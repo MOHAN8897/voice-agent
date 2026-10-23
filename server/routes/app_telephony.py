@@ -276,6 +276,21 @@ async def voice_preview(
         elif requested_tier == "low":
             provider = "gemini"
             model = "gemini-3.8-flash-tts"
+        elif requested_tier and requested_tier != "premium":
+            from server.services.dev_runtime import effective_app_environment
+            from server.services.saas.voice_stack_profiles import load_profile_records
+            custom_recs = await load_profile_records(effective_app_environment(), (requested_tier,))
+            custom_rec = custom_recs.get(requested_tier)
+            if custom_rec and isinstance(custom_rec.get("profile"), dict):
+                first_model = custom_rec["profile"].get("engines", [{}])[0].get("models", [{}])[0]
+                provider = str(first_model.get("provider") or ("gemini" if "low" in requested_tier else "sarvam"))
+                model = str(first_model.get("model") or "")
+            elif "low" in requested_tier or "economical" in requested_tier:
+                provider = "gemini"
+                model = "gemini-3.8-flash-tts"
+            else:
+                provider = "sarvam"
+                model = "bulbul:v3"
         else:
             phone_stack = await resolve_platform_phone_stack(raw_lang or "te-IN")
             llm = phone_stack.get("llm") if isinstance(phone_stack.get("llm"), dict) else {}

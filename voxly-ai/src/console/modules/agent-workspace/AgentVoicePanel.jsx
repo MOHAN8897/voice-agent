@@ -16,6 +16,7 @@ import {
   Activity,
   Layers,
   ChevronDown,
+  RefreshCw,
 } from 'lucide-react';
 import { voiceAgent } from '../../../services/voiceAgent';
 import { api } from '../../../services/api';
@@ -193,6 +194,340 @@ export const VOICE_CATALOG = [
     sampleUrl: '/audio/voxly/samples/rahul.wav',
     duration: '6.9s',
   },
+
+  // Expressive Indic Personas
+  {
+    id: 'nalini',
+    name: 'Nalini',
+    gender: 'female',
+    tone: 'Warm & expressive',
+    category: 'conversational',
+    useCase: 'Conversational Customer Support',
+    sampleText: 'నమస్కారం, నేను నళిని. మీకు ఎలా సహాయపడగలను?',
+    sampleUrl: '/audio/voxly/samples/voice-gnani-1.wav',
+    duration: '7.1s',
+  },
+  {
+    id: 'shivani',
+    name: 'Shivani',
+    gender: 'female',
+    tone: 'Clear & friendly',
+    category: 'conversational',
+    useCase: 'Frontdesk & Concierge Services',
+    sampleText: 'నమస్కారం! నేను శివాని. మీకు ఎలాంటి సహాయం కావాలి?',
+    sampleUrl: '/audio/voxly/samples/voice-gnani-2.wav',
+    duration: '6.9s',
+  },
+  {
+    id: 'lakshmi',
+    name: 'Lakshmi',
+    gender: 'female',
+    tone: 'Soft & engaging',
+    category: 'conversational',
+    useCase: 'Healthcare & Patient Intake',
+    sampleText: 'నమస్కారం, మీ ఆరోగ్య మరియు సంరక్షణ వివరాలను సరిచూసేందుకు సహాయపడతాను.',
+    sampleUrl: '/audio/voxly/samples/voice-gnani-1.wav',
+    duration: '7.4s',
+  },
+  {
+    id: 'chitra',
+    name: 'Chitra',
+    gender: 'female',
+    tone: 'Professional & steady',
+    category: 'promotional',
+    useCase: 'Commercial Advisory & Outreach',
+    sampleText: 'నమస్కారం! మా ప్రత్యేక ఆఫర్లు మరియు సేవలను పరిశీలించడానికి నేను సిద్ధంగా ఉన్నాను.',
+    sampleUrl: '/audio/voxly/samples/voice-gnani-2.wav',
+    duration: '7.2s',
+  },
+  {
+    id: 'pranav',
+    name: 'Pranav',
+    gender: 'male',
+    tone: 'Crisp & natural',
+    category: 'conversational',
+    useCase: 'Technical Support & Inquiries',
+    sampleText: 'నమస్కారం, నేను ప్రణవ్. మీ సాంకేతిక ప్రశ్నలకు సమాధానాలు ఇవ్వగలను.',
+    sampleUrl: '/audio/voxly/samples/voice-gnani-2.wav',
+    duration: '6.8s',
+  },
+  {
+    id: 'avinash',
+    name: 'Avinash',
+    gender: 'male',
+    tone: 'Authoritative & calm',
+    category: 'promotional',
+    useCase: 'Commercial Property & Consultations',
+    sampleText: 'నమస్కారం, రియల్ ఎస్టేట్ మరియు ప్రాజెక్ట్ వివరాలను మీకు తెలియజేయడానికి నేను ఇక్కడ ఉన్నాను.',
+    sampleUrl: '/audio/voxly/samples/voice-gnani-1.wav',
+    duration: '7.5s',
+  },
+  {
+    id: 'prakash',
+    name: 'Prakash',
+    gender: 'male',
+    tone: 'Direct & warm',
+    category: 'conversational',
+    useCase: 'Logistics & Operational Updates',
+    sampleText: 'నమస్కారం, మీ డెలివరీ మరియు సేవల తాజా సమాచారం కోసం నేను సహాయపడతాను.',
+    sampleUrl: '/audio/voxly/samples/voice-gnani-2.wav',
+    duration: '6.6s',
+  },
+  {
+    id: 'sanjay',
+    name: 'Sanjay',
+    gender: 'male',
+    tone: 'Dynamic & persuasive',
+    category: 'promotional',
+    useCase: 'Sales Campaigns & Fast Booking',
+    sampleText: 'నమస్కారం, ఈ వారం ప్రత్యేక బుకింగ్‌ల గురించి మీకు తెలియజేయడానికి కాల్ చేస్తున్నాను.',
+    sampleUrl: '/audio/voxly/samples/voice-gnani-1.wav',
+    duration: '7.0s',
+  },
+
+  // Ultra-Fast Conversational Personas (Cartesia Engine)
+  {
+    id: 'priya',
+    name: 'Priya',
+    gender: 'female',
+    tone: 'Warm, natural & conversational',
+    category: 'conversational',
+    accent: 'Indian',
+    tag: 'Indian',
+    language: 'hi-IN',
+    useCase: 'Hindi & Telugu Regional Support',
+    sampleText: 'नमस्ते! मैं प्रिया हूँ, आपकी सहायता के लिए सदैव उपलब्ध हूँ।',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-1.wav',
+    duration: '6.5s',
+  },
+  {
+    id: 'kiara',
+    name: 'Kiara',
+    gender: 'female',
+    tone: 'Upbeat, pleasant & clear',
+    category: 'conversational',
+    accent: 'Indian',
+    tag: 'Indian',
+    language: 'en-IN',
+    useCase: 'Hospitality & Onboarding Concierge',
+    sampleText: 'Hello! I am Kiara, happy to guide you through our services.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-1.wav',
+    duration: '6.3s',
+  },
+  {
+    id: 'indian-lady',
+    name: 'Indian Lady',
+    gender: 'female',
+    tone: 'Polite, composed & supportive',
+    category: 'conversational',
+    accent: 'Indian',
+    tag: 'Indian',
+    language: 'en-IN',
+    useCase: 'Priority Helpdesk & Customer Care',
+    sampleText: 'Good day. How may I be of service to you today?',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-1.wav',
+    duration: '6.4s',
+  },
+  {
+    id: 'bhavani',
+    name: 'Bhavani',
+    gender: 'female',
+    tone: 'Warm, natural & conversational',
+    category: 'conversational',
+    accent: 'Indian',
+    tag: 'Indian',
+    language: 'te-IN',
+    useCase: 'Telugu Regional Support & Outreach',
+    sampleText: 'నమస్కారం! నేను భవానిని. మీ ప్రశ్నలకు సమాధానం ఇవ్వడానికి నేను సిద్ధంగా ఉన్నాను.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-1.wav',
+    duration: '6.4s',
+  },
+  {
+    id: 'charan',
+    name: 'Charan',
+    gender: 'male',
+    tone: 'Crisp, conversational & friendly',
+    category: 'conversational',
+    accent: 'Indian',
+    tag: 'Indian',
+    language: 'te-IN',
+    useCase: 'Telugu Consultations & Bookings',
+    sampleText: 'నమస్కారం! చరణ్ ఇక్కడ, మీ సర్వీస్ అభ్యర్థనలను ధృవీకరించడానికి నేను సహాయం చేస్తాను.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-2.wav',
+    duration: '6.6s',
+  },
+  {
+    id: 'aarti',
+    name: 'Aarti',
+    gender: 'female',
+    tone: 'Friendly, clear & engaging',
+    category: 'conversational',
+    accent: 'Indian',
+    tag: 'Indian',
+    language: 'hi-IN',
+    useCase: 'Hindi Customer Care & Inquiry',
+    sampleText: 'नमस्ते! मैं आरती हूँ। आपकी पूछताछ और सहायता के लिए हमेशा उपलब्ध हूँ।',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-1.wav',
+    duration: '6.5s',
+  },
+  {
+    id: 'amrit',
+    name: 'Amrit',
+    gender: 'male',
+    tone: 'Professional, articulate & calm',
+    category: 'promotional',
+    accent: 'Indian',
+    tag: 'Indian',
+    language: 'hi-IN',
+    useCase: 'Hindi Corporate & Advisory Services',
+    sampleText: 'नमस्ते! मैं अमृत बोल रहा हूँ। आपके खाते और सेवाओं की जानकारी मैं साझा करूँगा।',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-2.wav',
+    duration: '6.8s',
+  },
+  {
+    id: 'maya',
+    name: 'Maya',
+    gender: 'female',
+    tone: 'Clear, modern & empathetic',
+    category: 'conversational',
+    accent: 'Indian',
+    tag: 'Indian',
+    language: 'en-IN',
+    useCase: 'Indian English Concierge & Support',
+    sampleText: 'Hello! I am Maya. I can quickly answer your questions and confirm your appointments.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-1.wav',
+    duration: '6.2s',
+  },
+  {
+    id: 'devansh',
+    name: 'Devansh',
+    gender: 'male',
+    tone: 'Crisp, confident & courteous',
+    category: 'promotional',
+    accent: 'Indian',
+    tag: 'Indian',
+    language: 'en-IN',
+    useCase: 'Indian English Priority Dispatch & Sales',
+    sampleText: 'Hi there, Devansh here. I am pleased to assist you with your schedule and inquiries today.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-2.wav',
+    duration: '6.5s',
+  },
+  {
+    id: 'krishna',
+    name: 'Krishna',
+    gender: 'male',
+    tone: 'Deep, confident & reassuring',
+    category: 'conversational',
+    accent: 'Indian',
+    tag: 'Indian',
+    language: 'te-IN',
+    useCase: 'Telugu & Hindi Financial Consultations',
+    sampleText: 'నమస్కారం! నేను కృష్ణ. మీ ఆర్థిక ప్రణాళికలో సహాయపడటానికి సిద్ధంగా ఉన్నాను.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-2.wav',
+    duration: '6.7s',
+  },
+  {
+    id: 'aarav',
+    name: 'Aarav',
+    gender: 'male',
+    tone: 'Crisp, dynamic & energetic',
+    category: 'promotional',
+    accent: 'Indian',
+    tag: 'Indian',
+    language: 'en-IN',
+    useCase: 'Indian English Sales & Announcements',
+    sampleText: 'Hi there! I am Aarav, reaching out to share our newest offers.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-2.wav',
+    duration: '6.4s',
+  },
+  {
+    id: 'sarah',
+    name: 'Sarah',
+    gender: 'female',
+    tone: 'Ultra-fast & natural',
+    category: 'conversational',
+    useCase: 'High-Speed Multilingual Inquiries',
+    sampleText: 'Hello! I am Sarah. I can rapidly answer questions, check availability, and confirm reservations.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-1.wav',
+    duration: '6.5s',
+  },
+  {
+    id: 'caleb',
+    name: 'Caleb',
+    gender: 'male',
+    tone: 'Upbeat & friendly',
+    category: 'conversational',
+    useCase: 'Interactive Real-time Dialogue',
+    sampleText: 'Hi there! Caleb here, ready to assist with your account, scheduled visits, or general questions.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-2.wav',
+    duration: '6.7s',
+  },
+  {
+    id: 'jacqueline',
+    name: 'Jacqueline',
+    gender: 'female',
+    tone: 'Warm & empathetic',
+    category: 'conversational',
+    useCase: 'Customer Care & Priority Helpdesk',
+    sampleText: 'Thank you for reaching out. I am Jacqueline, and I am here to make sure your questions are resolved.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-1.wav',
+    duration: '7.0s',
+  },
+  {
+    id: 'michael',
+    name: 'Michael',
+    gender: 'male',
+    tone: 'Professional & clear',
+    category: 'promotional',
+    useCase: 'Corporate Briefings & Consultations',
+    sampleText: 'Good day. I am Michael. Let us review the optimal plans and solutions tailored for your business.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-2.wav',
+    duration: '7.3s',
+  },
+  {
+    id: 'skylar',
+    name: 'Skylar',
+    gender: 'female',
+    tone: 'Empathetic & natural',
+    category: 'conversational',
+    useCase: 'Care Navigation & Advisory',
+    sampleText: 'Hello! I am Skylar, guiding you step-by-step through appointments and check-in procedures.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-1.wav',
+    duration: '6.8s',
+  },
+  {
+    id: 'daniel',
+    name: 'Daniel',
+    gender: 'male',
+    tone: 'Authoritative & steady',
+    category: 'promotional',
+    useCase: 'Priority Dispatch & Notifications',
+    sampleText: 'Attention: this is dispatch confirmation with Daniel. I will verify your service slot right away.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-2.wav',
+    duration: '6.9s',
+  },
+  {
+    id: 'katie',
+    name: 'Katie',
+    gender: 'female',
+    tone: 'Bright & energetic',
+    category: 'promotional',
+    useCase: 'Retail Highlights & Promotional Offers',
+    sampleText: 'Hi! Katie here to share our exclusive new offers and limited-time opportunities.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-1.wav',
+    duration: '6.4s',
+  },
+  {
+    id: 'leo',
+    name: 'Leo',
+    gender: 'male',
+    tone: 'Calm & engaging',
+    category: 'conversational',
+    useCase: 'Educational Briefs & Guided Walkthroughs',
+    sampleText: 'Welcome. I am Leo, your virtual concierge, pleased to assist you with every detail today.',
+    sampleUrl: '/audio/voxly/samples/voice-cartesia-2.wav',
+    duration: '7.2s',
+  },
 ];
 
 const STACK_TIER_LABELS = {
@@ -264,7 +599,8 @@ function isSelectableProfile(profile, language) {
   if (
     !profile ||
     profile.ready !== true ||
-    !['low', 'medium', 'premium'].includes(profile.tier) ||
+    typeof profile.tier !== 'string' ||
+    !profile.tier.trim() ||
     !Number.isSafeInteger(profile.profileRevision) ||
     profile.profileRevision < 0 ||
     !hasApprovedRetailRate(profile.retailRate)
@@ -276,7 +612,7 @@ function isSelectableProfile(profile, language) {
 
 function selectionFromAgent(agent) {
   const settings = agent?.voiceSettings;
-  if (settings?.stackSelectionVersion !== 1 || !STACK_TIER_LABELS[agent?.defaultTier]) {
+  if (settings?.stackSelectionVersion !== 1 || !agent?.defaultTier) {
     return { tier: '', engineId: '', modelId: '', voiceId: '' };
   }
   return {
@@ -414,9 +750,27 @@ export function AgentVoicePanel({
   const savedSelectionRevision = Number.isSafeInteger(agent?.voiceRevision) ? agent.voiceRevision : 0;
   const savedSelectionStateKey = `${selectionKey(savedSelection)}|${savedSelectionRevision}`;
   const isStackOptedIn = agent?.voiceSettings?.stackSelectionVersion === 1;
-  const catalogStackProfiles = voiceStackProfiles.filter(
-    (profile) => ['low', 'medium', 'premium'].includes(profile?.tier)
-  );
+  const catalogStackProfiles = Array.isArray(voiceStackProfiles)
+    ? voiceStackProfiles.filter((profile) => profile?.tier && profile?.ready && profile?.enabled !== false && !profile?.blockers?.some(b => b.code === 'profile_not_available'))
+    : [];
+  const [isRefreshingVoiceData, setIsRefreshingVoiceData] = useState(false);
+
+  const handleRefreshAllVoiceData = useCallback(async () => {
+    if (isRefreshingVoiceData) return;
+    setIsRefreshingVoiceData(true);
+    try {
+      await Promise.allSettled([
+        onRetryVoiceStackCatalog ? onRetryVoiceStackCatalog() : Promise.resolve(),
+        onRetryVoiceCatalog ? onRetryVoiceCatalog() : Promise.resolve(),
+        onReloadVoiceStackSettings ? onReloadVoiceStackSettings() : Promise.resolve(),
+      ]);
+      showToast?.('success', 'Voice stacks and catalog refreshed.');
+    } catch {
+      showToast?.('error', 'Failed to refresh voice data.');
+    } finally {
+      setTimeout(() => setIsRefreshingVoiceData(false), 500);
+    }
+  }, [isRefreshingVoiceData, onRetryVoiceStackCatalog, onRetryVoiceCatalog, onReloadVoiceStackSettings]);
   const selectableStackProfiles = useMemo(
     () =>
       voiceStackProfiles
@@ -740,8 +1094,9 @@ export function AgentVoicePanel({
 
   // Computed voices for each tier for the active language
   const tierVoicesMap = useMemo(() => {
-    const map = { low: [], medium: [], premium: [] };
+    const map = {};
     for (const profile of catalogStackProfiles) {
+      if (!profile?.tier) continue;
       if (profile.tier === 'premium') {
         map.premium = displayVoices.map((v, idx) => ({
           ...v,
@@ -1072,8 +1427,8 @@ export function AgentVoicePanel({
         },
       }));
 
-      // In low or medium tier, update draftSelection to a valid voice for the new language
-      if (draftSelection?.tier && ['low', 'medium'].includes(draftSelection.tier)) {
+      // In composed tier, update draftSelection to a valid voice for the new language
+      if (draftSelection?.tier && draftSelection.tier !== 'premium') {
         const prof = selectableStackProfiles.find((p) => p.tier === draftSelection.tier);
         const engines = publicEngines(prof, langCode);
         const firstVoice = engines[0]?.models?.[0]?.voices?.[0];
@@ -1186,8 +1541,8 @@ export function AgentVoicePanel({
             <p className="mt-1 text-xs text-[#524E5E]">
               Saved setup:{' '}
               <strong className="text-[#0F0E17]">
-                {isStackOptedIn && STACK_TIER_LABELS[agent?.defaultTier]
-                  ? STACK_TIER_LABELS[agent.defaultTier]
+                {isStackOptedIn && agent?.defaultTier
+                  ? (STACK_TIER_LABELS[agent.defaultTier] || savedProfile?.label || agent.defaultTier)
                   : 'Current voice configuration'}
               </strong>
               {isStackOptedIn && savedVoice ? ` · ${savedVoice.label}` : ''}
@@ -1231,10 +1586,23 @@ export function AgentVoicePanel({
         {/* 3 Columns for the Stacks with Scrollable Voices */}
         {catalogStackProfiles.length > 0 && (
           <fieldset className="space-y-3" disabled={isSavingStackSelection || voiceStackCatalogLoading}>
-            <legend className="mb-2 text-xs font-semibold text-[#0F0E17]">
-              Voice Stacks &amp; Tier Architecture
-            </legend>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+            <div className="flex items-center justify-between mb-2">
+              <legend className="text-xs font-semibold text-[#0F0E17]">
+                Voice Stacks &amp; Tier Architecture
+              </legend>
+              <button
+                type="button"
+                onClick={handleRefreshAllVoiceData}
+                disabled={isRefreshingVoiceData || voiceStackCatalogLoading}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-[#6344E7] hover:text-[#5233D6] bg-[#6344E7]/5 hover:bg-[#6344E7]/10 rounded-lg border border-[#6344E7]/20 transition-all cursor-pointer disabled:opacity-50"
+                title="Refresh Voice Stacks from backend"
+                data-testid="refresh-voice-stacks-btn"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingVoiceData || voiceStackCatalogLoading ? 'animate-spin' : ''}`} />
+                <span>{isRefreshingVoiceData || voiceStackCatalogLoading ? 'Refreshing…' : 'Refresh Stacks'}</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {catalogStackProfiles.map((profile) => {
                 const isSelectedTier = draftSelection?.tier === profile.tier;
                 const ready = isSelectableProfile(profile, currentLanguage);
@@ -1266,14 +1634,16 @@ export function AgentVoicePanel({
                           />
                           <div>
                             <span className="block text-xs font-bold text-[#0F0E17]">
-                              {STACK_TIER_LABELS[profile.tier] || profile.label}
+                              {STACK_TIER_LABELS[profile.tier] || profile.label || profile.tier}
                             </span>
                             <span className="text-[10px] text-[#716C7F]">
                               {profile.tier === 'low'
                                 ? 'Economical Composed Voice'
                                 : profile.tier === 'medium'
                                 ? 'Standard Regional Expressive'
-                                : 'Flagship Realtime Live'}
+                                : profile.tier === 'premium'
+                                ? 'Flagship Realtime Live'
+                                : (profile.description || `${profile.label || 'Custom'} Composed Stack`)}
                             </span>
                           </div>
                         </label>
@@ -1283,14 +1653,18 @@ export function AgentVoicePanel({
                               ? 'bg-[#6344E7]/10 text-[#6344E7] border-[#6344E7]/25'
                               : profile.tier === 'medium'
                               ? 'bg-blue-50 text-blue-700 border-blue-200'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : profile.tier === 'low'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-purple-50 text-purple-700 border-purple-200'
                           }`}
                         >
                           {profile.tier === 'low'
                             ? 'Economical'
                             : profile.tier === 'medium'
                             ? 'Standard'
-                            : 'Flagship'}
+                            : profile.tier === 'premium'
+                            ? 'Flagship'
+                            : (profile.label || 'Custom')}
                         </span>
                       </div>
                       <div
@@ -1370,6 +1744,11 @@ export function AgentVoicePanel({
                                       {v.gender && (
                                         <span className="text-[9px] uppercase px-1 rounded bg-[#F0EEF6] text-[#524E5E] font-semibold">
                                           {v.gender}
+                                        </span>
+                                      )}
+                                      {(v.tag === 'Indian' || v.accent?.includes('Indian') || v.label?.includes('Indian') || v.useCase?.includes('Indian')) && (
+                                        <span className="text-[9px] px-1 py-0.2 rounded font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                          🇮🇳 Indian
                                         </span>
                                       )}
                                       {v.category && (
@@ -1578,6 +1957,17 @@ export function AgentVoicePanel({
             <span className="text-xs font-bold text-[#0F0E17]">
               Available Speaking Voices ({filteredVoices.length})
             </span>
+            <button
+              type="button"
+              onClick={handleRefreshAllVoiceData}
+              disabled={isRefreshingVoiceData || voiceCatalogLoading}
+              className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-[#6344E7] hover:text-[#5233D6] bg-[#6344E7]/5 hover:bg-[#6344E7]/10 rounded-md border border-[#6344E7]/20 transition-all cursor-pointer ml-1 disabled:opacity-50"
+              title="Refresh Speaking Voices and Playbacks"
+              data-testid="refresh-speaking-voices-btn"
+            >
+              <RefreshCw className={`w-3 h-3 ${isRefreshingVoiceData || voiceCatalogLoading ? 'animate-spin' : ''}`} />
+              <span>{isRefreshingVoiceData || voiceCatalogLoading ? 'Refreshing…' : 'Refresh'}</span>
+            </button>
             <span className="text-[11px] text-[#8C879A]">
               Click Play to listen · Click row to choose
             </span>
@@ -1693,6 +2083,11 @@ export function AgentVoicePanel({
                       <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-[#F0EEF6] text-[#524E5E] capitalize">
                         {voice.gender}
                       </span>
+                      {(voice.tag === 'Indian' || voice.accent?.includes('Indian') || voice.useCase?.includes('Indian') || voice.tone?.includes('Telugu') || voice.tone?.includes('Hindi')) && (
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                          🇮🇳 Indian
+                        </span>
+                      )}
                       <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#6344E7]/10 text-[#6344E7] border border-[#6344E7]/20">
                         {voice.category === 'support' || voice.category === 'care'
                           ? 'Customer Care'

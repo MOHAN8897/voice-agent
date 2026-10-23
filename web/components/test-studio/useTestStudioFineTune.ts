@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ensureArray } from "@/lib/ensure-array";
 import { assembleRawPreview, type BrainSection } from "@/lib/brain-utils";
 import { testStudioSessionId } from "@/lib/test-studio-stack";
+import { portalFetch } from "@/lib/auth-client";
 import {
   applyEntityTagsToScript,
   EMPTY_SCRIPT_ENTITIES,
@@ -89,7 +90,18 @@ export type InstructionsState = {
   customBrainPrompt: boolean;
   cacheEligible?: boolean;
   callEndPolicy: CallEndPolicyState;
+  generationConfig?: {
+    employeeName?: string;
+    agentRole?: string;
+    callDirection?: string;
+    mode?: string;
+    industry?: string;
+    naturalSpokenStyle?: boolean;
+  };
 };
+
+type GenerationIssue = { code?: string; message: string; severity?: string };
+type GenerationProvenance = { provider?: string; model?: string; fallback?: boolean; llm_used?: boolean };
 
 export type PromptLimits = {
   agentBriefMax: number;
@@ -109,11 +121,11 @@ export type PromptLimits = {
 };
 
 const DEFAULT_LIMITS: PromptLimits = {
-  agentBriefMax: 1200,
-  agentBriefMaxWords: 180,
+  agentBriefMax: 6000,
+  agentBriefMaxWords: 1200,
   recommendedAgentBriefWords: 80,
-  agentScriptMax: 8000,
-  agentScriptMaxWords: 1200,
+  agentScriptMax: 30000,
+  agentScriptMaxWords: 5000,
   recommendedAgentScriptWords: 500,
   behaviourMax: 2000,
   businessMax: 2400,
@@ -173,6 +185,7 @@ function snapFineTune(instructions: InstructionsState, runtime: RuntimeState): s
     agentScript: instructions.agentScript,
     responseStyle: instructions.responseStyle,
     callEndPolicy: instructions.callEndPolicy,
+    generationConfig: instructions.generationConfig,
     runtime: snapRuntime(runtime),
   });
 }
@@ -221,6 +234,9 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     agentName?: string;
     detectedRole?: string;
     responseStyle?: string;
+    generationStatus?: string;
+    issues?: GenerationIssue[];
+    provenance?: GenerationProvenance;
   }>({});
   const [agentMeta, setAgentMeta] = useState<{
     name?: string;
@@ -308,6 +324,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
           customBrainPrompt: Boolean(j.customBrainPrompt),
           cacheEligible: Boolean(j.cacheEligible),
           callEndPolicy: normalizeCallEndPolicyState(j.callEndPolicy, language),
+          generationConfig: j.generationConfig || j.optimizerReport?.generation_config || {},
         });
         const lim = j.limits || {};
         setLimits({
@@ -345,6 +362,9 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
           agentName: j.optimizerReport?.agent_name,
           detectedRole: j.optimizerReport?.detected_role,
           responseStyle: j.style,
+          generationStatus: j.optimizerReport?.status,
+          issues: j.optimizerReport?.issues || j.optimizerReport?.conflicts || [],
+          provenance: j.optimizerReport?.provenance,
         });
         if (j.compilerSections) {
           setCompilerSections(j.compilerSections as CompilerSectionsPayload);
@@ -431,14 +451,14 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       return false;
     }
     setSaving(true);
-    setStatus("Creating agent script… GPT expanding your brief (usually 30–60s)");
+    setStatus("Creating and validating the calling script from your brief…");
     try {
       const requestedBudget = Math.max(
         Number(runtime.brainPromptBudgetTokens || 0),
         Number(instructions.budgetTokens || 0),
         6000
       );
-      const r = await fetch("/api/instructions", {
+      const r = await portalFetch(portal, "/api/instructions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -446,6 +466,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
           sessionId,
           agentBrief: instructions.agentBrief,
           compileFromBrief: true,
+          generationConfig: instructions.generationConfig,
           responseStyle: spokenStyleMatchesLanguage(instructions.responseStyle, language)
             ? instructions.responseStyle || undefined
             : undefined,
@@ -456,6 +477,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) {
+        setOptimizerMeta((prev) => ({ ...prev, generationStatus: j.detail?.error?.needs_user_input ? "needs_clarification" : "failed", issues: j.detail?.error?.issues || [] }));
         setStatus(apiErrorMessage(j, `Agent script creation failed (${r.status})`));
         return false;
       }
@@ -480,6 +502,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         headroom: j.headroom,
         cacheEligible: Boolean(j.cacheEligible),
         callEndPolicy: normalizeCallEndPolicyState(j.callEndPolicy, language),
+        generationConfig: j.generationConfig || j.optimizerReport?.generation_config || instructions.generationConfig,
       };
       setRuntime(nextRuntime);
       setInstructions(nextInstructions);
@@ -493,6 +516,9 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         agentName: j.optimizerReport?.agent_name,
         detectedRole: j.optimizerReport?.detected_role,
         responseStyle: j.responseStyle || j.style,
+        generationStatus: j.optimizerReport?.status,
+        issues: j.optimizerReport?.issues || j.optimizerReport?.conflicts || [],
+        provenance: j.optimizerReport?.provenance,
       });
       if (j.compilerSections) {
         setCompilerSections(j.compilerSections as CompilerSectionsPayload);
@@ -540,7 +566,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     setSaving(true);
     setStatus("Saving call end policy…");
     try {
-      const r = await fetch("/api/instructions", {
+      const r = await portalFetch(portal, "/api/instructions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -614,6 +640,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
           agentScript: parsed?.agentScript ?? instructions.agentScript,
           responseStyle: parsed?.responseStyle ?? instructions.responseStyle,
           callEndPolicy: parsed?.callEndPolicy ?? instructions.callEndPolicy,
+          generationConfig: parsed?.generationConfig ?? instructions.generationConfig,
           runtime: snapRuntime(runtime),
         });
       } catch {
@@ -641,9 +668,8 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     if (!conflictOnLoad || loading || saving || autoRecompileRef.current) return;
     autoRecompileRef.current = true;
     setConflictOnLoad(false);
-    setStatus("Saved script does not match brief — regenerating from brief…");
-    void saveInstructions();
-  }, [conflictOnLoad, loading, saving, saveInstructions]);
+    setStatus("Saved script differs from the brief. Review it, or choose Create agent script to regenerate.");
+  }, [conflictOnLoad, loading, saving]);
 
   const saveEditedScript = useCallback(async (opts?: { silent?: boolean }) => {
     const script = scriptForSave(instructions.agentScript, scriptEntities);
@@ -675,7 +701,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         Number(instructions.budgetTokens || 0),
         6000
       );
-      const r = await fetch("/api/instructions", {
+      const r = await portalFetch(portal, "/api/instructions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -683,6 +709,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
           sessionId,
           agentScript: script,
           agentBrief: instructions.agentBrief,
+          generationConfig: instructions.generationConfig,
           responseStyle: spokenStyleMatchesLanguage(instructions.responseStyle, language)
             ? instructions.responseStyle || undefined
             : undefined,
@@ -717,6 +744,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         headroom: j.headroom,
         cacheEligible: Boolean(j.cacheEligible),
         callEndPolicy: normalizeCallEndPolicyState(j.callEndPolicy, language),
+        generationConfig: j.generationConfig || j.optimizerReport?.generation_config || instructions.generationConfig,
       };
       setRuntime(nextRuntime);
       setInstructions(nextInstructions);
@@ -730,6 +758,9 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         agentName: j.optimizerReport?.agent_name,
         detectedRole: j.optimizerReport?.detected_role,
         responseStyle: j.responseStyle || j.style,
+        generationStatus: j.optimizerReport?.status,
+        issues: j.optimizerReport?.issues || j.optimizerReport?.conflicts || [],
+        provenance: j.optimizerReport?.provenance,
       });
       if (j.compilerSections) {
         setCompilerSections(j.compilerSections as CompilerSectionsPayload);
@@ -813,6 +844,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
             agentScript: parsed?.agentScript ?? instructions.agentScript,
             responseStyle: parsed?.responseStyle ?? instructions.responseStyle,
             callEndPolicy: parsed?.callEndPolicy ?? instructions.callEndPolicy,
+            generationConfig: parsed?.generationConfig ?? instructions.generationConfig,
             runtime: snapRuntime(runtime),
           });
         } catch {
@@ -838,6 +870,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         responseStyle: string;
         callEndPolicy: CallEndPolicyState;
         runtime: RuntimeState;
+        generationConfig?: InstructionsState["generationConfig"];
       };
       setInstructions((prev) => ({
         ...prev,
@@ -845,6 +878,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         agentScript: parsed.agentScript,
         responseStyle: parsed.responseStyle,
         callEndPolicy: parsed.callEndPolicy,
+        generationConfig: parsed.generationConfig,
       }));
       setRuntime(parsed.runtime || {});
       setStatus("Discarded unsaved Fine-tune changes");
@@ -864,7 +898,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         method: "DELETE",
         credentials: "include",
       }),
-      fetch(`/api/instructions?sessionId=${encodeURIComponent(sessionId)}`, {
+      portalFetch(portal, `/api/instructions?sessionId=${encodeURIComponent(sessionId)}`, {
         method: "DELETE",
         credentials: "include",
       }),

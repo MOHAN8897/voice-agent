@@ -13,7 +13,7 @@ from server.services.dev_secrets_store import dev_secrets_store
 def _resolve_voice_id(config: TTSConfig) -> str:
     from server.services.gnani_tts_ws import _resolve_gnani_voice
 
-    return _resolve_gnani_voice(config.speaker)
+    return _resolve_gnani_voice(config.speaker, model=config.model)
 
 
 class GnaniTTSAdapter:

@@ -25,4 +25,7 @@ def generation_target():
     if adapter is None:
         raise RuntimeError("The selected script generation provider is unavailable")
     model = getattr(settings, f"{provider}_model", None)
+    if provider == "openai" and (not model or "realtime" in str(model).lower()):
+        from server.realtime.models import DEFAULT_HTTP_LLM_MODEL
+        model = DEFAULT_HTTP_LLM_MODEL
     return adapter, LLMConfig(provider=provider, model=model)

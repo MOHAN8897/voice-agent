@@ -63,18 +63,61 @@ def resolve_preview_voice(
         label = str(alias_match.get("label") or pvid)
         return pvid, label
 
-    # Gnani Voices (Voice 1, Voice 2)
+    # Gnani Voices (Voice 1, Voice 2, Voice 3, Voice 4)
     if active_provider == "gnani" or "gnani" in wanted.lower():
         clean_g = wanted.removeprefix("voice-").strip().lower()
+        if "4" in clean_g or clean_g in {"prakash", "gnani-4"}:
+            return "Prakash", "Voice 4"
+        if "3" in clean_g or clean_g in {"lakshmi", "gnani-3"}:
+            return "Lakshmi", "Voice 3"
         if "2" in clean_g or clean_g in {"pranav", "avinash", "gnani-2"}:
             return "Pranav", "Voice 2"
         return "Nalini", "Voice 1"
 
-    # Cartesia Voices (Voice 1, Voice 2)
+    # Cartesia Voices
     if active_provider == "cartesia" or "cartesia" in wanted.lower() or "sonic" in wanted.lower() or len(wanted) > 20:
         clean_c = wanted.removeprefix("voice-").strip().lower()
-        if "2" in clean_c or clean_c in {"caleb", "male", "cartesia-2"}:
+        from server.providers.cartesia_tts import _CARTESIA_VOICE_MAP
+        from server.services.cartesia_voices import _UUID_RE, _FALLBACK_VOICES
+
+        # 1. Exact catalog match
+        for row in phone_voice_catalog():
+            if row.get("provider") == "cartesia":
+                rid = str(row.get("id") or "").casefold()
+                rpvid = str(row.get("providerVoiceId") or "").casefold()
+                rname = str(row.get("name") or "").casefold()
+                if wanted.casefold() in (rid, rpvid, rname) or clean_c in (rid, rpvid, rname):
+                    return str(row.get("providerVoiceId") or row.get("id")), str(row.get("label") or row.get("name") or wanted)
+
+        # 2. Numbered aliases (voice-cartesia-1, cartesia-1, etc.)
+        if clean_c in {"cartesia-4", "4"}:
+            return "47c38ca4-ff9b-4e89-a2e1-456956b46452", "Voice 4"
+        if clean_c in {"cartesia-3", "3"}:
+            return "694f9389-aac1-45b6-b726-9d9369183238", "Voice 3"
+        if clean_c in {"cartesia-2", "2"}:
             return "a0e99841-438c-4a64-b679-ae501e7d6091", "Voice 2"
+        if clean_c in {"cartesia-1", "1"}:
+            return "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", "Voice 1"
+
+        # 3. Known names in map
+        if clean_c in _CARTESIA_VOICE_MAP:
+            uid = _CARTESIA_VOICE_MAP[clean_c]
+            matched_fallback = next((v for v in _FALLBACK_VOICES if v["id"] == uid), None)
+            lbl = matched_fallback["name"] if matched_fallback else clean_c.title()
+            return uid, lbl
+
+        # 4. Direct UUID
+        if _UUID_RE.match(clean_c):
+            matched_fallback = next((v for v in _FALLBACK_VOICES if v["id"].lower() == clean_c.lower()), None)
+            lbl = matched_fallback["name"] if matched_fallback else "Cartesia Voice"
+            return clean_c, lbl
+
+        # 5. Default by language
+        lang_prefix = (language or "te").split("-")[0].lower()
+        if lang_prefix == "te":
+            return "76961778-84da-4b51-8d42-2e8e6e6a5e8a", "Bhavani"
+        elif lang_prefix == "hi":
+            return "9cebb910-d4b7-4a4a-85a4-12c79137724c", "Aarti"
         return "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", "Voice 1"
 
     # 2. Defaults if empty
@@ -287,20 +330,39 @@ async def _synthesize_gemini_tts(line: str, voice: str, speed: float, language: 
 
 async def _synthesize_gnani(line: str, voice: str, speed: float, language: str | None = None, model: str | None = None) -> bytes:
     from server.providers.gnani_tts import GnaniTTSAdapter, TTSConfig
+    from server.services.saas.voice_sample_cache import pcm16_to_wav, valid_wav
+
+    clean_v = str(voice or "").strip()
+    req_model = model or "timbre-v3.0"
+    if "v3" in req_model.lower():
+        if clean_v.lower() in {"nalini", "voice-gnani-1", "voice 1"}:
+            clean_v = "Shivani"
+        elif clean_v.lower() in {"pranav", "voice-gnani-2", "voice 2"}:
+            clean_v = "Avinash"
+        elif clean_v.lower() in {"lakshmi", "voice-gnani-3", "voice 3"}:
+            clean_v = "Shivani"
+        elif clean_v.lower() in {"prakash", "voice-gnani-4", "voice 4"}:
+            clean_v = "Avinash"
 
     adapter = GnaniTTSAdapter()
     cfg = TTSConfig(
         provider="gnani",
-        model=model or "timbre-v3.0",
-        speaker=voice,
+        model=req_model,
+        speaker=clean_v,
         language=language or "te-IN",
         pace=speed,
     )
-    return await adapter.synthesize_rest(line, cfg)
+    raw = await adapter.synthesize_rest(line, cfg)
+    if isinstance(raw, bytes) and valid_wav(raw):
+        return raw
+    if isinstance(raw, bytes) and len(raw) > 44:
+        return pcm16_to_wav(raw[44:], 16000)
+    return raw
 
 
 async def _synthesize_cartesia(line: str, voice: str, speed: float, language: str | None = None, model: str | None = None) -> bytes:
     from server.providers.cartesia_tts import CartesiaTTSAdapter, TTSConfig
+    from server.services.saas.voice_sample_cache import pcm16_to_wav, valid_wav
 
     adapter = CartesiaTTSAdapter()
     cfg = TTSConfig(
@@ -310,7 +372,12 @@ async def _synthesize_cartesia(line: str, voice: str, speed: float, language: st
         language=language or "te-IN",
         speed=speed,
     )
-    return await adapter.synthesize_rest(line, cfg)
+    raw = await adapter.synthesize_rest(line, cfg)
+    if isinstance(raw, bytes) and valid_wav(raw):
+        return raw
+    if isinstance(raw, bytes) and len(raw) > 0:
+        return pcm16_to_wav(raw, 16000)
+    return raw
 
 
 def find_static_sample(voice: str, language: str | None = None) -> bytes | None:
@@ -326,9 +393,31 @@ def find_static_sample(voice: str, language: str | None = None) -> bytes | None:
         Path("voxly-ai/public/audio/voxly/samples"),
         Path(get_settings().data_dir) / "voice-samples" / "static",
         Path("server/static/audio/samples"),
+        Path("web/public/audio/voxly/samples"),
     ]
     # Priority: 1. Voice with language prefix (e.g. zephyr_te.wav), 2. Base voice (e.g. shubh.wav)
-    filenames = [f"{clean_voice}_{lang_prefix}.wav", f"{clean_voice}.wav"]
+    filenames = [
+        f"{clean_voice}_{lang_prefix}.wav",
+        f"{clean_voice}.wav",
+        f"voice-{clean_voice}_{lang_prefix}.wav",
+        f"voice-{clean_voice}.wav",
+    ]
+    female_cartesia_hints = {"priya", "kiara", "indian lady", "indian_lady", "bhavani", "aarti", "maya", "sarah", "jacqueline", "skylar", "katie", "045f0292", "f8f5f1b2", "3b554273", "76961778", "9cebb910", "79a125e8", "cartesia-1", "cartesia-3"}
+    male_cartesia_hints = {"devansh", "krishna", "aarav", "charan", "amrit", "caleb", "michael", "daniel", "leo", "87a983d8", "2ee87190", "efa653e5", "39d518b7", "82c2afc8", "97303aad", "cartesia-2", "cartesia-4"}
+
+    if any(h in clean_voice for h in female_cartesia_hints):
+        filenames.extend([f"voice-cartesia-1_{lang_prefix}.wav", "voice-cartesia-1.wav", f"cartesia-1_{lang_prefix}.wav"])
+    elif any(h in clean_voice for h in male_cartesia_hints):
+        filenames.extend([f"voice-cartesia-2_{lang_prefix}.wav", "voice-cartesia-2.wav", f"cartesia-2_{lang_prefix}.wav"])
+    elif "nalini" in clean_voice or "shivani" in clean_voice or "gnani-1" in clean_voice:
+        filenames.extend([f"voice-gnani-1_{lang_prefix}.wav", "voice-gnani-1.wav", f"gnani-1_{lang_prefix}.wav"])
+    elif "pranav" in clean_voice or "avinash" in clean_voice or "gnani-2" in clean_voice:
+        filenames.extend([f"voice-gnani-2_{lang_prefix}.wav", "voice-gnani-2.wav", f"gnani-2_{lang_prefix}.wav"])
+    elif "lakshmi" in clean_voice or "gnani-3" in clean_voice:
+        filenames.extend([f"voice-gnani-3_{lang_prefix}.wav", "voice-gnani-3.wav", f"gnani-3_{lang_prefix}.wav"])
+    elif "prakash" in clean_voice or "gnani-4" in clean_voice:
+        filenames.extend([f"voice-gnani-4_{lang_prefix}.wav", "voice-gnani-4.wav", f"gnani-4_{lang_prefix}.wav"])
+
     for bdir in base_dirs:
         for fname in filenames:
             cand = bdir / fname
@@ -442,7 +531,8 @@ async def synthesize_preview(
         )
     )
     is_catalog_voice = (
-        any(
+        active_provider in {"gnani", "cartesia"}
+        or any(
             str(row.get("id", "")).casefold() == voice.casefold()
             or str(row.get("geminiVoice", "")).casefold() == voice.casefold()
             for row in phone_voice_catalog()

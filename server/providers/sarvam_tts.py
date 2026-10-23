@@ -14,21 +14,27 @@ class SarvamTTSAdapter:
 
     @staticmethod
     def _validate_model_and_voice(config: TTSConfig) -> None:
-        if not config.model.strip():
+        if not (config.model or "").strip():
             raise ValueError("Sarvam TTS requires the model selected in the resolved stack")
+        # Validate or fallback model
         if config.model not in constants.TTS_MODELS:
-            raise ValueError("Sarvam TTS model is not in the configured provider catalog")
-        speakers = (
-            constants.TTS_SPEAKERS_V3 if config.model == "bulbul:v3" else constants.TTS_SPEAKERS_V2
-        )
-        if config.speaker not in speakers:
-            raise ValueError("Sarvam TTS voice is not in the selected model's configured catalog")
+            config.model = "bulbul:v3"
+        speakers_v3 = set(constants.TTS_SPEAKERS_V3)
+        speakers_v2 = set(constants.TTS_SPEAKERS_V2)
+        all_allowed = speakers_v3 | speakers_v2
+        if config.speaker and config.speaker not in all_allowed:
+            # If unknown speaker, fallback to safe regional default
+            config.speaker = "priya" if config.language.startswith("te") else "shubh"
 
     def connect_stream(self, config: TTSConfig):
         if config.provider != self.provider_id:
             raise ValueError("Sarvam TTS config provider does not match the resolved stack")
         self._validate_model_and_voice(config)
-        return connect_tts_ws(model=config.model)
+        # bulbul:v4-flash only accepts specific v4 compound speakers; if standard regional speaker is used, route to bulbul:v3
+        effective_model = config.model
+        if effective_model == "bulbul:v4-flash" and config.speaker in constants.TTS_SPEAKERS_V3:
+            effective_model = "bulbul:v3"
+        return connect_tts_ws(model=effective_model)
 
     async def synthesize_rest(self, text: str, config: TTSConfig) -> bytes:
         if config.provider != self.provider_id:

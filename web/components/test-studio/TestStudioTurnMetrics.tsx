@@ -161,7 +161,7 @@ export function TestStudioTurnMetrics({
   ttsModel = "",
   sttProvider = "sarvam",
   sttModel = "",
-  llmModel = "gpt-5.6-luna",
+  llmModel = "gpt-6-luna",
   pricing,
   sessionDurationMs = 0,
   callDirection = "outbound",

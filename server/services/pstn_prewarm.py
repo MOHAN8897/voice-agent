@@ -600,6 +600,7 @@ async def _build_prewarm_bundle(
                             language=language,
                             model=stack.llm.model,
                             voice=str(cfg.get("voice") or ""),
+                            speed=cfg.get("speed"),
                             turn_detection=str(cfg.get("turn_detection") or ""),
                             max_output_tokens=resolve_realtime_voice_max_output_tokens(
                                 _runtime_max_output_tokens(config_session)

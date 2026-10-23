@@ -125,7 +125,9 @@ export function parseApiError(data, status) {
   const retryAfter = typeof err === 'object' ? err?.retry_after : undefined;
   const retryHint =
     status === 429 && retryAfter ? ` Retry in ${retryAfter}s.` : '';
-  return { code, message: `${message}${retryHint}`, retryAfter, status };
+  const issues = Array.isArray(err?.issues) ? err.issues : [];
+  const issueText = issues.map((issue) => issue?.message).filter(Boolean).join(' ');
+  return { code, message: `${message}${retryHint}${issueText ? ` ${issueText}` : ''}`, issues, retryAfter, status };
 }
 
 function parseError(data, status) {
@@ -912,6 +914,8 @@ export const api = {
         industry: payload.industry || '',
         naturalSpokenStyle: Boolean(payload.naturalSpokenStyle),
         employeeName: payload.employeeName || '',
+        agentRole: payload.agentRole || payload.role || '',
+        callDirection: payload.callDirection || payload.direction || '',
       });
       const agent = data.agent || {};
       return {

@@ -22,9 +22,9 @@ from server.prompts.brain_prompt import SECTION_SAFETY
 from server.prompts.voice_defaults import style_for_language
 
 SCHEMA_VERSION = "1"
-CORE_VERSION = "section_safety_v2"
-LANGUAGE_PACK_VERSION = "spoken_packs_v5"
-TOOL_CONTRACT_VERSION = "realtime_voice_v1"
+CORE_VERSION = "section_safety_v3"
+LANGUAGE_PACK_VERSION = "spoken_packs_v6"
+TOOL_CONTRACT_VERSION = "realtime_voice_v2"
 
 _SPOKEN_HEADER = re.compile(r"---\s*SPOKEN LANGUAGE\s*\(", re.I)
 _STATIC_HEADER = re.compile(r"---\s*STATIC OUTPUT RULES\s*---", re.I)
@@ -67,6 +67,20 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
     raw = (text or "").strip()
     if not is_unified_compiled_brain(raw):
         return raw
+    from server.prompts.agent_voice_rules import (
+        CALL_END_FAREWELLS,
+        build_recording_disclosure_instruction,
+    )
+
+    lang = normalize_compile_language(language)
+    previous = re.search(r"---\s*SPOKEN LANGUAGE\s*\(([^)]+)\)", raw, re.IGNORECASE)
+    previous_language = normalize_compile_language(previous.group(1)) if previous else lang
+    locale_changed = previous_language != lang
+    if locale_changed and "### RECORDING DISCLOSURE POLICY" in raw:
+        old_disclosure = build_recording_disclosure_instruction(language=previous_language).strip()
+        if old_disclosure not in raw:
+            raise ValueError("Custom recording disclosure must be reviewed for the selected language")
+        raw = raw.replace(old_disclosure, build_recording_disclosure_instruction(language=lang).strip())
     header = re.compile(r"(?m)^---\s*(.+?)\s*---[ \t]*\n")
     sections = list(header.finditer(raw))
     chunks = [raw[:sections[0].start()]] if sections else [raw]
@@ -87,6 +101,21 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
             block = STATIC_OUTPUT_RULES + ("\n\n" + suffix if suffix else "")
         elif title.startswith("SPOKEN LANGUAGE ("):
             block = spoken_pack_for(language, include_brevity=False, core_only=True)
+        elif title == "CALL END POLICY":
+            old = raw[match.start():end]
+            reasons = re.search(r"Allowed hangup reasons for this agent:\s*([^\n.]+)", old)
+            farewells = re.findall(r"Farewell example:\s*`([^`]+)`", old)
+            policy: dict[str, Any] = {}
+            if reasons:
+                policy["allowedReasons"] = [reason.strip() for reason in reasons.group(1).split(",")]
+            if farewells:
+                # Older assemblies carried a default example before the actual
+                # configured farewell. The last entry is the policy overlay.
+                farewell_text = farewells[-1]
+                if locale_changed and farewell_text not in CALL_END_FAREWELLS.values():
+                    raise ValueError("Custom farewell must be reviewed for the selected language")
+                policy["farewell"] = farewell_text
+            block = call_end_policy_section(lang, policy)
         else:
             block = raw[match.start():end]
         chunks.append(block.strip())
@@ -174,8 +203,8 @@ def build_artifact(
         platform_call_rules=platform_call_rules,
     )
     core_t = estimate_tokens(SECTION_SAFETY)
-    pack_t = estimate_tokens(spoken_pack_for(lang))
-    biz_t = estimate_tokens(script)
+    pack_t = estimate_tokens(spoken_pack_for(lang, include_brevity=False, core_only=True))
+    biz_t = estimate_tokens(strip_section_markers(script))
     return CompiledBrainArtifact(
         schema_version=SCHEMA_VERSION,
         language=lang,
@@ -190,6 +219,7 @@ def build_artifact(
             "core": core_t,
             "language_pack": pack_t,
             "business_script": biz_t,
+            "platform_overhead": max(0, estimate_tokens(final) - biz_t),
             "total": estimate_tokens(final),
         },
     )

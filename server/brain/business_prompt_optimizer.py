@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from server.agent.brain_prompt_composer import estimate_tokens, fit_text_to_tokens
+from server.agent.brain_prompt_composer import estimate_tokens
 
 OPTIMIZER_VERSION = "v2"
 OPTIMIZER_SCHEMA: dict[str, Any] = {
@@ -100,8 +100,9 @@ def _deterministic_compress_dual(behaviour: str, business: str, *, max_tokens: i
         z_text,
     ]
     merged = "\n".join(parts)
-    fitted = fit_text_to_tokens(merged, max_tokens)
-    return fitted, b_removed + z_removed
+    if estimate_tokens(merged) > max_tokens:
+        raise ValueError("Instructions exceed the available token budget; simplify them or increase the budget. No facts were removed.")
+    return merged, b_removed + z_removed
 
 
 async def _llm_compress_prompt(raw_prompt: str, *, budget_tokens: int) -> dict[str, Any] | None:
@@ -156,25 +157,19 @@ async def optimize_session_dual_prompt(
     budget_tokens: int = 2500,
     previous_optimized: str | None = None,
 ) -> OptimizerResult:
-    """Merge dev behaviour + client business into one concise cached core prompt."""
-    raw_tokens = estimate_tokens(raw_assembled)
-    llm_payload = await _llm_compress_prompt(raw_assembled, budget_tokens=budget_tokens)
+    """Cache the complete user instruction source without lossy paraphrasing.
 
-    if llm_payload:
-        optimized = str(llm_payload.get("optimized_prompt", "")).strip()
-        model = llm_payload.get("_generation_model") or "selected_provider"
-        facts = list(llm_payload.get("preserved_facts") or [])[:12]
-        rules = list(llm_payload.get("preserved_rules") or [])[:12]
-        deduped = list(llm_payload.get("deduplicated_items") or [])[:12]
-        conflicts = list(llm_payload.get("conflicts") or [])
-    else:
-        optimized, deduped = _deterministic_compress_dual(
-            behaviour, business, max_tokens=max(220, int(budget_tokens * 0.35))
-        )
-        model = "deterministic_v1"
-        facts = _extract_bullets(raw_assembled)[:6]
-        rules = [ln for ln in facts if any(k in ln.lower() for k in ("never", "only", "must", "do not"))]
-        conflicts = []
+    An optimizer's claim that it retained facts is not a preservation proof.
+    The legacy dual editor therefore preserves its authored sections verbatim;
+    the compiler validates the final size instead of truncating business policy.
+    """
+    raw_tokens = estimate_tokens(raw_assembled)
+    optimized = f"--- AGENT BEHAVIOUR ---\n{behaviour.strip()}\n\n--- BUSINESS CONTEXT ---\n{business.strip()}"
+    model = "source_preserving_v1"
+    facts = _extract_bullets(business)
+    rules = _extract_bullets(behaviour)
+    deduped: list[str] = []
+    conflicts: list[dict[str, Any]] = []
 
     if previous_optimized and previous_optimized.strip() == optimized.strip():
         conflicts.append(

@@ -10,6 +10,7 @@ def test_gpt5_omits_temperature():
     assert supports_temperature("gpt-5") is False
     assert supports_temperature("gpt-5.5") is False
     assert supports_temperature("gpt-5.6-luna") is False
+    assert supports_temperature("gpt-6-luna") is False
     assert supports_temperature("o3-mini") is False
     assert supports_temperature("o4-mini") is False
 
@@ -27,6 +28,11 @@ def test_apply_generation_params_luna():
     assert "temperature" not in kw
     assert kw["reasoning"] == {"effort": "none"}
 
+    kw6: dict = {"model": "gpt-6-luna", "input": []}
+    apply_generation_params(kw6, model="gpt-6-luna", temperature=0.3, default_temperature=0.5, voice_optimized=True)
+    assert "temperature" not in kw6
+    assert kw6["reasoning"] == {"effort": "none"}
+
 
 def test_apply_generation_params_reasoning_override():
     kw: dict = {"model": "gpt-5.6-luna", "input": []}
@@ -43,4 +49,5 @@ def test_apply_generation_params_reasoning_override():
 
 def test_voice_reasoning_effort():
     assert voice_reasoning_effort("gpt-5.6-luna") == "none"
+    assert voice_reasoning_effort("gpt-6-luna") == "none"
     assert voice_reasoning_effort("gpt-5.5") == "low"

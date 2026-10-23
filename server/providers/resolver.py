@@ -96,18 +96,18 @@ class StackResolver:
 
     def _from_tier_env(self, tier: TierName, language: str) -> StackSelection:
         s = self._settings
-        prefix = tier.upper()
-        stt_provider = getattr(s, f"voice_{tier}_stt_provider")
-        stt_model = getattr(s, f"voice_{tier}_stt_model")
-        llm_provider = getattr(s, f"voice_{tier}_llm_provider")
-        llm_model = getattr(s, f"voice_{tier}_llm_model")
-        tts_provider = getattr(s, f"voice_{tier}_tts_provider")
-        tts_model = getattr(s, f"voice_{tier}_tts_model")
+        base_tier = tier if tier in ("low", "medium", "premium") else "medium"
+        stt_provider = getattr(s, f"voice_{tier}_stt_provider", None) or getattr(s, f"voice_{base_tier}_stt_provider", "sarvam")
+        stt_model = getattr(s, f"voice_{tier}_stt_model", None) or getattr(s, f"voice_{base_tier}_stt_model", "saaras:v2")
+        llm_provider = getattr(s, f"voice_{tier}_llm_provider", None) or getattr(s, f"voice_{base_tier}_llm_provider", "gemini")
+        llm_model = getattr(s, f"voice_{tier}_llm_model", None) or getattr(s, f"voice_{base_tier}_llm_model", "gemini-2.0-flash")
+        tts_provider = getattr(s, f"voice_{tier}_tts_provider", None) or getattr(s, f"voice_{base_tier}_tts_provider", "sarvam")
+        tts_model = getattr(s, f"voice_{tier}_tts_model", None) or getattr(s, f"voice_{base_tier}_tts_model", "bulbul:v3")
 
         tts_config: dict[str, Any] = {}
         if tts_provider == "sarvam":
             lang = constants.SUPPORTED_LANGUAGES.get(language, constants.SUPPORTED_LANGUAGES["te-IN"])
-            tts_config["speaker"] = lang.get("speaker", s.sarvam_tts_speaker_te)
+            tts_config["speaker"] = lang.get("speaker", getattr(s, "sarvam_tts_speaker_te", "shubh"))
 
         return StackSelection(
             stt=StageSelection(stt_provider, stt_model, {"mode": "realtime" if "realtime" in stt_model else "rest"}),

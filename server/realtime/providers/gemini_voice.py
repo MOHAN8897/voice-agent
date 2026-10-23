@@ -208,6 +208,7 @@ class GeminiLiveVoiceAdapter:
         self._input_lock = asyncio.Lock()
         self._cancelled_tool_ids: deque[str] = deque(maxlen=128)
         self._input_finalize_retry_at = 0.0
+        self._speech_pace_instruction = ""
 
     async def connect(
         self,
@@ -225,7 +226,12 @@ class GeminiLiveVoiceAdapter:
         include_tools: bool = True,
         extra_tools: list[dict] | None = None,
     ) -> None:
-        _ = temperature, noise_reduction, speed
+        _ = temperature, noise_reduction
+        from server.services.tts_voice_direction import gemini_speech_style, resolve_speech_pace
+
+        effective_speed = resolve_speech_pace("gemini", speed)
+        self._speech_pace_instruction = "--- SPEAKING PACE ---\n" + gemini_speech_style(effective_speed)
+        instructions = self._with_speech_pace(instructions)
         key = (self._api_key or _api_key()).strip()
         if not key:
             raise RuntimeError("GEMINI_API_KEY is not configured")
@@ -294,8 +300,9 @@ class GeminiLiveVoiceAdapter:
                 "mode": self.turn_detection,
                 "silence_duration_ms": getattr(aad, "silence_duration_ms", None),
                 "start_of_speech_sensitivity": getattr(aad, "start_of_speech_sensitivity", None),
-                "ignored_ui": {"noise_reduction": noise_reduction, "speed": speed},
+                "ignored_ui": {"noise_reduction": noise_reduction},
             },
+            "effective_delivery": {"speed": effective_speed, "mode": "instruction"},
         }
         logger.info("[gemini_voice] connect effective_vad=%s", self.last_session["effective_vad"])
         self._connect_cm = self._client.aio.live.connect(model=self.model, config=config)
@@ -335,10 +342,16 @@ class GeminiLiveVoiceAdapter:
             payload["usage_only"] = True
         return payload
 
+    def _with_speech_pace(self, instructions: str) -> str:
+        body = (instructions or "").strip()
+        pace = self._speech_pace_instruction
+        return f"{body}\n\n{pace}" if pace and pace not in body else body
+
     async def update_instructions(self, instructions: str) -> None:
         new = (instructions or "").strip()
         if not new:
             return
+        new = self._with_speech_pace(new)
         previous = (self.instructions or "").strip()
         self.instructions = new
         if self.last_session:

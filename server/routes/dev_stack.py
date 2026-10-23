@@ -231,7 +231,7 @@ async def dev_composed_voice_profile_duplicate(
     if source_record and isinstance(source_record.get("profile"), dict):
         cloned_profile = copy.deepcopy(source_record["profile"])
     else:
-        cloned_profile = recommended_composed_profile(source_tier)
+        cloned_profile = recommended_composed_profile(source_tier, allow_premium=True)
 
     source_label = cloned_profile.get("label") or source_tier.replace("_", " ").title()
     target_label = (body.target_label or "").strip() or f"{source_label} (Copy)"
@@ -305,6 +305,25 @@ async def dev_composed_voice_profile_activation(
         )
     except VoiceProfileError as exc:
         raise _voice_profile_http_error(exc) from exc
+
+
+@router.delete("/api/dev/stack/voice-profiles/{tier}")
+async def dev_composed_voice_profile_delete(
+    tier: str,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.stack.write")
+    from server.services.saas.voice_stack_profiles import VoiceProfileError, delete_composed_profile
+
+    try:
+        return await delete_composed_profile(
+            environment=effective_app_environment(),
+            tier=tier,
+            actor=session.subject,
+        )
+    except VoiceProfileError as exc:
+        raise _voice_profile_http_error(exc) from exc
+
 
 
 @router.post("/api/dev/stack/voice-preview")

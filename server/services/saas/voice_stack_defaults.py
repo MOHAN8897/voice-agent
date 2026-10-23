@@ -20,13 +20,15 @@ SARVAM_COMPOSED_VOICES = (
 )
 
 
-def recommended_composed_profile(tier: str) -> dict[str, Any]:
+def recommended_composed_profile(tier: str, *, allow_premium: bool = False) -> dict[str, Any]:
     """A reviewable draft with documented mappings, no fabricated release evidence.
 
     Sources: docs.sarvam.ai chat-completion/overview and change-the-speaker-voice;
     ai.google.dev/gemini-api/docs/speech-generation (verified 2026-10-22).
     Saving and activation remain explicit, versioned admin operations.
     """
+    if tier == "premium" and not allow_premium:
+        raise VoiceProfileError("read_only_tier", "The premium tier is read-only for composed voice profiles.", status_code=409)
     if tier == "premium":
         from server.realtime.models import DEFAULT_GEMINI_LIVE_MODEL, GEMINI_LIVE_VOICES
         voices = []

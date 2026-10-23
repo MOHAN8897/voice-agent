@@ -64,7 +64,7 @@ def test_live_rules_do_not_contradict_language_or_truthfulness(locale, model, un
     assert 'Never say you are an AI' not in prompt
     assert 'garbled or an unsupported language' not in prompt
     assert 'If the caller speaks a different language: (1)' not in prompt
-    assert 'tool success' in prompt or 'successful action tool' in prompt
+    assert 'only after a successful tool result' in prompt
     assert 'end_call' in prompt
     assert 'dialed' in prompt
     if unified:
@@ -106,12 +106,16 @@ def test_advertised_languages_match_test_matrix():
 def test_gemini_retains_complete_mandatory_policy_when_budget_is_tight(locale):
     from server.prompts.brain_prompt import SECTION_SAFETY
     from server.brain.sections import STATIC_OUTPUT_RULES
-    from server.realtime.gemini_audio_session import build_gemini_audio_session_instructions
+    from server.realtime.gemini_audio_session import GEMINI_TURN_STYLE, build_gemini_audio_session_instructions
+    from server.services.voice_pipeline_limits import LIVE_REPLY_BREVITY_RULE
 
     brain = assemble_unified_brain(language=locale, script='--- AGENT IDENTITY ---\nYou are Sam from Acme.')
     prompt = build_gemini_audio_session_instructions(brain, language=locale, direction='outbound', token_budget=2500)
     assert SECTION_SAFETY in prompt
-    assert STATIC_OUTPUT_RULES in prompt
+    # Gemini intentionally replaces character plumbing with native-audio turn
+    # delivery. Every other static obligation must survive that adaptation.
+    expected_policy = STATIC_OUTPUT_RULES.replace(LIVE_REPLY_BREVITY_RULE, GEMINI_TURN_STYLE)
+    assert expected_policy in prompt
     assert rules.call_end_policy_section(locale) in prompt
 
 

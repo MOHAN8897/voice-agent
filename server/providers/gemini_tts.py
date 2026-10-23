@@ -24,9 +24,11 @@ logger = logging.getLogger(__name__)
 GEMINI_GENERATE_CONTENT_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 GEMINI_TTS_REQUEST_SAMPLE_RATE = 24000
 GEMINI_STREAMING_TTS_MODELS = frozenset({
-    "gemini-3.1-flash-tts-preview",
+    "gemini-3.8-live",
     "gemini-3.8-flash-tts",
     "gemini-3.8-flash-lite-tts",
+    "gemini-3.1-flash-tts-preview",
+    "gemini-2.0-flash",
 })
 GEMINI_FALLBACK_TTS_MODELS = ("gemini-3.8-flash-tts", "gemini-3.1-flash-tts-preview")
 
@@ -53,6 +55,17 @@ class GeminiTTSChunk:
     audio_bytes: bytes
     sample_rate: int
     usage: dict[str, int]
+
+
+def _speech_part(text: str, config: TTSConfig, model: str) -> dict[str, Any]:
+    from server.services.tts_voice_direction import gemini_speech_style
+
+    style = gemini_speech_style(config.pace)
+    if model.startswith("gemini-3.8"):
+        # 3.8 reads text verbatim: delivery directions belong in metadata.
+        return {"text": text.strip(), "speech_metadata": {"style": style}}
+    # Earlier TTS models use a delivery prompt around the transcript.
+    return {"text": f"{style}\nRead only the following transcript:\n{text.strip()}"}
 
 
 async def _sse_payloads(response: httpx.Response) -> AsyncIterator[dict[str, Any]]:
@@ -203,7 +216,6 @@ class GeminiTTSAdapter:
             if m != model and supports_gemini_tts_streaming(m)
         ]
         body = {
-            "contents": [{"role": "user", "parts": [{"text": text.strip()}]}],
             "generationConfig": {
                 "responseModalities": ["AUDIO"],
                 "speechConfig": {
@@ -214,6 +226,7 @@ class GeminiTTSAdapter:
         }
 
         for idx, current_model in enumerate(candidate_models):
+            body["contents"] = [{"role": "user", "parts": [_speech_part(text, config, current_model)]}]
             url = f"{GEMINI_GENERATE_CONTENT_BASE}/{quote(current_model, safe='-_.')}:streamGenerateContent"
             pending = b""
             received_audio = False
@@ -330,7 +343,6 @@ class GeminiTTSAdapter:
             m for m in GEMINI_FALLBACK_TTS_MODELS if m != model_path
         ]
         body = {
-            "contents": [{"role": "user", "parts": [{"text": text.strip()}]}],
             "generationConfig": {
                 "responseModalities": ["AUDIO"],
                 "responseFormat": {
@@ -347,6 +359,7 @@ class GeminiTTSAdapter:
         }
 
         for idx, current_model in enumerate(candidate_models):
+            body["contents"] = [{"role": "user", "parts": [_speech_part(text, config, current_model)]}]
             url = f"{GEMINI_GENERATE_CONTENT_BASE}/{quote(current_model, safe='-_.')}:generateContent"
             async with httpx.AsyncClient(timeout=self._timeout()) as client:
                 try:

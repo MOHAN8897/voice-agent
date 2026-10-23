@@ -7,8 +7,8 @@ from typing import Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator
 
-from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
-from server.brain.business_brain_store import assemble_raw_business_prompt, business_brain_store
+from server.auth.instructions_access import InstructionsAccess, authorize_instruction_session, require_instructions_access
+from server.brain.business_brain_store import assemble_raw_business_prompt, business_brain_store, draft_revision
 from server.services.saas.script_variables import (
     SAAS_SCRIPT_VARIABLES_TITLE as SAAS_VARIABLES_TITLE,
 )
@@ -33,10 +33,24 @@ SAAS_VOICE_CONFIG_TITLE = "saas_voice_config"
 
 async def _guard_agent(
     agent_id: str,
-    principal: SubscriberPrincipal | None,
+    principal: InstructionsAccess | SubscriberPrincipal | None,
     *,
     write: bool = False,
 ) -> None:
+    from server.brain.agent_service import agent_service
+
+    if isinstance(principal, InstructionsAccess):
+        if not principal.developer:
+            await load_agent_for_tenant(agent_id, principal.tenant_id)
+        else:
+            try:
+                await agent_service.get_agent(agent_id)
+            except (KeyError, ValueError):
+                raise HTTPException(
+                    status_code=404,
+                    detail={"error": {"code": "not_found", "message": "Agent not found"}},
+                )
+        return
     if principal is not None:
         await load_agent_for_tenant(agent_id, subscriber_workspace_tenant_id(principal))
         if write:
@@ -45,8 +59,6 @@ async def _guard_agent(
     # No subscriber principal (dev portal, SaaS auth off). Still confirm the agent
     # exists: brain sections are keyed by agent id, and writing them for an
     # unknown agent would either persist orphans or fail on the foreign key.
-    from server.brain.agent_service import agent_service
-
     try:
         await agent_service.get_agent(agent_id)
     except (KeyError, ValueError):
@@ -58,6 +70,11 @@ async def _guard_agent(
 
 class DraftSectionsBody(BaseModel):
     sections: list[dict[str, Any]]
+    expected_revision: str = Field(..., min_length=64, max_length=64)
+
+
+class PublishBrainBody(BaseModel):
+    expected_revision: str = Field(..., min_length=64, max_length=64)
 
 
 class PreviewSectionsBody(BaseModel):
@@ -68,7 +85,7 @@ class PreviewSectionsBody(BaseModel):
 async def preview_business_brain(
     agent_id: str,
     body: PreviewSectionsBody,
-    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    principal: InstructionsAccess | SubscriberPrincipal | None = Depends(require_instructions_access),
 ):
     """Review the submitted draft without saving, publishing or calling an LLM."""
     await _guard_agent(agent_id, principal)
@@ -99,7 +116,7 @@ async def preview_business_brain(
 @router.get("/api/agents/{agent_id}/business-brain")
 async def get_business_brain(
     agent_id: str,
-    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    principal: InstructionsAccess | SubscriberPrincipal | None = Depends(require_instructions_access),
 ):
     await _guard_agent(agent_id, principal)
     sections = await business_brain_store.ensure_default_sections(agent_id)
@@ -107,7 +124,7 @@ async def get_business_brain(
     raw_prompt, checksum = assemble_raw_business_prompt(sections)
     return {
         "agent_id": agent_id,
-        "draft": {"sections": sections, "raw_checksum": checksum},
+        "draft": {"sections": sections, "raw_checksum": checksum, "revision": draft_revision(sections)},
         "published": versions[0] if versions else None,
         "versions_count": len(versions),
     }
@@ -117,20 +134,23 @@ async def get_business_brain(
 async def save_business_draft(
     agent_id: str,
     body: DraftSectionsBody,
-    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    principal: InstructionsAccess | SubscriberPrincipal | None = Depends(require_instructions_access),
 ):
     await _guard_agent(agent_id, principal, write=True)
-    saved = await business_brain_store.save_draft_sections(
-        agent_id, await _carry_entity_tags_forward(agent_id, body.sections)
-    )
+    try:
+        saved = await business_brain_store.save_draft_sections(
+            agent_id, await _carry_entity_tags_forward(agent_id, body.sections), expected_revision=body.expected_revision
+        )
+    except AppError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.to_dict()) from exc
     raw_prompt, checksum = assemble_raw_business_prompt(saved)
-    return {"ok": True, "sections": saved, "raw_checksum": checksum}
+    return {"ok": True, "sections": saved, "raw_checksum": checksum, "revision": draft_revision(saved)}
 
 
 @router.post("/api/agents/{agent_id}/business-brain/validate")
 async def validate_business_brain(
     agent_id: str,
-    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    principal: InstructionsAccess | SubscriberPrincipal | None = Depends(require_instructions_access),
 ):
     await _guard_agent(agent_id, principal)
     sections = await business_brain_store.get_sections(agent_id)
@@ -143,7 +163,7 @@ async def validate_business_brain(
 @router.post("/api/agents/{agent_id}/business-brain/optimize")
 async def optimize_business_brain(
     agent_id: str,
-    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    principal: InstructionsAccess | SubscriberPrincipal | None = Depends(require_instructions_access),
 ):
     await _guard_agent(agent_id, principal, write=True)
     sections = await business_brain_store.ensure_default_sections(agent_id)
@@ -160,11 +180,12 @@ async def optimize_business_brain(
 @router.post("/api/agents/{agent_id}/business-brain/publish")
 async def publish_business_brain(
     agent_id: str,
-    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    body: PublishBrainBody,
+    principal: InstructionsAccess | SubscriberPrincipal | None = Depends(require_instructions_access),
 ):
     await _guard_agent(agent_id, principal, write=True)
     try:
-        snapshot = await compiled_brain_service.publish_agent_brain(agent_id)
+        snapshot = await compiled_brain_service.publish_agent_brain(agent_id, expected_revision=body.expected_revision)
     except AppError as e:
         raise HTTPException(status_code=e.status_code, detail=e.to_dict()) from e
     return {"ok": True, "compiled_version": snapshot["compiled_version"], "checksum": snapshot["checksum"]}
@@ -279,6 +300,7 @@ async def _replace_section(
     sections = await business_brain_store.get_sections(agent_id)
     if not sections:
         sections = await business_brain_store.ensure_default_sections(agent_id)
+    base_revision = draft_revision(sections)
     match = next((s for s in sections if s.get("title") == title), None)
     if match is None:
         sections = [
@@ -294,22 +316,17 @@ async def _replace_section(
     else:
         match = {**match, "raw_text": raw_text, "enabled": enabled, "order": order}
         sections = [match if s.get("title") == title else s for s in sections]
-    await business_brain_store.save_draft_sections(agent_id, sections)
-    _raw, checksum = assemble_raw_business_prompt(sections)
-    await business_brain_store.save_published_version(
-        agent_id,
-        optimized_prompt=_raw,
-        source_checksum=checksum,
-        optimizer_report={"source": "console", "section": title},
-    )
-    await compiled_brain_service.compile_for_agent(agent_id)
+    try:
+        await compiled_brain_service.publish_agent_brain(agent_id, sections=sections, expected_revision=base_revision)
+    except AppError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.to_dict()) from exc
 
 
 @router.put("/api/agents/{agent_id}/business-brain/calling-script")
 async def save_calling_script(
     agent_id: str,
     body: CallingScriptBody,
-    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    principal: InstructionsAccess | SubscriberPrincipal | None = Depends(require_instructions_access),
 ):
     await _guard_agent(agent_id, principal, write=True)
     await _replace_section(
@@ -325,7 +342,7 @@ async def save_calling_script(
 async def save_voice_config(
     agent_id: str,
     body: VoiceConfigBody,
-    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    principal: InstructionsAccess | SubscriberPrincipal | None = Depends(require_instructions_access),
 ):
     """Voice config is stored disabled: the runtime reads it, the LLM must not."""
     await _guard_agent(agent_id, principal, write=True)
@@ -356,7 +373,7 @@ async def save_voice_config(
 @router.get("/api/agents/{agent_id}/business-brain/calling-script")
 async def read_calling_script(
     agent_id: str,
-    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    principal: InstructionsAccess | SubscriberPrincipal | None = Depends(require_instructions_access),
 ):
     await _guard_agent(agent_id, principal)
     sections = await business_brain_store.get_sections(agent_id)
@@ -393,7 +410,7 @@ def _parse_variables(section: dict[str, Any] | None) -> list[dict[str, Any]]:
 @router.get("/api/agents/{agent_id}/business-brain/versions")
 async def list_business_versions(
     agent_id: str,
-    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    principal: InstructionsAccess | SubscriberPrincipal | None = Depends(require_instructions_access),
 ):
     await _guard_agent(agent_id, principal)
     versions = await business_brain_store.get_versions(agent_id)
@@ -405,7 +422,7 @@ async def compiled_preview(
     agent_id: str,
     version: Optional[str] = Query(None),
     redacted: bool = Query(True),
-    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    principal: InstructionsAccess | SubscriberPrincipal | None = Depends(require_instructions_access),
 ):
     await _guard_agent(agent_id, principal)
     try:
@@ -415,6 +432,8 @@ async def compiled_preview(
             else await compiled_brain_service.get_active_for_agent(agent_id)
         )
     except KeyError:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Compiled brain not found"}})
+    if version and not any(row["version_id"] == snap["business_version"] for row in await business_brain_store.get_versions(agent_id)):
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Compiled brain not found"}})
     text = snap["compiled_text"]
     if redacted:

@@ -324,11 +324,15 @@ class PstnTurnTtsSession:
             "output_audio_codec": "linear16",
             "speech_sample_rate": str(self._tts_rate),
         }
+        from server.services.tts_voice_direction import resolve_speech_pace
+
         pace_value = config.get("pace")
-        try:
-            pace = float(pace_value) if pace_value is not None else None
-        except (TypeError, ValueError):
-            pace = None
+        if config.get("speed") is not None and (provider == "cartesia" or pace_value is None):
+            pace_value = config["speed"]
+        pace = resolve_speech_pace(provider, pace_value)
+        self._merged["pace"] = pace
+        if provider == "cartesia":
+            self._merged["speed"] = pace
         temperature_value = config.get("temperature")
         try:
             temperature = float(temperature_value) if temperature_value is not None else None
@@ -340,6 +344,7 @@ class PstnTurnTtsSession:
             language=language_code,
             speaker=speaker,
             pace=pace,
+            speed=pace if provider == "cartesia" else None,
             temperature=temperature,
         )
 
@@ -361,7 +366,6 @@ class PstnTurnTtsSession:
             if provider == "sarvam":
                 self._merged.update(
                     {
-                        "pace": pace if pace is not None else 1.0,
                         "min_buffer_size": 30,
                         "max_chunk_length": 80,
                     }

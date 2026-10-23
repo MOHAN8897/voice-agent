@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import time
 import uuid
 from typing import Any
@@ -20,6 +21,7 @@ from server.services.telephony import (
     telephony_summary_async,
 )
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 _hydrated = False
@@ -473,6 +475,16 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         }
     await _hangup_active_telnyx_to(client, body.to_e164)
     from server.services.pstn_prewarm import pstn_prewarm_registry
+    from server.realtime.models import is_gemini_live_voice_model
+    live_llm = stack_override.get("llm") or {}
+    is_composed = str(stack_override.get("pipeline") or "").strip().lower() == "composed_voice"
+    prepared_voice_opening_required = (
+        not is_composed
+        and (
+            str(live_llm.get("provider") or "").lower() == "gemini"
+            or is_gemini_live_voice_model(str(live_llm.get("model") or ""))
+        )
+    )
 
     try:
         await pstn_prewarm_registry.prepare(
@@ -486,8 +498,10 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
     except Exception as exc:
         log_pstn("dial.preparation.failed", control=prewarm_external_id,
                  error_type=type(exc).__name__)
-        return {"ok": False, "error": "Opening audio could not be prepared. Call was not placed.",
-                "code": "prewarm_failed"}
+        if prepared_voice_opening_required:
+            return {"ok": False, "error": "Opening audio could not be prepared. Call was not placed.",
+                    "code": "prewarm_failed"}
+        logger.warning("[PSTN-Telnyx] Composed prewarm failed (%s), proceeding with live synthesis on answer", type(exc).__name__)
     bound = False
     try:
         result = await client.create_outbound_call(
@@ -705,7 +719,9 @@ async def _outbound_vobiz(
         )
     except Exception as exc:
         log_pstn("vobiz.prewarm_failed", control=tracking_id, error_type=type(exc).__name__)
-        return {"ok": False, "error": "The agent could not get ready. No phone call was placed. Please try again.", "code": "voice_preparation_failed"}
+        if prepared_voice_opening_required:
+            return {"ok": False, "error": "The agent could not get ready. No phone call was placed. Please try again.", "code": "voice_preparation_failed"}
+        logger.warning("[PSTN] Composed prewarm failed (%s), proceeding with live synthesis on answer", type(exc).__name__)
 
     ans_url = f"{base_api}/api/vobiz/answer?token={token}&outbound_id={tracking_id}"
     hup_url = f"{base_api}/api/vobiz/hangup?token={token}&outbound_id={tracking_id}"

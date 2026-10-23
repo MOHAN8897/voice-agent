@@ -4,18 +4,37 @@ Business brain store — per-agent sections and published versions.
 from __future__ import annotations
 
 import hashlib
+import asyncio
+import copy
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from server.brain.sections import SECTION_LABELS, default_section_seeds
 from server.db.connection import get_session_factory
-from server.db.models.brain_models import BusinessBrainSection, BusinessBrainVersion
+from server.db.models.brain_models import BusinessBrainSection, BusinessBrainVersion, CompiledBrainSnapshot
+from server.db.models.entities import Agent
+from server.utils.errors import AppError, ErrorCode
 
 _MEM_SECTIONS: dict[str, list[dict[str, Any]]] = {}
 _MEM_VERSIONS: dict[str, list[dict[str, Any]]] = {}
+_MEM_LOCKS: dict[str, asyncio.Lock] = {}
+
+
+def draft_revision(sections: list[dict[str, Any]]) -> str:
+    """Include disabled runtime metadata; exclude non-semantic timestamps."""
+    fields = ("section_id", "type", "title", "raw_text", "order", "enabled")
+    rows = [{key: section.get(key) for key in fields} for section in sections]
+    rows.sort(key=lambda row: (int(row.get("order") or 0), str(row.get("section_id") or "")))
+    return hashlib.sha256(json.dumps(rows, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+
+
+def _check_revision(sections: list[dict[str, Any]], expected_revision: str | None) -> None:
+    if expected_revision is not None and draft_revision(sections) != expected_revision:
+        raise AppError(ErrorCode.CONFLICT, "This draft changed in another editor. Reload it before saving or publishing.", status_code=409)
 
 # Exact text of superseded default seeds, keyed by section type. Kept so
 # `ensure_default_sections` can tell "still an old default" apart from
@@ -137,7 +156,7 @@ class BusinessBrainStore:
     async def get_sections(self, agent_id: str) -> list[dict[str, Any]]:
         factory = get_session_factory()
         if factory is None:
-            return list(_MEM_SECTIONS.get(agent_id, []))
+            return copy.deepcopy(_MEM_SECTIONS.get(agent_id, []))
 
         async with factory() as session:
             aid = uuid.UUID(agent_id)
@@ -146,7 +165,7 @@ class BusinessBrainStore:
             )
             return [self._section_row(r) for r in result.scalars()]
 
-    async def save_draft_sections(self, agent_id: str, sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    async def save_draft_sections(self, agent_id: str, sections: list[dict[str, Any]], *, expected_revision: str | None = None) -> list[dict[str, Any]]:
         factory = get_session_factory()
         normalized = []
         for s in sections:
@@ -164,14 +183,20 @@ class BusinessBrainStore:
             )
 
         if factory is None:
-            _MEM_SECTIONS[agent_id] = normalized
-            return normalized
+            async with _MEM_LOCKS.setdefault(agent_id, asyncio.Lock()):
+                _check_revision(_MEM_SECTIONS.get(agent_id, []), expected_revision)
+                _MEM_SECTIONS[agent_id] = copy.deepcopy(normalized)
+            return copy.deepcopy(normalized)
 
         async with factory() as session:
             aid = uuid.UUID(agent_id)
+            await session.execute(select(Agent.agent_id).where(Agent.agent_id == aid).with_for_update())
             result = await session.execute(select(BusinessBrainSection).where(BusinessBrainSection.agent_id == aid))
-            for row in result.scalars():
+            current = list(result.scalars())
+            _check_revision([self._section_row(row) for row in current], expected_revision)
+            for row in current:
                 await session.delete(row)
+            await session.flush()
             for s in normalized:
                 session.add(
                     BusinessBrainSection(
@@ -186,6 +211,45 @@ class BusinessBrainStore:
                 )
             await session.commit()
         return normalized
+
+    async def commit_reviewed_publication(
+        self, agent_id: str, *, expected_revision: str,
+        published: dict[str, Any], snapshot: dict[str, Any],
+        sections: list[dict[str, Any]] | None = None,
+    ) -> None:
+        """Compare the reviewed draft and activate its immutable snapshot atomically."""
+        factory = get_session_factory()
+        if factory is None:
+            async with _MEM_LOCKS.setdefault(agent_id, asyncio.Lock()):
+                _check_revision(_MEM_SECTIONS.get(agent_id, []), expected_revision)
+                if sections is not None:
+                    _MEM_SECTIONS[agent_id] = copy.deepcopy(sections)
+                _MEM_VERSIONS.setdefault(agent_id, []).append(copy.deepcopy(published))
+            return
+        aid = uuid.UUID(agent_id)
+        async with factory() as session:
+            agent = (await session.execute(select(Agent).where(Agent.agent_id == aid).with_for_update())).scalar_one()
+            current = (await session.execute(select(BusinessBrainSection).where(BusinessBrainSection.agent_id == aid))).scalars()
+            _check_revision([self._section_row(row) for row in current], expected_revision)
+            if sections is not None:
+                await session.execute(delete(BusinessBrainSection).where(BusinessBrainSection.agent_id == aid))
+                for section in sections:
+                    session.add(BusinessBrainSection(
+                        section_id=uuid.UUID(section["section_id"]), agent_id=aid,
+                        type=section["type"], title=section["title"], raw_text=section["raw_text"],
+                        order=int(section.get("order", 0)), enabled=bool(section.get("enabled", True)),
+                    ))
+            session.add(BusinessBrainVersion(
+                version_id=published["version_id"], agent_id=aid,
+                optimized_prompt=published["optimized_prompt"], optimizer_report=published["optimizer_report"],
+                source_checksum=published["source_checksum"], status="published", published_at=datetime.now(timezone.utc),
+            ))
+            session.add(CompiledBrainSnapshot(**{key: snapshot[key] for key in (
+                "compiled_version", "platform_version", "business_version", "static_rules_version",
+                "compiled_text", "checksum", "token_estimate",
+            )}))
+            agent.active_compiled_brain_version = snapshot["compiled_version"]
+            await session.commit()
 
     async def save_published_version(
         self,
@@ -228,7 +292,7 @@ class BusinessBrainStore:
     async def get_versions(self, agent_id: str) -> list[dict[str, Any]]:
         factory = get_session_factory()
         if factory is None:
-            return list(_MEM_VERSIONS.get(agent_id, []))
+            return copy.deepcopy(list(reversed(_MEM_VERSIONS.get(agent_id, []))))
 
         async with factory() as session:
             result = await session.execute(

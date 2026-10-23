@@ -134,8 +134,24 @@ def test_legacy_enabled_voice_and_variable_metadata_never_enters_prompt():
 
 @pytest.fixture
 def client():
+    import uuid
+    from types import SimpleNamespace
     from server.app import app
-    return TestClient(app)
+    from server.auth.instructions_access import InstructionsAccess, require_instructions_access
+    from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
+    mock_access = InstructionsAccess(tenant_id=uuid.UUID("00000000-0000-4000-8000-000000000001"), role="administrator", developer=True)
+    sub_principal = SimpleNamespace(
+        tenant_id=uuid.UUID("00000000-0000-4000-8000-000000000001"),
+        email="test@example.com",
+        role="customer_admin",
+        is_admin=True,
+        permissions=frozenset({"app.agents.write", "app.brain.write"}),
+    )
+    app.dependency_overrides[require_instructions_access] = lambda: mock_access
+    app.dependency_overrides[require_subscriber_jwt_if_enabled] = lambda: sub_principal
+    yield TestClient(app)
+    app.dependency_overrides.pop(require_instructions_access, None)
+    app.dependency_overrides.pop(require_subscriber_jwt_if_enabled, None)
 
 
 def create_agent(client):
@@ -161,18 +177,22 @@ def test_review_requires_known_agent(client):
 
 
 def test_preview_enforces_tenant_ownership(client, monkeypatch):
+    import uuid
     from fastapi import HTTPException
+    from server.auth.instructions_access import InstructionsAccess, require_instructions_access
     from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
     import server.routes.agents_business_brain as routes
-    principal = SimpleNamespace()
+    tenant_uuid = uuid.UUID("00000000-0000-4000-8000-000000000001")
+    principal = InstructionsAccess(tenant_id=tenant_uuid, role="admin", developer=False)
     ownership = AsyncMock(side_effect=HTTPException(status_code=404, detail="Agent not found"))
-    monkeypatch.setattr(routes, "subscriber_workspace_tenant_id", lambda _: "tenant-a")
+    monkeypatch.setattr(routes, "subscriber_workspace_tenant_id", lambda _: tenant_uuid)
     monkeypatch.setattr(routes, "load_agent_for_tenant", ownership)
+    client.app.dependency_overrides[require_instructions_access] = lambda: principal
     client.app.dependency_overrides[require_subscriber_jwt_if_enabled] = lambda: principal
     try:
         response = client.post("/api/agents/other-tenant-agent/business-brain/preview", json={"sections": sections()})
         assert response.status_code == 404
-        ownership.assert_awaited_once_with("other-tenant-agent", "tenant-a")
+        ownership.assert_awaited_once_with("other-tenant-agent", tenant_uuid)
     finally:
         client.app.dependency_overrides.pop(require_subscriber_jwt_if_enabled, None)
 
@@ -181,8 +201,12 @@ def test_edited_identity_updates_hidden_runtime_tags(client):
     agent_id = create_agent(client)
     url = f"/api/agents/{agent_id}/business-brain"
     tagged = "--- ENTITY TAGS ---\n@agent_name: OldName\n@company_name: OldCompany\n@opening_line: Old greeting\n\n--- AGENT IDENTITY ---\nYou are OldName, representing OldCompany."
-    assert client.put(url + "/draft", json={"sections": sections(tagged)}).status_code == 200
-    assert client.put(url + "/draft", json={"sections": sections()}).status_code == 200
+    initial = client.get(url).json()
+    rev1 = initial["draft"]["revision"]
+    assert client.put(url + "/draft", json={"sections": sections(tagged), "expected_revision": rev1}).status_code == 200
+    after_first = client.get(url).json()
+    rev2 = after_first["draft"]["revision"]
+    assert client.put(url + "/draft", json={"sections": sections(), "expected_revision": rev2}).status_code == 200
     body = client.get(url).json()["draft"]["sections"]
     script = next(row["raw_text"] for row in body if row["title"] == "Calling script")
     assert "@agent_name: Meera" in script

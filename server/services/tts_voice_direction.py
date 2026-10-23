@@ -9,6 +9,7 @@ these knobs refine delivery.
 """
 from __future__ import annotations
 
+import math
 from typing import Any
 
 # Primary Cartesia emotions with strongest training data (docs).
@@ -61,3 +62,37 @@ def sarvam_delivery_defaults() -> dict[str, float]:
         "pace": max(0.5, min(2.0, pace)),
         "temperature": max(0.01, min(1.0, temp)),
     }
+
+
+def resolve_speech_pace(provider: str, pace: Any = None) -> float:
+    """Resolve delivery speed before opening a provider; never retime carrier PCM."""
+    if pace is None:
+        from server.config.env import get_settings
+
+        settings = get_settings()
+        if provider == "sarvam":
+            pace = settings.sarvam_tts_pace
+        elif provider == "cartesia":
+            pace = settings.cartesia_tts_speed
+        else:
+            pace = 1.0
+    try:
+        value = float(pace)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("Speech pace must be a finite positive number") from exc
+    if isinstance(pace, bool) or not math.isfinite(value) or value <= 0:
+        raise ValueError("Speech pace must be a finite positive number")
+    lower, upper = (0.6, 1.5) if provider == "cartesia" else (0.5, 2.0)
+    if provider == "gemini":
+        lower = 0.25  # Preserve the supported Live speed selection range.
+    return max(lower, min(upper, value))
+
+
+def gemini_speech_style(pace: float | None = None) -> str:
+    """Gemini controls cadence through delivery directions, not a PCM rate change."""
+    speed = resolve_speech_pace("gemini", pace)
+    delivery = "Relaxed" if speed < 1.0 else "Brisk, natural"
+    return (
+        f"{delivery} conversational delivery at approximately {speed:.2f}x normal speaking pace; "
+        "clear articulation, short natural pauses, no drawn-out syllables."
+    )

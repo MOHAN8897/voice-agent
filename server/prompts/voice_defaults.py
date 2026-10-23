@@ -283,6 +283,13 @@ OPENAI_MODEL_PRESETS: dict[str, dict] = {
             "brainPromptBudgetTokens": 6000,
         "hint": "Previous Realtime generation. Prefer gpt-realtime-2.1-mini for live voice.",
     },
+    "gpt-6-luna": {
+        "name": "Voice Ultra Fast (Flagship)",
+        "openaiReasoningEffort": "none",
+        "openaiMaxTokens": 96,
+        "brainPromptBudgetTokens": 6000,
+        "hint": "Latest flagship model for script generation and voice — lowest latency with state-of-the-art script reasoning.",
+    },
     "gpt-5.6-luna": {
         "name": "Voice Fast",
         "openaiReasoningEffort": "none",

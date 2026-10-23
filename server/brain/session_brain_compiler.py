@@ -12,7 +12,6 @@ from server.agent.brain_prompt_composer import (
     sanitize_business,
     validate_brain_prompt_budget,
     validate_user_section,
-    fit_text_to_tokens,
     estimate_tokens,
     MAX_BEHAVIOUR_CHARS,
     MAX_BEHAVIOUR_WORDS,
@@ -20,7 +19,6 @@ from server.agent.brain_prompt_composer import (
     MAX_BUSINESS_WORDS,
 )
 from server.brain.business_prompt_optimizer import OptimizerResult, optimize_session_dual_prompt
-from server.brain.sections import STATIC_OUTPUT_RULES
 from server.prompts.agent_voice_rules import (
     call_end_policy_section,
     language_runtime_footer,
@@ -28,7 +26,6 @@ from server.prompts.agent_voice_rules import (
 )
 from server.prompts.brain_prompt import SECTION_SAFETY
 from server.prompts.voice_defaults import (
-    CACHE_FLOOR_PAD,
     DEFAULT_BEHAVIOUR_INSTRUCTIONS,
     DEFAULT_BUSINESS_INSTRUCTIONS,
     style_for_language,
@@ -167,31 +164,8 @@ async def compile_session_brain(
         BUDGET_MAX_TOKENS,
         max(int(budget_tokens), estimate_tokens(static_shell) + 180),
     )
-    user_budget = max(180, effective_budget - estimate_tokens(static_shell) - 40)
-    fitted = fit_text_to_tokens(opt.optimized_business_prompt.strip(), user_budget)
-    if fitted != opt.optimized_business_prompt.strip():
-        opt.optimized_business_prompt = fitted
-        compiled = _assemble_session_brain(
-            language=language,
-            style_val=style_val,
-            body=fitted,
-            call_end_policy=call_end_policy,
-        )
+    # All authored facts and constraints survive. Over-budget input is an
+    # actionable validation error, never a successful but incomplete script.
     validate_brain_prompt_budget(compiled, effective_budget)
     compiled_tokens = estimate_tokens(compiled)
-    if compiled_tokens < 1024:
-        # OpenAI explicit cache requires ≥1024 tokens in the breakpoint prefix.
-        filler = (
-            f"{opt.optimized_business_prompt.strip()}\n\n"
-            f"{CACHE_FLOOR_PAD.strip()}\n{CACHE_FLOOR_PAD.strip()}"
-        )
-        filler = fit_text_to_tokens(filler, user_budget)
-        compiled = _assemble_session_brain(
-            language=language,
-            style_val=style_val,
-            body=filler,
-            call_end_policy=call_end_policy,
-        )
-        validate_brain_prompt_budget(compiled, effective_budget)
-        compiled_tokens = estimate_tokens(compiled)
     return compiled, opt, raw_tokens, compiled_tokens

@@ -88,22 +88,16 @@ def test_compiled_brain_is_within_the_size_ceiling():
         )
 
 
-def test_length_bands_survive_in_the_static_rules():
+def test_sentence_and_output_limits_survive_in_the_static_rules():
     from server.services.voice_pipeline_limits import (
-        LIVE_REPLY_COMPLEX_MAX,
         LIVE_REPLY_MAX_CHARS,
-        LIVE_REPLY_MIN_CHARS,
-        LIVE_REPLY_NORMAL_MAX,
-        LIVE_REPLY_OBJECTION_MAX,
-        LIVE_REPLY_SIMPLE_MAX,
         LIVE_REPLY_SOFT_MAX_CHARS,
     )
 
     static = _brain().split("--- STATIC OUTPUT RULES ---", 1)[1]
-    assert f"{LIVE_REPLY_MIN_CHARS}–{LIVE_REPLY_SIMPLE_MAX}" in static
-    assert f"30–{LIVE_REPLY_NORMAL_MAX}" in static
-    assert f"30–{LIVE_REPLY_OBJECTION_MAX}" in static
-    assert f"70–{LIVE_REPLY_COMPLEX_MAX}" in static
+    assert "1–2 concise spoken sentences" in static
+    assert "never truncate words" in static
+    assert "at most one useful unanswered question" in static
     assert str(LIVE_REPLY_SOFT_MAX_CHARS) in static
     assert str(LIVE_REPLY_MAX_CHARS) in static
 
@@ -111,11 +105,12 @@ def test_length_bands_survive_in_the_static_rules():
 def test_outbound_numbering_rules_still_ship():
     """The 'dialed number already known' rule must survive the pack trim."""
     pack = _brain().split("--- SPOKEN LANGUAGE (te-IN) ---", 1)[1]
-    assert "dialed customer number is ALREADY KNOWN" in pack
+    assert "customer number is already known" in pack
+    assert "Never read phone, mobile, WhatsApp or office numbers aloud" in pack
 
 
 def test_core_only_pack_drops_the_requested_rule_blocks():
-    """NUMBERS, PHONE NUMBERS, VOICE EXAMPLES and the policy pointer stay out.
+    """Examples and rules owned by the platform core stay out.
 
     They are removed from the compiled brain only. A pack used on its own is
     unchanged, so no other caller silently loses a TTS guardrail.
@@ -123,12 +118,12 @@ def test_core_only_pack_drops_the_requested_rule_blocks():
     from server.prompts.agent_voice_rules import PHONE_CALL_POLICY_PTR
 
     core = spoken_pack_for("te-IN", include_brevity=False, core_only=True)
-    for dropped in ("NUMBERS (speak them", "PHONE NUMBERS", "VOICE EXAMPLES", "PHONE CALL"):
+    for dropped in ("PHONE NUMBERS", "VOICE EXAMPLES", "PHONE CALL", "CALLER DETAILS", "OVERLAP"):
         assert dropped not in core, f"{dropped} should not ship in the compiled brain"
     assert PHONE_CALL_POLICY_PTR not in core
     # What must survive.
-    assert "CALLER DETAILS" in core
-    assert "OVERLAP" in core
+    assert "NUMBERS (speak them" in core
+    assert "Never convert or invent currency" in core
     assert "SPOKEN GRAMMAR" in core
     assert "--- SPOKEN LANGUAGE (te-IN) ---" in core
 
@@ -150,11 +145,13 @@ def test_standalone_pack_keeps_every_rule_block():
             assert kept in pack, f"{kept} missing from standalone {locale} pack"
 
 
-def test_number_and_phone_rules_are_absent_from_the_compiled_brain():
+def test_number_examples_are_removed_but_privacy_remains_in_compiled_brain():
     brain = _brain()
     assert "rupees fifty lakhs" not in brain
-    assert "Never read phone, mobile, WhatsApp" not in brain
+    assert "PHONE NUMBERS (speak vs capture)" not in brain
     assert "VOICE EXAMPLES" not in brain
+    # Removing worked examples must not remove the platform privacy obligation.
+    assert "Never read phone, mobile, WhatsApp or office numbers aloud" in brain
 
 
 def test_length_bands_are_not_shipped_twice():

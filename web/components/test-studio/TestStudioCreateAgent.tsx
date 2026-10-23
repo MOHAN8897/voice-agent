@@ -12,6 +12,7 @@ import {
 import { bootstrapTestStudioAgent } from "@/lib/bootstrap-test-studio-agent";
 import { testStudioSessionId } from "@/lib/test-studio-stack";
 import { cn } from "@/lib/cn";
+import { portalFetch } from "@/lib/auth-client";
 
 const ROLES: { id: string; label: string }[] = [
   { id: "sales", label: "Sales / outbound pitch" },
@@ -54,10 +55,15 @@ export function TestStudioCreateAgent({ portal }: { portal: "app" | "dev" }) {
       setError("Describe the business and agent in at least 8 characters.");
       return;
     }
+    if (body.length > 6000 || body.split(/\s+/).length > 1200) {
+      setError("Use up to 6,000 characters and 1,200 words for the brief.");
+      return;
+    }
     setBuilding(true);
     setError("");
+    let createdAgentId = "";
     try {
-      const r = await fetch("/api/agents", {
+      const r = await portalFetch(portal, "/api/agents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -70,10 +76,11 @@ export function TestStudioCreateAgent({ portal }: { portal: "app" | "dev" }) {
       const j = await r.json();
       const agentId = String(j.agent?.agent_id || "");
       if (!agentId) throw new Error("No agent id returned");
+      createdAgentId = agentId;
 
       await bootstrapTestStudioAgent(agentId, language);
       const sessionId = testStudioSessionId(agentId);
-      const compileR = await fetch("/api/instructions", {
+      const compileR = await portalFetch(portal, "/api/instructions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -84,25 +91,40 @@ export function TestStudioCreateAgent({ portal }: { portal: "app" | "dev" }) {
           language_code: language,
           callDirection: direction,
           agentRole: role,
+          generationConfig: { agentRole: role, callDirection: direction },
           brainPromptBudgetTokens: 6000,
         }),
       });
       const compileJ = await compileR.json().catch(() => ({}));
       if (!compileR.ok) {
-        throw new Error(compileJ?.detail?.error?.message || `Script compile failed (${compileR.status})`);
+        const diagnostic = compileJ?.detail?.error;
+        const issueMessages = Array.isArray(diagnostic?.issues)
+          ? diagnostic.issues.map((issue: { message?: string }) => issue.message).filter(Boolean).join(" ")
+          : "";
+        throw new Error([diagnostic?.message || `Script compile failed (${compileR.status})`, issueMessages].filter(Boolean).join(" "));
       }
 
       const labName = labNameFromCompileResponse(compileJ as Record<string, unknown>);
-      await fetch(`/api/agents/${agentId}`, {
+      const renameR = await portalFetch(portal, `/api/agents/${agentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ name: labName }),
       });
+      if (!renameR.ok) throw new Error(`Could not save the generated agent name (${renameR.status}).`);
 
       router.push(testStudioAgentPath(agentId, portal));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not create agent");
+      let message = e instanceof Error ? e.message : "Could not create agent";
+      if (createdAgentId) {
+        try {
+          const cleanup = await portalFetch(portal, `/api/agents/${createdAgentId}`, { method: "DELETE" });
+          if (!cleanup.ok) message += " An unfinished agent remains in the agent list; remove it before retrying.";
+        } catch {
+          message += " An unfinished agent remains in the agent list; remove it before retrying.";
+        }
+      }
+      setError(message);
     } finally {
       setBuilding(false);
     }
@@ -112,7 +134,7 @@ export function TestStudioCreateAgent({ portal }: { portal: "app" | "dev" }) {
     <div className="mx-auto max-w-2xl" data-testid="test-studio-create-agent">
       <SkeuoPanel
         title="Create agent from brief"
-        description="Only the brief is required. Agent name, company, entity tags, and opening line are extracted from your text (or assigned by the compiler)."
+        description="Describe the agent, business, and call objective. Missing or conflicting facts are shown for clarification."
         padding="md"
       >
         <div className="space-y-5">
@@ -174,6 +196,7 @@ export function TestStudioCreateAgent({ portal }: { portal: "app" | "dev" }) {
               className={cn(inputCls, "mt-2 min-h-[200px] resize-y")}
               placeholder="Example: Agent name is Murthi. Business is Raghava Sales Private Limited — automobile spare parts in Hyderabad, Boduppal, with 20% discount…"
               value={brief}
+              maxLength={6000}
               onChange={(e) => setBrief(e.target.value)}
               disabled={building}
             />

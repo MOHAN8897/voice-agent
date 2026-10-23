@@ -119,7 +119,7 @@ class Settings(BaseSettings):
 
     # --- Fine-tune allowlist (industry: restrict client-selectable models) ---
     allowed_openai_models_csv: str = Field(
-        "gpt-realtime-2.1-mini,gpt-realtime-2.1,gpt-realtime-2,gpt-5.5,gpt-5.4,gpt-5,gpt-5.6-luna",
+        "gpt-realtime-2.1-mini,gpt-realtime-2.1,gpt-realtime-2,gpt-5.5,gpt-5.4,gpt-5,gpt-5.6-luna,gpt-6-luna",
         alias="OPENAI_ALLOWED_MODELS",
     )
     sarvam_llm_models_csv: str = Field(

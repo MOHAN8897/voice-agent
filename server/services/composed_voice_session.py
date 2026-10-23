@@ -30,6 +30,7 @@ class ComposedPromptSnapshot:
 def composed_system_prompt(ctx: Any) -> str:
     """Reuse within this admitted call; invalidate on script/language/model edits."""
     from server.brain.compiled_brain_artifact import refresh_platform_sections
+    from server.brain.sections import PLATFORM_PRIVACY_IDENTITY_RULES
     from server.prompts.agent_voice_rules import LANGUAGE_LOCK, normalize_compile_language
 
     brain = str(ctx.compiled_brain_text or "").strip()
@@ -59,6 +60,8 @@ def composed_system_prompt(ctx: Any) -> str:
     cached = getattr(ctx, "composed_prompt_snapshot", None)
     if cached is None or cached.key != key:
         text = refresh_platform_sections(brain, language)
+        if PLATFORM_PRIVACY_IDENTITY_RULES not in text:
+            text = f"{PLATFORM_PRIVACY_IDENTITY_RULES}\n\n{text}"
         text += (
             f"\n\n[Selected session language]\n{LANGUAGE_LOCK[language]}\n"
             "Render script examples in this language even when authored in English. "

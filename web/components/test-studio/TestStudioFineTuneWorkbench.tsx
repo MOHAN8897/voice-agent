@@ -433,6 +433,25 @@ export function TestStudioFineTuneWorkbench({
                 ) : null}
               </Field>
 
+              {ft.optimizerMeta.generationStatus ? (
+                <div className="rounded-skeuo-sm border border-surface-border-subtle p-3 text-xs" data-testid="script-generation-diagnostics" aria-live="polite">
+                  <p className="font-medium">
+                    {ft.optimizerMeta.generationStatus === "degraded" ? "Generated with fallback — review before using" : ft.optimizerMeta.generationStatus === "ready" ? "Generated and checked against the brief" : ft.optimizerMeta.generationStatus === "user_edited" ? "Edited script — review changes before using" : "Generation needs attention"}
+                  </p>
+                  <p className="mt-1 text-text-muted">
+                    {ft.optimizerMeta.provenance?.provider || "Deterministic compiler"}
+                    {ft.optimizerMeta.provenance?.model ? ` · ${ft.optimizerMeta.provenance.model}` : ""}
+                    {ft.optimizerMeta.provenance?.fallback ? " · fallback used" : ""}
+                    {" · Automated validation does not replace reviewing business facts and call behavior."}
+                  </p>
+                  {ft.optimizerMeta.issues?.length ? (
+                    <ul className="mt-2 list-disc pl-4">
+                      {ft.optimizerMeta.issues.map((issue, index) => <li key={`${issue.code || "issue"}-${index}`}>{issue.message}</li>)}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : null}
+
               {(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion) && hasScriptEntityValues(ft.scriptEntities) ? (
                 <details className="rounded-skeuo-sm border border-surface-border-subtle p-3">
                   <summary className="cursor-pointer text-xs font-medium text-text-muted">

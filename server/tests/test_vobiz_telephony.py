@@ -460,16 +460,18 @@ async def test_answer_then_consumed_stream_token_still_accepts_hangup():
 @pytest.mark.asyncio
 async def test_vobiz_outbound_dial_guard_hangup(monkeypatch):
     """Verify outbound dial guard detects and hangs up active calls before redialing."""
+    import uuid
     from unittest.mock import AsyncMock
     from server.services.outbound_dial_guard import hangup_active_vobiz_to
     from server.services.vobiz_client import VobizClient, vobiz_call_registry
 
-    # Register active call to destination
-    test_dest = "+919999988888"
+    # Register active call to destination with unique UUID for test isolation
+    test_uuid = f"test-active-{uuid.uuid4().hex[:12]}"
+    test_dest = f"+9199999{uuid.uuid4().int % 100000:05d}"
     vobiz_call_registry.upsert(
-        "test-active-uuid-123",
+        test_uuid,
         {
-            "call_uuid": "test-active-uuid-123",
+            "call_uuid": test_uuid,
             "to": test_dest,
             "status": "in-progress",
             "ended": False,
@@ -481,8 +483,8 @@ async def test_vobiz_outbound_dial_guard_hangup(monkeypatch):
 
     cancelled = await hangup_active_vobiz_to(test_dest)
     assert cancelled == 1
-    hangup_mock.assert_awaited_once_with("test-active-uuid-123")
-    assert vobiz_call_registry.get("test-active-uuid-123")["ended"] is True
+    hangup_mock.assert_awaited_once_with(test_uuid)
+    assert vobiz_call_registry.get(test_uuid)["ended"] is True
 
 
 def test_vobiz_stream_ws_rejects_missing_token():

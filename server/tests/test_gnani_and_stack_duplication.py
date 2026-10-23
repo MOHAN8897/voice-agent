@@ -28,17 +28,34 @@ def test_constants_and_models_configured():
 def test_voice_catalog_anonymizes_gnani_and_cartesia():
     catalog = voice_catalog.phone_voice_catalog()
     
-    # Check Gnani entries
+    # Check Gnani entries (expanded to 8 authentic Indic voices)
     gnani_voices = [v for v in catalog if v.get("provider") == "gnani"]
-    assert len(gnani_voices) == 2
-    assert {v["label"] for v in gnani_voices} == {"Voice 1", "Voice 2"}
-    assert all("Nalini" not in v["label"] and "Pranav" not in v["label"] for v in gnani_voices)
+    assert len(gnani_voices) == 8
+    gnani_labels = {v["label"] for v in gnani_voices}
+    assert "Nalini" in gnani_labels
+    assert "Pranav" in gnani_labels
+    assert "Lakshmi" in gnani_labels
+    assert "Chitra" in gnani_labels
 
-    # Check Cartesia entries
+    # Check Cartesia entries (expanded to 19 sonic voices including 11 Indian language voices)
     cartesia_voices = [v for v in catalog if v.get("provider") == "cartesia"]
-    assert len(cartesia_voices) == 2
-    assert {v["label"] for v in cartesia_voices} == {"Voice 1", "Voice 2"}
-    assert all("Sonic" not in v["label"] and "Caleb" not in v["label"] for v in cartesia_voices)
+    assert len(cartesia_voices) == 19
+    cartesia_labels = {v["label"] for v in cartesia_voices}
+    assert "Sarah" in cartesia_labels
+    assert "Caleb" in cartesia_labels
+    assert "Jacqueline" in cartesia_labels
+    assert "Daniel" in cartesia_labels
+    assert "Bhavani" in cartesia_labels
+    assert "Charan" in cartesia_labels
+    assert "Aarti" in cartesia_labels
+    assert "Amrit" in cartesia_labels
+    assert "Maya" in cartesia_labels
+    assert "Devansh" in cartesia_labels
+    assert "Priya" in cartesia_labels
+    assert "Kiara" in cartesia_labels
+    assert "Indian Lady" in cartesia_labels
+    assert "Krishna" in cartesia_labels
+    assert "Aarav" in cartesia_labels
 
 
 def test_voice_stack_profile_labels_anonymized():
@@ -70,6 +87,14 @@ def test_voice_preview_resolution_anonymized():
     assert speaker2 == "Pranav"
     assert label2 == "Voice 2"
 
+    speaker3, label3 = voice_preview.resolve_preview_voice("voice-gnani-3", provider="gnani")
+    assert speaker3 == "Lakshmi"
+    assert label3 == "Voice 3"
+
+    speaker4, label4 = voice_preview.resolve_preview_voice("voice-gnani-4", provider="gnani")
+    assert speaker4 == "Prakash"
+    assert label4 == "Voice 4"
+
     # Cartesia resolution
     c_speaker1, c_label1 = voice_preview.resolve_preview_voice("voice-cartesia-1", provider="cartesia")
     assert c_speaker1 == "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4"
@@ -78,6 +103,14 @@ def test_voice_preview_resolution_anonymized():
     c_speaker2, c_label2 = voice_preview.resolve_preview_voice("voice-cartesia-2", provider="cartesia")
     assert c_speaker2 == "a0e99841-438c-4a64-b679-ae501e7d6091"
     assert c_label2 == "Voice 2"
+
+    c_speaker3, c_label3 = voice_preview.resolve_preview_voice("voice-cartesia-3", provider="cartesia")
+    assert c_speaker3 == "694f9389-aac1-45b6-b726-9d9369183238"
+    assert c_label3 == "Voice 3"
+
+    c_speaker4, c_label4 = voice_preview.resolve_preview_voice("voice-cartesia-4", provider="cartesia")
+    assert c_speaker4 == "47c38ca4-ff9b-4e89-a2e1-456956b46452"
+    assert c_label4 == "Voice 4"
 
 
 def test_gnani_audio_tags_injected_in_composed_prompt():
@@ -291,3 +324,36 @@ async def test_gnani_ws_credit_exhaustion_detection():
                 chunk = json.loads(chunk_str)
                 assert chunk["type"] == "error"
                 assert chunk["code"] == "credits_exhausted"
+
+
+def test_find_static_sample_gnani_and_cartesia():
+    from server.services.saas.voice_preview import find_static_sample
+    from server.services.saas.voice_sample_cache import valid_wav
+
+    # Test all 4 Gnani voices find valid WAV static samples
+    for v in ("voice-gnani-1", "voice-gnani-2", "voice-gnani-3", "voice-gnani-4", "nalini", "pranav", "shivani", "avinash"):
+        sample = find_static_sample(v, "te-IN")
+        assert sample is not None, f"Static sample missing for {v}"
+        assert valid_wav(sample), f"Invalid WAV for {v}"
+
+    # Test all 4 Cartesia voices find valid WAV static samples
+    for v in ("voice-cartesia-1", "voice-cartesia-2", "voice-cartesia-3", "voice-cartesia-4", "cartesia-1", "cartesia-2"):
+        sample = find_static_sample(v, "te-IN")
+        assert sample is not None, f"Static sample missing for {v}"
+        assert valid_wav(sample), f"Invalid WAV for {v}"
+
+
+@pytest.mark.asyncio
+async def test_resolve_agent_selection_accepts_custom_tier():
+    from server.services.saas.voice_stack_profiles import resolve_agent_selection, VoiceProfileError
+
+    # Custom slug should not raise invalid_composed_tier
+    # If the record is not in DB, it raises profile_unavailable rather than invalid_composed_tier
+    with pytest.raises(VoiceProfileError) as exc_info:
+        await resolve_agent_selection(
+            environment="development",
+            tier="low_copy_1",
+            voice_settings={"profileRevision": 1},
+            language="te-IN",
+        )
+    assert exc_info.value.code != "invalid_composed_tier"

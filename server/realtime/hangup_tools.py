@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from server.call.call_end_policy import CLOSING_TOOL_DESCRIPTION
 from server.realtime.end_call_tool import parse_end_call_tool
 from server.realtime.models import END_CALL_REASONS, END_CALL_TOOL
 
@@ -29,15 +30,7 @@ _REQUEST_TO_INTERNAL: dict[str, str] = {
 REQUEST_END_CALL_TOOL: dict[str, Any] = {
     "type": "function",
     "name": "request_end_call",
-    "description": (
-        "Request the platform to end the call after you finish speaking. "
-        "Call in the SAME turn as a short farewell when the caller clearly declined, "
-        "said goodbye, or confirmed the next step (callback/visit). "
-        "Use customer_declined for not interested / no need / don't call. "
-        "Use caller_goodbye for bye, hang up, that's all. "
-        "Use goal_complete only after callback or handoff details are captured and confirmed. "
-        "Never call for bare okay/thanks, busy without ending, or an open question."
-    ),
+    "description": CLOSING_TOOL_DESCRIPTION,
     "parameters": {
         "type": "object",
         "additionalProperties": False,

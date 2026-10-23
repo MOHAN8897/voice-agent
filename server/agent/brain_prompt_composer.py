@@ -13,11 +13,11 @@ MAX_BEHAVIOUR_CHARS = 2_000
 MAX_BUSINESS_CHARS = 2_400
 MAX_BEHAVIOUR_WORDS = 280
 MAX_BUSINESS_WORDS = 320
-MAX_AGENT_BRIEF_CHARS = 1_200
-MAX_AGENT_BRIEF_WORDS = 180
+MAX_AGENT_BRIEF_CHARS = 6_000
+MAX_AGENT_BRIEF_WORDS = 1_200
 RECOMMENDED_AGENT_BRIEF_WORDS = 80
-MAX_AGENT_SCRIPT_CHARS = 8_000
-MAX_AGENT_SCRIPT_WORDS = 1_200
+MAX_AGENT_SCRIPT_CHARS = 30_000
+MAX_AGENT_SCRIPT_WORDS = 5_000
 RECOMMENDED_AGENT_SCRIPT_WORDS = 500
 RECOMMENDED_BEHAVIOUR_WORDS = 180
 RECOMMENDED_BUSINESS_WORDS = 220
@@ -90,23 +90,23 @@ def _strip_legacy_tags(text: str) -> str:
 def sanitize_behaviour(text: str) -> str:
     if not text:
         return ""
-    return _strip_legacy_tags(text.strip()[:MAX_BEHAVIOUR_CHARS])
+    return _strip_legacy_tags(text.strip())
 
 
 def sanitize_business(text: str) -> str:
     if not text:
         return ""
-    return _strip_legacy_tags(text.strip()[:MAX_BUSINESS_CHARS])
+    return _strip_legacy_tags(text.strip())
 
 
 def sanitize_agent_brief(text: str) -> str:
     if not text:
         return ""
-    return _strip_legacy_tags(text.strip()[:MAX_AGENT_BRIEF_CHARS])
+    return _strip_legacy_tags(text.strip())
 
 
 def sanitize_agent_script(text: str) -> str:
-    return (text or "").strip()[:MAX_AGENT_SCRIPT_CHARS]
+    return (text or "").strip()
 
 
 def validate_user_section(section: str, text: str, *, word_limit: int, char_limit: int) -> None:

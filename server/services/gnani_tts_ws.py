@@ -20,18 +20,45 @@ _GNANI_VOICE_MAP: dict[str, str] = {
     "voice 1": "Nalini",
     "voice-1": "Nalini",
     "nalini": "Nalini",
-    "shivani": "Shivani",
     "voice-gnani-2": "Pranav",
     "voice 2": "Pranav",
     "voice-2": "Pranav",
     "pranav": "Pranav",
+    "voice-gnani-3": "Lakshmi",
+    "voice 3": "Lakshmi",
+    "voice-3": "Lakshmi",
+    "lakshmi": "Lakshmi",
+    "voice-gnani-4": "Prakash",
+    "voice 4": "Prakash",
+    "voice-4": "Prakash",
+    "prakash": "Prakash",
+    "voice-gnani-5": "Shivani",
+    "voice 5": "Shivani",
+    "voice-5": "Shivani",
+    "shivani": "Shivani",
+    "voice-gnani-6": "Avinash",
+    "voice 6": "Avinash",
+    "voice-6": "Avinash",
     "avinash": "Avinash",
+    "voice-gnani-7": "Chitra",
+    "voice 7": "Chitra",
+    "voice-7": "Chitra",
+    "chitra": "Chitra",
+    "voice-gnani-8": "Sanjay",
+    "voice 8": "Sanjay",
+    "voice-8": "Sanjay",
+    "sanjay": "Sanjay",
 }
 
 
-def _resolve_gnani_voice(raw: str | None) -> str:
+def _resolve_gnani_voice(raw: str | None, model: str | None = None) -> str:
     key = str(raw or "").strip().lower()
-    return _GNANI_VOICE_MAP.get(key) or "Nalini"
+    voice = _GNANI_VOICE_MAP.get(key)
+    if voice:
+        return voice
+    if raw and not key.startswith("voice"):
+        return raw.strip().title()
+    return "Shivani" if (model and "v3" in str(model).lower()) else "Nalini"
 
 
 def _gnani_language_code(language_code: str | None) -> str:
@@ -122,8 +149,8 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                 await self._send_chunk(text)
                 return
             if mtype == "flush":
-                # Gnani is turn-based streaming; flush signifies end of current speaker turn
-                self._pending_done = True
+                # Gnani completes after streaming all chunks; do not abort early
+                pass
 
         async def _send_chunk(self, text: str) -> None:
             self._stripped_header = False
@@ -154,12 +181,14 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
             return self
 
         async def __anext__(self) -> str:
-            if self._pending_done:
-                self._pending_done = False
-                return json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}})
-
             while True:
-                raw = await self._ws.recv()
+                try:
+                    raw = await self._ws.recv()
+                except websockets.exceptions.ConnectionClosed:
+                    return json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}})
+                except Exception:
+                    return json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}})
+
                 if isinstance(raw, bytes):
                     # Raw PCM/WAV binary frame
                     data_bytes = raw
@@ -184,7 +213,8 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                 except json.JSONDecodeError:
                     continue
 
-                if "error" in data or "errors" in data or data.get("status") in (401, 402, 429):
+                mtype = str(data.get("type") or "").lower()
+                if "error" in data or "errors" in data or data.get("status") in (401, 402, 429) or mtype == "error":
                     err_msg = str(data.get("message") or data.get("error") or "Gnani TTS error")
                     is_credit = any(k in err_msg.lower() for k in ("credit", "balance", "quota", "payment", "unauthorized"))
                     return json.dumps(
@@ -195,7 +225,16 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                         }
                     )
 
-                audio_b64 = data.get("audio") or data.get("data")
+                if mtype in ("complete", "end", "done") or data.get("is_final") or data.get("done"):
+                    return json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}})
+
+                # Handle audio payload in JSON
+                inner = data.get("data") if isinstance(data.get("data"), dict) else {}
+                audio_b64 = (
+                    data.get("audio")
+                    or inner.get("audio")
+                    or (data.get("data") if isinstance(data.get("data"), str) else None)
+                )
                 if audio_b64 and isinstance(audio_b64, str):
                     try:
                         raw_bytes = base64.b64decode(audio_b64)
@@ -217,9 +256,6 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                             },
                         }
                     )
-
-                if data.get("is_final") or data.get("done"):
-                    return json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}})
 
         async def close(self) -> None:
             try:

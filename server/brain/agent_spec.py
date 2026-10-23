@@ -17,6 +17,17 @@ class Evidenced(BaseModel):
     confidence: float = 0.0      # 0.0 to 1.0
 
 
+class WorkflowRequirement(BaseModel):
+    """A source-backed obligation, kept separate from optional role defaults."""
+    requirement_id: str
+    kind: str
+    text: str
+    evidence: str
+    condition: str | None = None
+    depends_on: list[str] = Field(default_factory=list)
+    required: bool = True
+
+
 class AgentSpec(BaseModel):
     agent_name: Evidenced = Field(default_factory=Evidenced)
     company_name: Evidenced = Field(default_factory=Evidenced)
@@ -31,6 +42,11 @@ class AgentSpec(BaseModel):
     extraction_source: str = "llm"  # "llm_gemini" | "llm_openai" | "regex_fallback"
     raw_brief: str = ""
     spec_version: str = "v1"
+    workflow: list[WorkflowRequirement] = Field(default_factory=list)
+    opening_line: Evidenced = Field(default_factory=Evidenced)
+    direction: str = "outbound"
+    role: str = "other"
+    generation_config: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("language_code")
     @classmethod
@@ -53,6 +69,11 @@ class AgentSpec(BaseModel):
             "tone": self.tone,
             "constraints": sorted(self.constraints),
             "spec_version": self.spec_version,
+            "workflow": [item.model_dump() for item in self.workflow],
+            "opening_line": self.opening_line.value,
+            "direction": self.direction,
+            "role": self.role,
+            "generation_config": self.generation_config,
         }
         raw = json.dumps(payload, sort_keys=True)
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]

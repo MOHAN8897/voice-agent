@@ -90,11 +90,15 @@ def connect_gemini_tts_ws(
                 or (self._initial_config.language if self._initial_config else None)
                 or "te-IN"
             )
+            pace = self._cfg.get("pace")
+            if pace is None and self._initial_config is not None:
+                pace = self._initial_config.pace
             cfg = TTSConfig(
                 provider="gemini",
                 model=self._model,
                 language=language,
                 speaker=speaker,
+                pace=pace,
             )
             try:
                 async for chunk in adapter.stream_with_metadata(text, cfg):

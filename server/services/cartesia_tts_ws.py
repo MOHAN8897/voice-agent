@@ -15,7 +15,10 @@ from server.services.dev_secrets_store import dev_secrets_store
 
 def _cartesia_language(language_code: str) -> str:
     code = (language_code or "te-IN").split("-")[0].lower()
-    return code if code in {"en", "te", "hi", "es", "fr", "de", "ja", "ko", "pt", "zh"} else "en"
+    return code if code in {
+        "en", "te", "hi", "ta", "kn", "ml", "mr", "bn", "gu", "pa",
+        "es", "fr", "de", "ja", "ko", "pt", "zh", "it", "nl", "pl", "ru", "sv", "tr"
+    } else "en"
 
 
 def _resolve_tts_model(model: str | None) -> str:
@@ -89,7 +92,8 @@ def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
             from server.services.tts_voice_direction import cartesia_generation_config
 
             cfg = self._cfg or {}
-            voice_id = cfg.get("speaker") or settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
+            from server.providers.cartesia_tts import resolve_cartesia_voice_id
+            voice_id = resolve_cartesia_voice_id(cfg.get("speaker"))
             sample_rate = int(cfg.get("speech_sample_rate") or cfg.get("sample_rate") or 16000)
             self._sample_rate = sample_rate
             lang = _cartesia_language(str(cfg.get("language_code") or "te-IN"))

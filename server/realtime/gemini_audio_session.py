@@ -283,9 +283,12 @@ def _gemini_outbound_block(
         "- After intro, follow CONVERSATION FLOW / OUTBOUND or INBOUND WORKFLOW in order; "
         "skip steps they already answered.",
         "- Turn discipline: 1–2 short sentences, then stop. At most one question per turn.",
-        "- If they are busy: one callback offer, no pitch. Stay on the line.",
+        (
+            "- If they are busy: offer one callback only when that workflow is business-permitted. "
+            "Otherwise acknowledge without pitching or inventing a next step. Honor a requested stop."
+        ),
         "- CONTACT: The dialed customer number is ALREADY KNOWN. Do not ask for their phone number again. "
-        "Ask their preferred name once after they agree to speak, if unknown. "
+        "Ask their preferred name only when needed by the applicable business workflow, permitted and unknown. "
         "Only collect an alternative phone if they request one; never read the connected digits aloud.",
     ]
     if line:
@@ -320,12 +323,15 @@ def build_gemini_audio_session_instructions(
 ) -> str:
     """Build one selected-language instruction without dropping authored business content."""
     from server.brain.compiled_brain_artifact import refresh_platform_sections
+    from server.brain.sections import PLATFORM_PRIVACY_IDENTITY_RULES
     raw_brain = condense_compiled_brain_for_gemini(refresh_platform_sections(compiled_brain, language))
     parts: list[str] = [
         "You are a professional live phone agent. Use the business script and the selected language naturally.",
         f"Speak only {language} as your primary language, with natural English mixing where appropriate. "
         "Translate English script examples into this language before speaking; preserve names and facts.",
     ]
+    if PLATFORM_PRIVACY_IDENTITY_RULES not in raw_brain:
+        parts.insert(0, PLATFORM_PRIVACY_IDENTITY_RULES)
     name, company = _parse_agent_identity(compiled_brain or "")
     if name or company:
         who = f"{name}, {company}" if company else name
@@ -365,7 +371,7 @@ def build_gemini_audio_session_instructions(
         tail.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
     tail.append(_gemini_audio_and_tools())
     tail.append(
-        "CONTACT PRIORITY: Ask an unknown preferred name at a natural pause after consent. "
+        "CONTACT PRIORITY: Ask an unknown preferred name only when the applicable business workflow needs and permits it. "
         "On outbound calls the dialed number is already known; ask only if a different number is requested."
     )
 

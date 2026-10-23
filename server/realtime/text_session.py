@@ -44,6 +44,7 @@ def build_session_instructions(
     direction: str | None = None,
 ) -> str:
     from server.brain.compiled_brain_artifact import is_unified_compiled_brain, refresh_platform_sections
+    from server.brain.sections import PLATFORM_PRIVACY_IDENTITY_RULES
     from server.prompts.agent_voice_rules import live_realtime_output_rules
 
     brain = refresh_platform_sections(compiled_brain, language)
@@ -59,6 +60,8 @@ def build_session_instructions(
         )
     elif caller_id:
         parts.append("[Caller context]\nInbound caller connected (do not read their number aloud).")
+    if PLATFORM_PRIVACY_IDENTITY_RULES not in brain:
+        parts.insert(0, PLATFORM_PRIVACY_IDENTITY_RULES)
     return "\n\n".join(parts)
 
 
@@ -91,6 +94,7 @@ def build_audio_session_instructions(
 ) -> str:
     """Same compiled brain as the text PSTN path, with audio-output rules."""
     from server.brain.compiled_brain_artifact import is_unified_compiled_brain, refresh_platform_sections
+    from server.brain.sections import PLATFORM_PRIVACY_IDENTITY_RULES
     from server.prompts.agent_voice_rules import live_audio_modality_rules, live_realtime_audio_rules
 
     brain = refresh_platform_sections(compiled_brain, language)
@@ -109,12 +113,12 @@ def build_audio_session_instructions(
             "- You placed this call. VAD is on — do not speak first while the line is silent.\n"
             "- The platform may already play your scripted opening. If that line was already spoken, never repeat it; answer the callee.\n"
             "- If the opening has not been spoken yet, reply once with your scripted opening when they pick up, then continue.\n"
-            "- After your first intro, continue the sales conversation naturally.\n"
+            "- After your first intro, follow the configured business purpose naturally.\n"
             "- Turn discipline: 1–2 short sentences, then stop and listen. "
             "Ask at most one question. Never keep explaining or pitching after a question.\n"
-            "- Ask a lead field only if they have not already given it on this call. Never re-ask name or phone.\n"
-            "- If they are busy or not now: offer one callback, no pitch.\n"
-            "- For a callback they still want, collect only missing name/phone/day. "
+            "- Ask only business-permitted fields required by the applicable workflow and still unknown. Never re-ask name or phone.\n"
+            "- If they are busy or not now: offer one callback only when that workflow is permitted. Otherwise acknowledge and honor a requested stop; no pitch.\n"
+            "- For a permitted callback they still want, collect only required missing fields. "
             "The connected outbound number already counts as the callback phone.\n"
             "- Once they confirm the callback and details are ready, say the confirmation, thank them, "
             "say goodbye, and call end_call. Never hang up on okay/thanks alone."
@@ -131,7 +135,7 @@ def build_audio_session_instructions(
         "(bye, hang up, cut the call, that's all, don't call, not interested) or the script objective "
         "and agreed next step are complete. Do not require a separate goodbye after completion. "
         "Do not also require call_action to disconnect. "
-        "Busy or not now: one callback offer, no pitch, stay on the line. "
+        "Busy or not now: one callback offer only when the business permits it; otherwise acknowledge without inventing a next step. Honor a requested stop. "
         "Do not end for okay, thanks, alright, uncertainty, or a follow-up question. "
         "After an accepted end_call, finish the farewell once and stop. The platform disconnects immediately after playback, in every language. "
         "If a tool rejects an action, follow its result and do not claim it succeeded."
@@ -142,6 +146,8 @@ def build_audio_session_instructions(
             "This overrides conflicting language directions and examples in the business script. "
             "A successful language callback tool permits the handoff farewell and end_call."
         )
+    if PLATFORM_PRIVACY_IDENTITY_RULES not in brain:
+        parts.insert(0, PLATFORM_PRIVACY_IDENTITY_RULES)
     return "\n\n".join(parts)
 
 

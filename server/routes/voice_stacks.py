@@ -34,11 +34,16 @@ async def voice_stack_catalog(
     from server.services.dev_runtime import effective_app_environment
 
     environment = effective_app_environment()
-    records = await load_profile_records(environment, ("low", "medium", "premium"))
+    records = await load_profile_records(environment, None)
     rates = await _load_rates_without_fallback()
+
+    standard_tiers = ["low", "medium"]
+    custom_tiers = [t for t in sorted(records.keys()) if t not in ("low", "medium", "premium")]
+    ordered_tiers = [t for t in standard_tiers if t in records or t in ("low", "medium")] + custom_tiers
+
     profiles = [
         public_catalog_profile(tier, records.get(tier), rates)
-        for tier in ("low", "medium")
+        for tier in ordered_tiers
     ]
 
     premium_rate = _native_tier_retail_rate(rates, "premium")
@@ -91,5 +96,11 @@ async def voice_stack_catalog(
         if not profile["engines"] and profile.get("ready") and profile.get("tier") != "premium":
             profile["ready"] = False
             profile["blockers"].append({"code": "language_voice_unavailable", "message": "No approved voice is available for this language."})
+    active_profiles = [
+        p for p in profiles
+        if p.get("ready") is True
+        and not any(b.get("code") == "profile_not_available" for b in p.get("blockers", []))
+    ]
 
-    return {"language": normalized_language, "profiles": profiles}
+    return {"language": normalized_language, "profiles": active_profiles}
+

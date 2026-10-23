@@ -48,6 +48,10 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
         saved_voice_settings = agent.get("voiceSettings")
     if not isinstance(saved_voice_settings, dict):
         saved_voice_settings = voice_cfg
+    agent_voice = agent.get("voice") if isinstance(agent.get("voice"), dict) else {}
+    speed_val = next((value for value in (
+        saved_voice_settings.get("speed"), voice_cfg.get("speed"), agent_voice.get("speed"),
+    ) if value is not None), None)
     raw_tier = agent.get("default_tier") or agent.get("defaultTier")
     from server.services.saas.voice_stack_profiles import (
         VoiceProfileError,
@@ -71,6 +75,15 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
                 language=lang,
                 allow_fallback=True,
             )
+            if speed_val is not None:
+                from server.services.tts_voice_direction import resolve_speech_pace
+
+                tts = dict(stack["tts"])
+                config = dict(tts.get("config") or {})
+                config["pace"] = resolve_speech_pace(tts["provider"], speed_val)
+                if tts["provider"] == "cartesia":
+                    config["speed"] = config["pace"]
+                stack = {**stack, "tts": {**tts, "config": config}}
             from server.services.pstn_stack import (
                 normalize_pstn_stack_override as normalize_composed_stack_override,
             )
@@ -80,16 +93,12 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
                 raise VoiceProfileError("profile_unavailable", "The selected voice profile is unavailable.", status_code=409)
             return normalized
         except VoiceProfileError as exc:
-            from fastapi import HTTPException
+            import logging
+            logging.getLogger(__name__).warning("PSTN composed stack selection conflict (%s), falling back to platform phone stack", exc)
 
-            raise HTTPException(
-                status_code=exc.status_code,
-                detail={"error": {"code": exc.code, "message": str(exc)}},
-            ) from exc
     lang = _agent_spoken_language(agent, voice_cfg)
     stack = await resolve_platform_phone_stack(lang)
     rv = dict(stack.get("realtime_voice") or {})
-    agent_voice = agent.get("voice") if isinstance(agent.get("voice"), dict) else {}
     realtime_voice = str(
         (saved_voice_settings.get("realtimeVoice") if isinstance(saved_voice_settings, dict) else None)
         or (saved_voice_settings.get("voiceId") if isinstance(saved_voice_settings, dict) else None)
@@ -114,11 +123,6 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     }:
         realtime_voice = DEFAULT_REALTIME_VOICE
     rv["voice"] = realtime_voice
-    speed_val = (
-        (saved_voice_settings.get("speed") if isinstance(saved_voice_settings, dict) else None)
-        or voice_cfg.get("speed")
-        or agent_voice.get("speed")
-    )
     if speed_val is not None:
         rv["speed"] = speed_val
     stack["language"] = lang

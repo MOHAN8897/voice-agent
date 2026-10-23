@@ -6,7 +6,7 @@ from __future__ import annotations
 import hashlib
 import re
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import Any, Optional
 
@@ -37,6 +37,12 @@ from server.agent.brain_prompt_composer import (
 )
 from server.agent.instruction_store import instruction_store
 from server.agent.session_memory import session_memory
+from server.auth.instructions_access import (
+    InstructionsAccess,
+    authorize_instruction_session,
+    require_instructions_access,
+)
+from server.auth.rbac import require_role_permission
 from server.config.env import get_settings, ConfigError
 from server.prompts.brain_prompt import get_factory_brain_prompt
 from server.services.brain_budget import resolve_brain_budget
@@ -108,6 +114,7 @@ class SaveRequest(BaseModel):
         max_length=48,
         description="sales | support | … — hints role when compiling from brief.",
     )
+    generationConfig: dict[str, Any] | None = None
     agentSpec: dict[str, Any] | None = Field(
         None,
         description="Explicit validated AgentSpec to bypass brief extraction.",
@@ -134,12 +141,15 @@ class CompileFromSpecRequest(BaseModel):
 
 
 @router.post("/api/instructions/extract-spec")
-async def extract_spec_endpoint(body: ExtractSpecRequest):
+async def extract_spec_endpoint(body: ExtractSpecRequest, access: InstructionsAccess = Depends(require_instructions_access)):
     """
     Stage 4 Confirmation Flow: Preview/extract endpoint that returns
     the spec without creating or saving the agent.
     """
     from server.brain.agent_spec_extractor import extract_agent_spec
+    from server.prompts.agent_voice_rules import normalize_compile_language
+
+    require_role_permission(access.role, "dev.platform_brain" if access.developer else "app.brain.write")
 
     lang = (body.language_code or "").strip()
     if not lang:
@@ -147,7 +157,15 @@ async def extract_spec_endpoint(body: ExtractSpecRequest):
             status_code=400,
             detail={"error": {"message": "language_code must be provided; no default allowed."}},
         )
+    try:
+        lang = normalize_compile_language(lang)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail={"error": {"code": "unsupported_language", "message": str(exc)}}) from exc
 
+    from server.brain.brief_contract import BriefValidationError, validate_brief_requirements
+    issues = validate_brief_requirements(body.agentBrief, language=lang)
+    if issues:
+        raise HTTPException(status_code=422, detail={"error": BriefValidationError(issues).to_dict()})
     spec = await extract_agent_spec(
         body.agentBrief,
         language_code=lang,
@@ -166,12 +184,13 @@ async def extract_spec_endpoint(body: ExtractSpecRequest):
 
 
 @router.post("/api/instructions/compile-from-spec")
-async def compile_from_spec_endpoint(body: CompileFromSpecRequest):
+async def compile_from_spec_endpoint(body: CompileFromSpecRequest, access: InstructionsAccess = Depends(require_instructions_access)):
     """
     Stage 4 Confirmation Flow: Edit spec fields and regenerate the script
     without re-extracting from raw brief text.
     """
     from server.brain.agent_spec import AgentSpec
+    require_role_permission(access.role, "dev.platform_brain" if access.developer else "app.brain.write")
     from server.brain.agent_spec_script_builder import (
         generate_deterministic_script_from_spec,
         lint_agent_script,
@@ -184,6 +203,7 @@ async def compile_from_spec_endpoint(body: CompileFromSpecRequest):
             status_code=400,
             detail={"error": {"message": f"Invalid AgentSpec: {exc}"}},
         ) from exc
+    _validate_spec_source(body.spec)
 
     if spec_obj.needs_user_input and not body.force:
         raise HTTPException(
@@ -216,8 +236,39 @@ async def compile_from_spec_endpoint(body: CompileFromSpecRequest):
     }
 
 
+def _validate_spec_source(spec: dict[str, Any]) -> None:
+    from server.brain.brief_contract import BriefValidationError, brief_issue, source_supported, validate_brief_requirements
+    from server.prompts.agent_voice_rules import normalize_compile_language
+
+    language_value = spec.get("language") or spec.get("language_code") or "te-IN"
+    if isinstance(language_value, dict):
+        language_value = language_value.get("value") or "te-IN"
+    try:
+        language = normalize_compile_language(language_value)
+        def values(value: Any) -> list[str]:
+            if isinstance(value, str):
+                return [value]
+            if isinstance(value, dict):
+                return [text for child in value.values() for text in values(child)]
+            if isinstance(value, list):
+                return [text for child in value for text in values(child)]
+            return []
+        source = "\n".join(values(spec))
+        issues = validate_brief_requirements(source, language=language)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail={"error": {"code": "unsupported_language", "message": str(exc)}}) from exc
+    if issues:
+        raise HTTPException(status_code=422, detail={"error": BriefValidationError(issues).to_dict()})
+    raw_brief = str(spec.get("raw_brief") or "")
+    for field in ("agent_name", "company_name", "location", "offering", "call_objective"):
+        evidence = (spec.get(field) or {}).get("evidence")
+        if raw_brief and evidence and not source_supported(str(evidence), raw_brief):
+            issue = brief_issue("unsupported_evidence", "The supplied spec contains evidence absent from its brief.", field=field)
+            raise HTTPException(status_code=422, detail={"error": BriefValidationError([issue]).to_dict()})
+
+
 @router.get("/api/instructions/default")
-async def get_default_brain_prompt():
+async def get_default_brain_prompt(access: InstructionsAccess = Depends(require_instructions_access)):
     """Factory default brain prompt for the UI editor."""
     prompt = get_factory_brain_prompt()
     est = estimate_tokens(prompt)
@@ -234,7 +285,8 @@ async def get_default_brain_prompt():
 
 
 @router.post("/api/instructions")
-async def save_instructions(body: SaveRequest):
+async def save_instructions(body: SaveRequest, access: InstructionsAccess = Depends(require_instructions_access)):
+    await authorize_instruction_session(body.sessionId, access, write=True)
     b_max, z_max, p_max = _limits()
     budget = body.brainPromptBudgetTokens or resolve_brain_budget(body.sessionId)
     budget = max(BUDGET_MIN_TOKENS, min(BUDGET_MAX_TOKENS, int(budget)))
@@ -242,12 +294,28 @@ async def save_instructions(body: SaveRequest):
     from server.call.call_end_policy import default_call_end_policy, normalize_call_end_policy
     from server.prompts.agent_voice_rules import normalize_compile_language
 
-    lang = normalize_compile_language(body.language_code)
+    try:
+        lang = normalize_compile_language(body.language_code)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail={"error": {"code": "unsupported_language", "message": str(exc)}}) from exc
+    previous_meta = instruction_store.get_with_meta(body.sessionId)
+    generation_config = dict(body.generationConfig if body.generationConfig is not None else previous_meta.get("generationConfig") or {})
+    if body.agentRole is not None:
+        generation_config["agentRole"] = body.agentRole
+    if body.callDirection is not None:
+        generation_config["callDirection"] = body.callDirection
     policy = normalize_call_end_policy(body.callEndPolicy, language=lang)
     compiler_sections = None
+    from server.brain.brief_contract import BriefValidationError, validate_brief_requirements
 
     try:
+        for source in (body.agentBrief, body.agentScript):
+            if source and source.strip():
+                issues = validate_brief_requirements(source, language=lang)
+                if issues:
+                    raise BriefValidationError(issues)
         if body.agentSpec is not None:
+            _validate_spec_source(body.agentSpec)
             from server.brain.agent_spec import AgentSpec
             from server.brain.agent_spec_script_builder import (
                 generate_deterministic_script_from_spec,
@@ -266,6 +334,8 @@ async def save_instructions(body: SaveRequest):
                     status_code=400,
                     detail={"error": {"code": "validation_error", "message": f"Invalid agentSpec: {exc}"}},
                 ) from exc
+            if normalize_compile_language(spec_obj.language_code) != lang:
+                raise HTTPException(status_code=422, detail={"error": {"code": "language_conflict", "message": "The supplied spec and selected language must match."}})
 
             if spec_obj.needs_user_input and not body.forceCreate:
                 raise HTTPException(
@@ -352,6 +422,7 @@ async def save_instructions(body: SaveRequest):
                 budget_tokens=budget,
                 raw_token_estimate=est,
                 call_end_policy=policy,
+                generation_config=generation_config,
                 agent_spec=spec_obj.model_dump(),
                 spec_version=1,
                 template_version=1,
@@ -368,42 +439,16 @@ async def save_instructions(body: SaveRequest):
             prev_compiled = prev_meta.get("brainPrompt") if prev_meta.get("compiledVersion") else None
             if body.callEndPolicy is None:
                 policy = normalize_call_end_policy(prev_meta.get("callEndPolicy"), language=lang)
-            compile_direction = _normalize_call_direction(body.callDirection)
-            compile_brief = _brief_with_compile_hints(
-                body.agentBrief,
-                direction=compile_direction,
-                role=body.agentRole,
+            compiled, script_result, raw_est, _compiled_est, effective_budget = await compile_agent_from_brief(
+                brief=body.agentBrief,
+                language=lang,
+                style=body.responseStyle,
+                budget_tokens=budget,
+                previous_compiled=prev_compiled,
+                call_end_policy=policy,
+                interpret_brief=True,
+                generation_config=generation_config,
             )
-            try:
-                compiled, script_result, raw_est, _compiled_est, effective_budget = await compile_agent_from_brief(
-                    brief=compile_brief,
-                    language=lang,
-                    style=body.responseStyle,
-                    budget_tokens=budget,
-                    previous_compiled=prev_compiled,
-                    call_end_policy=policy,
-                    interpret_brief=True,
-                    direction=compile_direction,
-                )
-            except (PromptSectionTooLong, PromptBudgetExceeded):
-                raise
-            except Exception as exc:
-                from server.utils.logger import logger
-
-                logger.error(
-                    f"[AGENT_SCRIPT] compile failed, deterministic fallback: {type(exc).__name__}: {str(exc)[:240]}"
-                )
-                compiled, script_result, raw_est, _compiled_est, effective_budget = await compile_agent_from_brief(
-                    brief=compile_brief,
-                    language=lang,
-                    style=body.responseStyle,
-                    budget_tokens=budget,
-                    previous_compiled=prev_compiled,
-                    call_end_policy=policy,
-                    use_llm=False,
-                    interpret_brief=True,
-                    direction=compile_direction,
-                )
             budget = effective_budget
             compiler_sections = build_compiler_sections(
                 user_script=script_result.agent_script,
@@ -425,6 +470,7 @@ async def save_instructions(body: SaveRequest):
                 budget_tokens=budget,
                 raw_token_estimate=raw_est,
                 call_end_policy=policy,
+                generation_config=generation_config,
             )
         elif body.reassembleOnly:
             from server.brain.agent_script_compiler import reassemble_brain_from_script
@@ -486,7 +532,7 @@ async def save_instructions(body: SaveRequest):
             )
             from server.prompts.conversation_policy import infer_call_direction
 
-            script_direction = infer_call_direction(brief or script)
+            script_direction = generation_config.get("callDirection") or infer_call_direction(brief or script)
             entity_tags = parse_entity_tags(script)
             if entities_have_values(entity_tags):
                 script = with_entity_tags_section(script, entity_tags)
@@ -526,8 +572,8 @@ async def save_instructions(body: SaveRequest):
                     script,
                 )
                 agent_name = (ident_match.group(1) if ident_match else "") or str(opt.get("agent_name") or "")
-            role = infer_agent_role(f"{brief}\n{script}", llm_role=str(opt.get("detected_role") or ""))
-            direction = infer_call_direction(brief or script)
+            role = generation_config.get("agentRole") or infer_agent_role(f"{brief}\n{script}", llm_role=str(opt.get("detected_role") or ""))
+            direction = generation_config.get("callDirection") or infer_call_direction(brief or script)
             platform_rules = _platform_call_rules(
                 agent_name=agent_name or ("Alex" if is_native_english(lang) else "Priya"),
                 role=role,
@@ -549,7 +595,11 @@ async def save_instructions(body: SaveRequest):
                 budget = est
             warnings = validate_agent_script(script, brief=brief, agent_name=agent_name)
             report = dict(opt)
+            report.pop("agent_spec", None)
+            report.pop("provenance", None)
             report["user_edited"] = True
+            report["status"] = "user_edited"
+            report["edited_script_checksum"] = hashlib.sha256(script.encode("utf-8")).hexdigest()
             report["script_warnings"] = warnings
             report["agent_name"] = agent_name
             report["detected_role"] = role
@@ -577,6 +627,7 @@ async def save_instructions(body: SaveRequest):
                 budget_tokens=budget,
                 raw_token_estimate=int(prev_meta.get("rawTokenEstimate") or est),
                 call_end_policy=policy,
+                generation_config=generation_config,
             )
         elif body.brainPrompt is not None:
             if len(body.brainPrompt) > p_max:
@@ -595,30 +646,15 @@ async def save_instructions(body: SaveRequest):
             prev_compiled = prev_meta.get("brainPrompt") if prev_meta.get("compiledVersion") else None
             if body.callEndPolicy is None:
                 policy = normalize_call_end_policy(prev_meta.get("callEndPolicy"), language=lang)
-            try:
-                compiled, script_result, raw_est, _compiled_est, effective_budget = await compile_agent_from_brief(
-                    brief=body.agentBrief,
-                    language=lang,
-                    style=body.responseStyle,
-                    budget_tokens=budget,
-                    previous_compiled=prev_compiled,
-                    call_end_policy=policy,
-                )
-            except (PromptSectionTooLong, PromptBudgetExceeded):
-                raise
-            except Exception as exc:
-                from server.utils.logger import logger
-
-                logger.error(f"[AGENT_SCRIPT] compile failed, deterministic fallback: {type(exc).__name__}: {str(exc)[:240]}")
-                compiled, script_result, raw_est, _compiled_est, effective_budget = await compile_agent_from_brief(
-                    brief=body.agentBrief,
-                    language=lang,
-                    style=body.responseStyle,
-                    budget_tokens=budget,
-                    previous_compiled=prev_compiled,
-                    call_end_policy=policy,
-                    use_llm=False,
-                )
+            compiled, script_result, raw_est, _compiled_est, effective_budget = await compile_agent_from_brief(
+                brief=body.agentBrief,
+                language=lang,
+                style=body.responseStyle,
+                budget_tokens=budget,
+                previous_compiled=prev_compiled,
+                call_end_policy=policy,
+                generation_config=generation_config,
+            )
             budget = effective_budget
             from server.brain.agent_script_compiler import build_compiler_sections
 
@@ -642,6 +678,7 @@ async def save_instructions(body: SaveRequest):
                 budget_tokens=budget,
                 raw_token_estimate=raw_est,
                 call_end_policy=policy,
+                generation_config=generation_config,
             )
         else:
             behaviour = body.behaviourInstructions if body.behaviourInstructions is not None else body.instructions or ""
@@ -672,6 +709,8 @@ async def save_instructions(body: SaveRequest):
                 raw_token_estimate=raw_est,
                 call_end_policy=policy,
             )
+    except BriefValidationError as exc:
+        raise HTTPException(status_code=422, detail={"error": exc.to_dict()}) from exc
     except PromptSectionTooLong as e:
         raise HTTPException(
             status_code=400,
@@ -702,7 +741,7 @@ async def save_instructions(body: SaveRequest):
         ) from e
 
     try:
-        if get_settings().use_versioned_brains:
+        if access.developer and body.sessionId == "default" and get_settings().use_versioned_brains:
             from server.brain.instruction_bridge import sync_legacy_instructions_to_business_brain
 
             await sync_legacy_instructions_to_business_brain(
@@ -741,6 +780,7 @@ async def save_instructions(body: SaveRequest):
         "callEndPolicy": saved.get("callEndPolicy"),
         "language": saved.get("language"),
         "persistedToDb": persisted,
+        "generationConfig": saved.get("generationConfig"),
         "agentSpec": saved.get("agentSpec"),
         "specVersion": saved.get("specVersion", 1),
         "templateVersion": saved.get("templateVersion", 1),
@@ -764,7 +804,9 @@ async def get_instructions(
     sessionId: str = "default",
     includeCompiled: bool = Query(False),
     includeCompilerSections: bool = Query(False),
+    access: InstructionsAccess = Depends(require_instructions_access),
 ):
+    await authorize_instruction_session(sessionId, access)
     from server.call.call_end_policy import normalize_call_end_policy
 
     meta = instruction_store.get_with_meta(sessionId)
@@ -856,7 +898,9 @@ async def instructions_live_prompt_preview(
     direction: str = Query("outbound"),
     pipeline: str = Query("realtime_voice"),
     llmModel: str | None = Query(None),
+    access: InstructionsAccess = Depends(require_instructions_access),
 ):
+    await authorize_instruction_session(sessionId, access)
     from server.call.call_prompt_preview import get_session_live_prompt_preview
     from server.realtime.models import is_gemini_live_voice_model
 
@@ -900,7 +944,8 @@ async def instructions_live_prompt_preview(
 
 
 @router.delete("/api/instructions")
-async def clear_instructions(sessionId: str = "default"):
+async def clear_instructions(sessionId: str = "default", access: InstructionsAccess = Depends(require_instructions_access)):
+    await authorize_instruction_session(sessionId, access, write=True)
     instruction_store.clear(sessionId)
     session_memory.clear(sessionId)
     try:

@@ -298,8 +298,9 @@ or a question means stay on the line. Keep the farewell in the configured agent 
 KEEP TALKING (never goodbye, never end_call):
 - Interested callers, questions, tell me more, price, objections you can still handle.
 - Bare okay / thanks / alright — that is not permission to hang up.
-- Busy / not now / maybe / I'll decide: offer ONE callback time, no pitch, stay on the line
-  until they pick a time, decline the callback, or ask to end.
+- Busy / not now / maybe / I'll decide: offer ONE callback only when the business permits
+  that workflow. Otherwise acknowledge without pitching or inventing a next step.
+  Respect a requested stop; while they want to continue, stay on the line.
 - I'm here / wait / hold on: continue the topic. A bare hello during farewell is not re-engage.
 - A fact they already said on this call (name, phone, area, budget): never ask it again.
 

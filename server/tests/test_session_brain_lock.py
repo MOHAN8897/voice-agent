@@ -1,4 +1,6 @@
 """Session brain locks on call start for Test Studio fine-tune."""
+import pytest
+
 from server.call.call_lifecycle_service import CallLifecycleService
 from server.agent.instruction_store import instruction_store
 
@@ -27,9 +29,10 @@ async def test_lock_session_brain_over_versioned(monkeypatch):
     get_settings.cache_clear()
 
 
-async def test_fitted_session_brain_keeps_default_hangup():
+async def test_oversize_session_brain_is_rejected_without_truncation():
     from unittest.mock import AsyncMock, patch
 
+    from server.agent.brain_prompt_composer import PromptBudgetExceeded
     from server.brain.business_prompt_optimizer import OptimizerResult
     from server.brain.session_brain_compiler import compile_session_brain
 
@@ -38,12 +41,11 @@ async def test_fitted_session_brain_keeps_default_hangup():
     with patch(
         "server.brain.session_brain_compiler.optimize_session_dual_prompt",
         new=AsyncMock(return_value=opt),
-    ):
-        compiled, *_ = await compile_session_brain(
+    ), pytest.raises(PromptBudgetExceeded):
+        await compile_session_brain(
             behaviour="Be brief.",
             business="We sell plots in Hyderabad.",
             language="en-IN",
             budget_tokens=1800,
         )
-    assert "--- CALL END POLICY ---" in compiled
-    assert "Thank you for your time. Goodbye." in compiled
+    assert opt.optimized_business_prompt == long_body

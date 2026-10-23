@@ -13,11 +13,16 @@ from server.config.env import get_settings
 # Minimal offline fallbacks when no API key
 _FALLBACK_VOICES: list[dict[str, Any]] = [
     {"id": "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", "name": "Skylar", "gender": "feminine", "languages": ["en"], "region": "english", "description": "American English female (default)"},
+    {"id": "045f0292-0731-4a4c-971d-64594fc2c35a", "name": "Priya", "gender": "feminine", "languages": ["en", "te", "hi", "ta", "kn"], "region": "indian_english", "description": "Indian multilingual female natural"},
+    {"id": "f8f5f1b2-f02d-4d8e-a40d-fd850a487b3d", "name": "Kiara", "gender": "feminine", "languages": ["en", "te", "hi"], "region": "indian_english", "description": "Indian conversational female"},
+    {"id": "3b554273-4299-48b9-9aaf-eefd438e3941", "name": "Indian Lady", "gender": "feminine", "languages": ["en", "te", "hi"], "region": "indian_english", "description": "Indian English female natural"},
     {"id": "79a125e8-cd45-4c13-8a67-0491c5ad1b8a", "name": "Maya", "gender": "feminine", "languages": ["en", "te", "hi"], "region": "indian_english", "description": "Indian English female"},
-    {"id": "2ee87190-8f84-4925-97da-e756ad7d262d", "name": "Devansh", "gender": "masculine", "languages": ["en", "te", "hi"], "region": "indian_english", "description": "Indian English male"},
     {"id": "76961778-84da-4b51-8d42-2e8e6e6a5e8a", "name": "Bhavani", "gender": "feminine", "languages": ["te"], "region": "telugu", "description": "Telugu female"},
-    {"id": "82c2afc8-4f0d-4c3e-9c3e-8e8e8e8e8e8e", "name": "Charan", "gender": "masculine", "languages": ["te"], "region": "telugu", "description": "Telugu male"},
     {"id": "9cebb910-d4b7-4a4a-85a4-12c79137724c", "name": "Aarti", "gender": "feminine", "languages": ["hi"], "region": "hindi", "description": "Hindi female"},
+    {"id": "87a983d8-3471-4c4b-9ade-f1d10a4110ac", "name": "Devansh", "gender": "masculine", "languages": ["en", "te", "hi"], "region": "indian_english", "description": "Indian English male"},
+    {"id": "efa653e5-314d-46ca-9f90-70ac7d6ca71e", "name": "Krishna", "gender": "masculine", "languages": ["en", "te", "hi"], "region": "indian_english", "description": "Indian conversational male"},
+    {"id": "39d518b7-fd0b-4676-9b8b-29d64ff31e12", "name": "Aarav", "gender": "masculine", "languages": ["en", "te", "hi"], "region": "indian_english", "description": "Indian warm male"},
+    {"id": "82c2afc8-4f0d-4c3e-9c3e-8e8e8e8e8e8e", "name": "Charan", "gender": "masculine", "languages": ["te"], "region": "telugu", "description": "Telugu male"},
     {"id": "97303aad-0000-0000-0000-000000000001", "name": "Amrit", "gender": "masculine", "languages": ["hi"], "region": "hindi", "description": "Hindi male"},
 ]
 
@@ -63,7 +68,7 @@ def _infer_region(v: dict[str, Any]) -> str | None:
         return "telugu"
     if "hi" in lang_set or "hindi" in blob:
         return "hindi"
-    if any(k in blob for k in ("indian", "india", "desi", "bharat")):
+    if any(k in blob for k in ("indian", "india", "desi", "bharat", "priya", "kiara", "devansh", "krishna", "aarav", "maya", "bhavani", "charan", "aarti", "amrit")):
         return "indian_english"
     if "en" in lang_set or lang_set & {"en-in"}:
         # Pure English without Indian markers → general English bucket
@@ -153,10 +158,13 @@ def cartesia_voice_ids() -> set[str]:
 
 
 def is_cartesia_voice_id(value: str) -> bool:
-    v = (value or "").strip()
+    v = (value or "").strip().lower()
     if _UUID_RE.match(v):
         return True
-    return v.lower() in {x.lower() for x in cartesia_voice_ids()}
+    from server.providers.cartesia_tts import _CARTESIA_VOICE_MAP
+    if v in _CARTESIA_VOICE_MAP or v.removeprefix("voice-") in _CARTESIA_VOICE_MAP:
+        return True
+    return v in {x.lower() for x in cartesia_voice_ids()}
 
 
 async def fetch_cartesia_voices(*, force: bool = False) -> list[dict[str, Any]]:

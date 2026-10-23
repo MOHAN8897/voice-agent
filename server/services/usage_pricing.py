@@ -84,6 +84,12 @@ OPENAI_USD_PER_M: dict[str, dict[str, float]] = {
         "cache_write": 4.00,
         "output": 24.00,
     },
+    "gpt-6-luna": {
+        "input": 0.20,
+        "cached_input": 0.02,
+        "cache_write": 0.25,
+        "output": 1.20,
+    },
     "gpt-5.6-luna": {
         "input": 0.20,
         "cached_input": 0.02,
@@ -457,6 +463,16 @@ def build_pricing_metadata(fx_rate_inr: float) -> dict[str, Any]:
             "usd_audio_input_per_min_list": GEMINI_LIVE_AUDIO_INPUT_USD_PER_MIN,
             "usd_audio_output_per_min_list": GEMINI_LIVE_AUDIO_OUTPUT_USD_PER_MIN,
             "billing": "tokens_audio_native",
+            "updated_at": PRICING_UPDATED_AT,
+        },
+        "openai:gpt-6-luna": {
+            "unit": "1m_tokens",
+            "usd_per_unit": OPENAI_USD_PER_M["gpt-6-luna"]["input"] / 1000.0,
+            "usd_input_per_m": OPENAI_USD_PER_M["gpt-6-luna"]["input"],
+            "usd_cached_input_per_m": OPENAI_USD_PER_M["gpt-6-luna"]["cached_input"],
+            "usd_cache_write_per_m": OPENAI_USD_PER_M["gpt-6-luna"]["cache_write"],
+            "usd_output_per_m": OPENAI_USD_PER_M["gpt-6-luna"]["output"],
+            "billing": "tokens_with_cache",
             "updated_at": PRICING_UPDATED_AT,
         },
         "openai:gpt-5.6-luna": {

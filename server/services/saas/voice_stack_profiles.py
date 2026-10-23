@@ -93,10 +93,10 @@ def _identifier(value: Any, label: str, *, allow_empty: bool = False) -> str:
     raise VoiceProfileError("invalid_profile", f"{label} must be a stable identifier.")
 
 
-def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = True) -> dict[str, Any]:
+def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = False) -> dict[str, Any]:
     """Validate the admin-owned executable profile; values are never defaulted."""
     tier_norm = str(tier or "").strip().lower()
-    if not (tier_norm in COMPOSED_TIERS or (allow_premium and tier_norm == "premium") or re.match(r"^[a-z0-9_]{1,20}$", tier_norm)):
+    if not (tier_norm in COMPOSED_TIERS or (allow_premium and tier_norm == "premium") or (tier_norm != "premium" and re.match(r"^[a-z0-9_]{1,20}$", tier_norm))):
         raise VoiceProfileError("read_only_tier", f"Tier '{tier}' cannot be managed here.", status_code=409)
     if not isinstance(payload, dict):
         raise VoiceProfileError("invalid_profile", "composedProfile must be an object.")
@@ -249,10 +249,32 @@ def _clean_catalog_voice_label(raw_label: Any, pvid: str, tier: str) -> str:
     else:
         cat_meta = _GEMINI_VOICE_META.get(clean_speaker, {}) or _GEMINI_VOICE_META.get(clean_speaker.title(), {})
         authentic_name = cat_meta.get("label", clean_speaker.title() if clean_speaker else "")
-    if "gnani" in pvid.lower():
-        return "Voice 1" if "1" in pvid else "Voice 2"
-    if "cartesia" in pvid.lower():
-        return "Voice 1" if "1" in pvid else "Voice 2"
+    if "gnani" in pvid.lower() or pvid.lower() in {"nalini", "pranav", "shivani", "avinash", "lakshmi", "prakash"}:
+        if "4" in pvid.lower() or "prakash" in pvid.lower():
+            return "Voice 4"
+        if "3" in pvid.lower() or "lakshmi" in pvid.lower():
+            return "Voice 3"
+        if "2" in pvid.lower() or any(x in pvid.lower() for x in ("pranav", "avinash")):
+            return "Voice 2"
+        return "Voice 1"
+    if "cartesia" in pvid.lower() or "sonic" in pvid.lower():
+        m = re.search(r"voice-cartesia-(\d+)", pvid.lower())
+        if m:
+            return f"Voice {m.group(1)}"
+        if pvid.lower() in {"cartesia-4", "4"}:
+            return "Voice 4"
+        if pvid.lower() in {"cartesia-3", "3"}:
+            return "Voice 3"
+        if pvid.lower() in {"cartesia-2", "2"}:
+            return "Voice 2"
+        if pvid.lower() in {"cartesia-1", "1"}:
+            return "Voice 1"
+        from server.services.saas.voice_catalog import phone_voice_catalog
+        for row in phone_voice_catalog():
+            if row.get("provider") == "cartesia":
+                if str(row.get("providerVoiceId", "")).lower() == pvid.lower() or str(row.get("id", "")).lower() == pvid.lower():
+                    return str(row.get("label") or row.get("name") or "Voice")
+        return authentic_name or clean_speaker.title() or "Voice"
     raw = str(raw_label or "").strip()
     if not raw or re.match(r"^Voice\s+\d+$", raw, re.IGNORECASE) or _PRIVATE_LABEL_RE.search(raw):
         return authentic_name or clean_speaker.title() or "Voice"
@@ -263,16 +285,23 @@ def _resolve_catalog_voice_metadata(pvid: str, tier: str) -> dict[str, str]:
     from server.services.saas.voice_catalog import _GEMINI_VOICE_META, _SARVAM_VOICE_META
     sarvam_map = {str(item["id"]).lower(): item for item in _SARVAM_VOICE_META}
     clean_speaker = pvid.removeprefix("voice-").strip()
-    if "gnani" in clean_speaker.lower():
-        gender = "female" if "1" in clean_speaker else "male"
-        tone = "Warm & expressive"
-        category = "conversational"
-        use_case = "Conversational Customer Support"
-    elif "cartesia" in clean_speaker.lower() or "sonic" in clean_speaker.lower() or len(clean_speaker) > 20:
-        gender = "female" if "1" in clean_speaker or "female" in clean_speaker.lower() or "skylar" in clean_speaker.lower() else "male"
-        tone = "Ultra-low-latency & clear"
-        category = "conversational"
-        use_case = "Sub-100ms Multilingual Outreach"
+    gnani_names = {"nalini", "shivani", "lakshmi", "chitra", "pranav", "avinash", "prakash", "sanjay"}
+    cartesia_names = {"sarah", "caleb", "jacqueline", "michael", "skylar", "daniel", "katie", "leo", "bhavani", "charan", "aarti", "amrit", "maya", "devansh", "priya", "kiara", "indian lady", "indian_lady", "krishna", "aarav"}
+    spk_lower = clean_speaker.lower()
+    if "gnani" in spk_lower or any(n in spk_lower for n in gnani_names):
+        is_female = any(x in spk_lower for x in ("1", "3", "nalini", "shivani", "lakshmi", "chitra"))
+        gender = "female" if is_female else "male"
+        is_promo = any(x in spk_lower for x in ("chitra", "avinash", "sanjay", "promotional", "sales"))
+        tone = "Warm & expressive" if not is_promo else ("Professional & steady" if is_female else "Authoritative & clear")
+        category = "promotional" if is_promo else "conversational"
+        use_case = "Commercial Advisory & Sales" if is_promo else "Conversational Customer Support"
+    elif "cartesia" in spk_lower or "sonic" in spk_lower or len(clean_speaker) > 20 or any(n in spk_lower for n in cartesia_names):
+        is_female = any(x in spk_lower for x in ("1", "3", "female", "sarah", "jacqueline", "skylar", "katie", "bhavani", "aarti", "maya", "priya", "kiara", "indian lady", "db6b0ed5", "694f9389", "5c5ac573", "f114a346", "76961778", "9cebb910", "79a125e8", "045f0292", "f8f5f1b2", "3b554273"))
+        gender = "female" if is_female else "male"
+        is_promo = any(x in spk_lower for x in ("michael", "daniel", "katie", "amrit", "devansh", "promotional", "sales", "47c38ca4", "79a125e8", "f114a346", "97303aad", "2ee87190"))
+        tone = "Ultra-low-latency & clear" if not is_promo else ("Bright & energetic" if is_female else "Professional & direct")
+        category = "promotional" if is_promo else "conversational"
+        use_case = "Commercial & Retail Outreach" if is_promo else "Sub-100ms Multilingual Outreach"
     elif clean_speaker.lower() in sarvam_map or (tier == "medium" and clean_speaker.lower() in {"shubh", "priya", "pooja", "simran", "neha", "rahul"}):
         meta = sarvam_map.get(clean_speaker.lower(), {})
         gender = meta.get("gender") if meta else ("female" if clean_speaker.lower() in {"ritu", "pooja", "neha", "priya", "kavitha", "ishita", "simran", "kavya", "shreya", "roopa", "tanya", "shruti", "suhani", "rupali"} else "male")
@@ -326,7 +355,7 @@ async def resolve_voice_alias(alias_id: str, environment: str | None = None) -> 
     from server.services.dev_runtime import effective_app_environment
 
     env = environment or effective_app_environment()
-    records = await load_profile_records(env, COMPOSED_TIERS)
+    records = await load_profile_records(env, None)
     for t, rec in records.items():
         cache_aliases_from_record(t, rec)
     return _REVERSE_ALIAS_CACHE.get(wanted)
@@ -752,6 +781,52 @@ async def set_profile_enabled(*, environment: str, tier: str, expected_revision:
     return await profile_view(tier, environment, include_internal=True)
 
 
+async def delete_composed_profile(*, environment: str, tier: str, actor: str) -> dict[str, Any]:
+    tier_norm = str(tier or "").strip().lower()
+    if tier_norm in ("low", "medium", "premium"):
+        raise VoiceProfileError("core_tier_protected", "Core tiers (Economical, Standard, and Flagship) cannot be deleted.", status_code=400)
+    if not re.match(r"^[a-z0-9_]{1,20}$", tier_norm):
+        raise VoiceProfileError("invalid_tier", f"Invalid tier identifier '{tier}'.", status_code=400)
+    factory = get_session_factory()
+    if factory is None:
+        raise VoiceProfileError("durable_store_unavailable", "Database-backed configuration store is required.", status_code=503)
+    resource_id = f"{environment}:{tier_norm}"
+    async with factory() as session:
+        bind = session.get_bind()
+        if bind.dialect.name == "postgresql":
+            await session.execute(select(func.pg_advisory_xact_lock(func.hashtext(f"voice-profile:{resource_id}"))))
+        row = (await session.execute(
+            select(TierAssignment).where(
+                TierAssignment.environment == environment,
+                TierAssignment.tier == tier_norm,
+            ).with_for_update()
+        )).scalar_one_or_none()
+        if row is not None:
+            await session.delete(row)
+        latest = await session.execute(
+            select(func.max(ConfigVersion.version)).where(
+                ConfigVersion.resource_type == "composed_voice_profile",
+                ConfigVersion.resource_id == resource_id,
+            )
+        )
+        session.add(
+            ConfigVersion(
+                id=uuid.uuid4(),
+                resource_type="composed_voice_profile",
+                resource_id=resource_id,
+                version=int(latest.scalar_one_or_none() or 0) + 1,
+                payload={"deleted": True, "actor": actor, "tier": tier_norm},
+                created_at=datetime.now(timezone.utc),
+            )
+        )
+        await session.commit()
+    from server.db.tier_store import _TIER_CACHE
+    if environment in _TIER_CACHE:
+        _TIER_CACHE[environment].pop(tier_norm, None)
+    return {"ok": True, "tier": tier_norm, "deleted": True}
+
+
+
 def _public_label(value: Any, fallback: str) -> str:
     label = str(value or "").strip()
     return fallback if not label or _PRIVATE_LABEL_RE.search(label) else label[:100]
@@ -835,11 +910,12 @@ async def resolve_agent_selection(
     allow_fallback: bool = False,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Resolve a tenant's public aliases against one persisted, ready profile revision."""
-    if tier not in COMPOSED_TIERS:
-        raise VoiceProfileError("invalid_composed_tier", "Composed voice settings are only available for Economical or Standard.", status_code=409)
-    record = (await load_profile_records(environment, (tier,))).get(tier)
+    tier_norm = str(tier or "").strip().lower()
+    if not (tier_norm in COMPOSED_TIERS or (tier_norm != "premium" and re.match(r"^[a-z0-9_]{1,20}$", tier_norm))):
+        raise VoiceProfileError("invalid_composed_tier", "Composed voice settings are only available for Economical, Standard, or custom composed stacks.", status_code=409)
+    record = (await load_profile_records(environment, (tier_norm,))).get(tier_norm)
     rates = await _load_rates_without_fallback()
-    readiness = readiness_for_profile(tier, record, rates)
+    readiness = readiness_for_profile(tier_norm, record, rates)
     if not record or not readiness["ready"] or not readiness["enabled"]:
         raise VoiceProfileError("profile_unavailable", "The selected voice profile is not available for calls.", status_code=409, details={"blockers": readiness["blockers"]})
     if int(voice_settings.get("profileRevision") or -1) != int(record.get("revision") or 0):
@@ -877,13 +953,16 @@ async def resolve_agent_selection(
         )
 
     # If any stage was not matched or voice does not support language, attempt fallback if allowed
-    if not engine_row or not model_row or not voice_row or language not in (voice_row.get("languages") or []):
+    has_lang_match = bool(voice_row and (language in (voice_row.get("languages") or []) or any(str(l).split("-")[0].lower() == language.split("-")[0].lower() for l in voice_row.get("languages") or [])))
+    if not engine_row or not model_row or not voice_row or not has_lang_match:
         if allow_fallback:
             found_fallback = False
+            lang_prefix = language.split("-")[0].lower()
             for e in profile.get("engines") or []:
                 for m in e.get("models") or []:
                     for v in m.get("voices") or []:
-                        if language in (v.get("languages") or []):
+                        v_langs = [str(l).lower() for l in (v.get("languages") or [])]
+                        if not v_langs or language.lower() in v_langs or any(vl.startswith(lang_prefix) for vl in v_langs):
                             engine_row = e
                             model_row = m
                             voice_row = v
@@ -896,6 +975,18 @@ async def resolve_agent_selection(
                         break
                 if found_fallback:
                     break
+            if not found_fallback and profile.get("engines"):
+                e0 = (profile.get("engines") or [])[0]
+                m0 = (e0.get("models") or [{}])[0]
+                v0 = (m0.get("voices") or [{}])[0]
+                if v0:
+                    engine_row = e0
+                    model_row = m0
+                    voice_row = v0
+                    selected["engineId"] = (aliases.get("engines") or {}).get(str(e0.get("id")), str(e0.get("id")))
+                    selected["modelId"] = (aliases.get("models") or {}).get(f"{e0.get('id')}::{m0.get('id')}", str(m0.get("id")))
+                    selected["voiceId"] = (aliases.get("voices") or {}).get(f"{e0.get('id')}::{m0.get('id')}::{v0.get('id')}", str(v0.get("id")))
+                    found_fallback = True
             if not found_fallback:
                 raise VoiceProfileError("unsupported_language", "This profile does not have an active voice supporting the agent language.", status_code=409)
         else:

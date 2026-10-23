@@ -23,7 +23,7 @@ async function proxyInstructions(
   });
 
   const headers = new Headers();
-  for (const name of ["authorization", "content-type", "cookie"]) {
+  for (const name of ["authorization", "content-type", "cookie", "x-csrf-token"]) {
     const value = request.headers.get(name);
     if (value) headers.set(name, value);
   }

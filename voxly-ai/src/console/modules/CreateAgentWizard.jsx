@@ -60,7 +60,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
         const options = toLanguageOptions(languages);
         setLanguageOptions(options);
         // Keep the draft on a language the platform still offers.
-        set((prev) =>
+        setDraft((prev) =>
           options.some((o) => o.code === prev.language)
             ? prev
             : { ...prev, language: options[0]?.code || prev.language }
@@ -74,7 +74,8 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
     };
   }, [isOpen, set]);
 
-  const ready = draft.brief.trim().length >= BRIEF_MIN_CHARS;
+  const briefWords = draft.brief.trim() ? draft.brief.trim().split(/\s+/).length : 0;
+  const ready = draft.brief.trim().length >= BRIEF_MIN_CHARS && draft.brief.length <= 6000 && briefWords <= 1200;
 
   const appendIndustry = (chip) => {
     const text = chip.snippet;
@@ -88,7 +89,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
   /** Brief → compiled script → published brain. One call, then hand over. */
   const createAgent = useCallback(async () => {
     if (!ready) {
-      setError('Describe the job in a few sentences (at least 8 characters).');
+      setError('Describe the job in at least 8 characters, up to 6,000 characters and 1,200 words.');
       return;
     }
     setBusy(true);
@@ -196,12 +197,14 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
             value={draft.brief}
             onChange={(e) => set({ brief: e.target.value })}
             rows={8}
+            maxLength={6000}
             placeholder={BRIEF_PLACEHOLDER}
             className="w-full rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] px-3.5 py-3 text-base sm:text-sm text-[#0F0E17] placeholder:text-[#8C879A] focus:outline-none focus:border-[#6344E7] resize-y leading-relaxed"
           />
           <p className="text-[10px] text-[#8C879A] mt-1">
             Write it the way you would brief a new employee — include the agent&rsquo;s name, your
             business, and what you want them to say.
+            {' '}{draft.brief.length}/6,000 characters · {briefWords}/1,200 words.
           </p>
         </div>
 

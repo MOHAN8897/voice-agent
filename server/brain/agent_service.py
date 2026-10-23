@@ -7,14 +7,22 @@ import uuid
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.attributes import flag_modified
 
 from server.config.env import get_settings
 from server.db.connection import get_session_factory
-from server.db.models.entities import Agent, Tenant
+from server.db.models.entities import Agent, ConfigVersion, Tenant
 
 _MEM_AGENTS: dict[str, dict[str, Any]] = {}
 _DEFAULT_AGENT_ID: str | None = None
+_MEM_BUILD_REQUESTS: dict[str, dict[str, Any]] = {}
+
+
+class AgentBuildRequestConflict(ValueError):
+    def __init__(self, code: str, message: str):
+        self.code = code
+        super().__init__(message)
 
 
 class AgentVoiceRevisionConflict(ValueError):
@@ -33,6 +41,101 @@ class AgentVoiceRevisionConflict(ValueError):
 
 
 class AgentService:
+    async def claim_build_request(
+        self, *, request_id: str, fingerprint: str, tenant_id: str,
+        name: str, language: str,
+    ) -> dict[str, Any]:
+        """One durable agent claim per workspace request, before generation starts."""
+        aid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"agent-build:{tenant_id}:{uuid.UUID(request_id)}"))
+        payload = {"fingerprint": fingerprint, "state": "building"}
+
+        def existing_result(agent: dict[str, Any], saved: dict[str, Any]) -> dict[str, Any]:
+            if saved.get("fingerprint") != fingerprint:
+                raise AgentBuildRequestConflict("request_input_changed", "This creation request was already used with different inputs. Start a new request.")
+            return {"agent": agent, **saved, "created": False}
+
+        factory = get_session_factory()
+        if factory is None:
+            if aid in _MEM_AGENTS:
+                agent = await self.get_agent(aid, tenant_id=tenant_id)
+                return existing_result(agent, _MEM_BUILD_REQUESTS.get(aid) or {})
+            agent = self._default_agent_dict(aid, name=name)
+            agent.update(tenant_id=tenant_id, languages=[language], status="draft")
+            _MEM_AGENTS[aid] = agent
+            _MEM_BUILD_REQUESTS[aid] = payload
+            return {"agent": dict(agent), **payload, "created": True}
+
+        # A concurrent insert can win the primary-key claim while this request
+        # was waiting. Re-read that committed claim instead of generating twice.
+        for attempt in range(2):
+            async with factory() as session:
+                row = (await session.execute(select(Agent).where(
+                    Agent.agent_id == uuid.UUID(aid), Agent.tenant_id == uuid.UUID(tenant_id),
+                ).with_for_update())).scalar_one_or_none()
+                if row is not None:
+                    record = (await session.execute(select(ConfigVersion).join(
+                        Agent, Agent.agent_id == uuid.UUID(aid),
+                    ).where(
+                        Agent.tenant_id == uuid.UUID(tenant_id),
+                        ConfigVersion.resource_type == "agent_build_request", ConfigVersion.resource_id == aid,
+                    ))).scalar_one_or_none()
+                    return existing_result(self._row_to_dict(row), dict(record.payload or {}) if record else {})
+                row = Agent(agent_id=uuid.UUID(aid), tenant_id=uuid.UUID(tenant_id), name=name, status="draft", languages=[language])
+                session.add(row)
+                session.add(ConfigVersion(resource_type="agent_build_request", resource_id=aid, version=1, payload=payload))
+                try:
+                    await session.commit()
+                except IntegrityError:
+                    await session.rollback()
+                    if attempt:
+                        raise
+                else:
+                    return {"agent": self._row_to_dict(row), **payload, "created": True}
+        raise AgentBuildRequestConflict("creation_in_progress", "This agent creation is already in progress.")
+
+    async def finish_build_request(
+        self, agent_id: str, *, tenant_id: str, response: dict[str, Any] | None = None,
+        error: dict[str, Any] | None = None, status_code: int = 502,
+    ) -> dict[str, Any] | None:
+        """Keep the request outcome beside its owned agent; never delete on retry."""
+        import copy
+
+        def outcome(agent: dict[str, Any], saved: dict[str, Any]) -> dict[str, Any] | None:
+            if saved.get("state") == "completed":
+                return copy.deepcopy(saved.get("response"))
+            if response is not None:
+                agent["status"] = "active"
+                reply = {**copy.deepcopy(response), "agent": copy.deepcopy(agent)}
+                saved.update(state="completed", response=reply)
+                return reply
+            saved.update(state="failed", error=copy.deepcopy(error), status_code=status_code)
+            return None
+
+        factory = get_session_factory()
+        if factory is None:
+            agent = await self.get_agent(agent_id, tenant_id=tenant_id)
+            saved = _MEM_BUILD_REQUESTS.get(agent_id)
+            if saved is None:
+                raise KeyError(agent_id)
+            return outcome(agent, saved)
+        async with factory() as session:
+            row = (await session.execute(select(Agent).where(
+                Agent.agent_id == uuid.UUID(agent_id), Agent.tenant_id == uuid.UUID(tenant_id),
+            ).with_for_update())).scalar_one()
+            record = (await session.execute(select(ConfigVersion).join(
+                Agent, Agent.agent_id == uuid.UUID(agent_id),
+            ).where(
+                Agent.tenant_id == uuid.UUID(tenant_id),
+                ConfigVersion.resource_type == "agent_build_request", ConfigVersion.resource_id == agent_id,
+            ))).scalar_one()
+            saved = copy.deepcopy(record.payload or {})
+            result = outcome(self._row_to_dict(row), saved)
+            if response is not None:
+                row.status = "active"
+            record.payload = saved
+            await session.commit()
+            return result
+
     async def ensure_default_agent(self) -> dict[str, Any]:
         factory = get_session_factory()
         if factory is None:

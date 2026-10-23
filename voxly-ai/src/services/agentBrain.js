@@ -8,6 +8,21 @@ import {
   voiceConfigSection,
 } from '../lib/voiceStack';
 
+const reviewedDrafts = new Map();
+
+function studioFingerprint(fields) {
+  return JSON.stringify(fields);
+}
+
+function assertCurrentRevision(existing, fields) {
+  const revision = existing?.draft?.revision;
+  if (!revision) throw new Error('Reload the agent before reviewing or publishing its script.');
+  if (fields.brainRevision && fields.brainRevision !== revision) {
+    throw new Error('This draft changed in another editor. Reload it before publishing; your edits have been kept.');
+  }
+  return revision;
+}
+
 function voiceSection(voice, language) {
   if (!voice && !language) return null;
   const lines = [];
@@ -160,14 +175,26 @@ export function mergeStudioSections(existingSections, studioFields) {
 
 export async function reviewAgentBrain(agentId, studioFields) {
   const existing = await loadAgentBrain(agentId);
+  const revision = assertCurrentRevision(existing, studioFields);
   const sections = mergeStudioSections(existing?.draft?.sections, studioFields);
-  return api.request('POST', `/api/agents/${agentId}/business-brain/preview`, { sections });
+  const review = await api.request('POST', `/api/agents/${agentId}/business-brain/preview`, { sections });
+  reviewedDrafts.set(agentId, { fingerprint: studioFingerprint(studioFields), revision, sections, review });
+  return review;
 }
 
 export async function saveAndPublishAgentBrain(agentId, studioFields) {
-  // A failed read must not turn an update into replacement of an unknown draft.
-  const existing = await loadAgentBrain(agentId);
-  const merged = mergeStudioSections(existing?.draft?.sections, studioFields);
-  await api.request('PUT', `/api/agents/${agentId}/business-brain/draft`, { sections: merged });
-  return await api.request('POST', `/api/agents/${agentId}/business-brain/publish`);
+  let reviewed = reviewedDrafts.get(agentId);
+  if (!reviewed || reviewed.fingerprint !== studioFingerprint(studioFields)) {
+    await reviewAgentBrain(agentId, studioFields);
+    reviewed = reviewedDrafts.get(agentId);
+  }
+  if (!reviewed.review.ok) throw new Error('Resolve the blocking script issues before publishing.');
+  const saved = await api.request('PUT', `/api/agents/${agentId}/business-brain/draft`, {
+    sections: reviewed.sections, expected_revision: reviewed.revision,
+  });
+  const publication = await api.request('POST', `/api/agents/${agentId}/business-brain/publish`, {
+    expected_revision: saved.revision,
+  });
+  reviewedDrafts.delete(agentId);
+  return { ...publication, draft_revision: saved.revision };
 }

@@ -890,6 +890,7 @@ class PstnRealtimeVoiceLoop:
             model=self._live_model or "gemini-3.8-live",
             language=self._resolve_language(),
             voice=voice or None,
+            speed=realtime_voice_config(self.stack_override).get("speed"),
             control_id=self.call_id or self.session_id,
         )
         if not frames:
@@ -992,6 +993,7 @@ class PstnRealtimeVoiceLoop:
             model=model,
             language=self._resolve_language(),
             voice=str(cfg.get("voice") or ""),
+            speed=cfg.get("speed"),
             turn_detection=str(cfg.get("turn_detection") or ""),
             max_output_tokens=max_output_tokens,
             control_id=self.call_id or self.session_id,
@@ -1560,6 +1562,7 @@ class PstnRealtimeVoiceLoop:
             tts_output_codec=self.tts_output_codec,
             model=model,
             voice=str(cfg.get("voice") or ""),
+            speed=cfg.get("speed"),
             turn_detection=str(cfg.get("turn_detection") or ""),
             max_output_tokens=max_output_tokens,
             control_id=self.call_id or self.session_id,
@@ -1620,6 +1623,7 @@ class PstnRealtimeVoiceLoop:
                 language=language,
                 model=model,
                 voice=str(cfg.get("voice") or ""),
+                speed=cfg.get("speed"),
                 turn_detection=str(cfg.get("turn_detection") or ""),
                 max_output_tokens=max_output_tokens,
                 control_id=self.call_id or self.session_id,

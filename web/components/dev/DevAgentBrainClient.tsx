@@ -21,6 +21,7 @@ export function DevAgentBrainClient({ agentId }: { agentId: string }) {
   const [published, setPublished] = useState<Record<string, unknown> | null>(null);
   const [versionsCount, setVersionsCount] = useState(0);
   const [checksum, setChecksum] = useState("");
+  const [revision, setRevision] = useState("");
 
   useEffect(() => {
     fetch(`/api/agents/${agentId}/business-brain`, { credentials: "include" })
@@ -31,6 +32,7 @@ export function DevAgentBrainClient({ agentId }: { agentId: string }) {
         setPublished(data?.published ?? null);
         setVersionsCount(data?.versions_count ?? 0);
         setChecksum(data?.draft?.raw_checksum || "");
+        setRevision(data?.draft?.revision || "");
       });
   }, [agentId]);
 
@@ -41,6 +43,8 @@ export function DevAgentBrainClient({ agentId }: { agentId: string }) {
       published={published as { version_id?: string; optimized_prompt?: string; optimizer_report?: { optimizer_model?: string } } | null}
       versionsCount={versionsCount}
       initialChecksum={checksum}
+      initialRevision={revision}
+      portal="dev"
       showCompiledPreview
     />
   );

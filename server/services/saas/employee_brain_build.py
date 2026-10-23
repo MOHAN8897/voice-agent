@@ -4,8 +4,9 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from server.agent.brain_prompt_composer import PromptBudgetExceeded, PromptSectionTooLong
 from server.brain.agent_script_compiler import AgentScriptResult, compile_agent_from_brief
-from server.brain.business_brain_store import assemble_raw_business_prompt, business_brain_store
+from server.brain.brief_contract import BriefValidationError, brief_issue
 from server.brain.compiled_brain_service import compiled_brain_service
 from server.call.call_end_policy import normalize_call_end_policy
 from server.services.saas.script_variables import SAAS_SCRIPT_VARIABLES_TITLE, merge_variables
@@ -20,6 +21,7 @@ def draft_sections_for_saas_employee(
     platform_call_rules: str,
     variables: list[dict[str, str]],
     voice_config: dict[str, Any] | None = None,
+    generation_config: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     lang = (language or "en-IN").strip() or "en-IN"
     script_body = user_script
@@ -35,6 +37,13 @@ def draft_sections_for_saas_employee(
         "Answer only from the calling script. Do not invent prices or policies."
     )
     return [
+        {
+            "type": "custom",
+            "title": "saas_generation_config",
+            "order": 1,
+            "raw_text": json.dumps(generation_config or {}, ensure_ascii=False),
+            "enabled": False,
+        },
         {
             "type": "custom",
             "title": "saas_voice_config",
@@ -77,6 +86,7 @@ async def compile_brief_for_employee(
     *,
     brief: str,
     language: str,
+    generation_config: dict[str, Any] | None = None,
 ) -> tuple[str, AgentScriptResult, list[dict[str, str]]]:
     lang = (language or "en-IN").strip() or "en-IN"
     policy = normalize_call_end_policy(None, language=lang)
@@ -86,15 +96,11 @@ async def compile_brief_for_employee(
             language=lang,
             interpret_brief=True,
             call_end_policy=policy,
+            generation_config=generation_config,
+            budget_tokens=6000,
         )
-    except Exception:
-        compiled, script_result, *_rest = await compile_agent_from_brief(
-            brief=brief.strip(),
-            language=lang,
-            interpret_brief=True,
-            call_end_policy=policy,
-            use_llm=False,
-        )
+    except (PromptBudgetExceeded, PromptSectionTooLong) as exc:
+        raise BriefValidationError([brief_issue("input_limit_exceeded", str(exc))]) from exc
     variables = merge_variables(None, "", script_result.agent_script)
     return compiled, script_result, variables
 
@@ -105,30 +111,31 @@ async def publish_saas_employee_brain(
     brief: str,
     language: str,
     voice_config: dict[str, Any] | None = None,
+    generation_config: dict[str, Any] | None = None,
+    compiled_artifact: tuple[str, AgentScriptResult, list[dict[str, str]]] | None = None,
 ) -> dict[str, Any]:
-    compiled, script_result, variables = await compile_brief_for_employee(
-        brief=brief, language=language
+    compiled, script_result, variables = compiled_artifact or await compile_brief_for_employee(
+        brief=brief, language=language, generation_config=generation_config
     )
+    report = script_result.to_dict()
     sections = draft_sections_for_saas_employee(
         user_script=script_result.agent_script,
         language=language,
         platform_call_rules=script_result.platform_call_rules,
         variables=variables,
         voice_config=voice_config,
+        generation_config=report.get("generation_config") or generation_config,
     )
-    await business_brain_store.save_draft_sections(agent_id, sections)
-    _raw, checksum = assemble_raw_business_prompt(sections)
-    await business_brain_store.save_published_version(
+    snapshot = await compiled_brain_service.publish_agent_brain(
         agent_id,
+        sections=sections,
         optimized_prompt=compiled,
-        source_checksum=checksum,
         optimizer_report={
-            **script_result.to_dict(),
+            **report,
             "saas_build": True,
             "compiled_brain": compiled,
         },
     )
-    snapshot = await compiled_brain_service.compile_for_agent(agent_id)
     return {
         "compiled": compiled,
         "script": script_result.agent_script,
@@ -136,4 +143,5 @@ async def publish_saas_employee_brain(
         "employeeName": script_result.agent_name or "AI Employee",
         "role": script_result.role_summary or "Voice agent",
         "snapshot": snapshot,
+        "generation": report,
     }

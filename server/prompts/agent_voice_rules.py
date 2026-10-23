@@ -25,7 +25,7 @@ from server.services.voice_pipeline_limits import (
 # STATIC + LIVE CALL GUIDE + FLOW carry the same policy in the assembled brain.
 PHONE_CALL_POLICY_PTR = (
     "PHONE CALL POLICY — STATIC OUTPUT RULES and CALL END POLICY in this brain are authoritative: "
-    "answer → known facts → one missing fact → recommend + next step; never re-ask, never a "
+    "answer → known facts → a required missing fact if needed → a permitted next step; never re-ask, never a "
     "Step/Question checklist; soft hesitation stays on the line; firm no / don't-call / goodbye → "
     "farewell and end_call; never invent facts or claim undone actions."
 )
@@ -55,62 +55,50 @@ NUMBER_RULES_INDIC = """NUMBERS (speak them — natural and human in the call la
 
 PHONE_SPEAK_BAN = """PHONE NUMBERS (speak vs capture)
 - Never read phone, mobile, WhatsApp, or office numbers aloud — ours or theirs. No digit strings.
-- Asked for YOUR number: decline briefly and offer to note a callback request. Adapt the example below: ask for their number only if unknown; outbound already has it. Never invent a number or promise a completed callback.
+- Asked for YOUR number: decline briefly. Offer a callback request only if the business permits that workflow. Ask for a number only if that permitted workflow needs it and it is unknown; outbound already has it. Never invent a number or promise a completed callback.
 - If the caller GIVES details: acknowledge them briefly. Do not refuse to listen, but never claim details were saved or sent without tool confirmation."""
 
 PHONE_ASK_FALLBACK: dict[str, str] = {
     "te-IN": (
-        "క్షమించండి, ఈ కాల్‌లో మా కాంటాక్ట్ నంబర్ చదవడం కుదరదు — "
-        "మీ నంబర్ చెబితే, మా టీమ్ మీకు రీచ్ అవుట్ అవుతుంది."
+        "క్షమించండి, ఈ కాల్‌లో మా కాంటాక్ట్ నంబర్ చదవడం కుదరదు."
     ),
     "en-IN": (
-        "Sorry, I can't read out our contact number on this call — "
-        "share yours and our team will reach out."
+        "Sorry, I can't read out our contact number on this call."
     ),
     "en-US": (
-        "Sorry, I can't read our number out on this call. "
-        "If you share yours, we'll get back to you."
+        "Sorry, I can't read our number out on this call."
     ),
     "en-GB": (
-        "Sorry, I can't read our contact number out on this call. "
-        "If you share yours, our team will get in touch."
+        "Sorry, I can't read our contact number out on this call."
     ),
     "hi-IN": (
-        "माफ़ कीजिए, इस कॉल पर हमारा संपर्क नंबर नहीं दे सकते — "
-        "अपना नंबर बता दीजिए, टीम आपसे संपर्क करेगी।"
+        "माफ़ कीजिए, इस कॉल पर हमारा संपर्क नंबर नहीं दे सकते।"
     ),
     "ta-IN": (
-        "மன்னிக்கவும், இந்த கால்ல எங்கள் தொடர்பு எண் சொல்ல முடியாது — "
-        "உங்க எண் சொன்னா, எங்கள் டீம் உங்களை தொடர்பு கொள்வார்கள்."
+        "மன்னிக்கவும், இந்த கால்ல எங்கள் தொடர்பு எண் சொல்ல முடியாது."
     ),
     "kn-IN": (
-        "ಕ್ಷಮಿಸಿ, ಈ ಕಾಲ್‌ನಲ್ಲಿ ನಮ್ಮ ಸಂಪರ್ಕ ಸಂಖ್ಯೆ ಹೇಳಲು ಆಗುವುದಿಲ್ಲ — "
-        "ನಿಮ್ಮ ನಂಬರ್ ಕೊಡಿ, ನಮ್ಮ ಟೀಮ್ ಸಂಪರ್ಕ ಮಾಡ್ತಾರೆ."
+        "ಕ್ಷಮಿಸಿ, ಈ ಕಾಲ್‌ನಲ್ಲಿ ನಮ್ಮ ಸಂಪರ್ಕ ಸಂಖ್ಯೆ ಹೇಳಲು ಆಗುವುದಿಲ್ಲ."
     ),
     "ml-IN": (
-        "ക്ഷമിക്കണം, ഈ കോളിൽ ഞങ്ങളുടെ കോൺടാക്റ്റ് നമ്പർ പറയാൻ കഴിയില്ല — "
-        "നിങ്ങളുടെ നമ്പർ തന്നാൽ, ടീം ബന്ധപ്പെടാം."
+        "ക്ഷമിക്കണം, ഈ കോളിൽ ഞങ്ങളുടെ കോൺടാക്റ്റ് നമ്പർ പറയാൻ കഴിയില്ല."
     ),
     "mr-IN": (
-        "माफ करा, या कॉलवर आमचा संपर्क क्रमांक देऊ शकत नाही — "
-        "आपला नंबर सांगा, आमची टीम संपर्क करेल."
+        "माफ करा, या कॉलवर आमचा संपर्क क्रमांक देऊ शकत नाही."
     ),
     "bn-IN": (
-        "মাফ করবেন, এই কলে আমাদের যোগাযোগ নম্বর দেওয়া সম্ভব নয় — "
-        "আপনার নম্বরটি দিলে, আমাদের টিম যোগাযোগ করবে।"
+        "মাফ করবেন, এই কলে আমাদের যোগাযোগ নম্বর দেওয়া সম্ভব নয়।"
     ),
     "gu-IN": (
-        "માફ કરશો, આ કૉલ પર અમારો સંપર્ક નંબર આપી શકાય નહીં — "
-        "તમારો નંબર આપો, અમારી ટીમ સંપર્ક કરશે."
+        "માફ કરશો, આ કૉલ પર અમારો સંપર્ક નંબર આપી શકાય નહીં."
     ),
     "pa-IN": (
-        "ਮਾਫ਼ ਕਰਨਾ, ਇਸ ਕਾਲ 'ਤੇ ਸਾਡਾ ਸੰਪਰਕ ਨੰਬਰ ਨਹੀਂ ਦੱਸ ਸਕਦੇ — "
-        "ਆਪਣਾ ਨੰਬਰ ਦੱਸੋ ਜੀ, ਸਾਡੀ ਟੀਮ ਸੰਪਰਕ ਕਰੇਗੀ।"
+        "ਮਾਫ਼ ਕਰਨਾ, ਇਸ ਕਾਲ 'ਤੇ ਸਾਡਾ ਸੰਪਰਕ ਨੰਬਰ ਨਹੀਂ ਦੱਸ ਸਕਦੇ।"
     ),
 }
 
 CALLER_DETAIL_CAPTURE = """CALLER DETAILS (mandatory)
-- Once they agree to talk, ask their preferred name at the first natural pause if unknown, before other lead details. Answer an immediate question first. Use their name naturally; never guess it or insist after they decline.
+- Once they agree to talk, ask their preferred name at a natural pause only if the applicable business workflow needs and permits it and it is unknown. Answer an immediate question first. Use their name naturally; never guess it or insist after they decline.
 - On outbound PSTN calls the dialed customer number is ALREADY KNOWN. Never ask them to dictate it again, including for a callback — only if they explicitly request a different one. The business caller ID is not the customer number.
 - Ask only for details the script needs: if the name is unknown, ask the name, not the known number. This overrides generic script examples asking for a phone number.
 - When they share details: acknowledge in one beat and continue. Never re-ask clear details. Confirm only an uncertain part once instead of guessing. Do not read their digits back. Acknowledging information in this call is not proof it was saved or sent; claim persistence or a completed action only after tool success."""
@@ -139,7 +127,7 @@ OVERLAP_RULES = """OVERLAP
 
 
 def normalize_compile_language(code: str | None) -> str:
-    from server.config.constants import coerce_supported_language, normalize_supported_language
+    from server.config.constants import normalize_supported_language
 
     raw = (code or "te-IN").strip()
     if raw in SPOKEN_PACKS:
@@ -147,7 +135,7 @@ def normalize_compile_language(code: str | None) -> str:
     mapped = normalize_supported_language(raw)
     if mapped in SPOKEN_PACKS:
         return mapped
-    return coerce_supported_language(raw)
+    raise ValueError(f"Unsupported language locale: {raw}")
 
 
 UNCLEAR_FALLBACK: dict[str, str] = {
@@ -240,7 +228,7 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
 - Use only reasons allowed by CALL END POLICY: a confirmed end request, firm refusal, confirmed callback, or completed script objective with the agreed next step confirmed; handle abuse only as that policy permits. Never hang up on okay/thanks alone. After the final farewell, let playback finish and disconnect promptly.
 - {LIVE_REPLY_BREVITY_RULE}
 - {DECISIVE_TURN_DISCIPLINE}
-- Start with the useful answer or acknowledgement immediately. Do not narrate plans such as 'I will clarify' or explain internal capabilities. For a firm refusal: one concise closing line and end_call. For 'call me later/tomorrow', 'contact me tomorrow', or 'record my name and phone': if name or phone is still missing (the dialed outbound number counts as known), ask ONLY that field — no pitch, no goodbye. Once you have it, confirm the callback in one line, farewell, end_call. Never claim a slot is booked unless a scheduling tool succeeded.
+- Start with the useful answer or acknowledgement immediately. Do not narrate plans such as 'I will clarify' or explain internal capabilities. For a firm refusal: one concise closing line and end_call. For a requested callback or detail capture: first check the business permits and supports it. If so, ask only a required missing field (the dialed outbound number counts as known), without a pitch. Confirm completion only after a successful tool result. Otherwise explain the limitation without collecting forbidden details or inventing a follow-up. Never claim a slot is booked unless a scheduling tool succeeded.
 - Follow the configured role: support, scheduling and information agents must not adopt a sales pitch. Answer naturally, with at most one next question; never re-ask a known fact.
 - Sales loop when role allows: Understand → Answer first → Discover one useful field → Recommend → Next step. After need is clear, never re-ask interest. Dense fact dumps: use all facts; do not checklist. Frustration ("I already told you"): own it and move forward.
 - Follow the relevant script objectives and required disclosures. Skip answered questions and inapplicable branches. After an interruption, address the caller's latest need before the next useful step. Respect refusal and stop requests; never insist on optional qualification after the caller is done.

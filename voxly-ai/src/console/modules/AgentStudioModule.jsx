@@ -817,6 +817,7 @@ export function AgentStudioModule({
         }
         const loaded = {
           ...base,
+          brainRevision: data?.draft?.revision,
           script: initialScript,
           greeting: initialGreeting,
           boundaries: studio.boundaries ?? base.boundaries,
@@ -903,6 +904,8 @@ export function AgentStudioModule({
         }
         const updated = await updateAgent(selectedAgent.id, formData);
         setPublishedVersion(updated?.publication?.compiled_version || null);
+        const publishedForm = { ...formData, brainRevision: updated?.publication?.draft_revision || formData.brainRevision };
+        setFormData(publishedForm);
         try {
           await api.agents.saveTelephonyProfile(selectedAgent.id, {
             greetingPhrase: formData.greeting || '',
@@ -911,7 +914,7 @@ export function AgentStudioModule({
           throw new Error('The script was published, but the opening greeting could not be confirmed. Your edits have been kept; retry Save.');
         }
         // Re-baseline: after a successful publish there is nothing left to guard.
-        setSavedSnapshot(snapForm(formData));
+        setSavedSnapshot(snapForm(publishedForm));
       }
       if (settingsDirty && settingsSaveRef.current) {
         const ok = await settingsSaveRef.current();

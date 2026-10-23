@@ -3,11 +3,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from server.call.call_end_policy import CLOSING_TOOL_DESCRIPTION
 from server.services.voice_pipeline_limits import LIVE_MAX_OUTPUT_TOKENS as _LIVE_MAX_OUTPUT_TOKENS
 from server.services.voice_pipeline_limits import LIVE_REPLY_BREVITY_RULE
 
 DEFAULT_REALTIME_MODEL = "gpt-realtime-2.1-mini"
-DEFAULT_HTTP_LLM_MODEL = "gpt-5.6-luna"
+DEFAULT_HTTP_LLM_MODEL = "gpt-6-luna"
 LIVE_MAX_OUTPUT_TOKENS = _LIVE_MAX_OUTPUT_TOKENS
 # Audio E2E bills output as audio tokens (~dozens per second of speech). The text
 # live cap (240) truncates greetings mid-word. OpenAI default for audio is 4096.
@@ -122,20 +123,7 @@ END_CALL_REASONS: tuple[str, ...] = (
 END_CALL_TOOL: dict[str, Any] = {
     "type": "function",
     "name": "end_call",
-    "description": (
-        "Judge the call and hang up when the caller has confirmed they are done. "
-        "Call this in the SAME turn as your spoken farewell. "
-        "Use firm_refusal when they are not interested; goodbye when they say bye/hang up/"
-        "cut the call/that's-all/don't-call/'can you call this call' (ASR for cut)/I'm sleeping/"
-        "I have to go. Use goal_complete only after they confirmed a callback/visit and any "
-        "name/phone they asked you to record is captured — never on okay/thanks alone. "
-        "For 'call me tomorrow' or 'record my name and phone', ask only a still-missing field, "
-        "then confirm and close. Never invent a manager. "
-        "The server waits after farewell and disconnects only if they stay silent; "
-        "if they speak again, stay on the line. "
-        "Do NOT call for information questions, uncertainty, busy without an end/callback, "
-        "or a bare okay/thanks."
-    ),
+    "description": CLOSING_TOOL_DESCRIPTION,
     "parameters": {
         "type": "object",
         "additionalProperties": False,

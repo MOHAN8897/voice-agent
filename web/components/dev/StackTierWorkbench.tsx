@@ -49,7 +49,7 @@ function defaultForm(row?: TierRow["resolved"]): StackForm {
     sttProvider: row?.stt?.provider || "sarvam",
     sttModel: row?.stt?.model || "saaras:v3",
     llmProvider: row?.llm?.provider || "openai",
-    llmModel: row?.llm?.model || "gpt-5.6-luna",
+    llmModel: row?.llm?.model || "gpt-6-luna",
     ttsProvider: row?.tts?.provider || "sarvam",
     ttsModel: row?.tts?.model || "bulbul:v3",
     language: row?.language || "te-IN",

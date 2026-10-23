@@ -143,8 +143,9 @@ class InstructionStore:
         template_version: int = 1,
         prompt_version: int = 1,
         model_name: str | None = None,
+        generation_config: dict | None = None,
     ) -> dict:
-        """Save short agent brief + GPT-expanded calling script as cached brain."""
+        """Save a compiled script and the configuration used to generate it."""
         brief = sanitize_agent_brief(agent_brief or "")
         script = sanitize_agent_script(agent_script or "")
         with self._lock:
@@ -162,11 +163,14 @@ class InstructionStore:
                 "business": "",
                 "agentBrief": brief,
                 "agentScript": script,
-                "agentSpec": agent_spec if agent_spec is not None else prev.get("agentSpec"),
+                "agentSpec": agent_spec if agent_spec is not None else (
+                    optimizer_report.get("agent_spec") if not optimizer_report.get("user_edited") else None
+                ),
+                "generationConfig": dict(generation_config or optimizer_report.get("generation_config") or {}),
                 "specVersion": spec_version or prev.get("specVersion", 1),
                 "templateVersion": template_version or prev.get("templateVersion", 1),
                 "promptVersion": prompt_version or prev.get("promptVersion", 1),
-                "model": model_name or prev.get("model"),
+                "model": model_name or optimizer_report.get("optimizer_model"),
                 "style": style_val,
                 "brainPrompt": compiled_brain,
                 "customBrainPrompt": False,
@@ -258,6 +262,7 @@ class InstructionStore:
             "language": e.get("language") or "te-IN",
             "callEndPolicy": _resolve_policy(e.get("callEndPolicy"), e.get("language") or "te-IN"),
             "agentSpec": e.get("agentSpec"),
+            "generationConfig": e.get("generationConfig") or {},
             "specVersion": e.get("specVersion", 1),
             "templateVersion": e.get("templateVersion", 1),
             "promptVersion": e.get("promptVersion", 1),
@@ -478,6 +483,7 @@ class InstructionStore:
                     "callEndPolicy": _resolve_policy(None, "te-IN"),
                     "language": "te-IN",
                     "agentSpec": None,
+                    "generationConfig": {},
                     "specVersion": 1,
                     "templateVersion": 1,
                     "promptVersion": 1,
@@ -513,6 +519,7 @@ class InstructionStore:
                 "callEndPolicy": _resolve_policy(e.get("callEndPolicy"), e.get("language") or "te-IN"),
                 "language": e.get("language") or "te-IN",
                 "agentSpec": e.get("agentSpec"),
+                "generationConfig": e.get("generationConfig") or {},
                 "specVersion": e.get("specVersion", 1),
                 "templateVersion": e.get("templateVersion", 1),
                 "promptVersion": e.get("promptVersion", 1),

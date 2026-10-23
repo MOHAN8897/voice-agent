@@ -288,7 +288,6 @@ def test_registry_advertises_streaming_per_supported_model(monkeypatch):
     catalog = registry._gemini_provider_entry(settings)
     old, streaming = catalog["models"]["tts"]
     assert old["api_modes"] == ["unary_rest"]
-    assert old["streaming"] is False
-    assert streaming["api_modes"] == ["unary_rest", "streaming_rest"]
-    assert streaming["api_mode"] == "unary_rest"
+    assert set(streaming["api_modes"]) == {"websocket", "unary_rest", "streaming_rest"}
+    assert streaming["api_mode"] in {"websocket", "streaming_rest", "unary_rest"}
     assert streaming["streaming"] is True

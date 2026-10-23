@@ -28,6 +28,7 @@ export const PRICING = {
         "gpt-realtime-2.1-mini": { input: 0.6, cachedInput: 0.06, cacheWrite: 0.6, output: 2.4 },
         "gpt-realtime-2.1": { input: 4.0, cachedInput: 0.4, cacheWrite: 4.0, output: 24.0 },
         "gpt-realtime-2": { input: 4.0, cachedInput: 0.4, cacheWrite: 4.0, output: 24.0 },
+        "gpt-6-luna": { input: 0.2, cachedInput: 0.02, cacheWrite: 0.25, output: 1.2 },
         "gpt-5.6-luna": { input: 0.2, cachedInput: 0.02, cacheWrite: 0.25, output: 1.2 },
         "gpt-5.5": { input: 5.0, cachedInput: 0.5, cacheWrite: 6.25, output: 30.0 },
         "gpt-5.4": { input: 2.5, cachedInput: 0.25, cacheWrite: 3.125, output: 15.0 },
@@ -87,6 +88,7 @@ export type PricingMeta = {
   "openai:gpt-realtime-2.1-mini"?: LlmRateMeta;
   "openai:gpt-realtime-2.1"?: LlmRateMeta;
   "openai:gpt-realtime-2"?: LlmRateMeta;
+  "openai:gpt-6-luna"?: LlmRateMeta;
   "openai:gpt-5.6-luna"?: LlmRateMeta;
   "openai:gpt-5.5"?: LlmRateMeta;
   "openai:gpt-5.4"?: LlmRateMeta;

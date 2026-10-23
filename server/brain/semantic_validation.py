@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from server.brain.sections import SECTION_MAX_CHARS, SECTION_REQUIRED_TYPES, SECTION_TYPES
+from server.agent.brain_prompt_composer import MAX_AGENT_SCRIPT_CHARS
 
 
 @dataclass
@@ -56,12 +57,13 @@ def validate_sections(sections: list[dict[str, Any]]) -> ValidationResult:
             continue
         by_type.setdefault(stype, []).append(s)
         raw = str(s.get("raw_text") or "")
-        if len(raw) > SECTION_MAX_CHARS:
+        char_limit = MAX_AGENT_SCRIPT_CHARS if s.get("title") == "Calling script" else SECTION_MAX_CHARS
+        if len(raw) > char_limit:
             issues.append(
                 ValidationIssue(
                     "blocking",
                     "section_too_long",
-                    f"Section '{s.get('title')}' exceeds {SECTION_MAX_CHARS} characters",
+                    f"Section '{s.get('title')}' exceeds {char_limit} characters",
                     [str(s.get("section_id", ""))],
                 )
             )

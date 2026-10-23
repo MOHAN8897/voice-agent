@@ -41,7 +41,7 @@ def test_canonical_voice_tier_allows_custom_and_premium():
 
 
 def test_recommended_composed_profile_premium():
-    prof = recommended_composed_profile("premium")
+    prof = recommended_composed_profile("premium", allow_premium=True)
     assert prof["schemaVersion"] == 1
     assert prof["stt"]["provider"] == "gemini"
     assert prof["stt"]["model"] == "gemini-3.8-live-audio"
@@ -149,3 +149,80 @@ def test_catalog_refresh_fx_fallback():
         catalog = {"providers": []}
         result = apply_live_fx_to_catalog(catalog)
         assert result.get("fx_rate_inr") == 94.0
+
+
+@pytest.mark.asyncio
+async def test_voice_stacks_catalog_includes_custom_duplicated_tiers():
+    from server.routes.voice_stacks import voice_stack_catalog
+
+    mock_records = {
+        "low": {"profile": {"enabled": True, "engines": []}, "revision": 1},
+        "medium": {"profile": {"enabled": True, "engines": []}, "revision": 1},
+        "low_copy_1": {
+            "profile": {
+                "label": "Custom Regional Stack",
+                "enabled": True,
+                "supportedLanguages": ["te-IN"],
+                "evidence": {
+                    "sarvamModelAccess": True,
+                    "sttVerified": True,
+                    "ttsCatalogVerified": True,
+                    "toolsVerified": True,
+                    "capacityVerified": True,
+                    "mediaFormatsVerified": True,
+                    "credentialRefConfigured": True,
+                },
+                "stt": {"provider": "sarvam", "model": "saaras:v2"},
+                "llm": {"provider": "gemini", "modelId": "gemini-2.0-flash", "apiMode": "chat_completions_v1"},
+                "engines": [
+                    {
+                        "id": "gnani-engine",
+                        "label": "Gnani Indian Speech",
+                        "models": [
+                            {
+                                "id": "timbre-v3.0",
+                                "label": "Timbre Expressive",
+                                "provider": "gnani",
+                                "model": "timbre-v3.0",
+                                "apiMode": "websocket",
+                                "voices": [
+                                    {"id": "voice-gnani-1", "label": "Voice 1", "languages": ["te-IN"]},
+                                    {"id": "voice-gnani-3", "label": "Voice 3", "languages": ["te-IN"]},
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            "revision": 2,
+            "publicAliases": {
+                "engines": {"gnani-engine": "eng_gnani_1"},
+                "models": {"gnani-engine::timbre-v3.0": "mod_gnani_1"},
+                "voices": {
+                    "gnani-engine::timbre-v3.0::voice-gnani-1": "voc_gnani_1",
+                    "gnani-engine::timbre-v3.0::voice-gnani-3": "voc_gnani_3",
+                },
+            },
+        },
+    }
+
+    mock_rates = {
+        "pstn_low_rate_usd_micros_per_min": 50000,
+        "pstn_low_rate_inr_paise_per_min": 450,
+        "low_rate_version": 1,
+        "pstn_rate_usd_micros_per_min": 150000,
+        "pstn_rate_inr_paise_per_min": 1400,
+        "version": 1,
+    }
+
+    with patch("server.routes.voice_stacks.load_profile_records", AsyncMock(return_value=mock_records)):
+        with patch("server.routes.voice_stacks._load_rates_without_fallback", AsyncMock(return_value=mock_rates)):
+            with patch("server.services.saas.voice_stack_profiles._runtime_profile_blockers", return_value=[]):
+                res = await voice_stack_catalog(language="te-IN")
+            assert "profiles" in res
+            tier_names = [p["tier"] for p in res["profiles"]]
+            assert "low_copy_1" in tier_names
+            custom_p = next(p for p in res["profiles"] if p["tier"] == "low_copy_1")
+            assert custom_p["label"] == "Custom Regional Stack"
+            assert custom_p["tier"] == "low_copy_1"
+            assert custom_p["ready"] is True

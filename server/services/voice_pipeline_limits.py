@@ -71,8 +71,8 @@ LIVE_REPLY_BREVITY_RULE = (
     "- A short yes, acknowledgement or thanks is enough when it answers the caller; never pad it to a minimum length.\n"
     f"- Soft target {LIVE_REPLY_SOFT_MAX_CHARS}, hard ceiling {LIVE_REPLY_MAX_CHARS} characters; "
     "never cut a sentence merely to hit the soft target.\n"
-    "- Sound human: a warm acknowledgment plus ONE next question — never two questions. Answer, then stop. "
-    "Use the caller's language naturally; do not count characters while speaking. No monologues, brochure dumps, padding, or trailing extras after the question. "
+    "- Sound natural: acknowledge warmly when useful and ask at most one useful unanswered question. Answer, then stop. "
+    "Use the configured primary language naturally; do not count characters while speaking. No monologues, brochure dumps, padding, or trailing extras after the question. "
     "After you ask something, end the turn and wait. Finish the thought. "
     "Never paste a greeting then restart with a second greeting in the same reply."
 )

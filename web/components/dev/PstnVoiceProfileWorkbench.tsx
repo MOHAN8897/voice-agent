@@ -185,14 +185,37 @@ function getVoicesForTtsProvider(provider: string, languages: string[]): VoicePr
   }
   if (provider === "cartesia") {
     return [
-      { id: "voice-cartesia-1", label: "Voice 1 (Female · Conversational)", providerVoiceId: "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", languages: langs },
-      { id: "voice-cartesia-2", label: "Voice 2 (Male · Conversational)", providerVoiceId: "a0e99841-438c-4a64-b679-ae501e7d6091", languages: langs },
+      { id: "voice-cartesia-priya", label: "Priya (Female · Conversational Hindi/Telugu · Indian)", providerVoiceId: "045f0292-0731-4a4c-971d-64594fc2c35a", languages: ["hi-IN", "te-IN", "en-IN", ...langs.filter((l) => !["hi-IN", "te-IN", "en-IN"].includes(l))] },
+      { id: "voice-kiara", label: "Kiara (Female · Hospitality & Onboarding · Indian)", providerVoiceId: "f8f5f1b2-f02d-4d8e-a40d-fd850a487b3d", languages: ["en-IN", "hi-IN", ...langs.filter((l) => !["en-IN", "hi-IN"].includes(l))] },
+      { id: "voice-indian-lady", label: "Indian Lady (Female · Priority Helpdesk · Indian)", providerVoiceId: "3b554273-4299-48b9-9aaf-eefd438e3941", languages: ["en-IN", "hi-IN", "te-IN", ...langs.filter((l) => !["en-IN", "hi-IN", "te-IN"].includes(l))] },
+      { id: "voice-bhavani", label: "Bhavani (Female · Telugu Conversational · Indian)", providerVoiceId: "76961778-84da-4b51-8d42-2e8e6e6a5e8a", languages: ["te-IN", ...langs.filter((l) => l !== "te-IN")] },
+      { id: "voice-aarti", label: "Aarti (Female · Hindi Friendly · Indian)", providerVoiceId: "9cebb910-d4b7-4a4a-85a4-12c79137724c", languages: ["hi-IN", ...langs.filter((l) => l !== "hi-IN")] },
+      { id: "voice-maya", label: "Maya (Female · Indian English Clear · Indian)", providerVoiceId: "79a125e8-cd45-4c13-8a67-0491c5ad1b8a", languages: ["en-IN", ...langs.filter((l) => l !== "en-IN")] },
+      { id: "voice-devansh", label: "Devansh (Male · Indian English Crisp · Indian)", providerVoiceId: "87a983d8-3471-4c4b-9ade-f1d10a4110ac", languages: ["en-IN", ...langs.filter((l) => l !== "en-IN")] },
+      { id: "voice-krishna", label: "Krishna (Male · Financial & Advisory · Indian)", providerVoiceId: "efa653e5-314d-46ca-9f90-70ac7d6ca71e", languages: ["te-IN", "hi-IN", "en-IN", ...langs.filter((l) => !["te-IN", "hi-IN", "en-IN"].includes(l))] },
+      { id: "voice-aarav", label: "Aarav (Male · Sales & Announcements · Indian)", providerVoiceId: "39d518b7-fd0b-4676-9b8b-29d64ff31e12", languages: ["en-IN", "hi-IN", ...langs.filter((l) => !["en-IN", "hi-IN"].includes(l))] },
+      { id: "voice-charan", label: "Charan (Male · Telugu Conversational · Indian)", providerVoiceId: "82c2afc8-4f0d-4c3e-9c3e-8e8e8e8e8e8e", languages: ["te-IN", ...langs.filter((l) => l !== "te-IN")] },
+      { id: "voice-amrit", label: "Amrit (Male · Hindi Professional · Indian)", providerVoiceId: "97303aad-0000-0000-0000-000000000001", languages: ["hi-IN", ...langs.filter((l) => l !== "hi-IN")] },
+      { id: "voice-sarah", label: "Sarah (Female · Conversational Assistant)", providerVoiceId: "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", languages: langs },
+      { id: "voice-caleb", label: "Caleb (Male · Upbeat & Friendly)", providerVoiceId: "a0e99841-438c-4a64-b679-ae501e7d6091", languages: langs },
+      { id: "voice-jacqueline", label: "Jacqueline (Female · Warm Customer Support)", providerVoiceId: "694f9389-aac1-45b6-b726-9d9369183238", languages: langs },
+      { id: "voice-michael", label: "Michael (Male · Professional & Clear)", providerVoiceId: "47c38ca4-ff9b-4e89-a2e1-456956b46452", languages: langs },
+      { id: "voice-skylar", label: "Skylar (Female · Empathetic & Natural)", providerVoiceId: "5c5ac573-455b-4d85-8ccb-a78c187bc954", languages: langs },
+      { id: "voice-daniel", label: "Daniel (Male · Authoritative Presenter)", providerVoiceId: "79a125e8-cd45-4c13-8a67-188112f4dd22", languages: langs },
+      { id: "voice-katie", label: "Katie (Female · Bright & Energetic)", providerVoiceId: "f114a346-765b-4ff2-8067-1601d0a52026", languages: langs },
+      { id: "voice-leo", label: "Leo (Male · Calm Storyteller)", providerVoiceId: "b7d50908-b47d-4404-be6c-033100685600", languages: langs },
     ];
   }
   if (provider === "gnani") {
     return [
-      { id: "voice-gnani-1", label: "Voice 1 (Female · Conversational)", providerVoiceId: "Nalini", languages: langs },
-      { id: "voice-gnani-2", label: "Voice 2 (Male · Conversational)", providerVoiceId: "Pranav", languages: langs },
+      { id: "voice-nalini", label: "Nalini (Female · Warm & Expressive)", providerVoiceId: "Nalini", languages: langs },
+      { id: "voice-shivani", label: "Shivani (Female · Clear Conversational)", providerVoiceId: "Shivani", languages: langs },
+      { id: "voice-lakshmi", label: "Lakshmi (Female · Soft & Engaging)", providerVoiceId: "Lakshmi", languages: langs },
+      { id: "voice-chitra", label: "Chitra (Female · Professional Support)", providerVoiceId: "Chitra", languages: langs },
+      { id: "voice-pranav", label: "Pranav (Male · Crisp & Natural)", providerVoiceId: "Pranav", languages: langs },
+      { id: "voice-avinash", label: "Avinash (Male · Authoritative & Calm)", providerVoiceId: "Avinash", languages: langs },
+      { id: "voice-prakash", label: "Prakash (Male · Direct & Warm)", providerVoiceId: "Prakash", languages: langs },
+      { id: "voice-sanjay", label: "Sanjay (Male · Dynamic Outreach)", providerVoiceId: "Sanjay", languages: langs },
     ];
   }
   // gemini
@@ -317,6 +340,8 @@ export function PstnVoiceProfileWorkbench() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [providers, setProviders] = useState<CatalogProvider[]>([]);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<string>("");
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Audio preview playback state
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
@@ -530,41 +555,134 @@ export function PstnVoiceProfileWorkbench() {
     return TTS_MODELS_BY_PROVIDER[currentTtsProvider] || [{ id: "default", label: "Default Speech Model", apiMode: "websocket" }];
   }, [providers, currentTtsProvider]);
 
+  async function executeSaveProfile(targetDraft?: ComposedProfile, customLabel?: string) {
+    const activeDraft = targetDraft || draft;
+    const labelVal = (customLabel !== undefined ? customLabel : tierLabelInput).trim() || DEFAULT_TIER_LABELS[selected] || selected;
+    const ttsProv = activeDraft.engines[0]?.models[0]?.provider || currentTtsProvider;
+    const ttsMdl = activeDraft.engines[0]?.models[0]?.model || currentTtsModel;
+    const matchedTtsModel = (TTS_MODELS_BY_PROVIDER[ttsProv] || []).find((m) => m.id === ttsMdl);
+    const languages = activeDraft.supportedLanguages.length > 0
+      ? activeDraft.supportedLanguages
+      : ["te-IN", "hi-IN", "en-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN", "bn-IN", "gu-IN", "pa-IN"];
+    const voices = getVoicesForTtsProvider(ttsProv, languages);
+
+    const payload: ComposedProfile = {
+      schemaVersion: 1,
+      enabled: isEnabled,
+      label: labelVal,
+      supportedLanguages: languages,
+      stt: {
+        provider: activeDraft.stt.provider || (selected === "premium" ? "gemini" : "sarvam"),
+        model: activeDraft.stt.model || (selected === "premium" ? "gemini-3.8-live-audio" : "saaras:v2"),
+      },
+      llm: {
+        provider: activeDraft.llm.provider || "gemini",
+        modelId: activeDraft.llm.modelId || (selected === "premium" ? "gemini-3.8-live" : "gemini-2.0-flash"),
+        apiMode: activeDraft.llm.apiMode || (selected === "premium" ? "websocket" : "chat_completions_v1"),
+      },
+      engines: [
+        {
+          id: ttsProv,
+          label: ttsProv === "sarvam" ? "Sarvam Bulbul" : ttsProv === "gemini" ? "Gemini TTS" : ttsProv === "cartesia" ? "Cartesia Sonic" : "Gnani.ai Timbre",
+          models: [
+            {
+              id: ttsMdl,
+              label: ttsMdl,
+              provider: ttsProv,
+              model: ttsMdl,
+              apiMode: matchedTtsModel?.apiMode || activeDraft.engines[0]?.models[0]?.apiMode || "websocket",
+              voices,
+            },
+          ],
+        },
+      ],
+      evidence: { ...EMPTY_EVIDENCE },
+    };
+
+    const expectedRev = selectedRow?.profileRevision !== null && selectedRow?.profileRevision !== undefined
+      ? selectedRow.profileRevision
+      : 0;
+
+    setAutoSaveStatus("⚡ Auto-saving changes…");
+    try {
+      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${selected}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          expectedRevision: expectedRev,
+          composedProfile: payload,
+        }),
+      });
+
+      if (!response.ok) throw new Error(await responseError(response));
+      await response.json().catch(() => null);
+      await loadProfiles(false);
+      setAutoSaveStatus("✓ Auto-saved & applied globally");
+      setDirty(false);
+      setTimeout(() => setAutoSaveStatus(""), 3500);
+    } catch (caught) {
+      setAutoSaveStatus("⚠️ Save error");
+      setError(caught instanceof Error ? caught.message : "Could not save tier configuration.");
+    }
+  }
+
+  function triggerAutoSave(nextDraft: ComposedProfile, customLabel?: string, delayMs: number = 0) {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    if (delayMs > 0) {
+      setAutoSaveStatus("Typing…");
+      autoSaveTimerRef.current = setTimeout(() => {
+        void executeSaveProfile(nextDraft, customLabel);
+      }, delayMs);
+    } else {
+      void executeSaveProfile(nextDraft, customLabel);
+    }
+  }
+
   function handleSttProviderChange(provider: string) {
     const models = STT_MODELS_BY_PROVIDER[provider] || [];
     const firstModel = models[0]?.id || "default";
-    setDraft((curr) => ({
-      ...curr,
+    const nextDraft = {
+      ...draft,
       stt: { provider, model: firstModel },
-    }));
-    setDirty(true);
+    };
+    setDraft(nextDraft);
+    setDirty(false);
+    triggerAutoSave(nextDraft);
   }
 
   function handleSttModelChange(model: string) {
-    setDraft((curr) => ({
-      ...curr,
-      stt: { ...curr.stt, model },
-    }));
-    setDirty(true);
+    const nextDraft = {
+      ...draft,
+      stt: { ...draft.stt, model },
+    };
+    setDraft(nextDraft);
+    setDirty(false);
+    triggerAutoSave(nextDraft);
   }
 
   function handleLlmProviderChange(provider: string) {
     const models = LLM_MODELS_BY_PROVIDER[provider] || [];
     const first = models[0] || { id: "default", apiMode: "chat_completions_v1" };
-    setDraft((curr) => ({
-      ...curr,
+    const nextDraft = {
+      ...draft,
       llm: { provider, modelId: first.id, apiMode: first.apiMode },
-    }));
-    setDirty(true);
+    };
+    setDraft(nextDraft);
+    setDirty(false);
+    triggerAutoSave(nextDraft);
   }
 
   function handleLlmModelChange(modelId: string) {
     const matched = currentLlmModels.find((m) => m.id === modelId);
-    setDraft((curr) => ({
-      ...curr,
-      llm: { ...curr.llm, modelId, apiMode: matched?.apiMode || "chat_completions_v1" },
-    }));
-    setDirty(true);
+    const nextDraft = {
+      ...draft,
+      llm: { ...draft.llm, modelId, apiMode: matched?.apiMode || "chat_completions_v1" },
+    };
+    setDraft(nextDraft);
+    setDirty(false);
+    triggerAutoSave(nextDraft);
   }
 
   function handleTtsProviderChange(provider: string) {
@@ -573,8 +691,8 @@ export function PstnVoiceProfileWorkbench() {
     const languages = draft.supportedLanguages.length > 0 ? draft.supportedLanguages : ["te-IN", "hi-IN", "en-IN"];
     const voices = getVoicesForTtsProvider(provider, languages);
 
-    setDraft((curr) => ({
-      ...curr,
+    const nextDraft: ComposedProfile = {
+      ...draft,
       engines: [
         {
           id: provider,
@@ -591,8 +709,10 @@ export function PstnVoiceProfileWorkbench() {
           ],
         },
       ],
-    }));
-    setDirty(true);
+    };
+    setDraft(nextDraft);
+    setDirty(false);
+    triggerAutoSave(nextDraft);
   }
 
   function handleTtsModelChange(model: string) {
@@ -600,28 +720,57 @@ export function PstnVoiceProfileWorkbench() {
     const languages = draft.supportedLanguages.length > 0 ? draft.supportedLanguages : ["te-IN", "hi-IN", "en-IN"];
     const voices = getVoicesForTtsProvider(currentTtsProvider, languages);
 
-    setDraft((curr) => {
-      const engines = [...curr.engines];
-      const engine = { ...(engines[0] || { id: currentTtsProvider, label: currentTtsProvider, models: [] }) };
-      engine.models = [
-        {
-          id: model,
-          label: model,
-          provider: currentTtsProvider,
-          model,
-          apiMode: matched?.apiMode || "websocket",
-          voices,
-        },
-      ];
-      return { ...curr, engines: [engine] };
-    });
-    setDirty(true);
+    const engines = [...draft.engines];
+    const engine = { ...(engines[0] || { id: currentTtsProvider, label: currentTtsProvider, models: [] }) };
+    engine.models = [
+      {
+        id: model,
+        label: model,
+        provider: currentTtsProvider,
+        model,
+        apiMode: matched?.apiMode || "websocket",
+        voices,
+      },
+    ];
+    const nextDraft: ComposedProfile = { ...draft, engines: [engine] };
+    setDraft(nextDraft);
+    setDirty(false);
+    triggerAutoSave(nextDraft);
   }
 
   function handleTierLabelChange(val: string) {
     setTierLabelInput(val);
-    setDraft((curr) => ({ ...curr, label: val }));
-    setDirty(true);
+    const nextDraft = { ...draft, label: val };
+    setDraft(nextDraft);
+    triggerAutoSave(nextDraft, val, 700);
+  }
+
+  async function handleDeleteTier(tierToDelete: string) {
+    if (["low", "medium", "premium"].includes(tierToDelete)) {
+      setError("Core tiers (Economical, Standard, and Flagship) cannot be deleted.");
+      return;
+    }
+    const tierRow = rows.find((r) => r.tier === tierToDelete);
+    const label = tierRow?.label || tierToDelete;
+    if (!window.confirm(`Are you sure you want to delete the tier "${label}" (${tierToDelete})? This will permanently remove it from the platform.`)) {
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setStatus("");
+    try {
+      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${tierToDelete}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error(await responseError(response));
+      await loadProfiles(false);
+      setSelected("medium");
+      setStatus(`Tier "${label}" (${tierToDelete}) was deleted successfully.`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not delete tier.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleSaveProfile() {
@@ -630,61 +779,8 @@ export function PstnVoiceProfileWorkbench() {
     setError("");
     setStatus("");
     try {
-      const languages = draft.supportedLanguages.length > 0
-        ? draft.supportedLanguages
-        : ["te-IN", "hi-IN", "en-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN", "bn-IN", "gu-IN", "pa-IN"];
-      const voices = getVoicesForTtsProvider(currentTtsProvider, languages);
-
-      const payload: ComposedProfile = {
-        schemaVersion: 1,
-        enabled: isEnabled,
-        label: tierLabelInput.trim() || DEFAULT_TIER_LABELS[selected] || selected,
-        supportedLanguages: languages,
-        stt: {
-          provider: draft.stt.provider || (selected === "premium" ? "gemini" : "sarvam"),
-          model: draft.stt.model || (selected === "premium" ? "gemini-3.8-live-audio" : "saaras:v2"),
-        },
-        llm: {
-          provider: draft.llm.provider || "gemini",
-          modelId: draft.llm.modelId || (selected === "premium" ? "gemini-3.8-live" : "gemini-2.0-flash"),
-          apiMode: draft.llm.apiMode || (selected === "premium" ? "websocket" : "chat_completions_v1"),
-        },
-        engines: [
-          {
-            id: currentTtsProvider,
-            label: currentTtsProvider === "sarvam" ? "Sarvam Bulbul" : currentTtsProvider === "gemini" ? "Gemini TTS" : currentTtsProvider === "cartesia" ? "Cartesia Sonic" : "Gnani.ai Timbre",
-            models: [
-              {
-                id: currentTtsModel,
-                label: currentTtsModel,
-                provider: currentTtsProvider,
-                model: currentTtsModel,
-                apiMode: currentTtsModelObj?.apiMode || "websocket",
-                voices,
-              },
-            ],
-          },
-        ],
-        evidence: { ...EMPTY_EVIDENCE },
-      };
-
-      const expectedRev = selectedRow?.profileRevision !== null && selectedRow?.profileRevision !== undefined
-        ? selectedRow.profileRevision
-        : 0;
-
-      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${selected}`, {
-        method: "PUT",
-        body: JSON.stringify({
-          expectedRevision: expectedRev,
-          composedProfile: payload,
-        }),
-      });
-
-      if (!response.ok) throw new Error(await responseError(response));
-      await response.json().catch(() => null);
-      await loadProfiles(false);
+      await executeSaveProfile();
       setStatus(`Configuration saved for ${tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected}. Applied globally.`);
-      setDirty(false);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not save tier configuration.");
     } finally {
@@ -1053,17 +1149,31 @@ export function PstnVoiceProfileWorkbench() {
               </div>
             </div>
 
-            {/* Duplicate Stack Button */}
+            {/* Tier Actions (Duplicate + Delete) */}
             <div className="flex flex-col gap-1.5 md:items-end">
-              <span className="text-xs font-medium text-text-muted">Stack Replication</span>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={handleOpenDuplicateModal}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-surface-border bg-surface-card px-3 py-1.5 text-xs font-semibold text-text hover:border-surface-border-subtle hover:bg-surface-raised transition-colors shadow-sm"
-              >
-                <span>📋 Duplicate Stack as New Tier</span>
-              </button>
+              <span className="text-xs font-medium text-text-muted">Tier Actions</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={handleOpenDuplicateModal}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-surface-border bg-surface-card px-3 py-1.5 text-xs font-semibold text-text hover:border-surface-border-subtle hover:bg-surface-raised transition-colors shadow-sm"
+                  title="Replicate this stack configuration as a new tier"
+                >
+                  <span>📋 Duplicate</span>
+                </button>
+                {!["low", "medium", "premium"].includes(selected) && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void handleDeleteTier(selected)}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 transition-colors shadow-sm"
+                    title="Permanently delete this custom tier"
+                  >
+                    <span>🗑️ Delete Tier</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1393,6 +1503,11 @@ export function PstnVoiceProfileWorkbench() {
             {dirty && (
               <span className="text-xs font-medium text-amber-400">
                 ● Unsaved changes
+              </span>
+            )}
+            {autoSaveStatus && (
+              <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full animate-pulse">
+                {autoSaveStatus}
               </span>
             )}
           </div>

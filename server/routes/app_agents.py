@@ -1,15 +1,20 @@
 """Subscriber agent onboarding helpers."""
 from __future__ import annotations
 
+import hashlib
+import json
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt
-from server.brain.agent_service import agent_service
+from server.brain.agent_service import AgentBuildRequestConflict, agent_service
+from server.brain.brief_contract import BriefValidationError, normalize_generation_config
 from server.brain.script_entities import strip_entity_tags_section
+from server.services.saas import platform_languages
 from server.services.saas.agent_onboarding_compose import compose_agent_onboarding
 from server.services.saas.employee_brain_build import publish_saas_employee_brain
-from server.services.saas import platform_languages
 from server.services.saas.tenant_guard import (
     SubscriberPrincipal,
     require_subscriber_permission,
@@ -51,6 +56,9 @@ class BuildEmployeeBody(BaseModel):
     industry: str = Field("", max_length=120)
     naturalSpokenStyle: bool = False
     employeeName: str = Field("", max_length=255)
+    agentRole: str = Field("", max_length=120)
+    callDirection: str = Field("", max_length=20)
+    requestId: uuid.UUID | None = None
 
 
 @router.post("/api/app/agents/compose-onboarding")
@@ -109,16 +117,68 @@ async def build_employee(
 
     from server.services.saas.employee_brain_build import compile_brief_for_employee
 
+    generation_config = {
+        "employeeName": body.employeeName.strip(),
+        "agentRole": body.agentRole.strip(),
+        "callDirection": body.callDirection.strip(),
+        "mode": body.mode.strip(),
+        "industry": body.industry.strip(),
+        "naturalSpokenStyle": body.naturalSpokenStyle,
+    }
+    claimed_agent = None
+    if body.requestId is not None:
+        try:
+            generation_config = normalize_generation_config(generation_config)
+            fingerprint = hashlib.sha256(json.dumps({
+                "brief": body.brief.strip(), "language": lang,
+                "generationConfig": generation_config,
+            }, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+            claim = await agent_service.claim_build_request(
+                request_id=str(body.requestId), fingerprint=fingerprint, tenant_id=tenant_id,
+                name=body.employeeName.strip() or "Unfinished agent", language=lang,
+            )
+        except BriefValidationError as exc:
+            raise HTTPException(status_code=422, detail={"error": exc.to_dict()}) from exc
+        except AgentBuildRequestConflict as exc:
+            raise HTTPException(status_code=409, detail={"error": {"code": exc.code, "message": str(exc)}}) from exc
+        claimed_agent = claim["agent"]
+        if not claim["created"]:
+            if claim.get("state") == "completed":
+                return claim["response"]
+            if claim.get("state") == "failed":
+                raise HTTPException(status_code=int(claim.get("status_code") or 502), detail={"error": claim.get("error")})
+            raise HTTPException(status_code=409, detail={"error": {
+                "code": "creation_in_progress", "agentId": claimed_agent["agent_id"],
+                "message": "This agent creation is already in progress. Wait before retrying; the same request will not create another agent.",
+            }})
+
+    async def record_failed_request(error: dict, status_code: int) -> None:
+        if claimed_agent is not None:
+            error["agentId"] = claimed_agent["agent_id"]
+            error["draftRetained"] = True
+            try:
+                await agent_service.finish_build_request(claimed_agent["agent_id"], tenant_id=tenant_id, error=error, status_code=status_code)
+            except Exception:  # noqa: BLE001 - retain the failed draft if recording its error fails.
+                error["recoveryRequired"] = True
+
     try:
-        _compiled, script_result, variables = await compile_brief_for_employee(
+        artifact = await compile_brief_for_employee(
             brief=body.brief.strip(),
             language=lang,
+            generation_config=generation_config,
         )
-    except Exception as e:
+    except BriefValidationError as exc:
+        error = exc.to_dict()
+        await record_failed_request(error, 422)
+        raise HTTPException(status_code=422, detail={"error": error}) from exc
+    except Exception as exc:
+        error = {"code": "script_compile_failed", "message": "Script generation failed. Please try again."}
+        await record_failed_request(error, 502)
         raise HTTPException(
-            status_code=400,
-            detail={"error": {"code": "script_compile_failed", "message": str(e)}},
-        )
+            status_code=502,
+            detail={"error": error},
+        ) from exc
+    _compiled, script_result, _variables = artifact
 
     display_name = (
         body.employeeName.strip()
@@ -126,11 +186,10 @@ async def build_employee(
         or "AI Employee"
     )[:255]
 
-    agent = await agent_service.create_agent(
-        name=display_name,
-        tenant_id=tenant_id,
-        languages=[lang],
-    )
+    if claimed_agent is None:
+        agent = await agent_service.create_agent(name=display_name, tenant_id=tenant_id, languages=[lang])
+    else:
+        agent = await agent_service.patch_agent(claimed_agent["agent_id"], {"name": display_name}, tenant_id=tenant_id)
     agent_id = str(agent.get("agent_id") or agent.get("id") or "")
     if not agent_id:
         raise HTTPException(
@@ -144,14 +203,38 @@ async def build_employee(
             brief=body.brief.strip(),
             language=lang,
             voice_config=voice_config,
+            generation_config=generation_config,
+            compiled_artifact=artifact,
         )
-    except Exception as e:
+    except Exception as exc:
+        if claimed_agent is not None:
+            error = exc.to_dict() if isinstance(exc, BriefValidationError) else {"code": "publish_failed", "message": "The script could not be published. An unfinished draft was retained for review."}
+            code = 422 if isinstance(exc, BriefValidationError) else 502
+            await record_failed_request(error, code)
+            raise HTTPException(status_code=code, detail={"error": error}) from exc
+        # This ID was created by this request and has never been returned to the
+        # caller. Cleanup must still enforce the same workspace ownership.
+        cleanup_failed = False
+        try:
+            await agent_service.delete_agent(agent_id, tenant_id=tenant_id)
+        except Exception:  # noqa: BLE001 - cleanup must not hide the publication failure.
+            cleanup_failed = True
+        error = {
+            "code": "publish_failed",
+            "message": "The script could not be published. Please try again.",
+            "cleanupFailed": cleanup_failed,
+        }
+        if isinstance(exc, BriefValidationError):
+            error.update(exc.to_dict())
+        if cleanup_failed:
+            error["agentId"] = agent_id
+            error["message"] += " An unfinished agent remains; remove it before retrying."
         raise HTTPException(
-            status_code=400,
-            detail={"error": {"code": "publish_failed", "message": str(e)}},
-        )
+            status_code=422 if isinstance(exc, BriefValidationError) else 502,
+            detail={"error": error},
+        ) from exc
 
-    return {
+    response = {
         "ok": True,
         "agent": agent,
         "agentId": agent_id,
@@ -160,4 +243,9 @@ async def build_employee(
         "script": strip_entity_tags_section(published.get("script") or ""),
         "variables": published.get("variables"),
         "source": "agent_script_compiler",
+        "generation": published.get("generation") or script_result.to_dict(),
     }
+    if claimed_agent is not None:
+        completed = await agent_service.finish_build_request(agent_id, tenant_id=tenant_id, response=response)
+        return completed or response
+    return response
