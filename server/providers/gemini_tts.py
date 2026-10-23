@@ -5,7 +5,6 @@ from __future__ import annotations
 import base64
 import binascii
 import json
-import logging
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any
@@ -19,18 +18,13 @@ from server.providers.base import TTSConfig
 from server.providers.gemini_llm import gemini_usage_from_metadata
 from server.services.dev_secrets_store import dev_secrets_store
 
-logger = logging.getLogger(__name__)
-
 GEMINI_GENERATE_CONTENT_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 GEMINI_TTS_REQUEST_SAMPLE_RATE = 24000
 GEMINI_STREAMING_TTS_MODELS = frozenset({
-    "gemini-3.8-live",
     "gemini-3.8-flash-tts",
     "gemini-3.8-flash-lite-tts",
     "gemini-3.1-flash-tts-preview",
-    "gemini-2.0-flash",
 })
-GEMINI_FALLBACK_TTS_MODELS = ("gemini-3.8-flash-tts", "gemini-3.1-flash-tts-preview")
 
 
 def supports_gemini_tts_streaming(model: str) -> bool:
@@ -58,8 +52,12 @@ class GeminiTTSChunk:
 
 
 def _speech_part(text: str, config: TTSConfig, model: str) -> dict[str, Any]:
+    from server.prompts.tts_delivery_rules import sanitize_tts_tags
     from server.services.tts_voice_direction import gemini_speech_style
 
+    text = sanitize_tts_tags(text, provider="gemini", model=model)
+    if not text:
+        raise ValueError("Speech text must contain words, not only audio tags")
     style = gemini_speech_style(config.pace)
     if model.startswith("gemini-3.8"):
         # 3.8 reads text verbatim: delivery directions belong in metadata.
@@ -188,6 +186,10 @@ class GeminiTTSAdapter:
         )
 
     def connect_stream(self, config: TTSConfig):
+        if config.provider != self.provider_id:
+            raise ValueError("Gemini TTS config provider does not match the resolved stack")
+        if not supports_gemini_tts_streaming(config.model):
+            raise NotImplementedError("The selected model requires the unary adapter")
         from server.services.gemini_tts_ws import connect_gemini_tts_ws
 
         return connect_gemini_tts_ws(model=config.model, tts_config=config)
@@ -211,10 +213,6 @@ class GeminiTTSAdapter:
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Gemini TTS requires non-empty text")
 
-        candidate_models = [model] + [
-            m for m in GEMINI_FALLBACK_TTS_MODELS
-            if m != model and supports_gemini_tts_streaming(m)
-        ]
         body = {
             "generationConfig": {
                 "responseModalities": ["AUDIO"],
@@ -225,99 +223,81 @@ class GeminiTTSAdapter:
             },
         }
 
-        for idx, current_model in enumerate(candidate_models):
-            body["contents"] = [{"role": "user", "parts": [_speech_part(text, config, current_model)]}]
-            url = f"{GEMINI_GENERATE_CONTENT_BASE}/{quote(current_model, safe='-_.')}:streamGenerateContent"
-            pending = b""
-            received_audio = False
-            completed = False
-            native_usage: dict[str, int] = {}
-            streamed_any_chunks = False
-            try:
-                async with (
-                    httpx.AsyncClient(timeout=self._timeout()) as client,
-                    client.stream(
-                        "POST", url, params={"alt": "sse"},
-                        headers={
-                            "x-goog-api-key": key,
-                            "Content-Type": "application/json",
-                            "Accept": "text/event-stream",
-                        },
-                        json=body,
-                    ) as response,
-                ):
-                    if response.status_code in {429, 503, 502, 504} and idx < len(candidate_models) - 1:
-                        logger.warning(
-                            "Gemini TTS streaming on model '%s' returned HTTP %s; attempting fallback candidate '%s'",
-                            current_model, response.status_code, candidate_models[idx + 1],
+        body["contents"] = [{"role": "user", "parts": [_speech_part(text, config, model)]}]
+        url = f"{GEMINI_GENERATE_CONTENT_BASE}/{quote(model, safe='-_.')}:streamGenerateContent"
+        pending = b""
+        received_audio = False
+        completed = False
+        native_usage: dict[str, int] = {}
+        try:
+            async with (
+                httpx.AsyncClient(timeout=self._timeout()) as client,
+                client.stream(
+                    "POST", url, params={"alt": "sse"},
+                    headers={
+                        "x-goog-api-key": key,
+                        "Content-Type": "application/json",
+                        "Accept": "text/event-stream",
+                    },
+                    json=body,
+                ) as response,
+            ):
+                if response.status_code >= 400:
+                    raise RuntimeError(f"Gemini TTS HTTP {response.status_code}")
+                async for payload in _sse_payloads(response):
+                    feedback = payload.get("promptFeedback") or {}
+                    if isinstance(feedback, dict) and feedback.get("blockReason"):
+                        raise RuntimeError("Gemini TTS streaming request was blocked")
+                    candidates = payload.get("candidates") or []
+                    if not isinstance(candidates, list):
+                        raise TypeError("Gemini TTS returned malformed streaming candidates")
+                    audio = bytearray()
+                    if candidates:
+                        candidate = candidates[0]
+                        if not isinstance(candidate, dict):
+                            raise RuntimeError("Gemini TTS returned malformed streaming candidate")
+                        finish = candidate.get("finishReason") or candidate.get("finish_reason")
+                        if finish and finish != "STOP":
+                            raise RuntimeError("Gemini TTS streaming ended without complete audio")
+                        completed = completed or finish == "STOP"
+                        content = candidate.get("content") or {}
+                        parts = content.get("parts") if isinstance(content, dict) else None
+                        if parts is not None and not isinstance(parts, list):
+                            raise RuntimeError("Gemini TTS returned malformed streaming parts")
+                        for part in parts or []:
+                            if not isinstance(part, dict):
+                                continue
+                            inline = part.get("inlineData") or part.get("inline_data")
+                            if isinstance(inline, dict):
+                                audio.extend(_decode_pcm(inline))
+                    received_audio = received_audio or bool(audio)
+                    pcm = pending + bytes(audio)
+                    aligned_size = len(pcm) - len(pcm) % 2
+                    pending = pcm[aligned_size:]
+                    meta = payload.get("usageMetadata") or payload.get("usage_metadata")
+                    usage_delta: dict[str, int] = {}
+                    for name, count in gemini_usage_from_metadata(meta, native_audio=True).items():
+                        previous = native_usage.get(name, 0)
+                        if count > previous:
+                            usage_delta[name] = count - previous
+                            native_usage[name] = count
+                    if aligned_size or usage_delta:
+                        yield GeminiTTSChunk(
+                            audio_bytes=pcm[:aligned_size],
+                            sample_rate=GEMINI_TTS_REQUEST_SAMPLE_RATE,
+                            usage=usage_delta,
                         )
-                        continue
-                    if response.status_code >= 400:
-                        raise RuntimeError(f"Gemini TTS HTTP {response.status_code}")
-                    async for payload in _sse_payloads(response):
-                        feedback = payload.get("promptFeedback") or {}
-                        if isinstance(feedback, dict) and feedback.get("blockReason"):
-                            raise RuntimeError("Gemini TTS streaming request was blocked")
-                        candidates = payload.get("candidates") or []
-                        if not isinstance(candidates, list):
-                            raise TypeError("Gemini TTS returned malformed streaming candidates")
-                        audio = bytearray()
-                        if candidates:
-                            candidate = candidates[0]
-                            if not isinstance(candidate, dict):
-                                raise RuntimeError("Gemini TTS returned malformed streaming candidate")
-                            finish = candidate.get("finishReason") or candidate.get("finish_reason")
-                            if finish and finish != "STOP":
-                                raise RuntimeError("Gemini TTS streaming ended without complete audio")
-                            completed = completed or finish == "STOP"
-                            content = candidate.get("content") or {}
-                            parts = content.get("parts") if isinstance(content, dict) else None
-                            if parts is not None and not isinstance(parts, list):
-                                raise RuntimeError("Gemini TTS returned malformed streaming parts")
-                            for part in parts or []:
-                                if not isinstance(part, dict):
-                                    continue
-                                inline = part.get("inlineData") or part.get("inline_data")
-                                if isinstance(inline, dict):
-                                    audio.extend(_decode_pcm(inline))
-                        received_audio = received_audio or bool(audio)
-                        pcm = pending + bytes(audio)
-                        aligned_size = len(pcm) - len(pcm) % 2
-                        pending = pcm[aligned_size:]
-                        meta = payload.get("usageMetadata") or payload.get("usage_metadata")
-                        usage_delta: dict[str, int] = {}
-                        for name, count in gemini_usage_from_metadata(meta, native_audio=True).items():
-                            previous = native_usage.get(name, 0)
-                            if count > previous:
-                                usage_delta[name] = count - previous
-                                native_usage[name] = count
-                        if aligned_size or usage_delta:
-                            streamed_any_chunks = True
-                            yield GeminiTTSChunk(
-                                audio_bytes=pcm[:aligned_size],
-                                sample_rate=GEMINI_TTS_REQUEST_SAMPLE_RATE,
-                                usage=usage_delta,
-                            )
-            except httpx.TimeoutException as exc:
-                if not streamed_any_chunks and idx < len(candidate_models) - 1:
-                    logger.warning("Gemini TTS streaming on model '%s' timed out; attempting fallback candidate '%s'", current_model, candidate_models[idx + 1])
-                    continue
-                raise TimeoutError("Gemini TTS streaming request timed out") from exc
-            except httpx.HTTPError as exc:
-                if not streamed_any_chunks and idx < len(candidate_models) - 1:
-                    logger.warning("Gemini TTS streaming on model '%s' transport failed; attempting fallback candidate '%s'", current_model, candidate_models[idx + 1])
-                    continue
-                raise RuntimeError("Gemini TTS streaming transport failed") from exc
-            if pending:
-                raise RuntimeError("Gemini TTS streaming returned an incomplete PCM16 sample")
-            if not received_audio:
-                if idx < len(candidate_models) - 1:
-                    logger.warning("Gemini TTS streaming on model '%s' returned no audio; attempting fallback candidate '%s'", current_model, candidate_models[idx + 1])
-                    continue
-                raise RuntimeError("Gemini TTS streaming returned no audio")
-            if not completed:
-                raise RuntimeError("Gemini TTS streaming ended before completion")
-            return
+        except httpx.TimeoutException as exc:
+            raise TimeoutError("Gemini TTS streaming request timed out") from exc
+        except httpx.HTTPError as exc:
+            raise RuntimeError("Gemini TTS streaming transport failed") from exc
+        if pending:
+            raise RuntimeError("Gemini TTS streaming returned an incomplete PCM16 sample")
+        if not received_audio:
+            raise RuntimeError("Gemini TTS streaming returned no audio")
+        if not completed:
+            raise RuntimeError("Gemini TTS streaming ended before completion")
+        return
 
     async def synthesize_rest(self, text: str, config: TTSConfig) -> bytes:
         result = await self.synthesize_with_metadata(text, config)
@@ -332,16 +312,17 @@ class GeminiTTSAdapter:
         model = (config.model or "").strip()
         if not model:
             raise ValueError("Gemini TTS requires the model selected in the resolved stack")
+        if not supports_gemini_tts_streaming(model) and model.removeprefix("models/") not in {
+            "gemini-2.5-pro-preview-tts", "gemini-2.5-flash-preview-tts",
+        }:
+            raise ValueError("The selected Gemini model does not support text-to-speech")
         speaker = (config.speaker or "").strip()
         if not speaker:
             raise ValueError("Gemini TTS requires the voice selected in the resolved stack")
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Gemini TTS requires non-empty text")
 
-        model_path = model.removeprefix("models/")
-        candidate_models = [model_path] + [
-            m for m in GEMINI_FALLBACK_TTS_MODELS if m != model_path
-        ]
+        model = model.removeprefix("models/")
         body = {
             "generationConfig": {
                 "responseModalities": ["AUDIO"],
@@ -358,53 +339,40 @@ class GeminiTTSAdapter:
             },
         }
 
-        for idx, current_model in enumerate(candidate_models):
-            body["contents"] = [{"role": "user", "parts": [_speech_part(text, config, current_model)]}]
-            url = f"{GEMINI_GENERATE_CONTENT_BASE}/{quote(current_model, safe='-_.')}:generateContent"
-            async with httpx.AsyncClient(timeout=self._timeout()) as client:
-                try:
-                    response = await client.post(
-                        url,
-                        headers={"x-goog-api-key": key, "Content-Type": "application/json"},
-                        json=body,
-                    )
-                except httpx.TimeoutException as exc:
-                    if idx < len(candidate_models) - 1:
-                        logger.warning("Gemini TTS unary on model '%s' timed out; attempting fallback candidate '%s'", current_model, candidate_models[idx + 1])
-                        continue
-                    raise TimeoutError("Gemini TTS request timed out") from exc
-                except httpx.HTTPError as exc:
-                    if idx < len(candidate_models) - 1:
-                        logger.warning("Gemini TTS unary on model '%s' transport failed; attempting fallback candidate '%s'", current_model, candidate_models[idx + 1])
-                        continue
-                    raise RuntimeError("Gemini TTS transport failed") from exc
-
-            if response.status_code in {429, 503, 502, 504} and idx < len(candidate_models) - 1:
-                logger.warning(
-                    "Gemini TTS unary on model '%s' returned HTTP %s; attempting fallback candidate '%s'",
-                    current_model, response.status_code, candidate_models[idx + 1],
-                )
-                continue
-            if response.status_code >= 400:
-                raise RuntimeError(f"Gemini TTS HTTP {response.status_code}")
+        body["contents"] = [{"role": "user", "parts": [_speech_part(text, config, model)]}]
+        url = f"{GEMINI_GENERATE_CONTENT_BASE}/{quote(model, safe='-_.')}:generateContent"
+        async with httpx.AsyncClient(timeout=self._timeout()) as client:
             try:
-                payload = response.json()
-            except (ValueError, json.JSONDecodeError) as exc:
-                raise RuntimeError("Gemini TTS returned malformed JSON") from exc
-            if not isinstance(payload, dict):
-                raise TypeError("Gemini TTS returned malformed JSON")
+                response = await client.post(
+                    url,
+                    headers={"x-goog-api-key": key, "Content-Type": "application/json"},
+                    json=body,
+                )
+            except httpx.TimeoutException as exc:
+                raise TimeoutError("Gemini TTS request timed out") from exc
+            except httpx.HTTPError as exc:
+                raise RuntimeError("Gemini TTS transport failed") from exc
 
-            inline_data = _audio_parts(payload)[0]
-            audio, media, content_type = _decode_wav(inline_data)
-            usage_metadata = payload.get("usageMetadata") or payload.get("usage_metadata")
-            usage = (
-                gemini_usage_from_metadata(usage_metadata, native_audio=True)
-                if isinstance(usage_metadata, dict)
-                else {}
-            )
-            return GeminiTTSResult(
-                audio_bytes=audio,
-                content_type=content_type,
-                media=media,
-                usage=usage,
-            )
+        if response.status_code >= 400:
+            raise RuntimeError(f"Gemini TTS HTTP {response.status_code}")
+        try:
+            payload = response.json()
+        except (ValueError, json.JSONDecodeError) as exc:
+            raise RuntimeError("Gemini TTS returned malformed JSON") from exc
+        if not isinstance(payload, dict):
+            raise TypeError("Gemini TTS returned malformed JSON")
+
+        inline_data = _audio_parts(payload)[0]
+        audio, media, content_type = _decode_wav(inline_data)
+        usage_metadata = payload.get("usageMetadata") or payload.get("usage_metadata")
+        usage = (
+            gemini_usage_from_metadata(usage_metadata, native_audio=True)
+            if isinstance(usage_metadata, dict)
+            else {}
+        )
+        return GeminiTTSResult(
+            audio_bytes=audio,
+            content_type=content_type,
+            media=media,
+            usage=usage,
+        )

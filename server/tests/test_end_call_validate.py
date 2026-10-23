@@ -354,3 +354,18 @@ def test_courteous_closing_with_question_mark_does_not_block_hangup():
     assert not looks_like_question("theek hai na?")
     assert looks_like_question("What is the loan interest rate?")
     assert looks_like_question("మీ పేరు ఏమిటి?")
+
+
+def test_telugu_cut_call_requests():
+    for user_phrase in ("కట్ చేయండి కాల్", "లేదు లేదు లేదు కట్ చేయండి", "కాల్ కట్ చేయండి", "ఫోన్ పెట్టేయండి"):
+        d = validate_end_call(
+            {},
+            user_text=user_phrase,
+            spoken_text="సరేనండి సాయి గారు, కాల్ cut చేస్తున్నాను. ధన్యవాదాలు.",
+            language="te-IN",
+            agent_farewell_ends_call=True,
+            tool_sourced=False,
+            completed_turns=2,
+        )
+        assert d.accepted is True
+        assert d.reason == "goodbye"

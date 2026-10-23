@@ -200,7 +200,7 @@ class OpenAILLMAdapter:
         apply_generation_params(
             create_kwargs,
             model=model,
-            temperature=None,
+            temperature=config.temperature if config is not None else None,
             default_temperature=getattr(settings, "openai_temperature", 0.4),
             voice_optimized=True,
         )

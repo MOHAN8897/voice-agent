@@ -25,7 +25,7 @@ def composed_lifecycle(monkeypatch, tmp_path):
     service = CallLifecycleService()
     agent = {"agent_id": "selected-agent", "tenant_id": "00000000-0000-4000-8000-000000000001", "languages": ["te-IN"]}
     monkeypatch.setattr(service, "_resolve_agent", AsyncMock(return_value=agent))
-    monkeypatch.setattr(service, "_lock_compiled_brain", AsyncMock(return_value=("v1", "", "published")))
+    monkeypatch.setattr(service, "_lock_compiled_brain", AsyncMock(return_value=("v1", "Approved calling instructions", "published")))
     monkeypatch.setattr(service, "_schedule_max_duration_watchdog", Mock())
     monkeypatch.setattr(test_studio_config, "saved_call_config", lambda _: {})
     monkeypatch.setattr(call_store, "insert", AsyncMock())
@@ -51,7 +51,7 @@ async def test_composed_lifecycle_preserves_selected_stages_on_each_channel(comp
     stack = ResolvedStack(
         combination_id="pinned-profile", tier=tier, mode="env", language="te-IN",
         stt=StageSelection("sarvam", "saaras:v3-realtime", {"mode": "realtime"}),
-        llm=StageSelection("sarvam", "sarvam-30b", {"api_mode": "chat_completions_v2"}),
+        llm=StageSelection("sarvam", "sarvam-105b-conversations", {"api_mode": "chat_completions_v1"}),
         tts=StageSelection("sarvam", "bulbul:v3", {"api_mode": "websocket", "speaker": "shubh"}),
     )
     snapshot = {"tier": tier, "profileRevision": 3, "voiceId": "public-voice-1", "retailRate": {

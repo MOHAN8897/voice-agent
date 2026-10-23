@@ -5,6 +5,8 @@ import re
 
 import pytest
 
+from server.brain.brief_contract import BriefValidationError
+
 from server.brain.agent_script_compiler import (
     _looks_like_agent_name,
     compile_agent_from_brief,
@@ -61,7 +63,7 @@ NATIVE_BRIEFS: list[dict] = [
     {
         "id": "austin_realty",
         "brief": "Create outbound sales agent for GreenHomes Realty. Sell 2 bedroom homes from 450000 dollars in Austin.",
-        "invented_name_ok": True,
+        "missing_name": True,
         "company_contains": "GreenHomes",
         "facts": ["450000"],
         "role": "sales",
@@ -70,7 +72,7 @@ NATIVE_BRIEFS: list[dict] = [
     {
         "id": "vague_shop_us",
         "brief": "make a bot for my shop we sell stuff please call customers",
-        "invented_name_ok": True,
+        "missing_name": True,
         "no_company": True,
         "must_not": ["Private Limited", "lakh", "rupees", "2BHK"],
     },
@@ -108,7 +110,7 @@ NATIVE_BRIEFS: list[dict] = [
         "id": "named_after_company_us",
         "brief": "I am the owner. The agent should speak for company SKM Plants. Don't invent a second brand. Sell indoor plants.",
         "company_contains": "SKM",
-        "invented_name_ok": True,
+        "missing_name": True,
         "must_not": ["You are SKM Plants"],
         "facts": ["plants"],
     },
@@ -122,7 +124,7 @@ NATIVE_BRIEFS: list[dict] = [
     {
         "id": "half_info_course_us",
         "brief": "call people about our course 8000 dollars",
-        "invented_name_ok": True,
+        "missing_name": True,
         "no_company": True,
         "facts": ["8000"],
         "must_not": ["2BHK", "lakh"],
@@ -167,15 +169,15 @@ NATIVE_BRIEFS: list[dict] = [
         "must_not": ["12%", "interest rate is", "lakh"],
     },
     {
-        "id": "unnamed_invents_alex",
+        "id": "unnamed_requires_identity",
         "brief": "Outbound sales for car servicing in Austin. Inspection, resale, and repairs.",
-        "name": "Alex",
+        "missing_name": True,
         "no_company": True,
     },
     {
         "id": "garbage_us",
         "brief": "asdf maybe cars or plants or something call them idk agent ??? ",
-        "invented_name_ok": True,
+        "missing_name": True,
         "no_company": True,
         "must_not": ["You are Asdf", "lakh", "rupees", "50 lakhs"],
     },
@@ -218,9 +220,6 @@ def _issues_for(case: dict, result, compiled: str) -> list[str]:
     expected_name = case.get("name")
     if expected_name and name.lower() != expected_name.lower():
         issues.append(f"name {name!r} != {expected_name!r}")
-    if case.get("invented_name_ok") and not expected_name:
-        if not _looks_like_agent_name(name):
-            issues.append(f"failed to invent a person name: {name!r}")
 
     needle = case.get("company_contains")
     if needle and needle.lower() not in company.lower():
@@ -266,6 +265,12 @@ def _issues_for(case: dict, result, compiled: str) -> list[str]:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("case", NATIVE_BRIEFS, ids=[c["id"] for c in NATIVE_BRIEFS])
 async def test_native_english_brief_compiles_clean_script(case):
+    if case.get("missing_name"):
+        with pytest.raises(BriefValidationError) as failure:
+            await compile_agent_from_brief(brief=case["brief"], language="en-US", use_llm=False)
+        assert any(issue["code"] == "missing_agent_name" for issue in failure.value.issues)
+        assert failure.value.to_dict()["status"] == "needs_user_input"
+        return
     compiled, result, *_ = await compile_agent_from_brief(
         brief=case["brief"],
         language="en-US",

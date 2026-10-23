@@ -62,7 +62,7 @@ def _build_vobiz_xml_response(stream_ws_url: str, recording_callback_url: str = 
     import html
 
     escaped_url = html.escape(stream_ws_url.strip(), quote=True)
-    record = (f'<Record recordSession="true" fileFormat="wav" maxLength="14400" timeout="14400" playBeep="false" redirect="false" '
+    record = (f'<Record recordSession="true" fileFormat="mp3" maxLength="14400" timeout="14400" playBeep="false" redirect="false" '
               f'callbackUrl="{html.escape(recording_callback_url, quote=True)}" callbackMethod="POST" />') if recording_callback_url else ""
     xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>

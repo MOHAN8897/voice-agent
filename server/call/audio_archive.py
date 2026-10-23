@@ -168,6 +168,9 @@ class AudioArchive:
     def conversation_mp3_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "conversation.mp3"
 
+    def conversation_mp4_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "conversation.mp4"
+
     def telnyx_wav_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "telnyx.wav"
 
@@ -479,6 +482,28 @@ class AudioArchive:
         dest = self.conversation_mp3_path(call_id)
         return self.ensure_mp3_for_wav(wav_path, dest)
 
+    def ensure_mp4_for_wav(self, wav_path: Path, mp4_path: Path) -> Path | None:
+        """Cache MP4 next to WAV; return mp4 path when encoding succeeds."""
+        if not self._nonempty(wav_path):
+            return None
+        if wav_path.suffix.lower() == ".mp4":
+            return wav_path
+        if self._nonempty(mp4_path) and mp4_path.stat().st_mtime >= wav_path.stat().st_mtime:
+            return mp4_path
+        from server.call.audio_mp3 import convert_wav_to_mp4
+
+        if convert_wav_to_mp4(wav_path, mp4_path):
+            return mp4_path if self._nonempty(mp4_path) else None
+        return None
+
+    def ensure_conversation_mp4(self, call_id: str, wav_path: Path | None) -> Path | None:
+        if wav_path is None or not self._nonempty(wav_path):
+            return None
+        if wav_path.suffix.lower() == ".mp4":
+            return wav_path
+        dest = self.conversation_mp4_path(call_id)
+        return self.ensure_mp4_for_wav(wav_path, dest)
+
     def file_for(self, call_id: str, kind: str) -> Path | None:
         if kind == "user":
             wav = self.user_wav_path(call_id)
@@ -508,11 +533,14 @@ class AudioArchive:
             path = self.agent_path(call_id)
         elif kind in ("mix", "mix_clear"):
             for candidate in (
-                call_dir(call_id) / "vobiz_recording.wav",
+                call_dir(call_id) / "conversation.mp4",
+                call_dir(call_id) / "vobiz_recording.mp4",
                 call_dir(call_id) / "vobiz_recording.mp3",
+                call_dir(call_id) / "conversation.mp3",
+                call_dir(call_id) / "vobiz_recording.wav",
                 self.telnyx_review_path(call_id),
-                self.telnyx_wav_path(call_id),
                 self.telnyx_mp3_path(call_id),
+                self.telnyx_wav_path(call_id),
                 self.mix_clear_path(call_id) if kind == "mix_clear" else None,
                 self.mix_path(call_id),
             ):

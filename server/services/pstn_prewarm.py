@@ -465,7 +465,9 @@ async def _build_prewarm_bundle(
     stack = call_lifecycle_service._coerce_pipeline_stack(
         call_lifecycle_service._resolve_locked_stack(
             session_id=config_session,
-            tier=str(dial_meta.get("tier") or "medium"),
+            tier=str(dial_meta.get("tier") or
+                     ((pstn_opts.get("stack_override") or {}).get("_voice_stack_snapshot") or {}).get("tier") or
+                     agent.get("default_tier") or "medium"),
             environment=agent.get("environment") or effective_app_environment(),
             stack_override=pstn_opts.get("stack_override"),
             language=language,
@@ -496,7 +498,13 @@ async def _build_prewarm_bundle(
     wire = _PROVIDER_WIRE.get(provider, _PROVIDER_WIRE["telnyx"])
     sample_rate = int(wire["sample_rate"])
     tts_codec = str(wire["tts_output_codec"])
-    greeting = extract_prewarm_greeting(compiled, language, direction="outbound")
+    from server.services.saas.telephony_profile import get_profile
+    tp = await get_profile(agent.get("agent_id") or agent_id) if (agent.get("agent_id") or agent_id) else None
+    tp_greeting = (tp.get("greeting_phrase") or "").strip() if tp else ""
+    if not is_prewarm_greeting_enabled():
+        greeting = ""
+    else:
+        greeting = tp_greeting or extract_prewarm_greeting(compiled, language, direction="outbound")
     generated_greeting_transcript = None
 
     settings = get_settings()
@@ -727,7 +735,10 @@ async def _synthesize_greeting_frames(
     from server.services.pstn_turn_tts import PstnTurnTtsSession
     from server.services.spoken_numbers import prepare_spoken_reply
 
-    text = prepare_spoken_reply(greeting or "").strip()
+    selection = resolved_stack.get("tts", {}) if isinstance(resolved_stack, dict) else getattr(resolved_stack, "tts", None)
+    provider = selection.get("provider") if isinstance(selection, dict) else getattr(selection, "provider", None)
+    model = selection.get("model") if isinstance(selection, dict) else getattr(selection, "model", None)
+    text = prepare_spoken_reply(greeting or "", provider=provider, model=model).strip()
     if not text:
         return [], {}
     stub = _PrewarmVoiceStub(
@@ -756,8 +767,24 @@ async def _synthesize_greeting_frames(
     }
 
 
+def is_prewarm_greeting_enabled() -> bool:
+    """Check if prewarm greeting synthesis is enabled globally by admin."""
+    try:
+        from server.services.dev_secrets_store import dev_secrets_store
+
+        return bool(dev_secrets_store.effective("enable_prewarm_greeting", True))
+    except Exception:
+        pass
+    from server.config.env import get_settings
+
+    return bool(getattr(get_settings(), "enable_prewarm_greeting", True))
+
+
 def schedule_prewarm(provider: str, external_id: str, dial_meta: dict[str, Any]) -> None:
     """Fire-and-forget prewarm on outbound dial (ring time hides Realtime + greeting TTS)."""
+    if not is_prewarm_greeting_enabled():
+        log_pstn("prewarm.disabled", control=external_id, provider=provider)
+        return
     if not external_id or not dial_meta.get("agent_id"):
         return
     log_pstn("prewarm.start", control=external_id, provider=provider, agent_id=dial_meta.get("agent_id"))

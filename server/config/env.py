@@ -123,7 +123,7 @@ class Settings(BaseSettings):
         alias="OPENAI_ALLOWED_MODELS",
     )
     sarvam_llm_models_csv: str = Field(
-        "sarvam-105b,sarvam-105b-conversations",
+        "sarvam-2b,sarvam-105b,sarvam-105b-conversations",
         alias="SARVAM_LLM_ALLOWED_MODELS",
     )
     gemini_tts_models_csv: str = Field(
@@ -362,9 +362,10 @@ class Settings(BaseSettings):
     #: Statutory retention window for CDR metadata (telecom regulations).
     #: TODO(legal): Confirm statutory retention window with jurisdiction counsel (TRAI/FCC/Ofcom).
     cdr_retention_days: int = Field(730, alias="CDR_RETENTION_DAYS")  # default 2 years
-    #: Statutory retention window for billing invoices (tax compliance).
-    #: TODO(legal): Confirm statutory retention window with jurisdiction counsel (IRS/GST/VAT).
-    invoice_retention_days: int = Field(2555, alias="INVOICE_RETENTION_DAYS")  # default 7 years
+    #: Statutory retention window for billing invoices and credit notes.
+    #: GST rules require 72 months from the annual return due date; the
+    #: Companies Act requires 8 financial years. 8 years satisfies the longer one.
+    invoice_retention_days: int = Field(2920, alias="INVOICE_RETENTION_DAYS")
 
     razorpay_api_key: str | None = Field(
         None,
@@ -384,6 +385,27 @@ class Settings(BaseSettings):
     #: Currency the customer is charged in. INR settles domestically; any other
     #: value is an international payment that Razorpay converts to INR.
     razorpay_currency: str = Field("USD", alias="RAZORPAY_CURRENCY")
+    #: Endpoint secret from Razorpay Dashboard -> Webhooks. Empty disables the
+    #: webhook route entirely (fail closed) rather than accepting unverified
+    #: payment events.
+    razorpay_webhook_secret: str | None = Field(
+        None, validation_alias=AliasChoices("RAZORPAY_WEBHOOK_SECRET", "razorpay_webhook_secret")
+    )
+
+    # --- Supplier tax identity (fallbacks; the admin panel's saved values win) ---
+    platform_legal_name: str = Field("", alias="PLATFORM_LEGAL_NAME")
+    platform_trade_name: str = Field("", alias="PLATFORM_TRADE_NAME")
+    platform_gstin: str = Field("", alias="PLATFORM_GSTIN")
+    platform_state_code: str = Field("", alias="PLATFORM_STATE_CODE")
+    platform_state_name: str = Field("", alias="PLATFORM_STATE_NAME")
+    platform_city: str = Field("", alias="PLATFORM_CITY")
+    platform_postal_code: str = Field("", alias="PLATFORM_POSTAL_CODE")
+    platform_address: str = Field("", alias="PLATFORM_ADDRESS")
+    platform_support_email: str = Field("", alias="PLATFORM_SUPPORT_EMAIL")
+    #: Domestic GST rate applied to the taxable value, in basis points.
+    gst_default_rate_bps: int = Field(1800, alias="GST_DEFAULT_RATE_BPS")
+    #: True when listed prices already contain GST rather than adding it on top.
+    gst_price_includes_tax: bool = Field(False, alias="GST_PRICE_INCLUDES_TAX")
     google_oauth_client_id: str | None = Field(
         None,
         validation_alias=AliasChoices("GOOGLE_OAUTH_CLIENT_ID", "google_oauth_client_id"),

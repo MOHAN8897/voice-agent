@@ -350,12 +350,24 @@ function StatusPill({ tone, children }: { tone: "good" | "warn" | "muted"; child
 
 async function responseError(response: Response): Promise<string> {
   const payload: unknown = await response.json().catch(() => null);
-  if (typeof payload === "object" && payload !== null && "detail" in payload) {
-    const detail = payload.detail;
-    if (typeof detail === "string" && detail.length < 240) return detail;
-    if (typeof detail === "object" && detail !== null && "message" in detail) {
-      const message = detail.message;
-      if (typeof message === "string" && message.length < 240) return message;
+  if (typeof payload === "object" && payload !== null) {
+    const raw = payload as Record<string, unknown>;
+    const detail = raw.detail ?? raw.error ?? raw;
+    if (typeof detail === "string" && detail.length < 300) return detail;
+    if (typeof detail === "object" && detail !== null) {
+      const d = detail as Record<string, unknown>;
+      const err = (typeof d.error === "object" && d.error !== null) ? (d.error as Record<string, unknown>) : d;
+      const message = typeof err.message === "string" ? err.message : typeof err.detail === "string" ? err.detail : "";
+      const blockers = Array.isArray(err.blockers)
+        ? err.blockers.map((b: any) => (typeof b === "object" && b !== null ? (b.message || b.code) : String(b))).filter(Boolean)
+        : (typeof err.readiness === "object" && err.readiness !== null && Array.isArray((err.readiness as any).blockers))
+        ? (err.readiness as any).blockers.map((b: any) => (typeof b === "object" && b !== null ? (b.message || b.code) : String(b))).filter(Boolean)
+        : [];
+      const blockerStr = blockers.length > 0 ? blockers.join("; ") : "";
+      const revNote = typeof err.currentRevision === "number" ? ` (server revision is ${err.currentRevision})` : "";
+      if (message && blockerStr) return `${message}: ${blockerStr}${revNote}`;
+      if (message) return `${message}${revNote}`;
+      if (blockerStr) return `${blockerStr}${revNote}`;
     }
   }
   return `Request failed (${response.status}).`;
@@ -418,6 +430,10 @@ export function PstnVoiceProfileWorkbench() {
   const [transcriptionLiveModel, setTranscriptionLiveModel] = useState("gpt-4o-mini-transcribe");
   const [saasPhoneRaw, setSaasPhoneRaw] = useState<Record<string, unknown> | null>(null);
   const [transcriptionSaving, setTranscriptionSaving] = useState(false);
+
+  // Global Prewarm Greeting Synthesis Toggle State
+  const [prewarmGreetingEnabled, setPrewarmGreetingEnabled] = useState<boolean>(true);
+  const [prewarmLoading, setPrewarmLoading] = useState<boolean>(false);
   const [transcriptionStatus, setTranscriptionStatus] = useState("");
   const [transcriptionError, setTranscriptionError] = useState("");
 
@@ -519,19 +535,51 @@ export function PstnVoiceProfileWorkbench() {
     }
   }, []);
 
+  const loadPrewarmGreeting = useCallback(async () => {
+    try {
+      const res = await portalFetch("dev", "/api/dev/stack/prewarm-greeting");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (typeof data.enabled === "boolean") {
+        setPrewarmGreetingEnabled(data.enabled);
+      }
+    } catch {
+      // Non-blocking prewarm greeting fetch
+    }
+  }, []);
+
+  const togglePrewarmGreeting = async (nextState: boolean) => {
+    setPrewarmLoading(true);
+    try {
+      const res = await portalFetch("dev", "/api/dev/stack/prewarm-greeting", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: nextState }),
+      });
+      if (res.ok) {
+        setPrewarmGreetingEnabled(nextState);
+      }
+    } catch {
+      // Non-blocking error handling
+    } finally {
+      setPrewarmLoading(false);
+    }
+  };
+
   useEffect(() => {
     void loadProfiles();
     void loadCatalog();
     void loadPrices();
     void loadTelephony();
     void loadTranscription();
+    void loadPrewarmGreeting();
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
     };
-  }, [loadProfiles, loadCatalog, loadPrices, loadTelephony, loadTranscription]);
+  }, [loadProfiles, loadCatalog, loadPrices, loadTelephony, loadTranscription, loadPrewarmGreeting]);
 
   useEffect(() => {
     const row = rows.find((r) => r.tier === selected);
@@ -686,6 +734,7 @@ export function PstnVoiceProfileWorkbench() {
     } catch (caught) {
       setAutoSaveStatus("⚠️ Save error");
       setError(caught instanceof Error ? caught.message : "Could not save tier configuration.");
+      void loadProfiles(false);
     }
   }
 
@@ -967,6 +1016,7 @@ export function PstnVoiceProfileWorkbench() {
       );
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not update tier activation.");
+      void loadProfiles(false);
     } finally {
       setBusy(false);
     }
@@ -1962,6 +2012,67 @@ export function PstnVoiceProfileWorkbench() {
 
               <span className="text-[11px] text-text-subtle font-mono">
                 API: POST /api/dev/stack/voice-preview
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Global Prewarm Greeting Synthesis Configuration Card */}
+        <div className="mt-6 rounded-xl border border-surface-border-subtle bg-surface-raised/40 p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2.5">
+                <div className={`p-1.5 rounded-lg ${prewarmGreetingEnabled ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-surface-border/20 text-text-muted"}`}>
+                  <span className="text-sm">⚡</span>
+                </div>
+                <h4 className="text-sm font-semibold text-text">
+                  Global Prewarm Greeting (Instant First Audio)
+                </h4>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider border ${
+                    prewarmGreetingEnabled
+                      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                      : "bg-surface-border/20 text-text-subtle border-surface-border/40"
+                  }`}
+                >
+                  {prewarmGreetingEnabled ? "Active (Global)" : "Disabled (Standard Playout)"}
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-text-muted leading-relaxed">
+                Pre-synthesizes the outbound agent greeting during carrier ring and connection time so caller hears the opening instantly (&lt;200ms) upon answering. Applies to all PSTN calls globally. When disabled, the agent synthesizes greeting on live stream pickup.
+              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-[10px] font-mono text-text-subtle">
+                  API: PATCH /api/dev/stack/prewarm-greeting
+                </span>
+                <span className="text-[10px] text-text-subtle">·</span>
+                <span className="text-[10px] text-text-subtle">
+                  Scope: Universal Platform
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={prewarmLoading}
+                onClick={() => void togglePrewarmGreeting(!prewarmGreetingEnabled)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 ${
+                  prewarmGreetingEnabled ? "bg-emerald-500" : "bg-surface-border"
+                } ${prewarmLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                role="switch"
+                aria-checked={prewarmGreetingEnabled}
+                aria-label="Toggle Prewarm Greeting"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    prewarmGreetingEnabled ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+              <span className="text-xs font-medium text-text select-none min-w-[58px]">
+                {prewarmGreetingEnabled ? "Enabled" : "Disabled"}
               </span>
             </div>
           </div>

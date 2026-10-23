@@ -93,9 +93,16 @@ def build_audio_session_instructions(
     opening_greeting: str | None = None,
 ) -> str:
     """Same compiled brain as the text PSTN path, with audio-output rules."""
-    from server.brain.compiled_brain_artifact import is_unified_compiled_brain, refresh_platform_sections
+    from server.brain.compiled_brain_artifact import (
+        is_unified_compiled_brain,
+        refresh_platform_sections,
+    )
     from server.brain.sections import PLATFORM_PRIVACY_IDENTITY_RULES
     from server.prompts.agent_voice_rules import live_audio_modality_rules, live_realtime_audio_rules
+    from server.prompts.tts_delivery_rules import (
+        native_audio_delivery_rules,
+        strip_inline_audio_cues,
+    )
 
     brain = refresh_platform_sections(compiled_brain, language)
     unified = is_unified_compiled_brain(brain)
@@ -106,6 +113,7 @@ def build_audio_session_instructions(
         parts.append(live_audio_modality_rules())
     else:
         parts.append(live_realtime_audio_rules(language, direction=direction))
+    parts.append(native_audio_delivery_rules())
     parts.append(first_turn_identity_rules(language, direction=direction))
     if _is_outbound(direction):
         parts.append(
@@ -142,13 +150,13 @@ def build_audio_session_instructions(
     )
     if not unified:
         parts.append(
-            f"FINAL LANGUAGE CONSTRAINT: Speak only {language}, including answers, tool confirmations and farewell. "
+            f"FINAL LANGUAGE CONSTRAINT: Keep {language} as the primary language, with natural English mixing, including answers, tool confirmations and farewell. "
             "This overrides conflicting language directions and examples in the business script. "
             "A successful language callback tool permits the handoff farewell and end_call."
         )
     if PLATFORM_PRIVACY_IDENTITY_RULES not in brain:
         parts.insert(0, PLATFORM_PRIVACY_IDENTITY_RULES)
-    return "\n\n".join(parts)
+    return strip_inline_audio_cues("\n\n".join(parts))
 
 
 class RealtimeTextSession:

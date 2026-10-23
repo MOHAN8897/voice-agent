@@ -32,6 +32,7 @@ _TOGGLE_FIELDS = frozenset(
         "enable_telnyx",
         "enable_vobiz",
         "enable_benchmarks",
+        "enable_prewarm_greeting",
     }
 )
 

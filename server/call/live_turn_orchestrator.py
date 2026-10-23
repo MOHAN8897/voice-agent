@@ -86,7 +86,7 @@ def cap_reactive_response(user_text: str, assistant_text: str) -> str:
     return text[: match.end()].strip() if match else text
 
 
-def finalize_live_spoken_text(user_text: str, assistant_text: str) -> str:
+def finalize_live_spoken_text(user_text: str, assistant_text: str, *, ctx: Any = None) -> str:
     """Apply reactive one-sentence cap, collapse repeats, soft length safety, spoken prep."""
     from server.services.spoken_numbers import prepare_spoken_reply
     from server.services.voice_pipeline_limits import (
@@ -96,7 +96,8 @@ def finalize_live_spoken_text(user_text: str, assistant_text: str) -> str:
 
     collapsed = collapse_repeated_spoken_reply(cap_reactive_response(user_text, assistant_text))
     capped = clamp_live_spoken_reply(collapsed)
-    prepared = prepare_spoken_reply(capped)
+    selection = getattr(getattr(ctx, "resolved_stack", None), "tts", None) if getattr(ctx, "pipeline", None) != "realtime_voice" else None
+    prepared = prepare_spoken_reply(capped, provider=getattr(selection, "provider", None), model=getattr(selection, "model", None))
     if is_incomplete_spoken_crumb(prepared) or is_incomplete_spoken_crumb(capped):
         return ""
     return prepared
@@ -419,7 +420,7 @@ class LiveTurnOrchestrator:
                     brain_latency_ms = int((time.perf_counter() - t0) * 1000)
                 if chunk.get("done"):
                     raw_assistant_text = chunk.get("text") or ""
-                    assistant_text = finalize_live_spoken_text(transcript, raw_assistant_text)
+                    assistant_text = finalize_live_spoken_text(transcript, raw_assistant_text, ctx=ctx)
                     memory_update = chunk.get("memory_update") or {"operations": []}
                     memory_parse_failed = bool(chunk.get("memory_parse_failed"))
                     if realtime and assistant_text.strip() and not (memory_update.get("operations")):
@@ -557,6 +558,13 @@ class LiveTurnOrchestrator:
                 ):
                     if chunk.get("done"):
                         result = chunk
+            elif ctx is not None:
+                result = None
+                async for chunk in self._stream_llm(ctx=ctx, **{k: v for k, v in kwargs.items() if k in _LLM_KEYS}):
+                    if chunk.get("done"):
+                        result = chunk
+                if result is None:
+                    raise RuntimeError("The selected text model returned an incomplete turn")
             else:
                 llm_kwargs = {k: v for k, v in kwargs.items() if k in _LLM_KEYS}
                 from server.realtime.models import http_openai_model, is_realtime_llm_model
@@ -566,7 +574,7 @@ class LiveTurnOrchestrator:
                     llm_kwargs["openai_model"] = http_openai_model(settings)
                 result = await generate_response(**llm_kwargs)
             raw_text = result.get("text") or ""
-            result["text"] = finalize_live_spoken_text(transcript, raw_text)
+            result["text"] = finalize_live_spoken_text(transcript, raw_text, ctx=ctx)
             if result["text"].strip():
                 from server.agent.conversation_manager import conversation_manager
 
@@ -658,11 +666,15 @@ class LiveTurnOrchestrator:
         call_id = kwargs.get("call_id")
         session = realtime_text_manager.get(call_id) if call_id else None
         composed = bool(ctx and getattr(ctx, "pipeline", None) == "composed_voice")
+        if ctx and getattr(ctx, "pipeline", None) == "realtime_voice":
+            raise RuntimeError("Native audio calls must use their prepared voice session")
         if composed and session is not None:
             # Composed calls use the resolved text adapter for every turn. A
             # pre-existing realtime session would violate the pinned profile.
             raise RuntimeError("Composed PSTN call unexpectedly has a realtime LLM session")
         if session is not None:
+            if ctx and session.model != ctx.resolved_stack.llm.model:
+                raise RuntimeError("The prepared text session does not match the selected model")
             async for chunk in session.run_turn(
                 str(kwargs.get("transcript") or ""),
                 language=str(kwargs.get("language_code") or "te-IN"),
@@ -674,21 +686,23 @@ class LiveTurnOrchestrator:
         adapter = None
         registry = None
         provider_id = ctx.resolved_stack.llm.provider if ctx else None
-        if settings.use_provider_registry and ctx is not None:
+        if settings.use_provider_registry and ctx is not None and not composed:
             try:
                 from server.providers import get_provider_registry
 
                 registry = get_provider_registry()
                 adapter = registry.get_llm(provider_id)
-            except Exception:
-                adapter = None
+            except Exception as exc:
+                raise RuntimeError("The selected text provider is unavailable") from exc
         stream_kwargs = {k: v for k, v in kwargs.items() if k != "ctx"}
         if ctx and ctx.resolved_stack:
             llm_sel = ctx.resolved_stack.llm
-            stream_kwargs.setdefault("model", llm_sel.model)
-            stream_kwargs.setdefault("openai_model", llm_sel.model)
+            stream_kwargs["model"] = llm_sel.model
+            stream_kwargs["openai_model"] = llm_sel.model
         http_model = str(stream_kwargs.get("openai_model") or stream_kwargs.get("model") or "")
         if is_realtime_llm_model(http_model):
+            if ctx is not None:
+                raise RuntimeError("The selected realtime model has no prepared session")
             fallback_model = http_openai_model(settings)
             stream_kwargs["openai_model"] = fallback_model
             stream_kwargs["model"] = fallback_model
@@ -700,11 +714,11 @@ class LiveTurnOrchestrator:
             # provider/model are the only permitted route for composed calls.
             # Do not align, substitute, or fall back to another provider/model.
             llm_sel = ctx.resolved_stack.llm
-            api_mode = str((llm_sel.config or {}).get("api_mode") or "").strip().lower()
+            from server.providers.llm_protocol import text_llm_api_mode
+
+            api_mode = text_llm_api_mode(llm_sel.provider, llm_sel.model, (llm_sel.config or {}).get("api_mode"))
             if (
                 not settings.use_provider_registry
-                or llm_sel.provider != "sarvam"
-                or api_mode not in {"chat_completions_v1", "chat_completions_v2"}
                 or not llm_sel.model
             ):
                 raise RuntimeError("The selected composed text model is unavailable")
@@ -713,14 +727,14 @@ class LiveTurnOrchestrator:
 
                 registry = get_provider_registry()
                 if (
-                    not registry.is_provider_enabled("sarvam", "llm")
-                    or not registry.is_model_allowed("sarvam", "llm", llm_sel.model)
+                    not registry.is_provider_enabled(llm_sel.provider, "llm")
+                    or not registry.is_model_allowed(llm_sel.provider, "llm", llm_sel.model)
                 ):
                     raise RuntimeError("The selected composed text model is unavailable")
-                adapter = registry.get_llm("sarvam")
+                adapter = registry.get_llm(llm_sel.provider)
             except Exception as exc:
                 raise RuntimeError("The selected composed text model is unavailable") from exc
-            if getattr(adapter, "provider_id", None) != "sarvam":
+            if getattr(adapter, "provider_id", None) != llm_sel.provider:
                 raise RuntimeError("The selected composed text model is unavailable")
             stream_kwargs["model"] = llm_sel.model
             stream_kwargs["openai_model"] = llm_sel.model
@@ -779,6 +793,7 @@ class LiveTurnOrchestrator:
                     messages=messages,
                     tool_calls=tool_calls,
                     allowed_tools={str(tool.get("name") or "").upper() for tool in tool_schemas},
+                    provider_content=first_done.get("_gemini_content") if llm_sel.provider == "gemini" else None,
                 )
                 final_kwargs = dict(stream_kwargs)
                 # Sarvam requires declarations alongside tool-call history.
@@ -809,9 +824,7 @@ class LiveTurnOrchestrator:
             self._align_stream_model(stream_kwargs, adapter_inst, registry)
             model = str(stream_kwargs.get("model") or stream_kwargs.get("openai_model") or "")
             if is_realtime_llm_model(model):
-                model = http_openai_model(settings)
-                stream_kwargs["model"] = model
-                stream_kwargs["openai_model"] = model
+                raise RuntimeError("The selected realtime model has no prepared session")
             msgs = self._messages_for_model(input_messages, model)
             stream_fn = adapter_inst.stream_structured_turn if schema else adapter_inst.stream_live_turn
             async for chunk in stream_fn(
@@ -822,18 +835,14 @@ class LiveTurnOrchestrator:
                 yield chunk
 
         if adapter is not None:
-            try:
-                async for chunk in _run_with(adapter):
-                    yield chunk
-                return
-            except Exception as e:
-                logger.warning(f"[LLM] primary provider failed {provider_id}: {str(e)[:160]}")
-                fallback = self._fallback_llm_adapter(ctx, registry, provider_id)
-                if fallback is None:
-                    raise
-                async for chunk in _run_with(fallback):
-                    yield chunk
-                return
+            if getattr(adapter, "provider_id", None) != provider_id:
+                raise RuntimeError("The selected text adapter does not match its provider")
+            async for chunk in _run_with(adapter):
+                yield chunk
+            return
+
+        if ctx is not None:
+            raise RuntimeError("The selected text provider is unavailable")
 
         if input_messages is not None:
             model = str(stream_kwargs.get("openai_model") or stream_kwargs.get("model") or "")
@@ -877,6 +886,7 @@ class LiveTurnOrchestrator:
         messages: list[dict] | None,
         tool_calls: list[Any],
         allowed_tools: set[str],
+        provider_content: dict[str, Any] | None = None,
     ) -> list[dict]:
         """Execute provider tool requests through the tenant-authorized gateway."""
         import json
@@ -884,18 +894,26 @@ class LiveTurnOrchestrator:
 
         from server.services.tool_router import tool_router
 
+        if len(tool_calls) > 32 or any(not isinstance(call, dict) for call in tool_calls):
+            raise RuntimeError("The text model returned an invalid action batch")
+        identifiers = [str(call.get("id")) for call in tool_calls if call.get("id")]
+        if len(identifiers) != len(set(identifiers)):
+            raise RuntimeError("The text model returned duplicate action identifiers")
         accepted_calls: list[dict[str, Any]] = []
         results: list[dict[str, Any]] = []
         for index, raw in enumerate(tool_calls[:4]):
             if not isinstance(raw, dict):
                 continue
             function = raw.get("function") if isinstance(raw.get("function"), dict) else {}
-            name = str(function.get("name") or "").strip().upper()
+            name = str(function.get("name") or "").strip()
             call_id = str(raw.get("id") or uuid.uuid4().hex)
             raw_arguments = function.get("arguments")
             if isinstance(raw_arguments, dict):
                 arguments = raw_arguments
                 encoded_arguments = json.dumps(raw_arguments, ensure_ascii=False)
+                if len(encoded_arguments) > 16_000:
+                    arguments = None
+                    encoded_arguments = "{}"
             elif isinstance(raw_arguments, str) and len(raw_arguments) <= 16_000:
                 encoded_arguments = raw_arguments
                 try:
@@ -912,7 +930,7 @@ class LiveTurnOrchestrator:
                     "function": {"name": name or "UNAVAILABLE_ACTION", "arguments": encoded_arguments},
                 }
             )
-            if name not in allowed_tools or not isinstance(arguments, dict):
+            if name.upper() not in allowed_tools or not isinstance(arguments, dict):
                 result = {"status": "error", "message": "This action is unavailable or its arguments were invalid."}
             else:
                 try:
@@ -920,7 +938,7 @@ class LiveTurnOrchestrator:
                         tenant_id=str(ctx.tenant_id),
                         agent_id=str(ctx.agent_id),
                         call_id=str(ctx.call_id),
-                        tool_name=name,
+                        tool_name=name.upper(),
                         arguments=arguments,
                         timing="in_call",
                     )
@@ -946,7 +964,7 @@ class LiveTurnOrchestrator:
         for raw in tool_calls[4:]:
             if isinstance(raw, dict):
                 function = raw.get("function") if isinstance(raw.get("function"), dict) else {}
-                name = str(function.get("name") or "UNAVAILABLE_ACTION").strip().upper()
+                name = str(function.get("name") or "UNAVAILABLE_ACTION").strip()
                 call_id = str(raw.get("id") or uuid.uuid4().hex)
                 accepted_calls.append(
                     {
@@ -977,7 +995,10 @@ class LiveTurnOrchestrator:
                 ),
             }
         )
-        output.append({"role": "assistant", "content": "", "tool_calls": accepted_calls})
+        assistant = {"role": "assistant", "content": "", "tool_calls": accepted_calls}
+        if isinstance(provider_content, dict):
+            assistant["_gemini_content"] = provider_content
+        output.append(assistant)
         output.extend(results)
         return output
 
@@ -989,7 +1010,7 @@ class LiveTurnOrchestrator:
         return _strip_prompt_cache_breakpoints(messages)
 
     def _align_stream_model(self, stream_kwargs: dict[str, Any], adapter_inst, registry) -> None:
-        """Never send a Gemini model id to OpenAI (or the reverse) after a provider swap."""
+        """Validate the selected tuple without substituting a catalog default."""
         pid = getattr(adapter_inst, "provider_id", None)
         if not pid:
             return
@@ -1000,49 +1021,8 @@ class LiveTurnOrchestrator:
                 allowed = registry.is_model_allowed(pid, "llm", current)
             except Exception:
                 allowed = False
-        if allowed:
-            return
-        model = self._provider_default_llm_model(registry, pid)
-        if not model:
-            return
-        stream_kwargs["model"] = model
-        stream_kwargs["openai_model"] = model
-
-    def _provider_default_llm_model(self, registry, provider_id: str) -> str | None:
-        settings = get_settings()
-        if provider_id == "openai":
-            preferred = (settings.openai_model or "").strip()
-            if preferred and (registry is None or registry.is_model_allowed("openai", "llm", preferred)):
-                return preferred
-        if registry is not None:
-            for p in registry.get_catalog().get("providers") or []:
-                if p.get("id") != provider_id:
-                    continue
-                models = (p.get("models") or {}).get("llm") or []
-                marked = next((m for m in models if m.get("default")), None)
-                row = marked or (models[0] if models else None)
-                if row and row.get("id"):
-                    return str(row["id"])
-        if provider_id == "openai":
-            return settings.openai_model
-        if provider_id == "deepseek":
-            return settings.deepseek_model
-        return None
-
-    def _fallback_llm_adapter(self, ctx, registry, failed_provider: str | None):
-        if ctx is None or registry is None:
-            return None
-        from server.services.dev_fallback_store import dev_fallback_store
-
-        chain = dev_fallback_store.get_chains().get("llm") or []
-        for pid in chain:
-            if pid == failed_provider:
-                continue
-            try:
-                return registry.get_llm(pid)
-            except Exception:
-                continue
-        return None
+        if not allowed:
+            raise RuntimeError("The selected text model is not available for its provider")
 
     async def _safe_append_user(
         self, call_id: str, transcript: str, stt_latency_ms: int | None

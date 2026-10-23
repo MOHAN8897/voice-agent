@@ -10,6 +10,7 @@ from server.providers.base import ResolvedStack, StackSelection, StageSelection
 from server.services.cartesia_voices import is_cartesia_voice_id
 from server.services.dev_secrets_store import dev_secrets_store
 from server.services.runtime_settings import runtime_settings
+from server.utils.errors import AppError, ErrorCode
 
 
 def _cartesia_available(settings: Settings) -> bool:
@@ -22,8 +23,8 @@ def infer_stt_from_runtime(*, model: str, default_provider: str, default_model: 
     raw = (model or default_model or "").strip()
     if raw in constants.CARTESIA_STT_MODELS or raw.lower().startswith("ink"):
         if cartesia_on:
-            return "cartesia", raw if raw in constants.CARTESIA_STT_MODELS else "ink-whisper"
-        return default_provider, default_model
+            return "cartesia", raw
+        raise AppError(ErrorCode.PROVIDER_DISABLED, message="The selected speech provider is unavailable", status_code=409)
     if raw in constants.STT_MODELS:
         return "sarvam", raw
     return default_provider, raw or default_model
@@ -42,9 +43,10 @@ def infer_tts_from_runtime(
     cartesia_voice = bool(speaker and is_cartesia_voice_id(str(speaker)))
     if cartesia_model or cartesia_voice:
         if cartesia_on:
-            resolved = raw if raw in constants.CARTESIA_TTS_MODELS else "sonic-3.5"
-            return "cartesia", resolved
-        return default_provider, default_model
+            if not cartesia_model:
+                raise AppError(ErrorCode.VALIDATION_ERROR, message="The selected voice and speech model do not match", status_code=409)
+            return "cartesia", raw
+        raise AppError(ErrorCode.PROVIDER_DISABLED, message="The selected speech provider is unavailable", status_code=409)
     if raw in constants.TTS_MODELS:
         return "sarvam", raw
     return default_provider, raw or default_model
@@ -71,10 +73,19 @@ def resolve_stack_for_session(session_id: str, *, language: str = "te-IN") -> Re
         )
 
     cartesia_on = _cartesia_available(settings)
-    default_stt_provider = getattr(settings, f"voice_{tier}_stt_provider")
-    default_stt_model = getattr(settings, f"voice_{tier}_stt_model")
-    default_tts_provider = getattr(settings, f"voice_{tier}_tts_provider")
-    default_tts_model = getattr(settings, f"voice_{tier}_tts_model") or "bulbul:v3"
+    base = resolve_stack(mode="env", tier=tier, language=lang, environment=app_env)
+    default_stt_provider, default_stt_model = base.stt.provider, base.stt.model
+    default_tts_provider, default_tts_model = base.tts.provider, base.tts.model
+    llm_provider, llm_model = base.llm.provider, runtime.get("openaiModel") or base.llm.model
+    if llm_model != base.llm.model:
+        from server.providers import get_provider_registry
+
+        registry = get_provider_registry()
+        matches = [p["id"] for p in registry.get_catalog().get("providers", [])
+                   if registry.is_provider_enabled(p["id"], "llm") and registry.is_model_allowed(p["id"], "llm", llm_model)]
+        if len(matches) != 1:
+            raise AppError(ErrorCode.VALIDATION_ERROR, message="The selected text model has no unambiguous enabled provider", status_code=409)
+        llm_provider = matches[0]
 
     stt_provider, stt_model = infer_stt_from_runtime(
         model=str(runtime.get("sttModel") or default_stt_model),
@@ -94,9 +105,11 @@ def resolve_stack_for_session(session_id: str, *, language: str = "te-IN") -> Re
     if speaker and is_cartesia_voice_id(str(speaker)) and tts_provider != "cartesia":
         speaker = None
     if not speaker:
-        if tts_provider == "cartesia":
+        if tts_provider == base.tts.provider:
+            speaker = base.tts.config.get("speaker") or base.tts.config.get("voice_id")
+        if not speaker and tts_provider == "cartesia":
             speaker = settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
-        else:
+        elif not speaker and tts_provider == "sarvam":
             speaker = settings.sarvam_tts_speaker_te
     selection = StackSelection(
         stt=StageSelection(
@@ -108,20 +121,21 @@ def resolve_stack_for_session(session_id: str, *, language: str = "te-IN") -> Re
             },
         ),
         llm=StageSelection(
-            getattr(settings, f"voice_{tier}_llm_provider"),
-            runtime.get("openaiModel") or getattr(settings, f"voice_{tier}_llm_model"),
-            {},
+            llm_provider,
+            llm_model,
+            dict(base.llm.config) if llm_model == base.llm.model else {},
         ),
         tts=StageSelection(
             tts_provider,
             tts_model,
-            {"speaker": speaker},
+            {**(base.tts.config if tts_provider == base.tts.provider else {}), **({"speaker": speaker} if speaker else {})},
         ),
         language=lang,
         voice_preset=runtime.get("voicePresetId"),
     )
     return resolve_stack(
         mode="frontend",
+        tier=tier,
         user_selection=selection,
         language=lang,
         environment=app_env,

@@ -206,7 +206,10 @@ async def test_superseded_defaults_are_reseeded_but_user_edits_are_kept(monkeypa
     async def fake_get(_agent_id):
         return list(sections)
 
-    async def fake_save(_agent_id, updated):
+    async def fake_save(_agent_id, updated, *, expected_revision):
+        from server.brain.business_brain_store import draft_revision
+
+        assert expected_revision == draft_revision(sections)
         saved["payload"] = repr(updated)
         return updated
 

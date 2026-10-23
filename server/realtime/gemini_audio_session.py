@@ -324,6 +324,10 @@ def build_gemini_audio_session_instructions(
     """Build one selected-language instruction without dropping authored business content."""
     from server.brain.compiled_brain_artifact import refresh_platform_sections
     from server.brain.sections import PLATFORM_PRIVACY_IDENTITY_RULES
+    from server.prompts.tts_delivery_rules import (
+        native_audio_delivery_rules,
+        strip_inline_audio_cues,
+    )
     raw_brain = condense_compiled_brain_for_gemini(refresh_platform_sections(compiled_brain, language))
     parts: list[str] = [
         "You are a professional live phone agent. Use the business script and the selected language naturally.",
@@ -337,6 +341,7 @@ def build_gemini_audio_session_instructions(
         who = f"{name}, {company}" if company else name
         parts.append(f"PINNED IDENTITY (always use when asked who is calling): {who}.")
     parts.append(live_audio_modality_rules())
+    parts.append(native_audio_delivery_rules())
     if not _is_outbound(direction):
         parts.append(first_turn_identity_rules(language, direction=direction))
     # Reserve flow before large opening-policy/knowledge sections can consume
@@ -405,4 +410,4 @@ def build_gemini_audio_session_instructions(
         "You MUST respond ONLY in the configured agent language for every single reply.",
         "Use the selected primary language with natural English mixing.",
     )
-    return _strip_repeated_rule_blocks(joined)
+    return strip_inline_audio_cues(_strip_repeated_rule_blocks(joined))

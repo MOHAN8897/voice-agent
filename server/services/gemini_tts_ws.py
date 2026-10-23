@@ -130,9 +130,9 @@ def connect_gemini_tts_ws(
                     "type": "error",
                     "code": "credits_exhausted" if is_credits_error else "gemini_tts_error",
                     "message": (
-                        f"Gemini TTS credits or quota exhausted ({err_msg})"
+                        "The selected speech service's capacity is exhausted."
                         if is_credits_error
-                        else f"Gemini TTS error: {err_msg}"
+                        else "The selected speech service could not complete the reply."
                     ),
                 }
                 await self._queue.put(json.dumps(error_payload))

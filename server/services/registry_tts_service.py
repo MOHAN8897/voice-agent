@@ -60,7 +60,7 @@ async def synthesize_via_registry(
 
     stack = _stack_for_tts(call_id=call_id, session_id=session_id, language_code=language_code)
     provider_id = stack.tts.provider
-    text = prepare_spoken_reply((text or "").strip(), provider=provider_id)
+    text = prepare_spoken_reply((text or "").strip(), provider=provider_id, model=model or stack.tts.model)
     if not text:
         raise AppError(ErrorCode.VALIDATION_ERROR, "Text is required for TTS", status_code=400)
 

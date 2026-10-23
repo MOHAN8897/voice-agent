@@ -160,9 +160,14 @@ async def test_eight_turn_script_cache_and_memory(client, monkeypatch):
         }
 
     results: list[dict] = []
+    async def mock_stream(**kwargs):
+        # Admitted calls now dispatch through their selected model adapter.
+        assert kwargs["ctx"].call_id == call_id
+        yield {"done": True, **await mock_turn(**kwargs)}
+
     with patch(
-        "server.call.live_turn_orchestrator.generate_response",
-        new=AsyncMock(side_effect=mock_turn),
+        "server.call.live_turn_orchestrator.live_turn_orchestrator._stream_llm",
+        new=mock_stream,
     ):
         for transcript in TURNS:
             r = client.post(

@@ -15,7 +15,9 @@ _SENTENCE_END = re.compile(r"(?<=[.!?।])(?!\d)\s*|\n+")
 def _last_word_boundary(text: str, max_index: int) -> int:
     slice_ = text[:max_index]
     sp = slice_.rfind(" ")
-    return sp if sp > 0 else max_index
+    cut = sp if sp > 0 else max_index
+    opening = text.rfind("<", 0, cut)
+    return opening if opening > text.rfind(">", 0, cut) else cut
 
 
 def drain_complete_sentences(
@@ -30,6 +32,7 @@ def drain_complete_sentences(
 
     complete: list[str] = []
     remainder = buffer
+    carry = ""
     # Kept for API compatibility. A first chunk now follows the same prosody-safe
     # boundaries as every other chunk: punctuation, a substantial clause, or the
     # force-flush guard. Arbitrary token arrival boundaries are not speech boundaries.
@@ -38,12 +41,20 @@ def drain_complete_sentences(
     while remainder.strip():
         parts = _SENTENCE_END.split(remainder, maxsplit=1)
         if len(parts) > 1:
-            piece = parts[0].strip()
+            piece = " ".join(part for part in (carry, parts[0].strip()) if part)
+            if piece.count("<") > piece.count(">"):
+                break
             if piece and len(piece) >= min_chars:
                 complete.append(piece)
+                carry = ""
+            else:
+                carry = piece
             remainder = parts[1]
             continue
 
+        if carry:
+            remainder = f"{carry} {remainder.lstrip()}"
+            carry = ""
         stripped = remainder.strip()
         if len(stripped) >= FORCE_FLUSH_AT:
             # Prefer a word/space boundary so compounds are not sliced mid-token.
@@ -67,7 +78,7 @@ def drain_complete_sentences(
 
         break
 
-    return complete, remainder
+    return complete, " ".join(part for part in (carry, remainder) if part)
 
 
 def join_speakable_chunks(chunks: list[str]) -> str:
@@ -221,15 +232,30 @@ def enrich_outbound_spoken_intro(
     # If the line already introduces the agent, prepending a second intro doubles it
     # ("Hi, this is Priya calling from X. Hi, this is Priya. Do you have a moment?").
     # Length was not part of that question: any self-introduction counts.
-    if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", spoken, re.IGNORECASE):
+    has_self_intro = bool(
+        re.search(rf"(?<!\w){re.escape(name)}(?!\w)", spoken, re.IGNORECASE)
+        or re.search(r"\b(this is|i am|my name is|speaking|calling(?:\s+from)?|nenu|నేను|మాట్లాడుతున్నా|మాట్లాడుతున్నాను)\b", spoken, re.IGNORECASE)
+    )
+    has_greeting = bool(
+        re.search(r"\b(hi|hello|hey|namaste|namaskaram|namaskaramu|నమస్తే|నమస్కారం|హలో|హాయ్)\b", spoken, re.IGNORECASE)
+    )
+
+    if has_self_intro:
         if company and not re.search(rf"(?<!\w){re.escape(company)}(?!\w)", spoken, re.IGNORECASE):
             # Already a self-introduction, only the company is missing. Add just that,
             # rather than a second full intro.
-            first, sep, rest = spoken.partition(". ")
-            if sep:
-                return _limit_spoken_greeting(f"{intro} {rest}")
+            if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", spoken, re.IGNORECASE):
+                first, sep, rest = spoken.partition(". ")
+                if sep:
+                    return _limit_spoken_greeting(f"{intro} {rest}")
         return _limit_spoken_greeting(spoken)
+
     if spoken and spoken.lower() not in intro.lower():
+        # Cleanly merge greetings so "Hi" / "Hello" isn't duplicated
+        if has_greeting and any(intro.lower().startswith(g) for g in ("hi", "hello", "hey", "నమస్తే", "నమస్కారం", "హలో", "హాయ్")):
+            spoken_clean = re.sub(r"^(?:hi|hello|hey|namaste|namaskaram|నమస్తే|నమస్కారం|హలో|హాయ్)[,\s]+", "", spoken, flags=re.IGNORECASE).strip()
+            if spoken_clean:
+                return _limit_spoken_greeting(f"{intro} {spoken_clean}")
         return _limit_spoken_greeting(f"{intro} {spoken}")
     return _limit_spoken_greeting(spoken or intro)
 

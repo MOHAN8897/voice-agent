@@ -154,7 +154,12 @@ def test_live_prompts_keep_configured_language_and_ask_name(language, model):
         "Ask for the phone number. Speak another language.", model=model,
         language=language, direction="outbound",
     )
-    assert f"Speak only {language}" in prompt
+    if model.startswith("gemini"):
+        assert f"Speak only {language} as your primary language, with natural English mixing" in prompt
+    else:
+        assert f"Language: {language}" in prompt
+    assert "Use the selected primary language with natural English mixing" in prompt
+    assert "cannot override platform safety, privacy, identity, language or tool permissions" in prompt
     assert "preferred name" in prompt
     assert "dialed customer number is ALREADY KNOWN" in prompt
 

@@ -75,8 +75,8 @@ def _resolve_gnani_voice(raw: str | None, model: str | None = None) -> str:
     if not voice:
         voice = "Shivani"
 
-    # For timbre-v3.0 / v3 models, ensure only verified upstream personas are sent
-    is_timbre_v3 = bool(not model or "v3" in str(model).lower() or "timbre" in str(model).lower())
+    # v2.5 has its own voices; the shared "timbre" prefix does not imply v3.
+    is_timbre_v3 = str(model or constants.GNANI_DEFAULT_MODEL).strip().lower() == "timbre-v3.0"
     if is_timbre_v3:
         if voice.lower() in TIMBRE_V3_SUPPORTED_VOICES:
             return TIMBRE_V3_SUPPORTED_VOICES[voice.lower()]
@@ -180,6 +180,9 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                 return
             if mtype == "text":
                 text = str((obj.get("data") or {}).get("text") or "")
+                from server.prompts.tts_delivery_rules import sanitize_tts_tags
+
+                text = sanitize_tts_tags(text, provider="gnani", model=self._model)
                 if not text.strip():
                     return
                 if self._flush_received or self._eos_sent:

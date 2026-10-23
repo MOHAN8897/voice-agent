@@ -758,3 +758,24 @@ async def dev_stack_saas_phone_put(body: SaasPhoneStackBody, session: SessionDat
         "credentials": _saas_phone_stack_credentials(),
         "databasePersisted": database_persisted,
     }
+
+
+class PrewarmGreetingBody(BaseModel):
+    enabled: bool
+
+
+@router.get("/api/dev/stack/prewarm-greeting")
+async def dev_get_prewarm_greeting(session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.stack.read")
+    from server.services.pstn_prewarm import is_prewarm_greeting_enabled
+
+    return {"ok": True, "enabled": is_prewarm_greeting_enabled()}
+
+
+@router.patch("/api/dev/stack/prewarm-greeting")
+async def dev_patch_prewarm_greeting(body: PrewarmGreetingBody, session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.stack.write")
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    dev_secrets_store.update({"enable_prewarm_greeting": body.enabled})
+    return {"ok": True, "enabled": body.enabled}

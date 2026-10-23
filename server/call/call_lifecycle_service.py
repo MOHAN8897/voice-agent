@@ -3,12 +3,11 @@ from __future__ import annotations
 
 import asyncio
 import copy
-import hashlib
-import json
 import uuid
-from dataclasses import replace
 from datetime import datetime, timezone
+from functools import wraps
 from typing import Any
+from weakref import WeakValueDictionary
 
 from server.brain.agent_service import agent_service
 from server.call import call_context
@@ -67,6 +66,17 @@ def _normalize_end_reason(reason: str) -> str:
 
 _idle_tasks: dict[str, asyncio.Task] = {}
 _max_duration_tasks: dict[str, asyncio.Task] = {}
+_start_locks: WeakValueDictionary[str, asyncio.Lock] = WeakValueDictionary()
+
+
+def _serialize_session_start(start):
+    @wraps(start)
+    async def locked(self, **kwargs):
+        key = kwargs.get("session_id") or "default"
+        lock = _start_locks.setdefault(key, asyncio.Lock())
+        async with lock:
+            return await start(self, **kwargs)
+    return locked
 
 
 def _utcnow() -> datetime:
@@ -128,6 +138,7 @@ def apply_recording_disclosure(compiled_text: str, agent: dict[str, Any], langua
 
 
 class CallLifecycleService:
+    @_serialize_session_start
     async def start(
         self,
         *,
@@ -165,11 +176,13 @@ class CallLifecycleService:
         # overwrote the SaaS Gemini platform stack with leftover OpenAI settings.
         if not stack_override:
             stack_override = saved.get("stack_override")
-        tier = tier or saved.get("tier")
-        if not tier and isinstance(stack_override, dict):
+        if isinstance(stack_override, dict):
             snapshot_tier = (stack_override.get("_voice_stack_snapshot") or {}).get("tier") or stack_override.get("tier")
             if snapshot_tier:
+                if tier and tier != str(snapshot_tier):
+                    raise AppError(ErrorCode.VALIDATION_ERROR, message="The selected tier does not match the voice profile", status_code=409)
                 tier = str(snapshot_tier)
+        tier = tier or saved.get("tier")
 
         agent = await self._resolve_agent(agent_id, tenant_id=tenant_id)
         env = environment or agent.get("environment") or effective_app_environment()
@@ -181,15 +194,12 @@ class CallLifecycleService:
         )
 
         previous = call_context.get_active_for_session(session_id)
-        if previous:
-            if settings.call_auto_end_on_start:
-                await self.end(previous.call_id, reason="superseded")
-            else:
-                raise AppError(
-                    ErrorCode.CONFLICT,
-                    message="An active call already exists for this session",
-                    status_code=409,
-                )
+        if previous and str(previous.tenant_id) != str(agent["tenant_id"]):
+            raise AppError(ErrorCode.CONFLICT,
+                message="This session is unavailable; choose a new session", status_code=409)
+        if previous and not settings.call_auto_end_on_start:
+            raise AppError(ErrorCode.CONFLICT,
+                message="An active call already exists for this session", status_code=409)
 
         stack = self._coerce_pipeline_stack(
             self._resolve_locked_stack(
@@ -204,7 +214,7 @@ class CallLifecycleService:
         pipeline = pipeline_mode(settings=settings, stack_override=stack_override)
         composed_snapshot = (
             copy.deepcopy(stack_override.get("_voice_stack_snapshot"))
-            if pipeline == "composed_voice" and isinstance(stack_override, dict)
+            if pipeline in {"composed_voice", "realtime_voice"} and isinstance(stack_override, dict)
             and isinstance(stack_override.get("_voice_stack_snapshot"), dict)
             else None
         )
@@ -212,7 +222,7 @@ class CallLifecycleService:
         is_composed_tier = False
         try:
             norm_tier = canonical_voice_tier(effective_tier)
-            is_composed_tier = (norm_tier != "premium")
+            is_composed_tier = bool(norm_tier)
         except Exception:
             is_composed_tier = False
 
@@ -224,7 +234,7 @@ class CallLifecycleService:
                 message="The composed voice profile is not valid for this call.",
                 status_code=409,
             )
-        if pipeline == "composed_voice":
+        if composed_snapshot is not None:
             locked_rate = composed_snapshot.get("retailRate") if composed_snapshot else None
             if (
                 not isinstance(locked_rate, dict)
@@ -255,6 +265,9 @@ class CallLifecycleService:
             compiled_version, compiled_text, brain_source = await self._lock_compiled_brain(
                 agent["agent_id"], session_id=lookup_session,
             )
+        if pipeline == "composed_voice" and not str(compiled_text or "").strip():
+            raise AppError(ErrorCode.VALIDATION_ERROR,
+                message="Publish the agent instructions before starting a call", status_code=409)
         if compiled_text and not using_prepared_brain:
             from server.brain.script_entities import realign_compiled_brain_for_session
 
@@ -318,7 +331,6 @@ class CallLifecycleService:
             "direction": direction,
             "campaign_id": campaign_id,
             "caller_id": caller_id,
-            "tier": stack.tier,
             "combination_id": stack.combination_id,
             "compiled_brain_version": compiled_version,
             "compiled_brain_text": compiled_text,
@@ -394,10 +406,12 @@ class CallLifecycleService:
 
                 cur_rates = await load_current_rates()
                 tier_slug = str(stack.tier or effective_tier or "medium").lower()
-                from server.services.dev_runtime import effective_app_environment
                 from server.services.saas.voice_stack_profiles import load_profile_records, _native_tier_retail_rate
-                tier_rec = (await load_profile_records(effective_app_environment(), (tier_slug,))).get(tier_slug)
+                tier_rec = (await load_profile_records(env, (tier_slug,))).get(tier_slug)
                 custom_rate = _native_tier_retail_rate(cur_rates, tier_slug, record=tier_rec)
+                if channel == "pstn" and custom_rate is None:
+                    raise AppError(ErrorCode.VALIDATION_ERROR,
+                        message="The selected voice tier has no complete approved rate", status_code=409)
                 if custom_rate and custom_rate.get("inrPaisePerMin"):
                     tier_rate_micros = custom_rate.get("usdMicrosPerMin")
                     tier_rate_cents = (tier_rate_micros + 5_000) // 10_000 if tier_rate_micros else None
@@ -425,13 +439,14 @@ class CallLifecycleService:
                 )
                 snap_fx = float(cur_rates.get("fx_rate_inr") or 95.64)
                 snap_ver = int(cur_rates.get("version") or 1)
+                if custom_rate and channel == "pstn":
+                    snap_fx = float(custom_rate["fxRateInr"])
+                    snap_ver = int(custom_rate["version"])
+            except AppError:
+                raise
             except Exception as e:
-                logger.debug(f"[CALL] rate snapshot resolution skipped: {e}")
-                snap_rate_cents = 9 if channel == "pstn" else 7
-                snap_rate_micros = snap_rate_cents * 10_000
-                snap_rate_inr_paise = int(round(snap_rate_cents * 95.64))
-                snap_fx = 95.64
-                snap_ver = 1
+                raise AppError(ErrorCode.VALIDATION_ERROR,
+                    message="Call pricing is unavailable; the call was not started", status_code=503) from e
 
         record["applied_rate_usd_cents_per_min"] = snap_rate_cents
         record["applied_rate_usd_micros_per_min"] = snap_rate_micros
@@ -452,6 +467,9 @@ class CallLifecycleService:
             meta["provider_cost_snapshot"] = await snapshot_provider_costs(
                 stack.to_safe_dict(), fx_rate_inr=snap_fx,
             )
+        # Failed stack/script/rate admission must not disconnect a healthy call.
+        if previous:
+            await self.end(previous.call_id, reason="superseded")
         await call_ledger.init(call_id, meta)
         audio_archive.init(call_id, record=not is_test)
         from server.call.memory_manager import memory_manager
@@ -958,6 +976,9 @@ class CallLifecycleService:
         stack_override: dict[str, Any] | None,
         language: str,
     ) -> ResolvedStack:
+        if self._is_server_composed_override(stack_override, tier):
+            return resolve_stack(mode=effective_config_mode(), tier=tier, language=language,
+                environment=environment, stack_override=stack_override, allow_composed_override=True)
         if effective_config_mode() == "frontend":
             base = resolve_stack_for_session(session_id, language=language)
             return resolve_stack(
@@ -989,8 +1010,8 @@ class CallLifecycleService:
         snapshot = stack_override.get("_voice_stack_snapshot") if isinstance(stack_override, dict) else None
         return bool(
             isinstance(stack_override, dict)
-            and stack_override.get("pipeline") == "composed_voice"
-            and stack_override.get("voice_flow") == "composed_stages"
+            and ((stack_override.get("pipeline") == "composed_voice" and stack_override.get("voice_flow") == "composed_stages")
+                 or (stack_override.get("pipeline") == "realtime_voice" and stack_override.get("voice_flow") == "realtime_e2e"))
             and isinstance(snapshot, dict)
             and snapshot.get("tier") == tier
         )
@@ -1001,21 +1022,19 @@ class CallLifecycleService:
         *,
         stack_override: dict[str, Any] | None = None,
     ) -> ResolvedStack:
-        provider, model = coerce_live_llm_selection(
-            stack.llm.provider,
-            stack.llm.model,
-            stack_override=stack_override,
-        )
-        if provider == stack.llm.provider and model == stack.llm.model:
-            return stack
-        llm = StageSelection(provider, model, dict(stack.llm.config))
-        payload = {
-            "stt": {"provider": stack.stt.provider, "model": stack.stt.model},
-            "llm": {"provider": llm.provider, "model": llm.model},
-            "tts": {"provider": stack.tts.provider, "model": stack.tts.model},
-        }
-        combination_id = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
-        return replace(stack, llm=llm, combination_id=combination_id)
+        try:
+            provider, model = coerce_live_llm_selection(
+                stack.llm.provider,
+                stack.llm.model,
+                stack_override=stack_override,
+            )
+        except ValueError as exc:
+            raise AppError(ErrorCode.VALIDATION_ERROR,
+                message="The selected model does not match the voice pipeline", status_code=409) from exc
+        if (provider, model) != (stack.llm.provider, stack.llm.model):
+            raise AppError(ErrorCode.VALIDATION_ERROR,
+                message="The selected model changed during pipeline validation", status_code=409)
+        return stack
 
     def _load_call_end_policy(self, session_id: str | None, language: str | None) -> dict | None:
         if not session_id:

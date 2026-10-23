@@ -64,8 +64,14 @@ def test_call_start_passes_authenticated_tenant_to_lifecycle(monkeypatch, tmp_pa
     get_settings.cache_clear()
     start = AsyncMock(return_value={"call_id": "tenant-scoped-call"})
     monkeypatch.setattr(lifecycle_module.call_lifecycle_service, "start", start)
-    monkeypatch.setattr(calls_module, "tenant_id_from_request", lambda _request: "tenant-a")
-    monkeypatch.setitem(app_mod.app.dependency_overrides, require_subscriber_jwt_if_enabled, lambda: None)
+    from types import SimpleNamespace
+    from server.services.saas import pstn_saas_stack
+
+    monkeypatch.setattr(lifecycle_module.call_lifecycle_service, "_resolve_agent", AsyncMock(return_value={
+        "agent_id": "agent-a", "tenant_id": "tenant-a", "default_tier": "medium"}))
+    monkeypatch.setattr(pstn_saas_stack, "saas_stack_override_for_agent", AsyncMock(return_value={"pipeline": "composed_voice"}))
+    monkeypatch.setitem(app_mod.app.dependency_overrides, require_subscriber_jwt_if_enabled,
+                        lambda: SimpleNamespace(tenant_id="tenant-a", role="owner"))
 
     response = c.post(
         "/api/call/start",
@@ -278,7 +284,10 @@ def test_get_call_merges_usage_cost_and_pipeline(monkeypatch, tmp_path):
     assert "cost_inr_per_min" in usage
     listed = c.get("/api/calls").json()["calls"]
     row = next(x for x in listed if x["call_id"] == call_id)
-    assert row["cost_usd"] == pytest.approx(usage["cost_usd"])
+    # This list is the tenant surface; wholesale costs are available in the
+    # privileged detail verified above and must not leak into tenant rows.
+    assert "cost_usd" not in row
+    assert "usage" not in row
     assert row["pipeline"] == "realtime_voice"
     get_settings.cache_clear()
 

@@ -11,8 +11,10 @@ def test_catalog_always_exposes_curated_conversational_and_promotional_voices():
     rows = voice_catalog.phone_voice_catalog()
     gemini_rows = [row for row in rows if row.get("provider") == "gemini"]
 
-    assert len(gemini_rows) == 9
-    assert all(row.get("category") in {"conversational", "promotional"} for row in gemini_rows)
+    expected = {"zephyr", "puck", "aoede", "leda", "kore", "charon", "fenrir", "sulafat", "pulcherrima"}
+    expected.update(voice.lower() for voice in GEMINI_LIVE_LIBRARY_VOICES)
+    assert {row["id"] for row in gemini_rows} == expected
+    assert all(row.get("category") in {"conversational", "promotional", "support", "operations"} for row in gemini_rows)
     assert all(row.get("accent") for row in gemini_rows)
     assert any(row.get("id") == "zephyr" for row in gemini_rows)
 

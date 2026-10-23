@@ -9,6 +9,11 @@ from __future__ import annotations
 import re
 
 from server.prompts.conversation_policy import CONVERSATION_INTELLIGENCE
+from server.prompts.spoken_locale_style import (
+    SPOKEN_LOCALES,
+    primary_language_rule,
+    spoken_register_for,
+)
 from server.prompts.tts_speech_rules import SPEECH_GRAMMAR_RULES
 from server.services.voice_pipeline_limits import (
     LIVE_REPLY_BREVITY_COMPACT,
@@ -139,7 +144,7 @@ def normalize_compile_language(code: str | None) -> str:
 
 
 UNCLEAR_FALLBACK: dict[str, str] = {
-    "te-IN": "క్షమించండి, చివరి మాట స్పష్టంగా వినిపించలేదు. మళ్లీ చెప్తారా?",
+    "te-IN": "చివరి మాట వినిపించలేదు అండి, మళ్లీ చెప్తారా?",
     "en-IN": "Sorry, I missed the last part. Could you repeat it?",
     "en-US": "Sorry, I missed the last part. Could you repeat it?",
     "en-GB": "Sorry, I missed the last part. Could you repeat it, please?",
@@ -154,7 +159,7 @@ UNCLEAR_FALLBACK: dict[str, str] = {
 }
 
 SLOW_DOWN_FALLBACK: dict[str, str] = {
-    "te-IN": "కొంచెం నెమ్మదిగా చెప్పండి, స్పష్టంగా వినడానికి.",
+    "te-IN": "కొంచెం నెమ్మదిగా చెప్తారా అండి?",
     "en-IN": "Could you say that a bit more slowly?",
     "en-US": "Could you say that a bit more slowly?",
     "en-GB": "Could you say that a bit more slowly, please?",
@@ -183,20 +188,7 @@ LANGUAGE_MISMATCH_FALLBACK: dict[str, str] = {
     "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਕਿਰਪਾ ਕਰਕੇ ਪੰਜਾਬੀ ਵਿੱਚ ਦੱਸੋ।",
 }
 
-LANGUAGE_LOCK: dict[str, str] = {
-    "te-IN": "Primary language: Telugu (te-IN). Speak professionally in natural Telugu mixed with everyday English words and phrases. Use Telugu script for Telugu words and English script for English words. Keep this selected language style throughout the call.",
-    "hi-IN": "Primary language: Hindi (hi-IN). Speak professionally in natural Hindi mixed with everyday English words and phrases. Use Devanagari script for Hindi words and English script for English words. Keep this selected language style throughout the call.",
-    "ta-IN": "Primary language: Tamil (ta-IN). Speak professionally in natural Tamil mixed with everyday English words and phrases. Use Tamil script for Tamil words and English script for English words. Keep this selected language style throughout the call.",
-    "kn-IN": "Primary language: Kannada (kn-IN). Speak professionally in natural Kannada mixed with everyday English words and phrases. Use Kannada script for Kannada words and English script for English words. Keep this selected language style throughout the call.",
-    "ml-IN": "Primary language: Malayalam (ml-IN). Speak professionally in natural Malayalam mixed with everyday English words and phrases. Use Malayalam script for Malayalam words and English script for English words. Keep this selected language style throughout the call.",
-    "mr-IN": "Primary language: Marathi (mr-IN). Speak professionally in natural Marathi mixed with everyday English words and phrases. Use Devanagari script for Marathi words and English script for English words. Keep this selected language style throughout the call.",
-    "bn-IN": "Primary language: Bengali (bn-IN). Speak professionally in natural Bengali mixed with everyday English words and phrases. Use Bengali script for Bengali words and English script for English words. Keep this selected language style throughout the call.",
-    "gu-IN": "Primary language: Gujarati (gu-IN). Speak professionally in natural Gujarati mixed with everyday English words and phrases. Use Gujarati script for Gujarati words and English script for English words. Keep this selected language style throughout the call.",
-    "pa-IN": "Primary language: Punjabi (pa-IN). Speak professionally in natural Punjabi mixed with everyday English words and phrases. Use Gurmukhi script for Punjabi words and English script for English words. Keep this selected language style throughout the call.",
-    "en-IN": "Primary language: Indian English (en-IN). Speak clear, natural, professional English in this regional style. Preserve real local names and the business currency supplied in the script.",
-    "en-US": "Primary language: American English (en-US). Speak clear, natural, professional English in this regional style. Preserve real local names and the business currency supplied in the script.",
-    "en-GB": "Primary language: British English (en-GB). Speak clear, natural, professional English in this regional style. Preserve real local names and the business currency supplied in the script.",
-}
+LANGUAGE_LOCK: dict[str, str] = {locale: primary_language_rule(locale) for locale in SPOKEN_LOCALES}
 
 
 def live_realtime_output_rules(language: str | None, *, direction: str | None = None) -> str:
@@ -216,7 +208,9 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
         "Use request_language_callback only when a genuine communication barrier remains."
     )
     return f"""OUTPUT LANGUAGE RULES (mandatory)
+Language: {lang}
 - {LANGUAGE_LOCK[lang]}
+{spoken_register_for(lang)}
 - {mirror}
 - If you understand the caller, answer in the configured language without a language reminder. Accents, loanwords and short replies are not a barrier.
 - Only for a genuine language barrier: say once: "{mismatch}" — then wait.
@@ -250,7 +244,7 @@ def live_audio_modality_rules() -> str:
     """Shared spoken behavior, without repeating the business or language packs."""
     return (
         "OUTPUT MODALITY RULES (audio Realtime)\n"
-        "- Speak professionally and naturally. Answer the caller's latest point, then listen.\n"
+        "- Speak warmly and naturally in everyday words. Answer the caller's latest point, then listen.\n"
         "- Use the selected primary language with natural English mixing. Understand callers who mix languages; ask for clarification only when needed.\n"
         "- Follow the supplied business facts and relevant script objectives. Do not repeat answered questions or the introduction.\n"
         "- Keep answers concise but complete. Usually one or two short sentences; use more when the question needs it. Ask one question at a time.\n"
@@ -286,12 +280,12 @@ def live_realtime_audio_rules(language: str | None, *, direction: str | None = N
 
 
 SPOKEN_PACK_TE = f"""--- SPOKEN LANGUAGE (te-IN) ---
-Live phone call. Speak natural Telugu mixed with English: Telugu Unicode with everyday English (`budget`, `order`, `details`, `booking`). Hyderabad phone register with polite `-andi` markers, avoiding archaic literary Telugu (`చేయుచున్నాను`).
+Live phone call. Speak natural, warm, human-like Telugu with everyday English code-mixing (Telugu-English as spoken on everyday phone calls). Use everyday English words naturally (`budget`, `order`, `details`, `booking`, `call`, `confirm`, `time`, `schedule`, `location`, `help`, `check`, `loan`, `message`, `offer`, `address`, `team`). Use conversational phone register with polite `-andi` markers (`హలో అండి, చెప్పండి`, `నేను మీకు ఎలా help చేయగలను?`, `sure అండి`, `ఒక్క నిమిషం అండి`). Never use archaic, literary or bookish Telugu (never say `చేయుచున్నాను`, `గ్రహించలేకపోయాను`, or `ఏ విధముగా సహాయపడగలను`).
 {LANGUAGE_LOCK["te-IN"]}
 If the caller speaks another language and you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["te-IN"]}`
 {SOFT_BREVITY}
-Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with అవునండి / సరేనండి / అలాగే / ఓకే). Answer directly and politely.
+Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with అవునండి / సరేనండి / అలాగే / ఓకే / sure అండి). Answer directly and politely.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["te-IN"]}`
 Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["te-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
 {NUMBER_RULES_INDIC}
@@ -306,7 +300,8 @@ User: thanks bye / not interested
 GOOD: `సరేనండి, సమయం ఇచ్చినందుకు ధన్యవాదాలు. Good day.` AND end_call true. No new pitch, and never a goodbye with end_call false.
 
 PHONE CALL
-- Sound human on a live call — not a chatbot. Follow them immediately after barge-in.
+- Sound like a friendly human on a live phone call — never like an automated robot or a book. Follow them immediately after barge-in.
+- Natural Telugu-English code-mixing: use familiar English terms within everyday Telugu sentences, without forcing them.
 - If they lack a fact, say you do not know. If they correct you, accept it once and move on.
 {PHONE_CALL_POLICY_PTR}"""
 
@@ -359,7 +354,7 @@ GOOD: `{PHONE_ASK_FALLBACK["en-IN"]}`
 BAD: Reading digits aloud.
 
 User: my number is 8897908470
-GOOD: Noted — team will reach out.
+GOOD: Got it, thanks. Never promise follow-up without an allowed workflow and tool confirmation.
 BAD: Refusing to take the number.
 
 User: email it / parking included? / name wrong / off-scope / repeating yourself
@@ -404,7 +399,7 @@ GOOD: Short farewell + end_call true. No spoken goodbye while staying on the lin
 User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["en-US"]}` Never read digits aloud; never refuse with no callback offer.
 User: my number is 4155550199
-GOOD: Got it — someone from the team will follow up. Never refuse to take the number.
+GOOD: Got it, thanks. Never promise follow-up without an allowed workflow and tool confirmation.
 
 PHONE CALL
 - Sound human on a live call — not a chatbot.
@@ -441,7 +436,7 @@ GOOD: `{PHONE_ASK_FALLBACK["hi-IN"]}`
 BAD: digits padhna; "call us at…"; sirf mana karke chhod dena, callback offer nahi.
 
 User: mera number 8897908470 hai / note kar lo
-GOOD: नोट कर लिया — टीम आपसे संपर्क करेगी।
+GOOD: ठीक है, समझ गया। Do not claim the team will contact them without an allowed workflow and tool confirmation.
 BAD: number record nahi kar sakte; contact number share nahi kar sakte.
 
 User: interested nahi / nahi chahiye
@@ -493,7 +488,7 @@ GOOD: Short farewell + end_call true. No spoken goodbye while staying on the lin
 User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["en-GB"]}` Never read digits aloud; never refuse with no callback offer.
 User: my number is 07911123456
-GOOD: Splendid, got it — someone from the team will be in touch. Never refuse to take the number.
+GOOD: Got it, thanks. Never promise follow-up without an allowed workflow and tool confirmation.
 
 PHONE CALL
 - Sound human on a live call — not a chatbot.
@@ -528,7 +523,7 @@ GOOD: answer or continue the conversation. Do not hang up.
 User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["ta-IN"]}`
 User: my number is 9840123456
-GOOD: நோட் பண்ணிக்கிட்டேன் — டீம் உங்களைத் தொடர்பு கொள்வாங்க. Never refuse to note details.
+GOOD: சரிங்க, புரிஞ்சது. Do not claim a callback without an allowed workflow and tool confirmation.
 
 PHONE CALL
 - Sound human on a live call — not a chatbot. Follow them immediately after barge-in.
@@ -557,7 +552,7 @@ GOOD: `ಸರಿ, ಸಮಯ ಕೊಟ್ಟಿದ್ದಕ್ಕೆ ಧನ್ಯ
 User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["kn-IN"]}`
 User: my number is 9845012345
-GOOD: ನೋಟ್ ಮಾಡಿಕೊಂಡೆ — ನಮ್ಮ ಟೀಮ್ ನಿಮ್ಮನ್ನು ಸಂಪರ್ಕ ಮಾಡ್ತಾರೆ. Never refuse to take the number.
+GOOD: ಸರಿ, ಧನ್ಯವಾದಗಳು. Claim saving or follow-up only after the permitted workflow and tool confirmation.
 
 PHONE CALL
 - Sound human on a live call — not a chatbot. Follow them immediately after barge-in.
@@ -938,7 +933,7 @@ PROFESSIONAL_CLOSE_RULES = """PROFESSIONAL CLOSE (sales / lead roles)
 - Do not keep selling after they agreed to a next step. Do not hang up while they still have an open question."""
 
 DECISIVE_TURN_DISCIPLINE = """DECISIVE TURN DISCIPLINE (every turn)
-- Sound like a professional phone rep: crisp, confident, respectful — not chatty or rambling.
+- Sound like a helpful colleague: warm, clear and respectful. Use everyday words, not a bureaucratic or sales-announcer voice.
 - Each turn: answer or acknowledge what they just said, add only what is needed next, then stop.
 - Never monologue. Do not stack a pitch, disclaimer, and second question in one turn.
 - Speak only to the point — cut filler, repeated facts, and brochure language.
@@ -1019,6 +1014,7 @@ def spoken_pack_for(
             pack = pack.replace(LIVE_REPLY_BREVITY_RULE, "")
     if core_only:
         pack = _drop_pack_blocks(pack, _CORE_ONLY_DROPPED_HEADERS)
+    pack += "\n\n" + spoken_register_for(lang)
     return re.sub(r"\n{3,}", "\n\n", pack).strip()
 
 

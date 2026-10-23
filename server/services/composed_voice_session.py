@@ -10,6 +10,11 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
+from server.prompts.tts_delivery_rules import (
+    strip_inline_audio_cues,
+    supports_inline_audio_tags,
+    tts_delivery_rules,
+)
 from server.providers.base import StageSelection
 
 _SCRIPTS = {
@@ -31,7 +36,7 @@ def composed_system_prompt(ctx: Any) -> str:
     """Reuse within this admitted call; invalidate on script/language/model edits."""
     from server.brain.compiled_brain_artifact import refresh_platform_sections
     from server.brain.sections import PLATFORM_PRIVACY_IDENTITY_RULES
-    from server.prompts.agent_voice_rules import LANGUAGE_LOCK, normalize_compile_language
+    from server.prompts.agent_voice_rules import normalize_compile_language, spoken_pack_for
 
     brain = str(ctx.compiled_brain_text or "").strip()
     if not brain:
@@ -56,31 +61,25 @@ def composed_system_prompt(ctx: Any) -> str:
         llm_api,
         tts_prov,
         tts_model,
+        str(getattr(stack, "tier", "") or getattr(ctx, "tier", "")),
+        str(getattr(stack, "combination_id", "")),
     )
     cached = getattr(ctx, "composed_prompt_snapshot", None)
     if cached is None or cached.key != key:
         text = refresh_platform_sections(brain, language)
+        if f"--- SPOKEN LANGUAGE ({language}) ---" not in text:
+            text = spoken_pack_for(language, include_brevity=False, core_only=True) + "\n\n" + text
+        if not supports_inline_audio_tags(tts_prov, tts_model):
+            text = strip_inline_audio_cues(text)
         if PLATFORM_PRIVACY_IDENTITY_RULES not in text:
             text = f"{PLATFORM_PRIVACY_IDENTITY_RULES}\n\n{text}"
         text += (
-            f"\n\n[Selected session language]\n{LANGUAGE_LOCK[language]}\n"
+            f"\n\n[Selected session language]\nThe admitted primary locale is {language}. "
             "Render script examples in this language even when authored in English. "
+            "Use its conversational register rather than stiff example phrasing; preserve exact mandatory wording. "
             "The opening has already been delivered; answer the caller without reintroducing yourself."
         )
-        if tts_prov == "gnani":
-            text += (
-                "\n\n[Gnani Audio Tags Expressive Guidelines]\n"
-                "Your speech is synthesized by Gnani Timbre, which supports inline non-verbal emotional and prosody audio tags. "
-                "Use the following tags contextually to make spoken responses feel warm, lively, and conversational:\n"
-                "- Emotional & Non-Verbal Markers: <laugh>, <giggle>, <sigh>, <whispers>, <excited>, <exhales>, <yawns>, <coughs>, <sniffles>, <clears throat>\n"
-                "- Pacing & Delivery: <pauses>, <slow>, <shouting>\n"
-                "Tag Generation Rules:\n"
-                "1. Place tags naturally at the start of clauses or between phrases (e.g., 'నమస్కారం అండి! <excited> మీకు ఒక శుభవార్త ఉంది.').\n"
-                "2. Place <pauses> before important numbers, account balances, or confirmation prompts so the caller has time to comprehend.\n"
-                "3. Use <laugh> or <giggle> for polite, cheerful customer service interactions.\n"
-                "4. Never combine conflicting tags (e.g. do not combine <whispers> and <shouting> together).\n"
-                "5. Use tags purposefully and contextually; do not clutter every single sentence with tags."
-            )
+        text += "\n\n" + tts_delivery_rules(tts_prov, tts_model, language)
         cached = ComposedPromptSnapshot(key, text)
         ctx.composed_prompt_snapshot = cached
     return cached.text

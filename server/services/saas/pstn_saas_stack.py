@@ -72,40 +72,33 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     profile_rec = records.get(tier)
     use_composed = bool(
         profile_rec
-        and (profile_rec.get("profile") or {}).get("enabled")
         and (profile_rec.get("profile") or {}).get("engines")
     )
 
     if tier != "premium" or use_composed:
-        try:
-            lang = _agent_spoken_language(agent, voice_cfg)
-            stack, _snapshot = await resolve_agent_selection(
-                environment=environment,
-                tier=tier,
-                voice_settings=saved_voice_settings if isinstance(saved_voice_settings, dict) else {},
-                language=lang,
-                allow_fallback=True,
-            )
-            if speed_val is not None:
-                from server.services.tts_voice_direction import resolve_speech_pace
+        lang = _agent_spoken_language(agent, voice_cfg)
+        stack, _snapshot = await resolve_agent_selection(
+            environment=environment,
+            tier=tier,
+            voice_settings=saved_voice_settings if isinstance(saved_voice_settings, dict) else {},
+            language=lang,
+        )
+        if speed_val is not None:
+            from server.services.tts_voice_direction import resolve_speech_pace
 
+            if stack.get("pipeline") == "realtime_voice":
+                stack["realtime_voice"] = {**stack["realtime_voice"], "speed": speed_val}
+            else:
                 tts = dict(stack["tts"])
                 config = dict(tts.get("config") or {})
                 config["pace"] = resolve_speech_pace(tts["provider"], speed_val)
                 if tts["provider"] == "cartesia":
                     config["speed"] = config["pace"]
                 stack = {**stack, "tts": {**tts, "config": config}}
-            from server.services.pstn_stack import (
-                normalize_pstn_stack_override as normalize_composed_stack_override,
-            )
-
-            normalized, _ = normalize_composed_stack_override(stack, language=lang, tier=tier)
-            if not normalized:
-                raise VoiceProfileError("profile_unavailable", "The selected voice profile is unavailable.", status_code=409)
-            return normalized
-        except VoiceProfileError as exc:
-            import logging
-            logging.getLogger(__name__).warning("PSTN composed stack selection conflict (%s), falling back to platform phone stack", exc)
+        normalized, _ = normalize_pstn_stack_override(stack, language=lang, tier=tier)
+        if not normalized:
+            raise VoiceProfileError("profile_unavailable", "The selected voice profile is unavailable.", status_code=409)
+        return normalized
 
     lang = _agent_spoken_language(agent, voice_cfg)
     stack = await resolve_platform_phone_stack(lang)
@@ -118,21 +111,19 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
         or agent_voice.get("realtimeVoice")
         or agent_voice.get("voiceId")
         or rv.get("voice")
-        or DEFAULT_REALTIME_VOICE
+        or ""
     )
     llm = stack.get("llm") if isinstance(stack.get("llm"), dict) else {}
     if str(llm.get("provider") or "").lower() == "gemini":
         gemini_ids = {item.lower() for item in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)}
-        if realtime_voice.lower() in {item.lower() for item in REALTIME_VOICES}:
+        if not realtime_voice:
             realtime_voice = default_gemini_live_voice(lang)
         elif realtime_voice.lower() not in gemini_ids:
-            from server.realtime.providers.gemini_voice import normalize_gemini_live_voice
-
-            realtime_voice = normalize_gemini_live_voice(realtime_voice)
-    elif realtime_voice.lower() in {
-        item.lower() for item in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)
-    }:
-        realtime_voice = DEFAULT_REALTIME_VOICE
+            raise VoiceProfileError("voice_selection_invalid", "Choose a current voice for the selected live model.", status_code=409)
+    else:
+        if realtime_voice and realtime_voice.lower() not in {item.lower() for item in REALTIME_VOICES}:
+            raise VoiceProfileError("voice_selection_invalid", "Choose a current voice for the selected live model.", status_code=409)
+        realtime_voice = realtime_voice or DEFAULT_REALTIME_VOICE
     rv["voice"] = realtime_voice
     from server.services.saas.voice_stack_profiles import canonical_voice_tier, load_profile_records
     raw_tier = agent.get("default_tier") or agent.get("defaultTier")
@@ -151,6 +142,13 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
             pass
     stack["language"] = lang
     stack["realtime_voice"] = rv
+    from server.services.saas.voice_stack_profiles import _load_rates_without_fallback, _native_tier_retail_rate
+
+    approved_rate = _native_tier_retail_rate(await _load_rates_without_fallback(), effective_tier)
+    if not approved_rate or not approved_rate.get("fxRateInr"):
+        raise VoiceProfileError("profile_unavailable", "The selected voice tier has no approved retail rate.", status_code=409)
+    stack["_voice_stack_snapshot"] = {"tier": effective_tier, "profileRevision": 0,
+        "source": "platform_phone_stack", "retailRate": approved_rate}
     normalized, _ = normalize_pstn_stack_override(
         stack, language=lang, tier=effective_tier, default_provider="gemini"
     )

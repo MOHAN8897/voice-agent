@@ -13,7 +13,7 @@ async def test_saas_stack_override_uses_gemini_from_platform(monkeypatch):
             "pipeline": "realtime_voice",
             "language": "te-IN",
             "llm": {"provider": "gemini", "model": "gemini-3.8-live"},
-            "realtime_voice": {"voice": "marin"},
+            "realtime_voice": {"voice": "te-in-csagent-5"},
         }
 
     async def fake_voice_cfg(_agent_id: str):
@@ -21,8 +21,15 @@ async def test_saas_stack_override_uses_gemini_from_platform(monkeypatch):
 
     monkeypatch.setattr(mod, "resolve_platform_phone_stack", fake_resolve)
     monkeypatch.setattr(mod, "load_agent_voice_config", fake_voice_cfg)
+    from unittest.mock import AsyncMock
+    from server.services.saas import voice_stack_profiles
 
-    stack = await mod.saas_stack_override_for_agent({"agent_id": "a1", "languages": ["te-IN"]})
+    monkeypatch.setattr(voice_stack_profiles, "load_profile_records", AsyncMock(return_value={}))
+    monkeypatch.setattr(voice_stack_profiles, "_load_rates_without_fallback", AsyncMock(return_value={
+        "pstn_premium_rate_usd_micros_per_min": 100000, "pstn_premium_rate_inr_paise_per_min": 955,
+        "fx_rate_inr": 95.5, "version": 1}))
+
+    stack = await mod.saas_stack_override_for_agent({"agent_id": "a1", "default_tier": "premium", "languages": ["te-IN"]})
     assert stack["llm"]["provider"] == "gemini"
     assert stack["llm"]["model"] == "gemini-3.8-live"
     assert stack["realtime_voice"]["voice"] == "te-in-csagent-5"

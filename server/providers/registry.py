@@ -98,7 +98,7 @@ class ProviderRegistry:
 
         self._stt["cartesia"] = CartesiaSTTAdapter()
         self._tts["cartesia"] = CartesiaTTSAdapter()
-        providers.append(self._cartesia_provider_entry(s, bool(cartesia_key), bool(enable_cartesia or cartesia_key)))
+        providers.append(self._cartesia_provider_entry(s, bool(cartesia_key), bool(enable_cartesia)))
 
         # Gnani AI (Vachana) TTS option
         gnani_key = dev_secrets_store.effective_secret("gnani_api_key") or s.gnani_api_key
@@ -106,7 +106,7 @@ class ProviderRegistry:
         from server.providers.gnani_tts import GnaniTTSAdapter
 
         self._tts["gnani"] = GnaniTTSAdapter()
-        providers.append(self._gnani_provider_entry(s, bool(gnani_key), bool(enable_gnani or gnani_key)))
+        providers.append(self._gnani_provider_entry(s, bool(gnani_key), bool(enable_gnani)))
 
 
         config_mode = dev_secrets_store.effective("voice_agent_config_mode", s.voice_agent_config_mode)
@@ -158,6 +158,7 @@ class ProviderRegistry:
                         "streaming": True,
                     }
                     for model in _allowed_models(s, "sarvam_llm_models_csv", "allowed_sarvam_llm_models")
+                    if sarvam_chat_api_modes(model)
                 ],
                 "tts": [
                     {
@@ -339,6 +340,9 @@ class ProviderRegistry:
         return self._catalog
 
     def is_provider_enabled(self, provider_id: str, stage: str) -> bool:
+        entry = next((row for row in self._catalog.get("providers", []) if row.get("id") == provider_id), None)
+        if not entry or entry.get("enabled") is not True or entry.get("configured") is not True:
+            return False
         if stage == "stt":
             return provider_id in self._stt
         if stage == "llm":
@@ -358,17 +362,17 @@ class ProviderRegistry:
         return False
 
     def get_stt(self, provider_id: str) -> STTAdapter:
-        if provider_id not in self._stt:
+        if not self.is_provider_enabled(provider_id, "stt"):
             raise KeyError(f"STT provider not available: {provider_id}")
         return self._stt[provider_id]
 
     def get_llm(self, provider_id: str) -> LLMAdapter:
-        if provider_id not in self._llm:
+        if not self.is_provider_enabled(provider_id, "llm"):
             raise KeyError(f"LLM provider not available: {provider_id}")
         return self._llm[provider_id]
 
     def get_tts(self, provider_id: str) -> TTSAdapter:
-        if provider_id not in self._tts:
+        if not self.is_provider_enabled(provider_id, "tts"):
             raise KeyError(f"TTS provider not available: {provider_id}")
         return self._tts[provider_id]
 

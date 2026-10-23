@@ -1,11 +1,12 @@
 """
-Spoken-output rules for LLM → TTS (Cartesia Sonic + Sarvam Bulbul).
+Spoken-output grammar shared by speech engines.
 
-TTS engines are NOT prompted like an LLM (no system prompt / free-text style brief).
+Transcript grammar is separate from model-specific delivery capabilities.
 Voice quality comes from:
 1) LLM writing punctuated, speakable sentences (rules below)
 2) Provider delivery knobs — Cartesia generation_config {emotion, speed, volume};
-   Sarvam pace + temperature (see server/services/tts_voice_direction.py)
+   Sarvam v3 pace/temperature, v4 pace/pitch/loudness; Gemini speech metadata;
+   optional Gnani v3 cues (see tts_delivery_rules.py).
 
 Sources:
 - Cartesia prompting tips: well-punctuated prose; do not strip punctuation;

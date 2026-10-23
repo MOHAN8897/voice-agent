@@ -2860,7 +2860,7 @@ class PstnRealtimeVoiceLoop:
             spoken_text=spoken_for_gate,
             callback_close_phase=state.phase,
             tool_sourced=tool_sourced,
-            agent_farewell_ends_call=self.channel == "pstn" and is_gemini_live_voice_model(self._live_model or ""),
+            agent_farewell_ends_call=self.channel == "pstn" and (is_gemini_live_voice_model(self._live_model or "") or getattr(self, "pipeline", None) == "composed_voice"),
         )
         if not decision.accepted:
             log_pstn(
@@ -3015,7 +3015,7 @@ class PstnRealtimeVoiceLoop:
         from server.realtime.models import is_gemini_live_voice_model
 
         if (
-            self.channel == "pstn" and is_gemini_live_voice_model(self._live_model or "")
+            self.channel == "pstn" and (is_gemini_live_voice_model(self._live_model or "") or getattr(self, "pipeline", None) == "composed_voice")
             and response_complete and self._response_had_audio and not self._caller_speaking
             and agent_spoke_terminal_farewell(spoken) and not looks_like_question(spoken)
         ):

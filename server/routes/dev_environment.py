@@ -33,6 +33,7 @@ class EnvironmentPatch(BaseModel):
     enable_telnyx: bool | None = None
     enable_vobiz: bool | None = None
     enable_benchmarks: bool | None = None
+    enable_prewarm_greeting: bool | None = None
     voice_agent_config_mode: str | None = None
     voice_agent_tier: str | None = None
     app_environment: str | None = None

@@ -111,7 +111,7 @@ _NAME_WORD = r"(?:[^\W\d_]|[\u0300-\u036f\u0900-\u0dff])(?:[^\W_]|[\u0300-\u036f
 _NAME_VALUE = rf"({_NAME_WORD}(?:\s+{_NAME_WORD}){{0,3}})"
 _NAME_STOPS = re.compile(
     r"\s+(?:from|for|who|whose|that|and|at|about|should|must|will|can|representing|working|work|with|to|is|also|people|calls?|calling|call\s+her|call\s+him|"
-    r"i|we|you|u|wants?|needs?|just|company|business|firm|agency|agencies|clinic|hospital|store|shop|"
+    r"i|we|you|u|wants?|needs?|just|related|realted|regarding|of|company|business|firm|agency|agencies|clinic|hospital|store|shop|"
     r"selling|sells|sell|buying|buys|buy|booking|books|book|है|और|से|का|की|के|మరియు|నుండి|కోసం|అనే|ఆమె|అతను)(?:\b|\s|[.,;।!?]|$)",
     re.I,
 )
@@ -129,7 +129,7 @@ def clean_person_name(value: str) -> str:
         "assistant", "company", "business", "i", "we", "you", "u", "never", "not", "no",
         "ask", "asking", "call", "calls", "calling", "verify", "check", "confirm", "help",
         "for", "should", "speak", "from", "about",
-        "please", "do", "don't", "dont",
+        "please", "do", "don't", "dont", "private", "limited", "ltd", "llp", "llc",
     }
     if any(word.casefold() in stop_words for word in words):
         return ""
@@ -160,6 +160,13 @@ def identity_candidates(brief: str) -> list[dict[str, Any]]:
     candidates: list[dict[str, Any]] = []
     for priority, pattern in patterns:
         for match in re.finditer(pattern, brief, re.I):
+            # A bare 'name is' / 'named' can describe the customer or business.
+            # It must not outrank an explicit person-who-calls clause.
+            if priority in {85, 88} and re.search(
+                r"\b(?:customer|caller|client|callee|contact|patient|student|company|business|agency|firm|product|brand)\s*$",
+                brief[:match.start()], re.I,
+            ):
+                continue
             name = clean_person_name(match.group(1))
             if not name:
                 continue

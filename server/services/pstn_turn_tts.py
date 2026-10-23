@@ -437,6 +437,10 @@ class PstnTurnTtsSession:
             self._reader_task = asyncio.create_task(self._reader_loop())
 
     async def send_text(self, text: str) -> None:
+        from server.prompts.tts_delivery_rules import sanitize_tts_tags
+
+        text = sanitize_tts_tags(text, provider=self._merged.get("provider"),
+                                 model=self._merged.get("model") or getattr(self, "_model", None))
         if not text or self._closed or self._interrupted or (
             not self._tts and not self._unary_adapter and not self._stream_adapter
         ):

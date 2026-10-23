@@ -242,11 +242,14 @@ function RecordingPlayer({ call }) {
           onClick={async () => {
             setLoading(true);
             try {
-              const url = await loadRecording();
+              const res = await api.requestBinary('GET', `/api/call/${encodeURIComponent(call.id)}/audio/mix?download=1`, null,
+                { Accept: 'audio/mpeg, audio/mp3' }, { allowMp3: true });
+              const url = URL.createObjectURL(res.blob);
               const link = document.createElement('a');
               link.href = url;
-              link.download = `${call.id}-recording`;
+              link.download = `${call.id}-recording.mp3`;
               link.click();
+              setTimeout(() => URL.revokeObjectURL(url), 10000);
             } catch (error) { showToast(error.message || 'Could not download recording', 'error'); }
             finally { setLoading(false); }
           }}

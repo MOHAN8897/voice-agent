@@ -125,7 +125,10 @@ _END_REQUEST = re.compile(
     r"(?:the |this |our )?(?:call|conversation|line)?\b|"
     r"\b(?:call|cut)\s+(?:the |this |our )?call\b|"
     r"\bcall\s+(?:cut|band|end)\s*(?:karo|kar do|chey|cheyyi|cheyandi)?\b|"
-    r"కాల్\s*(?:కట్|ఆపండి|ముగించండి)|कॉल\s*(?:काट|बंद)|"
+    r"(?:కాల్\s*)?కట్\s*(?:చేయండి|చేసెయ్యండి|చేయి|చెయ్|చేస్తారా|చేస్తావా)(?:\s*కాల్)?|"
+    r"కాల్\s*(?:కట్|ఆపండి|ముగించండి|పెట్టేయండి)|"
+    r"ఫోన్\s*పెట్టేయండి|పెట్టేయండి|కాల్\s*ఆపేయండి|ఆపేయండి|"
+    r"कॉल\s*(?:काट|बंद)|"
     r"அழைப்பை\s*(?:முடி|முடிக்கவும்|முடியுங்கள்|முடிங்க|நிறுத்து|நிறுத்தவும்|நிறுத்துங்கள்|நிறுத்துங்க|துண்டிக்கவும்)|"
     r"காலை?\s*(?:கட்\s*பண்ணுங்க|முடி|முடிக்கவும்|நிறுத்து|நிறுத்துங்க)",
     re.I,
@@ -633,10 +636,12 @@ def validate_end_call(
         if callback_close_phase in {"collecting_name", "collecting_phone"}:
             return EndCallDecision(False, False, "none", "", "lead_details_missing")
         # Repair missed end_call tool when the turn already closed the conversation.
-        if caller_confirmed_goal_complete(user) and (
-            agent_spoke_closing(spoken) or parsed.get("farewell")
+        if (
+            (caller_confirmed_goal_complete(user) or _user_wants_hangup(user) or caller_explicit_end_request(user) or caller_firm_refusal(user))
+            and (agent_spoke_closing(spoken) or agent_spoke_terminal_farewell(spoken) or parsed.get("farewell"))
         ):
-            parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang)
+            end_reason = "goodbye" if (_user_wants_hangup(user) or caller_explicit_end_request(user)) else ("firm_refusal" if caller_firm_refusal(user) else "goal_complete")
+            parsed = _force_end(end_reason, parsed.get("farewell") or "", spoken, lang)
         # Do not repair hangup from a spoken goodbye plus okay/thanks or turn count.
 
     if not parsed["should_end"]:

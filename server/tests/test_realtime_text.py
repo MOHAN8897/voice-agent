@@ -93,16 +93,14 @@ def test_realtime_usage_cached_audio_tokens():
     assert usage["cached_tokens"] == 500
 
 
-def test_gemini_is_not_a_live_llm():
-    from server.realtime.models import http_openai_model
-
+def test_classic_gemini_is_preserved_without_an_openai_substitution():
     provider, model = coerce_live_llm_selection(
         "gemini",
         "gemini-3.5-flash-lite",
         stack_override={"pipeline": "classic"},
     )
-    assert provider == "openai"
-    assert model == http_openai_model()
+    assert provider == "gemini"
+    assert model == "gemini-3.5-flash-lite"
 
 
 def test_gemini_live_for_realtime_voice_stack():

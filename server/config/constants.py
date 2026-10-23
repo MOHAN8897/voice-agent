@@ -24,6 +24,8 @@ class Constants:
         "saaras:v3": {"label": "Saaras v3 (recommended)", "modes": ["transcribe", "translate", "verbatim", "translit", "codemix"]},
         "saaras:v3-realtime": {"label": "Saaras v3 Realtime (WS)", "modes": ["transcribe", "translate", "verbatim", "translit", "codemix"], "realtime": True},
         "saaras:v4": {"label": "Saaras v4 (latest, Global English)", "modes": ["transcribe", "translate", "verbatim", "translit", "codemix"]},
+        "saaras:v2": {"label": "Saaras v2", "modes": ["transcribe", "translate", "verbatim", "translit", "codemix"], "realtime": True},
+        "saaras:v1": {"label": "Saaras v1", "modes": ["transcribe"], "realtime": False},
         "saarika:v2.5": {"label": "Saarika v2.5 (legacy)", "modes": ["transcribe"]},
     }
     STT_MODES = ["transcribe", "translate", "verbatim", "translit", "codemix"]

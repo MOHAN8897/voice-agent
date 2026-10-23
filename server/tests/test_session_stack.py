@@ -52,14 +52,11 @@ def test_infer_cartesia_and_sarvam_models():
     assert stt_provider == "cartesia"
     assert stt_model == "ink-whisper"
 
-    stt_off_provider, stt_off_model = infer_stt_from_runtime(
-        model="ink-whisper",
-        default_provider="sarvam",
-        default_model="saaras:v3-realtime",
-        cartesia_on=False,
-    )
-    assert stt_off_provider == "sarvam"
-    assert stt_off_model == "saaras:v3-realtime"
+    from server.utils.errors import AppError
+
+    with pytest.raises(AppError, match="unavailable"):
+        infer_stt_from_runtime(model="ink-whisper", default_provider="sarvam",
+                               default_model="saaras:v3-realtime", cartesia_on=False)
 
     tts_provider, tts_model = infer_tts_from_runtime(
         model="sonic-3.5",

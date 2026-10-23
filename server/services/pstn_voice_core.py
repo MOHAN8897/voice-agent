@@ -983,12 +983,16 @@ class PstnVoiceLoop:
         return None
 
     def _prepare_tts_chunk_text(self, text: str, *, ensure_terminal: bool = False) -> str:
+        from server.call.call_context import get as get_ctx
         from server.services.spoken_numbers import prepare_spoken_reply
         from server.services.voice_pipeline_limits import spoken_delta_after_collapse
 
+        ctx = get_ctx(self.call_id) if self.call_id else None
+        selection = getattr(getattr(ctx, "resolved_stack", None), "tts", None)
         expanded = prepare_spoken_reply(
             text or "",
             provider=self._tts_provider_name(),
+            model=getattr(selection, "model", None),
             ensure_terminal=ensure_terminal,
         )
         expanded, self._turn_tts_accum = spoken_delta_after_collapse(self._turn_tts_accum, expanded)
@@ -2077,8 +2081,8 @@ class PstnVoiceLoop:
             cancelled = True
             log_pstn("turn.cancelled", call_id=self.call_id, turn_id=self.current_turn_id)
         except Exception as e:
-            logger.warning("[PSTN] turn error: %s", str(e)[:300])
-            log_pstn("turn.error", call_id=self.call_id, error=str(e)[:200])
+            logger.warning("[PSTN] turn error: %s", type(e).__name__)
+            log_pstn("turn.error", call_id=self.call_id, error=type(e).__name__)
             if self.stack_override.get("pipeline") == "composed_voice":
                 from server.services.saas.session_failure_log import record_session_failure
 
@@ -2088,14 +2092,19 @@ class PstnVoiceLoop:
                     call_id=self.call_id, detail=type(e).__name__,
                 )
                 self._pending_transcript = None
-                # Do NOT hang up the call on the user! Recover gracefully in-call.
-                if not spoke_from_stream and self._phase != PHASE_ENDED and not self._closed:
+                self._set_phase(PHASE_ENDED)
+                # A model/transport error is not unclear caller speech. End the
+                # failed selected session without retrying an unconfirmed action.
+                if self._on_session_error:
                     try:
-                        from server.prompts.agent_voice_rules import unclear_fallback_for
-
-                        await self.speak(unclear_fallback_for(self._resolve_language()))
-                    except Exception as fallback_error:
-                        log_pstn("tts.fallback.failed", call_id=self.call_id, error=str(fallback_error)[:200])
+                        await self._on_session_error("The selected voice service could not complete the reply.")
+                    except Exception as notify_error:
+                        log_pstn("turn.error.notify_failed", call_id=self.call_id, error=type(notify_error).__name__)
+                if self._on_remote_hangup and not self._closed:
+                    try:
+                        await self._on_remote_hangup()
+                    except Exception as hangup_error:
+                        log_pstn("turn.error.hangup_failed", call_id=self.call_id, error=type(hangup_error).__name__)
             elif not needs_tts_fallback and not spoke_from_stream and self._phase != PHASE_ENDED and not self._closed:
                 try:
                     from server.prompts.agent_voice_rules import unclear_fallback_for
@@ -2104,7 +2113,7 @@ class PstnVoiceLoop:
                 except Exception as fallback_error:
                     log_pstn("tts.fallback.failed", call_id=self.call_id, error=str(fallback_error)[:200])
             if self.call_id:
-                pstn_media_flow.emit(self.call_id, "turn_error", "outbound", status="failed", detail=str(e)[:200])
+                pstn_media_flow.emit(self.call_id, "turn_error", "outbound", status="failed", detail=type(e).__name__)
         finally:
             self._reset_ducking()
             self._set_tts_active(False)

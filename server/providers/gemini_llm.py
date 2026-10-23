@@ -1,7 +1,10 @@
 """Gemini LLM adapter — same live-turn JSON, memory ops, and prefix-cache layout as OpenAI."""
 from __future__ import annotations
 
+import copy
 import json
+import re
+import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -11,11 +14,43 @@ from server.call.live_turn_schema import SpokenResponseExtractor
 from server.config.env import get_settings
 from server.providers.base import LLMConfig
 from server.providers.openai_messages import message_text, openai_input_to_gemini
-from server.prompts.agent_voice_rules import unclear_fallback_for
 from server.services.dev_secrets_store import dev_secrets_store
 from server.utils.logger import log_brain, log_error
 
 _GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+_STRUCTURED_REPLY_FUNCTION = "VOXLY_RETURN_SPOKEN_TURN"
+
+
+def _function_declarations(tools: list[Any]) -> list[dict[str, Any]]:
+    declarations = []
+    for raw in tools:
+        if not isinstance(raw, dict) or raw.get("type", "function") != "function":
+            raise ValueError("Gemini requires function tool declarations")
+        function = raw.get("function") if isinstance(raw.get("function"), dict) else raw
+        name = function.get("name")
+        parameters = function.get("parameters")
+        if (not isinstance(name, str) or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", name)
+                or name == _STRUCTURED_REPLY_FUNCTION or not isinstance(parameters, dict)):
+            raise ValueError("Gemini function declaration is invalid")
+        declarations.append({"name": name, "description": str(function.get("description") or ""),
+                             "parametersJsonSchema": copy.deepcopy(parameters)})
+    if len({item["name"] for item in declarations}) != len(declarations):
+        raise ValueError("Gemini function names must be unique")
+    return declarations
+
+
+def _function_config(choice: Any) -> dict[str, Any]:
+    if choice in (None, "auto"):
+        return {"mode": "AUTO"}
+    if choice == "none":
+        return {"mode": "NONE"}
+    if choice == "required":
+        return {"mode": "ANY"}
+    if isinstance(choice, dict):
+        function = choice.get("function") or choice
+        if isinstance(function, dict) and isinstance(function.get("name"), str):
+            return {"mode": "ANY", "allowedFunctionNames": [function["name"]]}
+    raise ValueError("Gemini tool choice is invalid")
 
 
 def _api_key() -> str:
@@ -203,7 +238,9 @@ class GeminiLLMAdapter:
         if not key:
             raise RuntimeError("GEMINI_API_KEY is missing — add it in Environment or .env")
         model = _model_id(kwargs.get("model") or kwargs.get("openai_model"))
-        language_code = str(kwargs.get("language_code") or "te-IN")
+        from server.providers.llm_protocol import text_llm_api_mode
+
+        text_llm_api_mode("gemini", model, kwargs.get("api_mode"))
         session_id = str(kwargs.get("session_id") or "default")
         transcript = str(kwargs.get("transcript") or "")
         system_instruction, contents = openai_input_to_gemini(input_messages)
@@ -230,12 +267,27 @@ class GeminiLLMAdapter:
         think = thinking_config_for(model)
         if think:
             gen["thinkingConfig"] = think
-        if schema:
+        declarations = _function_declarations(kwargs.get("tools") or [])
+        # Gemini 3+ supports JSON output together with functions. Earlier models
+        # use a forced response function for the same live-turn JSON contract.
+        legacy_reply = bool(schema and declarations and not model.startswith(("gemini-3", "gemini-4")))
+        if schema and not legacy_reply:
             gen["responseMimeType"] = "application/json"
             gen["responseJsonSchema"] = schema
         body: dict[str, Any] = {"contents": contents, "generationConfig": gen}
         if system_instruction:
             body["systemInstruction"] = {"parts": [{"text": system_instruction}]}
+        if declarations:
+            function_config = _function_config(kwargs.get("tool_choice"))
+            if legacy_reply:
+                declarations.append({"name": _STRUCTURED_REPLY_FUNCTION,
+                    "description": "Return the caller-facing response and conversation state when no external action is needed.",
+                    "parametersJsonSchema": schema})
+                function_config = {"mode": "ANY"}
+                if kwargs.get("tool_choice") == "none":
+                    function_config["allowedFunctionNames"] = [_STRUCTURED_REPLY_FUNCTION]
+            body["tools"] = [{"functionDeclarations": declarations}]
+            body["toolConfig"] = {"functionCallingConfig": function_config}
 
         log_brain(
             "Gemini stream started",
@@ -247,6 +299,11 @@ class GeminiLLMAdapter:
         extractor = SpokenResponseExtractor() if schema else None
         plain_parts: list[str] = []
         usage: dict[str, int] = {}
+        native_parts: list[dict[str, Any]] = []
+        tool_calls: list[dict[str, Any]] = []
+        legacy_response: dict[str, Any] | None = None
+        seen_ids: set[str] = set()
+        completed = False
         url = f"{_GEMINI_BASE}/{model}:streamGenerateContent"
         timeout = max(15.0, settings.request_timeout_ms / 1000)
         try:
@@ -259,25 +316,57 @@ class GeminiLLMAdapter:
                     json=body,
                 ) as resp:
                     if resp.status_code >= 400:
-                        err = (await resp.aread()).decode("utf-8", errors="replace")[:400]
-                        raise RuntimeError(f"Gemini HTTP {resp.status_code}: {err}")
+                        await resp.aread()
+                        raise RuntimeError(f"Gemini request failed (HTTP {resp.status_code})")
                     async for line in resp.aiter_lines():
-                        if not line:
+                        if not line or not line.startswith("data:"):
                             continue
                         data = line[5:].strip() if line.startswith("data:") else line.strip()
                         if not data or data == "[DONE]":
                             continue
                         try:
                             payload = json.loads(data)
-                        except json.JSONDecodeError:
-                            continue
+                        except json.JSONDecodeError as exc:
+                            raise RuntimeError("Gemini returned malformed SSE data") from exc
                         if not isinstance(payload, dict):
                             continue
                         if payload.get("error"):
-                            raise RuntimeError(str(payload["error"])[:300])
+                            raise RuntimeError("Gemini stream failed")
                         meta = payload.get("usageMetadata") or payload.get("usage_metadata")
                         if isinstance(meta, dict):
                             usage = gemini_usage_from_metadata(meta)
+                        candidates = payload.get("candidates") or []
+                        candidate = candidates[0] if candidates and isinstance(candidates[0], dict) else {}
+                        if candidate.get("finishReason") not in (None, "STOP"):
+                            raise RuntimeError("Gemini did not complete the requested turn")
+                        if candidate.get("finishReason") == "STOP":
+                            completed = True
+                        content = candidate.get("content") or {}
+                        for part in content.get("parts") or []:
+                            if not isinstance(part, dict):
+                                continue
+                            native_parts.append(copy.deepcopy(part))
+                            function = part.get("functionCall")
+                            if not isinstance(function, dict):
+                                continue
+                            name = function.get("name")
+                            arguments = function.get("args", {})
+                            if not isinstance(name, str) or not name or not isinstance(arguments, dict):
+                                raise RuntimeError("Gemini returned an invalid function call")
+                            if legacy_reply and name == _STRUCTURED_REPLY_FUNCTION:
+                                if legacy_response is not None:
+                                    raise RuntimeError("Gemini returned duplicate spoken responses")
+                                legacy_response = arguments
+                                continue
+                            identifier = str(function.get("id") or uuid.uuid4().hex)
+                            if identifier in seen_ids:
+                                raise RuntimeError("Gemini returned duplicate function call identifiers")
+                            if (not tool_calls and model.startswith(("gemini-3", "gemini-4"))
+                                    and not part.get("thoughtSignature")):
+                                raise RuntimeError("Gemini function call is missing its thought signature")
+                            seen_ids.add(identifier)
+                            tool_calls.append({"id": identifier, "type": "function", "function": {
+                                "name": name, "arguments": json.dumps(arguments, ensure_ascii=False)}})
                         delta = _chunk_text(payload)
                         if not delta:
                             continue
@@ -286,35 +375,58 @@ class GeminiLLMAdapter:
                         else:
                             plain_parts.append(delta)
                             spoken = delta
-                        if spoken:
+                        if spoken and not declarations:
                             yield {"delta": spoken, "language_context": {}}
         except Exception as e:
-            log_error("Gemini stream failed", err=str(e)[:400], model=model)
+            log_error("Gemini stream failed", error_type=type(e).__name__, model=model)
             raise
 
+        if tool_calls:
+            if not completed:
+                raise RuntimeError("Gemini function response was interrupted before completion")
+            if legacy_response is not None:
+                raise RuntimeError("Gemini combined a final response with an unfinished action")
+            yield {"done": True, "text": "", "language_context": {}, "usage": usage,
+                "tool_calls": tool_calls, "_gemini_content": {"role": "model", "parts": native_parts},
+                "memory_update": {"operations": []}, "memory_parse_failed": False,
+                "end_call": {"should_end": False, "reason": "none", "farewell": ""}}
+            return
+        if legacy_response is not None:
+            if not completed:
+                raise RuntimeError("Gemini spoken response was interrupted before completion")
+            from jsonschema import ValidationError, validate
+
+            try:
+                validate(legacy_response, schema)
+            except ValidationError as exc:
+                raise RuntimeError("Gemini returned an invalid structured spoken response") from exc
+            extractor.feed(json.dumps(legacy_response, ensure_ascii=False))
         if extractor is not None:
-            full_text = extractor.spoken_text.strip() or unclear_fallback_for(language_code)
+            full_text = extractor.spoken_text.strip()
             memory_update = extractor.parse_memory_update()
             memory_parse_failed = extractor.structured_parse_failed()
             end_call = extractor.parse_end_call()
         else:
-            full_text = "".join(plain_parts).strip() or unclear_fallback_for(language_code)
+            full_text = "".join(plain_parts).strip()
             memory_update = {"operations": []}
             memory_parse_failed = False
             end_call = {"should_end": False, "reason": "none", "farewell": ""}
+        if not full_text or (declarations and memory_parse_failed):
+            raise RuntimeError("Gemini returned an empty or incomplete spoken response")
+        if declarations:
+            yield {"delta": full_text, "language_context": {}}
 
         from server.agent.conversation_manager import conversation_manager
-        from server.services.openai_brain_service import _after_turn_memory
         from server.services.prompt_cache_key import compute_cache_key
         from server.services.prompt_cache_tracker import prompt_cache_tracker
 
-        conversation_manager.add_turn(session_id, transcript, full_text)
-        _after_turn_memory(session_id, call_id=kwargs.get("call_id"))
+        # Transport adapters do not mutate dialogue or working memory. The
+        # orchestrator owns the single confirmed assistant turn for this call.
         if system_instruction and usage:
             prompt_cache_tracker.record(
                 cache_key=compute_cache_key(system_instruction, 2500),
                 session_id=session_id,
-                turn=conversation_manager.get_completed_turns(session_id),
+                turn=conversation_manager.get_completed_turns(session_id) + 1,
                 input_tokens=int(usage.get("input_tokens") or 0),
                 cached_tokens=int(usage.get("cached_tokens") or 0),
                 cache_write_tokens=int(usage.get("cache_write_tokens") or 0),
@@ -361,6 +473,8 @@ class GeminiLLMAdapter:
                 "responseJsonSchema": schema,
             },
         }
+        if config is not None and config.temperature is not None:
+            body["generationConfig"]["temperature"] = config.temperature
         if system_instruction:
             body["systemInstruction"] = {"parts": [{"text": system_instruction}]}
         url = f"{_GEMINI_BASE}/{model}:generateContent"
@@ -372,7 +486,7 @@ class GeminiLLMAdapter:
                 json=body,
             )
             if resp.status_code >= 400:
-                raise RuntimeError(f"Gemini HTTP {resp.status_code}: {resp.text[:400]}")
+                raise RuntimeError(f"Gemini request failed (HTTP {resp.status_code})")
             payload = resp.json()
         text = _chunk_text(payload if isinstance(payload, dict) else {})
         try:

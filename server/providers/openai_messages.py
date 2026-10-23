@@ -1,6 +1,8 @@
 """Convert OpenAI Responses-API input messages into chat / Gemini shapes."""
 from __future__ import annotations
 
+import copy
+import json
 from typing import Any
 
 
@@ -51,18 +53,51 @@ def openai_input_to_gemini(
     """
     system_parts: list[str] = []
     contents: list[dict[str, Any]] = []
+    call_ids: dict[str, str | None] = {}
     for msg in input_messages or []:
+        role = str(msg.get("role") or "user")
+        native = msg.get("_gemini_content")
+        if role == "assistant" and isinstance(native, dict):
+            # Preserve every part, including opaque thought signatures. They
+            # are bound to their original function parts in Gemini 3+.
+            contents.append(copy.deepcopy(native))
+            functions = [part["functionCall"] for part in native.get("parts", [])
+                         if isinstance(part, dict) and isinstance(part.get("functionCall"), dict)]
+            for call, function in zip(msg.get("tool_calls") or [], functions):
+                call_ids[str(call.get("id") or "")] = function.get("id")
+            continue
+        if role == "tool":
+            internal_id = str(msg.get("tool_call_id") or "")
+            if internal_id not in call_ids:
+                raise ValueError("Gemini tool response has no matching native function call")
+            try:
+                result = json.loads(message_text(msg))
+            except (ValueError, TypeError):
+                result = {"result": message_text(msg)}
+            if not isinstance(result, dict):
+                result = {"result": result}
+            response = {"name": str(msg.get("name") or ""), "response": result}
+            if call_ids[internal_id]:
+                response["id"] = call_ids[internal_id]
+            part = {"functionResponse": response}
+            if contents and contents[-1]["role"] == "user":
+                contents[-1]["parts"].append(part)
+            else:
+                contents.append({"role": "user", "parts": [part]})
+            continue
+        if role == "assistant" and msg.get("tool_calls"):
+            raise ValueError("Gemini tool history is missing its native signed content")
         text = message_text(msg).strip()
         if not text:
             continue
-        role = str(msg.get("role") or "user")
         if role in ("developer", "system"):
             system_parts.append(text)
             continue
         gemini_role = "model" if role == "assistant" else "user"
-        if contents and contents[-1]["role"] == gemini_role:
-            prev = contents[-1]["parts"][0]["text"]
-            contents[-1]["parts"][0]["text"] = f"{prev}\n\n{text}"
+        if (contents and contents[-1]["role"] == gemini_role
+                and set(contents[-1]["parts"][-1]) == {"text"}):
+            prev = contents[-1]["parts"][-1]["text"]
+            contents[-1]["parts"][-1]["text"] = f"{prev}\n\n{text}"
         else:
             contents.append({"role": gemini_role, "parts": [{"text": text}]})
     return "\n\n".join(system_parts).strip(), contents

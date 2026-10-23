@@ -112,6 +112,12 @@ def _normalize_realtime_voice_override(
     voice_language = coerce_supported_language(str(out.get("language") or language or "te-IN"))
     gemini_voice_ids = {name.lower() for name in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)}
     explicit_provider = provider in {"openai", "gemini"}
+    if provider and not explicit_provider:
+        raise PstnStackValidationError("The selected provider does not support native audio calls")
+    if model and ((provider == "gemini" and not is_gemini_live_voice_model(model))
+                  or (provider == "openai" and not is_realtime_llm_model(model))
+                  or (not provider and not is_gemini_live_voice_model(model) and not is_realtime_llm_model(model))):
+        raise PstnStackValidationError("The selected model does not match the native audio provider")
     inferred_provider = (
         "gemini"
         if is_gemini_live_voice_model(model) or raw_voice.lower() in gemini_voice_ids
@@ -121,8 +127,6 @@ def _normalize_realtime_voice_override(
     )
     if not explicit_provider:
         provider = inferred_provider
-    elif is_gemini_live_voice_model(model):
-        provider = "gemini"
     if provider == "gemini":
         llm["provider"] = "gemini"
         if not is_gemini_live_voice_model(model):
@@ -139,11 +143,15 @@ def _normalize_realtime_voice_override(
 
         # A stale OpenAI slug cannot describe a Gemini selection. Resolve it to
         # the language's regional Gemini default instead of mapping to Puck/Aoede.
-        if not raw_voice or raw_voice.lower() in {item.lower() for item in REALTIME_VOICES}:
+        if raw_voice and raw_voice.lower() not in gemini_voice_ids:
+            raise PstnStackValidationError("The selected voice does not belong to the native audio model")
+        if not raw_voice:
             voice = default_gemini_live_voice(voice_language)
         else:
             voice = normalize_gemini_live_voice(raw_voice)
     else:
+        if raw_voice and raw_voice.lower() not in {item.lower() for item in REALTIME_VOICES}:
+            raise PstnStackValidationError("The selected voice does not belong to the native audio model")
         voice = normalize_realtime_voice(raw_voice)
     if raw_voice and raw_voice != voice and raw_voice.lower() != str(voice).lower():
         adjustments.append(f"realtime voice replaced with {voice}")

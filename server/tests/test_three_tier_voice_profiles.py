@@ -16,8 +16,8 @@ def _profile(*, enabled: bool = True) -> dict:
         "stt": {"provider": "sarvam", "model": "saaras:v3-realtime"},
         "llm": {
             "provider": "sarvam",
-            "modelId": "internal-text-model",
-            "apiMode": "chat_completions_v2",
+            "modelId": "sarvam-105b-conversations",
+            "apiMode": "chat_completions_v1",
         },
         "engines": [
             {
@@ -121,7 +121,7 @@ def test_public_catalog_uses_opaque_ids_and_safe_labels(monkeypatch):
         "internal-engine-id",
         "internal-model-id",
         "internal-voice-id",
-        "internal-text-model",
+        "sarvam-105b-conversations",
         "gemini-3.1-flash-tts-preview",
         "Zephyr",
         "sarvam",
@@ -196,7 +196,7 @@ async def test_resolved_selection_pins_exact_stages_revision_and_native_rate(mon
         "model": "saaras:v3-realtime",
         "config": {"mode": "realtime"},
     }
-    assert stack["llm"]["model"] == "internal-text-model"
+    assert stack["llm"]["model"] == "sarvam-105b-conversations"
     assert stack["tts"]["provider"] == "gemini"
     assert stack["tts"]["model"] == "gemini-3.1-flash-tts-preview"
     assert stack["tts"]["config"]["speaker"] == "Zephyr"

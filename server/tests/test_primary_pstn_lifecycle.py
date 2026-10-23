@@ -307,7 +307,9 @@ async def test_connected_call_keeps_exact_prepared_brain_and_session(native_call
     monkeypatch.setattr(service, "_schedule_max_duration_watchdog", Mock())
     monkeypatch.setattr(test_studio_config, "saved_call_config", lambda _: {})
     monkeypatch.setattr(call_store, "insert", AsyncMock())
-    monkeypatch.setattr(billing_rates, "load_current_rates", AsyncMock(return_value={}))
+    monkeypatch.setattr(billing_rates, "load_current_rates", AsyncMock(return_value={
+        "pstn_medium_rate_usd_micros_per_min": 100000, "pstn_medium_rate_inr_paise_per_min": 955,
+        "fx_rate_inr": 95.5, "version": 1}))
     monkeypatch.setattr(billing_wallet_service, "max_allowed_call_duration_sec", AsyncMock(return_value=900))
     campaign = AsyncMock()
     monkeypatch.setattr(campaign_script, "campaign_call_script", campaign)

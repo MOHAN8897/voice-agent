@@ -39,10 +39,9 @@ from server.auth.calls_tenant import (
     resolve_prompt_preview_tenant_id,
 )
 from server.services.saas.call_redaction import redact_call_detail_for_tenant
-from server.auth.tenant_context import tenant_id_from_request
+from server.auth.call_sessions import CallPrincipal, resolve_call_tenant, tenant_session_id
 from server.auth.subscriber_dependencies import (
     SubscriberPrincipal,
-    require_subscriber_jwt_if_enabled,
 )
 from server.config.env import get_settings
 from server.db.connection import get_session_factory
@@ -71,7 +70,7 @@ class CallStartBody(BaseModel):
     direction: Literal["inbound", "outbound"] = "inbound"
     campaign_id: Optional[str] = Field(None, alias="campaignId")
     environment: Optional[Literal["development", "staging", "production"]] = None
-    tier: Optional[Literal["low", "medium", "premium"]] = None
+    tier: Optional[str] = Field(None, pattern=r"^[a-z0-9_]{1,20}$")
     stack_override: Optional[dict] = Field(None, alias="stackOverride")
     caller_id: Optional[str] = Field(None, alias="callerId")
     language: Optional[str] = None
@@ -111,12 +110,43 @@ def _raise(e: AppError) -> None:
 async def call_start(
     body: CallStartBody,
     request: Request,
-    _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    _auth: CallPrincipal = None,
 ):
     try:
+        if isinstance(body.stack_override, dict) and "_voice_stack_snapshot" in body.stack_override:
+            raise HTTPException(status_code=400, detail="Voice profile snapshots are managed by the server.")
         # The browser call endpoint is tenant-facing. Resolve the workspace from
         # the verified bearer/session context; never accept it from the request body.
-        tenant_id = tenant_id_from_request(request) if get_settings().saas_auth_enabled else None
+        tenant_id = resolve_call_tenant(request, _auth) if get_settings().saas_auth_enabled else None
+        if tenant_id is not None:
+            from server.services.saas.pstn_saas_stack import saas_stack_override_for_agent
+            from server.services.saas.voice_stack_profiles import VoiceProfileError, canonical_voice_tier
+            from server.services.dev_runtime import effective_app_environment
+
+            if body.stack_override:
+                raise HTTPException(status_code=403, detail="Voice profiles are managed by the server.")
+            agent = await call_lifecycle_service._resolve_agent(body.agent_id, tenant_id=tenant_id)
+            try:
+                saved_tier = canonical_voice_tier(agent.get("default_tier") or agent.get("defaultTier") or "medium")
+            except VoiceProfileError as exc:
+                raise HTTPException(status_code=409, detail="The saved agent tier is unavailable.") from exc
+            saved_environment = agent.get("environment") or effective_app_environment()
+            if body.tier and canonical_voice_tier(body.tier) != saved_tier:
+                raise HTTPException(status_code=409, detail="The requested tier does not match the saved agent.")
+            if body.environment and body.environment != saved_environment:
+                raise HTTPException(status_code=409, detail="The requested environment does not match the saved agent.")
+            if body.language:
+                languages = agent.get("languages") or [agent.get("language") or "te-IN"]
+                if body.language not in languages:
+                    raise HTTPException(status_code=409, detail="Choose a language configured for this agent.")
+                agent = {**agent, "languages": [body.language, *[code for code in languages if code != body.language]]}
+            try:
+                body.stack_override = await saas_stack_override_for_agent(agent)
+            except VoiceProfileError as exc:
+                raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+            body.session_id = tenant_session_id(tenant_id, body.session_id)
+            body.tier = saved_tier
+            body.environment = saved_environment
         result = await call_lifecycle_service.start(
             agent_id=body.agent_id,
             tenant_id=tenant_id,
@@ -138,7 +168,8 @@ async def call_start(
 @router.post("/api/call/end", status_code=202)
 async def call_end(
     body: CallEndBody,
-    _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    request: Request,
+    _auth: CallPrincipal = None,
 ):
     if not body.call_id:
         raise HTTPException(
@@ -146,6 +177,7 @@ async def call_end(
             detail={"error": {"code": "validation_error", "message": "call_id is required"}},
         )
     _validate_call_id(body.call_id)
+    await _require_call_scope(body.call_id, request, _auth)
     try:
         result = await call_lifecycle_service.end(body.call_id, reason=body.reason)
         return JSONResponse(status_code=202, content=result)
@@ -154,12 +186,28 @@ async def call_end(
 
 
 @router.get("/api/call/{call_id}/finalization")
-async def call_finalization(call_id: str):
+async def call_finalization(call_id: str, request: Request,
+    _auth: CallPrincipal = None):
     _validate_call_id(call_id)
+    await _require_call_scope(call_id, request, _auth)
     try:
         return await call_lifecycle_service.finalization(call_id)
     except AppError as e:
         _raise(e)
+
+
+async def _require_call_scope(call_id: str, request: Request, principal: SubscriberPrincipal | None) -> None:
+    if not get_settings().saas_auth_enabled:
+        return
+    tenant_id = resolve_call_tenant(request, principal)
+    if tenant_id is None:
+        return
+    from server.call import call_context
+
+    ctx = call_context.get(call_id)
+    owner = str(ctx.tenant_id) if ctx else str((await call_store.get(call_id) or {}).get("tenant_id") or "")
+    if owner != tenant_id:
+        raise HTTPException(status_code=404, detail="Call not found")
 
 
 @router.get("/api/call/{call_id}/prompt-preview")
@@ -524,6 +572,10 @@ async def get_audio_status(call_id: str, scope: tuple[str, bool] = Depends(resol
         schedule_recording_retrieval(call_id)
     await asyncio.to_thread(audio_archive.ensure_telnyx_review, call_id)
     path = audio_archive.file_for(call_id, "mix_clear")
+    if path and path.suffix.lower() == ".wav":
+        mp4_path = await asyncio.to_thread(audio_archive.ensure_conversation_mp4, call_id, path)
+        if mp4_path:
+            path = mp4_path
     source = audio_archive.recording_source(call_id)
     return {
         "call_id": call_id,
@@ -550,7 +602,7 @@ async def get_audio(
     if path is None:
         from server.services.r2_storage import r2_storage
         if r2_storage.is_configured():
-            for ext in ("wav", "mp3"):
+            for ext in ("mp4", "mp3", "wav"):
                 presigned = await r2_storage.presigned_url(f"calls/{call_id}/recording.{ext}")
                 if presigned:
                     from fastapi.responses import RedirectResponse
@@ -561,19 +613,31 @@ async def get_audio(
         )
     serve_path = path
     suffix = path.suffix.lower()
-    if download and kind in ("mix", "mix_clear"):
-        telnyx_mp3 = audio_archive.telnyx_mp3_path(call_id)
-        if telnyx_mp3.is_file() and telnyx_mp3.stat().st_size > 0:
-            serve_path = telnyx_mp3
-            suffix = ".mp3"
-        elif suffix == ".wav":
+
+    if download:
+        # Downloads must always be MP3
+        if suffix == ".mp3":
+            serve_path = path
+        else:
             mp3 = await asyncio.to_thread(audio_archive.ensure_conversation_mp3, call_id, path)
-            if mp3 is not None:
+            if mp3 is not None and mp3.is_file():
                 serve_path = mp3
                 suffix = ".mp3"
+        download_name = f"{call_id}-recording.mp3"
+    else:
+        # Playout / media playback: convert WAV to MP4 if needed
+        if suffix == ".wav":
+            mp4 = await asyncio.to_thread(audio_archive.ensure_conversation_mp4, call_id, path)
+            if mp4 is not None and mp4.is_file():
+                serve_path = mp4
+                suffix = ".mp4"
+        download_name = f"{call_id}-{kind}{suffix}"
+
     media = {
         ".wav": "audio/wav",
         ".mp3": "audio/mpeg",
+        ".mp4": "audio/mp4",
+        ".m4a": "audio/mp4",
     }.get(suffix, "application/octet-stream")
     source = "vobiz" if path.name.startswith("vobiz_recording") else "telnyx" if path.name.startswith("telnyx") else "local"
     headers: dict[str, str] = {
@@ -583,8 +647,6 @@ async def get_audio(
         "Access-Control-Expose-Headers": "X-Recording-Source",
         "X-Audio-Encoding": suffix.lstrip("."),
     }
-    stem = "conversation" if path.name.startswith("telnyx") else kind
-    download_name = f"{call_id}-{stem}{suffix}"
     return FileResponse(
         serve_path,
         media_type=media,

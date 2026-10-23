@@ -21,11 +21,9 @@ SARVAM_V1_CHAT_MODELS = frozenset({"sarvam-105b", "sarvam-105b-conversations"})
 
 
 def sarvam_chat_api_modes(model: str) -> list[str]:
-    if model == "sarvam-105b-conversations":
-        return ["chat_completions_v1"]
-    if model == "sarvam-105b":
-        return ["chat_completions_v1", "chat_completions_v2"]
-    return ["chat_completions_v2"]
+    from server.providers.llm_protocol import sarvam_chat_modes
+
+    return sarvam_chat_modes(model)
 
 
 def _safe_count(value: Any) -> int:
@@ -181,12 +179,10 @@ class SarvamLLMAdapter:
             if config:
                 mode = getattr(config, "api_mode", None) or (config.get("api_mode") if isinstance(config, dict) else None)
         if not mode:
-            try:
-                model = cls._model(kwargs)
-                valid_modes = sarvam_chat_api_modes(model)
-                mode = valid_modes[0] if valid_modes else "chat_completions_v2"
-            except Exception:
-                mode = "chat_completions_v2"
+            valid_modes = sarvam_chat_api_modes(cls._model(kwargs))
+            if not valid_modes:
+                raise ValueError("The selected Sarvam model has no supported chat transport")
+            mode = valid_modes[0]
         mode_str = str(mode).strip().lower()
         if mode_str not in {"chat_completions_v1", "chat_completions_v2"}:
             raise ValueError("Sarvam LLM requires an approved chat completion API mode")
@@ -194,11 +190,15 @@ class SarvamLLMAdapter:
 
     @classmethod
     def _url(cls, model: str, kwargs: dict[str, Any]) -> str:
+        from server.providers.llm_protocol import text_llm_api_mode
+
         mode = cls._api_mode(kwargs)
         if mode == "chat_completions_v1":
             if model not in SARVAM_V1_CHAT_MODELS:
                 raise ValueError("The selected Sarvam model is unavailable on Chat Completions V1")
+            text_llm_api_mode("sarvam", model, mode)
             return SARVAM_CHAT_COMPLETIONS_V1_URL
+        text_llm_api_mode("sarvam", model, mode)
         return SARVAM_CHAT_COMPLETIONS_V2_URL
 
     @staticmethod
@@ -346,6 +346,7 @@ class SarvamLLMAdapter:
         plain_parts: list[str] = []
         usage: dict[str, int] = {}
         tool_calls: dict[int, dict[str, Any]] = {}
+        completed = False
         buffer_output = bool(kwargs.get("tools"))
         async with httpx.AsyncClient(timeout=self._timeout()) as client:
             try:
@@ -356,13 +357,8 @@ class SarvamLLMAdapter:
                     json=body,
                 ) as response:
                     if response.status_code >= 400:
-                        err_text = ""
-                        try:
-                            err_bytes = await response.aread()
-                            err_text = err_bytes.decode(errors="replace")
-                        except Exception:
-                            pass
-                        raise RuntimeError(f"Sarvam Chat Completions HTTP {response.status_code}: {err_text}")
+                        await response.aread()
+                        raise RuntimeError(f"Sarvam Chat Completions HTTP {response.status_code}")
                     async for line in response.aiter_lines():
                         if not line or line.startswith(":"):
                             continue
@@ -372,6 +368,7 @@ class SarvamLLMAdapter:
                         if not data:
                             continue
                         if data == "[DONE]":
+                            completed = True
                             break
                         try:
                             payload = json.loads(data)
@@ -390,6 +387,10 @@ class SarvamLLMAdapter:
                         if not isinstance(choices, list) or not choices:
                             continue
                         choice = choices[0]
+                        if isinstance(choice, dict) and choice.get("finish_reason"):
+                            if choice["finish_reason"] not in {"stop", "tool_calls"}:
+                                raise RuntimeError("Sarvam did not complete the requested turn")
+                            completed = True
                         delta = choice.get("delta") if isinstance(choice, dict) else None
                         if not isinstance(delta, dict):
                             continue
@@ -421,6 +422,8 @@ class SarvamLLMAdapter:
             extractor.spoken_text.strip() if extractor is not None else "".join(plain_parts).strip()
         )
         completed_tool_calls = [tool_calls[index] for index in sorted(tool_calls)]
+        if completed_tool_calls and not completed:
+            raise RuntimeError("Sarvam function response was interrupted before completion")
         if not full_text and not completed_tool_calls:
             raise RuntimeError("Sarvam Chat Completions returned an empty response")
 

@@ -23,12 +23,12 @@ class TtsConfigError(Exception):
 
 
 def _validate_speaker(model: str, speaker: str) -> None:
-    ok = speaker in constants.TTS_SPEAKERS_V3 if model == "bulbul:v3" else speaker in constants.TTS_SPEAKERS_V2
-    if not ok:
-        raise TtsConfigError(
-            f"Speaker '{speaker}' is incompatible with model '{model}'",
-            speaker=speaker,
-        )
+    from server.providers.sarvam_voice_catalog import validate_sarvam_voice
+
+    try:
+        validate_sarvam_voice(model, speaker)
+    except ValueError as exc:
+        raise TtsConfigError(f"Speaker '{speaker}' is incompatible with model '{model}'", speaker=speaker) from exc
 
 
 def _stack_for_session(session_id: str, call_id: str | None, language_code: str):
@@ -254,19 +254,13 @@ def resolve_tts_config(
     )
 
     if resolved_model not in constants.TTS_MODELS:
-        resolved_model = settings.sarvam_tts_model
+        raise TtsConfigError("The selected speech model is unavailable")
 
     from server.services.cartesia_voices import is_cartesia_voice_id
 
     resolved_speaker = speaker or rt.get("ttsSpeaker")
     if resolved_speaker and is_cartesia_voice_id(str(resolved_speaker)):
-        log_tts(
-            "CARTESIA_SPEAKER_IGNORED",
-            speaker=str(resolved_speaker)[:8],
-            reason="cartesia unavailable or stack is sarvam",
-            session=session_id,
-        )
-        resolved_speaker = None
+        raise TtsConfigError("The selected voice does not match the speech provider")
     if not resolved_speaker:
         stack_speaker = stack.tts.config.get("speaker") if stack and stack.tts.config else None
         if stack_speaker and not is_cartesia_voice_id(str(stack_speaker)):
@@ -280,13 +274,18 @@ def resolve_tts_config(
 
     try:
         _validate_speaker(resolved_model, resolved_speaker)
+        from server.providers.sarvam_voice_catalog import validate_sarvam_voice
+
+        validate_sarvam_voice(resolved_model, resolved_speaker, language_code)
+    except ValueError as exc:
+        raise TtsConfigError(str(exc), speaker=resolved_speaker) from exc
     except TtsConfigError:
         log_tts("SPEAKER_INVALID", speaker=resolved_speaker, model=resolved_model)
         raise
 
     resolved_pace = pace if pace is not None else rt.get("ttsPace", settings.sarvam_tts_pace)
     resolved_pace = float(resolved_pace)
-    if resolved_model == "bulbul:v3":
+    if resolved_model in {"bulbul:v3", "bulbul:v4-flash"}:
         resolved_pace = max(0.5, min(2.0, resolved_pace))
     else:
         resolved_pace = max(0.3, min(3.0, resolved_pace))

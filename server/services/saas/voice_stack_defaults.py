@@ -46,7 +46,7 @@ def recommended_composed_profile(tier: str, *, allow_premium: bool = False) -> d
             })
         return {
             "schemaVersion": 1,
-            "enabled": True,
+            "enabled": False,
             "label": "Gemini 3.8 Live (Flagship)",
             "supportedLanguages": list(COMPOSED_LANGUAGES),
             "stt": {"provider": "gemini", "model": "gemini-3.8-live-audio"},
@@ -63,7 +63,7 @@ def recommended_composed_profile(tier: str, *, allow_premium: bool = False) -> d
                     "voices": voices,
                 }],
             }],
-            "evidence": {key: True for key in _EVIDENCE_KEYS},
+            "evidence": {key: False for key in _EVIDENCE_KEYS},
         }
     # Economical tier (low) is Gemini TTS; Standard tier (medium) is Sarvam natural regional TTS; Custom tiers inherit appropriate base
     regional = tier == "medium" or (not tier.startswith("low") and "economical" not in tier)

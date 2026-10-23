@@ -23,7 +23,7 @@ from server.prompts.voice_defaults import style_for_language
 
 SCHEMA_VERSION = "1"
 CORE_VERSION = "section_safety_v3"
-LANGUAGE_PACK_VERSION = "spoken_packs_v6"
+LANGUAGE_PACK_VERSION = "spoken_packs_v7"
 TOOL_CONTRACT_VERSION = "realtime_voice_v2"
 
 _SPOKEN_HEADER = re.compile(r"---\s*SPOKEN LANGUAGE\s*\(", re.I)
@@ -65,7 +65,7 @@ def is_unified_compiled_brain(text: str | None) -> bool:
 def refresh_platform_sections(text: str | None, language: str) -> str:
     """Refresh platform-owned blocks at render time without changing saved business scripts."""
     raw = (text or "").strip()
-    if not is_unified_compiled_brain(raw):
+    if not is_unified_compiled_brain(raw) and not _SPOKEN_HEADER.search(raw):
         return raw
     from server.prompts.agent_voice_rules import (
         CALL_END_FAREWELLS,

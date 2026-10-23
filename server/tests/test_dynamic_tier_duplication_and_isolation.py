@@ -125,7 +125,12 @@ def test_pstn_stack_normalization_for_premium_and_composed():
 
 
 @pytest.mark.asyncio
-async def test_saas_stack_override_for_agent_routing():
+async def test_saas_stack_override_for_agent_routing(monkeypatch):
+    from server.services.saas import voice_stack_profiles
+
+    monkeypatch.setattr(voice_stack_profiles, "_load_rates_without_fallback", AsyncMock(return_value={
+        "pstn_premium_rate_usd_micros_per_min": 120000, "pstn_premium_rate_inr_paise_per_min": 1200,
+        "premium_rate_version": 1, "fx_rate_inr": 100}))
     agent = {
         "id": "agent-test-123",
         "default_tier": "premium",
@@ -161,6 +166,7 @@ async def test_voice_stacks_catalog_includes_custom_duplicated_tiers():
         "low_copy_1": {
             "profile": {
                 "label": "Custom Regional Stack",
+                "retailRateInr": 4.5,
                 "enabled": True,
                 "supportedLanguages": ["te-IN"],
                 "evidence": {
@@ -210,6 +216,7 @@ async def test_voice_stacks_catalog_includes_custom_duplicated_tiers():
         "pstn_low_rate_usd_micros_per_min": 50000,
         "pstn_low_rate_inr_paise_per_min": 450,
         "low_rate_version": 1,
+        "fx_rate_inr": 90,
         "pstn_rate_usd_micros_per_min": 150000,
         "pstn_rate_inr_paise_per_min": 1400,
         "version": 1,

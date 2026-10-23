@@ -36,6 +36,11 @@ class GnaniTTSAdapter:
         from server.services.gnani_tts_ws import _gnani_language_code
 
         model = str(config.model or constants.GNANI_DEFAULT_MODEL)
+        from server.prompts.tts_delivery_rules import sanitize_tts_tags
+
+        text = sanitize_tts_tags(text, provider="gnani", model=model)
+        if not text:
+            raise ValueError("Speech text must contain words, not only audio tags")
         voice = _resolve_voice_id(config)
         lang = _gnani_language_code(config.language)
         pace = max(0.85, min(1.15, float(config.pace or 1.0)))

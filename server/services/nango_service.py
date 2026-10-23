@@ -358,7 +358,7 @@ class NangoService:
                     session.add(oauth_record)
                     await session.commit()
             except Exception as exc:
-                logger.warning("[NANGO] Failed to persist oauth state in DB: %s", exc)
+                logger.warning("[NANGO] Failed to persist oauth state in DB: %s", type(exc).__name__)
 
         # 2. Check if Nango is configured
         env_key = await self._resolve_environment_key()
@@ -633,19 +633,18 @@ class NangoService:
                 )
             if resp.status_code == 404:
                 logger.error("[NANGO] Action trigger 404 Action not found for %s (custom TypeScript script not deployed in Nango)", action_name)
-                return {"status": "error", "message": f"Action {action_name} is not configured or deployed in Nango."}
+                return {"status": "error", "message": "This integration action is unavailable."}
             if resp.status_code >= 400:
-                err_body = resp.text[:200]
-                logger.error("[NANGO] Action trigger HTTP %s for %s: %s", resp.status_code, action_name, err_body)
+                logger.error("[NANGO] Action trigger HTTP %s for %s", resp.status_code, action_name)
                 return {"status": "error", "message": f"Integration returned an error (HTTP {resp.status_code})."}
             raw_result = resp.json()
             return self.sanitize_voice_response(raw_result, action_name=action_name)
         except (httpx.TimeoutException, asyncio.TimeoutError):
             logger.warning("[NANGO] Tool execution timed out: %s", action_name)
-            return {"status": "error", "message": "The action took too long. Please try again."}
+            return {"status": "unknown", "message": "The action result could not be confirmed. Check the existing action before trying again."}
         except Exception as exc:
-            logger.error("[NANGO] Tool execution failed for %s: %s", action_name, exc)
-            return {"status": "error", "message": "Could not complete that action right now."}
+            logger.error("[NANGO] Tool execution failed for %s: %s", action_name, type(exc).__name__)
+            return {"status": "unknown", "message": "The action result could not be confirmed."}
 
     async def _execute_proxy_tool(
         self,
@@ -701,7 +700,7 @@ class NangoService:
                         "message": f"Confirmation email sent to {to_addr}.",
                     }
                 else:
-                    logger.error("[NANGO_PROXY] Gmail send failed HTTP %s: %s", resp.status_code, resp.text[:150])
+                    logger.error("[NANGO_PROXY] Gmail send failed HTTP %s", resp.status_code)
                     return {"status": "error", "message": f"Could not send email (HTTP {resp.status_code})."}
 
             elif action_name == "SLACK_SEND_MESSAGE":
@@ -1970,7 +1969,7 @@ class NangoService:
             sf = get_session_factory()
             return await get_connection_id(tenant_id, raw_app, sf)
         except Exception as exc:
-            logger.warning("[NANGO] connection_id lookup failed: %s", exc)
+            logger.warning("[NANGO] connection_id lookup failed: %s", type(exc).__name__)
             return None
 
     def sanitize_voice_response(self, raw: Any, action_name: str = "") -> dict[str, Any]:

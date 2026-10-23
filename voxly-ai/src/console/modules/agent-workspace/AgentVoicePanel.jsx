@@ -799,10 +799,17 @@ export function AgentVoicePanel({
     .find((engine) => engine.id === savedSelection.engineId);
   const savedModel = savedEngine?.models.find((model) => model.id === savedSelection.modelId);
   const savedVoice = savedModel?.voices.find((voice) => voice.id === savedSelection.voiceId);
-  const hasUnsavedStackSelection = selectionKey(savedSelection) !== selectionKey({
-    ...draftSelection,
-    profileRevision: currentStackProfile?.profileRevision,
-  });
+  const userChangedChoice = Boolean(
+    savedSelection.tier && (
+      draftSelection.tier !== savedSelection.tier ||
+      draftSelection.voiceId !== savedSelection.voiceId ||
+      (draftSelection.tier !== 'premium' && (
+        draftSelection.engineId !== savedSelection.engineId ||
+        draftSelection.modelId !== savedSelection.modelId
+      ))
+    )
+  );
+  const hasUnsavedStackSelection = userChangedChoice;
   const persistedLanguage =
     (Array.isArray(agent?.languages) ? agent.languages[0] : null) ||
     agent?.language ||
@@ -1552,11 +1559,26 @@ export function AgentVoicePanel({
               Saved changes apply to new calls. Calls already in progress keep their current setup.
             </p>
           </div>
-          {isStackOptedIn && agent?.defaultTier === 'premium' && (
-            <span className="rounded-full border border-[#6344E7]/20 bg-[#6344E7]/5 px-2.5 py-1 text-[11px] font-semibold text-[#5233D6]">
-              Live voice controls below
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {onOpenTestCall && (
+              <button
+                type="button"
+                onClick={onOpenTestCall}
+                data-testid="voice-header-open-test-call-btn"
+                disabled={!voiceStackReady}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#6344E7] hover:bg-[#5233D6] text-white shadow-xs transition-all cursor-pointer disabled:opacity-50"
+                title="Test the agent with the active voice setup"
+              >
+                <Radio className="w-3.5 h-3.5 animate-pulse" />
+                <span>Test Live Agent</span>
+              </button>
+            )}
+            {isStackOptedIn && agent?.defaultTier === 'premium' && (
+              <span className="rounded-full border border-[#6344E7]/20 bg-[#6344E7]/5 px-2.5 py-1 text-[11px] font-semibold text-[#5233D6]">
+                Live voice controls below
+              </span>
+            )}
+          </div>
         </div>
 
         {voiceStackCatalogLoading && (

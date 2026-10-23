@@ -44,7 +44,9 @@ def _composed_profile_with_tts(provider: str, model: str, api_mode: str, voice_i
                             {
                                 "id": voice_id,
                                 "label": "Test Voice",
-                                "providerVoiceId": "Zephyr" if provider == "gemini" else ("shubh" if provider == "sarvam" else "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4"),
+                                "providerVoiceId": "Zephyr" if provider == "gemini" else (
+                                    ("anushka" if model == "bulbul:v2" else "kavitha_te_conversation" if model == "bulbul:v4-flash" else "shubh")
+                                    if provider == "sarvam" else "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4"),
                                 "languages": ["te-IN", "hi-IN", "en-IN"],
                             }
                         ],
@@ -64,6 +66,7 @@ def _composed_profile_with_tts(provider: str, model: str, api_mode: str, voice_i
         ("gemini", "gemini-3.8-flash-lite-tts", "websocket"),
         ("sarvam", "bulbul:v3", "websocket"),
         ("sarvam", "bulbul:v2", "websocket"),
+        ("sarvam", "bulbul:v4-flash", "websocket"),
         ("cartesia", "sonic-3.5", "websocket"),
         ("cartesia", "sonic-3.5-2026-05-04", "websocket"),
     ],

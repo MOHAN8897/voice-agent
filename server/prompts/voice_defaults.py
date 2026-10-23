@@ -4,7 +4,7 @@ Language-specific spoken style is selected by default_style_for().
 """
 
 DEFAULT_RESPONSE_STYLES: dict[str, str] = {
-    "te-IN": "very brief, 1-2 sentences, spoken Telugu",
+    "te-IN": "warm, brief, 1-2 sentences, spoken Telugu with natural English mixing",
     "en-IN": "warm, brief, 1-2 sentences, spoken Indian English like a person on a phone",
     "en-GB": "warm, brief, 1-2 sentences, spoken British English like a person on a phone",
     "en-US": "warm, brief, 1-2 sentences, natural spoken English like a person on a phone",
@@ -78,12 +78,12 @@ def default_style_for(language: str | None) -> str:
 
 
 _LANG_STYLE_MARKERS = {
-    "te-IN": ("spoken telugu", "tanglish"),
+    "te-IN": ("spoken telugu", "telugu-english", "tenglish"),
     "en-IN": ("spoken indian english",),
     "en-GB": ("spoken british english", "uk english", "british"),
     "en-US": ("natural spoken english", "us/uk"),
     "hi-IN": ("spoken hinglish",),
-    "ta-IN": ("spoken tamil",),
+    "ta-IN": ("spoken tamil", "tanglish"),
     "kn-IN": ("spoken kannada",),
     "ml-IN": ("spoken malayalam",),
     "mr-IN": ("spoken marathi",),
@@ -119,7 +119,7 @@ def style_for_language(style: str | None, language: str | None) -> str:
 DEFAULT_BEHAVIOUR_INSTRUCTIONS = """VOICE CALL MODE — spoken assistant
 - You represent this business on a live phone call. For sales/lead work, act as its sales representative — warm, clear, on-brand.
 - Reply in the call language with everyday words the caller uses. Sound like a helpful colleague, not a policy page.
-- Sarcasm is not a buying signal. Missing facts: I'll check and get back to you.
+- Sarcasm is not a buying signal. Missing facts: say you do not know; offer follow-up only when the business permits and supports it.
 - Busy: one callback offer, stay on the line. Never hang up on okay or thanks alone."""
 
 DEFAULT_BUSINESS_INSTRUCTIONS = """You are a helpful voice assistant for this business.

@@ -96,7 +96,7 @@ def resolve_speech_pace(provider: str, pace: Any = None) -> float:
 def gemini_speech_style(pace: float | None = None) -> str:
     """Gemini controls cadence through delivery directions, not a PCM rate change."""
     speed = resolve_speech_pace("gemini", pace)
-    delivery = "Relaxed" if speed < 1.0 else "Brisk, natural"
+    delivery = "Relaxed, warm" if speed < 1.0 else ("Brisk, natural" if speed > 1.05 else "Warm, natural")
     return (
         f"{delivery} conversational delivery at approximately {speed:.2f}x normal speaking pace; "
         "clear articulation, short natural pauses, no drawn-out syllables."

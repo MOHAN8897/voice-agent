@@ -108,18 +108,27 @@ async def web_agent_ws(websocket: WebSocket):
             active_snap = await compiled_brain_service.get_active_for_agent(agent_id)
             if active_snap and active_snap.get("compiled_version"):
                 agent["active_compiled_brain_version"] = active_snap["compiled_version"]
+            else:
+                from server.brain.business_brain_store import business_brain_store
+                draft = await business_brain_store.get_draft(agent_id)
+                sections = (draft or {}).get("sections")
+                if sections:
+                    compiled = await compiled_brain_service.compile_draft(agent_id, sections)
+                    if compiled and compiled.get("compiled_version"):
+                        agent["active_compiled_brain_version"] = compiled["compiled_version"]
         except Exception as brain_err:
             logger.warning("[WEB_AGENT] Could not auto-compile brain for agent %s: %s", agent_id, brain_err)
-            await _send(
-                websocket,
-                {
-                    "type": "error",
-                    "code": "brain_not_published",
-                    "message": "Publish this agent's script before testing live voice.",
-                },
-            )
-            await websocket.close(code=1008)
-            return
+    if not agent.get("active_compiled_brain_version"):
+        await _send(
+            websocket,
+            {
+                "type": "error",
+                "code": "brain_not_published",
+                "message": "Publish this agent's script before testing live voice.",
+            },
+        )
+        await websocket.close(code=1008)
+        return
     try:
         await assert_wallet_allows_usage(principal.tenant_id)
     except Exception as exc:

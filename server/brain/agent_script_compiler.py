@@ -2569,7 +2569,7 @@ async def compile_agent_from_brief(
     if "naturalSpokenStyle" in config:
         script += ("\n\nDelivery: use natural conversational wording and brief turns."
                    if config["naturalSpokenStyle"] else
-                   "\n\nDelivery: use a concise formal register and preserve approved exact wording.")
+                   "\n\nDelivery: use clear conversational wording and preserve approved exact wording.")
     if config.get("industry"):
         script += "\nIndustry context: " + config["industry"] + ". Do not infer facts, prices or permissions from this label."
     if config.get("mode"):

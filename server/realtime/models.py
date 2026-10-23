@@ -221,23 +221,24 @@ def realtime_voice_llm_provider(
         if isinstance(llm, dict):
             provider = str(llm.get("provider") or "").strip().lower()
             model = str(llm.get("model") or "").strip()
-            if provider == "gemini":
-                return "gemini", live_gemini_model(model, settings)
-            if is_gemini_live_voice_model(model):
-                return "gemini", live_gemini_model(model, settings)
-            if provider == "openai" and is_realtime_llm_model(model):
-                return "openai", live_openai_model(model, settings)
-            if is_realtime_llm_model(model):
-                return "openai", live_openai_model(model, settings)
+            from server.providers.llm_protocol import native_audio_provider
+
+            if not native_audio_provider(provider, model, "websocket"):
+                raise ValueError("The selected native audio provider and model do not match")
+            return provider, model
         raw = str(stack_override.get("model") or "").strip()
         if is_gemini_live_voice_model(raw):
             return "gemini", live_gemini_model(raw, settings)
         if is_realtime_llm_model(raw):
             return "openai", live_openai_model(raw, settings)
+        if raw:
+            raise ValueError("The selected model does not support native audio")
     if is_gemini_live_voice_model(runtime_model):
         return "gemini", live_gemini_model(runtime_model, settings)
     if is_realtime_llm_model(runtime_model):
         return "openai", live_openai_model(runtime_model, settings)
+    if runtime_model:
+        raise ValueError("The selected model does not support native audio")
     return "gemini", live_gemini_model(runtime_model, settings)
 
 
@@ -265,12 +266,16 @@ def pipeline_mode(*, settings=None, stack_override: dict[str, Any] | None = None
             override = "realtime_voice"
     if override in PIPELINE_MODES:
         return override
+    if override:
+        raise ValueError("The selected voice pipeline is unsupported")
     if settings is None:
         from server.config.env import get_settings
 
         settings = get_settings()
     mode = str(getattr(settings, "voice_pipeline_mode", "realtime_text") or "realtime_text").strip().lower()
-    return mode if mode in ("classic", "realtime_text") else "realtime_text"
+    if mode not in ("classic", "realtime_text"):
+        raise ValueError("The configured voice pipeline requires an explicit approved profile")
+    return mode
 
 
 def uses_realtime_text(*, settings=None, stack_override: dict[str, Any] | None = None) -> bool:
@@ -369,14 +374,20 @@ def coerce_live_llm_selection(
     settings=None,
     stack_override: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
-    """Live voice E2E may use OpenAI Realtime or Gemini Live; text PSTN stays OpenAI Realtime."""
+    """Validate the selected transport without replacing a supplied model."""
+    if isinstance(stack_override, dict) and stack_override.get("pipeline") == "composed_voice":
+        return provider, model
     if uses_realtime_voice(settings=settings, stack_override=stack_override):
+        from server.providers.llm_protocol import native_audio_provider
+
+        if not native_audio_provider(provider, model, "websocket"):
+            raise ValueError("The selected native audio provider and model do not match")
         prov, slug = realtime_voice_llm_provider(stack_override, model, settings=settings)
-        if prov == "gemini":
-            return prov, slug
-        return "openai", slug
+        if (prov, slug) != (provider, model):
+            raise ValueError("The selected native audio model does not match the resolved profile")
+        return provider, model
     if uses_realtime_text(settings=settings, stack_override=stack_override):
-        return "openai", live_openai_model(model, settings)
-    if str(provider or "").strip().lower() == "gemini":
-        return "openai", http_openai_model(settings)
+        if provider != "openai" or not is_realtime_llm_model(model):
+            raise ValueError("The selected model does not support the realtime text pipeline")
+        return provider, model
     return provider, model

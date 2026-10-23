@@ -206,15 +206,24 @@ export function AgentTestCallPanel({ agent, language }) {
     return false;
   };
 
-  const requireLive = () => {
+  const requireLive = async () => {
     if (isActive) return true;
+    if (mode === 'browser' && toggleAgentStatus && agent?.id) {
+      try {
+        await toggleAgentStatus(agent.id, 'active');
+        return true;
+      } catch {
+        /* fallback */
+      }
+    }
     showToast('Agent is paused. Switch to Live before testing.', 'error');
     return false;
   };
 
   const startBrowser = async () => {
     if (!agent?.id) return;
-    if (!requireLive() || !requireWallet()) return;
+    const liveOk = await requireLive();
+    if (!liveOk || !requireWallet()) return;
     if (sessionRef.current) {
       try {
         sessionRef.current.stop();
@@ -311,7 +320,8 @@ export function AgentTestCallPanel({ agent, language }) {
 
   const dialPhone = async () => {
     if (!agent?.id || dialRef.current) return;
-    if (!requireLive() || !requireWallet()) return;
+    const liveOk = await requireLive();
+    if (!liveOk || !requireWallet()) return;
     if (!activeFromLine) {
       showToast('Enable outgoing calls on a phone line in Phone lines before calling.', 'error');
       return;

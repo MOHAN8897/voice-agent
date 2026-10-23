@@ -125,7 +125,7 @@ def test_gnani_audio_tags_injected_in_composed_prompt():
     )
     prompt_gnani = composed_voice_session.composed_system_prompt(ctx_gnani)
     assert "[Gnani Audio Tags Expressive Guidelines]" in prompt_gnani
-    assert "<laugh>" in prompt_gnani
+    assert "<laugh>" not in prompt_gnani  # no forced laughter on ordinary business calls
     assert "<pauses>" in prompt_gnani
     assert "<excited>" in prompt_gnani
 
@@ -237,7 +237,7 @@ def test_validate_composed_profile_with_gnani_and_cartesia():
         "label": "Duplicated Cartesia Stack",
         "supportedLanguages": ["te-IN", "en-IN"],
         "stt": {"provider": "cartesia", "model": "ink-whisper"},
-        "llm": {"provider": "groq", "modelId": "llama-3.3-70b-versatile", "apiMode": "chat_completions_v1"},
+        "llm": {"provider": "sarvam", "modelId": "sarvam-105b-conversations", "apiMode": "chat_completions_v1"},
         "engines": [
             {
                 "id": "cartesia",

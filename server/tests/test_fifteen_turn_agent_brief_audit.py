@@ -231,9 +231,14 @@ async def test_fifteen_turn_agent_brief_flow_and_write_audit(client):
             "request_id": f"mock-15-{n}",
         }
 
+    async def mock_stream(**kwargs):
+        # Admitted calls now dispatch through their selected model adapter.
+        assert kwargs["ctx"].call_id == call_id
+        yield {"done": True, **await mock_turn(**kwargs)}
+
     with patch(
-        "server.call.live_turn_orchestrator.generate_response",
-        new=AsyncMock(side_effect=mock_turn),
+        "server.call.live_turn_orchestrator.live_turn_orchestrator._stream_llm",
+        new=mock_stream,
     ):
         for user_text, note, expect, end_override in TURNS:
             r = client.post(

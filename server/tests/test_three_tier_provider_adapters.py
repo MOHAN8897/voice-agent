@@ -118,14 +118,14 @@ async def test_sarvam_llm_uses_selected_model_and_emits_terminal_usage(monkeypat
         event
         async for event in sarvam_llm.SarvamLLMAdapter(api_key="test-key").stream_live_turn(
             input_messages=[{"role": "user", "content": "Hi"}],
-            model="resolved-model-id",
+            model="sarvam-105b", api_mode="chat_completions_v2",
         )
     ]
 
     assert fake.closed
     assert fake.captured["url"] == sarvam_llm.SARVAM_CHAT_COMPLETIONS_V2_URL
     assert fake.captured["headers"]["api-subscription-key"] == "test-key"
-    assert fake.captured["json"]["model"] == "resolved-model-id"
+    assert fake.captured["json"]["model"] == "sarvam-105b"
     assert fake.captured["json"]["stream_options"] == {"include_usage": True}
     assert events[0]["delta"] == "Hello"
     assert events[-1]["done"] is True
@@ -173,7 +173,7 @@ async def test_sarvam_llm_rejects_malformed_and_empty_streams(monkeypatch, lines
     adapter = sarvam_llm.SarvamLLMAdapter(api_key="test-key")
     with pytest.raises(RuntimeError, match=message):
         async for _ in adapter.stream_live_turn(
-            input_messages=[{"role": "user", "content": "Hi"}], model="resolved-model-id"
+            input_messages=[{"role": "user", "content": "Hi"}], model="sarvam-105b"
         ):
             pass
     assert fake.closed
@@ -194,7 +194,7 @@ async def test_sarvam_llm_timeout_and_missing_model_fail_closed(monkeypatch):
     adapter = sarvam_llm.SarvamLLMAdapter(api_key="test-key")
     with pytest.raises(TimeoutError, match="timed out"):
         async for _ in adapter.stream_live_turn(
-            input_messages=[{"role": "user", "content": "Hi"}], model="resolved-model-id"
+            input_messages=[{"role": "user", "content": "Hi"}], model="sarvam-105b"
         ):
             pass
     assert timeout_client.closed
@@ -232,7 +232,7 @@ async def test_sarvam_llm_cancellation_closes_response_and_client(monkeypatch):
     fake = Client()
     _patch_client(monkeypatch, "server.providers.sarvam_llm", fake)
     generator = sarvam_llm.SarvamLLMAdapter(api_key="test-key").stream_live_turn(
-        input_messages=[{"role": "user", "content": "Hi"}], model="resolved-model-id"
+        input_messages=[{"role": "user", "content": "Hi"}], model="sarvam-105b"
     )
     assert (await anext(generator))["delta"] == "Hi"
     pending = asyncio.create_task(anext(generator))
@@ -279,14 +279,14 @@ async def test_gemini_tts_requests_and_validates_wav_and_returns_usage(monkeypat
     )
     _patch_client(monkeypatch, "server.providers.gemini_tts", fake)
     config = TTSConfig(
-        provider="gemini", model="resolved-model-id", language="te-IN", speaker="voice-from-config"
+        provider="gemini", model="gemini-3.8-flash-tts", language="te-IN", speaker="voice-from-config"
     )
     result = await gemini_tts.GeminiTTSAdapter(api_key="test-key").synthesize_with_metadata(
         "Hello", config
     )
 
     assert fake.closed
-    assert fake.captured["url"].endswith("/resolved-model-id:generateContent")
+    assert fake.captured["url"].endswith("/gemini-3.8-flash-tts:generateContent")
     assert fake.captured["headers"]["x-goog-api-key"] == "test-key"
     generation = fake.captured["json"]["generationConfig"]
     assert generation["responseModalities"] == ["AUDIO"]
@@ -345,7 +345,7 @@ async def test_gemini_tts_rejects_malformed_empty_and_unrequested_audio(
     with pytest.raises(RuntimeError, match=message):
         await adapter.synthesize_rest(
             "Hello",
-            TTSConfig(provider="gemini", model="resolved-model-id", speaker="voice-from-config"),
+            TTSConfig(provider="gemini", model="gemini-3.8-flash-tts", speaker="voice-from-config"),
         )
     assert fake.closed
 
@@ -374,7 +374,7 @@ async def test_gemini_tts_rejects_malformed_wav_and_timeout(monkeypatch):
     )
     _patch_client(monkeypatch, "server.providers.gemini_tts", fake)
     adapter = gemini_tts.GeminiTTSAdapter(api_key="test-key")
-    config = TTSConfig(provider="gemini", model="resolved-model-id", speaker="voice-from-config")
+    config = TTSConfig(provider="gemini", model="gemini-3.8-flash-tts", speaker="voice-from-config")
     with pytest.raises(RuntimeError, match="invalid PCM16 WAV"):
         await adapter.synthesize_rest("Hello", config)
     assert fake.closed
@@ -387,7 +387,7 @@ async def test_gemini_tts_rejects_malformed_wav_and_timeout(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_gemini_tts_cancellation_closes_request_and_streaming_is_explicitly_unsupported(
+async def test_gemini_tts_cancellation_closes_request_and_legacy_streaming_is_unsupported(
     monkeypatch,
 ):
     from server.providers import gemini_tts
@@ -405,7 +405,7 @@ async def test_gemini_tts_cancellation_closes_request_and_streaming_is_explicitl
     fake = Client()
     _patch_client(monkeypatch, "server.providers.gemini_tts", fake)
     adapter = gemini_tts.GeminiTTSAdapter(api_key="test-key")
-    config = TTSConfig(provider="gemini", model="resolved-model-id", speaker="voice-from-config")
+    config = TTSConfig(provider="gemini", model="gemini-3.8-flash-tts", speaker="voice-from-config")
     request = asyncio.create_task(adapter.synthesize_rest("Hello", config))
     await waiting.wait()
     request.cancel()
@@ -413,7 +413,7 @@ async def test_gemini_tts_cancellation_closes_request_and_streaming_is_explicitl
         await request
     assert fake.closed
     with pytest.raises(NotImplementedError, match="unary adapter"):
-        adapter.connect_stream(config)
+        adapter.connect_stream(TTSConfig(provider="gemini", model="gemini-2.5-pro-preview-tts", speaker="Zephyr"))
 
 
 @pytest.mark.asyncio

@@ -234,14 +234,16 @@ def prepare_spoken_reply(
     text: str,
     *,
     provider: str | None = None,
+    model: str | None = None,
     ensure_terminal: bool = True,
 ) -> str:
     """
     Final pass before TTS: strip phones, expand Indian amounts, keep grammar punctuation.
 
-    provider is optional (`sarvam` / `cartesia`) for future tuning; both keep sentence punct.
+    Only documented cues for an explicitly selected Gnani v3 model may survive.
     """
-    _ = provider  # reserved — shared path is correct for both engines today
-    cleaned = strip_spoken_phone_numbers(text or "")
+    from server.prompts.tts_delivery_rules import sanitize_tts_tags
+
+    cleaned = sanitize_tts_tags(strip_spoken_phone_numbers(text or ""), provider=provider, model=model)
     expanded = expand_spoken_numbers(cleaned)
     return sanitize_tts_punctuation(expanded, ensure_terminal=ensure_terminal)

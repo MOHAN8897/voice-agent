@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol, runtime_checkable
 
-TierName = Literal["low", "medium", "premium"]
+TierName = str  # Built-in and persisted custom tier slugs.
 ConfigMode = Literal["env", "frontend"]
 ProviderStage = Literal["stt", "llm", "tts"]
 
@@ -53,7 +53,20 @@ class ResolvedStack:
 
     @staticmethod
     def _safe_config(cfg: dict[str, Any]) -> dict[str, Any]:
-        return {k: v for k, v in cfg.items() if k not in ("api_key", "secret")}
+        sensitive = {"apikey", "secret", "clientsecret", "password", "authorization", "authid",
+                     "authtoken", "accesstoken", "refreshtoken", "connectionid", "accountkey",
+                     "apisubscriptionkey", "token", "accesskey", "webhookurl", "webhookendpoint"}
+
+        def scrub(value: Any) -> Any:
+            if isinstance(value, dict):
+                return {key: scrub(item) for key, item in value.items()
+                        if (normalized := "".join(c for c in str(key).lower() if c.isalnum())) not in sensitive
+                        and not normalized.endswith(("apikey", "clientsecret"))}
+            if isinstance(value, list):
+                return [scrub(item) for item in value]
+            return value
+
+        return scrub(cfg)
 
 
 @dataclass

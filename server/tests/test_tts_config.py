@@ -54,7 +54,7 @@ def test_cartesia_voice_uuid_not_validated_as_sarvam_speaker(monkeypatch):
     assert cfg["speaker"] == "4418bb06-8329-49a1-bb11-53bb64ca0547"
 
 
-def test_cartesia_uuid_falls_back_to_sarvam_when_cartesia_disabled(monkeypatch):
+def test_disabled_selected_cartesia_voice_never_falls_back_to_sarvam(monkeypatch):
     monkeypatch.setenv("ENABLE_CARTESIA", "false")
     monkeypatch.setenv("CARTESIA_API_KEY", "")
     from server.services.dev_secrets_store import dev_secrets_store
@@ -74,10 +74,10 @@ def test_cartesia_uuid_falls_back_to_sarvam_when_cartesia_disabled(monkeypatch):
             "ttsModel": "sonic-3.5",
         },
     )
-    cfg = resolve_tts_config("cfg-test", language_code="te-IN")
-    assert cfg["provider"] == "sarvam"
-    assert cfg["model"] == "bulbul:v3"
-    assert cfg["speaker"] == "shubh"
+    from server.utils.errors import AppError
+
+    with pytest.raises(AppError, match="unavailable"):
+        resolve_tts_config("cfg-test", language_code="te-IN")
 
 
 def test_active_call_stack_ignores_stale_runtime_provider(monkeypatch):

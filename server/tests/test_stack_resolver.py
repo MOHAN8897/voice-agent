@@ -82,7 +82,7 @@ def test_stack_override_rejected_in_production(resolver):
     assert exc.value.code == ErrorCode.VALIDATION_ERROR
 
 
-def test_resolver_rejects_gemini(monkeypatch):
+def test_resolver_preserves_selected_gemini(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
     monkeypatch.setenv("GEMINI_API_KEY", "gem-test")
@@ -104,9 +104,9 @@ def test_resolver_rejects_gemini(monkeypatch):
         language="te-IN",
     )
     stack = resolver.resolve(mode="frontend", user_selection=selection, language="te-IN")
-    assert stack.llm.provider == "openai"
-    assert registry.is_provider_enabled("gemini", "llm") is False
-    assert all(p.get("id") != "gemini" for p in registry.get_catalog()["providers"])
+    assert stack.llm.provider == "gemini"
+    assert registry.is_provider_enabled("gemini", "llm") is True
+    assert any(p.get("id") == "gemini" for p in registry.get_catalog()["providers"])
     dev_secrets_store.remove_overlay_key("enable_gemini")
     dev_secrets_store.remove_overlay_key("gemini_api_key")
     get_settings.cache_clear()

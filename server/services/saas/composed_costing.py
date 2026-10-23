@@ -69,14 +69,20 @@ def default_provider_rates() -> list[dict[str, Any]]:
         })
 
     add("stt", "sarvam", "saaras:v3-realtime", "audio_minute", "0.49", "INR", "2026-10-10")
+    add("stt", "sarvam", "saaras:v2", "audio_minute", "0.49", "INR", "2026-10-10")
+    add("stt", "sarvam", "saaras:v1", "audio_minute", "0.49", "INR", "2026-10-10")
     add("tts", "sarvam", "bulbul:v4-flash", "characters_1000", "2", "INR", "2026-10-10")
     add("tts", "sarvam", "bulbul:v3", "characters_1000", "3", "INR", "2026-10-10")
+    add("tts", "sarvam", "bulbul:v2", "characters_1000", "3", "INR", "2026-10-10")
     add("tts", "cartesia", "sonic-3.5", "characters_1000", "0.075", "USD", "2026-10-10")
     add("tts", "cartesia", "sonic-3.5-2026-05-04", "characters_1000", "0.075", "USD", "2026-10-10")
     add("tts", "gnani", "timbre-v3.0", "characters_1000", "3.5", "INR", "2026-10-10")
     add("tts", "gnani", "timbre-v2.5", "characters_1000", "2.5", "INR", "2026-10-10")
     for unit, price in (("input_tokens_million", "15"), ("cached_input_tokens_million", "5"), ("output_tokens_million", "60")):
         add("llm", "sarvam", "sarvam-105b-conversations", unit, price, "INR", "2026-10-10")
+        add("llm", "sarvam", "sarvam-105b", unit, price, "INR", "2026-10-10")
+    for unit, price in (("input_tokens_million", "1"), ("cached_input_tokens_million", "0.5"), ("output_tokens_million", "3")):
+        add("llm", "sarvam", "sarvam-2b", unit, price, "INR", "2026-10-10")
     for model, output in (("gemini-3.8-flash-lite-tts", "6"), ("gemini-3.8-flash-tts", "9")):
         add("tts", "gemini", model, "input_tokens_million", "0.5", "USD", "2026-10-22", "2027-01-01")
         add("tts", "gemini", model, "output_audio_tokens_million", output, "USD", "2026-10-22", "2027-01-01")
@@ -139,12 +145,21 @@ async def load_provider_costs() -> dict[str, Any]:
             ConfigVersion.resource_type == RESOURCE_TYPE, ConfigVersion.resource_id == RESOURCE_ID,
         ).order_by(desc(ConfigVersion.version)).limit(1))
         row = result.scalar_one_or_none()
+    stored_rates = copy.deepcopy(row.payload["rates"]) if row else []
+    defaults = default_provider_rates()
+    if stored_rates:
+        existing_ids = {r["id"] for r in stored_rates}
+        for d in defaults:
+            if d["id"] not in existing_ids:
+                stored_rates.append(copy.deepcopy(d))
+    else:
+        stored_rates = defaults
     view = {
         "schemaVersion": 1, "version": int(row.version) if row else 0, "configured": row is not None,
         "updatedAt": row.created_at.isoformat() if row else None,
         "reason": (row.payload.get("reason") or "") if row else "Published supplier tariff suggestions; save to configure.",
         "editableTiers": ["low", "medium"], "premiumReadOnly": True,
-        "rates": copy.deepcopy(row.payload["rates"]) if row else default_provider_rates(),
+        "rates": stored_rates,
     }
     from server.services.dev_runtime import effective_app_environment
     from server.services.saas.voice_stack_profiles import load_profile_records
@@ -167,7 +182,7 @@ def provider_stack_views(config: dict, profiles: dict) -> list[dict[str, Any]]:
         missing, selected = [], []
         for stage, options in (("stt", [stages["stt"]]), ("llm", [stages["llm"]]), ("tts", tts or [stages["tts"]])):
             for option in options:
-                units = UNITS[stage] if stage != "tts" else ({"characters_1000"} if option["provider"] == "sarvam" else {"input_tokens_million", "output_audio_tokens_million"})
+                units = UNITS[stage] if stage != "tts" else ({"input_tokens_million", "output_audio_tokens_million"} if option.get("provider") == "gemini" else {"characters_1000"})
                 for unit in sorted(units):
                     rate = _rate(config["rates"], stage, option, unit, today)
                     if rate:
@@ -223,7 +238,12 @@ def _rate(rates: list[dict], stage: str, selection: dict, unit: str, as_of: str)
     matched = [r for r in rates if r["stage"] == stage and r["provider"] == selection.get("provider")
                and r["model"] == selection.get("model") and r["unit"] == unit
                and r["effectiveFrom"] <= as_of and (r["effectiveUntil"] is None or as_of < r["effectiveUntil"])]
-    return matched[0] if len(matched) == 1 else None
+    if not matched:
+        defaults = default_provider_rates()
+        matched = [r for r in defaults if r["stage"] == stage and r["provider"] == selection.get("provider")
+                   and r["model"] == selection.get("model") and r["unit"] == unit
+                   and r["effectiveFrom"] <= as_of and (r["effectiveUntil"] is None or as_of < r["effectiveUntil"])]
+    return matched[0] if len(matched) >= 1 else None
 
 
 def build_cost_snapshot(config: dict, stack: dict, *, fx_rate_inr: Any, captured_at: datetime | None = None) -> dict[str, Any]:
