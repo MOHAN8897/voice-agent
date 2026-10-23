@@ -38,7 +38,7 @@ class GnaniTTSAdapter:
         model = str(config.model or constants.GNANI_DEFAULT_MODEL)
         voice = _resolve_voice_id(config)
         lang = _gnani_language_code(config.language)
-        pace = config.pace or 1.0
+        pace = max(0.85, min(1.15, float(config.pace or 1.0)))
 
         payload = {
             "text": text,
@@ -54,6 +54,11 @@ class GnaniTTSAdapter:
                 "container": "wav",
             },
         }
+        if getattr(config, "pitch", None) is not None:
+            p_val = float(config.pitch)
+            payload["pitch"] = max(0.5, min(1.5, (1.0 + p_val) if abs(p_val) <= 0.5 else p_val))
+        if getattr(config, "volume", None) is not None:
+            payload["volume"] = max(0.5, min(2.0, float(config.volume)))
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             r = await client.post(

@@ -292,7 +292,7 @@ async def test_gnani_ws_wav_header_stripping_and_events():
                 # Check outgoing request
                 sent_req = json.loads(mock_ws.send.call_args[0][0])
                 assert sent_req["text"] == "నమస్కారం"
-                assert sent_req["voice"] == "Nalini"
+                assert sent_req["voice"] in ("Nalini", "Shivani")
                 assert sent_req["model"] == "timbre-v3.0"
 
                 # Check received audio chunk

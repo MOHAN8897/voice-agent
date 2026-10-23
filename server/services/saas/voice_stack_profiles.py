@@ -107,6 +107,18 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
     profile["enabled"] = False
     if "label" in payload and str(payload["label"]).strip():
         profile["label"] = str(payload["label"]).strip()[:100]
+    rate_val = payload.get("retailRateInr") if payload.get("retailRateInr") is not None else payload.get("rateInr")
+    if rate_val is not None:
+        try:
+            profile["retailRateInr"] = round(float(rate_val), 4)
+            profile["rateInr"] = profile["retailRateInr"]
+        except (TypeError, ValueError):
+            pass
+    if "supplierCostInr" in payload and payload["supplierCostInr"] is not None:
+        try:
+            profile["supplierCostInr"] = round(float(payload["supplierCostInr"]), 4)
+        except (TypeError, ValueError):
+            pass
 
     languages = profile.get("supportedLanguages")
     if not isinstance(languages, list) or not languages:
@@ -206,6 +218,48 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
     if not isinstance(evidence, dict):
         evidence = {key: False for key in _EVIDENCE_KEYS}
     profile["evidence"] = {key: evidence.get(key) is True for key in _EVIDENCE_KEYS}
+
+    voice_dynamics = payload.get("voiceDynamics")
+    if isinstance(voice_dynamics, dict):
+        clean_dynamics: dict[str, Any] = {}
+        spd = voice_dynamics.get("speed") if voice_dynamics.get("speed") is not None else voice_dynamics.get("pace")
+        if spd is not None:
+            try:
+                clean_dynamics["speed"] = max(0.5, min(2.0, round(float(spd), 2)))
+                clean_dynamics["pace"] = clean_dynamics["speed"]
+            except (TypeError, ValueError):
+                pass
+        pitch_val = voice_dynamics.get("pitch")
+        if pitch_val is not None:
+            try:
+                clean_dynamics["pitch"] = max(-0.15, min(0.15, round(float(pitch_val), 2)))
+            except (TypeError, ValueError):
+                pass
+        temp_val = voice_dynamics.get("temperature")
+        if temp_val is not None:
+            try:
+                clean_dynamics["temperature"] = max(0.01, min(1.0, round(float(temp_val), 2)))
+            except (TypeError, ValueError):
+                pass
+        emo_val = str(voice_dynamics.get("emotion") or "").strip().lower()
+        if emo_val in {"neutral", "calm", "content", "happy", "sad", "angry", "scared", "confident", "curious", "sympathetic", "grateful", "peaceful"}:
+            clean_dynamics["emotion"] = emo_val
+        vol_val = voice_dynamics.get("volume")
+        if vol_val is not None:
+            try:
+                clean_dynamics["volume"] = max(0.5, min(2.0, round(float(vol_val), 2)))
+            except (TypeError, ValueError):
+                pass
+        profile["voiceDynamics"] = clean_dynamics
+    elif "voiceDynamics" in profile:
+        profile["voiceDynamics"] = {
+            "speed": 1.0,
+            "pace": 1.0,
+            "pitch": 0.0,
+            "temperature": 0.7,
+            "emotion": "neutral",
+            "volume": 1.0,
+        }
     return profile
 
 
@@ -379,8 +433,32 @@ async def load_profile_records(environment: str, tiers: tuple[str, ...] | list[s
         return loaded
 
 
-def _native_tier_retail_rate(rates: dict[str, Any] | None, tier: str) -> dict[str, Any] | None:
+def _native_tier_retail_rate(rates: dict[str, Any] | None, tier: str, record: dict[str, Any] | None = None) -> dict[str, Any] | None:
     """Read explicit tier-native prices or fallback gracefully to parent tier rates."""
+    prof = (record.get("profile") or {}) if isinstance(record, dict) else {}
+    custom_inr = prof.get("retailRateInr") if prof.get("retailRateInr") is not None else prof.get("rateInr")
+    if custom_inr is not None:
+        try:
+            inr_val = float(custom_inr)
+            if inr_val > 0:
+                fx = rates.get("fx_rate_inr") if isinstance(rates, dict) else None
+                try:
+                    fx_rate = float(fx) if fx is not None else 95.64
+                except (TypeError, ValueError):
+                    fx_rate = 95.64
+                inr_paise = int(round(inr_val * 100))
+                usd_micros = int(round((inr_val / fx_rate) * 1_000_000))
+                ver = int((record or {}).get("revision") or 1)
+                return {
+                    "usdMicrosPerMin": usd_micros,
+                    "inrPaisePerMin": inr_paise,
+                    "version": ver,
+                    "fxRateInr": fx_rate,
+                    "complete": True,
+                }
+        except (TypeError, ValueError):
+            pass
+
     if not isinstance(rates, dict):
         return None
     usd = rates.get(f"pstn_{tier}_rate_usd_micros_per_min")
@@ -473,7 +551,7 @@ def readiness_for_profile(tier: str, record: dict[str, Any] | None, rates: dict[
     for key, (code, message) in _EVIDENCE_MESSAGES.items():
         if evidence.get(key) is not True:
             blockers.append({"code": code, "message": message})
-    native_rate = _native_tier_retail_rate(rates, tier)
+    native_rate = _native_tier_retail_rate(rates, tier, record=record)
     if native_rate is None:
         blockers.append({"code": "tier_native_rate_missing", "message": "An approved native retail rate for this tier has not been configured."})
     blockers.extend(_runtime_profile_blockers(profile))
@@ -606,7 +684,7 @@ async def profile_view(tier: str, environment: str, *, include_internal: bool = 
         "profileRevision": revision,
         "composedProfile": copy.deepcopy(profile) if isinstance(profile, dict) else None,
         "readiness": readiness,
-        "retailRate": _native_tier_retail_rate(rates, tier),
+        "retailRate": _native_tier_retail_rate(rates, tier, record=record),
     }
     if include_internal:
         result["readOnly"] = False
@@ -644,6 +722,8 @@ async def save_composed_profile(
                 status_code=409, details={"currentRevision": current_revision},
             )
         next_revision = current_revision + 1
+        if payload.get("enabled") is True or (previous and (previous.get("profile") or {}).get("enabled")):
+            profile["enabled"] = True
         aliases = _choice_keys(profile, (previous or {}).get("publicAliases"))
         record = {"revision": next_revision, "profile": profile, "publicAliases": aliases}
         stt_spec = profile.get("stt") or {}
@@ -705,6 +785,33 @@ async def save_composed_profile(
                 created_at=datetime.now(timezone.utc),
             )
         )
+        retail_rate_inr = profile.get("retailRateInr") or profile.get("rateInr")
+        if retail_rate_inr is not None and retail_rate_inr > 0:
+            try:
+                from sqlalchemy import desc
+                from server.db.models.saas_models import BillingRateVersion
+                rate_result = await session.execute(
+                    select(BillingRateVersion).where(BillingRateVersion.is_active == True).order_by(desc(BillingRateVersion.version)).limit(1)
+                )
+                rate_row = rate_result.scalar_one_or_none()
+                if rate_row:
+                    inr_paise = int(round(retail_rate_inr * 100))
+                    fx = float(rate_row.fx_rate_inr or 95.64)
+                    usd_micros = int(round((retail_rate_inr / fx) * 1_000_000))
+                    if tier == "low":
+                        rate_row.pstn_low_rate_inr_paise_per_min = inr_paise
+                        rate_row.pstn_low_rate_usd_micros_per_min = usd_micros
+                    elif tier == "medium":
+                        rate_row.pstn_medium_rate_inr_paise_per_min = inr_paise
+                        rate_row.pstn_medium_rate_usd_micros_per_min = usd_micros
+                    elif tier == "premium":
+                        rate_row.pstn_premium_rate_inr_paise_per_min = inr_paise
+                        rate_row.pstn_premium_rate_usd_micros_per_min = usd_micros
+                        rate_row.pstn_rate_inr_paise_per_min = inr_paise
+                        rate_row.pstn_rate_usd_micros_per_min = usd_micros
+                    flag_modified(rate_row, "pstn_rate_inr_paise_per_min")
+            except Exception as rate_sync_err:
+                logger.warning("[RATES] Rate sync warning on profile save: %s", rate_sync_err)
         await session.commit()
         from server.db.tier_store import _cache_put
         _cache_put(environment, tier, row.stack_payload)
@@ -895,7 +1002,7 @@ def public_catalog_profile(tier: str, record: dict[str, Any] | None, rates: dict
         "label": display_label,
         "ready": bool(readiness["ready"] and readiness["enabled"]),
         "profileRevision": int((record or {}).get("revision") or 0),
-        "retailRate": _native_tier_retail_rate(rates, tier),
+        "retailRate": _native_tier_retail_rate(rates, tier, record=record),
         "engines": engines,
         "blockers": blockers,
     }
@@ -1004,6 +1111,25 @@ async def resolve_agent_selection(
         "voiceId": selected["voiceId"],
         "retailRate": _native_tier_retail_rate(rates, tier),
     }
+    tts_config: dict[str, Any] = {
+        "speaker": voice_row["providerVoiceId"],
+        "language_code": language,
+        "api_mode": model_row["apiMode"],
+    }
+    tier_dynamics = profile.get("voiceDynamics")
+    if isinstance(tier_dynamics, dict):
+        if tier_dynamics.get("speed") is not None:
+            tts_config["pace"] = tier_dynamics["speed"]
+            tts_config["speed"] = tier_dynamics["speed"]
+        if tier_dynamics.get("pitch") is not None:
+            tts_config["pitch"] = tier_dynamics["pitch"]
+        if tier_dynamics.get("temperature") is not None:
+            tts_config["temperature"] = tier_dynamics["temperature"]
+        if tier_dynamics.get("emotion") is not None:
+            tts_config["emotion"] = tier_dynamics["emotion"]
+        if tier_dynamics.get("volume") is not None:
+            tts_config["volume"] = tier_dynamics["volume"]
+
     stack = {
         "pipeline": "composed_voice",
         "voice_flow": "composed_stages",
@@ -1013,7 +1139,7 @@ async def resolve_agent_selection(
         "tts": {
             "provider": model_row["provider"],
             "model": model_row["model"],
-            "config": {"speaker": voice_row["providerVoiceId"], "language_code": language, "api_mode": model_row["apiMode"]},
+            "config": tts_config,
         },
         "_voice_stack_snapshot": snapshot,
     }
@@ -1077,23 +1203,17 @@ async def hydrate_composed_voice_stacks_and_rates() -> dict[str, Any]:
 
     for tier in COMPOSED_TIERS:
         record = records.get(tier)
-        target_provider = "gemini" if tier == "low" else "sarvam"
-        profile = record.get("profile") if record else {}
-        current_provider = (
-            profile.get("engines", [{}])[0].get("models", [{}])[0].get("provider")
-            if profile.get("engines")
-            else None
-        )
-        if record is None or current_provider != target_provider:
-            draft = recommended_composed_profile(tier)
+        if record is None:
+            draft = recommended_composed_profile(tier, allow_premium=True)
             draft["evidence"] = {k: True for k in _EVIDENCE_KEYS}
-            expected_rev = int(record.get("revision") or 0) if record else 0
+            expected_rev = 0
             await save_composed_profile(
                 environment=environment,
                 tier=tier,
                 expected_revision=expected_rev,
                 payload=draft,
                 actor="system_startup",
+                allow_premium=True,
             )
             records = await load_profile_records(environment, COMPOSED_TIERS)
             record = records.get(tier)
@@ -1117,20 +1237,6 @@ async def hydrate_composed_voice_stacks_and_rates() -> dict[str, Any]:
                         flag_modified(row, "stack_payload")
                         await session.commit()
                 records = await load_profile_records(environment, COMPOSED_TIERS)
-                record = records.get(tier)
-
-            readiness = readiness_for_profile(tier, record, rates)
-            if readiness["ready"] and not readiness["enabled"]:
-                try:
-                    await set_profile_enabled(
-                        environment=environment,
-                        tier=tier,
-                        expected_revision=int(record.get("revision") or 1),
-                        enabled=True,
-                        actor="system_startup",
-                    )
-                except Exception:
-                    pass
 
     return {"status": "ok", "environment": environment}
 

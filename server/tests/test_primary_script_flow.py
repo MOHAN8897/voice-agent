@@ -10,7 +10,10 @@ from server.brain.compiled_brain_artifact import assemble_unified_brain
 from server.brain.compiled_brain_service import compiled_brain_service
 from server.brain.semantic_validation import validate_sections
 from server.prompts.agent_voice_rules import (
-    LANGUAGE_LOCK, SPOKEN_PACKS, build_recording_disclosure_instruction, spoken_pack_for,
+    LANGUAGE_LOCK,
+    SPOKEN_PACKS,
+    build_recording_disclosure_instruction,
+    spoken_pack_for,
 )
 from server.realtime.gemini_audio_session import build_gemini_audio_session_instructions
 from server.realtime.models import realtime_voice_llm_provider
@@ -70,7 +73,8 @@ def test_explicit_gemini_stack_never_becomes_secondary(model):
 
 @pytest.mark.asyncio
 async def test_generation_failure_retries_only_selected_provider(monkeypatch):
-    from server.brain import generation_runtime, agent_script_compiler as compiler
+    from server.brain import agent_script_compiler as compiler
+    from server.brain import generation_runtime
     from server.providers.base import LLMConfig
     adapter = SimpleNamespace(structured_completion=AsyncMock(side_effect=RuntimeError("unavailable")))
     monkeypatch.setattr(generation_runtime, "generation_target", lambda: (adapter, LLMConfig(provider="gemini", model="test-gemini")))
@@ -82,7 +86,8 @@ async def test_generation_failure_retries_only_selected_provider(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_generation_uses_selected_locale_and_inbound_direction(monkeypatch):
-    from server.brain import generation_runtime, agent_script_compiler as compiler
+    from server.brain import agent_script_compiler as compiler
+    from server.brain import generation_runtime
     from server.providers.base import LLMConfig
     adapter = SimpleNamespace(structured_completion=AsyncMock(return_value={"agent_name": "Meera", "company_name": "Example Support"}))
     monkeypatch.setattr(generation_runtime, "generation_target", lambda: (adapter, LLMConfig(provider="gemini", model="test-gemini")))
@@ -134,24 +139,13 @@ def test_legacy_enabled_voice_and_variable_metadata_never_enters_prompt():
 
 @pytest.fixture
 def client():
-    import uuid
-    from types import SimpleNamespace
     from server.app import app
-    from server.auth.instructions_access import InstructionsAccess, require_instructions_access
-    from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
-    mock_access = InstructionsAccess(tenant_id=uuid.UUID("00000000-0000-4000-8000-000000000001"), role="administrator", developer=True)
-    sub_principal = SimpleNamespace(
-        tenant_id=uuid.UUID("00000000-0000-4000-8000-000000000001"),
-        email="test@example.com",
-        role="customer_admin",
-        is_admin=True,
-        permissions=frozenset({"app.agents.write", "app.brain.write"}),
-    )
-    app.dependency_overrides[require_instructions_access] = lambda: mock_access
-    app.dependency_overrides[require_subscriber_jwt_if_enabled] = lambda: sub_principal
-    yield TestClient(app)
-    app.dependency_overrides.pop(require_instructions_access, None)
-    app.dependency_overrides.pop(require_subscriber_jwt_if_enabled, None)
+    from server.auth.session import create_session_token
+    result = TestClient(app)
+    result.cookies.set("dev_session", create_session_token("dev", "synthetic-developer", None, "developer"))
+    result.cookies.set("dev_csrf", "synthetic-csrf")
+    result.headers["X-CSRF-Token"] = "synthetic-csrf"
+    return result
 
 
 def create_agent(client):
@@ -178,23 +172,23 @@ def test_review_requires_known_agent(client):
 
 def test_preview_enforces_tenant_ownership(client, monkeypatch):
     import uuid
+
     from fastapi import HTTPException
+
+    import server.auth.instructions_access as access_module
     from server.auth.instructions_access import InstructionsAccess, require_instructions_access
-    from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
-    import server.routes.agents_business_brain as routes
-    tenant_uuid = uuid.UUID("00000000-0000-4000-8000-000000000001")
-    principal = InstructionsAccess(tenant_id=tenant_uuid, role="admin", developer=False)
+    tenant_uuid = uuid.uuid4()
+    agent_uuid = uuid.uuid4()
+    principal = InstructionsAccess(tenant_id=tenant_uuid, role="customer_admin", developer=False)
     ownership = AsyncMock(side_effect=HTTPException(status_code=404, detail="Agent not found"))
-    monkeypatch.setattr(routes, "subscriber_workspace_tenant_id", lambda _: tenant_uuid)
-    monkeypatch.setattr(routes, "load_agent_for_tenant", ownership)
+    monkeypatch.setattr(access_module, "load_agent_for_tenant", ownership)
     client.app.dependency_overrides[require_instructions_access] = lambda: principal
-    client.app.dependency_overrides[require_subscriber_jwt_if_enabled] = lambda: principal
     try:
-        response = client.post("/api/agents/other-tenant-agent/business-brain/preview", json={"sections": sections()})
+        response = client.post(f"/api/agents/{agent_uuid}/business-brain/preview", json={"sections": sections()})
         assert response.status_code == 404
-        ownership.assert_awaited_once_with("other-tenant-agent", tenant_uuid)
+        ownership.assert_awaited_once_with(str(agent_uuid), tenant_uuid)
     finally:
-        client.app.dependency_overrides.pop(require_subscriber_jwt_if_enabled, None)
+        client.app.dependency_overrides.pop(require_instructions_access, None)
 
 
 def test_edited_identity_updates_hidden_runtime_tags(client):
@@ -216,8 +210,8 @@ def test_edited_identity_updates_hidden_runtime_tags(client):
 
 
 def test_primary_web_call_resolves_template_fallback_without_imported_contact(client, monkeypatch):
-    from server.call.call_lifecycle_service import call_lifecycle_service
     from server.call import call_context
+    from server.call.call_lifecycle_service import call_lifecycle_service
     agent_id = create_agent(client)
     compiled = assemble_unified_brain(language="en-IN", script="Hello {{contact.first_name | there}}. Today is {{system.date}}.")
     monkeypatch.setattr(call_lifecycle_service, "_lock_compiled_brain", AsyncMock(return_value=("test-approved", compiled, "published")))
@@ -232,8 +226,8 @@ def test_primary_web_call_resolves_template_fallback_without_imported_contact(cl
 
 @pytest.mark.asyncio
 async def test_publish_preserves_authored_text_without_generation(monkeypatch):
-    from server.brain.agent_service import agent_service
     import server.brain.business_prompt_optimizer as optimizer
+    from server.brain.agent_service import agent_service
     agent = await agent_service.create_agent(name="Preserve Authored Test")
     agent_id = agent["agent_id"]
     wording = "EXACT AUTHORED WORDING: Refund policy 7 days, price INR 13750."

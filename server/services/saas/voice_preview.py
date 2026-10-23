@@ -295,7 +295,14 @@ async def _synthesize_openai(line: str, voice: str, speed: float) -> bytes:
     return audio
 
 
-async def _synthesize_sarvam(line: str, voice: str, speed: float, language: str | None = None) -> bytes:
+async def _synthesize_sarvam(
+    line: str,
+    voice: str,
+    speed: float,
+    language: str | None = None,
+    temperature: float | None = None,
+    pitch: float | None = None,
+) -> bytes:
     from server.services.sarvam_tts_service import synthesize
 
     result = await synthesize(
@@ -303,6 +310,7 @@ async def _synthesize_sarvam(line: str, voice: str, speed: float, language: str 
         language_code=language or "te-IN",
         speaker=voice,
         pace=speed,
+        temperature=temperature,
     )
     audio = result.get("audio_bytes")
     if not isinstance(audio, bytes) or len(audio) < 44 or not audio.startswith(b"RIFF") or audio[8:12] != b"WAVE":
@@ -310,7 +318,14 @@ async def _synthesize_sarvam(line: str, voice: str, speed: float, language: str 
     return audio
 
 
-async def _synthesize_gemini_tts(line: str, voice: str, speed: float, language: str | None = None, model: str | None = None) -> bytes:
+async def _synthesize_gemini_tts(
+    line: str,
+    voice: str,
+    speed: float,
+    language: str | None = None,
+    model: str | None = None,
+    pitch: float | None = None,
+) -> bytes:
     from server.providers.gemini_tts import GeminiTTSAdapter, TTSConfig
 
     adapter = GeminiTTSAdapter()
@@ -320,6 +335,7 @@ async def _synthesize_gemini_tts(line: str, voice: str, speed: float, language: 
         speaker=voice,
         language=language or "te-IN",
         pace=speed,
+        pitch=pitch,
     )
     result = await adapter.synthesize_with_metadata(line, cfg)
     audio = result.audio_bytes
@@ -328,9 +344,17 @@ async def _synthesize_gemini_tts(line: str, voice: str, speed: float, language: 
     return audio
 
 
-async def _synthesize_gnani(line: str, voice: str, speed: float, language: str | None = None, model: str | None = None) -> bytes:
+async def _synthesize_gnani(
+    line: str,
+    voice: str,
+    speed: float,
+    language: str | None = None,
+    model: str | None = None,
+    pitch: float | None = None,
+    volume: float | None = None,
+) -> bytes:
     from server.providers.gnani_tts import GnaniTTSAdapter, TTSConfig
-    from server.services.saas.voice_sample_cache import pcm16_to_wav, valid_wav
+    from server.services.saas.voice_sample_cache import valid_wav
 
     clean_v = str(voice or "").strip()
     req_model = model or "timbre-v3.0"
@@ -351,6 +375,8 @@ async def _synthesize_gnani(line: str, voice: str, speed: float, language: str |
         speaker=clean_v,
         language=language or "te-IN",
         pace=speed,
+        pitch=pitch,
+        volume=volume,
     )
     raw = await adapter.synthesize_rest(line, cfg)
     if isinstance(raw, bytes) and valid_wav(raw):
@@ -360,9 +386,17 @@ async def _synthesize_gnani(line: str, voice: str, speed: float, language: str |
     return raw
 
 
-async def _synthesize_cartesia(line: str, voice: str, speed: float, language: str | None = None, model: str | None = None) -> bytes:
+async def _synthesize_cartesia(
+    line: str,
+    voice: str,
+    speed: float,
+    language: str | None = None,
+    model: str | None = None,
+    emotion: str | None = None,
+    volume: float | None = None,
+) -> bytes:
     from server.providers.cartesia_tts import CartesiaTTSAdapter, TTSConfig
-    from server.services.saas.voice_sample_cache import pcm16_to_wav, valid_wav
+    from server.services.saas.voice_sample_cache import valid_wav
 
     adapter = CartesiaTTSAdapter()
     cfg = TTSConfig(
@@ -371,6 +405,8 @@ async def _synthesize_cartesia(line: str, voice: str, speed: float, language: st
         speaker=voice,
         language=language or "te-IN",
         speed=speed,
+        emotion=emotion,
+        volume=volume,
     )
     raw = await adapter.synthesize_rest(line, cfg)
     if isinstance(raw, bytes) and valid_wav(raw):
@@ -485,6 +521,10 @@ async def synthesize_preview(
     voice_id: str | None = None,
     language: str | None = None,
     speed: float | None = None,
+    pitch: float | None = None,
+    temperature: float | None = None,
+    emotion: str | None = None,
+    volume: float | None = None,
     provider: str = "gemini",
     model: str | None = None,
     tier: str | None = None,
@@ -540,17 +580,18 @@ async def synthesize_preview(
         or any(s.casefold() == voice.casefold() for s in constants.TTS_SPEAKERS_V3)
         or any(s.casefold() == voice.casefold() for s in STANDARD_TTS_VOICES)
     )
+    is_speed_standard = abs(pace - 1.0) < 0.01 and (pitch is None or abs(pitch) < 0.01) and (emotion is None or emotion == "neutral")
     cacheable = is_catalog_voice and is_standard_sample
 
     async def generate():
         if active_provider == "gnani":
-            return await _synthesize_gnani(line, voice, pace, language=language, model=preview_model)
+            return await _synthesize_gnani(line, voice, pace, language=language, model=preview_model, pitch=pitch, volume=volume)
         elif active_provider == "cartesia":
-            return await _synthesize_cartesia(line, voice, pace, language=language, model=preview_model)
+            return await _synthesize_cartesia(line, voice, pace, language=language, model=preview_model, emotion=emotion, volume=volume)
         elif tier == "medium" or active_provider == "sarvam":
-            return await _synthesize_sarvam(line, voice, pace, language)
+            return await _synthesize_sarvam(line, voice, pace, language=language, temperature=temperature, pitch=pitch)
         elif tier == "low" or (model and "tts" in model):
-            return await _synthesize_gemini_tts(line, voice, pace, language=language, model=preview_model)
+            return await _synthesize_gemini_tts(line, voice, pace, language=language, model=preview_model, pitch=pitch)
         elif active_provider == "gemini":
             return await _synthesize_gemini(line, voice, pace)
         return await _synthesize_openai(line, voice, pace)
@@ -571,7 +612,7 @@ async def synthesize_preview(
         )
 
         if not is_mocked_test:
-            cache_key = [active_provider, preview_model, voice, language, pace, norm_line]
+            cache_key = [active_provider, preview_model, voice, language, round(pace, 2), pitch, temperature, emotion, norm_line]
             cache_file = sample_path(cache_key)
 
             # 1. Direct hit on persisted cache
@@ -588,23 +629,24 @@ async def synthesize_preview(
                     "cacheHit": True,
                 }
 
-            # 2. Direct hit on pre-stored static sample audio (0 live API costs)
-            static_audio = await asyncio.to_thread(find_static_sample, voice, language)
-            if static_audio is not None:
-                try:
-                    await asyncio.to_thread(_write, cache_file, static_audio)
-                except OSError:
-                    pass
-                return {
-                    "audio": static_audio,
-                    "voice": voice,
-                    "label": label,
-                    "model": preview_model,
-                    "stackModel": str(model or ""),
-                    "truncated": False,
-                    "cacheable": True,
-                    "cacheHit": True,
-                }
+            # 2. Direct hit on pre-stored static sample audio (ONLY at 1.0x standard pace)
+            if is_speed_standard:
+                static_audio = await asyncio.to_thread(find_static_sample, voice, language)
+                if static_audio is not None:
+                    try:
+                        await asyncio.to_thread(_write, cache_file, static_audio)
+                    except OSError:
+                        pass
+                    return {
+                        "audio": static_audio,
+                        "voice": voice,
+                        "label": label,
+                        "model": preview_model,
+                        "stackModel": str(model or ""),
+                        "truncated": False,
+                        "cacheable": True,
+                        "cacheHit": True,
+                    }
 
             # 3. Fallback to generator (and cache result)
             audio, cache_hit = await get_or_create(cache_key, generate)

@@ -7,8 +7,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-from server.brain.sections import SECTION_MAX_CHARS, SECTION_REQUIRED_TYPES, SECTION_TYPES
 from server.agent.brain_prompt_composer import MAX_AGENT_SCRIPT_CHARS
+from server.brain.sections import SECTION_MAX_CHARS, SECTION_REQUIRED_TYPES, SECTION_TYPES
 
 
 @dataclass

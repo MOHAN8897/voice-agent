@@ -191,7 +191,7 @@ def normalize_pstn_stack_override(
     # stage tuple. Preserve it intact: the legacy normalizer intentionally
     # removes LLM overrides and rewrites classic PSTN stacks to realtime_text.
     if str(out.get("pipeline") or "").strip().lower() == "composed_voice":
-        if tier == "premium" or out.get("voice_flow") != "composed_stages":
+        if out.get("voice_flow") != "composed_stages":
             raise PstnStackValidationError("Invalid composed PSTN profile selection")
         snapshot = out.get("_voice_stack_snapshot")
         if not isinstance(snapshot, dict) or snapshot.get("tier") != tier:

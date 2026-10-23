@@ -15,7 +15,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
-export function CompanyPage({ onBackToLanding, onEnterConsole, onNavigatePage }) {
+export function CompanyPage({ onBackToLanding, onEnterConsole, onNavigatePage, onSignIn }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9FD] text-[#0F0E17]">
       <PageHeader
@@ -23,6 +23,7 @@ export function CompanyPage({ onBackToLanding, onEnterConsole, onNavigatePage })
         subtitle="Empowering modern enterprises with autonomous, emotionally resonant AI voice employees."
         onBackToLanding={onBackToLanding}
         onEnterConsole={onEnterConsole}
+        onSignIn={onSignIn}
       />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-12 space-y-16">

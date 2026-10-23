@@ -2,13 +2,19 @@
 Stage 4 Tests: Confirmation Flow, Preview/Extract, Edit-and-Regenerate, and Creation Gates.
 """
 import pytest
-from fastapi.testclient import TestClient
 
-from server.app import app
 from server.agent.instruction_store import instruction_store
+from server.app import app
 from server.brain.agent_spec import AgentSpec, Evidenced
+from server.tests.auth_helpers import authenticated_dev_client
 
-client = TestClient(app)
+client = None
+
+
+@pytest.fixture(autouse=True)
+def _authorized_http_workflow():
+    global client
+    client = authenticated_dev_client(app)
 
 USER_BRIEF = (
     "We sell flats and plots. Ask which project they are interested in, their budget "

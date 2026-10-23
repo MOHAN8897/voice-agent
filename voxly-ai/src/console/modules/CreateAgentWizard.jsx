@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Sparkles, Megaphone, Zap } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { useWorkspace } from '../context/WorkspaceContext';
@@ -37,6 +37,8 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const creationRequestRef = useRef(null);
+  const creatingRef = useRef(false);
   // Which languages exist is an admin setting, not a bundle constant.
   const [languageOptions, setLanguageOptions] = useState(() =>
     toLanguageOptions(null)
@@ -48,6 +50,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
     if (!isOpen) return;
     setDraft(EMPTY_DRAFT);
     setError(null);
+    creationRequestRef.current = null;
   }, [isOpen]);
 
   useEffect(() => {
@@ -88,13 +91,19 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
 
   /** Brief → compiled script → published brain. One call, then hand over. */
   const createAgent = useCallback(async () => {
+    if (creatingRef.current) return;
     if (!ready) {
       setError('Describe the job in at least 8 characters, up to 6,000 characters and 1,200 words.');
       return;
     }
     setBusy(true);
+    creatingRef.current = true;
     setError(null);
     try {
+      const fingerprint = JSON.stringify({ ...draft, brief: draft.brief.trim() });
+      if (creationRequestRef.current?.fingerprint !== fingerprint) {
+        creationRequestRef.current = { fingerprint, id: crypto.randomUUID() };
+      }
       const result = await api.agents.buildEmployee({
         brief: draft.brief.trim(),
         language: draft.language,
@@ -103,6 +112,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
         direction: draft.direction,
         industry: draft.industry,
         naturalSpokenStyle: draft.naturalSpokenStyle,
+        requestId: creationRequestRef.current.id,
       });
       const agentId = result.id;
       if (!agentId) throw new Error('The agent was created but no id came back. Try again.');
@@ -117,6 +127,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
     } catch (e) {
       setError(e.message || 'Could not create the agent');
     } finally {
+      creatingRef.current = false;
       setBusy(false);
     }
   }, [draft, ready, loadWorkspaceData, agents, selectedAgentId, setSelectedAgentId, onClose, onNavigate]);

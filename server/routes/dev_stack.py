@@ -98,6 +98,10 @@ class DevVoicePreviewBody(BaseModel):
     text: str | None = None
     language: str | None = "te-IN"
     speed: float | None = 1.0
+    pitch: float | None = None
+    temperature: float | None = None
+    emotion: str | None = None
+    volume: float | None = None
 
     model_config = {"populate_by_name": True}
 
@@ -345,6 +349,10 @@ async def dev_composed_voice_preview(
             voice_id=body.voice_id,
             language=body.language or "te-IN",
             speed=body.speed or 1.0,
+            pitch=body.pitch,
+            temperature=body.temperature,
+            emotion=body.emotion,
+            volume=body.volume,
             provider=body.provider,
             model=body.model,
         )

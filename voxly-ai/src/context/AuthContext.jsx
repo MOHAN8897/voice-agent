@@ -81,7 +81,18 @@ function writeStoredImpersonation(imp) {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const cached = authService.getSession();
+      if (cached) {
+        const imp = readStoredImpersonation();
+        return imp ? { ...cached, impersonation: imp } : cached;
+      }
+    } catch {
+      /* ignore */
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = useState(true);
   // Session policy, learned from the server on every auth response. Held in state so
   // the idle monitor is rebuilt whenever the server's bounds change.

@@ -29,6 +29,15 @@ def _now():
     return datetime.now(timezone.utc)
 
 
+def _is_older_than(dt: datetime | None, delta: timedelta) -> bool:
+    if dt is None:
+        return False
+    now = _now()
+    if dt.tzinfo is None:
+        return dt < now.replace(tzinfo=None) - delta
+    return dt < now - delta
+
+
 def request_key(tenant_id: uuid.UUID, request_id: str) -> str:
     return hashlib.sha256(f"{tenant_id}:{request_id}".encode()).hexdigest()
 
@@ -81,13 +90,46 @@ async def reserve(tenant_id: uuid.UUID, request_id: str, *, provider: str, paylo
             candidates = (await db.execute(select(PstnDialRequest).where(
                 PstnDialRequest.tenant_id == tenant_id, PstnDialRequest.destination_hash == destination_hash,
                 PstnDialRequest.status.in_(ACTIVE)).with_for_update())).scalars().all()
+            from server.services.vobiz_client import vobiz_call_registry
             for row in candidates:
-                # These server-produced results are emitted before carrier dispatch.
-                # Repair older reservations that recorded preparation failure as uncertain.
-                if ((row.response or {}).get("code") in NO_DIAL_CODES and not row.carrier_id
-                        and row.media_claimed_at is None and row.answered_at is None):
+                # 1. Server-produced non-dial result or explicit failure
+                resp = row.response or {}
+                if (resp.get("code") in NO_DIAL_CODES or resp.get("ok") is False) and not row.media_claimed_at and not row.answered_at:
                     row.status = "failed"
                     row.updated_at = _now()
+                    continue
+
+                # 2. Auto-reconcile reservation if the linked call record has already terminated.
+                if row.call_id:
+                    call_status = (await db.execute(
+                        select(Call.ended_at, Call.status).where(Call.call_id == row.call_id)
+                    )).first()
+                    if call_status is not None:
+                        ended_at, status_val = call_status
+                        if ended_at is not None or str(status_val or "").lower() in ("completed", "failed", "busy", "no-answer", "canceled", "ended"):
+                            row.status = "ended"
+                            row.updated_at = _now()
+                            continue
+
+                # 3. Auto-reconcile from carrier call registry
+                if row.carrier_id:
+                    reg_entry = vobiz_call_registry.get(row.carrier_id) or {}
+                    if reg_entry.get("ended") is True or str(reg_entry.get("status") or "").lower() in ("completed", "failed", "busy", "no-answer", "canceled", "ended"):
+                        row.status = "ended"
+                        row.updated_at = _now()
+                        continue
+
+                # 4. If status is uncertain and created more than 20 seconds ago, fail it
+                if row.status == "uncertain" and _is_older_than(row.created_at, timedelta(seconds=20)):
+                    row.status = "failed"
+                    row.updated_at = _now()
+                    continue
+
+                # 5. Auto-reconcile unlinked or unanswered reservations older than 45 seconds (ringing / dispatch timeout).
+                if not row.carrier_id and not row.call_id and row.answered_at is None and _is_older_than(row.created_at, timedelta(seconds=45)):
+                    row.status = "ended"
+                    row.updated_at = _now()
+                    continue
             await db.flush()
         if destination_hash and (await db.execute(select(PstnDialRequest.request_key).where(
             PstnDialRequest.tenant_id == tenant_id, PstnDialRequest.destination_hash == destination_hash,
@@ -144,7 +186,11 @@ async def finish(key: str, tenant_id: uuid.UUID, *, result: dict | None = None, 
                 # Only a definitive client rejection proves the POST did not
                 # place a call. A malformed success or an HTTP timeout can
                 # still leave a live carrier call and must retain its slot.
-                definitive_rejection = (400 <= status < 500 and status != 408) or result.get("code") in NO_DIAL_CODES
+                definitive_rejection = (
+                    (400 <= status < 500 and status != 408)
+                    or result.get("code") in NO_DIAL_CODES
+                    or result.get("code") in ("dial_failed", "voice_preparation_failed", "voice_start_failed", "agent_paused", "dnc_blocked")
+                )
                 ambiguous = not result.get("ok") and not definitive_rejection
                 row.status = "accepted" if result.get("ok") else "uncertain" if ambiguous else "failed"
         row.updated_at = _now()
@@ -181,18 +227,17 @@ async def reconcile_ended_destination(tenant_id: uuid.UUID, destination_hash: st
     async with factory() as db:
         rows = (await db.execute(select(PstnDialRequest).where(
             PstnDialRequest.tenant_id == tenant_id, PstnDialRequest.provider == "vobiz",
-            PstnDialRequest.destination_hash == destination_hash, PstnDialRequest.status.in_(ACTIVE),
-            PstnDialRequest.call_id.is_not(None)).limit(20))).scalars().all()
+            PstnDialRequest.destination_hash == destination_hash, PstnDialRequest.status.in_(ACTIVE)).limit(20))).scalars().all()
     from server.call.call_ledger import call_ledger
     from server.services.saas.voice_kyc_service import vobiz_client_for_call
     from server.services.vobiz_client import vobiz_call_registry
 
     released = 0
     for row in rows:
-        meta = call_ledger.read_meta(str(row.call_id)) or {}
-        if str(meta.get("tenant_id") or "") != str(tenant_id) or not meta.get("ended_at"):
+        meta = (call_ledger.read_meta(str(row.call_id)) or {}) if row.call_id else {}
+        if row.call_id and (str(meta.get("tenant_id") or "") != str(tenant_id) or not meta.get("ended_at")):
             continue
-        call_uuid = str(meta.get("vobiz_call_uuid") or "")
+        call_uuid = str(meta.get("vobiz_call_uuid") or row.carrier_id or "")
         if not call_uuid:
             continue
         try:
@@ -233,6 +278,12 @@ async def provider_event(*, tenant_id: uuid.UUID, key: str | None = None, carrie
             query = query.where(PstnDialRequest.request_key == key)
         elif carrier_ids:
             query = query.where(PstnDialRequest.carrier_id.in_([str(value) for value in carrier_ids if value]))
+        elif call_id:
+            try:
+                cid_u = uuid.UUID(str(call_id))
+                query = query.where(PstnDialRequest.call_id == cid_u)
+            except ValueError:
+                return
         else:
             return
         row = (await db.execute(query.with_for_update())).scalar_one_or_none()

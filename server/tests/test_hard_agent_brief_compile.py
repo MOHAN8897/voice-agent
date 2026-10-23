@@ -9,6 +9,7 @@ from server.brain.agent_script_compiler import (
     _looks_like_agent_name,
     compile_agent_from_brief,
 )
+from server.brain.brief_contract import BriefValidationError
 
 # 20 real-world-ish briefs: typos, ambiguity, half-info, mixed industries.
 HARD_BRIEFS: list[dict] = [
@@ -36,11 +37,10 @@ HARD_BRIEFS: list[dict] = [
     {
         "id": "company_only_sales",
         "brief": "Create outbound sales agent for GreenHomes Realty. Sell 2BHK flats from 45 lakhs in Gachibowli.",
-        "name": "Priya",
+        "needs_name": True,
         "company_contains": "GreenHomes",
         "facts": ["45 lakhs", "2BHK"],
         "role": "sales",
-        "invented_name_ok": True,
     },
     {
         "id": "person_only_no_company",
@@ -54,14 +54,14 @@ HARD_BRIEFS: list[dict] = [
     {
         "id": "vague_shop",
         "brief": "make a bot for my shop we sell stuff please call customers",
-        "invented_name_ok": True,
+        "needs_name": True,
         "no_company": True,
         "must_not": ["Private Limited", "Acme", "plots", "50 lakhs"],
     },
     {
         "id": "half_info_course",
         "brief": "call people about our course 8000 rupees",
-        "invented_name_ok": True,
+        "needs_name": True,
         "no_company": True,
         "facts": ["8000"],
         "must_not": ["site visit", "2BHK"],
@@ -78,7 +78,7 @@ HARD_BRIEFS: list[dict] = [
         "id": "named_after_company_trap",
         "brief": "I am the owner. The agent should speak for company SKM Plants. Don't invent a second brand. Sell indoor plants.",
         "company_contains": "SKM",
-        "invented_name_ok": True,
+        "needs_name": True,
         "must_not": ["You are SKM Plants"],
         "facts": ["plants"],
     },
@@ -181,7 +181,7 @@ HARD_BRIEFS: list[dict] = [
     {
         "id": "garbage_ambiguous",
         "brief": "asdf maybe cars or plants or something call them idk agent ??? ",
-        "invented_name_ok": True,
+        "needs_name": True,
         "no_company": True,
         "must_not": ["You are Asdf", "Private Limited", "50 lakhs", "2BHK"],
     },
@@ -230,9 +230,6 @@ def _issues_for(case: dict, result, compiled: str) -> list[str]:
     expected_name = case.get("name")
     if expected_name and name.lower() != expected_name.lower():
         issues.append(f"name {name!r} != {expected_name!r}")
-    if case.get("invented_name_ok") and not expected_name:
-        if not _looks_like_agent_name(name):
-            issues.append(f"failed to invent a person name: {name!r}")
 
     needle = case.get("company_contains")
     if needle and needle.lower() not in company.lower():
@@ -282,6 +279,11 @@ def _issues_for(case: dict, result, compiled: str) -> list[str]:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("case", HARD_BRIEFS, ids=[c["id"] for c in HARD_BRIEFS])
 async def test_hard_brief_compiles_clean_script(case):
+    if case.get("needs_name"):
+        with pytest.raises(BriefValidationError) as error:
+            await compile_agent_from_brief(brief=case["brief"], language="en-IN", use_llm=False)
+        assert any(issue["code"] == "missing_agent_name" for issue in error.value.issues)
+        return
     compiled, result, *_ = await compile_agent_from_brief(
         brief=case["brief"],
         language="en-IN",

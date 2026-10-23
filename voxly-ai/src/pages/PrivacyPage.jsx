@@ -3,13 +3,14 @@ import { PageHeader } from './PageHeader';
 import { Footer } from '../components/Footer';
 import { Shield, Lock, FileText, CheckCircle2 } from 'lucide-react';
 
-export function PrivacyPage({ onBackToLanding, onEnterConsole, onNavigatePage }) {
+export function PrivacyPage({ onBackToLanding, onEnterConsole, onNavigatePage, onSignIn }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9FD] text-[#0F0E17]">
       <PageHeader
         title="Privacy Policy"
         onBackToLanding={onBackToLanding}
         onEnterConsole={onEnterConsole}
+        onSignIn={onSignIn}
       />
 
       <main className="flex-1 max-w-4xl mx-auto px-6 sm:px-8 py-12 sm:py-16">

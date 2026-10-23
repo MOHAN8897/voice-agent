@@ -208,8 +208,16 @@ class CallLifecycleService:
             and isinstance(stack_override.get("_voice_stack_snapshot"), dict)
             else None
         )
+        from server.services.saas.voice_stack_profiles import canonical_voice_tier
+        is_composed_tier = False
+        try:
+            norm_tier = canonical_voice_tier(effective_tier)
+            is_composed_tier = (norm_tier != "premium")
+        except Exception:
+            is_composed_tier = False
+
         if pipeline == "composed_voice" and (
-            effective_tier not in {"low", "medium"} or composed_snapshot is None
+            not is_composed_tier or composed_snapshot is None
         ):
             raise AppError(
                 ErrorCode.VALIDATION_ERROR,
@@ -385,18 +393,33 @@ class CallLifecycleService:
                 from server.services.saas.billing_rates import load_current_rates
 
                 cur_rates = await load_current_rates()
+                tier_slug = str(stack.tier or effective_tier or "medium").lower()
+                from server.services.dev_runtime import effective_app_environment
+                from server.services.saas.voice_stack_profiles import load_profile_records, _native_tier_retail_rate
+                tier_rec = (await load_profile_records(effective_app_environment(), (tier_slug,))).get(tier_slug)
+                custom_rate = _native_tier_retail_rate(cur_rates, tier_slug, record=tier_rec)
+                if custom_rate and custom_rate.get("inrPaisePerMin"):
+                    tier_rate_micros = custom_rate.get("usdMicrosPerMin")
+                    tier_rate_cents = (tier_rate_micros + 5_000) // 10_000 if tier_rate_micros else None
+                    tier_rate_inr = custom_rate.get("inrPaisePerMin")
+                else:
+                    parent_tier = "low" if (tier_slug == "low" or tier_slug.startswith("low") or "economical" in tier_slug) else ("premium" if (tier_slug == "premium" or "flagship" in tier_slug) else "medium")
+                    tier_rate_cents = cur_rates.get(f"pstn_{parent_tier}_rate_usd_cents_per_min") or (cur_rates.get(f"pstn_{parent_tier}_rate_usd_micros_per_min", 0) // 10_000)
+                    tier_rate_micros = cur_rates.get(f"pstn_{parent_tier}_rate_usd_micros_per_min")
+                    tier_rate_inr = cur_rates.get(f"pstn_{parent_tier}_rate_inr_paise_per_min")
+
                 snap_rate_cents = int(
-                    cur_rates["pstn_rate_usd_cents_per_min"]
+                    (tier_rate_cents if tier_rate_cents else cur_rates["pstn_rate_usd_cents_per_min"])
                     if channel == "pstn"
                     else cur_rates["web_agent_rate_usd_cents_per_min"]
                 )
                 snap_rate_micros = int(
-                    cur_rates["pstn_rate_usd_micros_per_min"]
+                    (tier_rate_micros if tier_rate_micros else cur_rates["pstn_rate_usd_micros_per_min"])
                     if channel == "pstn"
                     else cur_rates["web_agent_rate_usd_micros_per_min"]
                 )
                 snap_rate_inr_paise = int(
-                    cur_rates["pstn_rate_inr_paise_per_min"]
+                    (tier_rate_inr if tier_rate_inr else cur_rates["pstn_rate_inr_paise_per_min"])
                     if channel == "pstn"
                     else cur_rates["web_agent_rate_inr_paise_per_min"]
                 )
@@ -644,6 +667,18 @@ class CallLifecycleService:
                 "end_reason": reason,
             },
         )
+        tid = stored.get("tenant_id") if stored else (ctx.tenant_id if ctx else None)
+        if tid:
+            try:
+                from server.services.saas.call_admission import provider_event
+
+                await provider_event(
+                    tenant_id=uuid.UUID(str(tid)),
+                    call_id=call_id,
+                    status="ended",
+                )
+            except Exception as adm_e:
+                logger.debug(f"[CALL] dial admission release notice: {adm_e}")
         asyncio.create_task(self._finalize_async(call_id))
         logger.info(f"[CALL] end {call_id} reason={reason}")
         return self._accepted_payload(call_id, "processing")

@@ -136,7 +136,7 @@ def test_explicit_unsupported_locale_is_never_silently_coerced(bad_locale):
 
 
 def test_locale_aliases_and_unspecified_default_remain_supported():
-    assert normalize_compile_language(None) == normalize_compile_language("") == "te-IN"
+    assert normalize_compile_language(None) == normalize_compile_language("") == normalize_compile_language("  ") == "te-IN"
     assert normalize_compile_language("kn_in") == "kn-IN"
 
 

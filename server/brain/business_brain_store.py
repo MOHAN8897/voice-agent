@@ -3,19 +3,23 @@ Business brain store — per-agent sections and published versions.
 """
 from __future__ import annotations
 
-import hashlib
 import asyncio
 import copy
+import hashlib
 import json
 import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 
 from server.brain.sections import SECTION_LABELS, default_section_seeds
 from server.db.connection import get_session_factory
-from server.db.models.brain_models import BusinessBrainSection, BusinessBrainVersion, CompiledBrainSnapshot
+from server.db.models.brain_models import (
+    BusinessBrainSection,
+    BusinessBrainVersion,
+    CompiledBrainSnapshot,
+)
 from server.db.models.entities import Agent
 from server.utils.errors import AppError, ErrorCode
 
@@ -121,7 +125,12 @@ class BusinessBrainStore:
             }
             for seed in seeds
         ]
-        return await self.save_draft_sections(agent_id, sections)
+        try:
+            return await self.save_draft_sections(agent_id, sections, expected_revision=draft_revision([]))
+        except AppError as exc:
+            if exc.status_code != 409:
+                raise
+            return await self.get_sections(agent_id)
 
     async def _refresh_untouched_defaults(
         self, agent_id: str, sections: list[dict[str, Any]]
@@ -151,7 +160,12 @@ class BusinessBrainStore:
             changed = True
         if not changed:
             return sections
-        return await self.save_draft_sections(agent_id, updated)
+        try:
+            return await self.save_draft_sections(agent_id, updated, expected_revision=draft_revision(sections))
+        except AppError as exc:
+            if exc.status_code != 409:
+                raise
+            return await self.get_sections(agent_id)
 
     async def get_sections(self, agent_id: str) -> list[dict[str, Any]]:
         factory = get_session_factory()

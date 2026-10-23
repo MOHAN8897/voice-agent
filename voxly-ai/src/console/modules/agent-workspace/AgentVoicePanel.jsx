@@ -607,7 +607,7 @@ function isSelectableProfile(profile, language) {
   ) {
     return false;
   }
-  return profile.tier === 'premium' || publicEngines(profile, language).length > 0;
+  return publicEngines(profile, language).length > 0;
 }
 
 function selectionFromAgent(agent) {
@@ -713,6 +713,7 @@ export function AgentVoicePanel({
   voiceCatalogError = null,
   stackLabel = 'Enterprise Voice Network',
   onOpenTestCall,
+  isAdmin = false,
 }) {
   const storedVoiceId = String(
     formData?.voice?.realtimeVoice || formData?.voice?.voiceId || 'marin'
@@ -2145,150 +2146,152 @@ export function AgentVoicePanel({
         </>
       )}
 
-      {/* 3. Acoustic Calibration & Greeting Toolbar (Collapsible / Compact) */}
-      <div
-        className="p-3.5 rounded-xl bg-white border border-[#E4E2EB] shadow-xs space-y-3"
-        data-testid="acoustic-calibration-card"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sliders className="w-4 h-4 text-[#6344E7]" />
-            <span className="text-xs font-bold text-[#0F0E17]">
-              Acoustic Calibration &amp; Speech Dynamics
-            </span>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowAcousticControls((v) => !v)}
-            className="flex items-center gap-1 text-[11px] font-semibold text-[#6344E7] hover:underline"
-          >
-            <span>{showAcousticControls ? 'Hide Sliders' : 'Fine-Tune Speed & Pitch'}</span>
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAcousticControls ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
-
-        {/* Speed Slider always available or expanded */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-          {/* Speaking Pace */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-[#0F0E17]">Speaking Pace (Speed)</span>
-              <span className="font-mono font-bold text-[#6344E7] text-[11px]">
-                {Number(currentSpeed || 1.0).toFixed(2)}x
+      {/* 3. Acoustic Calibration & Speech Dynamics (Admin Only - Hidden for Tenants) */}
+      {isAdmin && (
+        <div
+          className="p-3.5 rounded-xl bg-white border border-[#E4E2EB] shadow-xs space-y-3"
+          data-testid="acoustic-calibration-card"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-[#6344E7]" />
+              <span className="text-xs font-bold text-[#0F0E17]">
+                Acoustic Calibration &amp; Speech Dynamics
               </span>
             </div>
-            <input
-              type="range"
-              min="0.5"
-              max="2.0"
-              step="0.05"
-              value={currentSpeed}
-              data-testid="speed-slider"
-              onChange={(e) => {
-                const val = parseFloat(e.target.value);
-                setFormData((prev) => ({
-                  ...prev,
-                  voice: {
-                    ...prev.voice,
-                    speed: val,
-                  },
-                }));
-              }}
-              className="w-full h-1.5 bg-[#E4E2EB] rounded-lg appearance-none cursor-pointer accent-[#6344E7]"
-            />
-            <div className="flex justify-between text-[10px] text-[#8C879A]">
-              <span>0.5x (Slow)</span>
-              <span className="font-semibold text-[#6344E7]">1.0x (Industry Standard)</span>
-              <span>2.0x (Fast)</span>
+
+            <button
+              type="button"
+              onClick={() => setShowAcousticControls((v) => !v)}
+              className="flex items-center gap-1 text-[11px] font-semibold text-[#6344E7] hover:underline"
+            >
+              <span>{showAcousticControls ? 'Hide Sliders' : 'Fine-Tune Speed & Pitch'}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAcousticControls ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+
+          {/* Speed Slider always available or expanded */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            {/* Speaking Pace */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-[#0F0E17]">Speaking Pace (Speed)</span>
+                <span className="font-mono font-bold text-[#6344E7] text-[11px]">
+                  {Number(currentSpeed || 1.0).toFixed(2)}x
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0.5"
+                max="2.0"
+                step="0.05"
+                value={currentSpeed}
+                data-testid="speed-slider"
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  setFormData((prev) => ({
+                    ...prev,
+                    voice: {
+                      ...prev.voice,
+                      speed: val,
+                    },
+                  }));
+                }}
+                className="w-full h-1.5 bg-[#E4E2EB] rounded-lg appearance-none cursor-pointer accent-[#6344E7]"
+              />
+              <div className="flex justify-between text-[10px] text-[#8C879A]">
+                <span>0.5x (Slow)</span>
+                <span className="font-semibold text-[#6344E7]">1.0x (Industry Standard)</span>
+                <span>2.0x (Fast)</span>
+              </div>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="space-y-1.5">
+              <span className="text-xs font-semibold text-[#0F0E17] block">
+                Pacing Presets
+              </span>
+              <div className="flex items-center gap-1.5">
+                {[
+                  { label: 'Standard (1.0x)', speed: 1.0 },
+                  { label: 'Patient Support (0.9x)', speed: 0.9 },
+                  { label: 'Dynamic Sales (1.1x)', speed: 1.1 },
+                ].map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        voice: {
+                          ...prev.voice,
+                          speed: p.speed,
+                        },
+                      }));
+                    }}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium border transition-all ${
+                      Math.abs(currentSpeed - p.speed) < 0.01
+                        ? 'bg-[#6344E7] text-white border-[#6344E7]'
+                        : 'bg-[#FAF9FD] text-[#524E5E] border-[#E4E2EB] hover:bg-white'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Quick Presets */}
-          <div className="space-y-1.5">
-            <span className="text-xs font-semibold text-[#0F0E17] block">
-              Pacing Presets
-            </span>
-            <div className="flex items-center gap-1.5">
-              {[
-                { label: 'Standard (1.0x)', speed: 1.0 },
-                { label: 'Patient Support (0.9x)', speed: 0.9 },
-                { label: 'Dynamic Sales (1.1x)', speed: 1.1 },
-              ].map((p) => (
-                <button
-                  key={p.label}
-                  type="button"
-                  onClick={() => {
-                    setFormData((prev) => ({
-                      ...prev,
-                      voice: {
-                        ...prev.voice,
-                        speed: p.speed,
-                      },
-                    }));
-                  }}
-                  className={`px-2.5 py-1 rounded text-[11px] font-medium border transition-all ${
-                    Math.abs(currentSpeed - p.speed) < 0.01
-                      ? 'bg-[#6344E7] text-white border-[#6344E7]'
-                      : 'bg-[#FAF9FD] text-[#524E5E] border-[#E4E2EB] hover:bg-white'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
+          {/* Detailed sliders if expanded */}
+          {showAcousticControls && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#F0EEF6]">
+              {/* Pitch Offset - Disabled because providers manage pitch natively */}
+              <div className="space-y-1.5 opacity-80">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-[#0F0E17]">Pitch Offset</span>
+                  <span className="font-mono text-[#8C879A] text-[11px]">
+                    0.00 (Neutral)
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="-0.15"
+                  max="0.15"
+                  step="0.05"
+                  value={0}
+                  disabled
+                  className="w-full h-1.5 bg-[#E4E2EB] rounded-lg appearance-none cursor-not-allowed opacity-50"
+                />
+                <p className="text-[10px] text-[#716C7F] italic">
+                  Managed natively by provider voice persona (Not supported by provider API).
+                </p>
+              </div>
+
+              {/* Stability - Disabled because providers manage prosody natively */}
+              <div className="space-y-1.5 opacity-80">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-[#0F0E17]">Tone Stability</span>
+                  <span className="font-mono text-[#8C879A] text-[11px]">
+                    0.75 (Balanced Natural)
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.3"
+                  max="1.0"
+                  step="0.05"
+                  value={0.75}
+                  disabled
+                  className="w-full h-1.5 bg-[#E4E2EB] rounded-lg appearance-none cursor-not-allowed opacity-50"
+                />
+                <p className="text-[10px] text-[#716C7F] italic">
+                  Native acoustic model control (Not supported by provider API).
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-
-        {/* Detailed sliders if expanded */}
-        {showAcousticControls && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#F0EEF6]">
-            {/* Pitch Offset - Disabled because providers manage pitch natively */}
-            <div className="space-y-1.5 opacity-80">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#0F0E17]">Pitch Offset</span>
-                <span className="font-mono text-[#8C879A] text-[11px]">
-                  0.00 (Neutral)
-                </span>
-              </div>
-              <input
-                type="range"
-                min="-0.15"
-                max="0.15"
-                step="0.05"
-                value={0}
-                disabled
-                className="w-full h-1.5 bg-[#E4E2EB] rounded-lg appearance-none cursor-not-allowed opacity-50"
-              />
-              <p className="text-[10px] text-[#716C7F] italic">
-                Managed natively by provider voice persona (Not supported by provider API).
-              </p>
-            </div>
-
-            {/* Stability - Disabled because providers manage prosody natively */}
-            <div className="space-y-1.5 opacity-80">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#0F0E17]">Tone Stability</span>
-                <span className="font-mono text-[#8C879A] text-[11px]">
-                  0.75 (Balanced Natural)
-                </span>
-              </div>
-              <input
-                type="range"
-                min="0.3"
-                max="1.0"
-                step="0.05"
-                value={0.75}
-                disabled
-                className="w-full h-1.5 bg-[#E4E2EB] rounded-lg appearance-none cursor-not-allowed opacity-50"
-              />
-              <p className="text-[10px] text-[#716C7F] italic">
-                Native acoustic model control (Not supported by provider API).
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
 
     </div>

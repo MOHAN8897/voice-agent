@@ -56,18 +56,29 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     from server.services.saas.voice_stack_profiles import (
         VoiceProfileError,
         canonical_voice_tier,
+        load_profile_records,
         resolve_agent_selection,
     )
 
-    tier = canonical_voice_tier(raw_tier)
-    if tier != "premium":
+    tier = canonical_voice_tier(raw_tier or "medium")
+    environment = str(agent.get("environment") or "").strip()
+    if not environment:
+        from server.services.dev_runtime import effective_app_environment
+
+        environment = effective_app_environment()
+
+    # Check if a composed profile exists for this tier
+    records = await load_profile_records(environment, None)
+    profile_rec = records.get(tier)
+    use_composed = bool(
+        profile_rec
+        and (profile_rec.get("profile") or {}).get("enabled")
+        and (profile_rec.get("profile") or {}).get("engines")
+    )
+
+    if tier != "premium" or use_composed:
         try:
             lang = _agent_spoken_language(agent, voice_cfg)
-            environment = str(agent.get("environment") or "").strip()
-            if not environment:
-                from server.services.dev_runtime import effective_app_environment
-
-                environment = effective_app_environment()
             stack, _snapshot = await resolve_agent_selection(
                 environment=environment,
                 tier=tier,
@@ -123,13 +134,23 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     }:
         realtime_voice = DEFAULT_REALTIME_VOICE
     rv["voice"] = realtime_voice
-    if speed_val is not None:
-        rv["speed"] = speed_val
-    stack["language"] = lang
-    stack["realtime_voice"] = rv
-    from server.services.saas.voice_stack_profiles import canonical_voice_tier
+    from server.services.saas.voice_stack_profiles import canonical_voice_tier, load_profile_records
     raw_tier = agent.get("default_tier") or agent.get("defaultTier")
     effective_tier = canonical_voice_tier(raw_tier) if raw_tier else "medium"
+    if speed_val is not None:
+        rv["speed"] = speed_val
+    else:
+        try:
+            records = await load_profile_records(environment, (effective_tier,))
+            tier_rec = records.get(effective_tier)
+            if tier_rec and tier_rec.get("profile"):
+                tier_dyn = tier_rec["profile"].get("voiceDynamics") or {}
+                if tier_dyn.get("speed") is not None:
+                    rv["speed"] = tier_dyn["speed"]
+        except Exception:
+            pass
+    stack["language"] = lang
+    stack["realtime_voice"] = rv
     normalized, _ = normalize_pstn_stack_override(
         stack, language=lang, tier=effective_tier, default_provider="gemini"
     )

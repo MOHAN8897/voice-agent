@@ -1,19 +1,18 @@
 """Agent brief → calling script flow tests."""
-from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 
+import server.app as app_mod
 from server.agent.brain_prompt_composer import BUDGET_MAX_TOKENS, CACHE_MIN_TOKENS, estimate_tokens
 from server.brain.agent_script_compiler import _ensure_cache_floor
 from server.config.env import get_settings
-from server.prompts.agent_voice_rules import AGENT_VOICE_RULE_MARKERS
-import server.app as app_mod
+from server.tests.auth_helpers import authenticated_dev_client
 
 
 def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-agent-brief")
     monkeypatch.setenv("SARVAM_API_KEY", "sv-agent-brief")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    return authenticated_dev_client(app_mod.app)
 
 
 def test_agent_brief_creates_script_and_brain(monkeypatch):
@@ -37,10 +36,10 @@ def test_agent_brief_creates_script_and_brain(monkeypatch):
     script_text = g.get("agentScript", "")
     assert "BUSINESS KNOWLEDGE" in script_text or "COMPANY & OFFER" in script_text
     assert "LIVE CALL GUIDE" not in script_text
-    assert g["limits"]["agentBriefMax"] == 1200
-    assert g["limits"]["agentBriefMaxWords"] == 180
-    assert g["limits"]["agentScriptMax"] == 8000
-    assert g["limits"]["agentScriptMaxWords"] == 1200
+    assert g["limits"]["agentBriefMax"] == 6000
+    assert g["limits"]["agentBriefMaxWords"] == 1200
+    assert g["limits"]["agentScriptMax"] == 30000
+    assert g["limits"]["agentScriptMaxWords"] == 5000
     eff = c.get("/api/prompt/effective", params={"sessionId": sid, "transcript": "test"}).json()
     assert "Swetha" in eff["brainPrompt"]
     c.delete("/api/instructions", params={"sessionId": sid})
@@ -75,7 +74,7 @@ def test_agent_script_not_truncated_for_cache_or_budget():
 def test_agent_brief_too_long_rejected(monkeypatch):
     c = _client(monkeypatch)
     sid = "agent-brief-cap"
-    long_brief = "word " * 250
+    long_brief = "Create a support agent named Swetha for Acme Realty. " + "word " * 1220
     r = c.post("/api/instructions", json={"sessionId": sid, "agentBrief": long_brief})
     assert r.status_code == 400
     assert r.json()["detail"]["error"]["code"] == "prompt_section_too_long"
@@ -175,25 +174,17 @@ def test_agent_brief_deterministic_fallback(monkeypatch):
     get_settings.cache_clear()
 
 
-def test_agent_brief_unnamed_no_company_uses_work_scope(monkeypatch):
+def test_agent_brief_unnamed_requests_identity_without_fabricating_a_persona(monkeypatch):
     c = _client(monkeypatch)
     sid = "agent-brief-work-scope"
     brief = "Help callers book a car. Qualify pickup city, drop location, and time. Never invent fares."
-    with patch(
-        "server.brain.agent_script_compiler._llm_generate_script",
-        new=AsyncMock(return_value=None),
-    ):
-        r = c.post("/api/instructions", json={"sessionId": sid, "agentBrief": brief})
-    assert r.status_code == 200, r.text
-    script = r.json().get("agentScript", "")
-    assert "BUSINESS KNOWLEDGE" in script or "COMPANY & OFFER" in script
-    assert "Priya" in script
-    assert "OPENING HINT" in script or "CANONICAL OPENING" in script
-    assert "nundi matladutunnanu" not in script
-    assert "[agent name]" not in script.lower()
-    assert "[company" not in script.lower()
-    assert "book a car" in script.lower() or "car" in script.lower()
-    c.delete("/api/instructions", params={"sessionId": sid})
+    response = c.post("/api/instructions", json={"sessionId": sid, "agentBrief": brief})
+    assert response.status_code == 422, response.text
+    error = response.json()["detail"]["error"]
+    assert error["status"] == "needs_user_input"
+    assert any(issue["code"] == "missing_agent_name" for issue in error["issues"])
+    assert "agentScript" not in response.json()
+    assert not c.get("/api/instructions", params={"sessionId": sid}).json()["present"]
     get_settings.cache_clear()
 
 
@@ -234,7 +225,8 @@ def test_missing_hangup_uses_default_farewell(monkeypatch):
     sid = "agent-brief-default-hangup"
     c.delete("/api/instructions", params={"sessionId": sid})
     empty = c.get("/api/instructions", params={"sessionId": sid}).json()
-    assert empty["callEndPolicy"]["farewell"] == "Sare, time ichinanduku thanks. Good day."
+    from server.call.call_end_policy import default_call_end_policy
+    assert empty["callEndPolicy"]["farewell"] == default_call_end_policy("te-IN")["farewell"]
     assert empty["callEndPolicy"]["allowedReasons"]
     brief = "Telecaller for Acme Realty. Agent name Priya. Book site visits."
     with patch(

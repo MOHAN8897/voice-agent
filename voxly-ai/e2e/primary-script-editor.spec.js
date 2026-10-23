@@ -12,8 +12,8 @@ const initialSections = [
   { section_id: 'v', type: 'custom', title: 'saas_voice_config', raw_text: '{"realtimeVoice":"Puck","language":"en-IN"}', enabled: false, order: 5 },
 ];
 
-async function setup(page, { failPublish = false, failRead = false } = {}) {
-  const state = { reads: 0, voiceReads: 0, writes: [], publishes: 0, failRead, sections: structuredClone(initialSections) };
+async function setup(page, { failPublish = false, failRead = false, generationReport = null } = {}) {
+  const state = { reads: 0, voiceReads: 0, writes: [], publishes: 0, failRead, revision: 'draft-1', sections: structuredClone(initialSections) };
   const user = { id: 'script-test-user', userId: 'script-test-user', fullName: 'Script Tester', name: 'Script Tester', email: 'script-test@example.invalid', hasCompletedOnboarding: true, role: 'subscriber', tenantId: 'script-test-tenant' };
   const b64 = (data) => Buffer.from(JSON.stringify(data)).toString('base64url');
   const token = `${b64({ alg: 'none' })}.${b64({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600 })}.test`;
@@ -32,14 +32,18 @@ async function setup(page, { failPublish = false, failRead = false } = {}) {
     } else if (path.endsWith('/business-brain') && method === 'GET') {
       state.reads++;
       status = state.failRead ? 503 : 200;
-      data = state.failRead ? { detail: 'Script service unavailable' } : { draft: { sections: state.sections }, published: { version_id: 'published-original' } };
+      data = state.failRead ? { detail: 'Script service unavailable' } : { draft: { sections: state.sections, revision: state.revision }, published: { version_id: 'published-original', optimizer_report: generationReport } };
     } else if (path.endsWith('/business-brain/preview')) {
       data = { ok: true, issues: [], language: 'en-IN', token_estimate: 250, script_characters: 150, section_count: 5 };
     } else if (path.endsWith('/business-brain/draft') && method === 'PUT') {
       const body = request.postDataJSON();
+      expect(body.expected_revision).toBe(state.revision);
       state.writes.push(body);
       state.sections = body.sections;
+      state.revision = `draft-${state.writes.length + 1}`;
+      data = { ok: true, revision: state.revision };
     } else if (path.endsWith('/business-brain/publish')) {
+      expect(request.postDataJSON().expected_revision).toBe(state.revision);
       state.publishes++;
       status = failPublish ? 503 : 200;
       data = failPublish ? { detail: 'Publishing unavailable' } : { ok: true, compiled_version: 'cb_verified_test' };
@@ -56,9 +60,29 @@ async function setup(page, { failPublish = false, failRead = false } = {}) {
     for (const key of ['voxly_tour_completed', 'voxly_tour_completed_default', 'voxly_tour_completed_script-test@example.invalid', 'dialtact_tour_completed_default']) localStorage.setItem(key, 'true');
   }, { token, user });
   await page.goto(`/#dashboard/employees?step=script&agent=${agent.id}`);
+  const technicalDetails = page.getByRole('button', { name: 'Show technical details' });
+  await Promise.race([
+    page.getByRole('combobox', { name: 'Calling script' }).waitFor(),
+    technicalDetails.waitFor(),
+  ]);
+  if (await technicalDetails.isVisible()) {
+    await technicalDetails.click();
+    throw new Error(`Workspace failed to render: ${await page.locator('body').innerText()}`);
+  }
   await expect(page.getByRole('combobox', { name: 'Calling script' })).toBeVisible();
   return state;
 }
+
+test('generation fallback diagnostics stay visible and identify edited drafts', async ({ page }) => {
+  await setup(page, { generationReport: { status: 'degraded', provenance: { provider: 'gemini', model: 'test-generation-model', fallback: true }, issues: [{ code: 'deterministic_fallback', message: 'Model interpretation was unavailable; review the script.' }] } });
+  const notice = page.getByTestId('agent-script-generation-status');
+  await expect(notice).toContainText('Generated with fallback');
+  await expect(notice).toContainText('Gemini');
+  await expect(notice).toContainText('test-generation-model');
+  await expect(notice).toContainText('Model interpretation was unavailable');
+  await page.getByRole('combobox', { name: 'Calling script' }).fill(original + '\nEdited draft.');
+  await expect(notice).toContainText('current draft has edits');
+});
 
 test('voice refresh preserves unsaved script; review does not publish', async ({ page }) => {
   const state = await setup(page);

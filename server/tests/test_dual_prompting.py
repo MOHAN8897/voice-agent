@@ -1,16 +1,16 @@
 """Dual-channel prompting (behaviour + business) — Phase 5.5 tests."""
-from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 
-from server.config.env import get_settings
 import server.app as app_mod
+from server.config.env import get_settings
+from server.tests.auth_helpers import authenticated_dev_client
 
 
 def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-dual")
     monkeypatch.setenv("SARVAM_API_KEY", "sv-dual")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    return authenticated_dev_client(app_mod.app)
 
 
 def test_save_and_get_single_brain_prompt(monkeypatch):

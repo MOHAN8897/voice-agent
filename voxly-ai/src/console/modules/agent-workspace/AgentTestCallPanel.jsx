@@ -65,6 +65,45 @@ export function AgentTestCallPanel({ agent, language }) {
   const walletEmpty = displayUsd <= 0 && balanceInr <= 0 && balanceUsd <= 0;
   const isActive = agent?.status === 'active';
 
+  const agentTier = useMemo(() => {
+    return String(agent?.default_tier || agent?.defaultTier || agent?.tier || 'medium').toLowerCase();
+  }, [agent]);
+
+  const activeRateInr = useMemo(() => {
+    if (mode === 'browser') {
+      return Number(wallet?.webRateInrPerMin ?? 3.50);
+    }
+    const directRate = wallet?.tierRates?.[agentTier]?.inrPerMin;
+    if (directRate != null && Number(directRate) > 0) return Number(directRate);
+    const parentTier = (agentTier.startsWith('low') || agentTier.includes('economical') || agentTier.includes('budget'))
+      ? 'low'
+      : (agentTier.startsWith('prem') || agentTier.includes('flagship') || agentTier.includes('high'))
+      ? 'premium'
+      : 'medium';
+    const parentRate = wallet?.tierRates?.[parentTier]?.inrPerMin;
+    if (parentRate != null && Number(parentRate) > 0) return Number(parentRate);
+    if (parentTier === 'low' && wallet?.pstnLowRateInrPerMin) return Number(wallet.pstnLowRateInrPerMin);
+    if (parentTier === 'medium' && wallet?.pstnMediumRateInrPerMin) return Number(wallet.pstnMediumRateInrPerMin);
+    if (parentTier === 'premium' && wallet?.pstnPremiumRateInrPerMin) return Number(wallet.pstnPremiumRateInrPerMin);
+    return Number(wallet?.rateInrPerMin ?? 5.00);
+  }, [mode, agentTier, wallet]);
+
+  const activeRateUsd = useMemo(() => {
+    if (mode === 'browser') {
+      return Number(wallet?.webRateUsdPerMin ?? 0.037);
+    }
+    const directRate = wallet?.tierRates?.[agentTier]?.usdPerMin;
+    if (directRate != null && Number(directRate) > 0) return Number(directRate);
+    const parentTier = (agentTier.startsWith('low') || agentTier.includes('economical') || agentTier.includes('budget'))
+      ? 'low'
+      : (agentTier.startsWith('prem') || agentTier.includes('flagship') || agentTier.includes('high'))
+      ? 'premium'
+      : 'medium';
+    const parentRate = wallet?.tierRates?.[parentTier]?.usdPerMin;
+    if (parentRate != null && Number(parentRate) > 0) return Number(parentRate);
+    return Number(wallet?.rateUsdPerMin ?? 0.053);
+  }, [mode, agentTier, wallet]);
+
   // Find the agent's assigned phone line
   const assignedLine = useMemo(() => {
     const fromList = phoneNumbers.find(
@@ -523,9 +562,9 @@ export function AgentTestCallPanel({ agent, language }) {
               <span className="font-medium">Phone call rate</span>
             </div>
             <span className="font-mono font-semibold text-[#0F0E17]">
-              ₹{Number(wallet?.rateInrPerMin ?? 5.00).toFixed(2)}/min
+              ₹{activeRateInr.toFixed(2)}/min
               <span className="text-[10px] font-normal text-[#8C879A] ml-1">
-                (${Number(wallet?.rateUsdPerMin ?? 0.053).toFixed(3)}/min)
+                (${activeRateUsd.toFixed(3)}/min)
               </span>
             </span>
           </div>

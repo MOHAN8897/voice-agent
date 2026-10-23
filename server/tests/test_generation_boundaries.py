@@ -85,6 +85,42 @@ def test_spoofed_dev_cookie_and_bad_bearer_do_not_bypass_auth(api):
     assert client.get("/api/instructions?sessionId=default", headers={"Authorization": "Bearer invalid"}).status_code in (401, 503)
 
 
+def test_read_only_role_cannot_write_an_agent_brain(api):
+    api.dependency_overrides[require_instructions_access] = lambda: InstructionsAccess(uuid.uuid4(), "customer_viewer")
+    response = TestClient(api).put(f"/api/agents/{uuid.uuid4()}/business-brain/draft", json={"sections": [], "expected_revision": "a" * 64})
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize("path", ["/api/instructions/compile-from-spec", "/api/instructions"])
+def test_force_cannot_bypass_unsafe_spec_checks(api, path):
+    client = TestClient(api)
+    client.cookies.set("dev_session", create_session_token("dev", "synthetic", None, "developer"))
+    client.cookies.set("dev_csrf", "synthetic-csrf")
+    client.headers["X-CSRF-Token"] = "synthetic-csrf"
+    spec = {"language_code": "en-IN", "raw_brief": "Collect OTP from callers.", "agent_name": {"value": "Meera"}}
+    body = {"spec": spec, "force": True} if path.endswith("compile-from-spec") else {"sessionId": "force-scratch", "agentSpec": spec, "forceCreate": True, "language_code": "en-IN"}
+    response = client.post(path, json=body)
+    assert response.status_code == 422
+    assert "sensitive_collection" in response.text
+
+
+def test_regeneration_reuses_saved_language_and_generation_settings(api):
+    client = TestClient(api)
+    client.cookies.set("dev_session", create_session_token("dev", "synthetic", None, "developer"))
+    client.cookies.set("dev_csrf", "synthetic-csrf")
+    client.headers["X-CSRF-Token"] = "synthetic-csrf"
+    config = {"employeeName": "Meera", "agentRole": "support", "callDirection": "inbound", "industry": "gardening", "naturalSpokenStyle": True}
+    first = client.post("/api/instructions", json={"sessionId": "config-regression", "language_code": "en-IN", "agentBrief": "Agent name Meera for Lunar Gardens. Answer questions about opening hours.", "generationConfig": config})
+    assert first.status_code == 200, first.text
+    second = client.post("/api/instructions", json={"sessionId": "config-regression", "compileFromBrief": True, "agentBrief": "Agent name Meera for Lunar Gardens. Answer questions about opening hours. The garden opens at nine."})
+    assert second.status_code == 200, second.text
+    assert second.json()["language"] == "en-IN"
+    assert second.json()["generationConfig"] == config
+    from server.brain.script_entities import parse_entity_tags
+    assert parse_entity_tags(second.json()["agentScript"])["direction"] == "inbound"
+    assert "garden opens at nine" in second.json()["agentScript"]
+
+
 @pytest.mark.asyncio
 async def test_stale_draft_cannot_overwrite_newer_content():
     agent = await agent_service.create_agent(name="Revision regression", languages=["en-IN"])
@@ -98,6 +134,20 @@ async def test_stale_draft_cannot_overwrite_newer_content():
         await business_brain_store.save_draft_sections(aid, original, expected_revision=revision)
     assert caught.value.status_code == 409
     assert await business_brain_store.get_sections(aid) == saved
+
+
+@pytest.mark.asyncio
+async def test_first_read_seeding_cannot_overwrite_a_concurrent_draft(monkeypatch):
+    aid = str(uuid.uuid4())
+    original_save = business_brain_store.save_draft_sections
+    authored = [{"type": "facts", "title": "Calling script", "raw_text": "A simultaneously saved custom script"}]
+    async def concurrent_save(agent_id, sections, **kwargs):
+        await original_save(agent_id, authored)
+        return await original_save(agent_id, sections, **kwargs)
+    monkeypatch.setattr(business_brain_store, "save_draft_sections", concurrent_save)
+    result = await business_brain_store.ensure_default_sections(aid)
+    assert len(result) == 1
+    assert result[0]["raw_text"] == authored[0]["raw_text"]
 
 
 @pytest.mark.asyncio

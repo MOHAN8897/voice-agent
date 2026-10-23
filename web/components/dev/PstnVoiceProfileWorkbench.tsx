@@ -34,15 +34,25 @@ type ProfileEvidence = {
   mediaFormatsVerified: boolean;
   credentialRefConfigured: boolean;
 };
+type VoiceDynamics = {
+  speed: number;
+  pitch: number;
+  temperature?: number;
+  emotion?: string;
+  volume?: number;
+};
 type ComposedProfile = {
   schemaVersion: 1;
   enabled: boolean;
   label?: string;
+  retailRateInr?: number | null;
+  supplierCostInr?: number | null;
   supportedLanguages: string[];
   stt: StageProfile;
   llm: LlmProfile;
   engines: EngineProfile[];
   evidence: ProfileEvidence;
+  voiceDynamics?: VoiceDynamics;
 };
 type ReadinessBlocker = { code: string; message: string };
 type RetailRate = { complete?: boolean; usdMicrosPerMin?: number; inrPaisePerMin?: number; fxRateInr?: number; version?: number } | null;
@@ -208,14 +218,17 @@ function getVoicesForTtsProvider(provider: string, languages: string[]): VoicePr
   }
   if (provider === "gnani") {
     return [
-      { id: "voice-nalini", label: "Nalini (Female · Warm & Expressive)", providerVoiceId: "Nalini", languages: langs },
-      { id: "voice-shivani", label: "Shivani (Female · Clear Conversational)", providerVoiceId: "Shivani", languages: langs },
+      { id: "voice-shivani", label: "Shivani (Female · Clear Conversational · Recommended)", providerVoiceId: "Shivani", languages: langs },
       { id: "voice-lakshmi", label: "Lakshmi (Female · Soft & Engaging)", providerVoiceId: "Lakshmi", languages: langs },
-      { id: "voice-chitra", label: "Chitra (Female · Professional Support)", providerVoiceId: "Chitra", languages: langs },
-      { id: "voice-pranav", label: "Pranav (Male · Crisp & Natural)", providerVoiceId: "Pranav", languages: langs },
+      { id: "voice-kalpana", label: "Kalpana (Female · Warm & Expressive)", providerVoiceId: "Kalpana", languages: langs },
+      { id: "voice-chetana", label: "Chetana (Female · Professional Support)", providerVoiceId: "Chetana", languages: langs },
+      { id: "voice-vasudha", label: "Vasudha (Female · Calm & Natural)", providerVoiceId: "Vasudha", languages: langs },
       { id: "voice-avinash", label: "Avinash (Male · Authoritative & Calm)", providerVoiceId: "Avinash", languages: langs },
       { id: "voice-prakash", label: "Prakash (Male · Direct & Warm)", providerVoiceId: "Prakash", languages: langs },
-      { id: "voice-sanjay", label: "Sanjay (Male · Dynamic Outreach)", providerVoiceId: "Sanjay", languages: langs },
+      { id: "voice-shubham", label: "Shubham (Male · Crisp & Friendly)", providerVoiceId: "Shubham", languages: langs },
+      { id: "voice-devansh", label: "Devansh (Male · Dynamic Outreach)", providerVoiceId: "Devansh", languages: langs },
+      { id: "voice-yashraj", label: "Yashraj (Male · Resonant & Clear)", providerVoiceId: "Yashraj", languages: langs },
+      { id: "voice-harshad", label: "Harshad (Male · Confident Presenter)", providerVoiceId: "Harshad", languages: langs },
     ];
   }
   // gemini
@@ -257,6 +270,8 @@ function defaultProfileForTier(tier: ProfileTier): ComposedProfile {
     schemaVersion: 1,
     enabled: true,
     label: DEFAULT_TIER_LABELS[tier] || tier.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    retailRateInr: isPremium ? 6.50 : isMedium ? 5.00 : 3.50,
+    supplierCostInr: isPremium ? 3.00 : isMedium ? 2.00 : 1.20,
     supportedLanguages: languages,
     stt: { provider: sttProv, model: sttMdl },
     llm: { provider: llmProv, modelId: llmMdl, apiMode: isPremium ? "websocket" : "chat_completions_v1" },
@@ -277,6 +292,13 @@ function defaultProfileForTier(tier: ProfileTier): ComposedProfile {
       },
     ],
     evidence: { ...EMPTY_EVIDENCE },
+    voiceDynamics: {
+      speed: 1.0,
+      pitch: 0.0,
+      temperature: 0.7,
+      emotion: "neutral",
+      volume: 1.0,
+    },
   };
 }
 
@@ -287,6 +309,8 @@ function normalizeProfile(profile: ComposedProfile | null | undefined, tier: Pro
     schemaVersion: 1,
     enabled: profile.enabled === true,
     label: profile.label || DEFAULT_TIER_LABELS[tier] || tier.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    retailRateInr: profile.retailRateInr !== undefined && profile.retailRateInr !== null ? Number(profile.retailRateInr) : (fallback.retailRateInr ?? null),
+    supplierCostInr: profile.supplierCostInr !== undefined && profile.supplierCostInr !== null ? Number(profile.supplierCostInr) : (fallback.supplierCostInr ?? null),
     supportedLanguages: Array.isArray(profile.supportedLanguages) && profile.supportedLanguages.length > 0
       ? [...profile.supportedLanguages]
       : fallback.supportedLanguages,
@@ -303,6 +327,15 @@ function normalizeProfile(profile: ComposedProfile | null | undefined, tier: Pro
       ? profile.engines
       : fallback.engines,
     evidence: { ...EMPTY_EVIDENCE, ...(profile.evidence || {}) },
+    voiceDynamics: profile.voiceDynamics
+      ? {
+          speed: Number(profile.voiceDynamics.speed ?? 1.0),
+          pitch: Number(profile.voiceDynamics.pitch ?? 0.0),
+          temperature: Number(profile.voiceDynamics.temperature ?? 0.7),
+          emotion: String(profile.voiceDynamics.emotion || "neutral"),
+          volume: Number(profile.voiceDynamics.volume ?? 1.0),
+        }
+      : { speed: 1.0, pitch: 0.0, temperature: 0.7, emotion: "neutral", volume: 1.0 },
   };
 }
 
@@ -334,6 +367,8 @@ export function PstnVoiceProfileWorkbench() {
   const [selected, setSelected] = useState<ProfileTier>("low");
   const [draft, setDraft] = useState<ComposedProfile>(defaultProfileForTier("low"));
   const [tierLabelInput, setTierLabelInput] = useState<string>("");
+  const [retailRateInput, setRetailRateInput] = useState<string>("");
+  const [supplierCostInput, setSupplierCostInput] = useState<string>("");
   const [dirty, setDirty] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -347,6 +382,13 @@ export function PstnVoiceProfileWorkbench() {
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Speed Dynamics Testing & Audition state
+  const [testText, setTestText] = useState("నమస్కారం! నేను మీ రియల్ ఎస్టేట్ సేల్స్ అసిస్టెంట్ మోహన్‌ని. మీకు ఎలా సహాయపడగలను?");
+  const [testVoiceId, setTestVoiceId] = useState("");
+  const [isTestingDynamics, setIsTestingDynamics] = useState(false);
+  const [isPlayingDynamics, setIsPlayingDynamics] = useState(false);
+  const dynamicsAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Stack duplication state
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
@@ -494,8 +536,13 @@ export function PstnVoiceProfileWorkbench() {
   useEffect(() => {
     const row = rows.find((r) => r.tier === selected);
     const norm = normalizeProfile(row?.composedProfile, selected);
+    if ((norm.retailRateInr === null || norm.retailRateInr === undefined) && row?.retailRate?.inrPaisePerMin) {
+      norm.retailRateInr = Number((row.retailRate.inrPaisePerMin / 100).toFixed(2));
+    }
     setDraft(norm);
     setTierLabelInput(row?.label || norm.label || DEFAULT_TIER_LABELS[selected] || selected);
+    setRetailRateInput(norm.retailRateInr !== null && norm.retailRateInr !== undefined ? String(norm.retailRateInr) : "");
+    setSupplierCostInput(norm.supplierCostInr !== null && norm.supplierCostInr !== undefined ? String(norm.supplierCostInr) : "");
     setDirty(false);
   }, [rows, selected]);
 
@@ -566,10 +613,19 @@ export function PstnVoiceProfileWorkbench() {
       : ["te-IN", "hi-IN", "en-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN", "bn-IN", "gu-IN", "pa-IN"];
     const voices = getVoicesForTtsProvider(ttsProv, languages);
 
+    const parsedRetail = activeDraft.retailRateInr !== undefined && activeDraft.retailRateInr !== null
+      ? activeDraft.retailRateInr
+      : (retailRateInput.trim() !== "" && !isNaN(parseFloat(retailRateInput)) ? parseFloat(retailRateInput) : null);
+    const parsedSupplier = activeDraft.supplierCostInr !== undefined && activeDraft.supplierCostInr !== null
+      ? activeDraft.supplierCostInr
+      : (supplierCostInput.trim() !== "" && !isNaN(parseFloat(supplierCostInput)) ? parseFloat(supplierCostInput) : null);
+
     const payload: ComposedProfile = {
       schemaVersion: 1,
       enabled: isEnabled,
       label: labelVal,
+      retailRateInr: parsedRetail !== null && !isNaN(parsedRetail) ? parsedRetail : null,
+      supplierCostInr: parsedSupplier !== null && !isNaN(parsedSupplier) ? parsedSupplier : null,
       supportedLanguages: languages,
       stt: {
         provider: activeDraft.stt.provider || (selected === "premium" ? "gemini" : "sarvam"),
@@ -597,6 +653,13 @@ export function PstnVoiceProfileWorkbench() {
         },
       ],
       evidence: { ...EMPTY_EVIDENCE },
+      voiceDynamics: activeDraft.voiceDynamics || {
+        speed: 1.0,
+        pitch: 0.0,
+        temperature: 0.7,
+        emotion: "neutral",
+        volume: 1.0,
+      },
     };
 
     const expectedRev = selectedRow?.profileRevision !== null && selectedRow?.profileRevision !== undefined
@@ -616,6 +679,7 @@ export function PstnVoiceProfileWorkbench() {
       if (!response.ok) throw new Error(await responseError(response));
       await response.json().catch(() => null);
       await loadProfiles(false);
+      await loadPrices();
       setAutoSaveStatus("✓ Auto-saved & applied globally");
       setDirty(false);
       setTimeout(() => setAutoSaveStatus(""), 3500);
@@ -743,6 +807,93 @@ export function PstnVoiceProfileWorkbench() {
     const nextDraft = { ...draft, label: val };
     setDraft(nextDraft);
     triggerAutoSave(nextDraft, val, 700);
+  }
+
+  function handleRetailRateChange(val: string) {
+    setRetailRateInput(val);
+    const num = parseFloat(val);
+    const nextDraft = { ...draft, retailRateInr: !isNaN(num) ? num : null };
+    setDraft(nextDraft);
+    triggerAutoSave(nextDraft, undefined, 800);
+  }
+
+  function handleSupplierCostChange(val: string) {
+    setSupplierCostInput(val);
+    const num = parseFloat(val);
+    const nextDraft = { ...draft, supplierCostInr: !isNaN(num) ? num : null };
+    setDraft(nextDraft);
+    triggerAutoSave(nextDraft, undefined, 800);
+  }
+
+  function handleDynamicsChange(patch: Partial<VoiceDynamics>) {
+    const nextDynamics: VoiceDynamics = {
+      speed: draft.voiceDynamics?.speed ?? 1.0,
+      pitch: draft.voiceDynamics?.pitch ?? 0.0,
+      temperature: draft.voiceDynamics?.temperature ?? 0.7,
+      emotion: draft.voiceDynamics?.emotion ?? "neutral",
+      volume: draft.voiceDynamics?.volume ?? 1.0,
+      ...patch,
+    };
+    const nextDraft: ComposedProfile = {
+      ...draft,
+      voiceDynamics: nextDynamics,
+    };
+    setDraft(nextDraft);
+    triggerAutoSave(nextDraft, undefined, 400);
+  }
+
+  async function handleTestSpeedDynamics() {
+    if (isPlayingDynamics && dynamicsAudioRef.current) {
+      dynamicsAudioRef.current.pause();
+      dynamicsAudioRef.current = null;
+      setIsPlayingDynamics(false);
+      return;
+    }
+    if (dynamicsAudioRef.current) {
+      dynamicsAudioRef.current.pause();
+      dynamicsAudioRef.current = null;
+    }
+    setIsTestingDynamics(true);
+    setError("");
+    try {
+      const activeVoice = testVoiceId || currentVoices[0]?.id || "default";
+      const dyn = draft.voiceDynamics || { speed: 1.0, pitch: 0.0, temperature: 0.7, emotion: "neutral", volume: 1.0 };
+      const response = await portalFetch("dev", "/api/dev/stack/voice-preview", {
+        method: "POST",
+        body: JSON.stringify({
+          provider: currentTtsProvider,
+          model: currentTtsModel,
+          voiceId: activeVoice,
+          text: testText,
+          language: draft.supportedLanguages[0] || "te-IN",
+          speed: dyn.speed,
+          pitch: dyn.pitch,
+          temperature: dyn.temperature,
+          emotion: dyn.emotion,
+          volume: dyn.volume,
+        }),
+      });
+      if (!response.ok) throw new Error(await responseError(response));
+      const data = await response.json();
+      const b64 = data.audio_base64;
+      if (!b64) throw new Error("No audition audio returned by server.");
+      const audio = new Audio(`data:audio/wav;base64,${b64}`);
+      dynamicsAudioRef.current = audio;
+      audio.onended = () => {
+        setIsPlayingDynamics(false);
+        dynamicsAudioRef.current = null;
+      };
+      audio.onerror = () => {
+        setIsPlayingDynamics(false);
+        dynamicsAudioRef.current = null;
+      };
+      await audio.play();
+      setIsPlayingDynamics(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate speed dynamics preview.");
+    } finally {
+      setIsTestingDynamics(false);
+    }
   }
 
   async function handleDeleteTier(tierToDelete: string) {
@@ -930,6 +1081,7 @@ export function PstnVoiceProfileWorkbench() {
     try {
       const payload = {
         rateCurrency: "INR",
+        pstnInrPerMin: Number(pstnMediumInr) || 0,
         pstnLowInrPerMin: Number(pstnLowInr) || 0,
         pstnMediumInrPerMin: Number(pstnMediumInr) || 0,
         pstnPremiumInrPerMin: Number(pstnPremiumInr) || 0,
@@ -1094,7 +1246,11 @@ export function PstnVoiceProfileWorkbench() {
                 <span className={`text-[11px] font-medium ${tierEnabled ? "text-emerald-400" : "text-text-muted"}`}>
                   {tierEnabled ? "Active / Enabled" : "Disabled"}
                 </span>
-                {row?.retailRate?.inrPaisePerMin ? (
+                {row?.composedProfile?.retailRateInr ? (
+                  <span className="font-mono text-[11px] text-text-subtle">
+                    · ₹{Number(row.composedProfile.retailRateInr).toFixed(2)}/min
+                  </span>
+                ) : row?.retailRate?.inrPaisePerMin ? (
                   <span className="font-mono text-[11px] text-text-subtle">
                     · ₹{(row.retailRate.inrPaisePerMin / 100).toFixed(2)}/min
                   </span>
@@ -1174,6 +1330,62 @@ export function PstnVoiceProfileWorkbench() {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tier Pricing & Provider Cost Configuration */}
+        <div className="rounded-xl border border-surface-border bg-surface-card p-4 mb-6 shadow-sm">
+          <div className="flex items-center justify-between border-b border-surface-border-subtle pb-3 mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-base">💰</span>
+              <h3 className="text-sm font-semibold text-text">Tier Pricing & Provider Cost</h3>
+            </div>
+            <span className="text-[11px] font-mono text-text-subtle">Direct Platform Economics · Applied Universally</span>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-xs font-semibold text-text mb-1">
+                Platform Calling Price (₹/min)
+                <span className="text-text-muted font-normal ml-1">· Billed to Tenants</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-sm font-semibold text-text-muted">₹</span>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="0"
+                  value={retailRateInput}
+                  onChange={(e) => handleRetailRateChange(e.target.value)}
+                  placeholder="e.g. 5.00"
+                  className="w-full rounded-xl border border-surface-border bg-surface-panel pl-7 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-text-subtle">
+                Retail price per minute deducted from tenant wallets when placing phone calls on this tier.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-text mb-1">
+                Estimated Provider / Supplier Cost (₹/min)
+                <span className="text-text-muted font-normal ml-1">· Admin Wholesale Cost</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-sm font-semibold text-text-muted">₹</span>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="0"
+                  value={supplierCostInput}
+                  onChange={(e) => handleSupplierCostChange(e.target.value)}
+                  placeholder="e.g. 1.80"
+                  className="w-full rounded-xl border border-surface-border bg-surface-panel pl-7 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-text-subtle">
+                Estimated cost to platform for telephony trunk + STT + LLM + TTS for accurate profit margin tracking.
+              </p>
             </div>
           </div>
         </div>
@@ -1390,6 +1602,368 @@ export function PstnVoiceProfileWorkbench() {
             <p className="text-[11px] text-text-subtle">
               Curated voice personas are automatically bound to this speech engine. All speech options stream over low-latency WebSockets.
             </p>
+          </div>
+        </div>
+
+        {/* Acoustic Calibration & Speech Dynamics (Universal Platform Controls) */}
+        <div className="mt-6 rounded-2xl border border-surface-border bg-gradient-to-b from-surface-card to-surface-raised/40 p-5 shadow-sm space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border-subtle pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="flex size-7 items-center justify-center rounded-xl bg-accent-primary/20 text-accent-primary font-bold text-sm">
+                  🎛️
+                </span>
+                <h3 className="text-base font-semibold text-text">
+                  Acoustic Calibration &amp; Speech Dynamics
+                </h3>
+                <span className="rounded-full border border-purple-500/30 bg-purple-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-purple-300">
+                  Universal Defaults
+                </span>
+              </div>
+              <p className="text-xs text-text-muted">
+                Fine-tune speaking pace, prosody, and audio delivery for <strong>{currentTtsProvider.toUpperCase()}</strong> on this tier. Applied universally to all platform calls.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                ⚡ Universal Platform Default: Applied to all calls
+              </span>
+            </div>
+          </div>
+
+          {/* Dynamic Knobs based on Chosen Provider */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Speaking Pace (Speed) - All Providers */}
+            <div className="space-y-3 rounded-xl border border-surface-border/60 bg-surface-panel/70 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-text block">Speaking Pace (Speed)</span>
+                  <span className="text-[10px] text-text-subtle">Real-time speech velocity without audio artifacting</span>
+                </div>
+                <span className="font-mono text-xs font-bold text-accent-primary px-2 py-0.5 rounded bg-accent-primary/10 border border-accent-primary/20">
+                  {Number(draft.voiceDynamics?.speed || 1.0).toFixed(2)}x
+                </span>
+              </div>
+
+              {(() => {
+                const isGnani = currentTtsProvider === "gnani";
+                const isCartesia = currentTtsProvider === "cartesia";
+                const minSpeed = isGnani ? 0.85 : isCartesia ? 0.60 : 0.50;
+                const maxSpeed = isGnani ? 1.15 : isCartesia ? 1.50 : 2.00;
+                const presets = isGnani
+                  ? [
+                      { label: "Patient (0.9x)", speed: 0.9 },
+                      { label: "Standard (1.0x)", speed: 1.0 },
+                      { label: "Dynamic Sales (1.1x)", speed: 1.1 },
+                      { label: "Max Speed (1.15x)", speed: 1.15 },
+                    ]
+                  : isCartesia
+                  ? [
+                      { label: "Patient Support (0.85x)", speed: 0.85 },
+                      { label: "Standard (1.0x)", speed: 1.0 },
+                      { label: "Dynamic Sales (1.15x)", speed: 1.15 },
+                      { label: "Fast (1.3x)", speed: 1.3 },
+                    ]
+                  : [
+                      { label: "Patient Support (0.9x)", speed: 0.9 },
+                      { label: "Standard (1.0x)", speed: 1.0 },
+                      { label: "Dynamic Sales (1.1x)", speed: 1.1 },
+                      { label: "Energetic (1.25x)", speed: 1.25 },
+                    ];
+
+                return (
+                  <>
+                    <input
+                      type="range"
+                      min={minSpeed}
+                      max={maxSpeed}
+                      step="0.05"
+                      value={draft.voiceDynamics?.speed || 1.0}
+                      onChange={(e) => handleDynamicsChange({ speed: parseFloat(e.target.value) })}
+                      className="w-full h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-primary"
+                    />
+
+                    <div className="flex justify-between text-[10px] text-text-subtle font-mono">
+                      <span>{minSpeed.toFixed(2)}x (Slow)</span>
+                      <span className="text-accent-primary font-semibold">1.00x (Standard)</span>
+                      <span>{maxSpeed.toFixed(2)}x (Fast)</span>
+                    </div>
+
+                    {/* Pacing Presets */}
+                    <div className="pt-2 border-t border-surface-border-subtle">
+                      <span className="text-[10px] font-semibold text-text-muted uppercase block mb-1.5">
+                        Pacing Presets ({currentTtsProvider.toUpperCase()})
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {presets.map((p) => {
+                          const active = Math.abs((draft.voiceDynamics?.speed || 1.0) - p.speed) < 0.01;
+                          return (
+                            <button
+                              key={p.label}
+                              type="button"
+                              onClick={() => handleDynamicsChange({ speed: p.speed })}
+                              className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                                active
+                                  ? "bg-accent-primary text-white shadow-xs"
+                                  : "border border-surface-border bg-surface-raised text-text hover:bg-surface-raised/80"
+                              }`}
+                            >
+                              {p.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Provider-Specific Options */}
+            <div className="space-y-4 rounded-xl border border-surface-border/60 bg-surface-panel/70 p-4">
+              {/* Pitch for Sarvam, Gnani, and Gemini */}
+              {(currentTtsProvider === "sarvam" || currentTtsProvider === "gnani" || currentTtsProvider === "gemini") && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-semibold text-text block">Pitch Offset</span>
+                      <span className="text-[10px] text-text-subtle">Adjusts vocal pitch frequency</span>
+                    </div>
+                    <span className="font-mono text-xs font-bold text-accent-primary px-2 py-0.5 rounded bg-accent-primary/10 border border-accent-primary/20">
+                      {Number(draft.voiceDynamics?.pitch || 0.0).toFixed(2)}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-0.15"
+                    max="0.15"
+                    step="0.01"
+                    value={draft.voiceDynamics?.pitch || 0.0}
+                    onChange={(e) => handleDynamicsChange({ pitch: parseFloat(e.target.value) })}
+                    className="w-full h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-primary"
+                  />
+                  <div className="flex justify-between text-[10px] text-text-subtle font-mono">
+                    <span>-0.15 (Deeper)</span>
+                    <span className="text-accent-primary font-semibold">0.00 (Neutral)</span>
+                    <span>+0.15 (Higher)</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Temperature / Prosody Inflection for Sarvam */}
+              {currentTtsProvider === "sarvam" && (
+                <div className="space-y-2 pt-2 border-t border-surface-border-subtle">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-semibold text-text block">Expressive Inflection (Temperature)</span>
+                      <span className="text-[10px] text-text-subtle">Higher values increase tone variance &amp; prosodic richness</span>
+                    </div>
+                    <span className="font-mono text-xs font-bold text-accent-primary px-2 py-0.5 rounded bg-accent-primary/10 border border-accent-primary/20">
+                      {Number(draft.voiceDynamics?.temperature || 0.7).toFixed(2)}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.05"
+                    max="1.0"
+                    step="0.05"
+                    value={draft.voiceDynamics?.temperature || 0.7}
+                    onChange={(e) => handleDynamicsChange({ temperature: parseFloat(e.target.value) })}
+                    className="w-full h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-primary"
+                  />
+                  <div className="flex justify-between text-[10px] text-text-subtle font-mono">
+                    <span>0.05 (Rigid / Monotone)</span>
+                    <span className="text-accent-primary font-semibold">0.70 (Natural)</span>
+                    <span>1.00 (Highly Expressive)</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Cartesia Emotion & Volume Knobs */}
+              {currentTtsProvider === "cartesia" && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-text-muted mb-1">
+                      Sonic Emotion Director
+                    </label>
+                    <select
+                      value={draft.voiceDynamics?.emotion || "neutral"}
+                      onChange={(e) => handleDynamicsChange({ emotion: e.target.value })}
+                      className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                    >
+                      <option value="neutral">Neutral · Balanced Natural</option>
+                      <option value="calm">Calm · Relaxed &amp; Patient</option>
+                      <option value="content">Content · Friendly &amp; Pleasant</option>
+                      <option value="happy">Happy · Upbeat &amp; Enthusiastic</option>
+                      <option value="confident">Confident · Direct &amp; Professional</option>
+                      <option value="curious">Curious · Engaging Questioning</option>
+                      <option value="grateful">Grateful · Warm &amp; Welcoming</option>
+                      <option value="peaceful">Peaceful · Serene Consultation</option>
+                      <option value="sympathetic">Sympathetic · Empathetic Support</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-text-muted">Volume Multiplier</span>
+                      <span className="font-mono text-xs text-accent-primary font-bold">
+                        {Number(draft.voiceDynamics?.volume || 1.0).toFixed(2)}x
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="1.5"
+                      step="0.05"
+                      value={draft.voiceDynamics?.volume || 1.0}
+                      onChange={(e) => handleDynamicsChange({ volume: parseFloat(e.target.value) })}
+                      className="w-full h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-primary"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Gnani Timbre Audio Tags */}
+              {currentTtsProvider === "gnani" && (
+                <div className="space-y-2 pt-2 border-t border-surface-border-subtle">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-text">Expressive Audio Tags</span>
+                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                      Native Vachana Enabled
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-text-subtle">
+                    Timbre v3 dynamically parses conversational pauses, emphasis tags, and natural breath cadences across Indian regional dialects.
+                  </p>
+                </div>
+              )}
+
+              {/* Gemini Native Instructions */}
+              {currentTtsProvider === "gemini" && (
+                <div className="space-y-2 pt-2 border-t border-surface-border-subtle">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-text">Delivery Persona Modulation</span>
+                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                      WebSocket Realtime
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-text-subtle">
+                    Pacing and pitch dynamically guide the low-latency Gemini WebSocket stream to articulate natural, unhurried Indian conversational cadences.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Test Speed Dynamics & Live Audition Box */}
+          <div className="rounded-xl border border-surface-border bg-surface-panel p-4 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-surface-border-subtle pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-text">
+                  🎧 Test Speed &amp; Dynamics Audio Generator
+                </span>
+                <span className="text-[10px] text-text-subtle font-mono">
+                  (Audition live with configured pace)
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={testVoiceId || currentVoices[0]?.id || ""}
+                  onChange={(e) => setTestVoiceId(e.target.value)}
+                  className="rounded-lg border border-surface-border bg-surface-raised px-2.5 py-1 text-xs text-text focus:outline-none"
+                >
+                  {currentVoices.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      Voice: {v.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Test Sample Text Input */}
+            <div className="space-y-2">
+              <label className="block text-xs font-medium text-text-muted">
+                Audition Sample Text (Telugu / English / Hindi)
+              </label>
+              <textarea
+                rows={2}
+                value={testText}
+                onChange={(e) => setTestText(e.target.value)}
+                placeholder="Enter test script to synthesize with configured dynamics..."
+                className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 font-sans resize-none"
+              />
+
+              {/* Preset Sample Text Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] text-text-subtle mr-1">Quick Scripts:</span>
+                {[
+                  {
+                    label: "Real Estate Mohan (Telugu)",
+                    text: "నమస్కారం! నేను మీ రియల్ ఎస్టేట్ సేల్స్ అసిస్టెంట్ మోహన్‌ని. మీకు ఎలా సహాయపడగలను?",
+                  },
+                  {
+                    label: "Real Estate Mohan (English)",
+                    text: "Hello! This is Mohan from real estate sales. How can I help you explore prime properties today?",
+                  },
+                  {
+                    label: "Customer Support (Hindi)",
+                    text: "नमस्ते! मैं आपका रियल एस्टेट सेल्स कंसल्टेंट मोहन हूँ। मैं आपकी क्या मदद कर सकता हूँ?",
+                  },
+                ].map((s) => (
+                  <button
+                    key={s.label}
+                    type="button"
+                    onClick={() => setTestText(s.text)}
+                    className="rounded-md border border-surface-border bg-surface-raised/70 px-2 py-0.5 text-[10px] text-text-muted hover:text-text hover:bg-surface-raised transition-all"
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Audition Trigger & Status */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  disabled={isTestingDynamics}
+                  onClick={() => void handleTestSpeedDynamics()}
+                  className={`flex items-center gap-2 px-4 py-2 text-xs font-medium transition-all ${
+                    isPlayingDynamics
+                      ? "bg-amber-600 hover:bg-amber-700 text-white"
+                      : "bg-accent-primary hover:bg-accent-primary/90 text-white shadow-sm"
+                  }`}
+                >
+                  {isTestingDynamics ? (
+                    <>
+                      <span className="size-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      <span>Synthesizing Audio…</span>
+                    </>
+                  ) : isPlayingDynamics ? (
+                    <>
+                      <span>⏹ Stop Audition</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>▶ Generate &amp; Audition Dynamics</span>
+                    </>
+                  )}
+                </Button>
+
+                {isPlayingDynamics && (
+                  <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg animate-pulse">
+                    <span className="size-2 rounded-full bg-emerald-400" />
+                    <span>Playing at {Number(draft.voiceDynamics?.speed || 1.0).toFixed(2)}x Speed ({currentTtsProvider.toUpperCase()})</span>
+                  </div>
+                )}
+              </div>
+
+              <span className="text-[11px] text-text-subtle font-mono">
+                API: POST /api/dev/stack/voice-preview
+              </span>
+            </div>
           </div>
         </div>
 

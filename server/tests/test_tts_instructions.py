@@ -2,17 +2,16 @@
 import base64
 from unittest.mock import AsyncMock, patch
 
-from fastapi.testclient import TestClient
-
 import server.app as app_mod
 from server.config.env import get_settings
+from server.tests.auth_helpers import authenticated_dev_client
 
 
 def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test-dummy")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    return authenticated_dev_client(app_mod.app)
 
 # -- TTS --
 def test_tts_rest_mocked(monkeypatch):

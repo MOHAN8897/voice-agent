@@ -8,12 +8,12 @@ import re
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
 
+import server.app as app_mod
 from server.config.env import get_settings
 from server.services.usage_pricing import cost_tts_usd, estimate_turn_cost, split_llm_tokens
+from server.tests.auth_helpers import authenticated_dev_client
 from server.utils.text_billing import billing_char_count
-import server.app as app_mod
 
 SESSION = "eight-turn-test"
 BRIEF = (
@@ -59,7 +59,7 @@ def _client(monkeypatch):
     monkeypatch.setenv("ENABLE_WORKING_MEMORY", "true")
     monkeypatch.setenv("VOICE_PIPELINE_MODE", "classic")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    return authenticated_dev_client(app_mod.app)
 
 
 @pytest.fixture

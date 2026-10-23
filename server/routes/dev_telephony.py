@@ -785,6 +785,8 @@ async def _outbound_vobiz(
                     "stack_override": stack_override,
                     "status": "initiated",
                     "tenant_id": session.tenant_id,
+                    "admission_key": body.admission_key,
+                    "admission_tenant_id": session.tenant_id,
                     "vobiz_account_scope": carrier_account_scope,
                     "vobiz_account_tenant_id": getattr(client, "account_tenant_id", None),
                 },
@@ -819,7 +821,7 @@ async def _outbound_vobiz(
     except VobizApiError as e:
         await pstn_prewarm_registry.cancel("vobiz", tracking_id)
         detail = (e.body or str(e))[:400]
-        return {"ok": False, "error": detail, "status": e.status, "vobiz_error": detail}
+        return {"ok": False, "error": detail, "status": e.status, "code": "dial_failed", "vobiz_error": detail}
 
 
 @router.get("/api/dev/telephony/calls")

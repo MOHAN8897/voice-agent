@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import hashlib
 import re
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from typing import Any, Optional
 
 from server.agent.brain_prompt_composer import (
     BUDGET_MAX_TOKENS,
@@ -43,12 +43,13 @@ from server.auth.instructions_access import (
     require_instructions_access,
 )
 from server.auth.rbac import require_role_permission
-from server.config.env import get_settings, ConfigError
+from server.config.env import ConfigError, get_settings
 from server.prompts.brain_prompt import get_factory_brain_prompt
 from server.services.brain_budget import resolve_brain_budget
 from server.services.prompt_cache_key import cache_eligible
 
 router = APIRouter()
+_INSTRUCTIONS_ACCESS = Depends(require_instructions_access)
 
 
 def _normalize_call_direction(raw: str | None) -> str | None:
@@ -97,7 +98,7 @@ class SaveRequest(BaseModel):
     instructions: str | None = Field(None, max_length=MAX_BEHAVIOUR_CHARS)
     responseStyle: str | None = Field(None, max_length=100)
     brainPromptBudgetTokens: int | None = Field(None, description="Optional budget override for validation")
-    language_code: str | None = Field("te-IN", max_length=16)
+    language_code: str | None = Field(None, max_length=16)
     callEndPolicy: dict | None = None
     reassembleOnly: bool = False
     compileFromBrief: bool = Field(
@@ -141,7 +142,7 @@ class CompileFromSpecRequest(BaseModel):
 
 
 @router.post("/api/instructions/extract-spec")
-async def extract_spec_endpoint(body: ExtractSpecRequest, access: InstructionsAccess = Depends(require_instructions_access)):
+async def extract_spec_endpoint(body: ExtractSpecRequest, access: InstructionsAccess = _INSTRUCTIONS_ACCESS):
     """
     Stage 4 Confirmation Flow: Preview/extract endpoint that returns
     the spec without creating or saving the agent.
@@ -184,7 +185,7 @@ async def extract_spec_endpoint(body: ExtractSpecRequest, access: InstructionsAc
 
 
 @router.post("/api/instructions/compile-from-spec")
-async def compile_from_spec_endpoint(body: CompileFromSpecRequest, access: InstructionsAccess = Depends(require_instructions_access)):
+async def compile_from_spec_endpoint(body: CompileFromSpecRequest, access: InstructionsAccess = _INSTRUCTIONS_ACCESS):
     """
     Stage 4 Confirmation Flow: Edit spec fields and regenerate the script
     without re-extracting from raw brief text.
@@ -237,7 +238,12 @@ async def compile_from_spec_endpoint(body: CompileFromSpecRequest, access: Instr
 
 
 def _validate_spec_source(spec: dict[str, Any]) -> None:
-    from server.brain.brief_contract import BriefValidationError, brief_issue, source_supported, validate_brief_requirements
+    from server.brain.brief_contract import (
+        BriefValidationError,
+        brief_issue,
+        source_supported,
+        validate_brief_requirements,
+    )
     from server.prompts.agent_voice_rules import normalize_compile_language
 
     language_value = spec.get("language") or spec.get("language_code") or "te-IN"
@@ -268,7 +274,7 @@ def _validate_spec_source(spec: dict[str, Any]) -> None:
 
 
 @router.get("/api/instructions/default")
-async def get_default_brain_prompt(access: InstructionsAccess = Depends(require_instructions_access)):
+async def get_default_brain_prompt(access: InstructionsAccess = _INSTRUCTIONS_ACCESS):
     """Factory default brain prompt for the UI editor."""
     prompt = get_factory_brain_prompt()
     est = estimate_tokens(prompt)
@@ -285,7 +291,7 @@ async def get_default_brain_prompt(access: InstructionsAccess = Depends(require_
 
 
 @router.post("/api/instructions")
-async def save_instructions(body: SaveRequest, access: InstructionsAccess = Depends(require_instructions_access)):
+async def save_instructions(body: SaveRequest, access: InstructionsAccess = _INSTRUCTIONS_ACCESS):
     await authorize_instruction_session(body.sessionId, access, write=True)
     b_max, z_max, p_max = _limits()
     budget = body.brainPromptBudgetTokens or resolve_brain_budget(body.sessionId)
@@ -294,11 +300,11 @@ async def save_instructions(body: SaveRequest, access: InstructionsAccess = Depe
     from server.call.call_end_policy import default_call_end_policy, normalize_call_end_policy
     from server.prompts.agent_voice_rules import normalize_compile_language
 
+    previous_meta = instruction_store.get_with_meta(body.sessionId)
     try:
-        lang = normalize_compile_language(body.language_code)
+        lang = normalize_compile_language(body.language_code or previous_meta.get("language"))
     except ValueError as exc:
         raise HTTPException(status_code=422, detail={"error": {"code": "unsupported_language", "message": str(exc)}}) from exc
-    previous_meta = instruction_store.get_with_meta(body.sessionId)
     generation_config = dict(body.generationConfig if body.generationConfig is not None else previous_meta.get("generationConfig") or {})
     if body.agentRole is not None:
         generation_config["agentRole"] = body.agentRole
@@ -306,9 +312,19 @@ async def save_instructions(body: SaveRequest, access: InstructionsAccess = Depe
         generation_config["callDirection"] = body.callDirection
     policy = normalize_call_end_policy(body.callEndPolicy, language=lang)
     compiler_sections = None
-    from server.brain.brief_contract import BriefValidationError, validate_brief_requirements
+    from server.brain.brief_contract import (
+        BriefValidationError,
+        normalize_generation_config,
+        validate_brief_requirements,
+    )
 
     try:
+        generation_config = normalize_generation_config(generation_config)
+        for setting in generation_config.values():
+            if isinstance(setting, str) and sum(char.isalpha() for char in setting) >= 3:
+                issues = validate_brief_requirements(setting, language=lang)
+                if issues:
+                    raise BriefValidationError(issues)
         for source in (body.agentBrief, body.agentScript):
             if source and source.strip():
                 issues = validate_brief_requirements(source, language=lang)
@@ -316,15 +332,15 @@ async def save_instructions(body: SaveRequest, access: InstructionsAccess = Depe
                     raise BriefValidationError(issues)
         if body.agentSpec is not None:
             _validate_spec_source(body.agentSpec)
-            from server.brain.agent_spec import AgentSpec
-            from server.brain.agent_spec_script_builder import (
-                generate_deterministic_script_from_spec,
-                lint_agent_script,
-            )
             from server.brain.agent_script_compiler import (
                 _platform_call_rules,
                 build_compiler_sections,
                 reassemble_brain_from_script,
+            )
+            from server.brain.agent_spec import AgentSpec
+            from server.brain.agent_spec_script_builder import (
+                generate_deterministic_script_from_spec,
+                lint_agent_script,
             )
 
             try:
@@ -513,7 +529,6 @@ async def save_instructions(body: SaveRequest, access: InstructionsAccess = Depe
                 reassemble_brain_from_script,
                 validate_agent_script,
             )
-            from server.brain.script_entities import regenerate_calling_script_from_brief, script_conflicts_with_brief
 
             prev_meta = instruction_store.get_with_meta(body.sessionId)
             lang = normalize_compile_language(body.language_code or prev_meta.get("language"))
@@ -789,9 +804,11 @@ async def save_instructions(body: SaveRequest, access: InstructionsAccess = Depe
     }
     if compiler_sections is not None:
         payload["compilerSections"] = compiler_sections
-    from server.brain.script_entities import entity_tags_to_api, parse_entity_tags
-
-    from server.brain.script_entities import strip_entity_tags_section
+    from server.brain.script_entities import (
+        entity_tags_to_api,
+        parse_entity_tags,
+        strip_entity_tags_section,
+    )
 
     saved_script = str(saved.get("agentScript") or "")
     payload["scriptEntities"] = entity_tags_to_api(parse_entity_tags(saved_script))
@@ -804,7 +821,7 @@ async def get_instructions(
     sessionId: str = "default",
     includeCompiled: bool = Query(False),
     includeCompilerSections: bool = Query(False),
-    access: InstructionsAccess = Depends(require_instructions_access),
+    access: InstructionsAccess = _INSTRUCTIONS_ACCESS,
 ):
     await authorize_instruction_session(sessionId, access)
     from server.call.call_end_policy import normalize_call_end_policy
@@ -871,15 +888,20 @@ async def get_instructions(
             call_end_policy=payload.get("callEndPolicy"),
         )
     if meta.get("present"):
-        from server.brain.script_entities import entity_tags_to_api, parse_entity_tags
-
-        from server.brain.script_entities import entities_have_values
+        from server.brain.script_entities import (
+            entities_have_values,
+            entity_tags_to_api,
+            parse_entity_tags,
+        )
 
         parsed = parse_entity_tags(str(meta.get("agentScript") or ""))
         if not entities_have_values(parsed):
             parsed = parse_entity_tags(str(meta.get("brainPrompt") or ""))
         payload["scriptEntities"] = entity_tags_to_api(parsed)
-        from server.brain.script_entities import script_conflicts_with_brief, strip_entity_tags_section
+        from server.brain.script_entities import (
+            script_conflicts_with_brief,
+            strip_entity_tags_section,
+        )
 
         brief_text = str(meta.get("agentBrief") or "")
         script_text = str(meta.get("agentScript") or "")
@@ -898,7 +920,7 @@ async def instructions_live_prompt_preview(
     direction: str = Query("outbound"),
     pipeline: str = Query("realtime_voice"),
     llmModel: str | None = Query(None),
-    access: InstructionsAccess = Depends(require_instructions_access),
+    access: InstructionsAccess = _INSTRUCTIONS_ACCESS,
 ):
     await authorize_instruction_session(sessionId, access)
     from server.call.call_prompt_preview import get_session_live_prompt_preview
@@ -944,7 +966,7 @@ async def instructions_live_prompt_preview(
 
 
 @router.delete("/api/instructions")
-async def clear_instructions(sessionId: str = "default", access: InstructionsAccess = Depends(require_instructions_access)):
+async def clear_instructions(sessionId: str = "default", access: InstructionsAccess = _INSTRUCTIONS_ACCESS):
     await authorize_instruction_session(sessionId, access, write=True)
     instruction_store.clear(sessionId)
     session_memory.clear(sessionId)

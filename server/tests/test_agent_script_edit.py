@@ -1,22 +1,21 @@
 """Edited calling-script save, limits, and Fine-tune persist."""
-import pytest
-
 from unittest.mock import AsyncMock
 
-from fastapi.testclient import TestClient
+import pytest
 
+import server.app as app_mod
 from server.agent.brain_prompt_composer import MAX_AGENT_SCRIPT_CHARS, MAX_AGENT_SCRIPT_WORDS
 from server.agent.instruction_store import instruction_store
 from server.config.env import get_settings
 from server.services.runtime_settings import runtime_settings
-import server.app as app_mod
+from server.tests.auth_helpers import authenticated_dev_client
 
 
 def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-agent-script-edit")
     monkeypatch.setenv("SARVAM_API_KEY", "sv-agent-script-edit")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    return authenticated_dev_client(app_mod.app)
 
 
 def test_instructions_limits_include_script_caps(monkeypatch):

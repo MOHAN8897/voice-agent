@@ -372,6 +372,7 @@ export function AgentStudioModule({
   const [brainLoading, setBrainLoading] = useState(false);
   const [brainLoadAttempt, setBrainLoadAttempt] = useState(0);
   const [publishedVersion, setPublishedVersion] = useState(null);
+  const [generationReport, setGenerationReport] = useState(null);
   const [variablePickerOpen, setVariablePickerOpen] = useState(false);
   const [useFallbackSyntax, setUseFallbackSyntax] = useState(true);
   const [variableSuggestionTrigger, setVariableSuggestionTrigger] = useState(null);
@@ -787,6 +788,7 @@ export function AgentStudioModule({
     setBrainLoading(true);
     setBrainLoadError(null);
     setPublishedVersion(null);
+    setGenerationReport(null);
     setVariablePickerOpen(false);
     setVariableSuggestionTrigger(null);
 
@@ -800,6 +802,7 @@ export function AgentStudioModule({
       .then((data) => {
         if (cancelled) return;
         setPublishedVersion(data?.published?.version_id || null);
+        setGenerationReport(data?.published?.optimizer_report || null);
         const studio = parseStudioFieldsFromSections(data?.draft?.sections);
         const cfg = parseVoiceConfigFromSections(data?.draft?.sections);
         const chosenVoice = agent?.voiceSettings?.realtimeVoice || agent?.voice?.realtimeVoice ||
@@ -904,6 +907,7 @@ export function AgentStudioModule({
         }
         const updated = await updateAgent(selectedAgent.id, formData);
         setPublishedVersion(updated?.publication?.compiled_version || null);
+        setGenerationReport(null);
         const publishedForm = { ...formData, brainRevision: updated?.publication?.draft_revision || formData.brainRevision };
         setFormData(publishedForm);
         try {
@@ -1297,6 +1301,25 @@ export function AgentStudioModule({
           aria-labelledby="agent-tab-script"
           className="space-y-6 animate-in fade-in duration-150"
         >
+          {generationReport?.status ? (
+            <div data-testid="agent-script-generation-status" className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] px-4 py-3 text-xs text-[#524E5E]" aria-live="polite">
+              <p className="font-semibold text-[#0F0E17]">
+                {generationReport.status === 'degraded' ? 'Generated with fallback — review the script before calling' : generationReport.status === 'ready' ? 'Generated with automated source checks' : 'Generation requires review'}
+              </p>
+              <p className="mt-1">
+                {({ gemini: 'Gemini', openai: 'OpenAI' })[generationReport.provenance?.provider] || 'Deterministic compiler'}
+                {generationReport.provenance?.model ? ` · ${generationReport.provenance.model}` : ''}
+                {generationReport.provenance?.fallback ? ' · fallback used' : ''}
+                {' · Review business facts and test call behavior before use.'}
+              </p>
+              {scriptDirty ? <p className="mt-1">This report describes the published script. The current draft has edits.</p> : null}
+              {Array.isArray(generationReport.issues) && generationReport.issues.length ? (
+                <ul className="mt-2 list-disc pl-4">
+                  {generationReport.issues.map((issue, index) => <li key={`${issue.code || 'issue'}-${index}`}>{issue.message || issue.description}</li>)}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
           {/* Greeting the caller hears: synced with calling script and acoustic voice preview */}
           <SolidCard>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">

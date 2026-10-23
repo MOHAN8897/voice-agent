@@ -327,9 +327,13 @@ export function GlobalCallsWorkbench() {
                 </tr>
               ) : (
                 calls.map((call) => {
-                  const isMedium = call.tier === "medium";
-                  const isLow = call.tier === "low";
-                  const isPremium = call.tier === "premium";
+                  const isMedium = call.tier.startsWith("medium") || call.tier === "standard";
+                  const isLow = call.tier.startsWith("low") || call.tier.includes("economical");
+                  const tierLabel = isMedium
+                    ? call.tier === "medium" ? "Standard" : `Standard (${call.tier.replace("medium_", "")})`
+                    : isLow
+                    ? call.tier === "low" ? "Economical" : `Economical (${call.tier.replace("low_", "")})`
+                    : call.tier === "premium" ? "Flagship" : call.tier;
 
                   return (
                     <tr
@@ -361,7 +365,7 @@ export function GlobalCallsWorkbench() {
                                 : "border-purple-500/30 bg-purple-500/10 text-purple-300"
                             }`}
                           >
-                            {isMedium ? "Standard" : isLow ? "Economical" : "Flagship"}
+                            {tierLabel}
                           </span>
                           <span className="text-[11px] text-text-muted uppercase tracking-wider font-mono">
                             {call.channel}

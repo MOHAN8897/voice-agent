@@ -129,7 +129,7 @@ OVERLAP_RULES = """OVERLAP
 def normalize_compile_language(code: str | None) -> str:
     from server.config.constants import normalize_supported_language
 
-    raw = (code or "te-IN").strip()
+    raw = (code or "").strip() or "te-IN"
     if raw in SPOKEN_PACKS:
         return raw
     mapped = normalize_supported_language(raw)

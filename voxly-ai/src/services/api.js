@@ -916,6 +916,7 @@ export const api = {
         employeeName: payload.employeeName || '',
         agentRole: payload.agentRole || payload.role || '',
         callDirection: payload.callDirection || payload.direction || '',
+        requestId: payload.requestId,
       });
       const agent = data.agent || {};
       return {
@@ -1388,11 +1389,13 @@ export const api = {
     async load(agentId) {
       return await api.request('GET', `/api/agents/${agentId}/business-brain`);
     },
-    async saveDraft(agentId, sections) {
-      return await api.request('PUT', `/api/agents/${agentId}/business-brain/draft`, { sections });
+    async saveDraft(agentId, sections, expectedRevision) {
+      if (!expectedRevision) throw new Error('Reload and review the latest draft before saving.');
+      return await api.request('PUT', `/api/agents/${agentId}/business-brain/draft`, { sections, expected_revision: expectedRevision });
     },
-    async publish(agentId) {
-      return await api.request('POST', `/api/agents/${agentId}/business-brain/publish`);
+    async publish(agentId, expectedRevision) {
+      if (!expectedRevision) throw new Error('Review the latest draft before publishing.');
+      return await api.request('POST', `/api/agents/${agentId}/business-brain/publish`, { expected_revision: expectedRevision });
     },
   },
 };

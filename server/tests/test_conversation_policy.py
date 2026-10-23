@@ -77,7 +77,7 @@ def test_writer_forbids_question_tree():
 
 
 @pytest.mark.asyncio
-async def test_thin_llm_script_uses_quality_floor(monkeypatch):
+async def test_thin_llm_draft_is_not_rendered(monkeypatch):
     import server.brain.agent_script_compiler as compiler
 
     async def thin(*args, **kwargs):
@@ -93,8 +93,12 @@ async def test_thin_llm_script_uses_quality_floor(monkeypatch):
             "key_facts": ["basic service three thousand five hundred"],
         }
 
-    monkeypatch.setattr(compiler, "_llm_generate_script", thin)
-    _compiled, result, *_ = await compiler.compile_agent_from_brief(
+    monkeypatch.setattr(compiler, "_llm_interpret_brief", thin)
+    async def forbidden_full_writer(*_args, **_kwargs):
+        raise AssertionError("full script writer must not be called")
+
+    monkeypatch.setattr(compiler, "_llm_generate_script", forbidden_full_writer)
+    compiled, result, *_ = await compiler.compile_agent_from_brief(
         brief=(
             "Create an English sales counselor named Karthik for DriveRight Auto Care in Hyderabad. "
             "Sell periodic car service packages. Basic periodic service is three thousand five hundred rupees."
@@ -103,14 +107,13 @@ async def test_thin_llm_script_uses_quality_floor(monkeypatch):
         budget_tokens=6000,
         use_llm=True,
     )
-    assert "LIVE CALL GUIDE" in result.agent_script
-    assert "OBJECTION HANDLING" in result.agent_script
-    assert "Source facts and duties" in result.agent_script or "WORK SCOPE" in result.agent_script
-    assert result.optimizer_model in {
-        "legacy_deterministic_quality_floor_v1",
-        "legacy_deterministic_validation_fallback_v1",
-        "legacy_deterministic_v1",
-    }
+    assert "--- SAFETY ---" in compiled
+    assert "--- SCRIPT DISCIPLINE ---" in compiled
+    assert "--- CANONICAL OPENING ---" in result.agent_script
+    assert "three thousand five hundred rupees" in result.agent_script
+    assert result.optimizer_model == "brief_interpret_v1"
+    assert result.provenance["llm_used"] is True
+    assert "Be brief." not in result.agent_script
 
 
 def test_agent_script_schema_is_valid_for_openai_strict_mode():
@@ -120,7 +123,7 @@ def test_agent_script_schema_is_valid_for_openai_strict_mode():
 
 
 @pytest.mark.asyncio
-async def test_oversized_generated_script_falls_back_instead_of_failing(monkeypatch):
+async def test_oversized_model_draft_is_ignored_without_extra_generation(monkeypatch):
     import server.brain.agent_script_compiler as compiler
 
     async def oversized(*args, **kwargs):
@@ -141,15 +144,16 @@ async def test_oversized_generated_script_falls_back_instead_of_failing(monkeypa
             "key_facts": [],
         }
 
-    monkeypatch.setattr(compiler, "_llm_generate_script", oversized)
+    monkeypatch.setattr(compiler, "_llm_interpret_brief", oversized)
     compiled, result, *_ = await compiler.compile_agent_from_brief(
         brief="Answer City Library opening-hours questions. Agent name Nisha.",
         language="en-IN",
         use_llm=True,
     )
-    assert result.optimizer_model == "simple_business_budget_fallback_v1"
+    assert result.optimizer_model == "brief_interpret_v1"
     assert "BUSINESS KNOWLEDGE" in result.agent_script or "COMPANY & OFFER" in result.agent_script
     assert compiler.estimate_tokens(compiled) <= compiler.BUDGET_MAX_TOKENS
+    assert "oversized policy sentence" not in result.agent_script
 
 
 def test_static_and_human_rules_are_role_agnostic():

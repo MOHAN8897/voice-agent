@@ -1,6 +1,7 @@
 """Gnani.ai (Vachana) TTS WebSocket upstream adapter — persistent low-latency streaming."""
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import logging
@@ -51,14 +52,43 @@ _GNANI_VOICE_MAP: dict[str, str] = {
 }
 
 
+TIMBRE_V3_SUPPORTED_VOICES: dict[str, str] = {
+    "avinash": "Avinash",
+    "shivani": "Shivani",
+    "lakshmi": "Lakshmi",
+    "kalpana": "Kalpana",
+    "shubham": "Shubham",
+    "prakash": "Prakash",
+    "devansh": "Devansh",
+    "yashraj": "Yashraj",
+    "chetana": "Chetana",
+    "vasudha": "Vasudha",
+    "harshad": "Harshad",
+}
+
+
 def _resolve_gnani_voice(raw: str | None, model: str | None = None) -> str:
     key = str(raw or "").strip().lower()
     voice = _GNANI_VOICE_MAP.get(key)
-    if voice:
-        return voice
-    if raw and not key.startswith("voice"):
-        return raw.strip().title()
-    return "Shivani" if (model and "v3" in str(model).lower()) else "Nalini"
+    if not voice and raw and not key.startswith("voice"):
+        voice = raw.strip().title()
+    if not voice:
+        voice = "Shivani"
+
+    # For timbre-v3.0 / v3 models, ensure only verified upstream personas are sent
+    is_timbre_v3 = bool(not model or "v3" in str(model).lower() or "timbre" in str(model).lower())
+    if is_timbre_v3:
+        if voice.lower() in TIMBRE_V3_SUPPORTED_VOICES:
+            return TIMBRE_V3_SUPPORTED_VOICES[voice.lower()]
+        legacy_map = {
+            "nalini": "Shivani",
+            "chitra": "Chetana",
+            "pranav": "Prakash",
+            "sanjay": "Shubham",
+        }
+        return legacy_map.get(voice.lower(), "Shivani")
+
+    return voice
 
 
 def _gnani_language_code(language_code: str | None) -> str:
@@ -112,9 +142,15 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
             self._model = resolved_model
             self._sample_rate = 16000
             self._language = "te-IN"
-            self._speaker = "Nalini"
-            self._pending_done = False
+            self._speaker = _resolve_gnani_voice(None, model=resolved_model)
+            self._queue: asyncio.Queue[str] = asyncio.Queue()
+            self._requests_sent = 0
+            self._requests_completed = 0
+            self._flush_received = False
+            self._eos_sent = False
+            self._closed = False
             self._stripped_header = False
+            self._reader_task = asyncio.create_task(self._reader_loop())
 
         async def send(self, payload: str) -> None:
             try:
@@ -127,7 +163,7 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                 if self._cfg.get("model"):
                     self._model = str(self._cfg["model"])
                 if self._cfg.get("speaker"):
-                    self._speaker = _resolve_gnani_voice(str(self._cfg["speaker"]))
+                    self._speaker = _resolve_gnani_voice(str(self._cfg["speaker"]), model=self._model)
                 if self._cfg.get("language_code"):
                     self._language = _gnani_language_code(str(self._cfg["language_code"]))
                 try:
@@ -146,18 +182,31 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                 text = str((obj.get("data") or {}).get("text") or "")
                 if not text.strip():
                     return
+                if self._flush_received or self._eos_sent:
+                    self._flush_received = False
+                    self._eos_sent = False
+                    self._requests_sent = 0
+                    self._requests_completed = 0
+                    while not self._queue.empty():
+                        try:
+                            self._queue.get_nowait()
+                        except (asyncio.QueueEmpty, Exception):
+                            break
+                self._requests_sent += 1
                 await self._send_chunk(text)
                 return
             if mtype == "flush":
-                # Gnani completes after streaming all chunks; do not abort early
-                pass
+                self._flush_received = True
+                if not self._eos_sent and self._requests_completed >= self._requests_sent:
+                    self._eos_sent = True
+                    await self._queue.put(json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}}))
 
         async def _send_chunk(self, text: str) -> None:
             self._stripped_header = False
             pace_val = 1.0
             if self._cfg and self._cfg.get("pace"):
                 try:
-                    pace_val = max(0.5, min(2.0, float(self._cfg["pace"])))
+                    pace_val = max(0.85, min(1.15, float(self._cfg["pace"])))
                 except (TypeError, ValueError):
                     pace_val = 1.0
 
@@ -172,92 +221,119 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                     "num_channels": 1,
                     "sample_width": 2,
                     "encoding": "linear_pcm",
-                    "container": "wav",
+                    "container": "raw",
                 },
             }
             await self._ws.send(json.dumps(req))
+
+        async def _reader_loop(self) -> None:
+            try:
+                while not self._closed:
+                    try:
+                        raw = await self._ws.recv()
+                    except websockets.exceptions.ConnectionClosed:
+                        break
+                    except Exception:
+                        break
+
+                    if isinstance(raw, bytes):
+                        # Raw PCM/WAV binary frame
+                        data_bytes = raw
+                        if not self._stripped_header and len(data_bytes) >= 44 and data_bytes[:4] == b"RIFF":
+                            data_bytes = data_bytes[44:]
+                            self._stripped_header = True
+                        b64 = base64.b64encode(data_bytes).decode("ascii")
+                        await self._queue.put(
+                            json.dumps(
+                                {
+                                    "type": "audio",
+                                    "data": {
+                                        "audio": b64,
+                                        "event_type": "audio",
+                                        "sample_rate": self._sample_rate,
+                                        "speech_sample_rate": self._sample_rate,
+                                    },
+                                }
+                            )
+                        )
+                        continue
+
+                    try:
+                        data = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
+
+                    mtype = str(data.get("type") or "").lower()
+                    if "error" in data or "errors" in data or data.get("status") in (401, 402, 429) or mtype == "error":
+                        err_msg = str(data.get("message") or data.get("error") or "Gnani TTS error")
+                        is_credit = any(k in err_msg.lower() for k in ("credit", "balance", "quota", "payment", "unauthorized"))
+                        await self._queue.put(
+                            json.dumps(
+                                {
+                                    "type": "error",
+                                    "code": "credits_exhausted" if is_credit else "gnani_error",
+                                    "message": err_msg,
+                                }
+                            )
+                        )
+                        break
+
+                    is_final = bool((data.get("data") if isinstance(data.get("data"), dict) else {}).get("is_final") or data.get("is_final"))
+                    if mtype in ("complete", "end", "done") or is_final or data.get("done"):
+                        if is_final:
+                            self._requests_completed += 1
+                        if not self._eos_sent and self._flush_received and self._requests_completed >= self._requests_sent:
+                            self._eos_sent = True
+                            await self._queue.put(json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}}))
+                        continue
+
+                    inner = data.get("data") if isinstance(data.get("data"), dict) else {}
+                    audio_b64 = (
+                        data.get("audio")
+                        or inner.get("audio")
+                        or (data.get("data") if isinstance(data.get("data"), str) else None)
+                    )
+                    if audio_b64 and isinstance(audio_b64, str):
+                        try:
+                            raw_bytes = base64.b64decode(audio_b64)
+                            if not self._stripped_header and len(raw_bytes) >= 44 and raw_bytes[:4] == b"RIFF":
+                                raw_bytes = raw_bytes[44:]
+                                self._stripped_header = True
+                                audio_b64 = base64.b64encode(raw_bytes).decode("ascii")
+                        except Exception:
+                            pass
+
+                        await self._queue.put(
+                            json.dumps(
+                                {
+                                    "type": "audio",
+                                    "data": {
+                                        "audio": audio_b64,
+                                        "event_type": "audio",
+                                        "sample_rate": self._sample_rate,
+                                        "speech_sample_rate": self._sample_rate,
+                                    },
+                                }
+                            )
+                        )
+            except asyncio.CancelledError:
+                pass
+            finally:
+                if not self._eos_sent:
+                    self._eos_sent = True
+                    await self._queue.put(json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}}))
 
         def __aiter__(self):
             return self
 
         async def __anext__(self) -> str:
-            while True:
-                try:
-                    raw = await self._ws.recv()
-                except websockets.exceptions.ConnectionClosed:
-                    return json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}})
-                except Exception:
-                    return json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}})
-
-                if isinstance(raw, bytes):
-                    # Raw PCM/WAV binary frame
-                    data_bytes = raw
-                    if not self._stripped_header and len(data_bytes) >= 44 and data_bytes[:4] == b"RIFF":
-                        data_bytes = data_bytes[44:]
-                        self._stripped_header = True
-                    b64 = base64.b64encode(data_bytes).decode("ascii")
-                    return json.dumps(
-                        {
-                            "type": "audio",
-                            "data": {
-                                "audio": b64,
-                                "event_type": "audio",
-                                "sample_rate": self._sample_rate,
-                                "speech_sample_rate": self._sample_rate,
-                            },
-                        }
-                    )
-
-                try:
-                    data = json.loads(raw)
-                except json.JSONDecodeError:
-                    continue
-
-                mtype = str(data.get("type") or "").lower()
-                if "error" in data or "errors" in data or data.get("status") in (401, 402, 429) or mtype == "error":
-                    err_msg = str(data.get("message") or data.get("error") or "Gnani TTS error")
-                    is_credit = any(k in err_msg.lower() for k in ("credit", "balance", "quota", "payment", "unauthorized"))
-                    return json.dumps(
-                        {
-                            "type": "error",
-                            "code": "credits_exhausted" if is_credit else "gnani_error",
-                            "message": err_msg,
-                        }
-                    )
-
-                if mtype in ("complete", "end", "done") or data.get("is_final") or data.get("done"):
-                    return json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}})
-
-                # Handle audio payload in JSON
-                inner = data.get("data") if isinstance(data.get("data"), dict) else {}
-                audio_b64 = (
-                    data.get("audio")
-                    or inner.get("audio")
-                    or (data.get("data") if isinstance(data.get("data"), str) else None)
-                )
-                if audio_b64 and isinstance(audio_b64, str):
-                    try:
-                        raw_bytes = base64.b64decode(audio_b64)
-                        if not self._stripped_header and len(raw_bytes) >= 44 and raw_bytes[:4] == b"RIFF":
-                            raw_bytes = raw_bytes[44:]
-                            self._stripped_header = True
-                            audio_b64 = base64.b64encode(raw_bytes).decode("ascii")
-                    except Exception:
-                        pass
-
-                    return json.dumps(
-                        {
-                            "type": "audio",
-                            "data": {
-                                "audio": audio_b64,
-                                "event_type": "audio",
-                                "sample_rate": self._sample_rate,
-                                "speech_sample_rate": self._sample_rate,
-                            },
-                        }
-                    )
+            msg = await self._queue.get()
+            return msg
 
         async def close(self) -> None:
+            self._closed = True
+            if hasattr(self, "_reader_task") and self._reader_task is not None:
+                self._reader_task.cancel()
             try:
                 await self._ws.close()
             except Exception:

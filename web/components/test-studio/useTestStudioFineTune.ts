@@ -560,7 +560,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     } finally {
       setSaving(false);
     }
-  }, [instructions, limits, runtime, sessionId, language, agentId]);
+  }, [instructions, limits, runtime, sessionId, language, agentId, portal]);
 
   const saveCallEndPolicy = useCallback(async () => {
     setSaving(true);
@@ -602,7 +602,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     } finally {
       setSaving(false);
     }
-  }, [instructions, language, sessionId, agentId, runtime]);
+  }, [instructions, language, sessionId, agentId, runtime, portal]);
 
   const saveRuntime = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) {
@@ -789,7 +789,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
     } finally {
       if (!opts?.silent) setSaving(false);
     }
-  }, [instructions, limits, runtime, sessionId, language, agentId, scriptEntities]);
+  }, [instructions, limits, runtime, sessionId, language, agentId, scriptEntities, portal]);
 
   const saveFineTune = useCallback(async () => {
     let briefChanged = false;
@@ -893,7 +893,7 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
 
   const clearSession = useCallback(async () => {
     setStatus("Clearing session…");
-    await Promise.all([
+    const responses = await Promise.all([
       fetch(`/api/settings/runtime?sessionId=${encodeURIComponent(sessionId)}`, {
         method: "DELETE",
         credentials: "include",
@@ -903,9 +903,13 @@ export function useTestStudioFineTune(agentId: string, language: string, portal:
         credentials: "include",
       }),
     ]);
+    if (responses.some((response) => !response.ok)) {
+      setStatus("Session overrides could not be fully cleared. Reload and try again.");
+      return;
+    }
     await load();
     setStatus("Session overrides cleared");
-  }, [load, sessionId]);
+  }, [load, sessionId, portal]);
 
   const loadFactoryDefault = useCallback(async () => {
     const r = await fetch("/api/instructions/default", { credentials: "include" });

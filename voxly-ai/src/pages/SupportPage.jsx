@@ -32,7 +32,7 @@ const SUPPORT_FAQS = [
   },
 ];
 
-export function SupportPage({ onBackToLanding, onEnterConsole, onNavigatePage }) {
+export function SupportPage({ onBackToLanding, onEnterConsole, onNavigatePage, onSignIn }) {
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
   const toggleFaq = (index) => {
@@ -46,6 +46,7 @@ export function SupportPage({ onBackToLanding, onEnterConsole, onNavigatePage })
         subtitle="Help with agents, calling setup, workspace access and billing."
         onBackToLanding={onBackToLanding}
         onEnterConsole={onEnterConsole}
+        onSignIn={onSignIn}
       />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-10 space-y-12">

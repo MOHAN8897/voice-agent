@@ -128,13 +128,21 @@ def test_unnamed_brief_invents_person_name():
 
 
 def test_static_rules_forbid_interrogation_checklist():
+    from server.services.voice_pipeline_limits import (
+        LIVE_REPLY_MAX_CHARS,
+        LIVE_REPLY_SOFT_MAX_CHARS,
+    )
+
     blob = STATIC_OUTPUT_RULES.lower() + HUMAN_CALL_RULES.lower()
     assert "checklist" in blob
     assert "overrides script defaults" in blob
     assert "don't call" in blob or "dont call" in blob.replace("'", "")
     assert "whatsapp" in blob
     assert "not a hangup" in blob or "do not hang up" in blob
-    assert "15" in blob or "30–80" in blob or "30-80" in blob or "150" in blob
+    assert "1–2 concise spoken sentences" in blob
+    assert "at most one useful unanswered question" in blob
+    assert str(LIVE_REPLY_SOFT_MAX_CHARS) in blob
+    assert str(LIVE_REPLY_MAX_CHARS) in blob
     assert "length" in blob
     assert "tts" in blob or "short" in blob or "meaningful" in blob
 
@@ -325,7 +333,7 @@ def test_spoken_pack_uses_policy_pointer_not_full_human_call():
 
 
 @pytest.mark.asyncio
-async def test_compile_falls_back_when_llm_invents_price():
+async def test_compile_does_not_render_ungrounded_model_script_or_price():
     from unittest.mock import AsyncMock, patch
 
     from server.brain.agent_script_compiler import compile_agent_from_brief
@@ -346,7 +354,7 @@ async def test_compile_falls_back_when_llm_invents_price():
         "key_facts": ["50 lakhs"],
     }
     with patch(
-        "server.brain.agent_script_compiler._llm_generate_script",
+        "server.brain.agent_script_compiler._llm_interpret_brief",
         new=AsyncMock(return_value=bad_payload),
     ):
         compiled, result, *_ = await compile_agent_from_brief(
@@ -354,9 +362,15 @@ async def test_compile_falls_back_when_llm_invents_price():
             language="te-IN",
             use_llm=True,
         )
-    # This incomplete draft is rejected by the sectional quality gate before
-    # factual validation. The invented-price assertion below remains required.
-    assert result.optimizer_model == "legacy_deterministic_quality_floor_v1"
+    # Model extraction can be used, but its free-form draft is not authoritative.
+    # The renderer keeps source facts instead of accepting the invented offer.
+    assert result.optimizer_model == "brief_interpret_v1"
+    assert result.provenance["llm_used"] is True
+    assert result.provenance["fallback"] is False
+    assert result.provenance["semantic_review"] == "source_grounding_and_deterministic_checks"
+    assert result.provenance["source_checksum"] == result.source_checksum
+    assert "50 lakhs" in result.agent_script
     assert "95" not in result.agent_script
-    assert "LIVE CALL GUIDE" in result.agent_script
+    assert bad_payload["agent_script"] not in result.agent_script
+    assert "Satish" in result.agent_script and "Acme" in result.agent_script
     assert "STATIC OUTPUT RULES" in compiled or "Turn priority" in compiled

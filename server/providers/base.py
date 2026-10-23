@@ -94,6 +94,7 @@ class TTSConfig:
     emotion: str | None = None
     speed: float | None = None
     volume: float | None = None
+    pitch: float | None = None
 
 
 @runtime_checkable

@@ -4,17 +4,17 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 import pytest
-from fastapi.testclient import TestClient
 
 import server.app as app_mod
 from server.agent.instruction_store import instruction_store
 from server.call.audio_archive import audio_archive
-from server.call.call_context import CallContext, clear_all, get as get_ctx
+from server.call.call_context import CallContext, clear_all
 from server.call.call_ledger import call_ledger
 from server.call.call_prompt_preview import build_live_prompt_for_call, get_call_prompt_preview
 from server.call.call_store import call_store
 from server.config.env import get_settings
 from server.providers.base import ResolvedStack, StageSelection
+from server.tests.auth_helpers import authenticated_dev_client
 
 
 def _te_brain(body: str) -> str:
@@ -53,7 +53,7 @@ def test_prompt_preview_api_active_call(monkeypatch, tmp_path):
         optimizer_report={},
         source_checksum="prev1",
     )
-    c = TestClient(app_mod.app)
+    c = authenticated_dev_client(app_mod.app)
     started = c.post(
         "/api/call/start",
         json={"sessionId": sid, "channel": "browser", "direction": "outbound"},
@@ -86,7 +86,7 @@ async def test_prompt_preview_session_brain_locked_in_meta(monkeypatch, tmp_path
         optimizer_report={},
         source_checksum="x",
     )
-    c = TestClient(app_mod.app)
+    c = authenticated_dev_client(app_mod.app)
     call_id = c.post("/api/call/start", json={"sessionId": sid}).json()["call_id"]
     meta = call_ledger.read_meta(call_id)
     assert "LOCKED SESSION BRAIN" in (meta.get("compiled_brain_text") or "")
@@ -115,7 +115,7 @@ def test_instructions_live_prompt_preview_session(monkeypatch, tmp_path):
         optimizer_report={},
         source_checksum="prev2",
     )
-    c = TestClient(app_mod.app)
+    c = authenticated_dev_client(app_mod.app)
     r = c.get(
         f"/api/instructions/live-prompt-preview?sessionId={sid}"
         "&direction=outbound&pipeline=realtime_voice&llmModel=gpt-realtime-2.1-mini"
@@ -128,7 +128,7 @@ def test_instructions_live_prompt_preview_session(monkeypatch, tmp_path):
     instruction_store.clear(sid)
 
 
-def test_live_prompt_gemini_includes_pinned_flow_header():
+def test_live_prompt_gemini_preserves_prepared_opening_contract():
     brain = (
         "--- AGENT IDENTITY ---\nPriya, Acme.\n\n"
         "--- OUTBOUND WORKFLOW ---\nAsk if they have a moment.\n"
@@ -143,7 +143,9 @@ def test_live_prompt_gemini_includes_pinned_flow_header():
         caller_id=None,
     )
     assert provider == "gemini"
-    assert "GEMINI LIVE PSTN" in live
+    assert "The platform prepares your opening on this Live session before dialing" in live
+    assert "plays its cached audio once" in live
+    assert "Do not generate another opening while the cached audio is playing" in live
     assert "PINNED CONVERSATION FLOW" in live or "moment" in live.lower()
     assert layers[1]["layer"] == "realtime_voice_session"
 

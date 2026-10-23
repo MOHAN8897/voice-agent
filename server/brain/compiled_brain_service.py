@@ -3,30 +3,34 @@ Compiled brain service — sole L2 writer (Phase 2).
 """
 from __future__ import annotations
 
-import uuid
 import copy
+import uuid
 from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select, update
 
 from server.agent.brain_prompt_composer import estimate_tokens
-from server.brain.business_brain_store import assemble_raw_business_prompt, business_brain_store, draft_revision
+from server.brain.business_brain_store import (
+    assemble_raw_business_prompt,
+    business_brain_store,
+    draft_revision,
+)
 from server.brain.business_prompt_optimizer import optimize_business_prompt
-from server.brain.platform_brain_store import platform_brain_store
 from server.brain.compiled_brain_artifact import (
     assemble_unified_brain,
     checksum_instructions,
-    platform_body_for_agent_language,
     is_unified_compiled_brain,
+    platform_body_for_agent_language,
 )
+from server.brain.platform_brain_store import platform_brain_store
 from server.brain.sections import STATIC_OUTPUT_RULES_VERSION
-from server.prompts.agent_voice_rules import normalize_compile_language
 from server.brain.semantic_validation import validate_sections
 from server.config.env import get_settings
 from server.db.connection import get_session_factory
 from server.db.models.brain_models import CompiledBrainSnapshot
 from server.db.models.entities import Agent
+from server.prompts.agent_voice_rules import normalize_compile_language
 from server.utils.errors import AppError, ErrorCode
 
 _COMPILED_CACHE: dict[str, dict[str, Any]] = {}

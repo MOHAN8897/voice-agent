@@ -281,13 +281,25 @@ class PstnTurnTtsSession:
         from server.providers.base import TTSConfig
 
         voice = self._voice
-        selection = getattr(resolved_stack, "tts", None)
-        provider = str(getattr(selection, "provider", "") or "").strip().lower()
-        model = str(getattr(selection, "model", "") or "").strip()
-        config = getattr(selection, "config", None)
+        if isinstance(resolved_stack, dict):
+            selection = resolved_stack.get("tts")
+            stack_lang = str(resolved_stack.get("language") or "")
+        else:
+            selection = getattr(resolved_stack, "tts", None)
+            stack_lang = str(getattr(resolved_stack, "language", "") or "")
+
+        if isinstance(selection, dict):
+            provider = str(selection.get("provider") or "").strip().lower()
+            model = str(selection.get("model") or "").strip()
+            config = selection.get("config")
+        else:
+            provider = str(getattr(selection, "provider", "") or "").strip().lower()
+            model = str(getattr(selection, "model", "") or "").strip()
+            config = getattr(selection, "config", None)
+
         if not provider or not model or not isinstance(config, dict):
             raise RuntimeError("The selected composed speech model is unavailable")
-        if str(getattr(resolved_stack, "language", "") or "") != language_code:
+        if stack_lang and stack_lang != language_code:
             raise RuntimeError("Composed PSTN speech language does not match the pinned profile")
 
         api_mode = str(config.get("api_mode") or "").strip().lower()

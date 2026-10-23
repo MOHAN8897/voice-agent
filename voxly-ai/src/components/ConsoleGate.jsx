@@ -4,6 +4,8 @@ import { ConsoleSignInRequired } from './ConsoleSignInRequired';
 import { OnboardingSurveyModal } from './OnboardingSurveyModal';
 import { isTourCompleted, setTourCompleted } from '../services/tourGuide';
 
+import { ConsoleSkeleton } from '../console/ConsoleSkeleton';
+
 export function ConsoleGate({ children, onSignIn, onBackToMarketing }) {
   const { isAuthenticated, isLoading, user, updateUser, refreshSession } = useAuth();
 
@@ -25,11 +27,7 @@ export function ConsoleGate({ children, onSignIn, onBackToMarketing }) {
   }, [isAuthenticated, user]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAF9FD] text-sm text-[#524E5E]">
-        Checking session…
-      </div>
-    );
+    return <ConsoleSkeleton />;
   }
 
   if (!isAuthenticated) {

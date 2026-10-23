@@ -3,7 +3,7 @@ import { PageHeader } from './PageHeader';
 import { Footer } from '../components/Footer';
 import { ShieldCheck, Lock, Key, Server, Cpu, CheckCircle2 } from 'lucide-react';
 
-export function SecurityPage({ onBackToLanding, onEnterConsole, onNavigatePage }) {
+export function SecurityPage({ onBackToLanding, onEnterConsole, onNavigatePage, onSignIn }) {
   const securityPillars = [
     {
       title: 'Secure connections',
@@ -43,6 +43,7 @@ export function SecurityPage({ onBackToLanding, onEnterConsole, onNavigatePage }
         title="Security & Compliance"
         onBackToLanding={onBackToLanding}
         onEnterConsole={onEnterConsole}
+        onSignIn={onSignIn}
       />
 
       <main className="flex-1 max-w-5xl mx-auto px-6 sm:px-8 py-12 sm:py-16 space-y-12">

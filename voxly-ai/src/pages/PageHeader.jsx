@@ -3,8 +3,19 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { DEFAULT_CONSOLE_TAB } from '../lib/consoleEntry';
 
-export function PageHeader({ title, subtitle, onBackToLanding, onEnterConsole }) {
+export function PageHeader({ title, subtitle, onBackToLanding, onEnterConsole, onSignIn }) {
   const { isAuthenticated } = useAuth();
+
+  const handleAuthClick = () => {
+    if (isAuthenticated) {
+      onEnterConsole?.(DEFAULT_CONSOLE_TAB);
+    } else if (onSignIn) {
+      onSignIn();
+    } else {
+      onBackToLanding?.();
+      onEnterConsole?.(DEFAULT_CONSOLE_TAB);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E4E2EB] py-3.5 px-6 sm:px-8">
@@ -60,7 +71,7 @@ export function PageHeader({ title, subtitle, onBackToLanding, onEnterConsole })
           </button>
           <button
             type="button"
-            onClick={() => onEnterConsole?.(DEFAULT_CONSOLE_TAB)}
+            onClick={handleAuthClick}
             className="px-3.5 py-1.5 rounded-xl bg-[#0F0E17] text-white text-xs font-semibold hover:bg-[#27253D] transition-all flex items-center gap-1.5 shadow-xs"
           >
             <span>{isAuthenticated ? 'Open Console' : 'Sign In'}</span>

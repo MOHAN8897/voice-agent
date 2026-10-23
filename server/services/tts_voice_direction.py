@@ -82,9 +82,14 @@ def resolve_speech_pace(provider: str, pace: Any = None) -> float:
         raise ValueError("Speech pace must be a finite positive number") from exc
     if isinstance(pace, bool) or not math.isfinite(value) or value <= 0:
         raise ValueError("Speech pace must be a finite positive number")
-    lower, upper = (0.6, 1.5) if provider == "cartesia" else (0.5, 2.0)
-    if provider == "gemini":
-        lower = 0.25  # Preserve the supported Live speed selection range.
+    if provider == "gnani":
+        lower, upper = (0.85, 1.15)
+    elif provider == "cartesia":
+        lower, upper = (0.6, 1.5)
+    elif provider == "gemini":
+        lower, upper = (0.25, 2.0)
+    else:
+        lower, upper = (0.5, 2.0)
     return max(lower, min(upper, value))
 
 

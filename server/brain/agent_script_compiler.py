@@ -5,7 +5,7 @@ Default path (v16): extract agent name + company from the brief and emit a minim
 BUSINESS KNOWLEDGE script only. Platform voice, safety, hangup, and output rules are
 assembled separately in ``_assemble_brain``.
 
-Legacy path (``use_llm=True``): full sectional LLM script generation (disabled by default).
+``use_llm=True`` uses the same grounded interpretation path as normal generation.
 """
 from __future__ import annotations
 
@@ -28,7 +28,6 @@ from server.agent.brain_prompt_composer import (
 )
 from server.prompts.conversation_policy import (
     LIVE_CALL_GUIDE_BODY,
-    OPENING_GREETING_AND_CUSTOMER_ID_RULES,
     flow_section,
     infer_agent_role,
     infer_call_direction,
@@ -752,6 +751,8 @@ def extract_company_from_brief(brief: str) -> str:
         if candidate.lower() in {
             "shop", "my shop", "our shop", "stuff", "something", "business",
             "company", "agency", "cars", "plants", "idk", "maybe",
+            "whatsapp", "telegram", "instagram", "facebook", "email", "sms",
+            "callback", "callbacks", "phone", "call", "calls",
         }:
             return ""
         if re.search(
@@ -863,7 +864,7 @@ def extract_company_from_brief(brief: str) -> str:
 
     match = re.search(
         r"(?:(?:agent\s*(?:name|named)\s*(?:(?:is)\b\s*|:\s*)?[^\n.,;]+?\s+)|(?:call(?:ing)?\s+))"
-        r"from\s+([^\n.,;]{2,80}?)(?=\s+(?:about|in\b|who\b|that\b|book\b)|[.,;]|$)",
+        r"from\s+([^\n.,;]{2,80}?)(?=\s+(?:about|in\b|who\b|that\b|book\b|to\b)|[.,;]|$)",
         text,
         re.I,
     )
@@ -923,6 +924,9 @@ def extract_company_from_brief(brief: str) -> str:
             return accepted
 
     for camel in re.finditer(r"\b([A-Z][a-z]+[A-Z][A-Za-z0-9]*)\b", text):
+        prefix = text[:camel.start()].rstrip()
+        if re.search(r"\b(?:no|never|without|not|don'?t|do not)\b$", prefix, re.I):
+            continue
         accepted = _accept_company(camel.group(1))
         if accepted:
             return accepted
@@ -1623,13 +1627,10 @@ def _role_on_call_section(
         next_step = _sales_next_step(brief, inbound=inbound, native_en=native_en)
         if native_en:
             discover = "one useful missing fact from the brief"
-            collect = "callback or email preference"
         elif inbound:
             discover = "one discovery question at a time (from COMPANY & OFFER only)"
-            collect = "callback preference"
         else:
             discover = "one discovery question at a time (from COMPANY & OFFER only)"
-            collect = "callback preference"
         return (
             "--- YOUR ROLE ON THIS CALL ---\n"
             f"{heading} Answer questions first using COMPANY & OFFER only.\n"
@@ -1816,54 +1817,41 @@ def _platform_call_rules(
 ) -> str:
     """Platform call discipline — compiled into brain only, not shown as the user script."""
     inbound = str(direction or "").strip().lower() in ("inbound", "incoming")
-    native = is_native_english(language)
     lead_capture = ""
     if role in ("sales", "lead_qualification"):
-        next_pref = (
-            "callback or email preference"
-            if native
-            else "visit/callback preference"
-        )
         lead_capture = (
-            f"--- LEAD CAPTURE ---\n"
-            f"Ask a field only if they have not already given it on this call "
-            f"(interest, name, contact, {next_pref}). Never walk that list as a checklist.\n"
-            f"Brief ack when they share details ('Got it' / 'Noted'). Do not read the dialed number aloud; "
-            f"if they give or correct a callback number and you are unsure, confirm only the uncertain part once.\n"
-            f"If they are busy: one callback offer, no pitch, stay on the line.\n"
-            f"Stop qualifying once enough is captured for the agreed next step.\n\n"
+            "--- LEAD CAPTURE ---\n"
+            "Collect only fields required by the explicit business workflow and still unknown on this call. "
+            "Never turn optional fields into a checklist or invent permission to collect contact details.\n"
+            "Acknowledge details briefly. Do not read the dialed number aloud.\n"
+            "If they are busy, follow only a source-permitted next step; do not assume a callback is allowed.\n\n"
         )
     elif role in ("appointment", "follow_up"):
         lead_capture = (
-            f"--- LEAD CAPTURE ---\n"
-            f"Ask name, contact, or callback preference only if still unknown on this call.\n"
-            f"Brief ack when they share details ('Got it' / 'Noted'). Do not read the dialed number aloud; "
-            f"if they give or correct a callback number and you are unsure, confirm only the uncertain part once.\n"
-            f"If they are busy: one callback offer, no pitch, stay on the line.\n\n"
+            "--- LEAD CAPTURE ---\n"
+            "Ask for scheduling or contact details only when the explicit business workflow requires them. "
+            "Skip details already supplied. Do not read the dialed number aloud.\n"
+            "If they are busy, follow only a source-permitted next step.\n\n"
         )
     if inbound:
         workflow = (
-            f"--- INBOUND WORKFLOW ---\n"
-            f"1. Answer promptly with CANONICAL OPENING — name, company, offer to help.\n"
-            f"2. Listen to their issue or request first.\n"
-            f"3. Resolve using COMPANY & OFFER. If you cannot: one boundary, then a next step.\n"
-            f"4. When resolved or they are done: thank them and close.\n\n"
+            "--- INBOUND WORKFLOW ---\n"
+            "1. Answer promptly with CANONICAL OPENING — name, company, offer to help.\n"
+            "2. Listen to their issue or request first.\n"
+            "3. Resolve using COMPANY & OFFER. If you cannot: one boundary, then a next step.\n"
+            "4. When resolved or they are done: thank them and close.\n\n"
         )
         first_turn_guard = (
             "Follow inbound CANONICAL OPENING — do not ask if they have a moment on a call they placed.\n"
         )
     else:
-        next_step = (
-            "If they have time: one discovery question from COMPANY & OFFER."
-            if role in ("sales", "lead_qualification")
-            else "If they have time: address their request and follow the relevant script objective; do not add sales qualification."
-        )
         workflow = (
-            f"--- OUTBOUND WORKFLOW ---\n"
-            f"1. Wait for the callee to speak first (hello, yes, who is this).\n"
-            f"2. One intro using CANONICAL OPENING — then listen.\n"
-            f"3. {next_step}\n"
-            f"4. If busy: offer callback. If not interested: thank them and close.\n\n"
+            "--- OUTBOUND WORKFLOW ---\n"
+            "1. The platform prepares and plays CANONICAL OPENING once at media readiness. "
+            "Do not generate or replay it after the opening-delivered note.\n"
+            "2. Wait for the caller's actual reply and address it before the next applicable script objective.\n"
+            "3. Ask a discovery question or offer a next step only when the business workflow permits it.\n"
+            "4. If busy, acknowledge and use only a permitted next step. If not interested, thank them and close.\n\n"
         )
         first_turn_guard = "Never use help-desk language on the first turn.\n"
 
@@ -1885,7 +1873,7 @@ def _platform_call_rules(
         f"Follow applicable required steps and disclosures, skipping answered questions and inapplicable branches.\n"
         f"Script is a guide: follow the caller's need without forcing optional qualification. Never numbered Question/Step trees.\n"
         f"If the caller answers a script question without being asked, mark it as done and advance.\n"
-        f"Act like a skilled human telecaller: systematic but natural, persistent but respectful.\n\n"
+        f"Speak naturally as the named AI assistant; answer honestly if asked whether you are AI.\n\n"
         f"--- TURN DISCIPLINE ---\n"
         f"Professional and concise: one or two short sentences per turn, then stop and listen.\n"
         f"Answer their last point first, then resume the next open script step. No monologues, repeated pitch, or brochure dumps.\n"
@@ -2137,7 +2125,6 @@ def _apply_brief_interpretation(
     voice = extract_voice_from_brief(brief)
     offer = ""
     text_l = _normalize_brief_identity_text(brief).lower()
-    brief_name = extract_agent_name_from_brief(brief)
     if interpreted:
         llm_name = _titlecase_name(_clean_identity_value(str(interpreted.get("agent_name") or "")))
         if (
@@ -2489,17 +2476,24 @@ async def compile_agent_from_brief(
     config["callDirection"] = selected_direction
     checksum = brief_checksum(brief=cleaned, language=lang, style=style_val,
                               call_end_policy=call_end_policy, generation_config=config)
+    attempted_provider: str | None = None
+    attempted_model: str | None = None
+    if use_llm or interpret_brief:
+        try:
+            from server.brain.generation_runtime import generation_target_metadata
+
+            attempted_provider, attempted_model = generation_target_metadata()
+        except Exception:
+            # Failure to resolve the selected stack is itself a degraded attempt.
+            pass
     interpreted: dict[str, Any] | None = None
-    if use_llm:
-        interpreted = await _llm_generate_script(cleaned, language=lang, budget_tokens=budget_tokens)
-    elif interpret_brief:
+    if use_llm or interpret_brief:
         interpreted = await _llm_interpret_brief(cleaned, language=lang, direction=selected_direction)
     agent_name, identity_issues, name_evidence = resolve_agent_identity(
-        _normalize_brief_identity_text(cleaned), fallback=extract_agent_name_from_brief(cleaned),
-        interpreted=str((interpreted or {}).get("agent_name") or ""),
+        _normalize_brief_identity_text(cleaned),
         explicit=str(config.get("employeeName") or ""),
-        allow_default=True,
-        default_name=infer_agent_name(cleaned, lang),
+        interpreted=str((interpreted or {}).get("agent_name") or ""),
+        allow_default=False,
     )
     if identity_issues:
         raise BriefValidationError(identity_issues)
@@ -2511,8 +2505,17 @@ async def compile_agent_from_brief(
     inferred_role = str((interpreted or {}).get("role") or "").strip().lower()
     valid_roles = set(BRIEF_INTERPRET_SCHEMA["properties"]["role"]["enum"])
     explicit_role = str(config.get("agentRole") or "").strip().lower().replace(" ", "_").replace("-", "_")
-    role_aliases = {"lead_qualifier": "lead_qualification", "customer_support": "support",
-                    "admissions": "education", "custom": "other", "general": "other"}
+    role_aliases = {
+        "lead_qualifier": "lead_qualification",
+        "customer_support": "support",
+        "technical_support": "support",
+        "tech_support": "support",
+        "helpdesk": "support",
+        "triage": "support",
+        "admissions": "education",
+        "custom": "other",
+        "general": "other",
+    }
     explicit_role = role_aliases.get(explicit_role, explicit_role)
     if explicit_role and explicit_role not in valid_roles:
         raise BriefValidationError([brief_issue("invalid_role", "Choose a supported role or Custom for an unusual workflow.", field="agentRole")])
@@ -2575,7 +2578,7 @@ async def compile_agent_from_brief(
                                                company_name=company_name)
     if validation_issues:
         raise BriefValidationError([brief_issue("invalid_generated_script", item, field="script") for item in validation_issues])
-    missing = [item.requirement_id for item in requirements if item.evidence not in script]
+    missing = [item.requirement_id for item in requirements if item.text not in script]
     if missing:
         raise BriefValidationError([brief_issue("missing_requirements", "Source requirements were not preserved: " + ", ".join(missing), field="workflow")])
     platform_rules = _platform_call_rules(agent_name=agent_name, role=role,
@@ -2598,7 +2601,9 @@ async def compile_agent_from_brief(
     if previous_compiled and previous_compiled.strip() == compiled.strip():
         warnings.append(brief_issue("unchanged_script", "Agent script unchanged; the same brief and settings produced the same artifact.", severity="warning"))
     provenance = {"provider": (interpreted or {}).get("_generation_provider"),
-        "model": (interpreted or {}).get("_generation_model"), "llm_used": bool(interpreted),
+        "model": (interpreted or {}).get("_generation_model"),
+        "attempted_provider": attempted_provider, "attempted_model": attempted_model,
+        "llm_used": bool(interpreted),
         "fallback": fallback, "semantic_review": "source_grounding_and_deterministic_checks",
         "source_checksum": checksum, "spec_hash": spec.spec_hash(),
         "script_checksum": hashlib.sha256(script.encode("utf-8")).hexdigest(),

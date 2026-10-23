@@ -4,7 +4,7 @@ import { Menu, X, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { DEFAULT_CONSOLE_TAB } from '../lib/consoleEntry';
 
-export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour, onNavigatePage }) {
+export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour, onNavigatePage, onSignIn }) {
   const { isAuthenticated } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -15,7 +15,15 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour, onNavigatePage
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const openConsole = () => onEnterConsole?.(DEFAULT_CONSOLE_TAB);
+  const handleClickAuth = () => {
+    if (isAuthenticated) {
+      onEnterConsole?.(DEFAULT_CONSOLE_TAB);
+    } else if (onSignIn) {
+      onSignIn();
+    } else {
+      onEnterConsole?.(DEFAULT_CONSOLE_TAB);
+    }
+  };
 
   const handleLinkClick = (href) => (e) => {
     if (onNavigatePage) {
@@ -82,7 +90,7 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour, onNavigatePage
 
           <button
             type="button"
-            onClick={openConsole}
+            onClick={handleClickAuth}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] active:scale-[0.98] transition-all shadow-xs"
           >
             <span>{isAuthenticated ? 'Open console' : 'Sign in to console'}</span>
@@ -125,7 +133,7 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour, onNavigatePage
               data-testid="mobile-console-btn"
               onClick={() => {
                 setMobileMenuOpen(false);
-                openConsole();
+                handleClickAuth();
               }}
               className="w-full min-h-[44px] py-3 rounded-xl text-xs font-semibold text-white bg-[#0F0E17] hover:bg-[#232130] flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-xs"
             >

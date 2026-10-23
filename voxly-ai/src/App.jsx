@@ -35,14 +35,23 @@ import { PrivacyPage } from './pages/PrivacyPage';
 import { TermsPage } from './pages/TermsPage';
 import { SecurityPage } from './pages/SecurityPage';
 import { applyPageMetadata, PUBLIC_PATHS, viewFromLocation } from './lib/siteMetadata';
+import { authService } from './services/authService';
+
+import { ConsoleSkeleton } from './console/ConsoleSkeleton';
 
 const ConsoleEntry = React.lazy(() => import('./console/ConsoleEntry'));
 
 function AppInner() {
-  const { isAuthenticated, logout: authLogout, signOutReason, user } = useAuth();
+  const { isAuthenticated, isLoading, logout: authLogout, signOutReason, user } = useAuth();
 
   const [currentView, setCurrentView] = useState(() => {
-    if (typeof window !== 'undefined') return viewFromLocation(window.location);
+    if (typeof window !== 'undefined') {
+      const view = viewFromLocation(window.location);
+      if (view === 'dashboard' && !authService.getSession()) {
+        return 'landing';
+      }
+      return view;
+    }
     return 'landing';
   });
 
@@ -120,6 +129,23 @@ function AppInner() {
         setAuthModalMode('reset'); setIsAuthModalOpen(true); return;
       }
       const view = viewFromLocation(window.location);
+      if (view === 'dashboard') {
+        const hasStoredSession = Boolean(authService.getSession());
+        if (isLoading || hasStoredSession) {
+          setCurrentView('dashboard');
+          const tab = window.location.hash.match(/#dashboard\/([a-z0-9_-]+)/i)?.[1] || '';
+          applyPageMetadata('dashboard', tab);
+          return;
+        }
+        if (!isAuthenticated) {
+          setCurrentView('landing');
+          const tab = window.location.hash.match(/#dashboard\/([a-z0-9_-]+)/i)?.[1] || '';
+          openAuthModal('signin', tab || DEFAULT_CONSOLE_TAB);
+          window.history.replaceState({}, '', '/');
+          applyPageMetadata('landing');
+          return;
+        }
+      }
       setCurrentView(view);
       const tab = window.location.hash.match(/#dashboard\/([a-z0-9_-]+)/i)?.[1] || '';
       applyPageMetadata(view, tab);
@@ -131,7 +157,7 @@ function AppInner() {
       window.removeEventListener('hashchange', handleRouteChange);
       window.removeEventListener('popstate', handleRouteChange);
     };
-  }, []);
+  }, [isAuthenticated, isLoading]);
 
 
   const openAuthModal = (mode = 'signin', postAuthTab = DEFAULT_CONSOLE_TAB) => {
@@ -140,16 +166,20 @@ function AppInner() {
     setIsAuthModalOpen(true);
   };
 
-  /** Sign-in and "Build your agent" use the same path: console after auth. */
+  /** Sign-in and "Build your agent" open the modal in-place on the home page when unauthenticated, and navigate only post-auth. */
   const enterConsole = (tab = DEFAULT_CONSOLE_TAB) => {
     const targetTab = tab || DEFAULT_CONSOLE_TAB;
-    setCurrentView('dashboard');
-    window.history.pushState({}, '', '/' + consoleHash(targetTab));
-    applyPageMetadata('dashboard', targetTab);
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
     if (!isAuthenticated) {
-      openAuthModal('signin', targetTab);
+      if (currentView !== 'landing') {
+        goToLanding();
+      }
+      openAuthModal("signin", targetTab);
+      return;
     }
+    setCurrentView("dashboard");
+    window.history.pushState({}, "", "/" + consoleHash(targetTab));
+    applyPageMetadata("dashboard", targetTab);
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
   };
 
   const handleGetStarted = () => enterConsole(DEFAULT_CONSOLE_TAB);
@@ -240,7 +270,7 @@ function AppInner() {
   return (
     <>
       {currentView === 'dashboard' ? (
-        <React.Suspense fallback={<div role="status" className="min-h-screen flex items-center justify-center bg-[#FAF9FD] text-sm text-[#524E5E]">Loading workspace…</div>}>
+        <React.Suspense fallback={<ConsoleSkeleton />}>
           <ConsoleEntry
             onSignIn={() => openAuthModal('signin', parseDashboardTabFromHash(window.location.hash))}
             onBackToLanding={() => {
@@ -254,30 +284,35 @@ function AppInner() {
         <SupportPage
           onBackToLanding={goToLanding}
           onEnterConsole={enterConsole}
+          onSignIn={() => { goToLanding(); openAuthModal('signin', DEFAULT_CONSOLE_TAB); }}
           onNavigatePage={handleNavigatePage}
         />
       ) : currentView === 'company' ? (
         <CompanyPage
           onBackToLanding={goToLanding}
           onEnterConsole={enterConsole}
+          onSignIn={() => { goToLanding(); openAuthModal('signin', DEFAULT_CONSOLE_TAB); }}
           onNavigatePage={handleNavigatePage}
         />
       ) : currentView === 'privacy' ? (
         <PrivacyPage
           onBackToLanding={goToLanding}
           onEnterConsole={enterConsole}
+          onSignIn={() => { goToLanding(); openAuthModal('signin', DEFAULT_CONSOLE_TAB); }}
           onNavigatePage={handleNavigatePage}
         />
       ) : currentView === 'terms' ? (
         <TermsPage
           onBackToLanding={goToLanding}
           onEnterConsole={enterConsole}
+          onSignIn={() => { goToLanding(); openAuthModal('signin', DEFAULT_CONSOLE_TAB); }}
           onNavigatePage={handleNavigatePage}
         />
       ) : currentView === 'security' ? (
         <SecurityPage
           onBackToLanding={goToLanding}
           onEnterConsole={enterConsole}
+          onSignIn={() => { goToLanding(); openAuthModal('signin', DEFAULT_CONSOLE_TAB); }}
           onNavigatePage={handleNavigatePage}
         />
       ) : (
@@ -285,6 +320,7 @@ function AppInner() {
           {/* Navigation Header */}
           <Navbar
             onEnterConsole={enterConsole}
+            onSignIn={() => openAuthModal('signin', DEFAULT_CONSOLE_TAB)}
             onWatchDemo={() => setIsDemoModalOpen(true)}
             onNavigatePage={handleNavigatePage}
           />

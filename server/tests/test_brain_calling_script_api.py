@@ -8,12 +8,12 @@ from __future__ import annotations
 import uuid
 
 import pytest
-from fastapi.testclient import TestClient
 
 import server.app as app_mod
 from server.brain.business_brain_store import business_brain_store
 from server.brain.compiled_brain_service import compiled_brain_service
 from server.config.env import get_settings
+from server.tests.auth_helpers import authenticated_dev_client
 
 
 @pytest.fixture(autouse=True)
@@ -29,7 +29,7 @@ def _offline(monkeypatch, tmp_path):
 
 @pytest.fixture
 def client():
-    return TestClient(app_mod.app)
+    return authenticated_dev_client(app_mod.app)
 
 
 def _create_agent(client) -> str:

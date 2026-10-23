@@ -37,52 +37,41 @@ async def voice_stack_catalog(
     records = await load_profile_records(environment, None)
     rates = await _load_rates_without_fallback()
 
+    import copy
+    from server.services.saas.voice_stack_defaults import recommended_composed_profile
+
     standard_tiers = ["low", "medium"]
     custom_tiers = [t for t in sorted(records.keys()) if t not in ("low", "medium", "premium")]
     ordered_tiers = [t for t in standard_tiers if t in records or t in ("low", "medium")] + custom_tiers
 
-    profiles = [
-        public_catalog_profile(tier, records.get(tier), rates)
-        for tier in ordered_tiers
+    active_ordered_tiers = [
+        tier for tier in ordered_tiers
+        if bool((records.get(tier) or {}).get("profile", {}).get("enabled", False))
     ]
 
-    premium_rate = _native_tier_retail_rate(rates, "premium")
-    if not premium_rate and rates:
-        pstn_usd = rates.get("pstn_rate_usd_micros_per_min")
-        pstn_inr = rates.get("pstn_rate_inr_paise_per_min")
-        ver = rates.get("version") or 1
-        if isinstance(pstn_usd, int) and pstn_usd > 0 and isinstance(pstn_inr, int) and pstn_inr > 0:
-            premium_rate = {
-                "usdMicrosPerMin": pstn_usd,
-                "inrPaisePerMin": pstn_inr,
-                "version": int(ver),
-                "fxRateInr": float(rates.get("fx_rate_inr") or 95.64),
-                "complete": True,
-            }
+    profiles = [
+        public_catalog_profile(tier, records.get(tier), rates)
+        for tier in active_ordered_tiers
+    ]
 
     premium_record = records.get("premium")
-    if premium_record and isinstance(premium_record.get("profile"), dict) and premium_record["profile"].get("engines"):
-        premium_profile = public_catalog_profile("premium", premium_record, rates)
-    else:
-        prem_p = (premium_record or {}).get("profile") if premium_record else None
-        prem_enabled = prem_p.get("enabled", True) if isinstance(prem_p, dict) else True
-        prem_label = (prem_p.get("label") if isinstance(prem_p, dict) else None) or "Flagship Live"
-        ready_flag = bool(prem_enabled and premium_rate and premium_rate.get("complete"))
-        blockers = []
-        if not (premium_rate and premium_rate.get("complete")):
-            blockers.append({"code": "tier_native_rate_missing", "message": "An approved native retail rate for Flagship Live has not been configured."})
-        if not prem_enabled:
-            blockers.append({"code": "profile_not_available", "message": "This voice option is not currently available."})
-        premium_profile = {
-            "tier": "premium",
-            "label": prem_label,
-            "ready": ready_flag,
-            "profileRevision": int((premium_record or {}).get("revision") or 1),
-            "retailRate": premium_rate,
-            "engines": [],
-            "blockers": blockers,
-        }
-    profiles.append(premium_profile)
+    prem_p = (premium_record or {}).get("profile") if premium_record else None
+    prem_enabled = bool(prem_p.get("enabled", False)) if isinstance(prem_p, dict) else False
+
+    if prem_enabled:
+        if premium_record and isinstance(premium_record.get("profile"), dict) and premium_record["profile"].get("engines"):
+            premium_profile = public_catalog_profile("premium", premium_record, rates)
+        else:
+            prem_rec = copy.deepcopy(premium_record) if premium_record else {"profile": {}}
+            default_prem = recommended_composed_profile("premium", allow_premium=True)
+            if not prem_rec.get("profile"):
+                prem_rec["profile"] = default_prem
+            else:
+                for k, v in default_prem.items():
+                    if k not in prem_rec["profile"] or not prem_rec["profile"][k]:
+                        prem_rec["profile"][k] = v
+            premium_profile = public_catalog_profile("premium", prem_rec, rates)
+        profiles.append(premium_profile)
 
     for profile in profiles:
         for engine in profile.get("engines", []):
@@ -93,9 +82,10 @@ async def voice_stack_catalog(
                 ]
             engine["models"] = [model for model in engine.get("models", []) if model.get("voices")]
         profile["engines"] = [engine for engine in profile.get("engines", []) if engine.get("models")]
-        if not profile["engines"] and profile.get("ready") and profile.get("tier") != "premium":
+        if not profile["engines"] and profile.get("ready"):
             profile["ready"] = False
-            profile["blockers"].append({"code": "language_voice_unavailable", "message": "No approved voice is available for this language."})
+            if not any(b.get("code") == "language_voice_unavailable" for b in profile.get("blockers", [])):
+                profile["blockers"].append({"code": "language_voice_unavailable", "message": "No approved voice is available for this language."})
     active_profiles = [
         p for p in profiles
         if p.get("ready") is True

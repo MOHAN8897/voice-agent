@@ -47,7 +47,7 @@ class AgentService:
     ) -> dict[str, Any]:
         """One durable agent claim per workspace request, before generation starts."""
         aid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"agent-build:{tenant_id}:{uuid.UUID(request_id)}"))
-        payload = {"fingerprint": fingerprint, "state": "building"}
+        payload = {"fingerprint": fingerprint, "state": "building", "tenant_id": tenant_id}
 
         def existing_result(agent: dict[str, Any], saved: dict[str, Any]) -> dict[str, Any]:
             if saved.get("fingerprint") != fingerprint:
@@ -59,6 +59,8 @@ class AgentService:
             if aid in _MEM_AGENTS:
                 agent = await self.get_agent(aid, tenant_id=tenant_id)
                 return existing_result(agent, _MEM_BUILD_REQUESTS.get(aid) or {})
+            if aid in _MEM_BUILD_REQUESTS:
+                raise AgentBuildRequestConflict("creation_removed", "The agent for this creation request was removed. Start a new request.")
             agent = self._default_agent_dict(aid, name=name)
             agent.update(tenant_id=tenant_id, languages=[language], status="draft")
             _MEM_AGENTS[aid] = agent
@@ -80,14 +82,21 @@ class AgentService:
                         ConfigVersion.resource_type == "agent_build_request", ConfigVersion.resource_id == aid,
                     ))).scalar_one_or_none()
                     return existing_result(self._row_to_dict(row), dict(record.payload or {}) if record else {})
+                prior = (await session.execute(select(ConfigVersion).where(
+                    ConfigVersion.resource_type == "agent_build_request", ConfigVersion.resource_id == aid,
+                    ConfigVersion.payload["tenant_id"].as_string() == tenant_id,
+                ))).scalar_one_or_none()
+                if prior is not None:
+                    raise AgentBuildRequestConflict("creation_removed", "The agent for this creation request was removed. Start a new request.")
                 row = Agent(agent_id=uuid.UUID(aid), tenant_id=uuid.UUID(tenant_id), name=name, status="draft", languages=[language])
                 session.add(row)
                 session.add(ConfigVersion(resource_type="agent_build_request", resource_id=aid, version=1, payload=payload))
                 try:
                     await session.commit()
-                except IntegrityError:
+                except IntegrityError as exc:
                     await session.rollback()
-                    if attempt:
+                    sqlstate = getattr(exc.orig, "sqlstate", None) or getattr(exc.orig, "pgcode", None)
+                    if attempt or sqlstate != "23505":
                         raise
                 else:
                     return {"agent": self._row_to_dict(row), **payload, "created": True}
@@ -242,6 +251,8 @@ class AgentService:
         aid = str(uuid.uuid4())
         if factory is None:
             row = self._default_agent_dict(aid, name=name)
+            if tenant_id:
+                row["tenant_id"] = tenant_id
             row["languages"] = lang_list
             row["recording_disclosure_enabled"] = bool(recording_disclosure_enabled)
             row["recording_disclosure_text"] = recording_disclosure_text

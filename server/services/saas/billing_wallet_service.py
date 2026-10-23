@@ -65,6 +65,35 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
     min_from_cents = int((cents * 10_000) // rate_usd_micros) if rate_usd_micros > 0 else 0
     min_from_paise = int(inr_paise // rate_inr) if rate_inr > 0 else 0
     remaining_min = min_from_cents + min_from_paise
+    tier_rates_map = {
+        "low": {
+            "usdPerMin": round(rates["pstn_low_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_low_rate_usd_micros_per_min") else None,
+            "inrPerMin": round(rates["pstn_low_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_low_rate_inr_paise_per_min") else None,
+        },
+        "medium": {
+            "usdPerMin": round(rates["pstn_medium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_medium_rate_usd_micros_per_min") else None,
+            "inrPerMin": round(rates["pstn_medium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_medium_rate_inr_paise_per_min") else None,
+        },
+        "premium": {
+            "usdPerMin": round(rates["pstn_premium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_premium_rate_usd_micros_per_min") else round(rates["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
+            "inrPerMin": round(rates["pstn_premium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_premium_rate_inr_paise_per_min") else round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
+        },
+    }
+    try:
+        from server.services.dev_runtime import effective_app_environment
+        from server.services.saas.voice_stack_profiles import load_profile_records, _native_tier_retail_rate
+        env = effective_app_environment()
+        records = await load_profile_records(env, None)
+        for t, rec in records.items():
+            t_rate = _native_tier_retail_rate(rates, t, record=rec)
+            if t_rate and t_rate.get("inrPaisePerMin"):
+                tier_rates_map[t] = {
+                    "usdPerMin": round(t_rate["usdMicrosPerMin"] / 1_000_000.0, 6) if t_rate.get("usdMicrosPerMin") else None,
+                    "inrPerMin": round(t_rate["inrPaisePerMin"] / 100.0, 2),
+                }
+    except Exception as exc:
+        logger.debug("[WALLET] tier rate overlay error: %s", exc)
+
     summary = {
         # USD everywhere: the console quotes and displays one currency only.
         "currency": "USD",
@@ -87,20 +116,7 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
         "pstnMediumRateInrPerMin": round(rates["pstn_medium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_medium_rate_inr_paise_per_min") else None,
         "pstnPremiumRateUsdPerMin": round(rates["pstn_premium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_premium_rate_usd_micros_per_min") else round(rates["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
         "pstnPremiumRateInrPerMin": round(rates["pstn_premium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_premium_rate_inr_paise_per_min") else round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
-        "tierRates": {
-            "low": {
-                "usdPerMin": round(rates["pstn_low_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_low_rate_usd_micros_per_min") else None,
-                "inrPerMin": round(rates["pstn_low_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_low_rate_inr_paise_per_min") else None,
-            },
-            "medium": {
-                "usdPerMin": round(rates["pstn_medium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_medium_rate_usd_micros_per_min") else None,
-                "inrPerMin": round(rates["pstn_medium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_medium_rate_inr_paise_per_min") else None,
-            },
-            "premium": {
-                "usdPerMin": round(rates["pstn_premium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_premium_rate_usd_micros_per_min") else round(rates["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
-                "inrPerMin": round(rates["pstn_premium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_premium_rate_inr_paise_per_min") else round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
-            },
-        },
+        "tierRates": tier_rates_map,
         "webRateUsdPerMin": round(rates["web_agent_rate_usd_micros_per_min"] / 1_000_000.0, 6),
         "webRateInrPerMin": round(rates["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
         "didMonthlyUsd": round(rates["did_monthly_usd_micros"] / 1_000_000.0, 6),

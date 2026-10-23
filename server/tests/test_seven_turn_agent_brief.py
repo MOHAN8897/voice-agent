@@ -9,11 +9,11 @@ import re
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
 
+import server.app as app_mod
 from server.config.env import get_settings
 from server.prompts.agent_voice_rules import AGENT_VOICE_RULE_MARKERS
-import server.app as app_mod
+from server.tests.auth_helpers import authenticated_dev_client
 
 SESSION = "seven-turn-brief-demo"
 BRIEF = (
@@ -68,7 +68,7 @@ def _client(monkeypatch):
     monkeypatch.setenv("ENABLE_WORKING_MEMORY", "true")
     monkeypatch.setenv("VOICE_PIPELINE_MODE", "classic")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    return authenticated_dev_client(app_mod.app)
 
 
 def _script_has_voice_rules(text: str) -> bool:

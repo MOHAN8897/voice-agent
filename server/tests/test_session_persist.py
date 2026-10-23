@@ -1,15 +1,14 @@
 """Session override disk persistence."""
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
-
 import server.app as app_mod
 from server.agent.instruction_store import instruction_store
 from server.services.runtime_settings import runtime_settings
+from server.tests.auth_helpers import authenticated_dev_client
 
 
 def test_instructions_survive_store_reload():
-    c = TestClient(app_mod.app)
+    c = authenticated_dev_client(app_mod.app)
     sid = "persist-test-instructions"
     marker = "DISK_PERSIST_MARKER_XYZ"
     r = c.post(
@@ -58,7 +57,7 @@ def test_saved_agent_script_survives_ttl_and_memory_reload():
 
 
 def test_runtime_survive_store_reload():
-    c = TestClient(app_mod.app)
+    c = authenticated_dev_client(app_mod.app)
     sid = "persist-test-runtime"
     r = c.post(
         "/api/settings/runtime",

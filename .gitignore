@@ -94,3 +94,5 @@ scratch/
 /scratch_hima_prompt.txt
 dump.rdb
 /.gravitas/
+
+/.agents/teamwork/

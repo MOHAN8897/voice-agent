@@ -248,6 +248,9 @@ async def subscriber_outbound(
     saved_voice_settings = agent.get("voice_settings") if isinstance(agent.get("voice_settings"), dict) else (agent.get("voiceSettings") if isinstance(agent.get("voiceSettings"), dict) else {})
     raw_tier = agent.get("default_tier") or agent.get("defaultTier") or "medium"
     tier = str(raw_tier) if saved_voice_settings.get("stackSelectionVersion") == 1 else "medium"
+    snapshot = stack.get("_voice_stack_snapshot") if isinstance(stack, dict) else None
+    if isinstance(snapshot, dict) and snapshot.get("tier"):
+        tier = str(snapshot["tier"])
     body = OutboundTestBody(
         agentId=agent_id,
         fromE164=resolved_from,

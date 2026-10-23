@@ -26,9 +26,20 @@ class BriefValidationError(ValueError):
 
 
 def source_supported(value: str, source: str) -> bool:
-    """Exact normalized source evidence, not a model's confidence assertion."""
-    normalize = lambda text: " ".join(unicodedata.normalize("NFKC", text).casefold().split())
-    return bool(value and normalize(value) in normalize(source))
+    """Require a whole source phrase outside a contradictory negative context."""
+    def normalize(text: str) -> str:
+        return " ".join(unicodedata.normalize("NFKC", text).casefold().split())
+
+    proposed, original = normalize(value), normalize(source)
+    if not proposed:
+        return False
+    for match in re.finditer(r"(?<!\w)" + re.escape(proposed) + r"(?!\w)", original):
+        prior_clause = re.split(r"[.!?;।\n]", original[:match.start()])[-1]
+        if not re.search(r"\b(?:never|not|no|don'?t|do not|without)\b", prior_clause):
+            return True
+        if re.match(r"^(?:never|not|no|don'?t|do not|without)\b", proposed):
+            return True
+    return False
 
 
 def normalize_generation_config(config: dict[str, Any] | None) -> dict[str, Any]:
@@ -47,6 +58,10 @@ def normalize_generation_config(config: dict[str, Any] | None) -> dict[str, Any]
         if not isinstance(config["naturalSpokenStyle"], bool):
             raise BriefValidationError([brief_issue("invalid_configuration", "Natural spoken style must be true or false.", field="naturalSpokenStyle")])
         result["naturalSpokenStyle"] = config["naturalSpokenStyle"]
+    if result.get("mode") and result["mode"] not in {"instant_lead", "bulk"}:
+        raise BriefValidationError([brief_issue("invalid_mode", "Choose a supported call mode.", field="mode")])
+    if result.get("industry") and not re.fullmatch(r"[a-z][a-z0-9_-]{0,119}", result["industry"]):
+        raise BriefValidationError([brief_issue("invalid_industry", "Choose an industry label; describe custom details in the brief.", field="industry")])
     if result.get("callDirection"):
         direction = result["callDirection"].lower()
         if direction not in {"inbound", "outbound", "incoming", "outgoing", "in", "out"}:
@@ -67,7 +82,7 @@ def validate_brief_requirements(brief: str, *, language: str) -> list[dict[str, 
     if sum(char.isalpha() for char in brief) < 3:
         return [brief_issue("missing_brief", "Describe who the agent represents and what the call should accomplish.")]
     injection = re.compile(
-        r"\b(?:ignore|override|disregard)\s+(?:(?:all|the|your)\s+)?(?:previous|system|platform|safety|developer)\s+(?:instructions?|rules?|prompts?)"
+        r"\b(?:ignore|override|disregard)\s+(?:(?:all|the|your)\s+)?(?:previous\s+)?(?:system|platform|safety|developer)?\s*(?:instructions?|rules?|prompts?)"
         r"|\b(?:reveal|print|show|disclose)\b[^.\n]{0,45}\b(?:system|hidden|developer)\s+(?:prompts?|instructions?)", re.I)
     for match in injection.finditer(brief):
         if not _negative_or_quoted(brief, match.start()):
@@ -75,7 +90,7 @@ def validate_brief_requirements(brief: str, *, language: str) -> list[dict[str, 
     forged = re.search(r"(?im)^\s*(?:---\s*(?:CORE SAFETY|SYSTEM(?: PROMPT)?|STATIC OUTPUT RULES|PLATFORM CALL RULES|LANGUAGE LOCK|RUNTIME FOOTER)\s*---|<\s*/?\s*(?:system|developer)\s*>)", brief)
     if forged:
         issues.append(brief_issue("reserved_heading", "Platform instruction headings cannot be supplied in a business brief.", evidence=forged.group(0).strip()))
-    secrets = re.compile(r"\b(?:collect|request|ask(?:\s+(?:them|the caller|users?|customers?))?\s+for|obtain|capture)\b[^.\n;]{0,70}\b(?:otp|one[- ]time password|pin|cvv|password|full\s+(?:credit\s+|debit\s+|bank\s+)?card\s+number)\b", re.I)
+    secrets = re.compile(r"\b(?:collect|request|ask(?:\s+(?:them|the\s+callers?|callers?|users?|customers?))?\s+for|obtain|capture)\b[^.\n;]{0,70}\b(?:otp|one[- ]time password|pin|cvv|password|full\s+(?:credit\s+|debit\s+|bank\s+)?card\s+number)\b", re.I)
     for match in secrets.finditer(brief):
         if not _negative_or_quoted(brief, match.start()):
             issues.append(brief_issue("sensitive_collection", "The agent cannot collect OTPs, PINs, passwords, CVV or full card numbers; use an approved secure flow.", evidence=match.group(0)))
@@ -95,9 +110,9 @@ def validate_brief_requirements(brief: str, *, language: str) -> list[dict[str, 
 _NAME_WORD = r"(?:[^\W\d_]|[\u0300-\u036f\u0900-\u0dff])(?:[^\W_]|[\u0300-\u036f\u0900-\u0dff'’\-])*"
 _NAME_VALUE = rf"({_NAME_WORD}(?:\s+{_NAME_WORD}){{0,3}})"
 _NAME_STOPS = re.compile(
-    r"\s+(?:from|for|who|whose|that|and|at|representing|working|work|with|to|is|also|people|calls?|call\s+her|call\s+him|"
+    r"\s+(?:from|for|who|whose|that|and|at|about|should|must|will|can|representing|working|work|with|to|is|also|people|calls?|calling|call\s+her|call\s+him|"
     r"i|we|you|u|wants?|needs?|just|company|business|firm|agency|agencies|clinic|hospital|store|shop|"
-    r"selling|sells|sell|buying|buys|buy|booking|books|book|है|और|से|का|की|के|మరియు|నుండి|కోసం|అనే|ఆమె|అతను)\b",
+    r"selling|sells|sell|buying|buys|buy|booking|books|book|है|और|से|का|की|के|మరియు|నుండి|కోసం|అనే|ఆమె|అతను)(?:\b|\s|[.,;।!?]|$)",
     re.I,
 )
 
@@ -109,7 +124,14 @@ def clean_person_name(value: str) -> str:
         return ""
     if any(not (unicodedata.category(char)[0] in {"L", "M"} or char in " '’-") for char in value):
         return ""
-    if any(word.casefold() in {"agent", "named", "naed", "name", "is", "the", "person", "representative", "bot", "assistant", "company", "business", "i", "we", "you", "u"} for word in words):
+    stop_words = {
+        "agent", "named", "naed", "name", "is", "the", "person", "representative", "bot",
+        "assistant", "company", "business", "i", "we", "you", "u", "never", "not", "no",
+        "ask", "asking", "call", "calls", "calling", "verify", "check", "confirm", "help",
+        "for", "should", "speak", "from", "about",
+        "please", "do", "don't", "dont",
+    }
+    if any(word.casefold() in stop_words for word in words):
         return ""
     return " ".join(word[:1].upper() + word[1:] if word.islower() else word for word in words)
 
@@ -118,13 +140,22 @@ def identity_candidates(brief: str) -> list[dict[str, Any]]:
     patterns: tuple[tuple[int, str], ...] = (
         (100, rf"\bcreate\s+(?:an?\s+)?(?:\w+\s+){{0,4}}agent\s+(?:named|naed|name\b\s*(?:is|:|=)?)\s*{_NAME_VALUE}"),
         (95, rf"\b(?:actual|correct|new)\s+(?:agent\s+)?name\b\s*(?:is|:|=)?\s*{_NAME_VALUE}"),
+        (92, rf"\bagnet\s+name\s*(?:is|:|=)?\s*{_NAME_VALUE}"),
+        (90, rf"\b(?:it[\'’]?s|his|her|agent[\'’]?s|their|the)\s+name\s*(?:is|:|=)?\s*{_NAME_VALUE}"),
         (90, rf"\bagent\s+(?:named|naed|name\b\s*(?:is|:|=)?|is)\s*{_NAME_VALUE}"),
-        (85, rf"\b(?:person|representative|caller)\s+(?:who\s+calls(?:\s+the\s+users)?\s+is|named|naed)\s+{_NAME_VALUE}"),
+        (90, rf"\b(?:counsel(?:l)?or|consultant|salesperson|receptionist|advisor)\s+named\s+{_NAME_VALUE}"),
+        (88, rf"\bname\s*(?:is|:|=)\s*{_NAME_VALUE}"),
+        (88, rf"\bagent\s*[:=]\s*{_NAME_VALUE}"),
+        (85, rf"\bnamed\s+{_NAME_VALUE}"),
+        (85, rf"\bcall\s+(?:him|her|it|them|the\s+agent)\s+{_NAME_VALUE}"),
+        (85, rf"\b(?:person|representative)\s+(?:who\s+calls(?:\s+the\s+users)?\s+is|named|naed)\s+{_NAME_VALUE}"),
+        (70, rf"\bagent\s+{_NAME_VALUE}(?=\s*(?:[,.;]|from\b|for\b|at\b|company\b))"),
+        (65, rf"\bsomeone\s+like\s+{_NAME_VALUE}(?=\s+who\s+will\s+call\b)"),
+        (60, rf"^\s*([A-Z][a-z]+)\s+for\s+[A-Z]"),
         (80, rf"(?:एजेंट|एजेन्ट|प्रतिनिधि)(?:\s+का)?\s+नाम(?:\s+है)?\s*[:=]?\s*{_NAME_VALUE}"),
         (80, rf"(?:ఏజెంట్|ప్రతినిధి|మీ)(?:\s+యొక్క)?\s+పేరు\s*[:=]?\s*{_NAME_VALUE}"),
         (50, rf"\b(?:you are|I am|I'm)\s+{_NAME_VALUE}"),
         (20, rf"\bmy\s+name\s+is\s+{_NAME_VALUE}"),
-        (15, rf"\bname\s+is\s+{_NAME_VALUE}"),
     )
     candidates: list[dict[str, Any]] = []
     for priority, pattern in patterns:
@@ -142,7 +173,7 @@ def identity_candidates(brief: str) -> list[dict[str, Any]]:
 
 
 def resolve_agent_identity(brief: str, *, fallback: str = "", interpreted: str = "",
-                           explicit: str = "", allow_default: bool = True,
+                           explicit: str = "", allow_default: bool = False,
                            default_name: str = "Priya") -> tuple[str, list[dict[str, Any]], str]:
     candidates = identity_candidates(brief)
     positives = [item for item in candidates if not item["negative"]]
@@ -153,6 +184,8 @@ def resolve_agent_identity(brief: str, *, fallback: str = "", interpreted: str =
     selected = clean_person_name(explicit) if explicit else ""
     if explicit and not selected:
         return "", [brief_issue("invalid_agent_name", "Supply a valid spoken agent name.", field="employeeName")], ""
+    if selected and positives and selected.casefold() not in values:
+        return "", [brief_issue("identity_conflict", "The selected speaker name conflicts with the brief. Make both names agree.", field="employeeName", evidence="; ".join(item["evidence"] for item in positives))], ""
     if not selected and len(values) > 1:
         top_priority = max(item["priority"] for item in positives)
         top_values = {item["value"].casefold(): item["value"] for item in positives if item["priority"] == top_priority}
@@ -181,7 +214,7 @@ def resolve_agent_identity(brief: str, *, fallback: str = "", interpreted: str =
 
 
 def extract_exact_opening(brief: str) -> str:
-    match = re.search(r"\b(?:(?:exact|approved|custom)\s+(?:opening|greeting)(?:\s+(?:line|text))?|(?:open|start)\s+(?:exactly\s+)?with)\s*(?:is|:|=)?\s*[\"“]([^\"”\n]+)[\"”]", brief, re.I)
+    match = re.search(r"\b(?:(?:exact|approved|custom)\s+(?:opening|greeting)(?:\s+(?:line|text))?|(?:open|start)\s+(?:exactly\s+)?with)\s*(?:is|:|=)?\s*[\"“']([^\"”'\n]+)[\"”']", brief, re.I)
     return match.group(1).strip() if match else ""
 
 
@@ -217,7 +250,7 @@ def workflow_requirements(brief: str, interpreted: dict[str, Any] | None = None)
         clean_target = re.sub(r"\bwho\s+should\s+convince\s+(?:the\s+)?users?\s+to\b", "help callers to", clean_target, flags=re.I)
         clean_target = re.sub(r"\bwho\s+should\s+convince\b", "help callers", clean_target, flags=re.I)
         target = clean_target if clean_target else text
-        if re.search(r"\b(?:never|do not|don't|no\s+(?:callbacks?|emails?|whatsapp|contact|booking)|must not|only)\b", target, re.I):
+        if re.search(r"\b(?:never|do not|don't|no\s+\w+|must not|only|strictly|prohibit\w*|forbid\w*)\b", target, re.I):
             kind = "constraint"
         elif re.search(r"\b(?:if|when|unless|otherwise|before|after|until)\b", target, re.I):
             kind = "branch"
@@ -230,7 +263,7 @@ def workflow_requirements(brief: str, interpreted: dict[str, Any] | None = None)
         if match:
             condition = match.group(1)
         requirements.append(WorkflowRequirement(requirement_id=f"R{len(requirements)+1}", kind=kind,
-            text=target, evidence=target, condition=condition, required=not bool(re.search(r"\b(?:optional|may optionally)\b", target, re.I))))
+            text=target, evidence=text, condition=condition, required=not bool(re.search(r"\b(?:optional|may optionally)\b", target, re.I))))
     for item in (interpreted or {}).get("requirements", []):
         if not isinstance(item, dict):
             continue

@@ -20,6 +20,7 @@ from server.services.saas.tenant_guard import (
     require_subscriber_permission,
     subscriber_workspace_tenant_id,
 )
+from server.utils.errors import AppError, ErrorCode
 
 router = APIRouter()
 
@@ -156,6 +157,7 @@ async def build_employee(
         if claimed_agent is not None:
             error["agentId"] = claimed_agent["agent_id"]
             error["draftRetained"] = True
+            error["message"] = str(error.get("message") or "Creation failed.") + " An unfinished agent remains in your agent list; review or remove it before starting a new creation request."
             try:
                 await agent_service.finish_build_request(claimed_agent["agent_id"], tenant_id=tenant_id, error=error, status_code=status_code)
             except Exception:  # noqa: BLE001 - retain the failed draft if recording its error fails.
@@ -189,7 +191,14 @@ async def build_employee(
     if claimed_agent is None:
         agent = await agent_service.create_agent(name=display_name, tenant_id=tenant_id, languages=[lang])
     else:
-        agent = await agent_service.patch_agent(claimed_agent["agent_id"], {"name": display_name}, tenant_id=tenant_id)
+        try:
+            agent = await agent_service.patch_agent(claimed_agent["agent_id"], {"name": display_name}, tenant_id=tenant_id)
+            if not str(agent.get("agent_id") or agent.get("id") or ""):
+                raise ValueError("Claimed agent id is missing")
+        except Exception as exc:
+            error = {"code": "create_failed", "message": "The generated script could not be attached to its agent. An unfinished draft was retained for review."}
+            await record_failed_request(error, 502)
+            raise HTTPException(status_code=502, detail={"error": error}) from exc
     agent_id = str(agent.get("agent_id") or agent.get("id") or "")
     if not agent_id:
         raise HTTPException(
@@ -207,11 +216,15 @@ async def build_employee(
             compiled_artifact=artifact,
         )
     except Exception as exc:
+        if isinstance(exc, BriefValidationError):
+            publication_error, publication_status = exc.to_dict(), 422
+        elif isinstance(exc, AppError) and exc.code in (ErrorCode.VALIDATION_ERROR, ErrorCode.CONFLICT):
+            publication_error, publication_status = {"code": exc.code.value, "message": exc.user_message}, exc.status_code
+        else:
+            publication_error, publication_status = {"code": "publish_failed", "message": "The script could not be published. Please try again."}, 502
         if claimed_agent is not None:
-            error = exc.to_dict() if isinstance(exc, BriefValidationError) else {"code": "publish_failed", "message": "The script could not be published. An unfinished draft was retained for review."}
-            code = 422 if isinstance(exc, BriefValidationError) else 502
-            await record_failed_request(error, code)
-            raise HTTPException(status_code=code, detail={"error": error}) from exc
+            await record_failed_request(publication_error, publication_status)
+            raise HTTPException(status_code=publication_status, detail={"error": publication_error}) from exc
         # This ID was created by this request and has never been returned to the
         # caller. Cleanup must still enforce the same workspace ownership.
         cleanup_failed = False
@@ -219,18 +232,12 @@ async def build_employee(
             await agent_service.delete_agent(agent_id, tenant_id=tenant_id)
         except Exception:  # noqa: BLE001 - cleanup must not hide the publication failure.
             cleanup_failed = True
-        error = {
-            "code": "publish_failed",
-            "message": "The script could not be published. Please try again.",
-            "cleanupFailed": cleanup_failed,
-        }
-        if isinstance(exc, BriefValidationError):
-            error.update(exc.to_dict())
+        error = {**publication_error, "cleanupFailed": cleanup_failed}
         if cleanup_failed:
             error["agentId"] = agent_id
             error["message"] += " An unfinished agent remains; remove it before retrying."
         raise HTTPException(
-            status_code=422 if isinstance(exc, BriefValidationError) else 502,
+            status_code=publication_status,
             detail={"error": error},
         ) from exc
 
@@ -246,6 +253,12 @@ async def build_employee(
         "generation": published.get("generation") or script_result.to_dict(),
     }
     if claimed_agent is not None:
-        completed = await agent_service.finish_build_request(agent_id, tenant_id=tenant_id, response=response)
+        try:
+            completed = await agent_service.finish_build_request(agent_id, tenant_id=tenant_id, response=response)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail={"error": {
+                "code": "creation_recovery_required", "agentId": agent_id,
+                "message": "The agent was published, but creation confirmation could not be saved. Open this agent before retrying.",
+            }}) from exc
         return completed or response
     return response

@@ -3,13 +3,14 @@ import { PageHeader } from './PageHeader';
 import { Footer } from '../components/Footer';
 import { FileText, CheckCircle2, ShieldCheck, Scale } from 'lucide-react';
 
-export function TermsPage({ onBackToLanding, onEnterConsole, onNavigatePage }) {
+export function TermsPage({ onBackToLanding, onEnterConsole, onNavigatePage, onSignIn }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9FD] text-[#0F0E17]">
       <PageHeader
         title="Terms of Service"
         onBackToLanding={onBackToLanding}
         onEnterConsole={onEnterConsole}
+        onSignIn={onSignIn}
       />
 
       <main className="flex-1 max-w-4xl mx-auto px-6 sm:px-8 py-12 sm:py-16">

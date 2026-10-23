@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_SUPPORT_CONFIG = {
     "config_key": "global",
     "support_email": "support@dialtact.com",
-    "support_phone": None,
+    "support_phone": "+1 (800) 555-0199",
     "business_hours": "Mon - Fri: 9:00 AM - 6:00 PM EST",
     "sla_response_time": "Within 2 hours for Priority, 24 hours Standard",
     "emergency_hotline": None,
@@ -183,6 +183,7 @@ async def get_support_config(for_admin: bool = False) -> dict:
                 row = CustomerSupportConfig(
                     config_key="global",
                     support_email=DEFAULT_SUPPORT_CONFIG["support_email"],
+                    support_phone=DEFAULT_SUPPORT_CONFIG["support_phone"],
                     business_hours=DEFAULT_SUPPORT_CONFIG["business_hours"],
                     sla_response_time=DEFAULT_SUPPORT_CONFIG["sla_response_time"],
                     auto_reply_message=DEFAULT_SUPPORT_CONFIG["auto_reply_message"],

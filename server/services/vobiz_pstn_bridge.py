@@ -728,6 +728,26 @@ class VobizPstnBridge:
                     if active_vobiz_bridges.get(str(k)) is self:
                         active_vobiz_bridges.pop(str(k), None)
 
+        # Release durable call admission slot on disconnect / error if still holding capacity
+        adm_key = self._token_meta.get("admission_key")
+        adm_tid = self._token_meta.get("admission_tenant_id")
+        if not adm_key or not adm_tid:
+            local_reg = await asyncio.to_thread(vobiz_call_registry.get, self.call_uuid or "") or {}
+            adm_key = adm_key or local_reg.get("admission_key")
+            adm_tid = adm_tid or local_reg.get("admission_tenant_id")
+        if adm_key and adm_tid:
+            try:
+                from server.services.saas.call_admission import provider_event
+                req_uuid = self._token_meta.get("request_uuid") or (local_reg.get("request_uuid") if "local_reg" in locals() else None)
+                await provider_event(
+                    tenant_id=uuid.UUID(str(adm_tid)),
+                    key=str(adm_key),
+                    carrier_ids=(self.call_uuid, req_uuid),
+                    status="ended",
+                )
+            except Exception as adm_exc:
+                logger.debug("Cleanup admission release notice: %s", adm_exc)
+
         await asyncio.to_thread(vobiz_call_registry.upsert,
             self.call_uuid,
             {
