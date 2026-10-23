@@ -690,10 +690,20 @@ async def test_statutory_invoice_preservation(monkeypatch):
         amount_inr_paise=9900,
         currency="USD",
         status="paid",
+        buyer_snapshot={
+            "legalName": "Jane Doe",
+            "email": "sensitive_ceo@taxcorp.com",
+            "addressLine1": "456 Market St",
+            "addressLine2": "Suite 200",
+            "city": "Bengaluru",
+            "stateName": "Karnataka",
+            "stateCode": "29",
+            "postalCode": "560001",
+            "countryCode": "IN",
+            "gstin": "29ABCDE1234F1Z5",
+            "customerType": "business",
+        },
     )
-    invoice.customer_email = "sensitive_ceo@taxcorp.com"
-    invoice.customer_name = "Jane Doe"
-    invoice.billing_address = "456 Market St, Suite 200, SF, CA"
 
     class FakeSession:
         async def __aenter__(self):
@@ -723,9 +733,14 @@ async def test_statutory_invoice_preservation(monkeypatch):
 
     await _stage_database(lambda: FakeSession(), tid)
 
-    assert invoice.customer_email == "anonymized@deleted.local"
-    assert invoice.customer_name == "Anonymized Customer"
-    assert invoice.billing_address is None
+    assert invoice.buyer_snapshot["legalName"] == "Deleted customer"
+    assert invoice.buyer_snapshot["email"] is None
+    assert invoice.buyer_snapshot["addressLine1"] is None
+    assert invoice.buyer_snapshot["city"] is None
+    # The tax facts survive: GSTIN is a public registration and the state
+    # explains the CGST/SGST versus IGST split on the retained document.
+    assert invoice.buyer_snapshot["gstin"] == "29ABCDE1234F1Z5"
+    assert invoice.buyer_snapshot["stateCode"] == "29"
     assert invoice.invoice_number == "INV-2026-001"
     assert invoice.amount_inr_paise == 9900
 

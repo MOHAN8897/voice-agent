@@ -289,6 +289,90 @@ class BillingWallet(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
+class TenantBillingProfile(Base):
+    """Buyer identity used for GST place-of-supply and invoice legal fields.
+
+    Held separately from `tenants` because a workspace can change its billing
+    entity without changing the workspace, and because invoices snapshot these
+    values at issue time and must never follow later edits.
+    """
+
+    __tablename__ = "tenant_billing_profiles"
+
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.tenant_id", ondelete="CASCADE"), primary_key=True
+    )
+    legal_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    gstin: Mapped[str | None] = mapped_column(String(15), nullable=True)
+    billing_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    address_line1: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    address_line2: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    state_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    state_code: Mapped[str | None] = mapped_column(String(4), nullable=True)
+    postal_code: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    country_code: Mapped[str] = mapped_column(String(2), nullable=False, default="IN")
+    customer_type: Mapped[str] = mapped_column(String(20), nullable=False, default="individual")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
+class PlatformTaxSettings(Base):
+    """Singleton GST/invoice configuration the operator owns.
+
+    Single row (`id=1`) rather than a version table: every invoice and order
+    snapshots the values it was issued under, so changing this row can never
+    alter a document that has already been issued.
+    """
+
+    __tablename__ = "platform_tax_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    legal_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    trade_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    gstin: Mapped[str | None] = mapped_column(String(15), nullable=True)
+    pan: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    address_line1: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    address_line2: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    city: Mapped[str] = mapped_column(String(120), nullable=False, default="")
+    state_name: Mapped[str] = mapped_column(String(120), nullable=False, default="")
+    state_code: Mapped[str] = mapped_column(String(4), nullable=False, default="")
+    postal_code: Mapped[str] = mapped_column(String(12), nullable=False, default="")
+    country_code: Mapped[str] = mapped_column(String(2), nullable=False, default="IN")
+    support_email: Mapped[str] = mapped_column(String(320), nullable=False, default="")
+    support_phone: Mapped[str] = mapped_column(String(40), nullable=False, default="")
+    sac_code: Mapped[str] = mapped_column(String(12), nullable=False, default="998413")
+    default_rate_bps: Mapped[int] = mapped_column(Integer, nullable=False, default=1800)
+    #: When true, listed prices already contain GST; the wallet is credited with
+    #: the net (taxable) portion and the customer is not charged extra at checkout.
+    price_includes_tax: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    #: Export of services under LUT is zero-rated. Off only when the operator has
+    #: not filed an LUT and must charge IGST on foreign supplies.
+    export_zero_rated: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    invoice_prefix: Mapped[str] = mapped_column(String(4), nullable=False, default="INV")
+    credit_note_prefix: Mapped[str] = mapped_column(String(4), nullable=False, default="CN")
+    lut_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    invoice_terms: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    updated_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
+class InvoiceSequence(Base):
+    """Consecutive serial numbers per financial year and document kind.
+
+    GST Rule 46(b) requires a consecutive serial not exceeding 16 characters,
+    unique for a financial year. The row is locked with `FOR UPDATE` while the
+    number is allocated, so two concurrent payments cannot share a serial.
+    """
+
+    __tablename__ = "invoice_sequences"
+
+    kind: Mapped[str] = mapped_column(String(4), primary_key=True)  # INV | CN
+    fy: Mapped[str] = mapped_column(String(7), primary_key=True)  # 2026-27
+    last_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+
 class BillingInvoice(Base):
     __tablename__ = "billing_invoices"
     __table_args__ = (UniqueConstraint("invoice_number", name="uq_invoice_number"),)
@@ -296,14 +380,37 @@ class BillingInvoice(Base):
     invoice_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
     invoice_number: Mapped[str] = mapped_column(String(32), nullable=False)
-    #: Settled INR value — what the wallet is actually credited.
+    #: Settled INR value of the taxable supply — what the wallet is credited.
     amount_inr_paise: Mapped[int] = mapped_column(Integer, nullable=False)
-    #: Currency the customer was charged in, and that amount in minor units.
+    #: Currency the customer was charged in, and the gross amount in minor units.
     currency: Mapped[str] = mapped_column(String(8), default="INR", nullable=False)
     amount_minor: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: Pre-tax and tax portions in the charge currency and in INR paise.
+    taxable_minor: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    tax_minor: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    taxable_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    tax_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    cgst_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    sgst_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    igst_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    tax_rate_bps: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    #: cgst_sgst | igst | export | none
+    tax_kind: Mapped[str] = mapped_column(String(20), nullable=False, default="none")
+    sac_code: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    place_of_supply: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    place_of_supply_code: Mapped[str | None] = mapped_column(String(4), nullable=True)
+    customer_gstin: Mapped[str | None] = mapped_column(String(15), nullable=True)
+    supplier_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    buyer_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    #: Financial year label and the serial within it, kept for reporting even if
+    #: the display number format changes later.
+    fy: Mapped[str | None] = mapped_column(String(7), nullable=True)
+    sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
     status: Mapped[str] = mapped_column(String(30), nullable=False)
     razorpay_order_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     razorpay_payment_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payment_method: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     line_items: Mapped[list] = mapped_column(JSONB, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
@@ -313,13 +420,106 @@ class RazorpayOrder(Base):
 
     order_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
-    #: What the wallet will be credited. Overwritten with Razorpay's settled
-    #: figure on confirmation when the payment reports one.
+    #: What the wallet will be credited (taxable value in INR paise).
     amount_inr_paise: Mapped[int] = mapped_column(Integer, nullable=False)
     currency: Mapped[str] = mapped_column(String(8), default="INR", nullable=False)
+    #: Gross amount charged, in the charge currency's minor units.
     amount_minor: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: Checkout-time tax snapshot; never recomputed at payment time.
+    gross_minor: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    taxable_minor: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    tax_minor: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    tax_rate_bps: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    tax_kind: Mapped[str] = mapped_column(String(20), nullable=False, default="none")
+    place_of_supply: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    place_of_supply_code: Mapped[str | None] = mapped_column(String(4), nullable=True)
+    buyer_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    supplier_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    sac_code: Mapped[str | None] = mapped_column(String(12), nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="created")
     purpose: Mapped[str] = mapped_column(String(40), default="wallet_topup")
+    payment_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    payment_method: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    failure_code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    #: Provider settlement data for reconciliation and costing.
+    base_amount_inr_paise: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    fee_minor: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    tax_on_fee_minor: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    settlement_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    settled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class RazorpayWebhookEvent(Base):
+    """Durable inbox for Razorpay webhooks.
+
+    The provider retries on any non-2xx and may deliver the same event more than
+    once; the event id primary key makes handling exactly-once even when two
+    deliveries race.
+    """
+
+    __tablename__ = "razorpay_webhook_events"
+
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="processing")
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class RazorpayRefund(Base):
+    __tablename__ = "razorpay_refunds"
+
+    refund_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
+    payment_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    order_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    amount_minor: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    currency: Mapped[str] = mapped_column(String(8), nullable=False, default="INR")
+    #: Wallet reversal and tax reversal in INR paise.
+    credit_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    tax_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="processed")
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class CreditNote(Base):
+    """GST credit note (CGST Sec 34) issued when a payment is refunded."""
+
+    __tablename__ = "credit_notes"
+    __table_args__ = (UniqueConstraint("credit_note_number", name="uq_credit_note_number"),)
+
+    credit_note_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False)
+    invoice_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("billing_invoices.invoice_id"), nullable=False)
+    invoice_number: Mapped[str] = mapped_column(String(32), nullable=False)
+    credit_note_number: Mapped[str] = mapped_column(String(32), nullable=False)
+    razorpay_refund_id: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    currency: Mapped[str] = mapped_column(String(8), nullable=False, default="INR")
+    gross_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    taxable_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    tax_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    cgst_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    sgst_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    igst_inr_paise: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    tax_rate_bps: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    tax_kind: Mapped[str] = mapped_column(String(20), nullable=False, default="none")
+    fy: Mapped[str | None] = mapped_column(String(7), nullable=True)
+    sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    supplier_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    buyer_snapshot: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="issued")
+    created_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
 

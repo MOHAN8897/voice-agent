@@ -41,6 +41,7 @@ from server.routes.app_agents import router as app_agents_router
 from server.routes.app_kyc import router as app_kyc_router
 from server.routes.app_agent_telephony import router as app_agent_telephony_router
 from server.routes.stripe_webhook import router as stripe_webhook_router
+from server.routes.razorpay_webhook import router as razorpay_webhook_router
 from server.routes.dev_admin import router as dev_admin_router
 from server.routes.app_billing import router as app_billing_router
 from server.routes.app_leads import router as app_leads_router
@@ -246,6 +247,38 @@ async def lifespan(app: FastAPI):
         import asyncio
         from server.services.saas.campaign_runner import recovery_loop
         app.state.campaign_recovery_task = asyncio.create_task(recovery_loop())
+
+        # Payments can complete without the browser ever returning (tab closed,
+        # network loss, dropped webhook). Settle that drift server-side.
+        try:
+            from server.config.env import get_settings as _billing_settings
+
+            if (_billing_settings().razorpay_api_key or "").strip():
+                from server.services.saas.razorpay_service import (
+                    reconcile_pending_orders,
+                    reconcile_pending_refunds,
+                )
+
+                async def _billing_reconciliation_loop() -> None:
+                    while True:
+                        try:
+                            result = await reconcile_pending_orders(limit=10)
+                            if any(result.get(key) for key in ("credited", "failed", "expired")):
+                                logger.info(f"[VOICE] Billing reconciliation: {result}")
+                            refunds = await reconcile_pending_refunds(limit=10)
+                            if refunds.get("processed") or refunds.get("failed"):
+                                logger.info(f"[VOICE] Refund reconciliation: {refunds}")
+                        except asyncio.CancelledError:
+                            break
+                        except Exception as loop_err:
+                            logger.warning(f"[VOICE] Billing reconciliation: {loop_err}")
+                        await asyncio.sleep(300)
+
+                app.state.billing_reconciliation_task = asyncio.create_task(
+                    _billing_reconciliation_loop()
+                )
+        except Exception as billing_err:
+            logger.warning(f"[VOICE] Billing reconciliation not started: {billing_err}")
     yield
     import asyncio
     from server.services.saas.campaign_runner import stop_campaign_runners
@@ -258,6 +291,13 @@ async def lifespan(app: FastAPI):
         task = getattr(app.state, "saas_provision_task", None)
         if task:
             task.cancel()
+    except Exception:
+        pass
+    try:
+        task = getattr(app.state, "billing_reconciliation_task", None)
+        if task:
+            task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
     except Exception:
         pass
     # Shutdown: close pooled HTTP clients
@@ -540,6 +580,7 @@ app.include_router(app_agents_router)
 app.include_router(app_kyc_router)
 app.include_router(app_agent_telephony_router)
 app.include_router(stripe_webhook_router)
+app.include_router(razorpay_webhook_router)
 app.include_router(dev_admin_router)
 app.include_router(app_billing_router)
 app.include_router(app_leads_router)

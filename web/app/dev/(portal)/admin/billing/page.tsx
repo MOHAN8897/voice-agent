@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { DevCard } from "@/components/dev/DevCard";
@@ -28,6 +28,7 @@ import {
   formatWhen,
   useAdminResource,
 } from "@/lib/useAdminResource";
+import { portalFetch } from "@/lib/auth-client";
 import { isWalletCurrencyDisplay, useWalletCurrencyDisplay } from "@/lib/useWalletCurrencyDisplay";
 
 type Purchase = {
@@ -84,6 +85,7 @@ type PaymentSettings = {
   configured: boolean;
   keyId: string;
   testMode: boolean;
+  webhookConfigured: boolean;
   internationalEnabled: boolean;
   /** Razorpay has no status endpoint; this is always null by design. */
   internationalVerified: null;
@@ -97,19 +99,144 @@ type PaymentSettings = {
 
 type PayOrder = {
   orderId: string;
+  tenantId: string;
   tenantName: string | null;
   status: string;
   currency: string;
+  /** Gross amount charged, in the charge currency. */
   amount: number;
+  /** Taxable value in the charge currency. */
+  subtotal: number;
+  tax: number;
+  taxRatePercent: number;
+  taxKind: string;
+  /** Taxable value settled in INR — what the wallet was credited. */
   amountInr: number;
+  /** Gross INR collected (taxable + GST). */
+  grossInr: number;
+  baseAmountInr: number | null;
+  paymentId: string | null;
+  paymentMethod: string | null;
+  failureCode: string | null;
+  failureReason: string | null;
+  fee: number | null;
+  taxOnFee: number | null;
+  settlementId: string | null;
+  settledAt: string | null;
+  invoiceId: string | null;
+  invoiceNumber: string | null;
+  invoiceStatus: string | null;
+  createdAt: string | null;
+  paidAt: string | null;
+  expiresAt: string | null;
+};
+
+type OrdersResponse = {
+  orders: PayOrder[];
+  total: number;
+  summary: {
+    creditedInr: number;
+    settledInr: number;
+    collectedInr: number;
+    byStatus: Record<string, number>;
+  };
+  limit: number;
+  offset: number;
+};
+
+type InvoiceRow = {
+  invoiceId: string;
+  invoiceNumber: string;
+  status: string;
+  currency: string;
+  amount: number;
+  gross: number;
+  subtotal: number;
+  tax: number;
+  taxRatePercent: number;
+  taxKind: string;
+  amountInr: number;
+  grossInr: number;
+  taxableInr: number;
+  taxInr: number;
+  cgstInr: number;
+  sgstInr: number;
+  igstInr: number;
+  sacCode: string | null;
+  placeOfSupply: string | null;
+  customerGstin: string | null;
+  fy: string | null;
+  sequence: number | null;
+  paymentId: string | null;
+  orderId: string | null;
+  paymentMethod: string | null;
+  paidAt: string | null;
+  createdAt: string | null;
+  tenantName?: string | null;
+};
+
+type InvoicesResponse = {
+  invoices: InvoiceRow[];
+  total: number;
+  summary: {
+    grossInr: number;
+    taxableInr: number;
+    taxInr: number;
+    cgstInr: number;
+    sgstInr: number;
+    igstInr: number;
+  };
+  limit: number;
+  offset: number;
+};
+
+type RefundRow = {
+  refundId: string;
+  amount: number;
+  currency: string;
+  walletReversalInr: number;
+  taxReversalInr: number;
+  status: string;
+  reason: string | null;
+  createdBy: string | null;
   createdAt: string | null;
 };
 
+type OrderDetail = {
+  order: PayOrder;
+  invoice: InvoiceRow | null;
+  refunds: RefundRow[];
+};
+
+type TaxReportRow = {
+  taxKind: string;
+  count: number;
+  taxableInr: number;
+  taxInr: number;
+  cgstInr: number;
+  sgstInr: number;
+  igstInr: number;
+};
+
+type TaxReport = {
+  from: string | null;
+  to: string | null;
+  issued: TaxReportRow[];
+  creditNotes: TaxReportRow;
+  net: {
+    taxableInr: number;
+    taxInr: number;
+    cgstInr: number;
+    sgstInr: number;
+    igstInr: number;
+  };
+};
+
 const STATUSES = ["", "paid", "failed", "refunded", "pending"] as const;
-const TONE: Record<string, "success" | "warning" | "danger" | "muted"> = {
+const TONE: Record<string, "success" | "warning" | "error" | "muted"> = {
   paid: "success",
   active: "success",
-  failed: "danger",
+  failed: "error",
   refunded: "muted",
   pending: "warning",
 };
@@ -128,7 +255,6 @@ export default function AdminBillingPage() {
   );
 
   const payments = useAdminResource<PaymentSettings>("/api/dev/admin/payments");
-  const payOrders = useAdminResource<{ orders: PayOrder[] }>("/api/dev/admin/payments/orders");
   const [intlEnabled, setIntlEnabled] = useState(false);
   const [payCurrency, setPayCurrency] = useState("USD");
 
@@ -166,8 +292,96 @@ export default function AdminBillingPage() {
 
   // Orders filter state
   const [orderQuery, setOrderQuery] = useState("");
+  const [orderQueryDraft, setOrderQueryDraft] = useState("");
   const [orderStatus, setOrderStatus] = useState("all");
   const [orderCurrency, setOrderCurrency] = useState("all");
+  const [orderFrom, setOrderFrom] = useState("");
+  const [orderTo, setOrderTo] = useState("");
+  const [orderPage, setOrderPage] = useState(0);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundReason, setRefundReason] = useState("");
+  const [orderDetail, setOrderDetail] = useState<OrderDetail | null>(null);
+  const [orderDetailLoading, setOrderDetailLoading] = useState(false);
+  const [orderDetailError, setOrderDetailError] = useState<string | null>(null);
+  const ORDERS_PAGE_SIZE = 25;
+
+  useEffect(() => {
+    // Typing shouldn't refetch every keystroke; the server does the matching.
+    const timer = window.setTimeout(() => {
+      setOrderQuery(orderQueryDraft.trim());
+      setOrderPage(0);
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [orderQueryDraft]);
+
+  // Invoices filter state
+  const [invoiceQuery, setInvoiceQuery] = useState("");
+  const [invoiceQueryDraft, setInvoiceQueryDraft] = useState("");
+  const [invoiceStatus, setInvoiceStatus] = useState("all");
+  const [invoiceFrom, setInvoiceFrom] = useState("");
+  const [invoiceTo, setInvoiceTo] = useState("");
+  const [invoicePage, setInvoicePage] = useState(0);
+  const INVOICES_PAGE_SIZE = 25;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setInvoiceQuery(invoiceQueryDraft.trim());
+      setInvoicePage(0);
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [invoiceQueryDraft]);
+
+  // GST report period (IST calendar days, resolved server-side)
+  const [reportFrom, setReportFrom] = useState("");
+  const [reportTo, setReportTo] = useState("");
+
+  const orderParams = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("limit", String(ORDERS_PAGE_SIZE));
+    params.set("offset", String(orderPage * ORDERS_PAGE_SIZE));
+    if (orderStatus !== "all") params.set("status", orderStatus);
+    if (orderQuery) params.set("q", orderQuery);
+    if (orderFrom) params.set("dateFrom", orderFrom);
+    if (orderTo) params.set("dateTo", orderTo);
+    if (tenantId) params.set("tenantId", tenantId);
+    return params.toString();
+  }, [orderPage, orderStatus, orderQuery, orderFrom, orderTo, tenantId]);
+
+  const payOrders = useAdminResource<OrdersResponse>(
+    `/api/dev/admin/payments/orders?${orderParams}`,
+    [orderParams]
+  );
+
+  const invoiceParams = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("limit", String(INVOICES_PAGE_SIZE));
+    params.set("offset", String(invoicePage * INVOICES_PAGE_SIZE));
+    if (invoiceStatus !== "all") params.set("status", invoiceStatus);
+    if (invoiceQuery) params.set("q", invoiceQuery);
+    if (invoiceFrom) params.set("dateFrom", invoiceFrom);
+    if (invoiceTo) params.set("dateTo", invoiceTo);
+    if (tenantId) params.set("tenantId", tenantId);
+    return params.toString();
+  }, [invoicePage, invoiceStatus, invoiceQuery, invoiceFrom, invoiceTo, tenantId]);
+
+  const invoices = useAdminResource<InvoicesResponse>(
+    `/api/dev/admin/payments/invoices?${invoiceParams}`,
+    [invoiceParams]
+  );
+
+  const reportParams = useMemo(() => {
+    const params = new URLSearchParams();
+    if (reportFrom) params.set("dateFrom", reportFrom);
+    if (reportTo) params.set("dateTo", reportTo);
+    const query = params.toString();
+    return query ? `?${query}` : "";
+  }, [reportFrom, reportTo]);
+
+  const taxReport = useAdminResource<TaxReport>(
+    `/api/dev/admin/payments/tax-report${reportParams}`,
+    [reportParams]
+  );
 
   // Purchases filter state
   const [purchaseQuery, setPurchaseQuery] = useState("");
@@ -274,29 +488,41 @@ export default function AdminBillingPage() {
   }
 
   function paymentOrderAmount(order: PayOrder, settlement: boolean) {
-    const inrPaise = Math.round(Number(order.amountInr || 0) * 100);
-    const usdCents = Math.round((Number(order.amountInr || 0) / chargeFx) * 100);
-    const actualCharge = `${order.currency} ${order.amount.toFixed(2)}`;
+    const creditedPaise = Math.round(Number(order.amountInr || 0) * 100);
+    const grossInr = Number(order.grossInr || order.amountInr || 0);
+    const grossPaise = Math.round(grossInr * 100);
+    const usdCents = Math.round((grossInr / chargeFx) * 100);
+    const actualCharge = `${order.currency} ${Number(order.amount || 0).toFixed(2)}`;
 
-    if (walletCurrencyDisplay === "both") {
-      if (settlement) return formatInr(inrPaise);
+    if (settlement) {
       return (
         <span className="flex flex-col">
-          <span>{actualCharge}</span>
-          <span className="text-[10px] font-normal text-text-muted">
-            ≈ {formatUsd(usdCents)} / {formatInr(inrPaise)}
-          </span>
+          <span>{formatInr(creditedPaise)}</span>
+          <span className="text-[10px] font-normal text-text-muted">wallet credit</span>
         </span>
       );
     }
 
-    const selectedAmount = walletCurrencyDisplay === "INR" ? formatInr(inrPaise) : formatUsd(usdCents);
-    if (settlement && walletCurrencyDisplay === "INR") return selectedAmount;
-    const sourceAmount = settlement ? `Settled ${formatInr(inrPaise)}` : `Charged ${actualCharge}`;
+    if (walletCurrencyDisplay === "INR") {
+      return (
+        <span className="flex flex-col">
+          <span>{formatInr(grossPaise)}</span>
+          <span className="text-[10px] font-normal text-text-muted">Charged {actualCharge}</span>
+        </span>
+      );
+    }
+    if (walletCurrencyDisplay === "USD") {
+      return (
+        <span className="flex flex-col">
+          <span>{formatUsd(usdCents)}</span>
+          <span className="text-[10px] font-normal text-text-muted">Charged {actualCharge}</span>
+        </span>
+      );
+    }
     return (
       <span className="flex flex-col">
-        <span>{selectedAmount}</span>
-        <span className="text-[10px] font-normal text-text-muted">{sourceAmount}</span>
+        <span>{actualCharge}</span>
+        <span className="text-[10px] font-normal text-text-muted">≈ {formatInr(grossPaise)} gross</span>
       </span>
     );
   }
@@ -338,15 +564,18 @@ export default function AdminBillingPage() {
   }, [allWallets, walletStatusFilter, walletBalanceFilter, query, walletCurrencyDisplay, chargeFx]);
 
   const allOrders = payOrders.data?.orders ?? [];
+  const orderTotal = payOrders.data?.total ?? 0;
+  const orderSummary = payOrders.data?.summary;
+  // Status/search/date are matched by the server; currency has no server filter.
   const filteredOrders = useMemo(() => {
     return allOrders.filter((o) => {
-      if (orderStatus !== "all" && (o.status || "").toLowerCase() !== orderStatus.toLowerCase()) return false;
       if (orderCurrency !== "all" && (o.currency || "").toUpperCase() !== orderCurrency.toUpperCase()) return false;
-      if (!orderQuery.trim()) return true;
-      const q = orderQuery.trim().toLowerCase();
-      return `${o.tenantName ?? ""} ${o.orderId}`.toLowerCase().includes(q);
+      return true;
     });
-  }, [allOrders, orderStatus, orderCurrency, orderQuery]);
+  }, [allOrders, orderCurrency]);
+
+  const allInvoices = invoices.data?.invoices ?? [];
+  const invoiceTotal = invoices.data?.total ?? 0;
 
   const allPurchases = purchases.data?.purchases ?? [];
   const purchaseRows = useMemo(() => {
@@ -506,6 +735,130 @@ export default function AdminBillingPage() {
     });
   }
 
+  async function downloadFile(path: string, fallbackName: string) {
+    const res = await portalFetch("dev", path);
+    if (!res.ok) {
+      let message = `${res.status} ${res.statusText}`;
+      try {
+        const body = await res.json();
+        message = body?.detail?.error?.message ?? body?.detail ?? body?.error?.message ?? message;
+      } catch {
+        /* non-JSON error body */
+      }
+      throw new Error(message);
+    }
+    const disposition = res.headers.get("Content-Disposition") || "";
+    const match = /filename="?([^";]+)"?/i.exec(disposition);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = match?.[1] || fallbackName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function loadOrderDetail(orderId: string) {
+    setOrderDetailLoading(true);
+    setOrderDetailError(null);
+    try {
+      const detail = await adminAction<OrderDetail>(
+        `/api/dev/admin/payments/orders/${encodeURIComponent(orderId)}`,
+        { method: "GET" }
+      );
+      setOrderDetail(detail);
+    } catch (e) {
+      setOrderDetail(null);
+      setOrderDetailError(e instanceof Error ? e.message : "Could not load this order.");
+    } finally {
+      setOrderDetailLoading(false);
+    }
+  }
+
+  function toggleOrder(orderId: string) {
+    if (expandedOrder === orderId) {
+      setExpandedOrder(null);
+      setOrderDetail(null);
+      setOrderDetailError(null);
+      return;
+    }
+    setExpandedOrder(orderId);
+    setOrderDetail(null);
+    setRefundAmount("");
+    setRefundReason("");
+    void loadOrderDetail(orderId);
+  }
+
+  function reconcileOrder(orderId: string) {
+    return run(`reconcile:${orderId}`, async () => {
+      await adminAction(`/api/dev/admin/payments/orders/${encodeURIComponent(orderId)}/reconcile`, {
+        method: "POST",
+      });
+      await Promise.all([
+        loadOrderDetail(orderId),
+        payOrders.reload(),
+        invoices.reload(),
+        taxReport.reload(),
+      ]);
+    });
+  }
+
+  function refundOrder(order: PayOrder) {
+    const reason = refundReason.trim();
+    if (reason.length < 8) {
+      setError("Write a refund reason (8+ characters) — it is stored on the credit note.");
+      return;
+    }
+    const amount = refundAmount.trim() === "" ? null : Number(refundAmount);
+    if (amount !== null && (!Number.isFinite(amount) || amount <= 0)) {
+      setError("Refund amount must be positive, or left blank for the full charge.");
+      return;
+    }
+    const amountLabel = amount === null ? "the full remaining charge" : `${order.currency} ${amount.toFixed(2)}`;
+    if (
+      !window.confirm(
+        `Refund ${amountLabel} for ${order.orderId}?\n\nThe wallet is debited the taxable value and a GST credit note is issued immediately.`
+      )
+    ) {
+      return;
+    }
+    return run(`orderRefund:${order.orderId}`, async () => {
+      await adminAction(`/api/dev/admin/payments/orders/${encodeURIComponent(order.orderId)}/refund`, {
+        method: "POST",
+        body: { ...(amount === null ? {} : { amount }), reason },
+      });
+      setRefundAmount("");
+      setRefundReason("");
+      await Promise.all([
+        loadOrderDetail(order.orderId),
+        payOrders.reload(),
+        invoices.reload(),
+        taxReport.reload(),
+      ]);
+    });
+  }
+
+  function clearOrderFilters() {
+    setOrderQueryDraft("");
+    setOrderQuery("");
+    setOrderStatus("all");
+    setOrderCurrency("all");
+    setOrderFrom("");
+    setOrderTo("");
+    setOrderPage(0);
+  }
+
+  function clearInvoiceFilters() {
+    setInvoiceQueryDraft("");
+    setInvoiceQuery("");
+    setInvoiceStatus("all");
+    setInvoiceFrom("");
+    setInvoiceTo("");
+    setInvoicePage(0);
+  }
+
   return (
     <div className="space-y-6 p-6" data-testid="admin-billing-wallets-page">
       <AdminPageHeader
@@ -540,6 +893,10 @@ export default function AdminBillingPage() {
       <AdminError error={purchases.error} />
       <AdminError error={wallets.error} />
       <AdminError error={ratesRes.error} />
+      <AdminError error={payOrders.error} />
+      <AdminError error={invoices.error} />
+      <AdminError error={taxReport.error} />
+      <AdminError error={orderDetailError} />
 
       <div className="grid gap-4 sm:grid-cols-4">
         <AdminStat
@@ -608,12 +965,28 @@ export default function AdminBillingPage() {
               and Phone Number DID rental pricing have been consolidated into the unified <strong>Stacks &amp; Tiers</strong> management workbench.
             </p>
           </div>
-          <Link
-            href="/dev/stack"
-            className="inline-flex items-center gap-2 rounded-xl bg-accent-primary px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity shrink-0"
-          >
-            <span>⚙️ Manage Prices in Stacks &amp; Tiers</span>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Link
+              href="/dev/stack"
+              className="inline-flex items-center gap-2 rounded-xl bg-accent-primary px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95 transition-opacity"
+            >
+              <span>⚙️ Manage Prices in Stacks &amp; Tiers</span>
+            </Link>
+            <Link
+              href="/dev/stack#gst-billing"
+              className="inline-flex items-center gap-2 rounded-xl border border-surface-border-subtle bg-surface-panel-raised px-4 py-2.5 text-xs font-semibold text-text shadow-sm hover:opacity-95 transition-opacity"
+            >
+              <span>GST &amp; invoice identity</span>
+            </Link>
+          </div>
+        </div>
+        <div className="mt-3 rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3 text-[11px] text-text-muted">
+          GST is applied on top of these shelf prices unless “prices include tax” is enabled in{" "}
+          <Link href="/dev/stack#gst-billing" className="font-semibold text-accent-primary hover:underline">
+            GST &amp; invoicing
           </Link>
+          . A recharge credits the wallet only the taxable value; the GST collected is a statutory
+          liability, not tenant credit.
         </div>
       </DevCard>
 
@@ -692,6 +1065,17 @@ export default function AdminBillingPage() {
           {payments.data?.keyId ? (
             <span className="font-mono text-text-muted">{payments.data.keyId}</span>
           ) : null}
+          <span
+            className={`rounded-skeuo-sm px-2 py-1 font-semibold ${
+              payments.data?.webhookConfigured
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-amber-50 text-amber-800"
+            }`}
+            data-testid="admin-payments-webhook-status"
+            title="Razorpay webhooks are the authoritative payment state. Without the secret, confirmation depends on the browser callback."
+          >
+            {payments.data?.webhookConfigured ? "Webhook verified" : "Webhook secret missing"}
+          </span>
           <span className="text-text-muted">Settles in {payments.data?.settlesIn ?? "INR"}</span>
           <span
             className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-2 py-1 font-medium text-text-subtle"
@@ -759,15 +1143,51 @@ export default function AdminBillingPage() {
         )}
       </DevCard>
 
-      <DevCard title="Payment orders">
+      <DevCard
+        title="Payment orders"
+        description="Every recharge attempt with cart value, GST and wallet credit shown separately, so a mismatch can be traced without opening the provider dashboard."
+        actions={
+          <span className="text-[11px] text-text-muted">
+            {payOrders.loading ? "Loading…" : `${orderTotal} order${orderTotal === 1 ? "" : "s"}`}
+          </span>
+        }
+      >
+        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">Collected (gross INR)</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {formatInr(Math.round((orderSummary?.collectedInr ?? 0) * 100))}
+            </span>
+            <span className="block text-[11px] text-text-subtle">tenant payments, including GST</span>
+          </div>
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">Credited to wallets</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {formatInr(Math.round((orderSummary?.creditedInr ?? 0) * 100))}
+            </span>
+            <span className="block text-[11px] text-text-subtle">taxable value — GST is not spendable credit</span>
+          </div>
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">GST collected</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {formatInr(
+                Math.round(
+                  Math.max(0, (orderSummary?.collectedInr ?? 0) - (orderSummary?.creditedInr ?? 0)) * 100
+                )
+              )}
+            </span>
+            <span className="block text-[11px] text-text-subtle">a statutory liability, not platform revenue</span>
+          </div>
+        </div>
+
         <div className="mb-4 space-y-3">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div>
               <label className="mb-1 block text-xs font-medium text-text-muted">Search orders</label>
               <SkeuoInput
-                placeholder="Tenant or order ID…"
-                value={orderQuery}
-                onChange={(e) => setOrderQuery(e.target.value)}
+                placeholder="Tenant, order or payment ID…"
+                value={orderQueryDraft}
+                onChange={(e) => setOrderQueryDraft(e.target.value)}
                 aria-label="Search orders"
               />
             </div>
@@ -775,15 +1195,19 @@ export default function AdminBillingPage() {
               <label className="mb-1 block text-xs font-medium text-text-muted">Status</label>
               <select
                 value={orderStatus}
-                onChange={(e) => setOrderStatus(e.target.value)}
+                onChange={(e) => {
+                  setOrderStatus(e.target.value);
+                  setOrderPage(0);
+                }}
                 className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
               >
                 <option value="all">All statuses</option>
-                <option value="captured">Captured / Paid</option>
-                <option value="paid">Paid</option>
                 <option value="created">Created</option>
                 <option value="attempted">Attempted</option>
+                <option value="paid">Paid</option>
                 <option value="failed">Failed</option>
+                <option value="partially_refunded">Partially refunded</option>
+                <option value="refunded">Refunded</option>
               </select>
             </div>
             <div>
@@ -794,27 +1218,48 @@ export default function AdminBillingPage() {
                 className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
               >
                 <option value="all">All currencies</option>
-                <option value="USD">USD</option>
                 <option value="INR">INR</option>
+                <option value="USD">USD</option>
                 <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="AED">AED</option>
               </select>
+              <span className="mt-1 block text-[10px] text-text-subtle">filters this page only</span>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">From (IST)</label>
+              <SkeuoInput
+                type="date"
+                value={orderFrom}
+                onChange={(e) => {
+                  setOrderFrom(e.target.value);
+                  setOrderPage(0);
+                }}
+                aria-label="Orders from date"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">To (IST)</label>
+              <SkeuoInput
+                type="date"
+                value={orderTo}
+                onChange={(e) => {
+                  setOrderTo(e.target.value);
+                  setOrderPage(0);
+                }}
+                aria-label="Orders to date"
+                className="mt-1"
+              />
             </div>
           </div>
           <div className="flex items-center justify-between border-t border-surface-border-subtle pt-2 text-xs text-text-muted">
             <span>
               Showing <strong className="text-text">{filteredOrders.length}</strong> of{" "}
-              <strong className="text-text">{allOrders.length}</strong> orders
+              <strong className="text-text">{orderTotal}</strong> matching orders
             </span>
-            {(orderQuery.trim() || orderStatus !== "all" || orderCurrency !== "all") && (
-              <button
-                type="button"
-                onClick={() => {
-                  setOrderQuery("");
-                  setOrderStatus("all");
-                  setOrderCurrency("all");
-                }}
-                className="text-accent-primary hover:underline"
-              >
+            {(orderQuery || orderStatus !== "all" || orderCurrency !== "all" || orderFrom || orderTo) && (
+              <button type="button" onClick={clearOrderFilters} className="text-accent-primary hover:underline">
                 Clear filters
               </button>
             )}
@@ -822,52 +1267,731 @@ export default function AdminBillingPage() {
         </div>
 
         <AdminLoading loading={payOrders.loading} />
-        <AdminError error={payOrders.error} />
         <p className="mb-2 text-[11px] text-text-muted">
-          Order equivalents use the display currency above and current charge FX. The smaller line preserves each order&apos;s actual charge or settlement amount.
+          Tax is the GST collected on the charge. Wallet credit is the taxable value the tenant can
+          spend; refunds reverse both in the same proportion.
         </p>
         <SkeuoTable>
           <SkeuoTableHead>
-            <SkeuoTh>Tenant</SkeuoTh>
+            <SkeuoTh>Tenant / order</SkeuoTh>
             <SkeuoTh>{walletCurrencyDisplay === "both" ? "Charged" : `Charged (${walletCurrencyDisplay} equiv.)`}</SkeuoTh>
-            <SkeuoTh>{walletCurrencyDisplay === "both" ? "Settled (INR)" : `Settled (${walletCurrencyDisplay} equiv.)`}</SkeuoTh>
+            <SkeuoTh>GST</SkeuoTh>
+            <SkeuoTh>Wallet credit</SkeuoTh>
             <SkeuoTh>Status</SkeuoTh>
+            <SkeuoTh>Invoice</SkeuoTh>
             <SkeuoTh>When</SkeuoTh>
+            <SkeuoTh className="text-right">Detail</SkeuoTh>
           </SkeuoTableHead>
           <SkeuoTableBody>
-            {filteredOrders.map((o) => (
-              <SkeuoTableRow key={o.orderId}>
-                <SkeuoTd>
-                  <div className="font-medium text-text">{o.tenantName || "Unassigned"}</div>
-                  <div className="font-mono text-[10px] text-text-muted">{o.orderId}</div>
-                </SkeuoTd>
-                <SkeuoTd className="font-mono font-medium">{paymentOrderAmount(o, false)}</SkeuoTd>
-                <SkeuoTd className="font-mono">{paymentOrderAmount(o, true)}</SkeuoTd>
-                <SkeuoTd>
-                  <SkeuoBadge
-                    tone={
-                      o.status === "captured" || o.status === "paid"
-                        ? "success"
-                        : o.status === "failed"
-                        ? "danger"
-                        : "warning"
-                    }
-                  >
-                    {o.status}
-                  </SkeuoBadge>
-                </SkeuoTd>
-                <SkeuoTd className="text-xs text-text-muted">{formatWhen(o.createdAt)}</SkeuoTd>
-              </SkeuoTableRow>
-            ))}
+            {filteredOrders.map((o) => {
+              const open = expandedOrder === o.orderId;
+              return (
+                <Fragment key={o.orderId}>
+                  <SkeuoTableRow>
+                    <SkeuoTd>
+                      <div className="font-medium text-text">{o.tenantName || "Unassigned"}</div>
+                      <div className="font-mono text-[10px] text-text-muted">{o.orderId}</div>
+                    </SkeuoTd>
+                    <SkeuoTd className="font-mono font-medium">{paymentOrderAmount(o, false)}</SkeuoTd>
+                    <SkeuoTd className="font-mono text-xs">
+                      {o.currency} {Number(o.tax || 0).toFixed(2)}
+                      <span className="block text-[10px] text-text-muted">
+                        {o.taxRatePercent ? `${o.taxRatePercent}% · ${o.taxKind}` : "no GST"}
+                      </span>
+                    </SkeuoTd>
+                    <SkeuoTd className="font-mono">{paymentOrderAmount(o, true)}</SkeuoTd>
+                    <SkeuoTd>
+                      <SkeuoBadge
+                        tone={
+                          o.status === "paid"
+                            ? "success"
+                            : o.status === "failed"
+                            ? "error"
+                            : o.status === "refunded"
+                            ? "muted"
+                            : "warning"
+                        }
+                      >
+                        {o.status}
+                      </SkeuoBadge>
+                      {o.failureCode ? (
+                        <span className="mt-1 block text-[10px] text-status-error">{o.failureCode}</span>
+                      ) : null}
+                    </SkeuoTd>
+                    <SkeuoTd className="text-xs">
+                      {o.invoiceId ? (
+                        <button
+                          type="button"
+                          className="font-mono text-accent-primary hover:underline"
+                          onClick={() =>
+                            void run(`invoicePdf:${o.invoiceId}`, () =>
+                              downloadFile(
+                                `/api/dev/admin/payments/invoices/${o.invoiceId}/pdf`,
+                                `${o.invoiceNumber || "invoice"}.pdf`
+                              )
+                            )
+                          }
+                        >
+                          {o.invoiceNumber}
+                        </button>
+                      ) : (
+                        <span className="text-text-muted">—</span>
+                      )}
+                    </SkeuoTd>
+                    <SkeuoTd className="text-xs text-text-muted">{formatWhen(o.createdAt)}</SkeuoTd>
+                    <SkeuoTd className="text-right">
+                      <SkeuoButton type="button" size="sm" variant="secondary" onClick={() => toggleOrder(o.orderId)}>
+                        {open ? "Close" : "Open"}
+                      </SkeuoButton>
+                    </SkeuoTd>
+                  </SkeuoTableRow>
+                  {open ? (
+                    <SkeuoTableRow>
+                      <SkeuoTd colSpan={8} className="bg-surface-panel-inset/60">
+                        <AdminLoading loading={orderDetailLoading} />
+                        {!orderDetailLoading && orderDetail && orderDetail.order.orderId === o.orderId ? (
+                          <div className="space-y-4 py-1">
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                              <div>
+                                <span className="block text-[10px] uppercase tracking-wide text-text-subtle">Listed value</span>
+                                <span className="font-mono text-sm">
+                                  {o.currency} {Number(orderDetail.order.subtotal || 0).toFixed(2)}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] uppercase tracking-wide text-text-subtle">GST</span>
+                                <span className="font-mono text-sm">
+                                  {o.currency} {Number(orderDetail.order.tax || 0).toFixed(2)}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] uppercase tracking-wide text-text-subtle">Charged</span>
+                                <span className="font-mono text-sm">
+                                  {o.currency} {Number(orderDetail.order.amount || 0).toFixed(2)}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] uppercase tracking-wide text-text-subtle">Credited wallet</span>
+                                <span className="font-mono text-sm">
+                                  {formatInr(Math.round(Number(orderDetail.order.amountInr || 0) * 100))}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] uppercase tracking-wide text-text-subtle">Payment ID</span>
+                                <span className="font-mono text-xs break-all">{orderDetail.order.paymentId || "—"}</span>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] uppercase tracking-wide text-text-subtle">Method</span>
+                                <span className="text-xs capitalize">{orderDetail.order.paymentMethod || "—"}</span>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] uppercase tracking-wide text-text-subtle">Provider fee / tax</span>
+                                <span className="font-mono text-xs">
+                                  {orderDetail.order.fee === null
+                                    ? "—"
+                                    : `${o.currency} ${Number(orderDetail.order.fee).toFixed(2)} + ${Number(
+                                        orderDetail.order.taxOnFee || 0
+                                      ).toFixed(2)}`}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="block text-[10px] uppercase tracking-wide text-text-subtle">Settlement</span>
+                                <span className="font-mono text-xs break-all">
+                                  {orderDetail.order.settlementId || "—"}
+                                  {orderDetail.order.settledAt ? ` · ${formatWhen(orderDetail.order.settledAt)}` : ""}
+                                </span>
+                              </div>
+                            </div>
+
+                            {orderDetail.order.failureReason || orderDetail.order.failureCode ? (
+                              <p className="rounded-skeuo-sm border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+                                <strong>{orderDetail.order.failureCode || "Payment failed"}:</strong>{" "}
+                                {orderDetail.order.failureReason || "No provider reason recorded."}
+                              </p>
+                            ) : null}
+
+                            <div className="grid gap-4 lg:grid-cols-2">
+                              <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel p-3">
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-xs font-semibold text-text">GST invoice</span>
+                                  {orderDetail.invoice ? (
+                                    <SkeuoButton
+                                      type="button"
+                                      size="sm"
+                                      variant="secondary"
+                                      onClick={() =>
+                                        void run(`invoicePdf:${orderDetail.invoice?.invoiceId}`, () =>
+                                          downloadFile(
+                                            `/api/dev/admin/payments/invoices/${orderDetail.invoice?.invoiceId}/pdf`,
+                                            `${orderDetail.invoice?.invoiceNumber || "invoice"}.pdf`
+                                          )
+                                        )
+                                      }
+                                    >
+                                      Download PDF
+                                    </SkeuoButton>
+                                  ) : null}
+                                </div>
+                                {orderDetail.invoice ? (
+                                  <div className="mt-2 space-y-1 text-xs">
+                                    <p className="font-mono font-medium">{orderDetail.invoice.invoiceNumber}</p>
+                                    <p className="text-text-muted">
+                                      Taxable {formatInr(Math.round(orderDetail.invoice.taxableInr * 100))} · GST{" "}
+                                      {formatInr(Math.round(orderDetail.invoice.taxInr * 100))} · Gross{" "}
+                                      {formatInr(Math.round(orderDetail.invoice.grossInr * 100))}
+                                    </p>
+                                    <p className="text-text-muted">
+                                      {orderDetail.invoice.taxKind === "cgst_sgst"
+                                        ? `CGST ${formatInr(Math.round(orderDetail.invoice.cgstInr * 100))} + SGST ${formatInr(
+                                            Math.round(orderDetail.invoice.sgstInr * 100)
+                                          )}`
+                                        : orderDetail.invoice.taxKind === "igst"
+                                        ? `IGST ${formatInr(Math.round(orderDetail.invoice.igstInr * 100))}`
+                                        : "No GST (export of services or tax disabled)"}
+                                    </p>
+                                    <p className="text-text-muted">
+                                      Place of supply: {orderDetail.invoice.placeOfSupply || "—"}
+                                      {orderDetail.invoice.customerGstin
+                                        ? ` · Buyer GSTIN ${orderDetail.invoice.customerGstin}`
+                                        : ""}
+                                    </p>
+                                    <p className="text-text-muted">Status: {orderDetail.invoice.status}</p>
+                                  </div>
+                                ) : (
+                                  <p className="mt-2 text-xs text-text-muted">
+                                    No invoice yet — one is issued automatically when the provider reports the
+                                    payment captured.
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel p-3">
+                                <span className="text-xs font-semibold text-text">Refunds</span>
+                                {orderDetail.refunds.length === 0 ? (
+                                  <p className="mt-2 text-xs text-text-muted">No refunds on this order.</p>
+                                ) : (
+                                  <ul className="mt-2 space-y-2 text-xs">
+                                    {orderDetail.refunds.map((r) => (
+                                      <li key={r.refundId} className="rounded border border-surface-border-subtle p-2">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <span className="font-mono text-[11px]">{r.refundId}</span>
+                                          <SkeuoBadge tone={r.status === "processed" ? "success" : r.status === "failed" ? "error" : "warning"}>
+                                            {r.status}
+                                          </SkeuoBadge>
+                                        </div>
+                                        <p className="mt-1 text-text-muted">
+                                          {r.currency} {Number(r.amount || 0).toFixed(2)} · wallet −
+                                          {formatInr(Math.round(Number(r.walletReversalInr || 0) * 100))} · GST credit{" "}
+                                          {formatInr(Math.round(Number(r.taxReversalInr || 0) * 100))}
+                                        </p>
+                                        {r.reason ? <p className="text-text-subtle">{r.reason}</p> : null}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-end gap-3 border-t border-surface-border-subtle pt-3">
+                              {orderDetail.order.status !== "paid" &&
+                              orderDetail.order.status !== "partially_refunded" &&
+                              orderDetail.order.status !== "refunded" ? (
+                                <>
+                                  <SkeuoButton
+                                    type="button"
+                                    size="sm"
+                                    disabled={busy === `reconcile:${o.orderId}`}
+                                    onClick={() => void reconcileOrder(o.orderId)}
+                                  >
+                                    {busy === `reconcile:${o.orderId}` ? "Checking…" : "Reconcile with provider"}
+                                  </SkeuoButton>
+                                  <span className="text-[11px] text-text-muted">
+                                    Asks Razorpay for the real payment state and settles this order locally.
+                                  </span>
+                                </>
+                              ) : null}
+                              {orderDetail.order.status === "paid" ||
+                              orderDetail.order.status === "partially_refunded" ? (
+                                <>
+                                  <label className="block text-xs">
+                                    <span className="mb-1 block text-text-muted">Refund amount ({o.currency})</span>
+                                    <SkeuoInput
+                                      value={refundAmount}
+                                      onChange={(e) => setRefundAmount(e.target.value)}
+                                      inputMode="decimal"
+                                      placeholder="Full remaining"
+                                      className="w-32"
+                                      aria-label="Refund amount"
+                                    />
+                                  </label>
+                                  <label className="block min-w-[240px] flex-1 text-xs">
+                                    <span className="mb-1 block text-text-muted">Reason (stored on the credit note)</span>
+                                    <SkeuoInput
+                                      value={refundReason}
+                                      onChange={(e) => setRefundReason(e.target.value)}
+                                      placeholder="8+ characters — why is this being refunded?"
+                                      aria-label="Refund reason"
+                                    />
+                                  </label>
+                                  <SkeuoButton
+                                    type="button"
+                                    size="sm"
+                                    variant="secondary"
+                                    disabled={busy === `orderRefund:${o.orderId}`}
+                                    onClick={() => void refundOrder(orderDetail.order)}
+                                  >
+                                    {busy === `orderRefund:${o.orderId}` ? "Refunding…" : "Refund & issue credit note"}
+                                  </SkeuoButton>
+                                </>
+                              ) : null}
+                            </div>
+                          </div>
+                        ) : null}
+                      </SkeuoTd>
+                    </SkeuoTableRow>
+                  ) : null}
+                </Fragment>
+              );
+            })}
             {filteredOrders.length === 0 && !payOrders.loading && (
               <SkeuoTableRow>
-                <SkeuoTd className="text-center py-6 text-text-muted" colSpan={5}>
+                <SkeuoTd className="text-center py-6 text-text-muted" colSpan={8}>
                   No payment orders found matching current filters.
                 </SkeuoTd>
               </SkeuoTableRow>
             )}
           </SkeuoTableBody>
         </SkeuoTable>
+        <div className="mt-3 flex items-center justify-between text-xs text-text-muted">
+          <span>
+            {orderTotal === 0
+              ? "No orders"
+              : `${orderPage * ORDERS_PAGE_SIZE + 1}–${Math.min(
+                  orderPage * ORDERS_PAGE_SIZE + allOrders.length,
+                  orderTotal
+                )} of ${orderTotal}`}
+          </span>
+          <div className="flex gap-2">
+            <SkeuoButton
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={orderPage === 0 || payOrders.loading}
+              onClick={() => setOrderPage((p) => Math.max(0, p - 1))}
+            >
+              Previous
+            </SkeuoButton>
+            <SkeuoButton
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={
+                payOrders.loading || (orderPage + 1) * ORDERS_PAGE_SIZE >= orderTotal
+              }
+              onClick={() => setOrderPage((p) => p + 1)}
+            >
+              Next
+            </SkeuoButton>
+          </div>
+        </div>
+      </DevCard>
+
+      <DevCard
+        title="Invoices & credit notes"
+        description="GST invoice register. Serial numbers are consecutive per financial year; every invoice stores the supplier and buyer identity used at the time of payment."
+        actions={
+          <SkeuoButton
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={!!busy || invoices.loading}
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (invoiceFrom) params.set("dateFrom", invoiceFrom);
+              if (invoiceTo) params.set("dateTo", invoiceTo);
+              if (tenantId) params.set("tenantId", tenantId);
+              const query = params.toString();
+              void run("invoiceCsv", () =>
+                downloadFile(
+                  `/api/dev/admin/payments/invoices/export${query ? `?${query}` : ""}`,
+                  "invoices.csv"
+                )
+              );
+            }}
+          >
+            {busy === "invoiceCsv" ? "Preparing…" : "Export CSV"}
+          </SkeuoButton>
+        }
+      >
+        <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">Gross invoiced</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {formatInr(Math.round((invoices.data?.summary.grossInr ?? 0) * 100))}
+            </span>
+          </div>
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">Taxable value</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {formatInr(Math.round((invoices.data?.summary.taxableInr ?? 0) * 100))}
+            </span>
+          </div>
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">GST invoiced</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {formatInr(Math.round((invoices.data?.summary.taxInr ?? 0) * 100))}
+            </span>
+            <span className="block text-[11px] text-text-subtle">
+              CGST {formatInr(Math.round((invoices.data?.summary.cgstInr ?? 0) * 100))} · SGST{" "}
+              {formatInr(Math.round((invoices.data?.summary.sgstInr ?? 0) * 100))} · IGST{" "}
+              {formatInr(Math.round((invoices.data?.summary.igstInr ?? 0) * 100))}
+            </span>
+          </div>
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">Invoices</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">{invoiceTotal}</span>
+            <span className="block text-[11px] text-text-subtle">
+              {tenantId ? "filtered to selected tenant" : "all tenants"}
+            </span>
+          </div>
+        </div>
+
+        <div className="mb-4 space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Search invoices</label>
+              <SkeuoInput
+                placeholder="Number, payment ID, GSTIN, tenant…"
+                value={invoiceQueryDraft}
+                onChange={(e) => setInvoiceQueryDraft(e.target.value)}
+                aria-label="Search invoices"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">Status</label>
+              <select
+                value={invoiceStatus}
+                onChange={(e) => {
+                  setInvoiceStatus(e.target.value);
+                  setInvoicePage(0);
+                }}
+                className="w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised px-3 py-2 text-sm text-text"
+              >
+                <option value="all">All statuses</option>
+                <option value="paid">Paid</option>
+                <option value="partially_refunded">Partially refunded</option>
+                <option value="refunded">Refunded</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">From (IST)</label>
+              <SkeuoInput
+                type="date"
+                value={invoiceFrom}
+                onChange={(e) => {
+                  setInvoiceFrom(e.target.value);
+                  setInvoicePage(0);
+                }}
+                aria-label="Invoices from date"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-text-muted">To (IST)</label>
+              <SkeuoInput
+                type="date"
+                value={invoiceTo}
+                onChange={(e) => {
+                  setInvoiceTo(e.target.value);
+                  setInvoicePage(0);
+                }}
+                aria-label="Invoices to date"
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-surface-border-subtle pt-2 text-xs text-text-muted">
+            <span>
+              Showing <strong className="text-text">{allInvoices.length}</strong> of{" "}
+              <strong className="text-text">{invoiceTotal}</strong> invoices
+            </span>
+            {(invoiceQuery || invoiceStatus !== "all" || invoiceFrom || invoiceTo) && (
+              <button type="button" onClick={clearInvoiceFilters} className="text-accent-primary hover:underline">
+                Clear filters
+              </button>
+            )}
+          </div>
+        </div>
+
+        <AdminLoading loading={invoices.loading} />
+        <SkeuoTable>
+          <SkeuoTableHead>
+            <SkeuoTh>Invoice</SkeuoTh>
+            <SkeuoTh>Tenant</SkeuoTh>
+            <SkeuoTh>Taxable</SkeuoTh>
+            <SkeuoTh>GST</SkeuoTh>
+            <SkeuoTh>Gross</SkeuoTh>
+            <SkeuoTh>Status</SkeuoTh>
+            <SkeuoTh className="text-right">PDF</SkeuoTh>
+          </SkeuoTableHead>
+          <SkeuoTableBody>
+            {allInvoices.map((inv) => (
+              <SkeuoTableRow key={inv.invoiceId}>
+                <SkeuoTd>
+                  <span className="font-mono text-xs font-medium">{inv.invoiceNumber}</span>
+                  <span className="block text-[10px] text-text-muted">
+                    {formatWhen(inv.createdAt)}
+                    {inv.fy ? ` · FY ${inv.fy}` : ""}
+                  </span>
+                </SkeuoTd>
+                <SkeuoTd className="text-xs">
+                  <span className="font-medium text-text">{inv.tenantName || "—"}</span>
+                  {inv.customerGstin ? (
+                    <span className="block font-mono text-[10px] text-text-muted">{inv.customerGstin}</span>
+                  ) : null}
+                </SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">
+                  {formatInr(Math.round(Number(inv.taxableInr || 0) * 100))}
+                </SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">
+                  {formatInr(Math.round(Number(inv.taxInr || 0) * 100))}
+                  <span className="block text-[10px] text-text-muted">
+                    {inv.taxKind === "cgst_sgst"
+                      ? `C ${formatInr(Math.round(inv.cgstInr * 100))} / S ${formatInr(Math.round(inv.sgstInr * 100))}`
+                      : inv.taxKind === "igst"
+                      ? `IGST ${formatInr(Math.round(inv.igstInr * 100))}`
+                      : inv.taxKind}
+                  </span>
+                </SkeuoTd>
+                <SkeuoTd className="font-mono text-xs font-medium">
+                  {formatInr(Math.round(Number(inv.grossInr || 0) * 100))}
+                </SkeuoTd>
+                <SkeuoTd>
+                  <SkeuoBadge
+                    tone={
+                      inv.status === "paid"
+                        ? "success"
+                        : inv.status === "refunded"
+                        ? "muted"
+                        : "warning"
+                    }
+                  >
+                    {inv.status}
+                  </SkeuoBadge>
+                  <span className="mt-1 block text-[10px] text-text-muted">
+                    {inv.placeOfSupply || "—"}
+                  </span>
+                </SkeuoTd>
+                <SkeuoTd className="text-right">
+                  <SkeuoButton
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={busy === `adminInvoicePdf:${inv.invoiceId}`}
+                    onClick={() =>
+                      void run(`adminInvoicePdf:${inv.invoiceId}`, () =>
+                        downloadFile(
+                          `/api/dev/admin/payments/invoices/${inv.invoiceId}/pdf`,
+                          `${inv.invoiceNumber}.pdf`
+                        )
+                      )
+                    }
+                  >
+                    {busy === `adminInvoicePdf:${inv.invoiceId}` ? "…" : "PDF"}
+                  </SkeuoButton>
+                </SkeuoTd>
+              </SkeuoTableRow>
+            ))}
+            {allInvoices.length === 0 && !invoices.loading && (
+              <SkeuoTableRow>
+                <SkeuoTd className="text-center py-6 text-text-muted" colSpan={7}>
+                  No invoices match the current filters. Invoices are created automatically when a
+                  recharge payment is captured.
+                </SkeuoTd>
+              </SkeuoTableRow>
+            )}
+          </SkeuoTableBody>
+        </SkeuoTable>
+        <div className="mt-3 flex items-center justify-between text-xs text-text-muted">
+          <span>
+            {invoiceTotal === 0
+              ? "No invoices"
+              : `${invoicePage * INVOICES_PAGE_SIZE + 1}–${Math.min(
+                  invoicePage * INVOICES_PAGE_SIZE + allInvoices.length,
+                  invoiceTotal
+                )} of ${invoiceTotal}`}
+          </span>
+          <div className="flex gap-2">
+            <SkeuoButton
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={invoicePage === 0 || invoices.loading}
+              onClick={() => setInvoicePage((p) => Math.max(0, p - 1))}
+            >
+              Previous
+            </SkeuoButton>
+            <SkeuoButton
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={
+                invoices.loading || (invoicePage + 1) * INVOICES_PAGE_SIZE >= invoiceTotal
+              }
+              onClick={() => setInvoicePage((p) => p + 1)}
+            >
+              Next
+            </SkeuoButton>
+          </div>
+        </div>
+      </DevCard>
+
+      <DevCard
+        title="GST tax report"
+        description="Net GST position for a filing period: invoices issued minus credit notes raised. Dates are Indian calendar days (IST)."
+        actions={
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="text-[11px] text-text-muted">
+              <span className="mb-1 block">From</span>
+              <SkeuoInput
+                type="date"
+                value={reportFrom}
+                onChange={(e) => setReportFrom(e.target.value)}
+                aria-label="Tax report from date"
+                className="mt-0 w-36"
+              />
+            </label>
+            <label className="text-[11px] text-text-muted">
+              <span className="mb-1 block">To</span>
+              <SkeuoInput
+                type="date"
+                value={reportTo}
+                onChange={(e) => setReportTo(e.target.value)}
+                aria-label="Tax report to date"
+                className="mt-0 w-36"
+              />
+            </label>
+          </div>
+        }
+      >
+        <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">Net taxable</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {formatInr(Math.round((taxReport.data?.net.taxableInr ?? 0) * 100))}
+            </span>
+          </div>
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">Net CGST</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {formatInr(Math.round((taxReport.data?.net.cgstInr ?? 0) * 100))}
+            </span>
+          </div>
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">Net SGST</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {formatInr(Math.round((taxReport.data?.net.sgstInr ?? 0) * 100))}
+            </span>
+          </div>
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">Net IGST</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {formatInr(Math.round((taxReport.data?.net.igstInr ?? 0) * 100))}
+            </span>
+          </div>
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-3">
+            <span className="block text-[11px] text-text-muted">Net GST payable</span>
+            <span className="mt-1 block font-mono text-lg font-semibold">
+              {formatInr(Math.round((taxReport.data?.net.taxInr ?? 0) * 100))}
+            </span>
+          </div>
+        </div>
+
+        <AdminLoading loading={taxReport.loading} />
+        <SkeuoTable>
+          <SkeuoTableHead>
+            <SkeuoTh>Supply type</SkeuoTh>
+            <SkeuoTh>Documents</SkeuoTh>
+            <SkeuoTh>Taxable</SkeuoTh>
+            <SkeuoTh>CGST</SkeuoTh>
+            <SkeuoTh>SGST</SkeuoTh>
+            <SkeuoTh>IGST</SkeuoTh>
+            <SkeuoTh>Total GST</SkeuoTh>
+          </SkeuoTableHead>
+          <SkeuoTableBody>
+            {(taxReport.data?.issued ?? []).map((row) => (
+              <SkeuoTableRow key={row.taxKind}>
+                <SkeuoTd className="text-xs font-medium capitalize">
+                  {row.taxKind === "cgst_sgst"
+                    ? "Intra-state (CGST + SGST)"
+                    : row.taxKind === "igst"
+                    ? "Inter-state (IGST)"
+                    : row.taxKind === "export"
+                    ? "Export of services"
+                    : row.taxKind}
+                </SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">{row.count}</SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">{formatInr(Math.round(row.taxableInr * 100))}</SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">{formatInr(Math.round(row.cgstInr * 100))}</SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">{formatInr(Math.round(row.sgstInr * 100))}</SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">{formatInr(Math.round(row.igstInr * 100))}</SkeuoTd>
+                <SkeuoTd className="font-mono text-xs font-medium">{formatInr(Math.round(row.taxInr * 100))}</SkeuoTd>
+              </SkeuoTableRow>
+            ))}
+            {taxReport.data?.creditNotes ? (
+              <SkeuoTableRow>
+                <SkeuoTd className="text-xs font-medium text-red-700">Less: credit notes</SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">{taxReport.data.creditNotes.count}</SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">
+                  −{formatInr(Math.round(taxReport.data.creditNotes.taxableInr * 100))}
+                </SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">
+                  −{formatInr(Math.round(taxReport.data.creditNotes.cgstInr * 100))}
+                </SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">
+                  −{formatInr(Math.round(taxReport.data.creditNotes.sgstInr * 100))}
+                </SkeuoTd>
+                <SkeuoTd className="font-mono text-xs">
+                  −{formatInr(Math.round(taxReport.data.creditNotes.igstInr * 100))}
+                </SkeuoTd>
+                <SkeuoTd className="font-mono text-xs font-medium text-red-700">
+                  −{formatInr(Math.round(taxReport.data.creditNotes.taxInr * 100))}
+                </SkeuoTd>
+              </SkeuoTableRow>
+            ) : null}
+            <SkeuoTableRow>
+              <SkeuoTd className="text-xs font-semibold">Net for the period</SkeuoTd>
+              <SkeuoTd>—</SkeuoTd>
+              <SkeuoTd className="font-mono text-xs font-semibold">
+                {formatInr(Math.round((taxReport.data?.net.taxableInr ?? 0) * 100))}
+              </SkeuoTd>
+              <SkeuoTd className="font-mono text-xs font-semibold">
+                {formatInr(Math.round((taxReport.data?.net.cgstInr ?? 0) * 100))}
+              </SkeuoTd>
+              <SkeuoTd className="font-mono text-xs font-semibold">
+                {formatInr(Math.round((taxReport.data?.net.sgstInr ?? 0) * 100))}
+              </SkeuoTd>
+              <SkeuoTd className="font-mono text-xs font-semibold">
+                {formatInr(Math.round((taxReport.data?.net.igstInr ?? 0) * 100))}
+              </SkeuoTd>
+              <SkeuoTd className="font-mono text-xs font-bold">
+                {formatInr(Math.round((taxReport.data?.net.taxInr ?? 0) * 100))}
+              </SkeuoTd>
+            </SkeuoTableRow>
+            {(taxReport.data?.issued ?? []).length === 0 && !taxReport.loading && (
+              <SkeuoTableRow>
+                <SkeuoTd className="text-center py-6 text-text-muted" colSpan={7}>
+                  No invoices or credit notes in this period.
+                </SkeuoTd>
+              </SkeuoTableRow>
+            )}
+          </SkeuoTableBody>
+        </SkeuoTable>
+        <p className="mt-3 text-[11px] text-text-subtle">
+          The export CSV above includes the per-invoice CGST/SGST/IGST split your GSTR-1 filing
+          needs. Credit notes reduce the liability in the period they were issued, not the original
+          invoice period.
+        </p>
       </DevCard>
 
       <DevCard title="Tenant wallets">
@@ -952,7 +2076,7 @@ export default function AdminBillingPage() {
                   <p className="font-mono text-[10px] text-text-subtle">{w.tenantId}</p>
                 </SkeuoTd>
                 <SkeuoTd>
-                  <SkeuoBadge tone={w.status === "active" ? "success" : w.status === "deleted" ? "danger" : "warning"}>
+                  <SkeuoBadge tone={w.status === "active" ? "success" : w.status === "deleted" ? "error" : "warning"}>
                     {w.status || "active"}
                   </SkeuoBadge>
                 </SkeuoTd>

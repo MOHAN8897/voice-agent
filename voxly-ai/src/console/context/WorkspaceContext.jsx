@@ -119,15 +119,19 @@ export function WorkspaceProvider({ children }) {
   // Payment wall. `addFundsReason` explains why it was opened, e.g. before a call.
   const [isAddFundsOpen, setIsAddFundsOpen] = useState(false);
   const [addFundsReason, setAddFundsReason] = useState(null);
+  // Optional starting amount chosen by a quick-top-up button.
+  const [addFundsPreset, setAddFundsPreset] = useState(null);
 
-  const openAddFunds = useCallback((reason = null) => {
+  const openAddFunds = useCallback((reason = null, presetAmount = null) => {
     setAddFundsReason(reason);
+    setAddFundsPreset(Number(presetAmount) || null);
     setIsAddFundsOpen(true);
   }, []);
 
   const closeAddFunds = useCallback(() => {
     setIsAddFundsOpen(false);
     setAddFundsReason(null);
+    setAddFundsPreset(null);
   }, []);
 
   /** True when the wallet is at or below the balance needed to make a billed call. */
@@ -846,32 +850,6 @@ export function WorkspaceProvider({ children }) {
   // ----------------------------------------------------------------
   // Wallet Operations
   // ----------------------------------------------------------------
-  const addFunds = async (amountUsd) => {
-    // Stripe removed — convert USD request to INR Razorpay order (legacy callers).
-    const result = await api.billing.topUp(amountUsd);
-    if (result?.orderId) {
-      const { openRazorpayWalletCheckout } = await import('../../utils/razorpayCheckout');
-      const cfg = await api.billing.razorpayConfig();
-      await openRazorpayWalletCheckout({
-        order: result,
-        keyId: cfg?.keyId,
-        user: null,
-        onSuccess: async (response) => {
-          await api.billing.verifyRazorpayPayment({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
-          await loadWorkspaceData();
-        },
-        onError: () => {},
-      });
-      return result;
-    }
-    await loadWorkspaceData();
-    return result;
-  };
-
   const refreshWallet = useCallback(async () => {
     if (!authed()) return;
     try {
@@ -883,21 +861,6 @@ export function WorkspaceProvider({ children }) {
       console.warn('refreshWallet failed:', e?.message || e);
     }
   }, [authed]);
-
-  const toggleAutoRecharge = () => {
-    setWallet((prev) => ({
-      ...prev,
-      autoRechargeEnabled: !prev.autoRechargeEnabled
-    }));
-  };
-
-  const updateAutoRechargeSettings = (thresholdUsd, amountUsd) => {
-    setWallet((prev) => ({
-      ...prev,
-      autoRechargeThresholdUsd: thresholdUsd,
-      autoRechargeAmountUsd: amountUsd
-    }));
-  };
 
   const value = {
     // Data
@@ -950,6 +913,7 @@ export function WorkspaceProvider({ children }) {
     isAddFundsOpen,
     setIsAddFundsOpen,
     addFundsReason,
+    addFundsPreset,
     openAddFunds,
     closeAddFunds,
     canAffordCalls,
@@ -982,9 +946,6 @@ export function WorkspaceProvider({ children }) {
     fetchCampaignAnalytics,
     createCampaign,
     toggleCampaignStatus,
-    addFunds,
-    toggleAutoRecharge,
-    updateAutoRechargeSettings
   };
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;

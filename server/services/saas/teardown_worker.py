@@ -468,20 +468,14 @@ async def _stage_database(factory, tenant_id: _uuid_mod.UUID) -> None:
         except Exception:
             logger.warning("teardown: CDR anonymization failed tenant=%s (non-fatal)", tenant_id)
 
-        # 4. Anonymize statutory billing invoices (tax compliance retention)
+        # 4. Anonymize statutory billing documents (tax compliance retention).
+        # The documents themselves stay; buyer name, email and address do not.
         try:
-            from server.db.models.saas_models import BillingInvoice
-
-            inv_res = await session.execute(
-                select(BillingInvoice).where(BillingInvoice.tenant_id == tenant_id)
+            from server.services.saas.billing_retention_service import (
+                anonymize_retained_documents,
             )
-            for inv in inv_res.scalars().all():
-                if hasattr(inv, "customer_email"):
-                    inv.customer_email = "anonymized@deleted.local"
-                if hasattr(inv, "customer_name"):
-                    inv.customer_name = "Anonymized Customer"
-                if hasattr(inv, "billing_address"):
-                    inv.billing_address = None
+
+            await anonymize_retained_documents(session, tenant_id)
         except Exception:
             logger.warning("teardown: invoice anonymization notice tenant=%s", tenant_id)
 
@@ -608,7 +602,11 @@ async def _stage_verification(
 
 
 async def purge_expired_retained_records() -> dict[str, int]:
-    """Purge invoices and CDRs that have exceeded their statutory retention windows."""
+    """Purge financial records and CDRs past their statutory retention windows.
+
+    Credit notes reference invoices, so they are removed first; refunds and
+    orders are support for the same ledger and share the invoice window.
+    """
     settings = get_settings()
     factory = get_session_factory()
     if factory is None:
@@ -618,18 +616,50 @@ async def purge_expired_retained_records() -> dict[str, int]:
     invoice_cutoff = now - timedelta(days=settings.invoice_retention_days)
     cdr_cutoff = now - timedelta(days=settings.cdr_retention_days)
 
-    stats = {"invoices_purged": 0, "cdrs_purged": 0}
+    stats: dict[str, int] = {
+        "invoices_purged": 0,
+        "credit_notes_purged": 0,
+        "orders_purged": 0,
+        "cdrs_purged": 0,
+    }
     async with factory() as session:
-        # Purge expired invoices
         try:
-            from server.db.models.saas_models import BillingInvoice
+            from server.db.models.saas_models import (
+                BillingInvoice,
+                BillingWalletTransaction,
+                CreditNote,
+                RazorpayOrder,
+                RazorpayRefund,
+            )
+
+            res = await session.execute(
+                delete(CreditNote).where(CreditNote.created_at < invoice_cutoff)
+            )
+            stats["credit_notes_purged"] = res.rowcount or 0
 
             res = await session.execute(
                 delete(BillingInvoice).where(BillingInvoice.created_at < invoice_cutoff)
             )
             stats["invoices_purged"] = res.rowcount or 0
+
+            await session.execute(
+                delete(RazorpayRefund).where(RazorpayRefund.created_at < invoice_cutoff)
+            )
+            res = await session.execute(
+                delete(RazorpayOrder).where(
+                    RazorpayOrder.created_at < invoice_cutoff,
+                    RazorpayOrder.status != "paid",
+                )
+            )
+            stats["orders_purged"] = res.rowcount or 0
+
+            await session.execute(
+                delete(BillingWalletTransaction).where(
+                    BillingWalletTransaction.created_at < invoice_cutoff
+                )
+            )
         except Exception as e:
-            logger.warning("purge_expired_retained_records: invoice purge notice: %s", e)
+            logger.warning("purge_expired_retained_records: billing purge notice: %s", e)
 
         # Purge expired CDRs
         try:

@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, CreditCard, Loader2, Wallet } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AlertCircle, CheckCircle2, CreditCard, Loader2, ShieldCheck, Wallet } from 'lucide-react';
 import { Modal } from './Modal';
 import { TactileButton } from './TactileButton';
 import { api } from '../../services/api';
@@ -8,8 +8,11 @@ import { useWorkspace } from '../context/WorkspaceContext';
 import { showToast } from './ToastHost';
 import { openRazorpayWalletCheckout } from '../../utils/razorpayCheckout';
 
-/** USD presets for English-speaking SaaS; Razorpay still settles in INR under the hood. */
-const USD_PRESETS = [5, 10, 25, 50, 100];
+/** Presets in the currency the account is charged in. */
+const PRESETS = {
+  INR: [500, 1000, 2500, 5000, 10000],
+  USD: [5, 10, 25, 50, 100],
+};
 
 /** Internal call-site keys → customer copy. Raw env/admin strings never show. */
 const REASON_COPY = {
@@ -18,8 +21,19 @@ const REASON_COPY = {
   'buy-number': 'Add credit to buy a phone number.',
 };
 
-function moneyUsd(n) {
-  return `$${(Number(n) || 0).toFixed(2)}`;
+function currencySymbol(currency) {
+  if (currency === 'INR') return '₹';
+  if (currency === 'USD') return '$';
+  return `${currency} `;
+}
+
+function money(amount, currency) {
+  const value = Number(amount) || 0;
+  if (currency === 'INR') {
+    return `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  if (currency === 'USD') return `$${value.toFixed(2)}`;
+  return `${currency} ${value.toFixed(2)}`;
 }
 
 function friendlyReason(reason) {
@@ -37,37 +51,63 @@ function customerPaymentError(raw) {
   if (/payment_cancelled|payment cancelled/i.test(msg)) {
     return null;
   }
-  if (/RAZORPAY|API_KEY|API_SECRET|\.env|not configured|not enabled/i.test(msg)) {
+  if (/payments_unavailable|RAZORPAY|API_KEY|API_SECRET|\.env|not configured|not enabled/i.test(msg)) {
     return 'Card payments are temporarily unavailable. Please try again later or contact support.';
   }
   return msg || 'Payment failed';
 }
 
+function taxLabel(taxKind) {
+  switch (taxKind) {
+    case 'cgst_sgst':
+      return 'CGST + SGST';
+    case 'igst':
+      return 'IGST';
+    case 'export':
+      return 'Zero-rated export';
+    default:
+      return 'GST';
+  }
+}
+
+const CONFIRMING_MESSAGE =
+  'Payment received. The bank has not confirmed it to us yet — the wallet will be credited automatically once it does. Refresh in a minute; no need to pay again.';
 
 /**
  * Wallet top-up via Razorpay.
  *
- * Charged in the currency the account is configured for (USD once international
- * payments are enabled, INR otherwise). UPI settles domestically only, so it is
- * hidden for any non-INR order — otherwise checkout offers a rail that cannot
- * take the payment.
+ * The amount is entered in the currency the account is charged in. The server
+ * quotes GST before checkout so the tenant sees the taxable value, the tax split
+ * and exactly what will be credited, never just a single "pay" number.
  */
-export function AddFundsModal({ isOpen, onClose, reason = null }) {
+export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = null }) {
   const { user } = useAuth();
   const { wallet, refreshWallet } = useWorkspace();
-  const [amountUsd, setAmountUsd] = useState(10);
+  const [amount, setAmount] = useState(() => Number(initialAmount) || 10);
   const [catalog, setCatalog] = useState(null);
-  const [razorpay, setRazorpay] = useState({ enabled: false, keyId: '', international: false, currency: 'USD' });
+  const [razorpay, setRazorpay] = useState({ enabled: false, keyId: '', international: false, currency: 'INR' });
+  const [quote, setQuote] = useState(null);
+  const [quoteBusy, setQuoteBusy] = useState(false);
+  const [quoteError, setQuoteError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState(null);
+  const quoteSeq = useRef(0);
 
   const banner = friendlyReason(reason);
+  const chargeCurrency = razorpay.currency || 'USD';
+  const symbol = currencySymbol(chargeCurrency);
+  const presets = PRESETS[chargeCurrency] || PRESETS.USD;
+  const isInternational = chargeCurrency !== 'INR';
 
   useEffect(() => {
     if (!isOpen) return;
     setError(null);
+    setConfirming(false);
     setDone(null);
+    setQuote(null);
+    setQuoteError(null);
     let cancelled = false;
     Promise.all([
       api.billing.getCatalog().catch(() => null),
@@ -79,44 +119,89 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
     ]).then(([cat, rz]) => {
       if (cancelled) return;
       setCatalog(cat);
-      setRazorpay({ international: false, currency: 'USD', ...(rz || {}) });
-      if (rz?.loadError || rz?.enabled === false) {
-        /* shown via the soft unavailable banner below — no env var names */
-      }
-      if (cat?.topupMinUsd) setAmountUsd(Math.max(Number(cat.topupMinUsd) || 5, 10));
+      const config = { international: false, currency: 'INR', ...(rz || {}) };
+      setRazorpay(config);
+      const currency = config.currency || 'INR';
+      const minimum = currency === 'INR' ? Number(cat?.topupMinInr) || 100 : Number(cat?.topupMinUsd) || 3;
+      const defaultAmount = Number(initialAmount) > 0 ? Number(initialAmount) : Math.max(minimum, currency === 'INR' ? 500 : 10);
+      setAmount(defaultAmount);
     });
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, initialAmount]);
 
-  const minUsd = catalog?.topupMinUsd ?? 3;
-  const maxUsd = catalog?.topupMaxUsd ?? 500;
+  const minAmount = useMemo(() => {
+    if (chargeCurrency === 'INR') return Number(catalog?.topupMinInr) || 100;
+    if (chargeCurrency === 'USD') return Number(catalog?.topupMinUsd) || 3;
+    return 1;
+  }, [catalog, chargeCurrency]);
+  const maxAmount = useMemo(() => {
+    if (chargeCurrency === 'INR') return Number(catalog?.topupMaxInr) || 500000;
+    if (chargeCurrency === 'USD') return Number(catalog?.topupMaxUsd) || 500;
+    return 5000;
+  }, [catalog, chargeCurrency]);
+
   const fx = Number(catalog?.rates?.fxRateInr) || 95.64;
   const rateUsd = Number(catalog?.rates?.pstnUsdPerMin) || 0.12;
+  const rateInr = Number(catalog?.rates?.pstnInrPerMin) || rateUsd * fx;
   const balanceUsd =
     Number(wallet?.balanceUsd) ||
     (Number(wallet?.balanceInr) || 0) / fx ||
     0;
-  const minutes = rateUsd > 0 ? Math.floor(balanceUsd / rateUsd) : Number(wallet?.remainingMinutes || 0);
-  const tooSmall = amountUsd < minUsd;
-  const tooLarge = amountUsd > maxUsd;
-  const canPay = !tooSmall && !tooLarge && amountUsd > 0 && razorpay.enabled;
-  const chargeCurrency = razorpay.currency || 'USD';
-  const isInternational = chargeCurrency !== 'INR';
-  const symbol = chargeCurrency === 'INR' ? '₹' : chargeCurrency === 'USD' ? '$' : `${chargeCurrency} `;
-  const amountLabel = isInternational ? `${symbol}${amountUsd}` : `₹${Math.round(amountUsd * fx)}`;
+  const minutes = rateInr > 0 && quote?.creditInr
+    ? Math.floor(Number(quote.creditInr) / rateInr)
+    : rateUsd > 0
+      ? Math.floor(balanceUsd / rateUsd)
+      : Number(wallet?.remainingMinutes || 0);
+
+  // Server-side quote: the only source of truth for GST and charge totals.
+  useEffect(() => {
+    if (!isOpen || !razorpay.enabled) return;
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value <= 0) {
+      setQuote(null);
+      setQuoteError(null);
+      return;
+    }
+    const seq = ++quoteSeq.current;
+    setQuoteBusy(true);
+    setQuoteError(null);
+    const timer = window.setTimeout(() => {
+      api.billing.quoteTopup(value, chargeCurrency)
+        .then((result) => {
+          if (seq === quoteSeq.current) setQuote(result);
+        })
+        .catch((e) => {
+          if (seq !== quoteSeq.current) return;
+          setQuote(null);
+          const message = customerPaymentError(e.message);
+          setQuoteError(message || 'Could not price this top-up.');
+        })
+        .finally(() => {
+          if (seq === quoteSeq.current) setQuoteBusy(false);
+        });
+    }, 300);
+    return () => {
+      window.clearTimeout(timer);
+      if (seq === quoteSeq.current) setQuoteBusy(false);
+    };
+  }, [amount, chargeCurrency, isOpen, razorpay.enabled]);
+
+  const inRange = Number(amount) >= minAmount && Number(amount) <= maxAmount;
+  const canPay = inRange && Number(amount) > 0 && razorpay.enabled && !!quote && !quoteBusy && !busy;
+  const totalLabel = quote ? money(quote.total, chargeCurrency) : money(amount, chargeCurrency);
 
   const pay = useCallback(async () => {
     if (!canPay || busy) return;
     setBusy(true);
     setError(null);
+    setConfirming(false);
     try {
       if (!razorpay.enabled) {
         throw new Error('payments_unavailable');
       }
-      const chargeAmount = isInternational ? amountUsd : Math.max(100, Math.round(amountUsd * fx));
-      const order = await api.billing.createRazorpayOrder(chargeAmount, chargeCurrency);
+      const order = await api.billing.createRazorpayOrder(Number(quote.amount), chargeCurrency);
       await openRazorpayWalletCheckout({
         order,
         keyId: razorpay.keyId,
@@ -124,39 +209,46 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
         hideUpi: isInternational,
         onSuccess: async (response) => {
           try {
-            await api.billing.verifyRazorpayPayment({
+            const result = await api.billing.verifyRazorpayPayment({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
             });
             await refreshWallet();
-            const charged = response.razorpay_payment?.currency
-              ? `${response.razorpay_payment.currency} ${Number(response.razorpay_payment.amount || 0) / 100}`
-              : amountLabel;
-            setDone(`${charged} added to your wallet.`);
+            const credited = result?.creditedInr != null ? Number(result.creditedInr) : Number(quote.creditInr);
+            setDone({
+              credited,
+              invoiceNumber: result?.invoiceNumber || null,
+            });
             showToast('Payment received', 'success');
           } catch (e) {
-            const err = customerPaymentError(e.message);
-            if (err) setError(err);
+            const message = String(e.message || '');
+            if (/verification|confirm|not been captured|not captured|unavailable/i.test(message)) {
+              setConfirming(true);
+            } else {
+              setError(customerPaymentError(message));
+            }
           }
         },
         onError: (e) => {
-          const err = customerPaymentError(e.message || 'Payment cancelled');
-          if (err) setError(err);
+          const message = String(e.message || 'Payment cancelled');
+          const friendly = customerPaymentError(message);
+          if (friendly) {
+            setError(
+              /payment cancelled/i.test(message)
+                ? null
+                : `${friendly} No wallet credit was added. You can retry with the same amount.`
+            );
+          }
         },
       });
     } catch (e) {
       const err = customerPaymentError(e.message);
-      if (err) setError(err);
+      if (err) setError(`${err} No wallet credit was added. You can retry with the same amount.`);
     } finally {
       setBusy(false);
     }
-  }, [amountLabel, amountUsd, busy, canPay, chargeCurrency, fx, isInternational, razorpay, refreshWallet, user]);
-
-  const buyMinutes = useMemo(
-    () => (rateUsd > 0 ? Math.floor(amountUsd / rateUsd) : 0),
-    [amountUsd, rateUsd]
-  );
+  }, [amount, busy, canPay, chargeCurrency, isInternational, quote, razorpay, refreshWallet, user]);
 
   return (
     <Modal
@@ -167,7 +259,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
       maxWidth="max-w-lg"
     >
       <div data-testid="add-funds-modal" className="space-y-4">
-        {banner && (
+        {banner && !done && (
           <div className="flex items-start gap-2 p-3 rounded-xl bg-[#FFFBEB] border border-[#FDE68A]">
             <AlertCircle className="w-4 h-4 text-[#B45309] mt-0.5 shrink-0" />
             <p className="text-xs text-[#78350F]">{banner}</p>
@@ -177,8 +269,18 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
         {done ? (
           <div className="text-center py-6 space-y-3">
             <CheckCircle2 className="w-10 h-10 text-[#047857] mx-auto" />
-            <p className="text-sm font-bold text-[#0F0E17]">{done}</p>
-            <p className="text-xs text-[#524E5E]">Balance: {moneyUsd(wallet?.balanceUsd ?? balanceUsd)}</p>
+            <p className="text-sm font-bold text-[#0F0E17]">
+              {money(done.credited, 'INR')} added to your wallet.
+            </p>
+            <p className="text-xs text-[#524E5E]">
+              Balance: {money(wallet?.balanceInr ?? 0, 'INR')}
+            </p>
+            {done.invoiceNumber ? (
+              <p className="text-[11px] text-[#8C879A]">
+                GST invoice <span className="font-mono font-semibold">{done.invoiceNumber}</span> is
+                available under Billing → Invoices &amp; tax receipts.
+              </p>
+            ) : null}
             <TactileButton variant="brand" size="md" onClick={onClose}>
               Done
             </TactileButton>
@@ -190,7 +292,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
                 <Wallet className="w-4 h-4 text-[#6344E7]" />
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-wider text-[#8C879A]">Balance</div>
-                  <div className="text-sm font-bold text-[#0F0E17]">{moneyUsd(balanceUsd)}</div>
+                  <div className="text-sm font-bold text-[#0F0E17]">{money(wallet?.balanceInr ?? 0, 'INR')}</div>
                 </div>
               </div>
               <div className="text-right">
@@ -207,49 +309,126 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
 
             <div>
               <label htmlFor="add-funds-amount" className="block text-xs font-bold text-[#0F0E17] mb-1.5">
-                Amount (USD)
+                Amount ({chargeCurrency}) {quote?.priceIncludesTax ? 'including GST' : 'before GST'}
               </label>
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-bold text-[#524E5E]">$</span>
+                <span className="text-sm font-bold text-[#524E5E]">{symbol}</span>
                 <input
                   id="add-funds-amount"
                   type="number"
-                  min={minUsd}
-                  max={maxUsd}
-                  step="1"
-                  value={amountUsd}
-                  onChange={(e) => setAmountUsd(Number(e.target.value))}
+                  min={minAmount}
+                  max={maxAmount}
+                  step={chargeCurrency === 'INR' ? '100' : '1'}
+                  value={amount}
+                  onChange={(e) => {
+                    setAmount(Number(e.target.value));
+                    setError(null);
+                    setConfirming(false);
+                  }}
                   data-testid="add-funds-amount"
                   className="flex-1 bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-sm min-h-[42px] sm:min-h-[38px] font-mono text-[#0F0E17]"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
-                {USD_PRESETS.map((p) => (
+                {presets.map((p) => (
                   <button
                     key={p}
                     type="button"
-                    onClick={() => setAmountUsd(p)}
+                    onClick={() => {
+                      setAmount(p);
+                      setError(null);
+                      setConfirming(false);
+                    }}
                     data-testid={`add-funds-preset-${p}`}
                     className={`min-w-[44px] min-h-[38px] sm:min-h-[34px] px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all flex items-center justify-center ${
-                      amountUsd === p
+                      Number(amount) === p
                         ? 'bg-[#0F0E17] text-white border-[#0F0E17]'
                         : 'bg-white text-[#524E5E] border-[#E4E2EB] hover:border-[#6344E7]'
                     }`}
                   >
-                    ${p}
+                    {symbol}
+                    {p.toLocaleString?.('en-IN') ?? p}
                   </button>
                 ))}
               </div>
               <p className="text-[10px] text-[#8C879A] mt-1.5">
-                Minimum {symbol}{minUsd}. ≈ {buyMinutes} min at {moneyUsd(rateUsd)}/min.
+                Minimum {money(minAmount, chargeCurrency)} · maximum {money(maxAmount, chargeCurrency)}
+                {quote?.creditInr != null ? ` · ${minutes} min at ${money(rateInr, 'INR')}/min` : ''}.
               </p>
             </div>
 
-            {(tooSmall || tooLarge) && (
+            {(Number(amount) < minAmount || Number(amount) > maxAmount) && (
               <p className="text-[11px] text-[#B91C1C]">
-                Enter between {symbol}{minUsd} and {symbol}{maxUsd}.
+                Enter between {money(minAmount, chargeCurrency)} and {money(maxAmount, chargeCurrency)}.
               </p>
             )}
+
+            {/* Server-quoted breakdown: what is taxed, what is credited. */}
+            {razorpay.enabled && Number(amount) >= minAmount ? (
+              <div
+                className="rounded-xl border border-[#E4E2EB] bg-white overflow-hidden"
+                data-testid="add-funds-breakdown"
+                aria-live="polite"
+              >
+                <div className="flex items-center justify-between px-3 py-2 border-b border-[#E4E2EB] bg-[#FAF9FD]">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#524E5E]">Charge breakdown</span>
+                  {quoteBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin text-[#8C879A]" /> : null}
+                </div>
+                <dl className="divide-y divide-[#F0EEF5] text-xs">
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <dt className="text-[#524E5E]">Wallet credit (taxable value)</dt>
+                    <dd className="font-mono font-semibold text-[#0F0E17]">
+                      {quote ? money(quote.creditInr, 'INR') : '—'}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <dt className="text-[#524E5E]">
+                      {quote?.taxKind === 'export'
+                        ? 'GST (export of services, zero-rated)'
+                        : `${taxLabel(quote?.taxKind)} ${quote?.ratePercent ? `@ ${quote.ratePercent}%` : ''}`}
+                    </dt>
+                    <dd className="font-mono font-semibold text-[#0F0E17]">
+                      {quote ? money(quote.tax, chargeCurrency) : '—'}
+                    </dd>
+                  </div>
+                  {quote?.taxKind === 'cgst_sgst' ? (
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <dt className="text-[#8C879A] pl-3">CGST / SGST</dt>
+                      <dd className="font-mono text-[#524E5E]">
+                        {money(quote.cgst, chargeCurrency)} + {money(quote.sgst, chargeCurrency)}
+                      </dd>
+                    </div>
+                  ) : null}
+                  <div className="flex items-center justify-between px-3 py-2 bg-[#FAF9FD]">
+                    <dt className="font-semibold text-[#0F0E17]">Total payable</dt>
+                    <dd className="font-mono text-sm font-bold text-[#0F0E17]" data-testid="add-funds-total">
+                      {quote ? money(quote.total, chargeCurrency) : '—'}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="px-3 py-2 text-[10px] text-[#8C879A] border-t border-[#F0EEF5]">
+                  GST is a statutory charge and is not wallet credit. Your invoice shows the same
+                  split and is downloadable under Billing.
+                </p>
+              </div>
+            ) : null}
+
+            {quoteError ? (
+              <p className="text-[11px] text-[#B45309]" role="status">
+                {quoteError}
+              </p>
+            ) : null}
+
+            {confirming ? (
+              <div
+                data-testid="add-funds-confirming"
+                role="status"
+                className="rounded-xl border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-xs text-[#78350F]"
+              >
+                {CONFIRMING_MESSAGE}
+              </div>
+            ) : null}
+
             {error && (
               <div
                 data-testid="add-funds-error"
@@ -270,15 +449,18 @@ export function AddFundsModal({ isOpen, onClose, reason = null }) {
               onClick={pay}
               className="w-full justify-center min-h-[44px]"
             >
-              {busy ? 'Opening checkout…' : `Pay ${amountLabel}`}
+              {busy ? 'Opening checkout…' : `Pay ${totalLabel}`}
             </TactileButton>
 
-            <p className="text-[10px] text-center text-[#8C879A] flex items-center justify-center gap-1">
-              {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-              {isInternational
-                ? `Secure card checkout. Charged in ${chargeCurrency}. We never see your card details.`
-                : 'Secure card checkout. We never see your card details.'}
-            </p>
+            <div className="flex items-start justify-center gap-1.5 text-[10px] text-[#8C879A] text-center">
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>
+                {isInternational
+                  ? `Secure card checkout in ${chargeCurrency}. We never see your card details.`
+                  : 'Secure card checkout with UPI, cards and netbanking. We never see your payment details.'}
+                {' '}A failed payment adds no credit and can be retried.
+              </span>
+            </div>
           </>
         )}
       </div>

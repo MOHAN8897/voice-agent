@@ -1,7 +1,9 @@
 """Subscriber billing — wallet and Razorpay (INR)."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt
@@ -10,7 +12,13 @@ from server.services.saas.billing_wallet_service import (
     list_wallet_transactions,
     wallet_summary,
 )
-from server.services.saas.razorpay_service import confirm_wallet_payment, create_wallet_order, list_invoices
+from server.services.saas.razorpay_service import (
+    confirm_wallet_payment,
+    create_wallet_order,
+    get_invoice,
+    list_invoices,
+    quote_wallet_topup,
+)
 from server.services.saas.tenant_guard import SubscriberPrincipal, require_subscriber_permission
 from server.utils.rate_limiter import RateLimiter, raise_rate_limited
 
@@ -37,6 +45,49 @@ class RazorpayVerifyBody(BaseModel):
     razorpay_order_id: str = Field(..., min_length=4, max_length=128)
     razorpay_payment_id: str = Field(..., min_length=4, max_length=128)
     razorpay_signature: str = Field(..., min_length=16, max_length=256)
+
+
+class QuoteBody(BaseModel):
+    amount: float = Field(..., gt=0, le=1_000_000)
+    currency: str | None = Field(None, max_length=8)
+
+
+class BillingProfileBody(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    legalName: str = Field("", max_length=255)
+    gstin: str | None = Field(None, max_length=15)
+    billingEmail: str = Field("", max_length=320)
+    addressLine1: str = Field("", max_length=255)
+    addressLine2: str = Field("", max_length=255)
+    city: str = Field("", max_length=120)
+    stateCode: str = Field("", max_length=4)
+    stateName: str = Field("", max_length=120)
+    postalCode: str = Field("", max_length=12)
+    countryCode: str = Field("IN", max_length=2)
+    customerType: str = Field("individual", max_length=20)
+
+
+def _topup_message(code: str) -> str:
+    return {
+        "razorpay_not_configured": "Card payments are temporarily unavailable. Please try again later or contact support.",
+        "minimum_amount": "That amount is below the minimum charge.",
+        "maximum_amount": "That amount is above the maximum single top-up.",
+        "razorpay_auth_failed": "Card payments are temporarily unavailable. Please try again later or contact support.",
+        "razorpay_order_failed": "Could not start payment. Please try again in a moment.",
+    }.get(code, code)
+
+
+async def _public_tax_summary() -> dict:
+    from server.services.saas.tax_service import config_configured, load_config
+
+    config = await load_config()
+    return {
+        "enabled": bool(config.get("enabled")) and config_configured(config),
+        "ratePercent": round(int(config.get("defaultRateBps") or 0) / 100.0, 2),
+        "priceIncludesTax": bool(config.get("priceIncludesTax")),
+        "countryCode": config.get("countryCode") or "IN",
+    }
 
 
 @router.get("/api/billing/catalog")
@@ -81,6 +132,43 @@ async def billing_catalog():
             "minBalanceInr": round(settings.pstn_min_balance_inr_paise / 100.0, 2),
             "fxRateInr": rates["fx_rate_inr"],
         },
+        # GST applies to INR supplies to Indian recipients. The exact split is
+        # quoted per account in POST /api/billing/quote.
+        "tax": await _public_tax_summary(),
+    }
+
+
+@router.post("/api/billing/quote")
+async def billing_quote(
+    body: QuoteBody,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    """Price a top-up with its GST split before checkout opens."""
+    require_subscriber_permission(principal, "app.billing.read")
+    allowed, retry = _billing_limiter.allow(f"quote:{principal.user_id}")
+    if not allowed:
+        raise_rate_limited(retry, "Quote rate limit reached.")
+    try:
+        priced = await quote_wallet_topup(
+            principal.tenant_id,
+            body.amount,
+            currency=body.currency,
+            buyer_email=principal.email,
+        )
+    except ValueError as e:
+        code = str(e)
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": code, "message": _topup_message(code)}},
+        ) from None
+    quote = priced["quote"]
+    return {
+        **quote,
+        "minAmount": priced["floor"],
+        "maxAmount": priced["ceiling"],
+        "fxRateInr": priced["fxRateInr"],
+        "buyer": priced["buyer"],
+        "paymentProvider": "razorpay",
     }
 
 
@@ -190,22 +278,16 @@ async def razorpay_create_order(
         raise_rate_limited(retry, "Payment rate limit reached.")
     try:
         return await create_wallet_order(
-            principal.tenant_id, body.amount, currency=body.currency
+            principal.tenant_id,
+            body.amount,
+            currency=body.currency,
+            buyer_email=principal.email,
         )
     except ValueError as e:
         code = str(e)
-        messages = {
-            "razorpay_not_configured": "Card payments are temporarily unavailable. Please try again later or contact support.",
-            "minimum_amount": "That amount is below the minimum charge.",
-            "maximum_amount": "That amount is above the maximum single top-up.",
-            "razorpay_auth_failed": (
-                "Card payments are temporarily unavailable. Please try again later or contact support."
-            ),
-            "razorpay_order_failed": "Could not start payment. Please try again in a moment.",
-        }
         raise HTTPException(
             status_code=400,
-            detail={"error": {"code": code, "message": messages.get(code, code)}},
+            detail={"error": {"code": code, "message": _topup_message(code)}},
         ) from None
 
 
@@ -231,8 +313,12 @@ async def razorpay_verify(body: RazorpayVerifyBody, principal: SubscriberPrincip
             status_code = 404
         elif code == "payment_verification_unavailable":
             status_code = 503
+        elif code in ("payment_not_captured", "payment_amount_mismatch", "payment_currency_mismatch"):
+            status_code = 409
         messages = {
             "payment_verification_unavailable": "Payment status could not be confirmed. Please retry.",
+            "payment_not_captured": "The bank has not captured this payment yet. It will be credited automatically once it is.",
+            "invalid_signature": "This payment could not be verified. Please contact support if money was deducted.",
         }
         raise HTTPException(
             status_code=status_code,
@@ -244,6 +330,87 @@ async def razorpay_verify(body: RazorpayVerifyBody, principal: SubscriberPrincip
 async def billing_invoices(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
     require_subscriber_permission(principal, "app.billing.read")
     return {"invoices": await list_invoices(principal.tenant_id)}
+
+
+@router.get("/api/billing/invoices/{invoice_id}")
+async def billing_invoice_detail(
+    invoice_id: uuid.UUID, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)
+):
+    require_subscriber_permission(principal, "app.billing.read")
+    from server.services.saas.invoice_service import invoice_payload
+
+    invoice, notes = await get_invoice(principal.tenant_id, invoice_id)
+    if invoice is None:
+        raise HTTPException(status_code=404, detail="invoice_not_found")
+    return invoice_payload(invoice, credit_notes=notes)
+
+
+@router.get("/api/billing/invoices/{invoice_id}/pdf")
+async def billing_invoice_pdf(
+    invoice_id: uuid.UUID, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)
+):
+    require_subscriber_permission(principal, "app.billing.read")
+    allowed, retry = _billing_limiter.allow(f"invoice_pdf:{principal.user_id}")
+    if not allowed:
+        raise_rate_limited(retry, "Invoice download rate limit reached.")
+    from server.services.saas.invoice_service import render_invoice_pdf
+
+    invoice, notes = await get_invoice(principal.tenant_id, invoice_id)
+    if invoice is None:
+        raise HTTPException(status_code=404, detail="invoice_not_found")
+    try:
+        pdf = render_invoice_pdf(invoice, notes)
+    except RuntimeError:
+        raise HTTPException(status_code=503, detail="invoice_pdf_unavailable") from None
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{invoice.invoice_number}.pdf"',
+            "Cache-Control": "private, no-store",
+        },
+    )
+
+
+@router.get("/api/billing/profile")
+async def billing_profile(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    require_subscriber_permission(principal, "app.billing.read")
+    from server.services.saas.billing_profile_service import get_profile
+    from server.services.saas.tax_service import INDIAN_STATES
+
+    profile = await get_profile(principal.tenant_id)
+    # The console renders a state picker from the same table the tax engine
+    # validates against, so the two can never drift on GST state codes.
+    return {
+        **profile,
+        "stateOptions": [{"code": code, "name": name} for code, name in INDIAN_STATES.items()],
+    }
+
+
+@router.put("/api/billing/profile")
+async def update_billing_profile(
+    body: BillingProfileBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)
+):
+    require_subscriber_permission(principal, "app.billing.write")
+    from server.services.saas.billing_profile_service import update_profile
+
+    try:
+        return await update_profile(principal.tenant_id, body.model_dump())
+    except ValueError as exc:
+        code = str(exc)
+        messages = {
+            "gstin_invalid_format": "That GSTIN is not in the 15-character GST format.",
+            "gstin_invalid_state": "That GSTIN does not start with a valid state code.",
+            "gstin_invalid_checksum": "That GSTIN's check digit is invalid. Please re-check it.",
+            "gstin_state_mismatch": "The GSTIN state does not match the billing address state.",
+            "invalid_state_code": "Choose a valid Indian state.",
+            "legal_name_required": "A business invoice needs the registered legal name.",
+            "invalid_customer_type": "Choose individual or business.",
+        }
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": code, "message": messages.get(code, code)}},
+        ) from None
 
 
 @router.get("/api/billing/transactions")
@@ -266,7 +433,7 @@ async def billing_transactions(
 async def razorpay_public_config():
     """Public: key id for Checkout, plus which currencies this account accepts.
 
-    Re-reads env so keys added after process start apply without a redeploy.
+    Only the publishable key id is returned; the secret never leaves the server.
     `international` must be true before a foreign-issued card will be offered —
     it reflects the operator having enabled it in the Razorpay dashboard, and the
     client uses it to avoid showing a currency the account would reject.
@@ -277,7 +444,6 @@ async def razorpay_public_config():
     )
     from server.services.saas.payment_settings import is_international_enabled
 
-    get_settings.cache_clear()
     settings = get_settings()
     key = (settings.razorpay_api_key or "").strip()
     secret = (settings.razorpay_api_secret or "").strip()

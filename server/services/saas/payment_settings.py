@@ -94,6 +94,10 @@ def settings_state() -> dict[str, Any]:
         "configured": bool(key and secret),
         # Masked: the full key never leaves the server.
         "keyId": _mask(key),
+        # Without the endpoint secret the webhook route refuses every delivery,
+        # so the panel must be able to say payments are only confirmed by the
+        # browser callback.
+        "webhookConfigured": bool((settings.razorpay_webhook_secret or "").strip()),
         "testMode": key.startswith("rzp_test"),
         "internationalEnabled": international,
         # Razorpay exposes NO endpoint reporting whether International Payments is

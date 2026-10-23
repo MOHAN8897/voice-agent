@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
-import { openRazorpayWalletCheckout } from '../../utils/razorpayCheckout';
 import {
-  CreditCard,
   Zap,
-  Clock,
   ShieldCheck,
-  CheckCircle2,
   Download,
   AlertCircle,
+  FileText,
+  Loader2,
+  Pencil,
   Plus,
-  ArrowUpRight,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
@@ -21,6 +20,7 @@ import {
   TransactionRowsSkeleton,
 } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { showToast } from '../ui/ToastHost';
 
 /** Plain-language labels for wallet ledger kinds. */
 const TRANSACTION_LABEL = {
@@ -38,6 +38,95 @@ const TRANSACTION_LABEL = {
   razorpay_topup: 'Wallet top-up',
   forfeiture: 'Account forfeiture',
 };
+
+/** Top-up presets in the currency checkout will charge. */
+const CHARGE_PRESETS = {
+  INR: [500, 1000, 2500, 5000],
+  USD: [5, 10, 25, 50],
+};
+
+const FIELD_CLASS =
+  'w-full min-h-[40px] rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7]';
+
+function money(amount, currency = 'INR') {
+  const value = Number(amount) || 0;
+  if (currency === 'INR') {
+    return `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  if (currency === 'USD') return `$${value.toFixed(2)}`;
+  return `${currency} ${value.toFixed(2)}`;
+}
+
+function symbolFor(currency) {
+  if (currency === 'INR') return '₹';
+  if (currency === 'USD') return '$';
+  return `${currency} `;
+}
+
+function formatDate(value, { withTime = false } = {}) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}),
+  });
+}
+
+function taxKindLabel(kind, ratePercent) {
+  const rate = Number(ratePercent) > 0 ? ` @ ${Number(ratePercent).toFixed(2).replace(/\.00$/, '')}%` : '';
+  switch (kind) {
+    case 'cgst_sgst':
+      return `CGST + SGST${rate}`;
+    case 'igst':
+      return `IGST${rate}`;
+    case 'export':
+      return 'Zero-rated export';
+    case 'none':
+      return 'No GST';
+    default:
+      return kind ? `${kind}${rate}` : 'GST';
+  }
+}
+
+/** What the customer actually paid, in the order currency and in INR. */
+function invoiceTotal(inv) {
+  const currency = String(inv.currency || 'INR').toUpperCase();
+  const gross = Number(inv.gross ?? inv.amount ?? 0);
+  const grossInr = Number(inv.grossInr ?? 0);
+  if (currency === 'INR') return money(gross, 'INR');
+  const inr = grossInr ? ` (${money(grossInr, 'INR')})` : '';
+  return `${money(gross, currency)}${inr}`;
+}
+
+function paymentMethodLabel(method) {
+  if (!method) return '—';
+  const value = String(method).toLowerCase();
+  const labels = {
+    card: 'Card',
+    upi: 'UPI',
+    netbanking: 'Net banking',
+    wallet: 'Wallet',
+    emi: 'EMI',
+  };
+  return labels[value] || method;
+}
+
+function invoiceStatusClass(status) {
+  const value = String(status || '').toLowerCase();
+  if (value === 'issued' || value === 'paid') {
+    return 'bg-[#22C55E]/10 text-[#15803D] border-[#22C55E]/20';
+  }
+  if (value === 'refunded' || value === 'credited') {
+    return 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]';
+  }
+  if (value === 'void' || value === 'cancelled') {
+    return 'bg-slate-100 text-slate-600 border-slate-200';
+  }
+  return 'bg-[#FAF9FD] text-[#524E5E] border-[#E4E2EB]';
+}
 
 function describeTransactionKind(row) {
   if (typeof row === 'string') {
@@ -107,52 +196,55 @@ function toCsv(rows, serverWallet) {
 }
 
 export function BillingModule() {
-  const { user } = useAuth();
   const {
     wallet,
-    toggleAutoRecharge,
-    updateAutoRechargeSettings,
+    openAddFunds,
+    isAddFundsOpen,
+    refreshWallet,
   } = useWorkspace();
 
-  const [topupSuccess, setTopupSuccess] = useState(null);
-  const [topupError, setTopupError] = useState(null);
-  const [threshold, setThreshold] = useState(wallet.autoRechargeThresholdUsd);
-  const [amount, setAmount] = useState(wallet.autoRechargeAmountUsd);
   const [serverWallet, setServerWallet] = useState(null);
   const [invoices, setInvoices] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [lastSession, setLastSession] = useState(null);
   const [razorpayEnabled, setRazorpayEnabled] = useState(false);
-  const [razorpayCurrency, setRazorpayCurrency] = useState('USD');
-  const [payBusy, setPayBusy] = useState(false);
+  const [razorpayCurrency, setRazorpayCurrency] = useState('INR');
   const [billingLoading, setBillingLoading] = useState(true);
 
-  const customerPayError = (raw) => {
-    const msg = String(raw || '');
-    if (/payment_cancelled|payment cancelled/i.test(msg)) {
-      return null;
-    }
-    if (/RAZORPAY|API_KEY|API_SECRET|\.env|not configured|not enabled/i.test(msg)) {
-      return 'Card payments are temporarily unavailable. Please try again later or contact support.';
-    }
-    return msg || 'Could not start payment';
-  };
+  const [profile, setProfile] = useState(null);
+  const [profileDraft, setProfileDraft] = useState(null);
+  const [profileEditing, setProfileEditing] = useState(false);
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [profileError, setProfileError] = useState(null);
+
+  const [expandedInvoiceId, setExpandedInvoiceId] = useState(null);
+  const [invoiceDetail, setInvoiceDetail] = useState(null);
+  const [invoiceDetailBusy, setInvoiceDetailBusy] = useState(false);
+  const [invoiceDetailError, setInvoiceDetailError] = useState(null);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(null);
+  const invoiceDetailSeq = useRef(0);
+  const wasAddFundsOpen = useRef(false);
 
   const refreshBilling = useCallback(async () => {
     try {
-      const [w, inv, cfg, tx, lastSess] = await Promise.all([
+      const [w, inv, cfg, tx, lastSess, prof] = await Promise.all([
         api.billing.getWallet(),
         api.billing.listInvoices(),
         api.billing.razorpayConfig(),
         api.billing.listTransactions(40),
         api.billing.getLastSession().catch(() => null),
+        api.billing.getBillingProfile().catch(() => null),
       ]);
       setServerWallet(w);
       setInvoices(inv || []);
       setRazorpayEnabled(!!cfg?.enabled);
-      setRazorpayCurrency(cfg?.currency || 'USD');
+      setRazorpayCurrency(cfg?.currency || 'INR');
       setTransactions(tx || []);
       setLastSession(lastSess || null);
+      if (prof) {
+        setProfile(prof);
+        setProfileError(null);
+      }
     } catch {
       /* demo wallet fallback */
     } finally {
@@ -164,50 +256,15 @@ export function BillingModule() {
     refreshBilling();
   }, [refreshBilling]);
 
-  const handleTopupUsd = async (amountUsd) => {
-    setTopupError(null);
-    setPayBusy(true);
-    try {
-      const cfg = await api.billing.razorpayConfig();
-      if (!cfg?.enabled) {
-        throw new Error('Card payments are temporarily unavailable. Please try again later or contact support.');
-      }
-      const currency = cfg.currency || razorpayCurrency || 'USD';
-      const fx = Number(serverWallet?.fxRateInr) || 95.64;
-      const isInternational = currency !== 'INR';
-      const chargeAmount = isInternational
-        ? Number(amountUsd)
-        : Math.max(100, Math.round(Number(amountUsd) * fx));
-      const order = await api.billing.createRazorpayOrder(chargeAmount, currency);
-      await openRazorpayWalletCheckout({
-        order,
-        keyId: cfg.keyId,
-        user,
-        hideUpi: isInternational,
-        onSuccess: async (response) => {
-          const result = await api.billing.verifyRazorpayPayment({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
-          await refreshBilling();
-          setTopupSuccess(
-            `Payment successful. Invoice ${result.invoiceNumber || result.invoiceId || ''} — wallet updated.`
-          );
-          setTimeout(() => setTopupSuccess(null), 5000);
-        },
-        onError: (err) => {
-          const msg = customerPayError(err.message);
-          if (msg) setTopupError(msg);
-        },
-      });
-    } catch (err) {
-      const msg = customerPayError(err.message);
-      if (msg) setTopupError(msg);
-    } finally {
-      setPayBusy(false);
+  // A top-up (or a delayed bank confirmation) changes balances and invoices.
+  // Re-read them when the shared checkout modal closes.
+  useEffect(() => {
+    if (wasAddFundsOpen.current && !isAddFundsOpen) {
+      refreshBilling();
+      refreshWallet();
     }
-  };
+    wasAddFundsOpen.current = isAddFundsOpen;
+  }, [isAddFundsOpen, refreshBilling, refreshWallet]);
 
   const exportTransactionsCsv = useCallback(() => {
     if (typeof window === 'undefined' || !transactions.length) return;
@@ -222,6 +279,136 @@ export function BillingModule() {
     URL.revokeObjectURL(url);
   }, [transactions, serverWallet]);
 
+  const downloadInvoice = useCallback(
+    async (inv) => {
+      if (downloadingInvoice) return;
+      setDownloadingInvoice(inv.invoiceId);
+      try {
+        await api.billing.downloadInvoicePdf(inv.invoiceId, inv.invoiceNumber);
+      } catch (err) {
+        showToast(err.message || 'That invoice could not be downloaded. Please try again.', 'error');
+      } finally {
+        setDownloadingInvoice(null);
+      }
+    },
+    [downloadingInvoice]
+  );
+
+  const toggleInvoiceDetail = useCallback(
+    async (inv) => {
+      if (expandedInvoiceId === inv.invoiceId) {
+        invoiceDetailSeq.current += 1;
+        setExpandedInvoiceId(null);
+        setInvoiceDetail(null);
+        setInvoiceDetailError(null);
+        setInvoiceDetailBusy(false);
+        return;
+      }
+      const seq = ++invoiceDetailSeq.current;
+      setExpandedInvoiceId(inv.invoiceId);
+      setInvoiceDetail(null);
+      setInvoiceDetailError(null);
+      setInvoiceDetailBusy(true);
+      try {
+        const detail = await api.billing.getInvoice(inv.invoiceId);
+        if (seq === invoiceDetailSeq.current) setInvoiceDetail(detail);
+      } catch (err) {
+        if (seq === invoiceDetailSeq.current) {
+          setInvoiceDetailError(err.message || 'Invoice details could not be loaded.');
+        }
+      } finally {
+        if (seq === invoiceDetailSeq.current) setInvoiceDetailBusy(false);
+      }
+    },
+    [expandedInvoiceId]
+  );
+
+  const startProfileEdit = () => {
+    setProfileError(null);
+    setProfileDraft({
+      legalName: profile?.legalName || '',
+      gstin: profile?.gstin || '',
+      billingEmail: profile?.billingEmail || '',
+      addressLine1: profile?.addressLine1 || '',
+      addressLine2: profile?.addressLine2 || '',
+      city: profile?.city || '',
+      stateCode: profile?.stateCode || '',
+      stateName: profile?.stateName || '',
+      postalCode: profile?.postalCode || '',
+      countryCode: profile?.countryCode || 'IN',
+      customerType: profile?.customerType || 'individual',
+      stateOptions: profile?.stateOptions || [],
+    });
+    setProfileEditing(true);
+  };
+
+  const cancelProfileEdit = () => {
+    setProfileDraft(null);
+    setProfileEditing(false);
+    setProfileError(null);
+  };
+
+  const setDraftField = (key) => (event) => {
+    const raw = event.target.value;
+    setProfileDraft((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, [key]: raw };
+      if (key === 'gstin') {
+        next.gstin = raw.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 15);
+        if (next.gstin) {
+          next.customerType = 'business';
+          if (next.gstin.length >= 2) {
+            next.stateCode = next.gstin.slice(0, 2);
+            const match = prev.stateOptions.find((s) => s.code === next.stateCode);
+            if (match) next.stateName = match.name;
+          }
+        }
+      }
+      if (key === 'stateCode') {
+        const match = prev.stateOptions.find((s) => s.code === raw);
+        next.stateName = match?.name || '';
+      }
+      return next;
+    });
+  };
+
+  const saveProfile = async (event) => {
+    event.preventDefault();
+    if (!profileDraft || profileBusy) return;
+    setProfileBusy(true);
+    setProfileError(null);
+    try {
+      const saved = await api.billing.updateBillingProfile({
+        legalName: profileDraft.legalName,
+        gstin: profileDraft.gstin || null,
+        billingEmail: profileDraft.billingEmail,
+        addressLine1: profileDraft.addressLine1,
+        addressLine2: profileDraft.addressLine2,
+        city: profileDraft.city,
+        stateCode: profileDraft.stateCode,
+        stateName: profileDraft.stateName,
+        postalCode: profileDraft.postalCode,
+        countryCode: profileDraft.countryCode || 'IN',
+        customerType: profileDraft.customerType,
+      });
+      setProfile({ ...saved, stateOptions: profile?.stateOptions || [] });
+      setProfileDraft(null);
+      setProfileEditing(false);
+      showToast('Invoice profile saved. New invoices will use it.', 'success');
+    } catch (err) {
+      setProfileError(err.message || 'Your invoice profile could not be saved.');
+    } finally {
+      setProfileBusy(false);
+    }
+  };
+
+  const balanceInr = Number(serverWallet?.balanceInr ?? wallet?.balanceInr ?? 0);
+  const balanceUsd = Number(serverWallet?.balanceUsd ?? wallet?.usdEquivalent ?? 0);
+  const hasBalance = balanceInr > 0 || balanceUsd > 0;
+  const remainingMinutes = Number(serverWallet?.remainingMinutes ?? wallet?.remainingMinutes ?? 0);
+  const presets = CHARGE_PRESETS[razorpayCurrency] || CHARGE_PRESETS.INR;
+  const currencySymbol = symbolFor(razorpayCurrency);
+
   return (
     <div className="space-y-6">
       <div>
@@ -233,20 +420,6 @@ export function BillingModule() {
         </p>
       </div>
 
-      {topupSuccess && (
-        <div className="p-3.5 rounded-xl bg-[#22C55E]/10 border border-[#22C55E]/20 text-xs font-semibold text-[#15803D] flex items-center gap-2 animate-in fade-in duration-150">
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-[#15803D]" />
-          <span>{topupSuccess}</span>
-        </div>
-      )}
-
-      {topupError && (
-        <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-xs font-semibold text-red-700 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{topupError}</span>
-        </div>
-      )}
-
       {/* Primary Balance Ribbon */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Left 2 Cols: Balance & Top-Up Buttons */}
@@ -255,10 +428,16 @@ export function BillingModule() {
             <div className="flex items-center justify-between gap-2 mb-2">
               <span className="text-xs font-semibold text-[#524E5E] uppercase tracking-wider flex items-center gap-1.5">
                 <Zap className="w-3.5 h-3.5 text-amber-500" />
-                <span>Available Talk Time Balance</span>
+                <span>Available talk time balance</span>
               </span>
-              <span className="text-[11px] font-mono font-medium text-[#15803D] bg-[#22C55E]/10 border border-[#22C55E]/20 px-2 py-0.5 rounded-md">
-                Wallet funded
+              <span
+                className={`text-[11px] font-mono font-medium px-2 py-0.5 rounded-md border ${
+                  hasBalance
+                    ? 'text-[#15803D] bg-[#22C55E]/10 border-[#22C55E]/20'
+                    : 'text-[#B45309] bg-[#FFFBEB] border-[#FDE68A]'
+                }`}
+              >
+                {hasBalance ? 'Wallet funded' : 'Add funds to start'}
               </span>
             </div>
 
@@ -269,20 +448,16 @@ export function BillingModule() {
             ) : (
               <div className="flex items-baseline gap-3 my-2 flex-wrap">
                 <span className="text-3xl sm:text-4xl font-mono font-bold text-[#0F0E17] tracking-tight">
-                {Number(wallet?.remainingMinutes || 0).toLocaleString()} min
+                  {remainingMinutes.toLocaleString()} min
                 </span>
                 <span className="text-sm font-mono text-[#524E5E]">
-                  {Number(serverWallet?.balanceInr ?? wallet?.balanceInr ?? 0) > 0 ? (
+                  {balanceInr > 0 ? (
                     <>
-                      <strong className="font-semibold text-[#0F0E17]">
-                        ₹{Number(serverWallet?.balanceInr ?? wallet?.balanceInr ?? 0).toFixed(2)}
-                      </strong>{' '}
-                      <span className="text-xs text-[#8C879A]">
-                        (${Number(serverWallet?.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)} USD)
-                      </span>
+                      <strong className="font-semibold text-[#0F0E17]">{money(balanceInr, 'INR')}</strong>{' '}
+                      <span className="text-xs text-[#8C879A]">(${balanceUsd.toFixed(2)} USD)</span>
                     </>
                   ) : (
-                    `($${Number(serverWallet?.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)} USD)`
+                    `($${balanceUsd.toFixed(2)} USD)`
                   )}
                 </span>
               </div>
@@ -330,20 +505,41 @@ export function BillingModule() {
             </div>
           </div>
 
-          {/* Quick Top-Up Strip — USD display */}
+          {/* Quick top-up — one checkout path, priced by the server */}
           <div className="pt-5 mt-4 border-t border-[#E4E2EB] space-y-3">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <span className="text-xs font-semibold text-[#524E5E]">
+                  Add funds ({razorpayCurrency})
+                </span>
+                <p className="text-[10px] text-[#8C879A] mt-0.5 max-w-md">
+                  GST is calculated at checkout and shown before you pay. Every successful top-up
+                  issues a GST invoice.
+                </p>
+              </div>
+              <TactileButton
+                variant="brand"
+                size="sm"
+                icon={Plus}
+                disabled={!razorpayEnabled}
+                onClick={() => openAddFunds('billing')}
+                data-testid="billing-add-funds"
+              >
+                Add funds
+              </TactileButton>
+            </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-semibold text-[#524E5E] mr-1">Top up (USD):</span>
-              {[5, 10, 25, 50, 100].map((usd) => (
+              {presets.map((preset) => (
                 <button
-                  key={usd}
+                  key={preset}
                   type="button"
-                  disabled={payBusy || !razorpayEnabled}
-                  onClick={() => handleTopupUsd(usd)}
-                  data-testid={`billing-topup-usd-${usd}`}
+                  disabled={!razorpayEnabled}
+                  onClick={() => openAddFunds('billing', preset)}
+                  data-testid={`billing-topup-${preset}`}
                   className="px-3.5 py-2 min-h-[38px] rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#6344E7] text-xs font-mono font-bold text-[#0F0E17] hover:text-[#6344E7] active:scale-[0.98] transition-all shadow-craft-xs disabled:opacity-50"
                 >
-                  +${usd}
+                  +{currencySymbol}
+                  {preset.toLocaleString('en-IN')}
                 </button>
               ))}
             </div>
@@ -371,89 +567,275 @@ export function BillingModule() {
 
           <ul className="space-y-2 text-xs text-[#524E5E]">
             <li className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
-              <span className="font-semibold text-[#0F0E17]">Card</span>
+              <span className="font-semibold text-[#0F0E17]">Cards</span>
               <span>{razorpayEnabled ? 'Visa, Mastercard & more' : 'Temporarily unavailable'}</span>
             </li>
+            {razorpayEnabled && razorpayCurrency === 'INR' && (
+              <li className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+                <span className="font-semibold text-[#0F0E17]">UPI &amp; net banking</span>
+                <span>Instant confirmation</span>
+              </li>
+            )}
           </ul>
 
           <p className="text-[11px] text-[#524E5E] leading-relaxed">
-            Card details stay with our payment partner. Wallet balance is shown in USD.
+            Card and bank details stay with our payment partner. A GST invoice is issued for every
+            successful top-up and is downloadable below.
           </p>
         </SolidCard>
       </div>
 
-      {/* Auto-Recharge Automation & Per-Second Cost Decomposition Split */}
+      {/* Invoice identity & live per-call rates */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Auto-Recharge Controller */}
         <SolidCard className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-xs font-bold text-[#0F0E17]">Auto-Recharge Protection</h3>
-              <p className="text-[11px] text-[#524E5E]">Prevents active telephone calls from dropping due to depleted credits.</p>
-              <p className="text-[10px] text-[#8C879A] mt-1">Coming soon — for now, top up manually above when your balance runs low.</p>
+              <h3 className="text-xs font-bold text-[#0F0E17] flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-[#6344E7]" />
+                <span>Invoice profile</span>
+              </h3>
+              <p className="text-[11px] text-[#524E5E] mt-0.5">
+                The legal name, GSTIN and address printed on your tax invoices.
+              </p>
             </div>
-            <button
-              type="button"
-              onClick={toggleAutoRecharge}
-              aria-label="Toggle auto recharge"
-              className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors ${
-                wallet.autoRechargeEnabled ? 'bg-[#22C55E]' : 'bg-[#E4E2EB]'
-              }`}
-            >
-              <div
-                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                  wallet.autoRechargeEnabled ? 'translate-x-4' : 'translate-x-0'
-                }`}
-              />
-            </button>
+            {!profileEditing && profile ? (
+              <TactileButton
+                variant="secondary"
+                size="xs"
+                icon={Pencil}
+                onClick={startProfileEdit}
+                data-testid="billing-profile-edit"
+              >
+                Edit
+              </TactileButton>
+            ) : null}
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-3 text-xs">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-[#524E5E]">When balance falls below:</span>
-              <div className="flex items-center gap-1 font-mono font-bold text-[#0F0E17]">
-                <span>$</span>
-                <input
-                  type="number"
-                  value={threshold}
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value) || 0;
-                    setThreshold(v);
-                    updateAutoRechargeSettings(v, amount);
-                  }}
-                  className="w-20 bg-white border border-[#E4E2EB] rounded-lg px-2 py-1.5 text-right text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] shadow-craft-xs"
-                />
+          {profileEditing && profileDraft ? (
+            <form className="space-y-3" onSubmit={saveProfile} data-testid="billing-profile-form">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#8C879A] mb-1">
+                    Customer type
+                  </span>
+                  <select
+                    value={profileDraft.customerType}
+                    onChange={setDraftField('customerType')}
+                    className={FIELD_CLASS}
+                  >
+                    <option value="individual">Individual</option>
+                    <option value="business">Business</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#8C879A] mb-1">
+                    Registered legal name
+                  </span>
+                  <input
+                    type="text"
+                    value={profileDraft.legalName}
+                    onChange={setDraftField('legalName')}
+                    maxLength={255}
+                    placeholder="As registered for GST"
+                    className={FIELD_CLASS}
+                  />
+                </label>
               </div>
-            </div>
 
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-[#524E5E]">Automatically charge card:</span>
-              <div className="flex items-center gap-1 font-mono font-bold text-[#0F0E17]">
-                <span>$</span>
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value) || 0;
-                    setAmount(v);
-                    updateAutoRechargeSettings(threshold, v);
-                  }}
-                  className="w-20 bg-white border border-[#E4E2EB] rounded-lg px-2 py-1.5 text-right text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] shadow-craft-xs"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="block">
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#8C879A] mb-1">
+                    GSTIN (optional)
+                  </span>
+                  <input
+                    type="text"
+                    value={profileDraft.gstin}
+                    onChange={setDraftField('gstin')}
+                    maxLength={15}
+                    placeholder="27ABCDE1234F1Z5"
+                    autoComplete="off"
+                    spellCheck={false}
+                    data-testid="billing-profile-gstin"
+                    className={`${FIELD_CLASS} font-mono uppercase`}
+                  />
+                </label>
+                <label className="block">
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#8C879A] mb-1">
+                    Billing email
+                  </span>
+                  <input
+                    type="email"
+                    value={profileDraft.billingEmail}
+                    onChange={setDraftField('billingEmail')}
+                    maxLength={320}
+                    placeholder="accounts@company.com"
+                    className={FIELD_CLASS}
+                  />
+                </label>
               </div>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2 text-[11px] text-[#524E5E]">
-            <ShieldCheck className="w-4 h-4 text-[#15803D] shrink-0" />
-            <span>
-              Calls stop at the minimum balance of{' '}
-              <strong className="text-[#0F0E17] font-semibold">
-                ${Number(serverWallet?.minBalanceUsd ?? 0).toFixed(2)}
-              </strong>
-              . Top up to keep your agents taking calls.
-            </span>
-          </div>
+              <label className="block">
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#8C879A] mb-1">
+                  Address line 1
+                </span>
+                <input
+                  type="text"
+                  value={profileDraft.addressLine1}
+                  onChange={setDraftField('addressLine1')}
+                  maxLength={255}
+                  className={FIELD_CLASS}
+                />
+              </label>
+              <label className="block">
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#8C879A] mb-1">
+                  Address line 2
+                </span>
+                <input
+                  type="text"
+                  value={profileDraft.addressLine2}
+                  onChange={setDraftField('addressLine2')}
+                  maxLength={255}
+                  className={FIELD_CLASS}
+                />
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <label className="block">
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#8C879A] mb-1">
+                    City
+                  </span>
+                  <input
+                    type="text"
+                    value={profileDraft.city}
+                    onChange={setDraftField('city')}
+                    maxLength={120}
+                    className={FIELD_CLASS}
+                  />
+                </label>
+                <label className="block">
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#8C879A] mb-1">
+                    State
+                  </span>
+                  <select
+                    value={profileDraft.stateCode}
+                    onChange={setDraftField('stateCode')}
+                    className={FIELD_CLASS}
+                  >
+                    <option value="">Select state</option>
+                    {profileDraft.stateOptions.map((state) => (
+                      <option key={state.code} value={state.code}>
+                        {state.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-[#8C879A] mb-1">
+                    PIN code
+                  </span>
+                  <input
+                    type="text"
+                    value={profileDraft.postalCode}
+                    onChange={setDraftField('postalCode')}
+                    maxLength={12}
+                    inputMode="numeric"
+                    className={FIELD_CLASS}
+                  />
+                </label>
+              </div>
+
+              {profileError ? (
+                <p className="text-[11px] text-red-700 flex items-start gap-1.5" role="alert">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  <span>{profileError}</span>
+                </p>
+              ) : null}
+
+              <div className="flex items-center gap-2 pt-1">
+                <TactileButton
+                  type="submit"
+                  variant="brand"
+                  size="sm"
+                  loading={profileBusy}
+                  disabled={profileBusy}
+                  data-testid="billing-profile-save"
+                >
+                  Save profile
+                </TactileButton>
+                <TactileButton
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={cancelProfileEdit}
+                  disabled={profileBusy}
+                >
+                  Cancel
+                </TactileButton>
+              </div>
+            </form>
+          ) : billingLoading && !profile ? (
+            <p className="text-[11px] text-[#8C879A]">Loading invoice profile…</p>
+          ) : profile ? (
+            <div className="space-y-2 text-xs" data-testid="billing-profile-summary">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[#8C879A]">
+                    Billed to
+                  </div>
+                  <div className="font-semibold text-[#0F0E17]">
+                    {profile.legalName || 'Account holder'}
+                  </div>
+                  <div className="text-[#524E5E]">{profile.billingEmail || 'No billing email set'}</div>
+                </div>
+                <span
+                  className={`text-[10px] font-medium px-2 py-0.5 rounded-md border whitespace-nowrap ${
+                    profile.complete
+                      ? 'text-[#15803D] bg-[#22C55E]/10 border-[#22C55E]/20'
+                      : 'text-[#92400E] bg-[#FFFBEB] border-[#FDE68A]'
+                  }`}
+                >
+                  {profile.complete ? 'Complete' : 'Incomplete'}
+                </span>
+              </div>
+              <div className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-3 text-[#524E5E] space-y-1">
+                <div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8C879A]">
+                    GSTIN{' '}
+                  </span>
+                  <span className="font-mono font-semibold text-[#0F0E17]">
+                    {profile.gstin || 'Not provided'}
+                  </span>
+                </div>
+                <div>
+                  {[profile.addressLine1, profile.addressLine2].filter(Boolean).join(', ') ||
+                    'No billing address yet'}
+                </div>
+                <div>
+                  {[profile.city, profile.stateName || profile.stateCode, profile.postalCode]
+                    .filter(Boolean)
+                    .join(', ') || '—'}
+                </div>
+              </div>
+              <p className="text-[10px] text-[#8C879A]">
+                Invoices snapshot this profile when they are issued, so later edits never rewrite an
+                invoice you already have. A GSTIN is required to claim input tax credit.
+              </p>
+            </div>
+          ) : (
+            <div className="text-[11px] text-[#8C879A] space-y-2">
+              <p>Your invoice profile could not be loaded.</p>
+              <TactileButton
+                variant="secondary"
+                size="xs"
+                onClick={() => {
+                  setBillingLoading(true);
+                  refreshBilling();
+                }}
+              >
+                Retry
+              </TactileButton>
+            </div>
+          )}
         </SolidCard>
 
         {/* What a call costs, taken from the live rates the server bills by. */}
@@ -494,12 +876,23 @@ export function BillingModule() {
             </div>
           </div>
 
+          <div className="flex items-center gap-2 text-[11px] text-[#524E5E]">
+            <ShieldCheck className="w-4 h-4 text-[#15803D] shrink-0" />
+            <span>
+              Calls stop at the minimum balance of{' '}
+              <strong className="text-[#0F0E17] font-semibold">
+                ${Number(serverWallet?.minBalanceUsd ?? 0).toFixed(2)}
+              </strong>
+              . Top up to keep your agents taking calls.
+            </span>
+          </div>
+
           {lastSession?.has_call && (
             <div className="pt-3 border-t border-[#E4E2EB] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-[#0F0E17] flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  Last Call Session ({lastSession.duration_formatted})
+                  Last call session ({lastSession.duration_formatted})
                 </span>
                 <span className="font-mono font-bold text-[#0F0E17]">
                   {lastSession.tenant_wallet_deduction?.amount != null
@@ -512,50 +905,205 @@ export function BillingModule() {
         </SolidCard>
       </div>
 
-      {(billingLoading || invoices.length > 0) && (
-        <SolidCard padding="p-0" className="overflow-hidden">
-          <div className="p-4 border-b border-[#E4E2EB]">
-            <h3 className="text-xs font-bold text-[#0F0E17]">Wallet invoices</h3>
-            <p className="text-[11px] text-[#524E5E] mt-0.5">Paid top-ups with Razorpay reference IDs.</p>
+      <SolidCard padding="p-0" className="overflow-hidden">
+        <div className="p-4 border-b border-[#E4E2EB] flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-xs font-bold text-[#0F0E17]">Invoices &amp; tax receipts</h3>
+            <p className="text-[11px] text-[#524E5E] mt-0.5">
+              Every successful top-up issues a GST invoice. Download the PDF, or open a row for the
+              place of supply, payment reference and any credit notes.
+            </p>
           </div>
-          <div className="overflow-x-auto">
-            {billingLoading && invoices.length === 0 ? (
-              <InvoiceRowsSkeleton rows={3} />
-            ) : (
-              <table className="w-full text-left text-xs font-mono">
-                <thead>
-                  <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] text-[#524E5E] uppercase tracking-wider font-semibold">
-                    <th className="py-2.5 px-4">Invoice #</th>
-                    <th className="py-2.5 px-3">Date</th>
-                    <th className="py-2.5 px-3">Amount</th>
-                    <th className="py-2.5 px-3">Status</th>
-                    <th className="py-2.5 px-4">Payment ID</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E4E2EB]">
-                  {invoices.map((inv) => (
-                    <tr key={inv.invoiceId} className="hover:bg-[#FAF9FD]/80">
-                      <td className="py-2.5 px-4 font-semibold text-[#0F0E17]">{inv.invoiceNumber}</td>
-                      <td className="py-2.5 px-3 text-[#524E5E]">
-                        {inv.createdAt ? new Date(inv.createdAt).toLocaleString() : '—'}
-                      </td>
-                      <td className="py-2.5 px-3 text-[#0F0E17]">
-                        {inv.amountUsd != null
-                          ? `$${Number(inv.amountUsd).toFixed(2)}`
-                          : inv.amountInr != null
-                            ? `$${(Number(inv.amountInr) / (Number(serverWallet?.fxRateInr) || 95.64)).toFixed(2)}`
-                            : '—'}
-                      </td>
-                      <td className="py-2.5 px-3 text-[#15803D] capitalize">{inv.status}</td>
-                      <td className="py-2.5 px-4 text-[#524E5E] truncate max-w-[140px]">{inv.paymentId || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </SolidCard>
-      )}
+          {invoices.length > 0 ? (
+            <span className="text-[10px] font-mono font-semibold text-[#524E5E] bg-[#FAF9FD] border border-[#E4E2EB] px-2 py-0.5 rounded-md whitespace-nowrap">
+              {invoices.length} issued
+            </span>
+          ) : null}
+        </div>
+        <div className="overflow-x-auto">
+          {billingLoading && invoices.length === 0 ? (
+            <InvoiceRowsSkeleton rows={3} />
+          ) : invoices.length === 0 ? (
+            <p className="px-4 py-6 text-center text-xs text-[#8C879A]">
+              No invoices yet. A GST invoice is issued automatically after your first top-up.
+            </p>
+          ) : (
+            <table className="w-full text-left text-xs font-mono">
+              <thead>
+                <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] text-[#524E5E] uppercase tracking-wider font-semibold">
+                  <th className="py-2.5 px-4">Invoice #</th>
+                  <th className="py-2.5 px-3">Date</th>
+                  <th className="py-2.5 px-3 text-right">Taxable</th>
+                  <th className="py-2.5 px-3 text-right">GST</th>
+                  <th className="py-2.5 px-3 text-right">Total paid</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-4 text-right">PDF</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E4E2EB]">
+                {invoices.map((inv) => {
+                  const expanded = expandedInvoiceId === inv.invoiceId;
+                  return (
+                    <React.Fragment key={inv.invoiceId}>
+                      <tr className="hover:bg-[#FAF9FD]/80">
+                        <td className="py-2.5 px-4 font-semibold text-[#0F0E17] whitespace-nowrap">
+                          {inv.invoiceNumber}
+                        </td>
+                        <td className="py-2.5 px-3 text-[#524E5E] whitespace-nowrap">
+                          {formatDate(inv.createdAt)}
+                        </td>
+                        <td className="py-2.5 px-3 text-right text-[#0F0E17] whitespace-nowrap">
+                          {money(inv.taxableInr, 'INR')}
+                        </td>
+                        <td className="py-2.5 px-3 text-right text-[#0F0E17] whitespace-nowrap">
+                          <div>{money(inv.taxInr, 'INR')}</div>
+                          <div className="text-[10px] text-[#8C879A] font-sans">
+                            {taxKindLabel(inv.taxKind, inv.taxRatePercent)}
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-bold text-[#0F0E17] whitespace-nowrap">
+                          {invoiceTotal(inv)}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-semibold capitalize ${invoiceStatusClass(inv.status)}`}
+                          >
+                            {inv.status || 'issued'}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-4">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => downloadInvoice(inv)}
+                              disabled={downloadingInvoice === inv.invoiceId}
+                              aria-label={`Download invoice ${inv.invoiceNumber}`}
+                              title="Download PDF"
+                              data-testid={`billing-invoice-download-${inv.invoiceNumber}`}
+                              className="min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-[#6344E7] hover:bg-[#6344E7]/10 disabled:opacity-50"
+                            >
+                              {downloadingInvoice === inv.invoiceId ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Download className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleInvoiceDetail(inv)}
+                              aria-expanded={expanded}
+                              aria-label={`${expanded ? 'Hide' : 'Show'} details for invoice ${inv.invoiceNumber}`}
+                              data-testid={`billing-invoice-detail-${inv.invoiceNumber}`}
+                              className="min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-[#524E5E] hover:bg-[#F0EEF6]"
+                            >
+                              {expanded ? (
+                                <ChevronUp className="w-3.5 h-3.5" />
+                              ) : (
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {expanded && (
+                        <tr className="bg-[#FAF9FD]">
+                          <td colSpan={7} className="px-4 py-3">
+                            {invoiceDetailBusy ? (
+                              <span className="flex items-center gap-2 text-[11px] text-[#524E5E]">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                Loading invoice details…
+                              </span>
+                            ) : invoiceDetailError ? (
+                              <span className="flex items-center gap-2 text-[11px] text-red-700">
+                                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                {invoiceDetailError}
+                              </span>
+                            ) : invoiceDetail ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-[11px]">
+                                <div className="space-y-1.5">
+                                  <div>
+                                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[#8C879A]">
+                                      Place of supply
+                                    </div>
+                                    <div className="text-[#0F0E17]">
+                                      {invoiceDetail.placeOfSupply || '—'}
+                                      {invoiceDetail.placeOfSupplyCode
+                                        ? ` (${invoiceDetail.placeOfSupplyCode})`
+                                        : ''}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[#8C879A]">
+                                      Payment reference
+                                    </div>
+                                    <div className="font-mono text-[#0F0E17] break-all">
+                                      {invoiceDetail.paymentId || '—'}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <div>
+                                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[#8C879A]">
+                                      Payment method
+                                    </div>
+                                    <div className="text-[#0F0E17]">
+                                      {paymentMethodLabel(invoiceDetail.paymentMethod)}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[#8C879A]">
+                                      Paid on
+                                    </div>
+                                    <div className="text-[#0F0E17]">
+                                      {formatDate(invoiceDetail.paidAt || invoiceDetail.createdAt, {
+                                        withTime: true,
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                  <div>
+                                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[#8C879A]">
+                                      Billed to
+                                    </div>
+                                    <div className="text-[#0F0E17]">
+                                      {invoiceDetail.buyer?.legalName || 'Account holder'}
+                                    </div>
+                                    <div className="font-mono text-[#524E5E]">
+                                      {invoiceDetail.customerGstin || invoiceDetail.buyer?.gstin
+                                        ? `GSTIN ${invoiceDetail.customerGstin || invoiceDetail.buyer.gstin}`
+                                        : 'No GSTIN on this invoice'}
+                                    </div>
+                                  </div>
+                                  {invoiceDetail.creditNotes?.length ? (
+                                    <div>
+                                      <div className="text-[10px] font-semibold uppercase tracking-wider text-[#8C879A]">
+                                        Credit notes
+                                      </div>
+                                      {invoiceDetail.creditNotes.map((note) => (
+                                        <div key={note.creditNoteId} className="text-[#0F0E17]">
+                                          {note.creditNoteNumber} · {money(note.amountInr, 'INR')}{' '}
+                                          <span className="text-[#8C879A]">
+                                            (GST {money(note.taxInr, 'INR')})
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+                            ) : null}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </SolidCard>
 
       {/* Every wallet movement, straight from the billing ledger. */}
       <SolidCard padding="p-0" className="overflow-hidden">

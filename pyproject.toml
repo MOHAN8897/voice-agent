@@ -25,6 +25,7 @@ dependencies = [
     "cryptography>=42",
     "PyJWT>=2.9",
     "razorpay>=1.4",
+    "reportlab>=4.2",
     "audioop-lts>=0.2.1; python_version >= '3.13'",
     # IANA tz database for zoneinfo. Windows has no system tzdata, and the
     # inbound business-hours policy must not fall back to naive UTC there.

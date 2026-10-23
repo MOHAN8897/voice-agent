@@ -41,6 +41,12 @@ async def admin_credits(body: CreditBody, principal: SubscriberPrincipal = Depen
         raise HTTPException(status_code=400, detail={"error": {"code": "invalid_tenant", "message": "Invalid tenant"}})
     if body.amountInrPaise == 0:
         raise HTTPException(status_code=400, detail={"error": {"code": "invalid_amount", "message": "Amount cannot be zero"}})
+    factory = get_session_factory()
+    if factory is None:
+        raise HTTPException(status_code=503, detail={"error": {"code": "db_unavailable", "message": "Database required"}})
+    async with factory() as check_session:
+        if await check_session.get(Tenant, tenant_id) is None:
+            raise HTTPException(status_code=404, detail={"error": {"code": "tenant_not_found", "message": "Tenant not found"}})
     # reference_id column is varchar(64) — keep under that.
     ref_tail = uuid.uuid4().hex[:12]
     if body.amountInrPaise > 0:
@@ -62,6 +68,19 @@ async def admin_credits(body: CreditBody, principal: SubscriberPrincipal = Depen
             amount_inr_paise=abs(body.amountInrPaise),
             allow_partial=False,
         )
+    from server.services.saas.admin_audit import record_admin_action
+
+    await record_admin_action(
+        actor=principal.email,
+        action="wallet.platform_adjust",
+        resource_type="tenant",
+        resource_id=str(tenant_id),
+        payload={
+            "amountInrPaise": body.amountInrPaise,
+            "reason": body.reason,
+            "userId": str(principal.user_id),
+        },
+    )
     return {"ok": True, "wallet": await wallet_summary(tenant_id)}
 
 
@@ -252,6 +271,20 @@ async def admin_delete_tenant(
                 },
             )
 
+        from server.db.models.saas_models import BillingWallet
+
+        wallet = await session.get(BillingWallet, tid)
+        if wallet and (int(wallet.balance_cents or 0) > 0 or int(wallet.balance_inr_paise or 0) > 0):
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error": {
+                        "code": "wallet_balance_remaining",
+                        "message": "Refund or zero the wallet balance before deleting this workspace.",
+                    }
+                },
+            )
+
     from server.db.connection import get_engine
     from sqlalchemy import text
 
@@ -259,8 +292,14 @@ async def admin_delete_tenant(
     if engine is None:
         raise HTTPException(status_code=503, detail="Database engine unavailable")
 
+    from server.services.saas.billing_retention_service import archive_billing_records
+
     str_tid = str(tid)
     async with engine.begin() as conn:
+        # Tax invoices and their ledger outlive the workspace: move them to the
+        # archive tenant with buyer contact details erased before the cascade.
+        await archive_billing_records(conn, tid)
+
         # Clear default_agent_id on this tenant first
         await conn.execute(
             text("UPDATE tenants SET default_agent_id = NULL WHERE tenant_id = :tid"),
@@ -357,11 +396,9 @@ async def admin_delete_tenant(
             text("DELETE FROM tenant_integrations WHERE tenant_id = :tid"),
             text("DELETE FROM user_onboarding_surveys WHERE tenant_id = :tid"),
             text("DELETE FROM kyc_verifications WHERE tenant_id = :tid"),
-            text("DELETE FROM razorpay_orders WHERE tenant_id = :tid"),
-            text("DELETE FROM billing_invoices WHERE tenant_id = :tid"),
             text("DELETE FROM leads WHERE tenant_id = :tid"),
-            text("DELETE FROM billing_wallet_transactions WHERE tenant_id = :tid"),
             text("DELETE FROM billing_wallets WHERE tenant_id = :tid"),
+            text("DELETE FROM tenant_billing_profiles WHERE tenant_id = :tid"),
             text("DELETE FROM telephony_contacts WHERE tenant_id = :tid"),
             text("DELETE FROM tenant_teardown_jobs WHERE tenant_id = :tid"),
             text("DELETE FROM dnc_list WHERE tenant_id = :tid"),

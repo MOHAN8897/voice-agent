@@ -8,9 +8,9 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
-from sqlalchemy import delete, desc, func, select, update
+from sqlalchemy import case, delete, desc, func, select, update
 
 from server.config.env import get_settings
 
@@ -2102,6 +2102,27 @@ async def list_admin_calls(
             llm_cost_usd = float(pcr.get("stages", {}).get("llm", {}).get("costUsd") or 0.0)
             tts_cost_inr = float(pcr.get("stages", {}).get("tts", {}).get("costInr") or 0.0)
             tts_cost_usd = float(pcr.get("stages", {}).get("tts", {}).get("costUsd") or 0.0)
+            if tts_cost_inr == 0 or pcr.get("stages", {}).get("tts", {}).get("costInr") is None:
+                stage_u = meta.get("stage_usage") or {}
+                tts_u = stage_u.get("tts") or {}
+                t_chars = int(tts_u.get("input_characters") or 0) + int(tts_u.get("prewarm_input_characters") or 0)
+                if t_chars > 0:
+                    r_tts = (meta.get("resolved_stack") or {}).get("tts") or (meta.get("voice_stack_snapshot") or {}).get("tts") or (meta.get("provider_cost_snapshot") or {}).get("stages", {}).get("tts") or {}
+                    p_name = str(r_tts.get("provider") or "").lower()
+                    m_name = str(r_tts.get("model") or "").lower()
+                    if "timbre-v2" in m_name or (p_name == "gnani" and "2.5" in m_name):
+                        tts_cost_inr = round((t_chars / 1000.0) * 2.5, 4)
+                    elif "timbre" in m_name or p_name == "gnani":
+                        tts_cost_inr = round((t_chars / 1000.0) * 3.5, 4)
+                    elif "v4-flash" in m_name or (p_name == "sarvam" and "flash" in m_name):
+                        tts_cost_inr = round((t_chars / 1000.0) * 2.0, 4)
+                    elif "bulbul" in m_name or p_name == "sarvam":
+                        tts_cost_inr = round((t_chars / 1000.0) * 3.0, 4)
+                    elif "sonic" in m_name or p_name == "cartesia":
+                        tts_cost_inr = round((t_chars / 1000.0) * 0.075 * fx, 4)
+                    elif p_name == "gemini" or "gemini" in m_name:
+                        tts_cost_inr = round((t_chars / 1000.0) * 1.5, 4)
+                    tts_cost_usd = round(tts_cost_inr / fx, 6) if fx else 0.0
 
             carrier_cost_inr = float(cb.get("amount") or 0.0) if cb.get("currency") == "INR" else float(cb.get("amount") or 0.0) * fx
             carrier_cost_usd = carrier_cost_inr / fx if fx else 0.0
@@ -2317,6 +2338,31 @@ async def get_admin_call_detail(
         llm_inr = float(llm_stage.get("costInr") or 0.0)
         tts_inr = float(tts_stage.get("costInr") or 0.0)
 
+        tts_components = tts_stage.get("components") or []
+        cost_snapshot = meta.get("provider_cost_snapshot") or {}
+        resolved_tts = (meta.get("resolved_stack") or {}).get("tts") or (cost_snapshot.get("stages") or {}).get("tts") or (meta.get("voice_stack_snapshot") or {}).get("tts") or {}
+        prov = str(resolved_tts.get("provider") or "").strip().lower()
+        mod = str(resolved_tts.get("model") or "").strip()
+        resolved_tts_label = f"{prov}:{mod}" if prov and mod else (mod or prov or "unconfigured")
+
+        tts_model = (tts_components[0].get("rateId") if tts_components and isinstance(tts_components[0], dict) else None) or resolved_tts_label
+        tts_usage = stage_usage.get("tts") or {}
+        tts_chars = int(tts_usage.get("input_characters") or 0) + int(tts_usage.get("prewarm_input_characters") or 0)
+
+        if (tts_inr == 0 or tts_stage.get("costInr") is None) and tts_chars > 0:
+            if "timbre-v2" in tts_model.lower() or (prov == "gnani" and "2.5" in mod):
+                tts_inr = round((tts_chars / 1000.0) * 2.5, 4)
+            elif "timbre" in tts_model.lower() or prov == "gnani":
+                tts_inr = round((tts_chars / 1000.0) * 3.5, 4)
+            elif "v4-flash" in tts_model.lower() or (prov == "sarvam" and "flash" in mod):
+                tts_inr = round((tts_chars / 1000.0) * 2.0, 4)
+            elif "bulbul" in tts_model.lower() or prov == "sarvam":
+                tts_inr = round((tts_chars / 1000.0) * 3.0, 4)
+            elif "sonic" in tts_model.lower() or prov == "cartesia":
+                tts_inr = round((tts_chars / 1000.0) * 0.075 * fx, 4)
+            elif prov == "gemini" or "gemini" in tts_model.lower():
+                tts_inr = round((tts_chars / 1000.0) * 1.5, 4)
+
         total_supplier_inr = round(carrier_amount_inr + stt_inr + llm_inr + tts_inr, 4)
         if total_supplier_inr == 0 and billable_minutes > 0:
             from server.services.dev_runtime import effective_app_environment
@@ -2336,11 +2382,6 @@ async def get_admin_call_detail(
         llm_components = llm_stage.get("components") or []
         llm_model = (llm_components[0].get("rateId") if llm_components and isinstance(llm_components[0], dict) else None) or "sarvam-105b-conversations"
         llm_usage = stage_usage.get("llm") or {}
-
-        tts_components = tts_stage.get("components") or []
-        tts_model = (tts_components[0].get("rateId") if tts_components and isinstance(tts_components[0], dict) else None) or "bulbul:v3"
-        tts_usage = stage_usage.get("tts") or {}
-        tts_chars = int(tts_usage.get("input_characters") or 0) + int(tts_usage.get("prewarm_input_characters") or 0)
 
         return {
             "ok": True,
@@ -2701,43 +2742,721 @@ async def put_payment_settings(
     return {"ok": True, **state}
 
 
+class TaxSettingsBody(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    enabled: bool = False
+    legalName: str = Field("", max_length=255)
+    tradeName: str = Field("", max_length=255)
+    gstin: Optional[str] = Field(None, max_length=15)
+    pan: Optional[str] = Field(None, max_length=10)
+    addressLine1: str = Field("", max_length=255)
+    addressLine2: str = Field("", max_length=255)
+    city: str = Field("", max_length=120)
+    stateCode: str = Field("", max_length=4)
+    stateName: str = Field("", max_length=120)
+    postalCode: str = Field("", max_length=12)
+    countryCode: str = Field("IN", max_length=2)
+    supportEmail: str = Field("", max_length=320)
+    supportPhone: str = Field("", max_length=40)
+    sacCode: str = Field("998413", max_length=12)
+    defaultRateBps: int = Field(1800, ge=0, le=5000)
+    priceIncludesTax: bool = False
+    exportZeroRated: bool = True
+    invoicePrefix: str = Field("INV", max_length=4)
+    creditNotePrefix: str = Field("CN", max_length=4)
+    lutNumber: Optional[str] = Field(None, max_length=32)
+    invoiceTerms: str = Field("", max_length=2000)
+
+
+class RefundBody(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    amount: Optional[float] = Field(None, gt=0, le=500000)
+    reason: str = Field(..., min_length=8, max_length=500)
+
+
+def _parse_dt(raw: str | None, *, end: bool = False):
+    """Filter dates are IST: a GST period is an Indian calendar day."""
+    if not raw:
+        return None
+    from server.services.saas.tax_service import IST
+
+    value = raw.strip()
+    try:
+        if len(value) == 10:
+            parsed = datetime.fromisoformat(value)
+            if end:
+                return parsed.replace(hour=23, minute=59, second=59, tzinfo=IST)
+            return parsed.replace(tzinfo=IST)
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=IST)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invalid_date") from None
+
+
+def _order_conditions(
+    *,
+    status: str | None,
+    tenant_id: str | None,
+    q: str | None,
+    date_from: str | None,
+    date_to: str | None,
+):
+    from server.db.models.saas_models import RazorpayOrder
+
+    conditions = []
+    if status:
+        conditions.append(RazorpayOrder.status == status)
+    if tenant_id:
+        try:
+            conditions.append(RazorpayOrder.tenant_id == uuid.UUID(tenant_id))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="invalid_tenant") from None
+    if q:
+        needle = f"%{q.strip()[:80]}%"
+        conditions.append(
+            RazorpayOrder.order_id.ilike(needle)
+            | RazorpayOrder.payment_id.ilike(needle)
+            | Tenant.name.ilike(needle)
+        )
+    start = _parse_dt(date_from)
+    end = _parse_dt(date_to, end=True)
+    if start:
+        conditions.append(RazorpayOrder.created_at >= start)
+    if end:
+        conditions.append(RazorpayOrder.created_at <= end)
+    return conditions
+
+
+def _order_payload(order, tenant, invoice=None) -> dict[str, Any]:
+    from server.services.saas.razorpay_service import from_minor
+
+    currency = order.currency or "INR"
+    gross = (
+        from_minor(order.gross_minor, currency)
+        if getattr(order, "gross_minor", None)
+        else from_minor(order.amount_minor or 0, currency)
+    )
+    return {
+        "orderId": order.order_id,
+        "tenantId": str(order.tenant_id),
+        "tenantName": tenant.name if tenant else None,
+        "status": order.status,
+        "currency": currency,
+        "amount": gross,
+        "subtotal": from_minor(order.taxable_minor or 0, currency),
+        "tax": from_minor(order.tax_minor or 0, currency),
+        "taxRatePercent": round(int(order.tax_rate_bps or 0) / 100.0, 2),
+        "taxKind": order.tax_kind or "none",
+        "amountInr": (order.amount_inr_paise or 0) / 100.0,
+        "grossInr": (
+            (order.amount_inr_paise or 0) + (int(order.tax_minor or 0) if currency == "INR" else 0)
+        )
+        / 100.0,
+        "baseAmountInr": (order.base_amount_inr_paise or 0) / 100.0 or None,
+        "paymentId": order.payment_id,
+        "paymentMethod": order.payment_method,
+        "failureCode": order.failure_code,
+        "failureReason": order.failure_reason,
+        "fee": from_minor(order.fee_minor, currency) if order.fee_minor is not None else None,
+        "taxOnFee": (
+            from_minor(order.tax_on_fee_minor, currency)
+            if order.tax_on_fee_minor is not None
+            else None
+        ),
+        "settlementId": order.settlement_id,
+        "settledAt": order.settled_at.isoformat() if order.settled_at else None,
+        "invoiceId": str(invoice.invoice_id) if invoice else None,
+        "invoiceNumber": invoice.invoice_number if invoice else None,
+        "invoiceStatus": invoice.status if invoice else None,
+        "createdAt": order.created_at.isoformat() if order.created_at else None,
+        "paidAt": order.paid_at.isoformat() if order.paid_at else None,
+        "expiresAt": order.expires_at.isoformat() if order.expires_at else None,
+    }
+
+
+@router.get("/api/dev/admin/payments/tax-settings")
+async def get_tax_settings(session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.admin.billing")
+    from server.services.saas.invoice_service import _PDF_AVAILABLE
+    from server.services.saas.tax_service import financial_year, load_config, public_config
+
+    state = public_config(await load_config())
+    settings = get_settings()
+    return {
+        **state,
+        "currentFy": financial_year(),
+        "webhookConfigured": bool((settings.razorpay_webhook_secret or "").strip()),
+        "razorpayConfigured": bool(
+            (settings.razorpay_api_key or "").strip() and (settings.razorpay_api_secret or "").strip()
+        ),
+        "pdfAvailable": bool(_PDF_AVAILABLE),
+    }
+
+
+@router.put("/api/dev/admin/payments/tax-settings")
+async def put_tax_settings(
+    body: TaxSettingsBody, session: SessionData = Depends(require_dev_session)
+):
+    require_permission(session, "dev.admin.billing")
+    from server.services.saas.tax_service import save_config
+
+    try:
+        state = await save_config(body.model_dump(), actor=session.subject)
+    except ValueError as exc:
+        code = str(exc)
+        messages = {
+            "gstin_invalid_format": "GSTIN must be the 15-character GST format.",
+            "gstin_invalid_state": "GSTIN starts with an unknown state code.",
+            "gstin_invalid_checksum": "GSTIN check digit is invalid.",
+            "gstin_state_mismatch": "GSTIN state does not match the supplier state.",
+            "gstin_required": "A GSTIN is required before GST can be enabled.",
+            "legal_name_required": "Legal name is required before GST can be enabled.",
+            "address_required": "Registered address and city are required before GST can be enabled.",
+            "state_required": "Supplier state is required before GST can be enabled.",
+            "invalid_state_code": "Choose a valid Indian state.",
+            "invalid_rate": "GST rate must be between 0% and 50%.",
+        }
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": code, "message": messages.get(code, code)}},
+        ) from None
+    await record_admin_action(
+        actor=session.subject,
+        action="payments.tax_settings",
+        resource_type="platform",
+        resource_id="gst",
+        payload={**body.model_dump(), "gstin": body.gstin},
+    )
+    return {"ok": True, **state}
+
+
 @router.get("/api/dev/admin/payments/orders")
 async def list_payment_orders(
     limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0, le=100000),
+    status: Optional[str] = Query(None, max_length=30),
+    tenantId: Optional[str] = Query(None, max_length=64),
+    q: Optional[str] = Query(None, max_length=120),
+    dateFrom: Optional[str] = Query(None, max_length=40),
+    dateTo: Optional[str] = Query(None, max_length=40),
     session: SessionData = Depends(require_dev_session),
 ):
-    """Recent top-up orders with the currency each was charged in."""
+    """Top-up orders with tax, settlement and failure state."""
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    from server.db.models.saas_models import BillingInvoice, RazorpayOrder
+
+    conditions = _order_conditions(
+        status=status, tenant_id=tenantId, q=q, date_from=dateFrom, date_to=dateTo
+    )
+    async with get_session_factory()() as db:
+        rows = (
+            await db.execute(
+                select(RazorpayOrder, Tenant, BillingInvoice)
+                .outerjoin(Tenant, Tenant.tenant_id == RazorpayOrder.tenant_id)
+                .outerjoin(BillingInvoice, BillingInvoice.razorpay_order_id == RazorpayOrder.order_id)
+                .where(*conditions)
+                .order_by(desc(RazorpayOrder.created_at))
+                .offset(offset)
+                .limit(limit)
+            )
+        ).all()
+        collected_states = ("paid", "partially_refunded", "refunded")
+        settled = RazorpayOrder.status.in_(collected_states)
+        totals = (
+            await db.execute(
+                select(
+                    func.count(RazorpayOrder.order_id),
+                    func.coalesce(
+                        func.sum(
+                            case((settled, RazorpayOrder.amount_inr_paise), else_=0)
+                        ),
+                        0,
+                    ),
+                    func.coalesce(
+                        func.sum(
+                            case((settled, RazorpayOrder.base_amount_inr_paise), else_=0)
+                        ),
+                        0,
+                    ),
+                    func.coalesce(
+                        func.sum(
+                            case(
+                                (
+                                    settled & (RazorpayOrder.currency == "INR"),
+                                    RazorpayOrder.amount_inr_paise + RazorpayOrder.tax_minor,
+                                ),
+                                (settled, RazorpayOrder.amount_inr_paise),
+                                else_=0,
+                            )
+                        ),
+                        0,
+                    ),
+                )
+                .select_from(RazorpayOrder)
+                .outerjoin(Tenant, Tenant.tenant_id == RazorpayOrder.tenant_id)
+                .where(*conditions)
+            )
+        ).one()
+        by_status = (
+            await db.execute(
+                select(RazorpayOrder.status, func.count(RazorpayOrder.order_id))
+                .select_from(RazorpayOrder)
+                .outerjoin(Tenant, Tenant.tenant_id == RazorpayOrder.tenant_id)
+                .where(*conditions)
+                .group_by(RazorpayOrder.status)
+            )
+        ).all()
+        return {
+            "orders": [_order_payload(order, tenant, invoice) for order, tenant, invoice in rows],
+            "total": int(totals[0] or 0),
+            "summary": {
+                "creditedInr": int(totals[1] or 0) / 100.0,
+                "settledInr": int(totals[2] or 0) / 100.0,
+                "collectedInr": int(totals[3] or 0) / 100.0,
+                "byStatus": {str(name): int(count) for name, count in by_status},
+            },
+            "limit": limit,
+            "offset": offset,
+        }
+
+
+@router.get("/api/dev/admin/payments/orders/{order_id}")
+async def payment_order_detail(order_id: str, session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    from server.db.models.saas_models import BillingInvoice, RazorpayOrder, RazorpayRefund
+    from server.services.saas.invoice_service import invoice_payload
+
+    async with get_session_factory()() as db:
+        order = await db.get(RazorpayOrder, order_id)
+        if order is None:
+            raise HTTPException(status_code=404, detail="order_not_found")
+        tenant = await db.get(Tenant, order.tenant_id)
+        invoice = (
+            await db.execute(
+                select(BillingInvoice).where(BillingInvoice.razorpay_order_id == order_id)
+            )
+        ).scalar_one_or_none()
+        refunds = list(
+            (
+                await db.execute(
+                    select(RazorpayRefund)
+                    .where(RazorpayRefund.order_id == order_id)
+                    .order_by(RazorpayRefund.created_at.desc())
+                )
+            ).scalars()
+        )
+        return {
+            "order": _order_payload(order, tenant, invoice),
+            "invoice": invoice_payload(invoice) if invoice else None,
+            "refunds": [
+                {
+                    "refundId": r.refund_id,
+                    "amount": r.amount_minor / 100.0,
+                    "currency": r.currency,
+                    "walletReversalInr": (r.credit_inr_paise or 0) / 100.0,
+                    "taxReversalInr": (r.tax_inr_paise or 0) / 100.0,
+                    "status": r.status,
+                    "reason": r.reason,
+                    "createdBy": r.created_by,
+                    "createdAt": r.created_at.isoformat() if r.created_at else None,
+                }
+                for r in refunds
+            ],
+        }
+
+
+@router.post("/api/dev/admin/payments/orders/{order_id}/reconcile")
+async def reconcile_payment_order(
+    order_id: str, session: SessionData = Depends(require_dev_session)
+):
+    """Ask Razorpay for the order's real state and settle it locally."""
     require_permission(session, "dev.admin.billing")
     _require_db()
     from server.db.models.saas_models import RazorpayOrder
-    from server.services.saas.razorpay_service import from_minor
+    from server.services.saas.razorpay_service import (
+        _client,
+        _run_provider_call,
+        credit_provider_payment,
+        mark_order_failed,
+    )
+
+    async with get_session_factory()() as db:
+        order = await db.get(RazorpayOrder, order_id)
+        if order is None:
+            raise HTTPException(status_code=404, detail="order_not_found")
+        current = order.status
+    if current in ("paid", "refunded", "partially_refunded"):
+        return {"ok": True, "status": current, "message": "Already settled."}
+    try:
+        payments = await _run_provider_call(_client().order.payments, order_id)
+    except Exception:
+        raise HTTPException(status_code=502, detail="provider_unavailable") from None
+    items = payments.get("items", []) if isinstance(payments, dict) else []
+    captured = [item for item in items if str(item.get("status")) == "captured"]
+    result: dict[str, Any] = {"ok": True, "checked": len(items)}
+    if captured:
+        result.update(await credit_provider_payment(captured[0], source="admin"))
+        result["status"] = "paid"
+    elif items:
+        await mark_order_failed(items[0], source="admin")
+        result["status"] = "failed"
+    else:
+        result["status"] = current
+    await record_admin_action(
+        actor=session.subject,
+        action="payments.reconcile",
+        resource_type="payment_order",
+        resource_id=order_id,
+        payload={"providerStatus": result.get("status")},
+    )
+    return result
+
+
+@router.post("/api/dev/admin/payments/orders/{order_id}/refund")
+async def refund_payment_order(
+    order_id: str,
+    body: RefundBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    """Refund through Razorpay, reverse the wallet and issue a GST credit note."""
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    from server.db.models.saas_models import RazorpayOrder
+    from server.services.saas.razorpay_service import from_minor, refund_order, to_minor
+
+    async with get_session_factory()() as db:
+        order = await db.get(RazorpayOrder, order_id)
+        if order is None:
+            raise HTTPException(status_code=404, detail="order_not_found")
+        currency = order.currency or "INR"
+        gross_minor = int(order.gross_minor or order.amount_minor or 0)
+    amount_minor = to_minor(body.amount, currency) if body.amount else None
+    if amount_minor is not None and amount_minor > gross_minor:
+        raise HTTPException(status_code=400, detail="refund_exceeds_charge")
+    try:
+        result = await refund_order(
+            order_id,
+            amount_minor=amount_minor,
+            reason=body.reason,
+            actor=session.subject,
+        )
+    except ValueError as exc:
+        code = str(exc)
+        messages = {
+            "order_not_refundable": "Only a captured payment can be refunded.",
+            "invalid_refund_amount": "Refund amount must be between zero and the captured amount.",
+            "refund_failed": "Razorpay did not accept the refund. No balance was changed.",
+        }
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": code, "message": messages.get(code, code)}},
+        ) from None
+    await record_admin_action(
+        actor=session.subject,
+        action="payments.refund",
+        resource_type="payment_order",
+        resource_id=order_id,
+        payload={
+            "amount": body.amount or from_minor(gross_minor, currency),
+            "currency": currency,
+            "reason": body.reason,
+            "refundId": result.get("refundId"),
+            "creditNoteNumber": result.get("creditNoteNumber"),
+        },
+    )
+    return result
+
+
+@router.get("/api/dev/admin/payments/invoices")
+async def list_billing_invoices(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0, le=100000),
+    tenantId: Optional[str] = Query(None, max_length=64),
+    status: Optional[str] = Query(None, max_length=30),
+    q: Optional[str] = Query(None, max_length=120),
+    dateFrom: Optional[str] = Query(None, max_length=40),
+    dateTo: Optional[str] = Query(None, max_length=40),
+    session: SessionData = Depends(require_dev_session),
+):
+    """Invoice register with GST totals — the report a tax filing needs."""
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    from server.db.models.saas_models import BillingInvoice
+    from server.services.saas.invoice_service import invoice_payload
+
+    conditions = []
+    if tenantId:
+        try:
+            conditions.append(BillingInvoice.tenant_id == uuid.UUID(tenantId))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="invalid_tenant") from None
+    if status:
+        conditions.append(BillingInvoice.status == status)
+    if q:
+        needle = f"%{q.strip()[:80]}%"
+        conditions.append(
+            BillingInvoice.invoice_number.ilike(needle)
+            | BillingInvoice.razorpay_payment_id.ilike(needle)
+            | BillingInvoice.customer_gstin.ilike(needle)
+            | Tenant.name.ilike(needle)
+        )
+    start = _parse_dt(dateFrom)
+    end = _parse_dt(dateTo, end=True)
+    if start:
+        conditions.append(BillingInvoice.created_at >= start)
+    if end:
+        conditions.append(BillingInvoice.created_at <= end)
 
     async with get_session_factory()() as db:
         rows = (
             await db.execute(
-                select(RazorpayOrder, Tenant)
-                .outerjoin(Tenant, Tenant.tenant_id == RazorpayOrder.tenant_id)
-                .order_by(desc(RazorpayOrder.created_at))
+                select(BillingInvoice, Tenant)
+                .outerjoin(Tenant, Tenant.tenant_id == BillingInvoice.tenant_id)
+                .where(*conditions)
+                .order_by(desc(BillingInvoice.created_at))
+                .offset(offset)
                 .limit(limit)
             )
         ).all()
+        totals = (
+            await db.execute(
+                select(
+                    func.count(BillingInvoice.invoice_id),
+                    func.coalesce(
+                        func.sum(BillingInvoice.amount_inr_paise + BillingInvoice.tax_inr_paise), 0
+                    ),
+                    func.coalesce(func.sum(BillingInvoice.taxable_inr_paise), 0),
+                    func.coalesce(func.sum(BillingInvoice.tax_inr_paise), 0),
+                    func.coalesce(func.sum(BillingInvoice.cgst_inr_paise), 0),
+                    func.coalesce(func.sum(BillingInvoice.sgst_inr_paise), 0),
+                    func.coalesce(func.sum(BillingInvoice.igst_inr_paise), 0),
+                )
+                .select_from(BillingInvoice)
+                .outerjoin(Tenant, Tenant.tenant_id == BillingInvoice.tenant_id)
+                .where(*conditions)
+            )
+        ).one()
+        invoices = []
+        for invoice, tenant in rows:
+            payload = invoice_payload(invoice)
+            payload["tenantName"] = tenant.name if tenant else None
+            invoices.append(payload)
         return {
-            "orders": [
-                {
-                    "orderId": order.order_id,
-                    "tenantId": str(order.tenant_id),
-                    "tenantName": tenant.name if tenant else None,
-                    "status": order.status,
-                    "currency": getattr(order, "currency", None) or "INR",
-                    "amount": from_minor(order.amount_minor, getattr(order, "currency", None) or "INR")
-                    if getattr(order, "amount_minor", None)
-                    else order.amount_inr_paise / 100,
-                    "amountInr": order.amount_inr_paise / 100,
-                    "createdAt": order.created_at.isoformat() if order.created_at else None,
-                }
-                for order, tenant in rows
-            ]
+            "invoices": invoices,
+            "total": int(totals[0] or 0),
+            "summary": {
+                "grossInr": int(totals[1] or 0) / 100.0,
+                "taxableInr": int(totals[2] or 0) / 100.0,
+                "taxInr": int(totals[3] or 0) / 100.0,
+                "cgstInr": int(totals[4] or 0) / 100.0,
+                "sgstInr": int(totals[5] or 0) / 100.0,
+                "igstInr": int(totals[6] or 0) / 100.0,
+            },
+            "limit": limit,
+            "offset": offset,
         }
+
+
+@router.get("/api/dev/admin/payments/invoices/{invoice_id}/pdf")
+async def admin_invoice_pdf(invoice_id: uuid.UUID, session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    from server.services.saas.invoice_service import render_invoice_pdf
+    from server.services.saas.razorpay_service import get_invoice
+
+    invoice, notes = await get_invoice(None, invoice_id)
+    if invoice is None:
+        raise HTTPException(status_code=404, detail="invoice_not_found")
+    try:
+        pdf = render_invoice_pdf(invoice, notes)
+    except RuntimeError:
+        raise HTTPException(status_code=503, detail="invoice_pdf_unavailable") from None
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{invoice.invoice_number}.pdf"',
+            "Cache-Control": "private, no-store",
+        },
+    )
+
+
+@router.get("/api/dev/admin/payments/invoices/export")
+async def export_billing_invoices(
+    tenantId: Optional[str] = Query(None, max_length=64),
+    dateFrom: Optional[str] = Query(None, max_length=40),
+    dateTo: Optional[str] = Query(None, max_length=40),
+    session: SessionData = Depends(require_dev_session),
+):
+    """CSV of the invoice register for accounting / GST return preparation."""
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    import csv
+    import io
+
+    from server.db.models.saas_models import BillingInvoice
+    from server.services.saas.razorpay_service import from_minor
+
+    conditions = []
+    if tenantId:
+        try:
+            conditions.append(BillingInvoice.tenant_id == uuid.UUID(tenantId))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="invalid_tenant") from None
+    start = _parse_dt(dateFrom)
+    end = _parse_dt(dateTo, end=True)
+    if start:
+        conditions.append(BillingInvoice.created_at >= start)
+    if end:
+        conditions.append(BillingInvoice.created_at <= end)
+
+    async with get_session_factory()() as db:
+        rows = list(
+            (
+                await db.execute(
+                    select(BillingInvoice)
+                    .where(*conditions)
+                    .order_by(BillingInvoice.created_at.asc())
+                    .limit(5000)
+                )
+            ).scalars()
+        )
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(
+        [
+            "invoice_number", "invoice_date", "fy", "tenant_id", "gstin", "currency",
+            "gross", "taxable_inr", "tax_inr", "cgst_inr", "sgst_inr", "igst_inr",
+            "tax_kind", "sac_code", "place_of_supply", "status", "payment_id",
+        ]
+    )
+    for row in rows:
+        writer.writerow(
+            [
+                row.invoice_number,
+                row.created_at.isoformat() if row.created_at else "",
+                row.fy or "",
+                str(row.tenant_id),
+                row.customer_gstin or "",
+                row.currency,
+                from_minor(int(row.amount_minor or 0), row.currency or "INR"),
+                int(row.taxable_inr_paise or 0) / 100.0,
+                int(row.tax_inr_paise or 0) / 100.0,
+                int(row.cgst_inr_paise or 0) / 100.0,
+                int(row.sgst_inr_paise or 0) / 100.0,
+                int(row.igst_inr_paise or 0) / 100.0,
+                row.tax_kind or "none",
+                row.sac_code or "",
+                row.place_of_supply or "",
+                row.status,
+                row.razorpay_payment_id or "",
+            ]
+        )
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": 'attachment; filename="invoices.csv"',
+            "Cache-Control": "private, no-store",
+        },
+    )
+
+
+@router.get("/api/dev/admin/payments/tax-report")
+async def billing_tax_report(
+    dateFrom: Optional[str] = Query(None, max_length=40),
+    dateTo: Optional[str] = Query(None, max_length=40),
+    session: SessionData = Depends(require_dev_session),
+):
+    """Net GST position: issued invoices minus credit notes in the period."""
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    from server.db.models.saas_models import BillingInvoice, CreditNote
+
+    conditions = []
+    start = _parse_dt(dateFrom)
+    end = _parse_dt(dateTo, end=True)
+    if start:
+        conditions.append(BillingInvoice.created_at >= start)
+    if end:
+        conditions.append(BillingInvoice.created_at <= end)
+    note_conditions = []
+    if start:
+        note_conditions.append(CreditNote.created_at >= start)
+    if end:
+        note_conditions.append(CreditNote.created_at <= end)
+
+    async with get_session_factory()() as db:
+        invoice_rows = (
+            await db.execute(
+                select(
+                    BillingInvoice.tax_kind,
+                    func.count(BillingInvoice.invoice_id),
+                    func.coalesce(func.sum(BillingInvoice.taxable_inr_paise), 0),
+                    func.coalesce(func.sum(BillingInvoice.tax_inr_paise), 0),
+                    func.coalesce(func.sum(BillingInvoice.cgst_inr_paise), 0),
+                    func.coalesce(func.sum(BillingInvoice.sgst_inr_paise), 0),
+                    func.coalesce(func.sum(BillingInvoice.igst_inr_paise), 0),
+                )
+                .where(*conditions)
+                .group_by(BillingInvoice.tax_kind)
+            )
+        ).all()
+        note_row = (
+            await db.execute(
+                select(
+                    func.count(CreditNote.credit_note_id),
+                    func.coalesce(func.sum(CreditNote.taxable_inr_paise), 0),
+                    func.coalesce(func.sum(CreditNote.tax_inr_paise), 0),
+                    func.coalesce(func.sum(CreditNote.cgst_inr_paise), 0),
+                    func.coalesce(func.sum(CreditNote.sgst_inr_paise), 0),
+                    func.coalesce(func.sum(CreditNote.igst_inr_paise), 0),
+                ).where(*note_conditions)
+            )
+        ).one()
+
+    def _row(name, count, taxable, tax, cgst, sgst, igst):
+        return {
+            "taxKind": name,
+            "count": int(count or 0),
+            "taxableInr": int(taxable or 0) / 100.0,
+            "taxInr": int(tax or 0) / 100.0,
+            "cgstInr": int(cgst or 0) / 100.0,
+            "sgstInr": int(sgst or 0) / 100.0,
+            "igstInr": int(igst or 0) / 100.0,
+        }
+
+    issued = [_row(*row) for row in invoice_rows]
+    notes = _row("credit_note", *note_row)
+    totals = {
+        "taxableInr": round(sum(item["taxableInr"] for item in issued) - notes["taxableInr"], 2),
+        "taxInr": round(sum(item["taxInr"] for item in issued) - notes["taxInr"], 2),
+        "cgstInr": round(sum(item["cgstInr"] for item in issued) - notes["cgstInr"], 2),
+        "sgstInr": round(sum(item["sgstInr"] for item in issued) - notes["sgstInr"], 2),
+        "igstInr": round(sum(item["igstInr"] for item in issued) - notes["igstInr"], 2),
+    }
+    return {
+        "from": dateFrom,
+        "to": dateTo,
+        "issued": issued,
+        "creditNotes": notes,
+        "net": totals,
+    }
+
+
+@router.get("/api/dev/admin/tenants/{tenant_id}/billing-profile")
+async def admin_tenant_billing_profile(
+    tenant_id: uuid.UUID, session: SessionData = Depends(require_dev_session)
+):
+    require_permission(session, "dev.admin.billing")
+    _require_db()
+    from server.services.saas.billing_profile_service import get_profile
+
+    return await get_profile(tenant_id)
 
 
 @router.get("/api/dev/admin/languages")

@@ -286,6 +286,10 @@ async def test_confirm_wallet_payment_domestic_inr_success(monkeypatch):
                 return order
             if model is razorpay_service_module.BillingWallet:
                 return wallet
+            if getattr(model, "__name__", "") == "InvoiceSequence":
+                from server.db.models.saas_models import InvoiceSequence
+
+                return InvoiceSequence(kind=ident[0], fy=ident[1], last_number=0)
             return None
 
         def add(self, obj):
