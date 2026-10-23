@@ -551,9 +551,6 @@ export const initialWallet = {
   usdEquivalent: 118.56,
   ratePerMinute: 0.095,
   ratePerSecond: 0.001583,
-  autoRechargeEnabled: true,
-  autoRechargeThresholdUsd: 20.00,
-  autoRechargeAmountUsd: 100.00,
   emergencyOverdraftUsd: 15.00,
   defaultPaymentMethod: {
     brand: 'Visa',

@@ -23,20 +23,15 @@ const EMPTY_DRAFT = {
   naturalSpokenStyle: false,
 };
 
-/**
- * One-step agent creation.
- *
- * The brief, the language and the role are all the compiler needs, so that is all
- * this screen asks for. The agent is created and published server-side, then the
- * flow drops the customer straight into the agent page, where the script, voice,
- * phone line and business hours are already editable — asking for them again in a
- * second, third and fourth step only delayed reaching a working agent.
- */
+/** Check the brief, clarify gaps, then write and review the business script. */
 export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
   const { loadWorkspaceData, agents, selectedAgentId, setSelectedAgentId } = useWorkspace();
   const [draft, setDraft] = useState(EMPTY_DRAFT);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState({});
+  const [phase, setPhase] = useState('brief');
   const creationRequestRef = useRef(null);
   const creatingRef = useRef(false);
   // Which languages exist is an admin setting, not a bundle constant.
@@ -50,6 +45,9 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
     if (!isOpen) return;
     setDraft(EMPTY_DRAFT);
     setError(null);
+    setQuestions([]);
+    setAnswers({});
+    setPhase('brief');
     creationRequestRef.current = null;
   }, [isOpen]);
 
@@ -79,6 +77,14 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
 
   const briefWords = draft.brief.trim() ? draft.brief.trim().split(/\s+/).length : 0;
   const ready = draft.brief.trim().length >= BRIEF_MIN_CHARS && draft.brief.length <= 6000 && briefWords <= 1200;
+  const answersReady = questions.every((question) => {
+    const value = answers[question.field];
+    return value?.answer?.trim() || (!question.required && value?.unavailable);
+  });
+
+  useEffect(() => {
+    if (phase === 'questions') document.getElementById('employee-answer-0')?.focus();
+  }, [phase, questions]);
 
   const appendIndustry = (chip) => {
     const text = chip.snippet;
@@ -89,29 +95,37 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
     }));
   };
 
-  /** Brief → compiled script → published brain. One call, then hand over. */
+  /** Clarification is read-only; create only after the brief is ready. */
   const createAgent = useCallback(async () => {
     if (creatingRef.current) return;
     if (!ready) {
       setError('Describe the job in at least 8 characters, up to 6,000 characters and 1,200 words.');
       return;
     }
+    if (phase === 'questions' && !answersReady) return;
     setBusy(true);
     creatingRef.current = true;
     setError(null);
     try {
-      const fingerprint = JSON.stringify({ ...draft, brief: draft.brief.trim() });
+      const clarificationAnswers = Object.values(answers)
+        .filter((item) => item.answer.trim() || item.unavailable)
+        .map((item) => ({ ...item, answer: item.unavailable ? '' : item.answer.trim() }));
+      const payload = { ...draft, brief: draft.brief.trim(), clarificationAnswers };
+      setPhase('checking');
+      const analysis = await api.agents.analyzeEmployee(payload);
+      if (analysis.status === 'needs_user_input' && analysis.questions?.length) {
+        setQuestions(analysis.questions);
+        setPhase('questions');
+        return;
+      }
+      if (analysis.status !== 'ready') throw new Error('The brief could not be checked. Please try again.');
+      setPhase('writing');
+      const fingerprint = JSON.stringify(payload);
       if (creationRequestRef.current?.fingerprint !== fingerprint) {
         creationRequestRef.current = { fingerprint, id: crypto.randomUUID() };
       }
       const result = await api.agents.buildEmployee({
-        brief: draft.brief.trim(),
-        language: draft.language,
-        mode: draft.mode,
-        role: draft.role,
-        direction: draft.direction,
-        industry: draft.industry,
-        naturalSpokenStyle: draft.naturalSpokenStyle,
+        ...payload,
         requestId: creationRequestRef.current.id,
       });
       const agentId = result.id;
@@ -126,11 +140,12 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
       onNavigate('employees', { agentId, step: 'script' });
     } catch (e) {
       setError(e.message || 'Could not create the agent');
+      setPhase(questions.length ? 'questions' : 'brief');
     } finally {
       creatingRef.current = false;
       setBusy(false);
     }
-  }, [draft, ready, loadWorkspaceData, agents, selectedAgentId, setSelectedAgentId, onClose, onNavigate]);
+  }, [draft, ready, answers, answersReady, phase, questions.length, loadWorkspaceData, agents, selectedAgentId, setSelectedAgentId, onClose, onNavigate]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -174,17 +189,51 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
-      title="Create an AI employee"
-      subtitle="Describe the job. We write the script and take you straight to the agent."
+      onClose={() => { if (!busy) onClose(); }}
+      title={questions.length && phase !== 'brief' ? 'A few details for your agent' : 'Create an AI employee'}
+      subtitle="Tell us the job. We’ll ask about any gaps, then write and check your calling script."
       maxWidth="max-w-3xl"
       panelClassName="shadow-craft-lg"
     >
       <div data-testid="create-employee-modal" className="space-y-4">
+        <fieldset disabled={busy} className="min-w-0 space-y-4">
+        {questions.length > 0 && phase !== 'brief' ? (
+          <div data-testid="employee-clarification-panel" className="space-y-5">
+            <p className="text-sm text-[#524E5E]">These details will help us write an accurate script. If an optional detail is unavailable, your agent will say it doesn’t know.</p>
+            {questions.map((question, index) => {
+              const value = answers[question.field] || { field: question.field, question: question.question, answer: '', unavailable: false };
+              const update = (patch) => setAnswers((previous) => ({ ...previous, [question.field]: { ...value, question: question.question, ...patch } }));
+              return (
+                <div key={question.field}>
+                  <label htmlFor={`employee-answer-${index}`} className="block text-sm font-semibold text-[#0F0E17] mb-1.5">{question.question}</label>
+                  {question.reason && <p id={`employee-reason-${index}`} className="text-xs text-[#524E5E] mb-2">{question.reason}</p>}
+                  <textarea
+                    id={`employee-answer-${index}`}
+                    data-testid={`employee-answer-${question.field}`}
+                    aria-describedby={question.reason ? `employee-reason-${index}` : undefined}
+                    required={question.required}
+                    disabled={value.unavailable}
+                    value={value.answer}
+                    onChange={(event) => update({ answer: event.target.value })}
+                    maxLength={1500}
+                    rows={3}
+                    className="w-full rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] px-3 py-2.5 text-sm text-[#0F0E17] focus:outline-none focus:border-[#6344E7] disabled:opacity-50"
+                  />
+                  {!question.required && <label className="mt-2 flex items-center gap-2 text-xs text-[#524E5E]">
+                    <input type="checkbox" checked={value.unavailable} onChange={(event) => update({ unavailable: event.target.checked })} data-testid={`employee-unknown-${question.field}`} />
+                    This information is unavailable or doesn’t apply
+                  </label>}
+                </div>
+              );
+            })}
+            <button type="button" onClick={() => { setPhase('brief'); setError(null); }} className="text-xs font-semibold text-[#6344E7] underline" data-testid="employee-edit-brief">Edit the original brief</button>
+          </div>
+        ) : (
+        <>
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-[11px] text-[#524E5E]">
             <Sparkles className="w-3.5 h-3.5 text-[#6344E7]" />
-            <span>One step. Voice, phone number and business hours come next, on the agent page.</span>
+            <span>We’ll check the details before creating your agent.</span>
           </div>
           <p className="hidden sm:block text-[11px] text-[#8C879A] shrink-0">
             <kbd className="font-mono text-[#524E5E] px-1 rounded bg-[#F0EEF6] border border-[#E4E2EB]">
@@ -194,7 +243,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
             <kbd className="font-mono text-[#524E5E] px-1 rounded bg-[#F0EEF6] border border-[#E4E2EB]">
               Enter
             </kbd>
-            to create
+            to continue
           </p>
         </div>
 
@@ -307,6 +356,11 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
             </span>
           </div>
         )}
+        </>
+        )}
+        </fieldset>
+
+        {busy && <p role="status" className="text-xs text-[#524E5E]" data-testid="employee-creation-progress">{phase === 'writing' ? 'Writing and checking your script…' : 'Checking your brief and answers…'}</p>}
 
         {error && (
           <div
@@ -321,10 +375,10 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
         <StepFooter
           onBack={null}
           onNext={createAgent}
-          nextLabel="Create my agent"
-          nextDisabled={!ready}
+          nextLabel={phase === 'questions' ? 'Continue with these answers' : 'Check brief & create agent'}
+          nextDisabled={!ready || (phase === 'questions' && !answersReady)}
           busy={busy}
-          busyLabel="Writing the script…"
+          busyLabel={phase === 'writing' ? 'Writing & checking…' : 'Checking details…'}
         />
       </div>
     </Modal>

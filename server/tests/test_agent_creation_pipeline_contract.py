@@ -20,6 +20,7 @@ from server.brain.brief_contract import BriefValidationError, brief_issue
 from server.routes import app_agents
 from server.services.saas import employee_brain_build
 from server.utils.errors import AppError, ErrorCode
+from server.tests.test_employee_script_pipeline import BRIEF, pipeline_model
 
 
 @pytest.fixture
@@ -231,7 +232,7 @@ async def test_build_request_outcome_survives_new_service_instance_in_database(m
 @pytest.mark.asyncio
 async def test_employee_compiler_does_not_repeat_identical_failed_strategy(monkeypatch):
     compiler = AsyncMock(side_effect=ValueError("bad brief"))
-    monkeypatch.setattr(employee_brain_build, "compile_agent_from_brief", compiler)
+    monkeypatch.setattr(employee_brain_build, "compile_employee_script", compiler)
     with pytest.raises(ValueError, match="bad brief"):
         await employee_brain_build.compile_brief_for_employee(brief="Name Meera", language="en-IN", generation_config={"agentRole": "support"})
     compiler.assert_awaited_once()
@@ -239,10 +240,10 @@ async def test_employee_compiler_does_not_repeat_identical_failed_strategy(monke
 
 
 @pytest.mark.asyncio
-async def test_employee_generation_settings_reach_real_compiler_spec_and_artifact():
+async def test_employee_generation_settings_reach_real_compiler_spec_and_artifact(pipeline_model):
     config = {"employeeName": "Meera", "agentRole": "information", "callDirection": "inbound", "mode": "bulk", "industry": "clinic", "naturalSpokenStyle": True}
     compiled, result, _variables = await employee_brain_build.compile_brief_for_employee(
-        brief="Example Clinic answers questions about opening hours. Opening hours are 09:00 to 18:00. Do not offer bookings.",
+        brief=BRIEF,
         language="en-IN", generation_config=config,
     )
     assert result.agent_name == "Meera"
@@ -251,13 +252,13 @@ async def test_employee_generation_settings_reach_real_compiler_spec_and_artifac
     assert result.generation_config == config
     assert "09:00 to 18:00" in compiled
     assert "Do not offer bookings" in compiled
-    assert "natural conversational wording" in result.agent_script
+    assert result.provenance["stages"] == ["extract", "generate", "validate"]
 
 
 @pytest.mark.asyncio
 async def test_employee_input_limit_returns_actionable_diagnostics_without_retry(monkeypatch):
     compiler = AsyncMock(side_effect=PromptSectionTooLong("Agent brief", 1201, 1200, 3000, 6000))
-    monkeypatch.setattr(employee_brain_build, "compile_agent_from_brief", compiler)
+    monkeypatch.setattr(employee_brain_build, "compile_employee_script", compiler)
     with pytest.raises(BriefValidationError) as failure:
         await employee_brain_build.compile_brief_for_employee(brief="Meera answers", language="en-IN")
     assert failure.value.issues[0]["code"] == "input_limit_exceeded"

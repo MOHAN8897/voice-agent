@@ -97,6 +97,12 @@
       "subject": "console"
     },
     {
+      "id": "inline:creation-asks-for-missing-details-before-it-crea-6171458f",
+      "statement": "Creation asks for missing details before it creates an agent.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
       "id": "inline:operators-can-open-call-history-and-choose-a-sta-f4acfc37",
       "statement": "Operators can open call history and choose a status from a compact drop…",
       "status": "proved",
@@ -129,6 +135,12 @@
     {
       "id": "inline:tenants-see-available-number-inventory-and-the-a-b7143605",
       "statement": "Tenants see available number inventory and the admin monthly price befo…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:the-completed-clarification-answers-create-the-a-b23233ed",
+      "statement": "The completed clarification answers create the agent and open its saved…",
       "status": "proved",
       "subject": "console"
     },
@@ -203,6 +215,12 @@
       "statement": "Creating an AI employee lands the operator in the agent workspace with…",
       "status": "proved",
       "subject": "drive-creating-an-ai-employee-lands-the"
+    },
+    {
+      "id": "flow:drive-creation-asks-for-missing-details-before-it-crea",
+      "statement": "Creation asks for missing details before it creates an agent.",
+      "status": "proved",
+      "subject": "drive-creation-asks-for-missing-details"
     },
     {
       "id": "flow:drive-csv-column-mapping-and-published-script-placehol",

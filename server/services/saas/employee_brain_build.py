@@ -1,14 +1,14 @@
-"""SaaS employee create — same script compiler + cached brain as dev Test Studio."""
+"""SaaS employee create — reviewed business script in the existing compiled brain."""
 from __future__ import annotations
 
 import json
 from typing import Any
 
 from server.agent.brain_prompt_composer import PromptBudgetExceeded, PromptSectionTooLong
-from server.brain.agent_script_compiler import AgentScriptResult, compile_agent_from_brief
+from server.brain.agent_script_compiler import AgentScriptResult
 from server.brain.brief_contract import BriefValidationError, brief_issue
+from server.brain.employee_script_pipeline import ClarificationAnswer, compile_employee_script
 from server.brain.compiled_brain_service import compiled_brain_service
-from server.call.call_end_policy import normalize_call_end_policy
 from server.services.saas.script_variables import SAAS_SCRIPT_VARIABLES_TITLE, merge_variables
 
 CALLING_SCRIPT_TITLE = "Calling script"
@@ -87,17 +87,15 @@ async def compile_brief_for_employee(
     brief: str,
     language: str,
     generation_config: dict[str, Any] | None = None,
+    answers: list[ClarificationAnswer] | None = None,
 ) -> tuple[str, AgentScriptResult, list[dict[str, str]]]:
     lang = (language or "en-IN").strip() or "en-IN"
-    policy = normalize_call_end_policy(None, language=lang)
     try:
-        compiled, script_result, *_rest = await compile_agent_from_brief(
+        compiled, script_result = await compile_employee_script(
             brief=brief.strip(),
             language=lang,
-            interpret_brief=True,
-            call_end_policy=policy,
             generation_config=generation_config,
-            budget_tokens=6000,
+            answers=answers,
         )
     except (PromptBudgetExceeded, PromptSectionTooLong) as exc:
         raise BriefValidationError([brief_issue("input_limit_exceeded", str(exc))]) from exc

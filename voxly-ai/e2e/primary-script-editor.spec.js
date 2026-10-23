@@ -73,18 +73,17 @@ async function setup(page, { failPublish = false, failRead = false, generationRe
   return state;
 }
 
-test('generation fallback diagnostics stay visible and identify edited drafts', async ({ page }) => {
+test('incomplete generation asks for business review without technical diagnostics', async ({ page }) => {
   await setup(page, { generationReport: { status: 'degraded', provenance: { provider: 'gemini', model: 'test-generation-model', fallback: true }, issues: [{ code: 'deterministic_fallback', message: 'Model interpretation was unavailable; review the script.' }] } });
   const notice = page.getByTestId('agent-script-generation-status');
-  await expect(notice).toContainText('Generated with fallback');
-  await expect(notice).toContainText('Gemini');
-  await expect(notice).toContainText('test-generation-model');
-  await expect(notice).toContainText('Model interpretation was unavailable');
+  await expect(notice).toContainText('Review the business details');
+  await expect(notice).not.toContainText('Gemini');
+  await expect(notice).not.toContainText('test-generation-model');
   await page.getByRole('combobox', { name: 'Calling script' }).fill(original + '\nEdited draft.');
   await expect(notice).toContainText('current draft has edits');
 });
 
-test('voice refresh preserves unsaved script; review does not publish', async ({ page }) => {
+test('voice refresh preserves unsaved script; technical draft controls stay hidden', async ({ page }) => {
   const state = await setup(page);
   const editor = page.getByRole('combobox', { name: 'Calling script' });
   await expect(editor).toHaveValue(original);
@@ -96,8 +95,9 @@ test('voice refresh preserves unsaved script; review does not publish', async ({
   await expect.poll(() => state.voiceReads).toBeGreaterThan(voiceReads);
   await expect(editor).toHaveValue(edited);
   expect(state.reads).toBe(reads);
-  await page.getByTestId('review-script-btn').click();
-  await expect(page.getByTestId('script-review-result')).toContainText('Draft checks passed');
+  await expect(page.getByTestId('review-script-btn')).toHaveCount(0);
+  await expect(page.getByTestId('script-review-result')).toHaveCount(0);
+  await expect(page.getByTestId('script-save-status')).toContainText('Unsaved changes');
   expect(state.writes).toHaveLength(0);
   expect(state.publishes).toBe(0);
   await editor.fill(edited + ' changed after review');
@@ -110,7 +110,9 @@ test('successful publication preserves extra facts, notes and guardrails', async
   await expect(editor).toHaveValue(original);
   await editor.fill(original + '\nNew approved step.');
   await page.getByTestId('agent-save').click();
-  await expect(page.getByTestId('script-published-version')).toContainText('cb_verified_test');
+  await expect(page.getByTestId('script-save-status')).toHaveText('Saved for calls');
+  await expect(page.getByTestId('script-review-result')).toHaveCount(0);
+  await expect(page.getByTestId('script-published-version')).toHaveCount(0);
   await expect(page.getByTestId('agent-studio-unsaved')).toHaveCount(0);
   expect(state.publishes).toBe(1);
   const saved = state.writes[0].sections;
@@ -132,7 +134,7 @@ test('publish failure keeps unsaved draft and shows error', async ({ page }) => 
   await expect(page.getByTestId('agent-save-error')).toBeVisible();
   await expect(editor).toHaveValue(edited);
   await expect(page.getByTestId('agent-studio-unsaved')).toBeVisible();
-  await expect(page.getByTestId('script-published-version')).toContainText('published-original');
+  await expect(page.getByTestId('script-save-status')).toContainText('Unsaved changes');
   expect(state.publishes).toBe(1);
 });
 
@@ -148,17 +150,17 @@ test('failed initial load blocks saving and retry restores the editor', async ({
   await expect(editor).toHaveValue(original);
 });
 
-test('blank objection rule blocks review; template stays factual and language aware', async ({ page }) => {
+test('blank objection rule blocks saving; template stays factual and language aware', async ({ page }) => {
   const state = await setup(page);
   await page.getByTestId('add-objection-btn').click();
-  await page.getByTestId('review-script-btn').click();
-  await expect(page.getByTestId('script-review-result')).toContainText('Complete the concern and response');
+  await page.getByTestId('agent-save').click();
+  await expect(page.getByTestId('agent-save-error')).toContainText('Complete the concern and response');
   expect(state.writes).toHaveLength(0);
   await page.getByTestId('remove-objection-0').click();
   await page.getByTestId('preset-objection-trust').click();
   await expect(page.getByTestId('objection-response-0')).toHaveValue('Yes, I am an AI assistant representing this business. What would you like to know?');
   await page.getByTestId('agent-save').click();
-  await expect(page.getByTestId('script-published-version')).toContainText('cb_verified_test');
+  await expect(page.getByTestId('script-save-status')).toHaveText('Saved for calls');
   const faq = state.writes[0].sections.find((row) => row.title === 'FAQ & Objections').raw_text;
   expect(faq).toContain('selected call language');
   expect(faq).not.toContain('recently engaged');

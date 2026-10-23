@@ -876,21 +876,6 @@ export function AgentStudioModule({
   const [saveError, setSaveError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [scriptReview, setScriptReview] = useState(null);
-  const [reviewing, setReviewing] = useState(false);
-
-  const handleReview = async () => {
-    if (!selectedAgent?.id || reviewing || brainLoading || brainLoadError) return;
-    const snapshot = snapForm(formData);
-    setReviewing(true);
-    try {
-      const result = await reviewAgentBrain(selectedAgent.id, formData);
-      setScriptReview({ snapshot, agentId: selectedAgent.id, ...result });
-    } catch (error) {
-      setScriptReview({ snapshot, agentId: selectedAgent.id, error: error.message || 'Could not review this draft. Your edits are still here; retry when the service is available.' });
-    } finally {
-      setReviewing(false);
-    }
-  };
 
   const handleSave = async () => {
     if (!selectedAgent?.id || saving || brainLoading || brainLoadError) return false;
@@ -1221,8 +1206,8 @@ export function AgentStudioModule({
             variant="secondary"
             size="sm"
             icon={Radio}
-            disabled={!voiceStackReady || dirty || saving || brainLoading || !!brainLoadError}
-            title={dirty ? 'Publish your changes before testing the agent.' : 'Test the published script'}
+            disabled={dirty || saving || brainLoading || !!brainLoadError}
+            title={dirty ? 'Save your changes before testing the agent.' : 'Test the published script'}
             onClick={(e) => {
               testCallButtonRef.current = e.currentTarget;
               setTestCallOpen(true);
@@ -1301,23 +1286,15 @@ export function AgentStudioModule({
           aria-labelledby="agent-tab-script"
           className="space-y-6 animate-in fade-in duration-150"
         >
-          {generationReport?.status ? (
+          {generationReport?.status && generationReport.status !== 'ready' ? (
             <div data-testid="agent-script-generation-status" className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] px-4 py-3 text-xs text-[#524E5E]" aria-live="polite">
               <p className="font-semibold text-[#0F0E17]">
-                {generationReport.status === 'degraded' ? 'Generated with fallback — review the script before calling' : generationReport.status === 'ready' ? 'Generated with automated source checks' : 'Generation requires review'}
+                Review the business details before calling
               </p>
               <p className="mt-1">
-                {({ gemini: 'Gemini', openai: 'OpenAI' })[generationReport.provenance?.provider] || 'Deterministic compiler'}
-                {generationReport.provenance?.model ? ` · ${generationReport.provenance.model}` : ''}
-                {generationReport.provenance?.fallback ? ' · fallback used' : ''}
-                {' · Review business facts and test call behavior before use.'}
+                Check the names, offer, and next step in this script, then make a test call.
               </p>
               {scriptDirty ? <p className="mt-1">This report describes the published script. The current draft has edits.</p> : null}
-              {Array.isArray(generationReport.issues) && generationReport.issues.length ? (
-                <ul className="mt-2 list-disc pl-4">
-                  {generationReport.issues.map((issue, index) => <li key={`${issue.code || 'issue'}-${index}`}>{issue.message || issue.description}</li>)}
-                </ul>
-              ) : null}
             </div>
           ) : null}
           {/* Greeting the caller hears: synced with calling script and acoustic voice preview */}
@@ -1359,10 +1336,10 @@ export function AgentStudioModule({
               <div>
                 <h3 className="text-xs font-bold text-[#0F0E17]">Calling script</h3>
                 <p className="text-[11px] text-[#524E5E]">
-                  What your agent says on a call. Published to the cached brain on save.
+                  Your agent’s conversation guide. Save to use your changes on calls.
                 </p>
                 {brainLoading && (
-                  <p className="text-[11px] text-[#6344E7] mt-1">Loading script from your agent brain…</p>
+                  <p className="text-[11px] text-[#6344E7] mt-1">Loading your script…</p>
                 )}
                 {brainLoadError && (
                   <div role="alert" className="text-[11px] text-red-600 mt-1">
@@ -1370,19 +1347,17 @@ export function AgentStudioModule({
                     <button type="button" onClick={() => setBrainLoadAttempt((n) => n + 1)} className="ml-2 underline" data-testid="retry-script-load">Retry loading</button>
                   </div>
                 )}
-                {!brainLoading && !brainLoadError && <p data-testid="script-published-version" className="text-[11px] text-[#524E5E] mt-1">{publishedVersion ? `Published version: ${publishedVersion}` : 'No published version loaded'}{scriptDirty ? ' · Unsaved draft' : ''}</p>}
+                {!brainLoading && !brainLoadError && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className={`inline-block size-1.5 rounded-full ${publishedVersion ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    <p data-testid="script-save-status" className="text-[11px] text-[#524E5E]" role="status">
+                      {scriptDirty ? 'Unsaved changes' : publishedVersion ? 'Saved for calls' : 'Save your script to use it on calls'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleReview}
-                  disabled={reviewing || saving || brainLoading || !!brainLoadError}
-                  data-testid="review-script-btn"
-                  className="px-2.5 py-1.5 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] text-xs font-semibold text-[#524E5E] disabled:opacity-50"
-                >
-                  {reviewing ? 'Reviewing…' : 'Review draft'}
-                </button>
                 <button
                   type="button"
                   onClick={() => setScriptPreviewMode(!scriptPreviewMode)}
@@ -1464,11 +1439,10 @@ export function AgentStudioModule({
               </div>
             </div>
 
-            {scriptReview?.agentId === selectedAgent?.id && scriptReview?.snapshot === snapForm(formData) && (
-              <div role={scriptReview.error || !scriptReview.ok ? 'alert' : 'status'} data-testid="script-review-result" className="mb-3 rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-3 text-xs space-y-2">
-                <p className="font-semibold text-[#0F0E17]">{scriptReview.error || (scriptReview.ok ? 'Draft checks passed' : 'Changes needed before publishing')}</p>
-                {!scriptReview.error && <p className="text-[#524E5E]">Language: {scriptReview.language} · {scriptReview.script_characters} characters · about {scriptReview.token_estimate} instruction tokens. Review does not save or publish.</p>}
-                {!!scriptReview.issues?.length && <ul className="list-disc pl-4 space-y-1">{scriptReview.issues.map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.severity === 'blocking' ? 'Required: ' : 'Check: '}{issue.message}</li>)}</ul>}
+            {scriptReview?.agentId === selectedAgent?.id && scriptReview?.snapshot === snapForm(formData) && (scriptReview.error || !scriptReview.ok || scriptReview.issues?.length > 0) && (
+              <div role="alert" data-testid="script-review-result" className="mb-3 rounded-xl border border-amber-300 bg-amber-50/70 p-3 text-xs text-amber-900 space-y-1.5">
+                <p className="font-semibold">{scriptReview.error || 'Check these details before saving'}</p>
+                {!!scriptReview.issues?.length && <ul className="list-disc pl-4 space-y-1">{scriptReview.issues.map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.message}</li>)}</ul>}
               </div>
             )}
             {scriptPreviewMode ? (

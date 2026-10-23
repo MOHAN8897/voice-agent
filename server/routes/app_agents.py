@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from server.auth.subscriber_dependencies import require_subscriber_jwt
 from server.brain.agent_service import AgentBuildRequestConflict, agent_service
 from server.brain.brief_contract import BriefValidationError, normalize_generation_config
+from server.brain.employee_script_pipeline import ClarificationAnswer, analyze_employee_brief, clarification_response
 from server.brain.script_entities import strip_entity_tags_section
 from server.services.saas import platform_languages
 from server.services.saas.agent_onboarding_compose import compose_agent_onboarding
@@ -60,6 +61,37 @@ class BuildEmployeeBody(BaseModel):
     agentRole: str = Field("", max_length=120)
     callDirection: str = Field("", max_length=20)
     requestId: uuid.UUID | None = None
+    clarificationAnswers: list[ClarificationAnswer] = Field(default_factory=list, max_length=20)
+
+
+def _generation_settings(body: BuildEmployeeBody) -> dict:
+    return {
+        "employeeName": body.employeeName.strip(), "agentRole": body.agentRole.strip(),
+        "callDirection": body.callDirection.strip(), "mode": body.mode.strip(),
+        "industry": body.industry.strip(), "naturalSpokenStyle": body.naturalSpokenStyle,
+    }
+
+
+@router.post("/api/app/agents/analyze-brief")
+async def analyze_brief(
+    body: BuildEmployeeBody,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    """Read-only clarification: never creates an agent or publishes a draft."""
+    require_subscriber_permission(principal, "app.agents.write")
+    subscriber_workspace_tenant_id(principal)
+    language = body.language.strip() or "en-IN"
+    if not platform_languages.is_enabled(language):
+        raise HTTPException(status_code=400, detail={"error": {"code": "language_not_enabled", "message": "Choose an available spoken language."}})
+    try:
+        extracted = await analyze_employee_brief(brief=body.brief.strip(), language=language,
+            generation_config=_generation_settings(body), answers=body.clarificationAnswers)
+        return clarification_response(extracted)
+    except BriefValidationError as exc:
+        raise HTTPException(status_code=422, detail={"error": exc.to_dict()}) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail={"error": {"code": "brief_analysis_unavailable",
+            "message": "We could not check the brief right now. Your answers are kept; please try again."}}) from exc
 
 
 @router.post("/api/app/agents/compose-onboarding")
@@ -118,14 +150,7 @@ async def build_employee(
 
     from server.services.saas.employee_brain_build import compile_brief_for_employee
 
-    generation_config = {
-        "employeeName": body.employeeName.strip(),
-        "agentRole": body.agentRole.strip(),
-        "callDirection": body.callDirection.strip(),
-        "mode": body.mode.strip(),
-        "industry": body.industry.strip(),
-        "naturalSpokenStyle": body.naturalSpokenStyle,
-    }
+    generation_config = _generation_settings(body)
     claimed_agent = None
     if body.requestId is not None:
         try:
@@ -133,6 +158,7 @@ async def build_employee(
             fingerprint = hashlib.sha256(json.dumps({
                 "brief": body.brief.strip(), "language": lang,
                 "generationConfig": generation_config,
+                "clarificationAnswers": [item.model_dump() for item in body.clarificationAnswers],
             }, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
             claim = await agent_service.claim_build_request(
                 request_id=str(body.requestId), fingerprint=fingerprint, tenant_id=tenant_id,
@@ -164,10 +190,12 @@ async def build_employee(
                 error["recoveryRequired"] = True
 
     try:
+        answer_options = {"answers": body.clarificationAnswers} if body.clarificationAnswers else {}
         artifact = await compile_brief_for_employee(
             brief=body.brief.strip(),
             language=lang,
             generation_config=generation_config,
+            **answer_options,
         )
     except BriefValidationError as exc:
         error = exc.to_dict()

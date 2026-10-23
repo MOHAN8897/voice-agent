@@ -171,6 +171,32 @@
       },
       "updatedAt": 1792523784158
     },
+    "inline:creation-asks-for-missing-details-before-it-crea-6171458f": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "employee-answer-agent_name"
+        }
+      },
+      "declaredAt": 1792774590594,
+      "id": "inline:creation-asks-for-missing-details-before-it-crea-6171458f",
+      "provenBy": {
+        "at": 1792774590808,
+        "grade": "presence",
+        "runId": "drive-agent-clarification-verification",
+        "verdictId": "reticle_act_and_wait:1792774590808"
+      },
+      "state": "proved",
+      "statement": "Creation asks for missing details before it creates an agent.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "voxly-ai/src/console/modules/CreateAgentWizard.jsx"
+        ]
+      },
+      "updatedAt": 1792774590880
+    },
     "inline:operators-can-open-call-history-and-choose-a-sta-f4acfc37": {
       "binding": {
         "kind": "element",
@@ -352,6 +378,47 @@
         ]
       },
       "updatedAt": 1792523781980
+    },
+    "inline:the-completed-clarification-answers-create-the-a-b23233ed": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Saved for calls",
+            "kind": "text",
+            "scope": "[data-testid='script-save-status']"
+          },
+          {
+            "absent": true,
+            "kind": "element",
+            "query": {
+              "testid": "employee-clarification-panel"
+            }
+          },
+          {
+            "contains": "agent=clarified-agent",
+            "kind": "route"
+          }
+        ]
+      },
+      "declaredAt": 1792774678575,
+      "id": "inline:the-completed-clarification-answers-create-the-a-b23233ed",
+      "provenBy": {
+        "at": 1792774680064,
+        "grade": "presence",
+        "runId": "drive-agent-clarification-verification",
+        "verdictId": "reticle_act_and_wait:1792774680064"
+      },
+      "state": "proved",
+      "statement": "The completed clarification answers create the agent and open its saved script without technical version or draft-check details.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "voxly-ai/src/console/modules/CreateAgentWizard.jsx"
+        ]
+      },
+      "updatedAt": 1792774680136
     },
     "inline:the-launched-synthetic-campaign-is-visible-in-th-9fa77178": {
       "binding": {

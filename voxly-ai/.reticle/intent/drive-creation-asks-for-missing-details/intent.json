@@ -1,0 +1,19 @@
+{
+  "intents": {
+    "flow:drive-creation-asks-for-missing-details-before-it-crea": {
+      "declaredAt": 1792775056528,
+      "id": "flow:drive-creation-asks-for-missing-details-before-it-crea",
+      "source": "decided on the dashboard",
+      "state": "declared",
+      "statement": "Creation asks for missing details before it creates an agent.",
+      "status": "proved",
+      "subject": "drive-creation-asks-for-missing-details",
+      "surface": {
+        "flow": "drive-creation-asks-for-missing-details-before-it-crea"
+      },
+      "updatedAt": 1792775059239
+    }
+  },
+  "subject": "drive-creation-asks-for-missing-details",
+  "version": 1
+}

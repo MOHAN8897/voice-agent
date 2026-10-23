@@ -492,6 +492,43 @@ export const api = {
     };
   },
 
+  /**
+   * Authenticated download of a file (invoice PDF, CSV).
+   *
+   * `request` always parses JSON, which would destroy a PDF body. This shares
+   * its auth/refresh behaviour and surfaces the server's error message.
+   */
+  async requestBlob(method, endpoint) {
+    const backendUrl = this.getBackendUrl().replace(/\/$/, '');
+    const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const fullUrl = `${backendUrl}${path.replace(/^\/api/, '')}`;
+    const buildHeaders = () => {
+      const token = this.getToken();
+      return { Accept: 'application/pdf, text/csv, application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+    };
+    const doFetch = () => fetch(fullUrl, { method, headers: buildHeaders(), ...fetchOpts });
+    let response = await doFetch();
+    if (response.status === 401 && this.getToken()) {
+      const refreshed = await this.refreshAccessToken();
+      if (refreshed) response = await doFetch();
+    }
+    if (!response.ok) {
+      let message = `HTTP ${response.status}`;
+      try {
+        const data = await response.json();
+        message = parseApiError(data, response.status).message || message;
+      } catch {
+        /* keep the status */
+      }
+      const error = new Error(message);
+      error.status = response.status;
+      throw error;
+    }
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const match = /filename="?([^";]+)"?/i.exec(disposition);
+    return { blob: await response.blob(), filename: match?.[1] || null };
+  },
+
   async request(method, endpoint, body = null, customHeaders = {}, { allowMock = false } = {}) {
     const backendUrl = this.getBackendUrl().replace(/\/$/, '');
     const token = this.getToken();
@@ -579,6 +616,7 @@ export const api = {
             : parsed.message || (isServerDegraded ? 'Service temporarily degraded. Please try again.' : `HTTP ${response.status}`)
         );
         e.code = parsed.code || (isConfirmedAuthDead ? 'session_expired' : isServerDegraded ? 'service_degraded' : undefined);
+        e.issues = parsed.issues || [];
         e.status = response.status;
         e.isServerDegraded = isServerDegraded;
         e.retryAfter = Number(response.headers.get('Retry-After') || parsed.retryAfter || 0);
@@ -906,6 +944,13 @@ export const api = {
       });
       return data;
     },
+    async analyzeEmployee(payload) {
+      return api.request('POST', '/api/app/agents/analyze-brief', {
+        ...payload,
+        agentRole: payload.agentRole || payload.role || '',
+        callDirection: payload.callDirection || payload.direction || '',
+      });
+    },
     async buildEmployee(payload) {
       const data = await api.request('POST', '/api/app/agents/build-employee', {
         brief: payload.brief,
@@ -917,6 +962,7 @@ export const api = {
         agentRole: payload.agentRole || payload.role || '',
         callDirection: payload.callDirection || payload.direction || '',
         requestId: payload.requestId,
+        clarificationAnswers: payload.clarificationAnswers || [],
       });
       const agent = data.agent || {};
       return {
@@ -1288,8 +1334,9 @@ export const api = {
     async getCatalog() {
       return await api.request('GET', '/api/billing/catalog');
     },
-    async topUp(amountUsd) {
-      return await api.request('POST', '/api/billing/topup', { amountUsd });
+    /** Pre-tax and GST breakdown for an amount, before checkout opens. */
+    async quoteTopup(amount, currency) {
+      return await api.request('POST', '/api/billing/quote', { amount, currency });
     },
     /** `currency` is the account's charge currency (USD when international is on). */
     async createRazorpayOrder(amount, currency) {
@@ -1301,6 +1348,29 @@ export const api = {
     async listInvoices() {
       const data = await api.request('GET', '/api/billing/invoices');
       return data.invoices || [];
+    },
+    async getInvoice(invoiceId) {
+      return await api.request('GET', `/api/billing/invoices/${invoiceId}`);
+    },
+    async downloadInvoicePdf(invoiceId, invoiceNumber = 'invoice') {
+      const { blob, filename } = await api.requestBlob(
+        'GET',
+        `/api/billing/invoices/${invoiceId}/pdf`
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename || `${invoiceNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    },
+    async getBillingProfile() {
+      return await api.request('GET', '/api/billing/profile');
+    },
+    async updateBillingProfile(payload) {
+      return await api.request('PUT', '/api/billing/profile', payload);
     },
     async razorpayConfig() {
       return await api.request('GET', '/api/billing/razorpay/config');
