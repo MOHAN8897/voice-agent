@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Panel } from "@/components/console/Panel";
 
-export default function DevAgentChannelsPage({ params }: { params: { id: string } }) {
+export default async function DevAgentChannelsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
@@ -10,7 +11,7 @@ export default function DevAgentChannelsPage({ params }: { params: { id: string 
             Live mic test with barge-in, STT partials, brain stream, and TTS playback. Same call ledger as PSTN.
           </p>
           <Link
-            href={`/dev/agents/${params.id}/test`}
+            href={`/dev/agents/${id}/test`}
             className="mt-3 inline-block text-sm font-medium text-accent hover:underline"
           >
             Open Test Studio →
@@ -22,7 +23,7 @@ export default function DevAgentChannelsPage({ params }: { params: { id: string 
             from Test Studio.
           </p>
           <Link
-            href={`/dev/agents/${params.id}/test`}
+            href={`/dev/agents/${id}/test`}
             className="mt-3 inline-block text-sm font-medium text-accent hover:underline"
           >
             PSTN tab in Test Studio →

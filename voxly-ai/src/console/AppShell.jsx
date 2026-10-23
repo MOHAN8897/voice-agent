@@ -42,6 +42,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
     setIsCommandPaletteOpen,
     isAddFundsOpen,
     addFundsReason,
+    addFundsPreset,
     closeAddFunds,
     openAddFunds,
     requireFunds,
@@ -261,7 +262,12 @@ export function AppShell({ onBackToLanding, onSignOut }) {
         onClose={() => setIsCommandPaletteOpen(false)}
         onNavigate={handleNavigate}
       />
-      <AddFundsModal isOpen={isAddFundsOpen} onClose={closeAddFunds} reason={addFundsReason} />
+      <AddFundsModal
+        isOpen={isAddFundsOpen}
+        onClose={closeAddFunds}
+        reason={addFundsReason}
+        initialAmount={addFundsPreset}
+      />
     </div>
   );
 }

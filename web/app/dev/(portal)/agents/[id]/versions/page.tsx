@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { Panel } from "@/components/console/Panel";
 import { EmptyState } from "@/components/console/EmptyState";
 
-export default function DevAgentVersionsPage({ params }: { params: { id: string } }) {
+export default function DevAgentVersionsPage() {
+  const { id } = useParams<{ id: string }>();
   const [versions, setVersions] = useState<unknown[]>([]);
 
   useEffect(() => {
-    fetch(`/api/agents/${params.id}/business-brain/versions`, { credentials: "include" })
+    fetch(`/api/agents/${id}/business-brain/versions`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : { versions: [] }))
       .then((j) => setVersions(j.versions || []));
-  }, [params.id]);
+  }, [id]);
 
   return (
     <div>

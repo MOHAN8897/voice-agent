@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ConsolePage } from "@/components/console/ConsolePage";
 import { DevCard } from "@/components/dev/DevCard";
 
-export default function DevAgentVoicePage({ params }: { params: { id: string } }) {
+export default async function DevAgentVoicePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   return (
     <ConsolePage>
       <DevCard delayMs={0}>
@@ -17,7 +18,7 @@ export default function DevAgentVoicePage({ params }: { params: { id: string } }
         >
           Open SaaS phone AI stack →
         </Link>
-        <p className="mt-6 font-mono text-[10px] text-text-subtle">Agent id: {params.id}</p>
+        <p className="mt-6 font-mono text-[10px] text-text-subtle">Agent id: {id}</p>
       </DevCard>
     </ConsolePage>
   );

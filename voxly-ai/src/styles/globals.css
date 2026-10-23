@@ -279,3 +279,95 @@
   border-color: #FF5C35 !important;
 }
 
+/* ==========================================================================
+   Auth modal — scoped typography and motion
+   ========================================================================== */
+
+.auth-modal {
+  font-family: 'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-feature-settings: 'ss01' 1, 'cv01' 1;
+}
+
+.auth-serif {
+  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.01em;
+}
+
+@keyframes auth-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes auth-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes auth-wave {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes auth-aurora {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(14px, 22px, 0) scale(1.1); }
+}
+
+.auth-backdrop {
+  animation: auth-backdrop-in 0.28s ease-out both;
+}
+
+.auth-dialog {
+  animation: auth-dialog-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.auth-panel-in {
+  animation: auth-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.auth-stagger > * {
+  animation: auth-rise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.auth-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.auth-stagger > *:nth-child(2) { animation-delay: 0.12s; }
+.auth-stagger > *:nth-child(3) { animation-delay: 0.18s; }
+.auth-stagger > *:nth-child(4) { animation-delay: 0.24s; }
+
+.auth-aurora {
+  animation: auth-aurora 16s ease-in-out infinite alternate;
+}
+
+.auth-wave {
+  transform-origin: 50% 100%;
+  animation: auth-wave 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-backdrop,
+  .auth-dialog,
+  .auth-panel-in,
+  .auth-stagger > *,
+  .auth-aurora,
+  .auth-wave {
+    animation: none;
+  }
+}
+

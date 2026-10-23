@@ -4,7 +4,8 @@ import { ConsolePage } from "@/components/console/ConsolePage";
 import { PageHeader } from "@/components/console/PageHeader";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 
-export default function CallDetailPage({ params }: { params: { id: string } }) {
+export default async function CallDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   return (
     <ConsolePage className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -18,7 +19,7 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
         </Link>
       </div>
 
-      <CallInvestigationConsole callId={params.id} />
+      <CallInvestigationConsole callId={id} />
     </ConsolePage>
   );
 }

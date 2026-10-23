@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default function DevAgentIndexPage({ params }: { params: { id: string } }) {
-  redirect(`/dev/agents/${params.id}/summary`);
+export default async function DevAgentIndexPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  redirect(`/dev/agents/${id}/summary`);
 }

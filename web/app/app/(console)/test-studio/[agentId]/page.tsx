@@ -1,10 +1,11 @@
 import { AgentTestStudio } from "@/components/test-studio/AgentTestStudio";
 import { ConsolePage } from "@/components/console/ConsolePage";
 
-export default function AgentTestStudioPage({ params }: { params: { agentId: string } }) {
+export default async function AgentTestStudioPage({ params }: { params: Promise<{ agentId: string }> }) {
+  const { agentId } = await params;
   return (
     <ConsolePage>
-      <AgentTestStudio key={params.agentId} agentId={params.agentId} portal="app" />
+      <AgentTestStudio key={agentId} agentId={agentId} portal="app" />
     </ConsolePage>
   );
 }

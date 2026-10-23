@@ -4,10 +4,11 @@ import { StatCard } from "@/components/console/StatCard";
 import { Panel } from "@/components/console/Panel";
 import Link from "next/link";
 
-export default async function AgentSummaryPage({ params }: { params: { id: string } }) {
+export default async function AgentSummaryPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let agent: Record<string, unknown> = {};
   try {
-    const data = await apiGet<{ agent?: Record<string, unknown> }>(`/api/agents/${params.id}`);
+    const data = await apiGet<{ agent?: Record<string, unknown> }>(`/api/agents/${id}`);
     agent = data.agent || {};
   } catch {
     agent = {};
@@ -21,16 +22,16 @@ export default async function AgentSummaryPage({ params }: { params: { id: strin
         <StatCard label="Status" value={String(agent.status ?? "—")} tone="ok" />
         <StatCard label="Default tier" value={String(agent.default_tier ?? "medium")} />
         <StatCard label="Language" value={langLabel} />
-        <StatCard label="Agent ID" value={params.id.slice(0, 10) + "…"} hint="Locked at call start" />
+        <StatCard label="Agent ID" value={id.slice(0, 10) + "…"} hint="Locked at call start" />
       </div>
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Panel title="Setup checklist">
           <ol className="space-y-3 text-sm">
             {[
-              ["Business Brain", `/app/agents/${params.id}/brain`],
-              ["Voice & Models", `/app/agents/${params.id}/voice`],
-              ["Test live", `/app/agents/${params.id}/test`],
-              ["Versions", `/app/agents/${params.id}/versions`],
+              ["Business Brain", `/app/agents/${id}/brain`],
+              ["Voice & Models", `/app/agents/${id}/voice`],
+              ["Test live", `/app/agents/${id}/test`],
+              ["Versions", `/app/agents/${id}/versions`],
             ].map(([label, href], i) => (
               <li key={href} className="flex justify-between">
                 <span className="text-text-muted">

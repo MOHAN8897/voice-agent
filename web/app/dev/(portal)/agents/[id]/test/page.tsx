@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default function DevAgentTestRedirectPage({ params }: { params: { id: string } }) {
-  redirect(`/dev/test-studio/${params.id}`);
+export default async function DevAgentTestRedirectPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  redirect(`/dev/test-studio/${id}`);
 }

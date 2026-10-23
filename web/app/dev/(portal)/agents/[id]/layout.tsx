@@ -5,8 +5,8 @@ export default async function DevAgentLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const resolvedParams = await Promise.resolve(params);
+  const resolvedParams = await params;
   return <DevAgentWorkspaceShell agentId={resolvedParams.id}>{children}</DevAgentWorkspaceShell>;
 }
