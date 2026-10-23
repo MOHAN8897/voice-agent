@@ -86,6 +86,7 @@ scratch/
 
 # Local Next.js work directories and browser verification output
 /web/.next-*/
+/web/.next.stale-*/
 /web/test-results-*/
 
 # Local provider audit output and scratch prompts
