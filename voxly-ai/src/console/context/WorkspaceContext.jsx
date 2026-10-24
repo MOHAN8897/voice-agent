@@ -460,8 +460,6 @@ export function WorkspaceProvider({ children }) {
           voiceSettings,
           recordingDisclosureEnabled: updates.recordingDisclosureEnabled,
           recordingDisclosureText: updates.recordingDisclosureText,
-          technicalFallbackPromiseCallback: updates.technicalFallbackPromiseCallback,
-          technicalFallbackText: updates.technicalFallbackText,
         });
         let publication = null;
         if (

@@ -1,14 +1,16 @@
 """Platform dev admin ? SaaS operations (PRD-06)."""
 from __future__ import annotations
 
+import io
 import logging
 import secrets
 import uuid
+import wave
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy import case, delete, desc, func, select, update
 
@@ -28,7 +30,7 @@ from server.auth.rbac import (
 )
 from server.auth.session import SessionData
 from server.db.connection import get_session_factory
-from server.db.models.entities import Agent, Call, CallAttempt, Tenant
+from server.db.models.entities import Agent, AgentFallbackClip, Call, CallAttempt, Tenant
 from server.db.models.phase5_models import PhoneNumber
 from server.db.models.saas_models import (
     AuthEvent,
@@ -3946,3 +3948,251 @@ async def purchase_platform_carrier_number(
         "status": number_status,
         "provisioning": number_status == "pending",
     }
+
+
+# ---------------------------------------------------------------------------
+# Technical-fallback (TTS outage) announcements — platform-owned configuration.
+#
+# Tenants never see or edit these. The live call path reads the agent row and
+# the uploaded clips directly, so moving the controls to the admin portal
+# changes who can configure the announcement, not how it plays.
+# ---------------------------------------------------------------------------
+
+
+class AgentTechnicalFallbackBody(BaseModel):
+    promiseCallback: Optional[bool] = None
+    transcript: Optional[str] = Field(None, max_length=255)
+
+
+_VARIANT_LABELS = {
+    "callback_promise": "Callback promise",
+    "call_back": "Call-back request",
+    "disclosure": "Recording disclosure",
+}
+
+
+def _admin_agent_id(agent_id: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(agent_id)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="Agent not found") from exc
+
+
+async def _admin_agent_tenant(agent_id: str) -> tuple[Agent, uuid.UUID]:
+    _require_db()
+    aid = _admin_agent_id(agent_id)
+    async with get_session_factory()() as db:
+        agent = await db.get(Agent, aid)
+        if agent is None:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        return agent, agent.tenant_id
+
+
+def _fallback_clip_http_error(exc: Exception) -> HTTPException:
+    from server.services.fallback_clip_store import FallbackClipError
+
+    if isinstance(exc, KeyError):
+        return HTTPException(status_code=404, detail="Clip not found")
+    if isinstance(exc, FallbackClipError):
+        return HTTPException(
+            status_code=exc.status_code,
+            detail={"error": {"code": exc.code, "message": str(exc)}},
+        )
+    return HTTPException(status_code=503, detail="Fallback clips are unavailable")
+
+
+def _fallback_supported_languages(agent: Agent) -> list[str]:
+    from server.services.pstn_technical_fallback import CALL_BACK, FALLBACK_TEXT
+
+    platform = list(FALLBACK_TEXT[CALL_BACK].keys())
+    spoken = [str(code) for code in (agent.languages or []) if str(code).strip()]
+    return list(dict.fromkeys(spoken + platform))
+
+
+@router.get("/api/dev/admin/agents/{agent_id}/technical-fallback")
+async def get_agent_technical_fallback(
+    agent_id: str,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.tenants")
+    from server.services import fallback_clip_store
+    from server.services.pstn_technical_fallback import CLIP_VARIANTS, FALLBACK_TEXT
+
+    agent, tenant_id = await _admin_agent_tenant(agent_id)
+    try:
+        clips = await fallback_clip_store.list_clips(tenant_id=str(tenant_id), agent_id=str(agent.agent_id))
+    except Exception as exc:
+        raise _fallback_clip_http_error(exc) from None
+    languages = _fallback_supported_languages(agent)
+    return {
+        "agentId": str(agent.agent_id),
+        "tenantId": str(tenant_id),
+        "name": agent.name,
+        "spokenLanguages": list(agent.languages or []),
+        "languages": languages,
+        "promiseCallback": bool(agent.technical_fallback_promise_callback),
+        "transcript": agent.technical_fallback_text or "",
+        "variants": [
+            {
+                "id": variant,
+                "label": _VARIANT_LABELS.get(variant, variant.replace("_", " ").title()),
+            }
+            for variant in CLIP_VARIANTS
+        ],
+        "defaults": {
+            language: {variant: FALLBACK_TEXT[variant].get(language, FALLBACK_TEXT[variant]["en-IN"]) for variant in CLIP_VARIANTS}
+            for language in languages
+        },
+        "clips": clips,
+    }
+
+
+@router.patch("/api/dev/admin/agents/{agent_id}/technical-fallback")
+async def patch_agent_technical_fallback(
+    agent_id: str,
+    body: AgentTechnicalFallbackBody,
+    request: Request,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.tenants")
+    _require_db()
+    aid = _admin_agent_id(agent_id)
+    async with get_session_factory()() as db:
+        agent = await db.get(Agent, aid, with_for_update=True)
+        if agent is None:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        if body.promiseCallback is not None:
+            agent.technical_fallback_promise_callback = body.promiseCallback
+        if body.transcript is not None:
+            agent.technical_fallback_text = body.transcript.strip()
+        await db.commit()
+        await db.refresh(agent)
+        result = {
+            "agentId": str(agent.agent_id),
+            "promiseCallback": bool(agent.technical_fallback_promise_callback),
+            "transcript": agent.technical_fallback_text or "",
+        }
+        tenant_id = agent.tenant_id
+    await record_admin_action(
+        actor=session.subject,
+        action="agent.technical_fallback.update",
+        resource_type="agent",
+        resource_id=agent_id,
+        tenant_id=tenant_id,
+        payload=result,
+        request=request,
+    )
+    return {"ok": True, **result}
+
+
+@router.put("/api/dev/admin/agents/{agent_id}/technical-fallback/clips/{language}/{variant}")
+async def upload_agent_technical_fallback_clip(
+    agent_id: str,
+    language: str,
+    variant: str,
+    request: Request,
+    file: UploadFile = File(..., description="16-bit PCM WAV, mono or stereo, ≤2 MB, ≤30 s"),
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.tenants")
+    from server.services import fallback_clip_store
+
+    agent, tenant_id = await _admin_agent_tenant(agent_id)
+    try:
+        raw = await file.read(fallback_clip_store.MAX_UPLOAD_BYTES + 1)
+        clip = await fallback_clip_store.upsert_clip(
+            tenant_id=str(tenant_id),
+            agent_id=str(agent.agent_id),
+            language=language,
+            variant=variant,
+            raw=raw,
+        )
+    except Exception as exc:
+        raise _fallback_clip_http_error(exc) from None
+    await record_admin_action(
+        actor=session.subject,
+        action="agent.technical_fallback.clip_upload",
+        resource_type="agent",
+        resource_id=agent_id,
+        tenant_id=tenant_id,
+        payload={"language": clip["language"], "variant": clip["variant"], "durationMs": clip["durationMs"]},
+        request=request,
+    )
+    return {"ok": True, "clip": clip}
+
+
+@router.delete("/api/dev/admin/agents/{agent_id}/technical-fallback/clips/{language}/{variant}")
+async def delete_agent_technical_fallback_clip(
+    agent_id: str,
+    language: str,
+    variant: str,
+    request: Request,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.tenants")
+    from server.services import fallback_clip_store
+
+    agent, tenant_id = await _admin_agent_tenant(agent_id)
+    try:
+        await fallback_clip_store.delete_clip(
+            tenant_id=str(tenant_id),
+            agent_id=str(agent.agent_id),
+            language=language,
+            variant=variant,
+        )
+    except Exception as exc:
+        raise _fallback_clip_http_error(exc) from None
+    await record_admin_action(
+        actor=session.subject,
+        action="agent.technical_fallback.clip_delete",
+        resource_type="agent",
+        resource_id=agent_id,
+        tenant_id=tenant_id,
+        payload={"language": language, "variant": variant},
+        request=request,
+    )
+    return {"ok": True}
+
+
+@router.get("/api/dev/admin/agents/{agent_id}/technical-fallback/clips/{language}/{variant}/audio")
+async def get_agent_technical_fallback_clip_audio(
+    agent_id: str,
+    language: str,
+    variant: str,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.tenants")
+    from server.services.fallback_clip_store import validate_language, validate_variant
+
+    agent, tenant_id = await _admin_agent_tenant(agent_id)
+    try:
+        language = validate_language(language)
+        variant = validate_variant(variant)
+    except ValueError as exc:
+        raise _fallback_clip_http_error(exc) from None
+    async with get_session_factory()() as db:
+        row = (
+            await db.execute(
+                select(AgentFallbackClip).where(
+                    AgentFallbackClip.tenant_id == tenant_id,
+                    AgentFallbackClip.agent_id == agent.agent_id,
+                    AgentFallbackClip.language == language,
+                    AgentFallbackClip.variant == variant,
+                )
+            )
+        ).scalar_one_or_none()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Clip not found")
+        pcm = bytes(row.pcm_bytes)
+        rate = int(row.sample_rate or 8000)
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(rate)
+        wav.writeframes(pcm)
+    return Response(
+        content=buffer.getvalue(),
+        media_type="audio/wav",
+        headers={"Cache-Control": "no-store", "Content-Disposition": "inline"},
+    )

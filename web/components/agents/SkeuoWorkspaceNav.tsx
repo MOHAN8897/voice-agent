@@ -67,11 +67,15 @@ export function SkeuoWorkspaceNav({
 }) {
   const pathname = usePathname();
   const base = portal === "dev" ? `/dev/agents/${agentId}` : `/app/agents/${agentId}`;
+  const tabs =
+    portal === "dev"
+      ? [...AGENT_WORKSPACE_TABS, { slug: "fallback", label: "Outage Announcement" }]
+      : AGENT_WORKSPACE_TABS;
 
   return (
     <nav className="mb-6 border-b border-surface-border-subtle pb-2" aria-label="Agent workspace">
       <div className="flex flex-wrap gap-1">
-        {AGENT_WORKSPACE_TABS.map((tab) => {
+        {tabs.map((tab) => {
           const href = `${base}/${tab.slug}`;
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (

@@ -13,6 +13,7 @@ from server.brain.agent_service import AgentBuildRequestConflict, agent_service
 from server.brain.brief_contract import BriefValidationError, normalize_generation_config
 from server.brain.employee_script_pipeline import ClarificationAnswer, analyze_employee_brief, clarification_response
 from server.brain.script_entities import strip_entity_tags_section
+from server.routes.agents import _subscriber_agent
 from server.services.saas import platform_languages
 from server.services.saas.agent_onboarding_compose import compose_agent_onboarding
 from server.services.saas.employee_brain_build import publish_saas_employee_brain
@@ -171,7 +172,8 @@ async def build_employee(
         claimed_agent = claim["agent"]
         if not claim["created"]:
             if claim.get("state") == "completed":
-                return claim["response"]
+                response = claim["response"]
+                return {**response, "agent": _subscriber_agent(response.get("agent") or {})}
             if claim.get("state") == "failed":
                 raise HTTPException(status_code=int(claim.get("status_code") or 502), detail={"error": claim.get("error")})
             raise HTTPException(status_code=409, detail={"error": {
@@ -271,7 +273,7 @@ async def build_employee(
 
     response = {
         "ok": True,
-        "agent": agent,
+        "agent": _subscriber_agent(agent),
         "agentId": agent_id,
         # Entity tags are the compiler/runtime contract, not part of the document the
         # customer reads. They stay in the stored section and the compiled brain.
@@ -288,5 +290,6 @@ async def build_employee(
                 "code": "creation_recovery_required", "agentId": agent_id,
                 "message": "The agent was published, but creation confirmation could not be saved. Open this agent before retrying.",
             }}) from exc
-        return completed or response
+        result = completed or response
+        return {**result, "agent": _subscriber_agent(result.get("agent") or {})}
     return response

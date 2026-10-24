@@ -863,38 +863,8 @@ export const api = {
       if (updates.recordingDisclosureText !== undefined) {
         body.recordingDisclosureText = updates.recordingDisclosureText;
       }
-      if (updates.technicalFallbackPromiseCallback !== undefined) {
-        body.technicalFallbackPromiseCallback = Boolean(updates.technicalFallbackPromiseCallback);
-      }
-      if (updates.technicalFallbackText !== undefined) {
-        body.technicalFallbackText = updates.technicalFallbackText;
-      }
       const data = await api.request('PATCH', `/api/agents/${id}`, body);
       return normalizeAgent(data.agent || data);
-    },
-    /** Recorded TTS-outage clips uploaded by the tenant, per language/variant. */
-    async listFallbackClips(agentId) {
-      const data = await api.request('GET', `/api/agents/${agentId}/fallback-clips`);
-      return {
-        clips: Array.isArray(data.clips) ? data.clips : [],
-        variants: Array.isArray(data.variants) ? data.variants : [],
-        languages: Array.isArray(data.languages) ? data.languages : [],
-      };
-    },
-    async uploadFallbackClip(agentId, language, variant, file) {
-      const body = new FormData();
-      body.append('file', file);
-      return api.request(
-        'PUT',
-        `/api/agents/${agentId}/fallback-clips/${encodeURIComponent(language)}/${encodeURIComponent(variant)}`,
-        body,
-      );
-    },
-    async deleteFallbackClip(agentId, language, variant) {
-      return api.request(
-        'DELETE',
-        `/api/agents/${agentId}/fallback-clips/${encodeURIComponent(language)}/${encodeURIComponent(variant)}`,
-      );
     },
     async toggleStatus(id, status) {
       return api.agents.update(id, { status });

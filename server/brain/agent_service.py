@@ -516,8 +516,6 @@ class AgentService:
             "environment": "development",
             "recording_disclosure_enabled": False,
             "recording_disclosure_text": None,
-            "technical_fallback_promise_callback": True,
-            "technical_fallback_text": "",
             "voice_settings": {},
         }
 
@@ -541,10 +539,6 @@ class AgentService:
             "environment": getattr(row, "environment", None) or "development",
             "recording_disclosure_enabled": bool(getattr(row, "recording_disclosure_enabled", False)),
             "recording_disclosure_text": getattr(row, "recording_disclosure_text", None),
-            "technical_fallback_promise_callback": bool(
-                getattr(row, "technical_fallback_promise_callback", True)
-            ),
-            "technical_fallback_text": getattr(row, "technical_fallback_text", "") or "",
             "voice_settings": voice_settings,
             "voice_revision": int(raw_voice_settings.get("_voice_revision") or 0),
             "voiceRevision": int(raw_voice_settings.get("_voice_revision") or 0),

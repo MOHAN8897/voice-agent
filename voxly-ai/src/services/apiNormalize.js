@@ -65,10 +65,6 @@ export function normalizeAgent(row) {
     stats: row.stats || { totalCalls: 0, totalMinutes: 0, successRate: 100, avgDuration: '0m 00s' },
     recordingDisclosureEnabled: Boolean(row.recording_disclosure_enabled ?? row.recordingDisclosureEnabled ?? false),
     recordingDisclosureText: row.recording_disclosure_text ?? row.recordingDisclosureText ?? null,
-    technicalFallbackPromiseCallback: Boolean(
-      row.technical_fallback_promise_callback ?? row.technicalFallbackPromiseCallback ?? true,
-    ),
-    technicalFallbackText: row.technical_fallback_text ?? row.technicalFallbackText ?? '',
     updatedAt: row.updated_at || row.updatedAt || new Date().toISOString(),
   };
 }
