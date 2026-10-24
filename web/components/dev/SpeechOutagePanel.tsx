@@ -143,7 +143,7 @@ export function SpeechOutagePanel() {
     <div className="space-y-5">
       <AdminPageHeader
         title="Speech outage announcements"
-        description="Platform-wide control for what a caller hears when the configured speech service fails mid-call. Applies to every PSTN and web call that runs through the voice stack."
+        description="Platform-wide control for what a caller hears when the configured speech service fails mid-call. Applies to every PSTN call that runs through the voice stack."
         actions={
           <SkeuoButton type="button" variant="ghost" onClick={() => void load()} disabled={working}>
             Reload
