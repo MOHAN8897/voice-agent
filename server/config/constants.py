@@ -33,9 +33,11 @@ class Constants:
 
     # TTS models — bulbul:v4-flash (latest low-latency), bulbul:v3 supports temperature (0.01-1.0), pace 0.5-2.0
     TTS_MODELS: dict[str, dict] = {
-        # v4 Flash controls prosody through pace/pitch/loudness and ignores
-        # temperature (Sarvam Bulbul v4 best-practices guide).
-        "bulbul:v4-flash": {"label": "Bulbul v4 Flash (latest, ultra low latency)", "pace": [0.5, 2.0], "temperature": None, "pitch": [-0.75, 0.75], "loudness": [0.3, 3.0]},
+        # Sarvam API reference, checked 2026-10-24: v3 and v4-flash support
+        # pace + temperature only. Pitch and loudness are explicitly rejected by
+        # the documentation for those models even though the endpoint tolerates
+        # the fields in a request; do not expose or send ignored knobs.
+        "bulbul:v4-flash": {"label": "Bulbul v4 Flash (latest, ultra low latency)", "pace": [0.5, 2.0], "temperature": [0.01, 1.0], "pitch": None, "loudness": None},
         "bulbul:v3": {"label": "Bulbul v3 (recommended, temperature)", "pace": [0.5, 2.0], "temperature": [0.01, 1.0], "pitch": None, "loudness": None},
         "bulbul:v2": {"label": "Bulbul v2 (legacy, pitch/loudness)", "pace": [0.3, 3.0], "temperature": None, "pitch": [-0.75, 0.75], "loudness": [0.3, 3.0]},
     }

@@ -261,7 +261,9 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
             except (TypeError, ValueError):
                 pass
         emo_val = str(voice_dynamics.get("emotion") or "").strip().lower()
-        if emo_val in {"neutral", "calm", "content", "happy", "sad", "angry", "scared", "confident", "curious", "sympathetic", "grateful", "peaceful"}:
+        from server.services.tts_voice_direction import CARTESIA_SAFE_EMOTIONS
+
+        if emo_val in CARTESIA_SAFE_EMOTIONS:
             clean_dynamics["emotion"] = emo_val
         vol_val = voice_dynamics.get("volume")
         if vol_val is not None:
@@ -271,12 +273,14 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
                 pass
         profile["voiceDynamics"] = clean_dynamics
     elif "voiceDynamics" in profile:
+        from server.services.tts_voice_direction import DEFAULT_CARTESIA_EMOTION
+
         profile["voiceDynamics"] = {
             "speed": 1.0,
             "pace": 1.0,
             "pitch": 0.0,
             "temperature": 0.7,
-            "emotion": "neutral",
+            "emotion": DEFAULT_CARTESIA_EMOTION,
             "volume": 1.0,
         }
     return profile

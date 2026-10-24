@@ -177,3 +177,46 @@ def test_stateless_config_never_resolves_the_live_session_stack(monkeypatch):
     assert cfg["provider"] == "sarvam"
     assert cfg["model"] == "bulbul:v4-flash"
     assert cfg["speaker"] == "pooja_te_conversation"
+
+
+def _saved_sarvam_stack():
+    return SimpleNamespace(tts=SimpleNamespace(provider="sarvam", model="bulbul:v4-flash", config={
+        "speaker": "pooja_te_conversation", "pace": 1.25, "temperature": 0.45,
+        "pitch": -0.2, "volume": 1.15,
+    }))
+
+
+def test_session_uses_saved_stack_delivery_controls_before_env(monkeypatch):
+    import server.services.tts_config as service
+
+    monkeypatch.setattr(service, "_stack_for_session", lambda *_: _saved_sarvam_stack())
+    cfg = resolve_tts_config("cfg-test")
+    assert (cfg["pace"], cfg["temperature"]) == (1.25, 0.45)
+    # v4-flash rejects pitch/loudness even when an older saved stack carries them.
+    assert "pitch" not in cfg and "loudness" not in cfg
+    assert resolve_tts_config("cfg-test", pace=0.9)["pace"] == 0.9
+
+
+def test_active_sarvam_call_keeps_saved_controls_despite_runtime_and_request_changes(monkeypatch):
+    monkeypatch.setattr(runtime_settings, "get", lambda *_: {"ttsPace": 1.8, "ttsTemperature": 0.9, "ttsPitch": 0.4, "ttsVolume": 2.0})
+    cfg = resolve_tts_config("cfg-test", resolved_stack=_saved_sarvam_stack(),
+        pace=0.7, temperature=0.2, pitch=0.3, volume=2.2, sample_rate=16000, codec="linear16")
+    assert (cfg["pace"], cfg["temperature"]) == (1.25, 0.45)
+    assert "pitch" not in cfg and "loudness" not in cfg
+    assert cfg["sample_rate"] == 16000 and cfg["output_audio_codec"] == "linear16"
+
+
+def test_active_cartesia_call_keeps_saved_emotion_speed_volume_and_carrier_rate(monkeypatch):
+    import server.services.tts_config as service
+    import server.providers.voice_inventory as inventory
+
+    voice_id = "47c38ca4-5f35-497b-b1a3-415245fb35e1"
+    monkeypatch.setattr(service, "_cartesia_available", lambda: True)
+    monkeypatch.setattr(inventory, "validate_voice", lambda *_: {"providerVoiceId": voice_id})
+    stack = SimpleNamespace(tts=SimpleNamespace(provider="cartesia", model="sonic-3.5", config={
+        "speaker": voice_id, "speed": 1.15, "emotion": "happy", "volume": 1.25,
+    }))
+    monkeypatch.setattr(runtime_settings, "get", lambda *_: {"ttsSpeed": 0.8, "ttsEmotion": "sad", "ttsVolume": 0.7})
+    cfg = resolve_tts_config("cfg-test", resolved_stack=stack, pace=0.6, emotion="angry", volume=1.7, sample_rate=16000)
+    assert cfg["generation_config"] == {"speed": 1.15, "emotion": "happy", "volume": 1.25}
+    assert cfg["sample_rate"] == 16000

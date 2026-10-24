@@ -23,7 +23,7 @@ def choice_for(record):
 
 @pytest.mark.parametrize("speaker,ready", [
     ("shubh", False),
-    ("shubh_enhi_ads", False),
+    ("shubh_enhi_ads", True),
     ("kavitha_te_conversation", True),
 ])
 def test_persisted_v4_profile_readiness_validates_voice_before_advertising(approved_registry, speaker, ready):

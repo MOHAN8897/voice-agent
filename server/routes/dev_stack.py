@@ -137,7 +137,7 @@ async def dev_stack_catalog(session: SessionData = Depends(require_dev_session),
                 if not any(item["id"] == row["id"] for item in tts_models):
                     tts_models.append({**row, "api_mode": "websocket", "api_modes": ["websocket"]})
             for row in tts_models:
-                row["voices"] = profile_voice_rows(provider["id"], row["id"], list(constants.SUPPORTED_LANGUAGES))
+                row["voices"] = profile_voice_rows(provider["id"], row["id"], list(constants.SUPPORTED_LANGUAGES), include_unavailable=True)
                 row["knobs"] = tts_knob_specs(provider["id"], row["id"])
         catalog["voiceInventory"] = refresh_result
     except Exception as exc:

@@ -62,15 +62,7 @@ class GnaniTTSAdapter:
                 "container": "wav",
             },
         }
-        if getattr(config, "pitch", None) is not None:
-            from server.services.tts_voice_direction import gnani_pitch_multiplier
-
-            pitch_multiplier = gnani_pitch_multiplier(config.pitch)
-            if pitch_multiplier is not None:
-                payload["pitch"] = pitch_multiplier
-        if getattr(config, "volume", None) is not None:
-            payload["volume"] = max(0.5, min(2.0, float(config.volume)))
-
+        # The published TTSRequest supports speed, not numeric pitch or volume.
         async with httpx.AsyncClient(timeout=30.0) as client:
             r = await client.post(
                 constants.GNANI_TTS_REST,

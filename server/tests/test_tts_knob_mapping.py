@@ -27,9 +27,9 @@ def _spec_map(provider: str, model: str) -> dict[str, dict]:
     "provider, model, expected",
     [
         ("sarvam", "bulbul:v3", ["speed", "temperature"]),
-        ("sarvam", "bulbul:v4-flash", ["speed", "pitch", "volume"]),
+        ("sarvam", "bulbul:v4-flash", ["speed", "temperature"]),
         ("sarvam", "bulbul:v2", ["speed", "pitch", "volume"]),
-        ("gnani", "timbre-v3.0", ["speed", "pitch", "volume"]),
+        ("gnani", "timbre-v3.0", ["speed"]),
         ("cartesia", "sonic-3.5", ["speed", "emotion", "volume"]),
         ("gemini", "gemini-3.8-flash-tts", ["speed", "pitch"]),
     ],
@@ -51,7 +51,7 @@ def test_knob_bounds_and_native_names_follow_the_engine():
 
     gnani = _spec_map("gnani", "timbre-v3.0")
     assert gnani["speed"]["min"] == 0.85 and gnani["speed"]["max"] == 1.15
-    assert gnani["pitch"]["min"] == -0.75 and gnani["pitch"]["max"] == 0.75
+    assert "pitch" not in gnani and "volume" not in gnani
 
     cartesia = _spec_map("cartesia", "sonic-3.5")
     assert cartesia["speed"]["min"] == 0.6 and cartesia["speed"]["max"] == 1.5
@@ -74,12 +74,13 @@ def test_normalize_drops_unsupported_knobs_and_clamps_to_the_model_band():
         {"speed": 9, "temperature": 2, "pitch": 0.4, "volume": 1.5, "emotion": "happy"},
     ) == {"speed": 2.0, "temperature": 1.0}
 
-    # v4 Flash ignores temperature; only pace/pitch/loudness are honoured.
+    # The provider rejects pitch/loudness for v4-flash even though the endpoint
+    # tolerates the fields; only pace and temperature reach the engine.
     assert normalize_tts_dynamics(
         "sarvam",
         "bulbul:v4-flash",
         {"speed": 0.1, "temperature": 0.7, "pitch": 2, "volume": 0.1},
-    ) == {"speed": 0.5, "pitch": 0.75, "volume": 0.3}
+    ) == {"speed": 0.5, "temperature": 0.7}
 
     assert normalize_tts_dynamics("gnani", "timbre-v3.0", {"speed": 1.4}) == {"speed": 1.15}
 
@@ -88,7 +89,7 @@ def test_normalize_rejects_unknown_emotions_and_non_numeric_values():
     assert normalize_tts_dynamics(
         "cartesia",
         "sonic-3.5",
-        {"speed": "fast", "emotion": "excited", "volume": True, "pitch": 0.2},
+        {"speed": "fast", "emotion": "not-a-provider-emotion", "volume": True, "pitch": 0.2},
     ) == {}
     assert normalize_tts_dynamics(
         "cartesia", "sonic-3.5", {"emotion": "Happy", "volume": 1.1}
@@ -100,7 +101,7 @@ def test_sarvam_payload_translates_loudness_and_filters_by_model():
         "sarvam",
         "bulbul:v4-flash",
         {"speed": 1.2, "temperature": 0.7, "pitch": 0.2, "volume": 1.1},
-    ) == {"pace": 1.2, "pitch": 0.2, "loudness": 1.1}
+    ) == {"pace": 1.2, "temperature": 0.7}
 
     assert provider_tts_payload(
         "sarvam",
@@ -108,14 +109,19 @@ def test_sarvam_payload_translates_loudness_and_filters_by_model():
         {"speed": 1.2, "temperature": 0.7, "pitch": 0.2, "volume": 1.1},
     ) == {"pace": 1.2, "temperature": 0.7}
 
+    assert provider_tts_payload(
+        "sarvam",
+        "bulbul:v2",
+        {"speed": 1.2, "temperature": 0.7, "pitch": 0.2, "volume": 1.1},
+    ) == {"pace": 1.2, "pitch": 0.2, "loudness": 1.1}
 
-def test_gnani_payload_maps_universal_pitch_onto_the_vachana_multiplier():
+
+def test_gnani_payload_drops_undocumented_delivery_fields():
     payload = provider_tts_payload(
         "gnani", "timbre-v3.0", {"speed": 1.1, "pitch": 0.375, "volume": 1.25}
     )
-    assert payload == {"pace": 1.1, "pitch": 1.25, "volume": 1.25}
-    assert provider_tts_payload("gnani", "timbre-v3.0", {"pitch": 0.75})["pitch"] == 1.5
-    assert provider_tts_payload("gnani", "timbre-v3.0", {"pitch": -0.75})["pitch"] == 0.5
+    assert payload == {"pace": 1.1}
+    assert provider_tts_payload("gnani", "timbre-v3.0", {"pitch": 0.75, "volume": 1.5}) == {}
 
 
 def test_cartesia_payload_carries_speed_emotion_and_volume():
@@ -175,13 +181,13 @@ def _voice():
                 "pitch": 0.2,
                 "volume": 1.1,
             },
-            {"pace": 1.2, "pitch": 0.2, "loudness": 1.1},
+            {"pace": 1.2, "temperature": 0.7},
             {
                 "pace": 1.2,
                 "speed": None,
-                "temperature": None,
-                "pitch": 0.2,
-                "volume": 1.1,
+                "temperature": 0.7,
+                "pitch": None,
+                "volume": None,
                 "emotion": None,
             },
         ),
@@ -211,8 +217,8 @@ def _voice():
             "gnani",
             "timbre-v3.0",
             {"speaker": "Shivani", "speed": 1.1, "pace": 1.1, "pitch": 0.375, "volume": 1.25},
-            {"pace": 1.1, "pitch": 1.25, "volume": 1.25},
-            {"pace": 1.1, "temperature": None, "pitch": 0.375, "volume": 1.25, "emotion": None},
+            {"pace": 1.1},
+            {"pace": 1.1, "temperature": None, "pitch": None, "volume": None, "emotion": None},
         ),
         (
             "cartesia",
@@ -283,7 +289,7 @@ async def test_composed_tts_forwards_every_supported_knob(
         sent = socket.sent[0]["data"]
         for key, value in expected_wire.items():
             assert sent[key] == pytest.approx(value)
-        if provider == "sarvam" and model == "bulbul:v3":
+        if provider == "sarvam" and model in {"bulbul:v3", "bulbul:v4-flash"}:
             assert "pitch" not in sent and "loudness" not in sent
         for attr, value in expected_config.items():
             actual = getattr(captured[0], attr)
@@ -340,7 +346,7 @@ async def test_composed_sarvam_uses_default_pace_when_agent_saved_none(monkeypat
 
 
 @pytest.mark.asyncio
-async def test_gnani_ws_sends_native_pitch_and_volume_multipliers(monkeypatch):
+async def test_gnani_ws_sends_only_documented_delivery_fields(monkeypatch):
     import server.services.gnani_tts_ws as gnani_ws
 
     sent = []
@@ -381,8 +387,7 @@ async def test_gnani_ws_sends_native_pitch_and_volume_multipliers(monkeypatch):
 
     request = next(message for message in sent if message.get("text"))
     assert request["speed"] == pytest.approx(1.1)
-    assert request["pitch"] == pytest.approx(1.25)
-    assert request["volume"] == pytest.approx(1.25)
+    assert "pitch" not in request and "volume" not in request
 
 
 def _wav_bytes(frames: bytes = b"\x01\x00" * 240, rate: int = 16000) -> bytes:
@@ -394,7 +399,7 @@ def _wav_bytes(frames: bytes = b"\x01\x00" * 240, rate: int = 16000) -> bytes:
 
 
 @pytest.mark.asyncio
-async def test_gnani_rest_preview_uses_the_same_pitch_mapping_as_live(monkeypatch):
+async def test_gnani_rest_preview_omits_undocumented_fields_like_live(monkeypatch):
     import httpx
 
     from server.providers.gnani_tts import GnaniTTSAdapter
@@ -426,19 +431,18 @@ async def test_gnani_rest_preview_uses_the_same_pitch_mapping_as_live(monkeypatc
 
     payload = requests[0]
     assert payload["speed"] == pytest.approx(1.1)
-    assert payload["pitch"] == pytest.approx(1.25)
-    assert payload["volume"] == pytest.approx(1.25)
+    assert "pitch" not in payload and "volume" not in payload
 
     await adapter.synthesize_rest(
         "నమస్కారం",
         TTSConfig(provider="gnani", model="timbre-v3.0", speaker="Shivani",
                   language="te-IN", pace=1.0, pitch=0.75),
     )
-    assert requests[1]["pitch"] == pytest.approx(1.5)
+    assert "pitch" not in requests[1]
 
 
 @pytest.mark.asyncio
-async def test_sarvam_rest_sends_pitch_and_loudness_for_v4_flash(monkeypatch):
+async def test_sarvam_rest_sends_only_supported_knobs_per_model(monkeypatch):
     import server.services.sarvam_tts_service as sarvam_service
 
     requests = []
@@ -469,9 +473,8 @@ async def test_sarvam_rest_sends_pitch_and_loudness_for_v4_flash(monkeypatch):
     )
     payload = requests[0]
     assert payload["pace"] == pytest.approx(1.2)
-    assert payload["pitch"] == pytest.approx(0.2)
-    assert payload["loudness"] == pytest.approx(1.1)
-    assert "temperature" not in payload
+    assert "pitch" not in payload and "loudness" not in payload
+    assert payload["temperature"] == pytest.approx(0.7)
 
     await sarvam_service.synthesize(
         "నమస్కారం",
@@ -487,6 +490,22 @@ async def test_sarvam_rest_sends_pitch_and_loudness_for_v4_flash(monkeypatch):
     payload = requests[1]
     assert "pitch" not in payload and "loudness" not in payload
     assert payload["temperature"] == pytest.approx(0.7)
+
+    await sarvam_service.synthesize(
+        "నమస్కారం",
+        language_code="te-IN",
+        speaker="anushka",
+        model="bulbul:v2",
+        pace=1.2,
+        temperature=0.7,
+        pitch=0.2,
+        volume=1.1,
+        session_id=None,
+    )
+    payload = requests[2]
+    assert "temperature" not in payload
+    assert payload["pitch"] == pytest.approx(0.2)
+    assert payload["loudness"] == pytest.approx(1.1)
 
 
 @pytest.mark.asyncio
@@ -506,8 +525,8 @@ async def test_sarvam_rest_adapter_forwards_pitch_and_volume(monkeypatch):
         "నమస్కారం",
         TTSConfig(
             provider="sarvam",
-            model="bulbul:v4-flash",
-            speaker="pooja_te_conversation",
+            model="bulbul:v2",
+            speaker="anushka",
             language="te-IN",
             pace=1.2,
             temperature=0.7,
@@ -563,8 +582,8 @@ async def test_registry_rest_applies_pitch_and_volume_for_non_sarvam_stacks(monk
         volume=1.25,
     )
 
-    assert captured[0].pitch == pytest.approx(0.375)
-    assert captured[0].volume == pytest.approx(1.25)
+    assert captured[0].pitch is None
+    assert captured[0].volume is None
     assert captured[0].pace == pytest.approx(1.1)
 
 
@@ -574,24 +593,44 @@ def test_browser_ws_config_forwards_sarvam_family_knobs():
     out = _upstream_tts_config_payload(
         {
             "provider": "sarvam",
-            "speaker": "pooja_te_conversation",
+            "speaker": "anushka",
             "language_code": "te-IN",
             "pace": 1.2,
-            "temperature": 0.7,
             "pitch": 0.2,
             "loudness": 1.1,
             "min_buffer_size": 30,
             "max_chunk_length": 80,
             "output_audio_codec": "linear16",
             "output_audio_bitrate": "128k",
-            "model": "bulbul:v4-flash",
+            "model": "bulbul:v2",
             "sample_rate": 24000,
         }
     )
     assert out["pace"] == pytest.approx(1.2)
-    assert out["temperature"] == pytest.approx(0.7)
+    assert "temperature" not in out
     assert out["pitch"] == pytest.approx(0.2)
     assert out["loudness"] == pytest.approx(1.1)
+
+
+def test_browser_ws_merge_filters_v4_to_pace_and_temperature():
+    from server.services.tts_config import merge_ws_tts_config
+
+    merged = merge_ws_tts_config(
+        None,
+        {
+            "language_code": "te-IN",
+            "speaker": "pooja_te_conversation",
+            "pace": 1.2,
+            "temperature": 0.7,
+            "pitch": 0.2,
+            "volume": 1.1,
+        },
+        language_code="te-IN",
+        ws_model="bulbul:v4-flash",
+    )
+    assert merged["pace"] == pytest.approx(1.2)
+    assert merged["temperature"] == pytest.approx(0.7)
+    assert "pitch" not in merged and "loudness" not in merged
 
 
 def test_browser_ws_config_forwards_cartesia_generation_knobs():
@@ -647,7 +686,7 @@ async def test_preview_applies_the_same_gnani_knobs_as_live(monkeypatch):
         model="timbre-v3.0",
     )
 
-    assert captured[0] == {"speed": pytest.approx(1.1), "pitch": pytest.approx(0.375), "volume": pytest.approx(1.25)}
+    assert captured[0] == {"speed": pytest.approx(1.1), "pitch": None, "volume": None}
 
 
 @pytest.mark.asyncio

@@ -37,6 +37,7 @@ class SarvamTTSAdapter:
             temperature=config.temperature,
             pitch=getattr(config, "pitch", None),
             volume=getattr(config, "volume", None),
+            session_id=None,
         )
         if not isinstance(result, dict):
             raise TypeError("Sarvam TTS returned a malformed response")

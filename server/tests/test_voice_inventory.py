@@ -13,7 +13,7 @@ from server.providers import voice_inventory as catalog
 @pytest.mark.parametrize("provider,model,voice,language", [
     ("sarvam", "bulbul:v4-flash", "shubh", "te-IN"),
     ("sarvam", "bulbul:v3", "shubh_enhi_ads", "te-IN"),
-    ("sarvam", "bulbul:v4-flash", "shubh_enhi_ads", "ml-IN"),
+    ("sarvam", "bulbul:v4-flash", "shubh_enhi_ads", "as-IN"),
     ("gnani", "timbre-v3.0", "Nalini", "te-IN"),
     ("gnani", "timbre-v2.5", "Shivani", "te-IN"),
     ("gnani", "timbre-v2.5", "Nalini", "te-IN"),
@@ -53,9 +53,11 @@ def test_v4_voice_languages_follow_published_ids_and_repair_legacy_rows():
     ]}}}
     catalog._repair_v4_rows(data)
     rows = data["sarvam"]["models"]["bulbul:v4-flash"]
-    assert rows[0]["languages"] == ["te-IN"]
+    supported = sorted(code for code in __import__("server.config.constants", fromlist=["constants"]).constants.SUPPORTED_LANGUAGES if code.endswith("-IN"))
+    assert rows[0]["languages"] == supported
     assert rows[0]["preferredLanguages"] == ["te-IN"]
-    assert rows[1]["languages"] == ["hi-IN", "en-IN"]
+    assert rows[1]["languages"] == supported
+    assert rows[1]["preferredLanguages"] == ["hi-IN", "en-IN"]
 
 
 def test_default_voice_is_model_and_language_scoped():
@@ -139,6 +141,58 @@ def test_read_through_expansion_preserves_saved_alias_and_revision():
     assert expanded["publicAliases"]["voices"]["engine::model::saved"] == "voc_saved"
     assert len(expanded["profile"]["engines"][0]["models"][0]["voices"]) == 13
     assert expanded == expand_model_voices("custom", record)
+
+
+@pytest.mark.asyncio
+async def test_live_sarvam_inventory_reconciles_every_speaker_without_synthesizing():
+    previous = catalog.voices_for_model("sarvam", "bulbul:v4-flash")
+    names = list(dict.fromkeys([row["providerVoiceId"] for row in previous] + ["kangkana_as_conversational", "mouchumi_as_conversational"]))
+    requests = []
+
+    def respond(request):
+        requests.append(request)
+        body = json.loads(request.content)
+        assert body["speaker"] == "__catalog_discovery_invalid__"
+        assert body["model"] == "bulbul:v4-flash"
+        assert body["language_code"] == "en-IN"
+        return httpx.Response(400, json={"error": {"message":
+            "Speaker is not recognized. Available speakers for bulbul:v4-flash are: " + ", ".join(reversed(names))}})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+        rows = await catalog._sarvam_api_voices(client, "test-key", [row for row in previous if row["languages"]])
+    assert len(requests) == 1
+    assert {row["providerVoiceId"] for row in rows} == set(names)
+    assert [row["providerVoiceId"] for row in rows] == [row["providerVoiceId"] for row in previous]
+    supported = {code for code in __import__("server.config.constants", fromlist=["constants"]).constants.SUPPORTED_LANGUAGES if code.endswith("-IN")}
+    assert all(set(row["languages"]) == supported for row in rows)
+    assert sum("te-IN" in row["languages"] for row in rows) == len(rows)
+    kavitha = next(row for row in rows if row["providerVoiceId"] == "kavitha_te_conversation")
+    assert kavitha["gender"] == "female" and kavitha["preferredLanguages"] == ["te-IN"]
+    assamese = [row for row in rows if row["providerVoiceId"].startswith(("kangkana_", "mouchumi_"))]
+    assert len(assamese) == 2 and all(row["preferredLanguages"] == ["as-IN"] for row in assamese)
+    assert all("selectable" not in row and "unavailableReason" not in row for row in rows)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("body", [
+    {"error": {"message": "Authentication error"}},
+    {"error": {"message": "Available speakers for bulbul:v4-flash are: kavitha_te_conversation"}},
+    {"error": "Unexpected validation response"},
+])
+async def test_sarvam_inventory_refuses_incomplete_or_unrecognized_error_responses(body):
+    async with httpx.AsyncClient(transport=httpx.MockTransport(lambda request: httpx.Response(400, json=body))) as client:
+        with pytest.raises(ValueError, match="inventory"):
+            await catalog._sarvam_api_voices(client, "test-key", [])
+
+
+def test_every_provider_v4_voice_reaches_the_tenant_for_a_supported_language():
+    provider_rows = catalog.voices_for_model("sarvam", "bulbul:v4-flash")
+    admin_rows = catalog.profile_voice_rows("sarvam", "bulbul:v4-flash", ["te-IN"], include_unavailable=True)
+    tenant_rows = catalog.profile_voice_rows("sarvam", "bulbul:v4-flash", ["te-IN"])
+    assert len(provider_rows) == len(admin_rows) == len(tenant_rows) == len(provider_rows)
+    assert [row["providerVoiceId"] for row in tenant_rows] == [row["providerVoiceId"] for row in provider_rows]
+    assert all(row["languages"] == ["te-IN"] for row in tenant_rows)
+    assert {row["providerVoiceId"] for row in tenant_rows} >= {"kavitha_te_conversation", "kangkana_as_conversational"}
 
 
 def test_empty_catalog_fails_readiness_before_registry_lookup():

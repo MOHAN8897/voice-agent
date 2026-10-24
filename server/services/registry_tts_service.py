@@ -32,9 +32,10 @@ def _resolve_cartesia_voice(
     speaker: str | None,
     model: str,
     language_code: str,
+    locked: bool = False,
 ) -> str:
     settings = get_settings()
-    runtime = runtime_settings.get(session_id)
+    runtime = {} if locked else runtime_settings.get(session_id)
     stack_speaker = stack.tts.config.get("speaker") if stack.tts.config else None
     preferred = speaker or runtime.get("ttsSpeaker") or stack_speaker or settings.cartesia_tts_voice_id
     from server.providers.voice_inventory import default_voice
@@ -61,11 +62,16 @@ async def synthesize_via_registry(
 
     stack = _stack_for_tts(call_id=call_id, session_id=session_id, language_code=language_code)
     provider_id = stack.tts.provider
+    if call_id:
+        # The admitted call owns its model, voice and delivery settings. Preview
+        # arguments and mutable session controls must not replace that snapshot.
+        model = stack.tts.model
+        speaker = pace = temperature = pitch = volume = None
     text = prepare_spoken_reply((text or "").strip(), provider=provider_id, model=model or stack.tts.model)
     if not text:
         raise AppError(ErrorCode.VALIDATION_ERROR, "Text is required for TTS", status_code=400)
 
-    if not settings.use_provider_registry:
+    if not settings.use_provider_registry and not call_id:
         return await sarvam_synthesize(
             text=text,
             language_code=language_code,
@@ -78,9 +84,16 @@ async def synthesize_via_registry(
             session_id=session_id,
         )
 
-    registry = get_provider_registry()
+    registry = get_provider_registry() if settings.use_provider_registry else None
 
-    if provider_id == "sarvam" or not registry.is_provider_enabled(provider_id, "tts"):
+    if provider_id != "sarvam" and (registry is None or not registry.is_provider_enabled(provider_id, "tts")):
+        raise AppError(
+            ErrorCode.PROVIDER_ERROR,
+            "The selected speech service is unavailable.",
+            status_code=503,
+        )
+
+    if provider_id == "sarvam":
         try:
             cfg = resolve_tts_config(
                 session_id,
@@ -91,6 +104,8 @@ async def synthesize_via_registry(
                 temperature=temperature,
                 pitch=pitch,
                 volume=volume,
+                call_id=call_id,
+                resolved_stack=stack if call_id else None,
             )
         except TtsConfigError as e:
             raise AppError(ErrorCode.VALIDATION_ERROR, str(e), status_code=400) from e
@@ -103,11 +118,12 @@ async def synthesize_via_registry(
             temperature=cfg.get("temperature"),
             pitch=cfg.get("pitch"),
             volume=cfg.get("loudness"),
-            session_id=session_id,
+            session_id=None if call_id else session_id,
         )
         result["provider"] = "sarvam"
         return result
 
+    assert registry is not None
     tts = registry.get_tts(provider_id)
     if not hasattr(tts, "synthesize_rest"):
         raise AppError(
@@ -123,6 +139,7 @@ async def synthesize_via_registry(
             speaker=speaker,
             model=model or stack.tts.model,
             language_code=language_code,
+            locked=bool(call_id),
         )
         try:
             cartesia_cfg = resolve_tts_config(
@@ -134,16 +151,16 @@ async def synthesize_via_registry(
                 temperature=temperature,
                 volume=volume,
                 call_id=call_id,
+                resolved_stack=stack if call_id else None,
             )
-        except TtsConfigError:
-            cartesia_cfg = {}
+        except TtsConfigError as exc:
+            raise AppError(ErrorCode.VALIDATION_ERROR, str(exc), status_code=400) from exc
         config = TTSConfig(
             provider=provider_id,
             model=model or stack.tts.model,
             language=language_code,
-            speaker=voice_id,
-            pace=pace,
-            temperature=temperature,
+            speaker=cartesia_cfg["speaker"],
+            pace=cartesia_cfg["pace"],
             emotion=cartesia_cfg.get("emotion"),
             speed=cartesia_cfg.get("speed"),
             volume=(
@@ -153,38 +170,29 @@ async def synthesize_via_registry(
             ),
         )
     else:
-        try:
-            runtime_cfg = resolve_tts_config(
-                session_id,
-                language_code=language_code,
-                speaker=speaker,
-                model=model or stack.tts.model,
-                pace=pace,
-                temperature=temperature,
-                pitch=pitch,
-                volume=volume,
-            )
-        except TtsConfigError:
-            runtime_cfg = {
-                "speaker": speaker or stack.tts.config.get("speaker"),
-                "pace": pace,
-                "temperature": temperature,
-                "pitch": pitch,
-                "volume": volume,
-            }
+        from server.services.tts_voice_direction import normalize_tts_dynamics, resolve_speech_pace
+
+        saved = stack.tts.config or {}
+        runtime = {} if call_id else runtime_settings.get(session_id)
+        explicit = {"speed": pace, "temperature": temperature, "pitch": pitch, "volume": volume}
+        keys = {"speed": "ttsPace", "temperature": "ttsTemperature", "pitch": "ttsPitch", "volume": "ttsVolume"}
+        values = {}
+        for key, runtime_key in keys.items():
+            value = explicit[key] if explicit[key] is not None else runtime.get(runtime_key)
+            if value is None:
+                value = saved.get(key, saved.get("pace") if key == "speed" else None)
+            values[key] = value
+        dynamics = normalize_tts_dynamics(provider_id, model or stack.tts.model, values)
+        dynamics.setdefault("speed", resolve_speech_pace(provider_id, model=model or stack.tts.model))
         config = TTSConfig(
             provider=provider_id,
             model=model or stack.tts.model,
             language=language_code,
-            speaker=runtime_cfg.get("speaker") or stack.tts.config.get("speaker", "shubh"),
-            pace=runtime_cfg.get("pace"),
-            temperature=runtime_cfg.get("temperature"),
-            pitch=runtime_cfg.get("pitch"),
-            volume=(
-                runtime_cfg.get("loudness")
-                if runtime_cfg.get("loudness") is not None
-                else runtime_cfg.get("volume")
-            ),
+            speaker=speaker or runtime.get("ttsSpeaker") or saved.get("speaker", "shubh"),
+            pace=dynamics["speed"],
+            temperature=dynamics.get("temperature"),
+            pitch=dynamics.get("pitch"),
+            volume=dynamics.get("volume"),
         )
 
     log_tts(

@@ -114,6 +114,7 @@ def _resolve_cartesia_tts_config(
     sample_rate: int | None,
     stack,
     volume: float | None = None,
+    emotion: str | None = None,
     allow_runtime: bool = True,
 ) -> dict[str, Any]:
     settings = get_settings()
@@ -143,20 +144,20 @@ def _resolve_cartesia_tts_config(
     from server.services.tts_voice_direction import cartesia_generation_config
 
     resolved_sample_rate = int(sample_rate) if sample_rate is not None else int(rt.get("ttsSampleRate") or 24000)
-    emotion = rt.get("ttsEmotion") or settings.cartesia_tts_emotion
-    # Prefer Cartesia speed; fall back to explicit pace arg / runtime only when set.
-    speed_raw = rt.get("ttsSpeed")
-    if speed_raw is None and pace is not None:
-        speed_raw = pace
-    elif speed_raw is None and rt.get("ttsPace") is not None:
-        speed_raw = rt.get("ttsPace")
+    stack_config = (stack.tts.config or {}) if stack else {}
+    emotion = emotion or rt.get("ttsEmotion") or stack_config.get("emotion") or settings.cartesia_tts_emotion
+    speed_raw = pace
+    if speed_raw is None:
+        speed_raw = rt.get("ttsSpeed", rt.get("ttsPace"))
+    if speed_raw is None:
+        speed_raw = stack_config.get("speed", stack_config.get("pace"))
     gen = cartesia_generation_config(
         emotion=str(emotion) if emotion else None,
         speed=float(speed_raw) if speed_raw is not None else None,
         volume=(
             float(volume)
             if volume is not None
-            else (float(rt["ttsVolume"]) if rt.get("ttsVolume") is not None else None)
+            else (rt.get("ttsVolume") if rt.get("ttsVolume") is not None else stack_config.get("volume"))
         ),
     )
 
@@ -199,6 +200,7 @@ def resolve_tts_config(
     temperature: float | None = None,
     pitch: float | None = None,
     volume: float | None = None,
+    emotion: str | None = None,
     codec: str | None = None,
     sample_rate: int | None = None,
     min_buffer_size: int | None = None,
@@ -235,6 +237,11 @@ def resolve_tts_config(
         rt = {}
         model = None
         speaker = None
+        pace = None
+        temperature = None
+        pitch = None
+        volume = None
+        emotion = None
     if provider_override is not None:
         if provider_override != "sarvam":
             raise TtsConfigError(f"Unsupported TTS fallback provider: {provider_override}")
@@ -259,6 +266,7 @@ def resolve_tts_config(
             sample_rate=sample_rate,
             stack=stack,
             volume=volume,
+            emotion=emotion,
             allow_runtime=not stack_is_locked,
         )
 
@@ -297,7 +305,12 @@ def resolve_tts_config(
         except ValueError as exc:
             raise TtsConfigError(str(exc), speaker=str(preferred) if preferred else None) from exc
 
-    resolved_pace = pace if pace is not None else rt.get("ttsPace", settings.sarvam_tts_pace)
+    stack_config = (stack.tts.config or {}) if stack else {}
+    resolved_pace = pace if pace is not None else rt.get("ttsPace")
+    if resolved_pace is None:
+        resolved_pace = stack_config.get("pace", stack_config.get("speed"))
+    if resolved_pace is None:
+        resolved_pace = settings.sarvam_tts_pace
     resolved_pace = float(resolved_pace)
     if resolved_model in {"bulbul:v3", "bulbul:v4-flash"}:
         resolved_pace = max(0.5, min(2.0, resolved_pace))
@@ -306,9 +319,15 @@ def resolve_tts_config(
 
     resolved_temp = temperature if temperature is not None else rt.get("ttsTemperature")
     if resolved_temp is None:
+        resolved_temp = stack_config.get("temperature")
+    if resolved_temp is None:
         resolved_temp = settings.sarvam_tts_temperature
     resolved_pitch = pitch if pitch is not None else rt.get("ttsPitch")
     resolved_volume = volume if volume is not None else rt.get("ttsVolume")
+    if resolved_pitch is None:
+        resolved_pitch = stack_config.get("pitch")
+    if resolved_volume is None:
+        resolved_volume = stack_config.get("volume", stack_config.get("loudness"))
     resolved_codec = codec or rt.get("ttsCodec") or "mp3"
     resolved_sample_rate = sample_rate or rt.get("ttsSampleRate") or 24000
     resolved_min_buf = min_buffer_size if min_buffer_size is not None else rt.get("ttsMinBuffer", 30)
@@ -374,6 +393,7 @@ def merge_ws_tts_config(
         temperature=data.get("temperature"),
         pitch=data.get("pitch"),
         volume=data.get("volume"),
+        emotion=data.get("emotion"),
         codec=data.get("output_audio_codec"),
         sample_rate=data.get("sample_rate"),
         min_buffer_size=data.get("min_buffer_size"),
@@ -436,18 +456,11 @@ def merge_pstn_tts_config(
         locked_stack = resolved_stack or (
             _stack_for_session(session_id, call_id, language_code) if call_id else None
         )
-        locked_cartesia = bool(
-            locked_stack
-            and (
-                locked_stack.tts.provider == "cartesia"
-                or _is_cartesia_model(str(locked_stack.tts.model or ""))
-            )
-        )
         if (
             speaker
             and is_cartesia_voice_id(str(speaker))
             and _cartesia_available()
-            and (not locked_stack or locked_cartesia)
+            and not locked_stack
         ):
             cfg = _resolve_cartesia_tts_config(
                 session_id,

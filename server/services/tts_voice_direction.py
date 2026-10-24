@@ -7,9 +7,9 @@ source of truth for what a provider/model supports, and
 `normalize_tts_dynamics`/`provider_tts_payload` guarantee that a saved
 universal value reaches the live call in the provider's native shape.
 
-Sarvam Bulbul: v3 pace + temperature; v4-flash pace + pitch + loudness
-(temperature is ignored by the engine); v2 pace + pitch + loudness.
-Gnani: speed 0.85–1.15, pitch multiplier, volume.
+Sarvam Bulbul: v3 and v4-flash pace + temperature; v2 pace + pitch + loudness.
+Sarvam documents pitch/loudness as unsupported for v3 and v4-flash.
+Gnani: documented speed 0.85–1.15; no documented numeric pitch/volume controls.
 Cartesia Sonic: generation_config {emotion, speed, volume}.
 Gemini TTS: pace and pitch via delivery metadata; no numeric temperature.
 """
@@ -18,43 +18,28 @@ from __future__ import annotations
 import math
 from typing import Any
 
-# Primary Cartesia emotions with strongest training data (docs).
-CARTESIA_SAFE_EMOTIONS = frozenset(
-    {
-        "neutral",
-        "calm",
-        "content",
-        "happy",
-        "sad",
-        "angry",
-        "scared",
-        "confident",
-        "curious",
-        "sympathetic",
-        "grateful",
-        "peaceful",
-    }
+# Complete documented Sonic emotion vocabulary, checked 2026-10-24:
+# https://docs.cartesia.ai/build-with-cartesia/capability-guides/volume-speed-emotion
+# This control is guidance and is documented for English only.
+CARTESIA_EMOTIONS: tuple[str, ...] = (
+    "neutral", "happy", "excited", "enthusiastic", "elated", "euphoric",
+    "triumphant", "amazed", "surprised", "flirtatious", "curious", "content",
+    "peaceful", "serene", "calm", "grateful", "affectionate", "trust",
+    "sympathetic", "anticipation", "mysterious", "angry", "mad", "outraged",
+    "frustrated", "agitated", "threatened", "disgusted", "contempt", "envious",
+    "sarcastic", "ironic", "sad", "dejected", "melancholic", "disappointed",
+    "hurt", "guilty", "bored", "tired", "rejected", "nostalgic", "wistful",
+    "apologetic", "hesitant", "insecure", "confused", "resigned", "anxious",
+    "panicked", "alarmed", "scared", "proud", "confident", "distant",
+    "skeptical", "contemplative", "determined",
 )
+CARTESIA_SAFE_EMOTIONS = frozenset(CARTESIA_EMOTIONS)
+CARTESIA_EMOTION_OPTIONS = tuple((emotion, emotion.capitalize()) for emotion in CARTESIA_EMOTIONS)
+DEFAULT_CARTESIA_EMOTION = "calm"
 
-CARTESIA_EMOTION_OPTIONS: tuple[tuple[str, str], ...] = (
-    ("neutral", "Neutral · Balanced Natural"),
-    ("calm", "Calm · Relaxed & Patient"),
-    ("content", "Content · Friendly & Pleasant"),
-    ("happy", "Happy · Upbeat & Enthusiastic"),
-    ("confident", "Confident · Direct & Professional"),
-    ("curious", "Curious · Engaging Questioning"),
-    ("grateful", "Grateful · Warm & Welcoming"),
-    ("peaceful", "Peaceful · Serene Consultation"),
-    ("sympathetic", "Sympathetic · Empathetic Support"),
-    ("sad", "Sad · Low & Empathetic"),
-    ("angry", "Angry · Firm & Urgent"),
-    ("scared", "Scared · Tense & Concerned"),
-)
-
-# Universal pitch offset range. Sarvam uses it directly; Gnani maps it onto
-# a 0.5–1.5 multiplier; Gemini turns it into a delivery direction.
+# Universal pitch offset range. Sarvam only supports it on v2; Gemini turns it
+# into a delivery direction.
 PITCH_RANGE = (-0.75, 0.75)
-GNANI_PITCH_RANGE = (-0.75, 0.75)
 GNANI_SPEED_RANGE = (0.85, 1.15)
 CARTESIA_SPEED_RANGE = (0.6, 1.5)
 CARTESIA_VOLUME_RANGE = (0.5, 2.0)
@@ -74,9 +59,9 @@ def cartesia_generation_config(
     from server.config.env import get_settings
 
     settings = get_settings()
-    emo = (emotion or getattr(settings, "cartesia_tts_emotion", None) or "calm").strip().lower()
+    emo = (emotion or getattr(settings, "cartesia_tts_emotion", None) or DEFAULT_CARTESIA_EMOTION).strip().lower()
     if emo not in CARTESIA_SAFE_EMOTIONS:
-        emo = "calm"
+        emo = DEFAULT_CARTESIA_EMOTION
     spd = float(speed if speed is not None else getattr(settings, "cartesia_tts_speed", 1.0))
     vol = float(volume if volume is not None else getattr(settings, "cartesia_tts_volume", 1.0))
     spd = max(CARTESIA_SPEED_RANGE[0], min(CARTESIA_SPEED_RANGE[1], spd))
@@ -152,17 +137,6 @@ def _as_float(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
     return number if math.isfinite(number) else None
-
-
-def gnani_pitch_multiplier(pitch: Any) -> float | None:
-    """Map a universal pitch offset (-0.75..0.75) onto Gnani's 0.5–1.5 multiplier."""
-    value = _as_float(pitch)
-    if value is None:
-        return None
-    low, high = GNANI_PITCH_RANGE
-    span = high if high > 0 else 1.0
-    fraction = max(-1.0, min(1.0, value / span))
-    return round(max(0.5, min(1.5, 1.0 + fraction * 0.5)), 3)
 
 
 def gemini_speech_style(pace: float | None = None, pitch: Any = None) -> str:
@@ -284,29 +258,6 @@ def tts_knob_specs(provider: str, model: str | None = None) -> list[dict[str, An
                 unit="x",
             )
         )
-        specs.append(
-            _range_spec(
-                "pitch",
-                "Pitch Offset",
-                "Mapped onto Vachana's 0.5–1.5 pitch multiplier.",
-                GNANI_PITCH_RANGE,
-                default=0.0,
-                step=0.01,
-                native="pitch",
-            )
-        )
-        specs.append(
-            _range_spec(
-                "volume",
-                "Volume Multiplier",
-                "Vachana volume multiplier applied to every request.",
-                CARTESIA_VOLUME_RANGE,
-                default=1.0,
-                step=0.05,
-                native="volume",
-                unit="x",
-            )
-        )
         return specs
     if provider == "cartesia":
         specs.append(
@@ -325,9 +276,9 @@ def tts_knob_specs(provider: str, model: str | None = None) -> list[dict[str, An
             {
                 "key": "emotion",
                 "label": "Sonic Emotion Director",
-                "description": "Emotion label sent in generation_config.",
+                "description": "English-only emotion guidance sent in generation_config; the transcript must support the intended emotion.",
                 "kind": "select",
-                "default": "neutral",
+                "default": DEFAULT_CARTESIA_EMOTION,
                 "native": "emotion",
                 "options": [{"value": value, "label": label} for value, label in CARTESIA_EMOTION_OPTIONS],
             }
@@ -421,11 +372,6 @@ def provider_tts_payload(
     if provider == "gnani":
         if "speed" in values:
             payload["pace"] = values["speed"]
-        pitch = gnani_pitch_multiplier(values.get("pitch"))
-        if pitch is not None:
-            payload["pitch"] = pitch
-        if "volume" in values:
-            payload["volume"] = values["volume"]
         return payload
     if provider == "cartesia":
         if "speed" in values:

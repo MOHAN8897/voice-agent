@@ -175,8 +175,19 @@ export function buildWsTtsConfig(cfg: TtsConfig): Record<string, unknown> {
   if (cfg.speaker) {
     out.speaker = cfg.speaker;
   }
-  if (cfg.temperature != null && model === "bulbul:v3") {
+  if (cfg.temperature != null && (model === "bulbul:v3" || model === "bulbul:v4-flash")) {
     out.temperature = cfg.temperature;
+  }
+  if (model === "bulbul:v2") {
+    if (cfg.pitch != null) out.pitch = cfg.pitch;
+    // The server maps the universal volume field to native loudness.
+    const volume = cfg.volume ?? cfg.loudness;
+    if (volume != null) out.volume = volume;
+  }
+  if (cfg.provider === "cartesia" || isCartesiaModel(model)) {
+    out.pace = cfg.speed ?? cfg.pace ?? 1.0;
+    if (cfg.emotion != null) out.emotion = cfg.emotion;
+    if (cfg.volume != null) out.volume = cfg.volume;
   }
   return out;
 }

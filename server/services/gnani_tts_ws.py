@@ -171,21 +171,8 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                     "container": "raw",
                 },
             }
-            # Config carries native Vachana values: pitch is a 0.5–1.5
-            # multiplier and volume is a 0.5–2.0 multiplier.
-            if self._cfg:
-                pitch_val = self._cfg.get("pitch")
-                if pitch_val is not None:
-                    try:
-                        req["pitch"] = max(0.5, min(1.5, float(pitch_val)))
-                    except (TypeError, ValueError):
-                        pass
-                volume_val = self._cfg.get("volume")
-                if volume_val is not None:
-                    try:
-                        req["volume"] = max(0.5, min(2.0, float(volume_val)))
-                    except (TypeError, ValueError):
-                        pass
+            # Only documented delivery fields reach the provider. Unknown pitch
+            # and volume keys can be silently ignored by its request schema.
             await self._ws.send(json.dumps(req))
 
         async def _reader_loop(self) -> None:

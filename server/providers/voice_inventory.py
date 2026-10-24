@@ -35,8 +35,11 @@ _voice_indexes: dict[tuple[str, str], tuple[dict[str, Any], tuple[int, ...], dic
 _refresh_lock = asyncio.Lock()
 _LOCALES = {str(meta["name"]).lower(): code for code, meta in constants.SUPPORTED_LANGUAGES.items() if code.endswith("-IN")}
 _LOCALES.update(english="en-IN", hinglish="hi-en", odia="od-IN")
-_V4_VOICE_ID = re.compile(r"[a-z]+_(enhi|en|hi|bn|gu|kn|mr|pa|ta|te)_[a-z_]+$")
+_V4_VOICE_ID = re.compile(r"[a-z]+_(as|enhi|en|hi|bn|gu|kn|mr|pa|ta|te)_[a-z_]+$")
+# Native persona language carried in the voice id. It is display metadata, not
+# a synthesis restriction: v4 maps the requested language_code at request time.
 _V4_LANGUAGE = {
+    "as": ["as-IN"],
     "enhi": ["hi-IN", "en-IN"],
     "en": ["en-IN"],
     "hi": ["hi-IN"],
@@ -48,6 +51,9 @@ _V4_LANGUAGE = {
     "ta": ["ta-IN"],
     "te": ["te-IN"],
 }
+# Every target language this platform supports is accepted by v4-flash for
+# every persona. The provider rejects only as-IN.
+_V4_TARGET_LANGUAGES = tuple(sorted(code for code in constants.SUPPORTED_LANGUAGES if code.endswith("-IN")))
 # The Gemini prebuilt voice API omits gender for the 30 featured personas, so
 # the tenant voice picker cannot group them without this documented roster.
 GEMINI_FEATURED_GENDERS = {
@@ -64,7 +70,7 @@ GEMINI_FEATURED_GENDERS = {
 
 
 def v4_voice_languages(voice_id: str) -> list[str] | None:
-    """Bulbul v4 Flash encodes the documented language in the voice id.
+    """The persona's native language(s), encoded in its Bulbul v4 voice id.
 
     Returns None for ids that are not v4 voice ids, so callers can leave rows alone.
     """
@@ -75,10 +81,12 @@ def v4_voice_languages(voice_id: str) -> list[str] | None:
 def _repair_v4_rows(data: dict[str, Any]) -> None:
     rows = ((data.get("sarvam") or {}).get("models") or {}).get("bulbul:v4-flash") or []
     for row in rows:
-        languages = v4_voice_languages(str(row.get("id") or ""))
-        if languages:
-            row["languages"] = languages
-            row["preferredLanguages"] = list(languages)
+        preferred = v4_voice_languages(str(row.get("id") or ""))
+        if preferred is not None:
+            row["languages"] = list(_V4_TARGET_LANGUAGES)
+            row["preferredLanguages"] = preferred
+            row.pop("selectable", None)
+            row.pop("unavailableReason", None)
 
 
 def _row(voice_id: str, languages: list[str], **metadata: Any) -> dict[str, Any]:
@@ -113,7 +121,7 @@ def parse_document_catalogs(sources: dict[str, str]) -> dict[str, Any]:
     v4 = {}
     for line in sources["sarvam"].splitlines():
         cells = [cell.strip().strip("`") for cell in line.strip("| ").split("|")]
-        if len(cells) == 3 and v4_voice_languages(cells[0]):
+        if len(cells) == 3 and v4_voice_languages(cells[0]) is not None:
             preferred = v4_voice_languages(cells[0]) or []
             metadata = {"label": cells[1], "category": cells[2].replace("_", " "), "preferredLanguages": preferred}
             gender = sarvam_gender.get(cells[0].split("_", 1)[0])
@@ -122,7 +130,7 @@ def parse_document_catalogs(sources: dict[str, str]) -> dict[str, Any]:
             tone = sarvam_tone.get(cells[0].split("_", 1)[0])
             if tone:
                 metadata["tone"] = tone
-            v4[cells[0]] = _row(cells[0], preferred, **metadata)
+            v4[cells[0]] = _row(cells[0], list(_V4_TARGET_LANGUAGES), **metadata)
     if len(v4) < 200:
         raise ValueError("Sarvam catalog table is incomplete")
     sarvam["bulbul:v4-flash"] = list(v4.values())
@@ -233,6 +241,16 @@ def default_voice(provider: str, model: str, language: str | None = None, prefer
         for row in candidates:
             if str(row["providerVoiceId"]).casefold() == str(preferred).casefold():
                 return str(row["providerVoiceId"])
+    # v4 personas can speak every supported language, so a plain first-row
+    # fallback would choose an unrelated native language. Prefer a persona
+    # native to the requested language, then the provider's own default.
+    native = [row for row in candidates if normalized in (row.get("preferredLanguages") or [])]
+    if native:
+        return str(native[0]["providerVoiceId"])
+    if provider == "sarvam" and model == "bulbul:v4-flash":
+        for row in candidates:
+            if row["providerVoiceId"] == "shubh_enhi_ads":
+                return "shubh_enhi_ads"
     return str(candidates[0]["providerVoiceId"])
 
 
@@ -290,17 +308,60 @@ def validate_voice(provider: str, model: str, voice_id: str, language: str | Non
     return copy.deepcopy(voice)
 
 
-def profile_voice_rows(provider: str, model: str, languages: list[str], previous: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+def profile_voice_rows(provider: str, model: str, languages: list[str], previous: list[dict[str, Any]] | None = None, *, include_unavailable: bool = False) -> list[dict[str, Any]]:
     existing = {row.get("providerVoiceId"): row for row in previous or []}
     result = []
     for row in voices_for_model(provider, model):
         supported = sorted(set(row["languages"]) & set(languages))
-        if not supported:
+        if not supported and not include_unavailable:
             continue
         old = existing.get(row["providerVoiceId"], {})
         key = hashlib.sha256(f"{provider}:{model}:{row['providerVoiceId']}".encode()).hexdigest()[:24]
         result.append({**row, "id": old.get("id") or f"voice-{key}", "languages": supported})
     return result
+
+
+async def _sarvam_api_voices(client: httpx.AsyncClient, key: str, previous: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Read the live v4 speaker enum from a deliberately rejected request.
+
+    Sarvam has no public list-voices endpoint. Its documented 400 response for
+    an invalid speaker lists the full model inventory. This request cannot
+    synthesize: the speaker is intentionally outside its persona-id grammar.
+    """
+    response = await client.post("https://api.sarvam.ai/text-to-speech",
+        headers={"api-subscription-key": key}, json={"model": "bulbul:v4-flash",
+        "speaker": "__catalog_discovery_invalid__", "text": "Voice catalogue validation.",
+        "language_code": "en-IN"})
+    if response.status_code != 400:
+        response.raise_for_status()
+        raise ValueError("The voice inventory validation request was not rejected")
+    body = response.json()
+    error = body.get("error") if isinstance(body, dict) else None
+    message = str(error.get("message") or "") if isinstance(error, dict) else ""
+    marker = "Available speakers for bulbul:v4-flash are:"
+    if marker not in message:
+        raise ValueError("The voice inventory response did not contain a complete speaker enum")
+    names = [name.strip() for name in message.split(marker, 1)[1].strip().rstrip(".").split(",")]
+    if len(names) < 200 or len(names) != len(set(names)) or any(not _V4_VOICE_ID.fullmatch(name) for name in names):
+        raise ValueError("The voice inventory speaker enum was incomplete or changed format")
+    known = {row["providerVoiceId"]: row for row in previous}
+    # Preserve the documented display order and numbered tenant identities when
+    # the live API returns the same speakers in a different order.
+    available = set(names)
+    ordered_names = [name for name in known if name in available] + [name for name in names if name not in known]
+    rows = []
+    for name in ordered_names:
+        preferred = v4_voice_languages(name) or []
+        row = copy.deepcopy(known.get(name)) or _row(
+            name, list(_V4_TARGET_LANGUAGES),
+            category=name.split("_", 2)[2].replace("_", " "), preferredLanguages=preferred,
+        )
+        row["languages"] = list(_V4_TARGET_LANGUAGES)
+        row["preferredLanguages"] = preferred
+        row.pop("selectable", None)
+        row.pop("unavailableReason", None)
+        rows.append(row)
+    return rows
 
 
 def normalize_cartesia_voice(raw: dict[str, Any]) -> dict[str, Any] | None:
@@ -386,13 +447,18 @@ async def refresh_inventory() -> dict[str, Any]:
                     updated[provider] = {**updated.get(provider, {}), **entry}
             except (httpx.HTTPError, ValueError, AssertionError, IndexError, StopIteration):
                 errors.append("Published voice documentation could not be refreshed; the verified snapshot was retained.")
-            for provider in ("gemini", "cartesia"):
+            for provider in ("sarvam", "gemini", "cartesia"):
                 key = dev_secrets_store.effective_secret(f"{provider}_api_key") or getattr(get_settings(), f"{provider}_api_key", "")
                 if not key:
                     continue
                 try:
-                    rows = await _api_voices(client, provider, key)
-                    updated.setdefault(provider, {})["voices"] = rows
+                    if provider == "sarvam":
+                        models = updated.setdefault(provider, {}).setdefault("models", {})
+                        rows = await _sarvam_api_voices(client, key, models.get("bulbul:v4-flash") or [])
+                        models["bulbul:v4-flash"] = rows
+                    else:
+                        rows = await _api_voices(client, provider, key)
+                        updated.setdefault(provider, {})["voices"] = rows
                 except (httpx.HTTPError, ValueError, TypeError):
                     errors.append(f"{provider} voice API could not be refreshed; the last verified inventory was retained.")
         updated["schemaVersion"] = 1

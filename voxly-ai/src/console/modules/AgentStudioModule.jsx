@@ -319,7 +319,7 @@ export function AgentStudioModule({
     let mounted = true;
     const refreshVoiceCatalog = () => {
       setVoiceCatalogLoading(true);
-      fetchPhoneVoiceOptions(voiceLanguage)
+      return fetchPhoneVoiceOptions(voiceLanguage)
         .then((o) => {
           if (!mounted) return;
           setPhoneVoices(o.voices || []);
@@ -327,10 +327,12 @@ export function AgentStudioModule({
           setDefaultVoiceId(o.defaultVoiceId || 'te-in-csagent-5');
           setStackLabel(o.stackLabel || PHONE_STACK_LABEL);
           setVoiceCatalogError(null);
+          return { error: false };
         })
         .catch((error) => {
           if (!mounted) return;
           setVoiceCatalogError('Current voice options could not be loaded. Try again.');
+          return { error: true };
         })
         .finally(() => {
           if (mounted) setVoiceCatalogLoading(false);
@@ -351,7 +353,7 @@ export function AgentStudioModule({
   }, [selectedAgentId, voiceLanguage]);
 
   const retryVoiceCatalog = useCallback(() => {
-    voiceCatalogRefreshRef.current?.();
+    return voiceCatalogRefreshRef.current?.();
   }, []);
 
   // A legacy ?step=telephony or ?step=test link resolves here on first mount and on
@@ -420,11 +422,13 @@ export function AgentStudioModule({
       );
       if (requestId !== voiceStackCatalogRequestRef.current) return;
       setVoiceStackProfiles(Array.isArray(result?.profiles) ? result.profiles : []);
+      return { error: false };
     } catch {
       if (requestId === voiceStackCatalogRequestRef.current) {
         setVoiceStackProfiles([]);
         setVoiceStackCatalogError('Approved voice options could not be loaded. Try again.');
       }
+      return { error: true };
     } finally {
       if (requestId === voiceStackCatalogRequestRef.current) {
         setVoiceStackCatalogLoading(false);

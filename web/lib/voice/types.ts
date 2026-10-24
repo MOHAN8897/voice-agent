@@ -24,6 +24,11 @@ export type TtsConfig = {
   output_audio_codec?: string;
   output_audio_bitrate?: string;
   temperature?: number;
+  pitch?: number;
+  loudness?: number;
+  volume?: number;
+  speed?: number;
+  emotion?: string;
   sample_rate?: number;
 };
 

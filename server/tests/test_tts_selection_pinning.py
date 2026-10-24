@@ -43,7 +43,7 @@ async def test_gemini_tts_failure_never_uses_another_model(monkeypatch, streamin
     ("missing-model", "shubh", "te-IN"),
     ("bulbul:v3", "missing-voice", "te-IN"),
     ("bulbul:v4-flash", "shubh", "te-IN"),
-    ("bulbul:v4-flash", "kavitha_te_conversation", "ml-IN"),
+    ("bulbul:v4-flash", "kavitha_te_conversation", "as-IN"),
 ])
 def test_invalid_sarvam_selection_is_rejected_without_replacing_it(model, speaker, language):
     config = TTSConfig(provider="sarvam", model=model, speaker=speaker, language=language)

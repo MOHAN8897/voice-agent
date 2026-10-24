@@ -316,16 +316,20 @@ export function AgentVoicePanel({
     if (isRefreshingVoiceData) return;
     setIsRefreshingVoiceData(true);
     try {
-      await Promise.allSettled([
+      const results = await Promise.allSettled([
         onRetryVoiceStackCatalog ? onRetryVoiceStackCatalog() : Promise.resolve(),
         onRetryVoiceCatalog ? onRetryVoiceCatalog() : Promise.resolve(),
         onReloadVoiceStackSettings ? onReloadVoiceStackSettings() : Promise.resolve(),
       ]);
-      showToast?.('success', 'Voice stacks and catalog refreshed.');
+      if (results.some((result) => result.status === 'rejected' || result.value === null || result.value?.error)) {
+        showToast('Some voice options could not be refreshed. Check the catalogue messages and retry.', 'error');
+      } else {
+        showToast('Voice options refreshed.', 'success');
+      }
     } catch {
-      showToast?.('error', 'Failed to refresh voice data.');
+      showToast('Voice options could not be refreshed. Try again.', 'error');
     } finally {
-      setTimeout(() => setIsRefreshingVoiceData(false), 500);
+      setIsRefreshingVoiceData(false);
     }
   }, [isRefreshingVoiceData, onRetryVoiceStackCatalog, onRetryVoiceCatalog, onReloadVoiceStackSettings]);
   const selectableStackProfiles = useMemo(
@@ -1130,6 +1134,12 @@ export function AgentVoicePanel({
                             : `${visibleVoices.length} of ${voices.length} voices`}
                         </span>
                       </div>
+                      <p className="mb-3 text-[10px] leading-relaxed text-[#716C7F]" data-testid={`voice-inventory-summary-${profile.tier}`}>
+                        All {voices.length} {activeLanguage.name} {voices.length === 1 ? 'voice is' : 'voices are'} included.
+                        {Number.isSafeInteger(profile.voiceInventory?.totalVoices) && profile.voiceInventory.totalVoices > voices.length
+                          ? ` This setup has ${profile.voiceInventory.totalVoices} voices across its supported languages. Change the spoken language above to browse the others.`
+                          : ' Voice availability depends on the spoken language.'}
+                      </p>
 
                       {categories.length > 0 && <label className="mb-2 text-[11px] text-[#524E5E]">Voice style
                         <select aria-label={`Voice style for ${profile.label || profile.tier}`} value={category}

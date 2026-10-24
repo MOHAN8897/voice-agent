@@ -120,6 +120,58 @@ test("PSTN profile readiness and native rate gate activation independently", asy
   expect(activationRequests).toBe(0);
 });
 
+test("speech dynamics render only the knobs published by the selected speech model", async ({ page }) => {
+  const evidence = { sarvamModelAccess: true, sttVerified: true, ttsCatalogVerified: true, toolsVerified: true, capacityVerified: true, mediaFormatsVerified: true, credentialRefConfigured: true };
+  const speed = { key: "speed", label: "Speaking Pace", description: "Native Bulbul pace control applied to every synthesized turn.", kind: "range", min: 0.5, max: 2, step: 0.05, default: 1, native: "pace", unit: "x" };
+  const configured = {
+    schemaVersion: 1, enabled: false, supportedLanguages: ["te-IN"],
+    stt: { provider: "sarvam", model: "saaras:v3-realtime" },
+    llm: { provider: "sarvam", modelId: "verified-text-model", apiMode: "chat_completions_v1" },
+    engines: [{ id: "standard-speech", label: "Standard speech", models: [{ id: "v4-model", label: "Bulbul v4 Flash", provider: "sarvam", model: "bulbul:v4-flash", apiMode: "websocket",
+      voices: [{ id: "v4-voice", label: "Telugu voice", providerVoiceId: "shubh", languages: ["te-IN"] }] }] }],
+    evidence,
+    voiceDynamics: { speed: 1.1, temperature: 0.6 },
+  };
+  await page.route("**/api/auth/dev-me", (route) => route.fulfill({ json: { authenticated: true, subject: "e2e-admin", csrf_token: "test-csrf" } }));
+  await page.route("**/api/dev/stack/tiers", (route) => route.fulfill({ json: { environment: "test", config_mode: "frontend", tiers: [] } }));
+  await page.route("**/api/dev/stack/catalog", (route) => route.fulfill({ json: { providers: [
+    { id: "sarvam", label: "Sarvam", enabled: true, configured: true, models: {
+      stt: [{ id: "saaras:v3-realtime", realtime: true }],
+      llm: [{ id: "verified-text-model", api_mode: "chat_completions_v1" }],
+      tts: [
+        { id: "bulbul:v4-flash", api_modes: ["websocket"], knobs: [
+          speed,
+          { key: "temperature", label: "Expressive Inflection (Temperature)", description: "Higher values increase tone variance and prosodic richness.", kind: "range", min: 0.01, max: 1, step: 0.05, default: 0.7, native: "temperature" },
+        ] },
+        { id: "bulbul:v2", api_modes: ["websocket"], knobs: [
+          speed,
+          { key: "pitch", label: "Pitch Offset", description: "Negative values deepen the voice; positive values raise it.", kind: "range", min: -0.75, max: 0.75, step: 0.01, default: 0, native: "pitch" },
+          { key: "volume", label: "Volume (Loudness)", description: "Native Bulbul loudness multiplier.", kind: "range", min: 0.1, max: 3, step: 0.05, default: 1, native: "loudness", unit: "x" },
+        ] },
+      ],
+    } },
+  ], telephony: { providers: [] } } }));
+  await page.route("**/api/dev/stack/voice-profiles", (route) => route.fulfill({ json: { environment: "test", profiles: [
+    { tier: "low", profileRevision: 2, composedProfile: configured, readiness: { ready: true, enabled: false, blockers: [] }, retailRate: { complete: true, usdMicrosPerMin: 12000, inrPaisePerMin: 110, fxRateInr: 92.5 } },
+    { tier: "medium", profileRevision: 0, composedProfile: null, readiness: { ready: false, enabled: false, blockers: [] }, retailRate: null },
+    { tier: "premium", profileRevision: null, composedProfile: null, readiness: { ready: true, enabled: true, blockers: [] }, retailRate: null },
+  ] } }));
+
+  await page.goto("/dev/stack");
+  await ensureDevPortalReady(page);
+
+  await expect(page.getByRole("heading", { name: "Acoustic Calibration & Speech Dynamics" })).toBeVisible();
+  await expect(page.getByText("Speaking Pace", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Expressive Inflection (Temperature)", { exact: true })).toBeVisible();
+  await expect(page.getByText("Pitch Offset", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Volume (Loudness)", { exact: true })).toHaveCount(0);
+
+  await page.getByRole("combobox", { name: "TTS model", exact: true }).selectOption("bulbul:v2");
+  await expect(page.getByText("Pitch Offset", { exact: true })).toBeVisible();
+  await expect(page.getByText("Volume (Loudness)", { exact: true })).toBeVisible();
+  await expect(page.getByText("Expressive Inflection (Temperature)", { exact: true })).toHaveCount(0);
+});
+
 test("profile template keeps exact catalog transports and clears voices when speech models change", async ({ page }) => {
   const evidence = { sarvamModelAccess: false, sttVerified: false, ttsCatalogVerified: false, toolsVerified: false, capacityVerified: false, mediaFormatsVerified: false, credentialRefConfigured: false };
   const template = { schemaVersion: 1, enabled: false, supportedLanguages: ["te-IN"],

@@ -18,6 +18,9 @@ type VoiceProfile = {
   category?: string;
   gender?: string;
   tone?: string;
+  selectable?: boolean;
+  preferredLanguages?: string[];
+  unavailableReason?: string;
 };
 type ModelProfile = {
   id: string;
@@ -113,13 +116,13 @@ const DEFAULT_TIER_LABELS: Record<string, string> = {
 
 function getVoicesForTtsProvider(providers: CatalogProvider[], provider: string, model: string, languages: string[], previous: VoiceProfile[] = []): VoiceProfile[] {
   const rows = providers.find((entry) => entry.id === provider)?.models?.tts?.find((entry) => entry.id === model)?.voices || [];
-  return rows.map((voice) => ({ ...voice,
+  return rows.filter((voice) => voice.selectable !== false).map((voice) => ({ ...voice,
     id: previous.find((item) => item.providerVoiceId === voice.providerVoiceId)?.id || voice.id,
     languages: voice.languages.filter((language) => !languages.length || languages.includes(language)),
   })).filter((voice) => voice.languages.length > 0);
 }
 
-const DEFAULT_VOICE_DYNAMICS: VoiceDynamics = { speed: 1.0, pitch: 0.0, temperature: 0.7, emotion: "neutral", volume: 1.0 };
+const DEFAULT_VOICE_DYNAMICS: VoiceDynamics = { speed: 1.0, pitch: 0.0, temperature: 0.7, emotion: "calm", volume: 1.0 };
 
 // Native live voice (Gemini Live / OpenAI Realtime) exposes one delivery knob:
 // speed, clamped by server/realtime/models.normalize_realtime_speed.
@@ -234,7 +237,7 @@ function defaultProfileForTier(tier: ProfileTier): ComposedProfile {
     retailRateInr: null, supplierCostInr: null, supportedLanguages: [],
     stt: { provider: "", model: "" }, llm: { provider: "", modelId: "", apiMode: "" },
     engines: [], evidence: { ...EMPTY_EVIDENCE },
-    voiceDynamics: { speed: 1, pitch: 0, temperature: 0.7, emotion: "neutral", volume: 1 },
+    voiceDynamics: { ...DEFAULT_VOICE_DYNAMICS },
   };
 }
 
@@ -268,10 +271,10 @@ function normalizeProfile(profile: ComposedProfile | null | undefined, tier: Pro
           speed: Number(profile.voiceDynamics.speed ?? 1.0),
           pitch: Number(profile.voiceDynamics.pitch ?? 0.0),
           temperature: Number(profile.voiceDynamics.temperature ?? 0.7),
-          emotion: String(profile.voiceDynamics.emotion || "neutral"),
+          emotion: String(profile.voiceDynamics.emotion || DEFAULT_VOICE_DYNAMICS.emotion),
           volume: Number(profile.voiceDynamics.volume ?? 1.0),
         }
-      : { speed: 1.0, pitch: 0.0, temperature: 0.7, emotion: "neutral", volume: 1.0 },
+      : { ...DEFAULT_VOICE_DYNAMICS },
   };
 }
 
@@ -1012,6 +1015,13 @@ export function PstnVoiceProfileWorkbench() {
     const languages = draft.supportedLanguages;
     return getVoicesForTtsProvider(providers, currentTtsProvider, currentTtsModel, languages, currentTtsModelObj?.voices);
   }, [providers, currentTtsProvider, currentTtsModel, currentTtsModelObj?.voices, draft.supportedLanguages]);
+
+  const currentModelInventory = useMemo(() => {
+    const rows = providers.find((entry) => entry.id === currentTtsProvider)?.models?.tts?.find((entry) => entry.id === currentTtsModel)?.voices || [];
+    return rows.map((voice) => ({ ...voice,
+      id: currentTtsModelObj?.voices.find((item) => item.providerVoiceId === voice.providerVoiceId)?.id || voice.id,
+    }));
+  }, [providers, currentTtsProvider, currentTtsModel, currentTtsModelObj?.voices]);
 
   useEffect(() => { setVoiceCategory(""); }, [currentTtsProvider, currentTtsModel]);
 
@@ -1820,13 +1830,22 @@ export function PstnVoiceProfileWorkbench() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-text">Expressive Audio Tags</span>
                     <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                      Native Vachana Enabled
+                      {currentTtsModel === "timbre-v3.0" ? "Timbre v3.0" : "Timbre v2.5"}
                     </span>
                   </div>
                   <p className="text-[11px] text-text-subtle">
-                    Timbre v3 dynamically parses conversational pauses, emphasis tags, and natural breath cadences across Indian regional dialects.
+                    {currentTtsModel === "timbre-v3.0"
+                      ? "Timbre v3.0 accepts inline expressive audio tags. Speaking speed is the documented numeric delivery control; numeric pitch, volume and temperature are not documented by the provider."
+                      : "Timbre v2.5 supports speaking speed. Expressive audio tags are available on Timbre v3.0 only; numeric pitch, volume and temperature are not documented by the provider."}
                   </p>
                 </div>
+              )}
+
+              {currentTtsProvider === "cartesia" && (
+                <p className="pt-2 border-t border-surface-border-subtle text-[11px] text-text-subtle" data-testid="cartesia-delivery-guidance">
+                  Sonic offers all 58 documented emotion choices for English. Emotion, speed and volume are generation guidance;
+                  results depend on the voice and transcript. Saved choices are included in every synthesis request.
+                </p>
               )}
 
               {currentTtsProvider === "gemini" && !isNativeRealtimeLlm && (
@@ -1852,7 +1871,7 @@ export function PstnVoiceProfileWorkbench() {
                     </span>
                   </div>
                   <p className="text-[11px] text-text-subtle">
-                    v3 exposes pace + temperature. v4-flash exposes pace + pitch + loudness. v2 exposes pace + pitch + loudness. Unsupported knobs are hidden and never sent.
+                    v3 and v4-flash expose pace + temperature. v2 exposes pace + pitch + loudness. Only parameters accepted by the selected model are sent.
                   </p>
                 </div>
               )}
@@ -2040,7 +2059,7 @@ export function PstnVoiceProfileWorkbench() {
                 Active Speech Engine: {currentTtsProvider.toUpperCase()} ({currentTtsModel})
               </p>
               <p className="mt-0.5 text-xs text-text-muted">
-                {currentVoices.length} verified voices for this model and the configured languages.
+                {currentModelInventory.length} provider voices in the complete model catalogue · {currentVoices.length} available for the configured languages.
               </p>
             </div>
             <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300">
@@ -2053,16 +2072,17 @@ export function PstnVoiceProfileWorkbench() {
             <label className="text-xs text-text-muted">Voice style
               <select aria-label="Voice style" value={voiceCategory} onChange={(event) => setVoiceCategory(event.target.value)} className="ml-2 rounded-lg border border-surface-border bg-surface-panel p-2">
                 <option value="">All styles</option>
-                {[...new Set(currentVoices.map((voice) => voice.category).filter(Boolean))].sort().map((category) => <option key={category} value={category}>{category}</option>)}
+                {[...new Set(currentModelInventory.map((voice) => voice.category).filter(Boolean))].sort().map((category) => <option key={category} value={category}>{category}</option>)}
               </select>
             </label>
             <Button variant="secondary" disabled={catalogRefreshing} onClick={() => void loadCatalog(true)}>{catalogRefreshing ? "Refreshing voices…" : "Refresh provider voices"}</Button>
             {catalogError && <p role="alert" className="text-xs text-red-400">{catalogError}</p>}
           </div>
           <div role="region" aria-label="Available model voices" tabIndex={0} className="grid max-h-96 overflow-y-auto gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {currentVoices.map((v, index) => ({ ...v, number: index + 1 })).filter((voice) => !voiceCategory || voice.category === voiceCategory).map((v) => {
+            {currentModelInventory.map((v, index) => ({ ...v, number: index + 1 })).filter((voice) => !voiceCategory || voice.category === voiceCategory).map((v) => {
               const isPlaying = playingVoiceId === v.id;
               const isLoading = previewLoadingId === v.id;
+              const available = currentVoices.some((voice) => voice.id === v.id);
               return (
                 <div
                   key={v.id}
@@ -2073,8 +2093,12 @@ export function PstnVoiceProfileWorkbench() {
                   }`}
                 >
                   <div className="space-y-0.5 min-w-0 pr-2">
-                    <p className="text-xs font-medium text-text truncate">Voice {v.number}</p>
-                    <p className="text-[10px] text-text-muted">{v.category || ""} · {v.languages.join(", ")}</p>
+                    <p className="text-xs font-medium text-text truncate">{v.label || `Voice ${v.number}`}</p>
+                    <p className="text-[10px] text-text-muted break-all">{v.providerVoiceId}</p>
+                    <p className="text-[10px] text-text-muted">{v.category || ""} · {(v.languages.length ? v.languages : v.preferredLanguages || []).join(", ")}</p>
+                    {!available && <p className="text-[10px] text-amber-300">
+                      {v.unavailableReason || "Enable one of this voice's supported languages to audition it."}
+                    </p>}
                     {(v.gender || v.tone) && (
                       <p className="text-[10px] text-text-subtle truncate">
                         {v.gender ? `${v.gender} · ` : ""}{v.tone || ""}
@@ -2083,7 +2107,8 @@ export function PstnVoiceProfileWorkbench() {
                   </div>
                   <button
                     type="button"
-                    disabled={isLoading}
+                    disabled={isLoading || !available}
+                    aria-label={`Preview ${v.label || v.providerVoiceId}`}
                     onClick={() => void handlePlayVoicePreview(v.id)}
                     className={`shrink-0 flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
                       isPlaying

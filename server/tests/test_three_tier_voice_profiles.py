@@ -212,6 +212,52 @@ async def test_catalog_route_attaches_opaque_stored_sample_urls(monkeypatch):
         assert internal not in serialized
 
 
+def test_public_catalog_expands_every_v4_voice_for_a_supported_language(monkeypatch):
+    from server.providers import voice_inventory
+
+    monkeypatch.setattr(profiles, "_runtime_profile_blockers", lambda _profile: [])
+    record = _record()
+    model = record["profile"]["engines"][0]["models"][0]
+    model.update({"provider": "sarvam", "model": "bulbul:v4-flash", "apiMode": "websocket", "voices": []})
+    expanded = profiles.expand_model_voices("low", record)
+    voices = expanded["profile"]["engines"][0]["models"][0]["voices"]
+    expected = voice_inventory.voices_for_model("sarvam", "bulbul:v4-flash")
+    assert len(voices) == len(expected) > 200
+    public = profiles.public_catalog_profile("low", expanded, _rates())
+    public_voices = public["engines"][0]["models"][0]["voices"]
+    assert len(public_voices) == len(expected)
+    assert len({voice["id"] for voice in public_voices}) == len(expected)
+    assert all("te-IN" in voice["languages"] for voice in public_voices)
+    assert all(voice["id"].startswith("voc_") for voice in public_voices)
+
+
+@pytest.mark.asyncio
+async def test_tenant_catalog_reports_complete_inventory_without_truncating_language_matches(monkeypatch):
+    from server.routes import voice_stacks
+
+    record = _record()
+    record["profile"]["supportedLanguages"] = ["te-IN", "hi-IN"]
+    model = record["profile"]["engines"][0]["models"][0]
+    model["voices"] = [
+        {"id": f"internal-{index}", "providerVoiceId": f"private-{index}", "label": "Internal label",
+         "languages": ["te-IN"] if index < 60 else ["hi-IN"]}
+        for index in range(70)
+    ]
+    record["publicAliases"] = profiles._choice_keys(record["profile"])
+    monkeypatch.setattr(profiles, "_runtime_profile_blockers", lambda _profile: [])
+    monkeypatch.setattr(voice_stacks, "load_profile_records", _async_return({"low": record}))
+    monkeypatch.setattr(voice_stacks, "_load_rates_without_fallback", _async_return(_rates()))
+    monkeypatch.setattr("server.services.dev_runtime.effective_app_environment", lambda: "test")
+    result = await voice_stacks.voice_stack_catalog(language="te-IN")
+    profile = result["profiles"][0]
+    assert profile["voiceInventory"] == {"totalVoices": 70, "voicesByLanguage": {"te-IN": 60, "hi-IN": 10}}
+    public_voices = profile["engines"][0]["models"][0]["voices"]
+    assert len(public_voices) == 60
+    assert len({voice["id"] for voice in public_voices}) == 60
+    assert all(voice["languages"] == ["te-IN"] for voice in public_voices)
+    assert "private-" not in json.dumps(result) and "internal-" not in json.dumps(result)
+
+
 @pytest.mark.parametrize(
     ("raw_gender", "expected"),
     [("Female", "female"), ("feminine", "female"), ("MALE", "male"),

@@ -79,6 +79,16 @@ async def voice_stack_catalog(
 
     warm_targets: list[tuple[str, str, str]] = []
     for profile in profiles:
+        # Counts describe the complete approved inventory, before the active
+        # language filter. Tenants can distinguish a short native roster from
+        # a truncated catalogue without seeing internal provider identifiers.
+        all_voices = [voice for engine in profile.get("engines", [])
+            for model in engine.get("models", []) for voice in model.get("voices", [])]
+        language_counts: dict[str, int] = {}
+        for voice in all_voices:
+            for code in set(voice.get("languages") or []):
+                language_counts[code] = language_counts.get(code, 0) + 1
+        profile["voiceInventory"] = {"totalVoices": len(all_voices), "voicesByLanguage": language_counts}
         for engine in profile.get("engines", []):
             for model in engine.get("models", []):
                 model["voices"] = [
