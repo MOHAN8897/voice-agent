@@ -76,7 +76,7 @@ export function DncRegistryPanel() {
       if (addMode === 'single') {
         const clean = singlePhone.trim();
         if (!clean) {
-          showToast('Enter a valid phone number in E.164 (+1...) format', 'error');
+          showToast('Enter a valid phone number in international E.164 format', 'error');
           setAddBusy(false);
           return;
         }
@@ -150,6 +150,10 @@ export function DncRegistryPanel() {
 
   return (
     <div className="space-y-6" data-testid="dnc-registry-panel">
+      <p className="text-xs leading-relaxed text-[#524E5E]">
+        This workspace's opt-out list blocks these numbers in your campaigns. Verify national DND
+        preferences and valid consent separately through the authorised TRAI process.
+      </p>
       {/* Sub-navigation & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Tab Switcher */}

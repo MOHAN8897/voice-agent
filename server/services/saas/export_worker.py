@@ -239,8 +239,8 @@ async def _build_export_zip(tenant_id: uuid.UUID) -> bytes:
             "README.txt",
             "Voxly AI — Workspace Data Export\n"
             "=================================\n"
-            "This archive contains your workspace data in compliance with GDPR Art. 20\n"
-            "(Right to Data Portability) and the India DPDP Act 2023.\n\n"
+            "This archive contains your workspace data for your records and privacy requests.\n"
+            "Handle the personal data it contains under applicable Indian law and your retention policy.\n\n"
             "Files included:\n"
             "  call_logs.csv        — Call history and metadata\n"
             "  contacts.csv         — Telephony contacts and leads\n"

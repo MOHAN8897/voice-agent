@@ -1,0 +1,155 @@
+{
+  "version": 2,
+  "name": "drive-compliance",
+  "createdAt": 1792865734636,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-employees",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 296,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "route",
+        "contains": "dashboard/employees"
+      },
+      "timeoutMs": 10000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-open-builder",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-tab-voice"
+        }
+      },
+      "timeoutMs": 10000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-voice",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1261,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "voice-stack-selector"
+        }
+      },
+      "timeoutMs": 10000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-settings",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1261,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "urlContains": "/compliance",
+            "status": 200
+          },
+          {
+            "kind": "allOf",
+            "predicates": [
+              {
+                "kind": "text",
+                "contains": "IN · TRAI TCCCPR / Indian privacy law"
+              },
+              {
+                "kind": "text",
+                "contains": "Calling consent & privacy"
+              },
+              {
+                "kind": "text",
+                "contains": "TTS outage",
+                "absent": true
+              }
+            ]
+          },
+          {
+            "kind": "allOf",
+            "predicates": [
+              {
+                "kind": "net",
+                "urlContains": "/compliance",
+                "status": 200
+              },
+              {
+                "kind": "text",
+                "contains": "IN · TRAI TCCCPR / Indian privacy law"
+              },
+              {
+                "kind": "text",
+                "contains": "I hold valid consent"
+              },
+              {
+                "kind": "text",
+                "contains": "TTS outage",
+                "absent": true
+              }
+            ]
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  }
+}

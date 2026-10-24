@@ -1,7 +1,7 @@
 import React from 'react';
 import { PageHeader } from './PageHeader';
 import { Footer } from '../components/Footer';
-import { FileText, CheckCircle2, ShieldCheck, Scale } from 'lucide-react';
+import { Scale } from 'lucide-react';
 
 export function TermsPage({ onBackToLanding, onEnterConsole, onNavigatePage, onSignIn }) {
   return (
@@ -24,7 +24,7 @@ export function TermsPage({ onBackToLanding, onEnterConsole, onNavigatePage, onS
               Dialtact Terms of Service
             </h1>
             <p className="text-xs text-[#524E5E] mt-2">
-              Last Updated: October 2026 • Effective Date: January 1, 2026
+              Updated: 24 October 2026 · India
             </p>
           </div>
 
@@ -42,7 +42,8 @@ export function TermsPage({ onBackToLanding, onEnterConsole, onNavigatePage, onS
               2. Acceptable Use &amp; Telecommunication Regulations
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
-              Subscribers agree not to use Dialtact telephony services to transmit unlawful robocalls, deceptive caller ID spoofing, unauthorized political or telemarketing spam, or harassment. Outbound calling campaigns must strictly honor National Do-Not-Call (DNC) registries, TCPA regulations, and STIR/SHAKEN caller verification standards.
+              Indian commercial calls must meet TRAI's Telecom Commercial Communications Customer Preference Regulations (TCCCPR), including valid consent, recipient preferences and applicable sender registration and calling route requirements. Maintain evidence of permission and honour opt-outs. Your workspace Do Not Call list records your own suppression requests; it does not verify national preference or consent records. Unsolicited spam, caller ID spoofing and harassment are prohibited. International calls also require review under the destination's rules. See{' '}
+              <a href="https://trai.gov.in/release-publication/regulations/amendments-page/7617" target="_blank" rel="noopener noreferrer" className="font-semibold underline">TRAI's regulations and phased amendments</a>.
             </p>
           </section>
 
@@ -78,7 +79,7 @@ export function TermsPage({ onBackToLanding, onEnterConsole, onNavigatePage, onS
               6. Dispute Resolution &amp; Contact
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
-              These terms are governed by the laws of the State of Delaware. For legal inquiries or contractual enterprise amendments, contact{' '}
+              These terms are governed by the laws of India, subject to any signed agreement. For legal inquiries or contractual enterprise amendments, contact{' '}
               <a href="mailto:legal@dialtact.com" className="font-semibold text-[#6344E7] hover:underline">
                 legal@dialtact.com
               </a>{' '}

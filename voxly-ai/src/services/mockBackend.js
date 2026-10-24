@@ -363,21 +363,38 @@ export const mockBackend = {
 
     const agentComplianceMatch = cleanEndpoint.match(/^\/api\/agents\/([a-zA-Z0-9_-]+)\/compliance$/);
     if (agentComplianceMatch) {
+      const labels = {
+        consent_disclosure: 'I have documented consent or another lawful basis for these calls and can produce it on request.',
+        do_not_call_registry: "I check the recipient's DND/consent preferences through an authorised process before calling and honour opt-outs.",
+        identify_sender: 'My agent identifies my business and the purpose of the call, and discloses that it is an AI assistant.',
+        recording_disclosure: 'My agent tells the caller when the call is recorded or transcribed and provides the privacy notice.',
+        commercial_registration: 'My business uses an approved commercial calling route and completes sender/KYC registration.',
+        data_retention: 'I limit caller data to its stated purpose and maintain retention, deletion and grievance-handling processes.',
+      };
+      const complianceData = {
+        country: 'IN',
+        countryName: 'India',
+        regulation: 'TRAI TCCCPR · DPDP Act 2023',
+        summary: 'Commercial calls need a documented consent basis, sender identity, recipient-preference checks and a privacy notice.',
+        obligations: Object.entries(labels).map(([key, label]) => ({ key, label })),
+        acknowledged: Object.fromEntries(Object.keys(labels).map((key) => [key, false])),
+        notes: [
+          'TRAI TCCCPR and the DPDP Rules, 2025 apply with phased commencement. These acknowledgements do not certify compliance or verify national DND records.',
+        ],
+        sources: [{ label: 'TRAI commercial calling regulations', url: 'https://trai.gov.in/release-publication/regulations/amendments-page/7617' }],
+      };
       if (method === 'GET') {
         return {
           status: 200,
-          data: {
-            country: 'IN',
-            acknowledged: { dnd: true, consent: true, disclosure: true },
-          },
+          data: complianceData,
         };
       }
       if (method === 'PUT') {
         return {
           status: 200,
           data: {
-            country: 'IN',
-            acknowledged: body?.acknowledged || {},
+            ...complianceData,
+            acknowledged: Object.fromEntries(Object.keys(labels).map((key) => [key, Boolean(body?.acknowledged?.[key])])),
           },
         };
       }

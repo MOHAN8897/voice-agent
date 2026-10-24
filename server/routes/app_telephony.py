@@ -702,13 +702,13 @@ async def list_buy_countries(principal: SubscriberPrincipal = Depends(require_su
 
 @router.get("/api/telephony/compliance")
 async def list_compliance(
-    country: str | None = Query(None, description="ISO-3166 alpha-2; omit for the full catalogue"),
+    country: str | None = Query(None, description="Ignored; the checklist is India-only"),
     principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
 ):
-    """Compliance obligations for one country, or the catalogue for all of them.
+    """India compliance obligations for the agent settings screen.
 
-    Advisory metadata for the agent settings screen. It is not consulted by the
-    call path — nothing here changes how a call is placed.
+    Advisory metadata only. It is not consulted by the call path — nothing here
+    changes how a call is placed.
     """
     require_subscriber_permission(principal, "app.telephony.write")
     from server.services.saas.country_compliance import compliance_catalog, compliance_for_country
@@ -749,10 +749,10 @@ async def put_agent_compliance(
                 detail={"error": {"code": "not_found", "message": "Agent not found"}},
             )
         current = dict(row.voice_settings or {})
-        current["compliance"] = {"acknowledged": body.acknowledged}
+        merged = merge_agent_compliance({"acknowledged": body.acknowledged})
+        current["compliance"] = {"country": merged["country"], "acknowledged": merged["acknowledged"]}
         row.voice_settings = current
         await session.commit()
-        merged = merge_agent_compliance(current["compliance"], await _agent_country(row, session))
     from server.services.saas.activity_log import record_event
 
     await record_event(
@@ -771,7 +771,7 @@ async def put_agent_compliance(
 async def get_agent_compliance(
     agent_id: str, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)
 ):
-    """Stored acknowledgements merged over the catalogue for the agent's country."""
+    """Stored acknowledgements merged over the India checklist."""
     require_subscriber_permission(principal, "app.calls.read")
     from server.services.saas.country_compliance import merge_agent_compliance
 
@@ -786,28 +786,7 @@ async def get_agent_compliance(
                 detail={"error": {"code": "not_found", "message": "Agent not found"}},
             )
         saved = (row.voice_settings or {}).get("compliance")
-        return merge_agent_compliance(saved, await _agent_country(row, session))
-
-
-async def _agent_country(row, session) -> str:
-    """The country this agent operates in, from its assigned number.
-
-    Falls back to the platform default so the settings screen always shows a
-    jurisdiction rather than an empty card.
-    """
-    from server.db.models.phase5_models import PhoneNumber
-
-    result = await session.execute(
-        select(PhoneNumber).where(PhoneNumber.agent_id == row.agent_id).limit(1)
-    )
-    number = result.scalars().first()
-    if number and number.e164:
-        # E.164 country calling code -> ISO-3166 alpha-2. NANP numbers (the +1
-        # trunk) cover US, CA and AU, so the dialled number alone cannot tell them
-        # apart; US is the platform default for a NANP number with no better signal.
-        dial = str(number.e164).lstrip("+").split(".")[0][:1]
-        return {"1": "US"}.get(dial, "US")
-    return "US"
+        return merge_agent_compliance(saved)
 
 
 @router.post("/api/telephony/buy")

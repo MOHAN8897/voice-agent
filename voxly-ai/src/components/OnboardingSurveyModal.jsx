@@ -414,26 +414,26 @@ export function OnboardingSurveyModal({ user, onComplete, onStartTour }) {
           <div className="space-y-4" data-testid="onboarding-step-3">
             <div className="flex items-center gap-2 text-xs font-bold text-[#0F0E17]">
               <ShieldCheck className="w-4 h-4 text-[#FF5C35]" />
-              <h3>Compliance &amp; Acceptable Telephony Use</h3>
+              <h3>Calling in India: consent &amp; acceptable use</h3>
             </div>
 
             <div className="space-y-2 text-xs text-[#524E5E] bg-[#FAF9FD] p-4 rounded-xl border border-[#E4E2EB] leading-relaxed">
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <span>
-                  <strong>National DND Compliance:</strong> Automated scrubbing against national Do-Not-Call registries protects operators from unsolicited dialing violations.
+                  <strong>TRAI commercial calling:</strong> Verify valid consent and recipient preferences under TCCCPR, complete applicable business registration, and use an approved calling route. Your workspace Do Not Call list records your own opt-outs; it is not a national DND check.
                 </span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <span>
-                  <strong>Calling Hours &amp; TCPA:</strong> Autonomous outbound calls are strictly constrained to 9:00 AM – 9:00 PM recipient local time.
+                  <strong>Calling hours &amp; preferences:</strong> Configure a suitable calling window and honour recipient time preferences and applicable restrictions. A configured window does not establish legal permission to call.
                 </span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <span>
-                  <strong>Caller ID &amp; Anti-Spam:</strong> Unsolicited spam, robocalling without consent, and caller ID spoofing are strictly prohibited.
+                  <strong>Privacy &amp; caller identity:</strong> Identify your business, explain recording or transcription, provide your privacy notice, and honour opt-outs. Prepare for the phased DPDP Act and Rules; unsolicited spam and caller ID spoofing are prohibited.
                 </span>
               </div>
             </div>

@@ -101,7 +101,7 @@ export function CompanyPage({ onBackToLanding, onEnterConsole, onNavigatePage, o
               </div>
               <h4 className="text-sm font-bold text-[#0F0E17]">Automated DNC &amp; Compliance</h4>
               <p className="text-xs text-[#524E5E] leading-relaxed">
-                Built-in TCPA scrubbing, calling window enforcement, and real-time consent verification safeguard outbound campaigns.
+                  Workspace opt-out lists and configured calling windows support your process. Verify recipient preferences and consent through the authorised TRAI process before launching commercial calls in India.
               </p>
             </div>
 

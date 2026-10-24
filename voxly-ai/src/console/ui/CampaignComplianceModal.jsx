@@ -34,7 +34,7 @@ export function CampaignComplianceModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Campaign Compliance Confirmation"
+      title="Confirm calling consent for India"
       subtitle={campaignName ? `Review legal requirements for "${campaignName}"` : 'Attestation of legal calling consent'}
       maxWidth="max-w-xl"
     >
@@ -46,7 +46,7 @@ export function CampaignComplianceModal({
           </div>
           <div>
             <h3 className="text-sm font-semibold text-[#0F0E17]">
-              Regulatory Attestation Required
+              Review recipient consent &amp; preferences
             </h3>
             <p className="text-xs text-[#524E5E]">
               {contactCount > 0 ? `${contactCount} contact${contactCount === 1 ? '' : 's'} queued for outbound dialing` : 'Outbound campaign dispatch'}
@@ -57,10 +57,10 @@ export function CampaignComplianceModal({
         {/* Attestation Body */}
         <div className="space-y-3.5 text-xs sm:text-sm text-[#2D2A38] bg-[#F7F6FA] p-4 rounded-xl border border-[#E9E7F0] leading-relaxed">
           <p>
-            &ldquo;I confirm that I have the necessary authorization/consent to contact the phone numbers used in this campaign and that my campaign complies with applicable laws and regulations.&rdquo;
+            &ldquo;I confirm that I have valid consent or another permitted basis for these commercial calls, have checked recipient preferences through the authorised DND/consent process, and will honour opt-outs under TRAI's TCCCPR framework.&rdquo;
           </p>
           <p>
-            &ldquo;I understand that I am responsible for the contacts, purpose, content, and legality of the calls made through Dialtact.&rdquo;
+            &ldquo;My business has completed applicable sender registration and calling route requirements. I am responsible for the contact list, purpose, caller identity, recording notice and lawful handling of caller data.&rdquo;
           </p>
         </div>
 
@@ -68,7 +68,7 @@ export function CampaignComplianceModal({
         <div className="flex items-start gap-2.5 text-xs text-[#645D73] bg-amber-500/5 p-3 rounded-xl border border-amber-500/20">
           <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <p>
-            <strong className="text-[#0F0E17]">Notice:</strong> Dialtact provides automated telephony infrastructure and does not verify or guarantee the legal validity of your contact lists. You are making this representation as the operating tenant.
+            <strong className="text-[#0F0E17]">Before launch:</strong> Your workspace suppression list does not verify national DND or consent records. This confirmation records your acknowledgement; it does not certify your campaign. Calls outside India also need review under the destination's rules.
           </p>
         </div>
 
@@ -84,7 +84,7 @@ export function CampaignComplianceModal({
             className="mt-0.5 w-4 h-4 rounded text-[#FF5C35] focus:ring-[#FF5C35] border-[#D1CFDB]"
           />
           <span className="text-xs sm:text-sm font-medium text-[#0F0E17]">
-            I confirm and accept
+            I have reviewed these requirements and confirm
           </span>
         </label>
 

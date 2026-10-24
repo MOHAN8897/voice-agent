@@ -79,7 +79,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
                   Dialtact Privacy Policy
                 </h3>
                 <p className="text-xs text-[#524E5E] mt-1">
-                  Last Updated: September 17, 2026 • Effective Date: January 1, 2026
+                  Updated: 24 October 2026 · India
                 </p>
               </div>
 
@@ -88,7 +88,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
                   1. Scope & Telephony Voice Data Processing
                 </h4>
                 <p>
-                  Dialtact Inc. ("Dialtact", "we", "us") provides enterprise autonomous AI voice employee infrastructure. This Privacy Policy details how we collect, process, transcribe, and secure audio recordings, synthetic voice outputs, caller telemetry, and contact data transmitted through our web services and telephone connections.
+                  Dialtact ("we", "us") provides AI voice services. Account details, contact lists, call audio, transcripts and call metadata are processed to provide and support the service. Business customers remain responsible for the purpose of their calls, the information they collect and the privacy notices given to callers.
                 </p>
               </section>
 
@@ -97,15 +97,15 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
                   2. Voice Recording, Transcription & Consent
                 </h4>
                 <p>
-                  Inbound and outbound telephone calls processed through Dialtact are digitized and transcribed in real-time. Customers deploying Dialtact agents are contractually required to configure two-party call recording consent disclosures ("This call may be recorded or monitored by an automated assistant") in compliance with applicable federal, state, and international telecommunication laws.
+                  Before collecting call data, identify your business, explain any recording or transcription and its purpose, and provide an accessible privacy notice. Obtain the consent or other permission required for your use case. Commercial calls in India must also meet TRAI's TCCCPR requirements for consent, recipient preferences and applicable registration.
                 </p>
                 <div className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-3.5 space-y-1.5 text-xs">
                   <div className="flex items-center gap-2 font-semibold text-[#0F0E17]">
                     <Lock className="w-3.5 h-3.5 text-[#6344E7]" />
-                    <span>Audio Encryption & Retention Standards</span>
+                    <span>Data access &amp; retention</span>
                   </div>
                   <p>
-                    All audio streams are encrypted in transit via TLS 1.3 and SRTP. By default, raw audio recordings are purged after 30 days unless customer enterprise retention rules mandate longer archival under custom storage encryption (AES-256).
+                    Restrict access to recordings and transcripts, collect only what your stated purpose needs and document an appropriate retention period. Deletion may be subject to applicable recordkeeping requirements and the service's deletion process.
                   </p>
                 </div>
               </section>
@@ -121,11 +121,12 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
 
               <section className="space-y-2">
                 <h4 className="text-sm font-bold text-[#0F0E17] uppercase tracking-wider">
-                  4. GDPR, UK DPA & CCPA/CPRA Rights
+                  4. Indian privacy law &amp; grievances
                 </h4>
                 <p>
-                  Data subjects maintain rights to request access to call recordings, request transcript corrections, or execute complete data deletion. Data erasure requests can be dispatched directly to <span className="font-mono text-xs text-[#0F0E17]">privacy@dialtact.ai</span> and are completed within 30 calendar days.
+                  The Information Technology Act and SPDI Rules apply where relevant. The DPDP Act, 2023 and Rules, 2025 have phased commencement; main notice, consent and data-principal duties commence 18 months after Gazette publication in November 2025. Send privacy, correction, deletion or grievance requests to <a href="mailto:privacy@dialtact.com" className="underline">privacy@dialtact.com</a>. Requests are assessed under the applicable law, role and retention requirements.
                 </p>
+                <p className="text-xs"><a href="https://www.meity.gov.in/static/uploads/2025/11/c56ceae6c383460ca69577428d36828b.pdf" target="_blank" rel="noopener noreferrer" className="underline">Official DPDP commencement notification</a></p>
               </section>
             </div>
           ) : (
@@ -135,7 +136,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
                   Dialtact Terms of Service
                 </h3>
                 <p className="text-xs text-[#524E5E] mt-1">
-                  Last Updated: September 17, 2026 • Enterprise License Agreement
+                  Updated: 24 October 2026 · India
                 </p>
               </div>
 
@@ -150,18 +151,20 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
 
               <section className="space-y-2">
                 <h4 className="text-sm font-bold text-[#0F0E17] uppercase tracking-wider">
-                  2. Acceptable Telephony Use & TCPA Compliance
+                  2. TRAI commercial calling &amp; acceptable use
                 </h4>
                 <p>
-                  You agree to comply with the Telephone Consumer Protection Act (TCPA), the FTC Telemarketing Sales Rule (TSR), and applicable Do-Not-Call (DNC) registry requirements. You may <strong>not</strong> utilize Dialtact for:
+                  For Indian commercial calls, comply with TRAI's TCCCPR framework, applicable registration and calling route requirements, valid consent and recipient preferences. Maintain evidence of permission and honour opt-outs. Your workspace suppression list is not proof of a national DND or consent check. You may <strong>not</strong> use Dialtact for:
                 </p>
                 <ul className="list-disc pl-5 space-y-1 text-xs">
-                  <li>Unsolicited commercial robocalls without prior express written consent</li>
+                  <li>Unsolicited commercial calls without the required permission</li>
                   <li>Emergency service impersonation or spoofing caller IDs</li>
                   <li>Harassment, debt extortion, or deceptive financial schemes</li>
                   <li>High-frequency spam dialing exceeding published API concurrency quotas</li>
                 </ul>
               </section>
+
+              <p className="text-xs">Indian law governs these terms, subject to any signed agreement. Destination-country rules also apply to international calls. <a href="https://trai.gov.in/release-publication/regulations/amendments-page/7617" target="_blank" rel="noopener noreferrer" className="underline">Read TRAI's regulations and phased amendments.</a></p>
 
               <section className="space-y-2">
                 <h4 className="text-sm font-bold text-[#0F0E17] uppercase tracking-wider">
@@ -191,7 +194,7 @@ export function LegalModals({ isOpen, onClose, defaultTab = 'privacy' }) {
         <div className="px-6 py-4 border-t border-[#E4E2EB] bg-[#FAF9FD] flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-[#524E5E]">
             <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
-            <span>Strict TLS 1.3 & SOC2 Type II Certified Architecture</span>
+            <span>Indian calling &amp; privacy requirements</span>
           </div>
           <button
             onClick={onClose}

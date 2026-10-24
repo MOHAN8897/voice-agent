@@ -20,15 +20,16 @@ const DEFAULT_PROFILE = {
   greetingPhrase: '',
   businessHours: {},
   closedDates: [],
-  timezone: 'America/New_York',
+  timezone: 'Asia/Kolkata',
   afterHoursAction: 'voicemail',
   transferNumber: '',
   inboundEnabled: true,
   outboundEnabled: true,
 };
 
-/** US/EU favourites, all valid IANA zones the server already accepts. */
+/** India first; existing international profiles keep their saved timezone. */
 const TIMEZONE_FAVOURITES = [
+  'Asia/Kolkata',
   'America/New_York',
   'America/Chicago',
   'America/Denver',
@@ -36,14 +37,12 @@ const TIMEZONE_FAVOURITES = [
   'Europe/London',
   'Europe/Dublin',
   'Europe/Berlin',
-  'Asia/Kolkata',
 ];
 
 const HOURS_HELP =
-  'Times are read in the timezone below, not the caller’s. Many US states and most of ' +
-  'the UK restrict sales and marketing calls to roughly 8am–9pm local time, so Mon–Fri ' +
-  '09:00–17:00 is a safe default. Outbound calling outside your window is a compliance ' +
-  'question we cannot enforce for you — set hours that match the rules you operate under.';
+  'These hours route incoming calls in the timezone below. For outbound commercial calls in India, ' +
+  'separately verify applicable calling times and recipient preferences under TRAI rules. ' +
+  'A business-hours setting does not establish permission to call.';
 
 const DECISION_LABEL = {
   in_hours: 'Inside business hours — the agent answers',

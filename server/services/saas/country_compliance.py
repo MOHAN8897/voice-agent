@@ -1,9 +1,9 @@
-"""Per-country telephony compliance rules, for the agent settings screen.
+"""India telephony compliance checklist for the tenant agent settings screen.
 
-The product is sold to English-speaking markets, so the obligations an operator
-has to answer for differ by where the number sits. This module is a reference
-catalogue: it states which regulation applies to each country and what each one
-obliges them to do.
+The console presents one India checklist because the platform's commercial
+calling route is Indian. This catalogue records operator acknowledgements; it
+does not certify compliance or substitute for consent/recipient-preference
+verification.
 
 Deliberately advisory only. Nothing here is consulted by the live PSTN path —
 turning a toggle off must not change how a call is placed, which is why the
@@ -13,167 +13,80 @@ from __future__ import annotations
 
 from typing import Any
 
-#: Regulation catalogue keyed by ISO-3166 alpha-2.
-#:
-#: `obligations` are the things an operator genuinely has to decide for that
-#: market. Each maps to a per-agent toggle so the settings screen can ask a
-#: yes/no question rather than making them read legislation.
-COUNTRY_COMPLIANCE: dict[str, dict[str, Any]] = {
-    "US": {
-        "regulation": "TCPA / TIA",
-        "summary": "Automated calls need prior consent; recorded calls must be disclosed.",
-        "obligations": {
-            "consent_disclosure": "Announce that the call is automated at the start",
-            "recording_disclosure": "Tell the caller the call is recorded",
-            "do_not_call_registry": "Honour the national Do-Not-Call registry",
-        },
-    },
-    "GB": {
-        "regulation": "UK GDPR / PECR",
-        "summary": "Lawful basis for processing, plus recorded-call notice to callers.",
-        "obligations": {
-            "lawful_basis": "Record the lawful basis you rely on (consent or legitimate interest)",
-            "recording_disclosure": "Tell the caller the call is recorded",
-            "data_retention": "Set and document a retention period for transcripts",
-        },
-    },
-    "CA": {
-        "regulation": "CASL / PIPEDA",
-        "summary": "Commercial electronic messages need consent or a stated exception.",
-        "obligations": {
-            "consent_disclosure": "Confirm you have consent to message this number",
-            "recording_disclosure": "Tell the caller the call is recorded",
-            "identify_sender": "Identify your organisation on the call",
-        },
-    },
-    "AU": {
-        "regulation": "ACMA Spam Act / Privacy Act",
-        "summary": "Consent-based messaging, and a clear sender identity.",
-        "obligations": {
-            "consent_disclosure": "Confirm you have consent to message this number",
-            "identify_sender": "Identify your organisation on the call",
-            "recording_disclosure": "Tell the caller the call is recorded",
-        },
-    },
-    "IE": {
-        "regulation": "ePrivacy Regulations",
-        "summary": "Direct marketing restrictions and recorded-call notice.",
-        "obligations": {
-            "consent_disclosure": "Confirm you have consent to message this number",
-            "recording_disclosure": "Tell the caller the call is recorded",
-        },
-    },
-    "NZ": {
-        "regulation": "Privacy Act 2020",
-        "summary": "Privacy principles and recorded-call notice.",
-        "obligations": {
-            "recording_disclosure": "Tell the caller the call is recorded",
-            "data_retention": "Set and document a retention period for transcripts",
-        },
-    },
-    "SG": {
-        "regulation": "PDPA",
-        "summary": "Consent or contract for collection, disclosure, and purpose limitation.",
-        "obligations": {
-            "consent_disclosure": "Record the consent or contractual basis you rely on",
-            "recording_disclosure": "Tell the caller the call is recorded",
-            "data_retention": "Set and document a retention period for transcripts",
-        },
-    },
-    "ZA": {
-        "regulation": "POPIA",
-        "summary": "Explicit consent for direct marketing; processing notice.",
-        "obligations": {
-            "consent_disclosure": "Confirm you have consent to message this number",
-            "recording_disclosure": "Tell the caller the call is recorded",
-        },
-    },
-    "PH": {
-        "regulation": "NPC / Data Privacy Act",
-        "summary": "Consent for processing and clear privacy notice.",
-        "obligations": {
-            "consent_disclosure": "Confirm you have consent to message this number",
-            "recording_disclosure": "Tell the caller the call is recorded",
-        },
-    },
-    "IN": {
-        "regulation": "TRAI DND / IT Act",
-        "summary": "Registration and DND-category consent before commercial calls.",
-        "obligations": {
-            "consent_disclosure": "Confirm DND-category consent before a commercial call",
-            "identify_sender": "Identify your organisation on the call",
-            "recording_disclosure": "Tell the caller the call is recorded",
-        },
-    },
-}
-
-#: Shown when a country has no specific catalogue entry, so the settings screen
-#: never implies a jurisdiction is unregulated.
-DEFAULT_COUNTRY = {
-    "regulation": "Local privacy law",
-    "summary": "Tell callers who you are and that the call may be recorded.",
+#: The tenant-facing checklist. Keys are stable so acknowledgements saved by
+#: earlier releases survive an update to the wording.
+INDIA_COMPLIANCE: dict[str, Any] = {
+    "country": "IN",
+    "countryName": "India",
+    "regulation": "TRAI TCCCPR · DPDP Act 2023",
+    "summary": "Commercial calls need a documented consent basis, sender identity, recipient-preference checks and a privacy notice.",
     "obligations": {
-        "identify_sender": "Identify your organisation on the call",
-        "recording_disclosure": "Tell the caller the call is recorded",
+        "consent_disclosure": "I have documented consent or another lawful basis for these calls and can produce it on request.",
+        "do_not_call_registry": "I check the recipient's DND/consent preferences through an authorised process before calling and honour opt-outs.",
+        "identify_sender": "My agent identifies my business and the purpose of the call, and discloses that it is an AI assistant.",
+        "recording_disclosure": "My agent tells the caller when the call is recorded or transcribed and provides the privacy notice.",
+        "commercial_registration": "My business uses an approved commercial calling route and completes sender/KYC registration.",
+        "data_retention": "I limit caller data to its stated purpose and maintain retention, deletion and grievance-handling processes.",
     },
+    "notes": [
+        "TRAI's TCCCPR framework governs commercial calls, consent, recipient preferences and the 140/1600/1601 numbering series. The Third Amendment (18 September 2026) phases in AI-based spam detection, A2P termination charges and KYC re-verification; confirm the provisions and number series applicable to your business before launch.",
+        "The DPDP Rules, 2025 were notified on 13 November 2025. Consent Manager registration begins 13 November 2026, and the main notice, consent and data-principal duties (with penalties) apply from 13 May 2027. Prepare your privacy processes; this checklist is not a certification.",
+        "The workspace Do Not Call list records your own opt-outs. It does not establish that a recipient was checked against the national preference or consent registers.",
+    ],
+    "sources": [
+        {"label": "TRAI commercial calling regulations", "url": "https://trai.gov.in/release-publication/regulations/amendments-page/7617"},
+        {"label": "TRAI Third Amendment press note (2026)", "url": "https://www.trai.gov.in/sites/default/files/2026-09/PR_No119of2026.pdf"},
+        {"label": "DPDP commencement notification", "url": "https://www.meity.gov.in/static/uploads/2025/11/c56ceae6c383460ca69577428d36828b.pdf"},
+        {"label": "DPDP Rules, 2025", "url": "https://www.meity.gov.in/static/uploads/2025/11/53450e6e5dc0bfa85ebd78686cadad39.pdf"},
+    ],
 }
 
 
-def normalize_country(raw: str | None) -> str:
-    return (raw or "US").strip().upper()[:2]
+def compliance_for_country(raw: str | None = None) -> dict[str, Any]:
+    """Return the tenant checklist.
 
-
-def _humanize(key: str) -> str:
-    """consent_disclosure -> "consent disclosure".
-
-    `str.replace` takes literals, not a regex — writing `/_/g` here silently
-    matched nothing and left every label as a raw snake_case key.
+    The argument is retained for the existing query surface; the tenant
+    checklist is India-only and does not vary by the agent's number.
     """
-    return str(key).replace("_", " ")
-
-
-def compliance_for_country(raw: str | None) -> dict[str, Any]:
-    """The obligations and whether they are on by default."""
-    code = normalize_country(raw)
-    entry = COUNTRY_COMPLIANCE.get(code, DEFAULT_COUNTRY)
+    del raw
     return {
-        "country": code,
-        "regulation": entry["regulation"],
-        "summary": entry["summary"],
+        "country": INDIA_COMPLIANCE["country"],
+        "countryName": INDIA_COMPLIANCE["countryName"],
+        "regulation": INDIA_COMPLIANCE["regulation"],
+        "summary": INDIA_COMPLIANCE["summary"],
         "obligations": [
-            {"key": key, "label": _humanize(key), "enabled": True}
-            for key in entry["obligations"]
+            {"key": key, "label": label}
+            for key, label in INDIA_COMPLIANCE["obligations"].items()
         ],
+        "notes": list(INDIA_COMPLIANCE["notes"]),
+        "sources": list(INDIA_COMPLIANCE["sources"]),
     }
 
 
 def compliance_catalog() -> list[dict[str, Any]]:
-    """Every country the console offers, with its obligations."""
-    from server.services.saas.telephony_countries import BUY_COUNTRIES
-
-    return [
-        {**compliance_for_country(c["code"]), "countryName": c["name"], "dial": c["dial"]}
-        for c in BUY_COUNTRIES
-    ]
+    """The tenant checklist; India is the only market the console presents."""
+    return [{**compliance_for_country(), "dial": "+91"}]
 
 
 def merge_agent_compliance(
-    saved: dict[str, Any] | None, country: str | None
+    saved: dict[str, Any] | None, country: str | None = None
 ) -> dict[str, Any]:
-    """Stored toggles over the catalogue defaults.
+    """Stored India acknowledgements over the checklist defaults.
 
-    Stored `false` is honoured, but a key the catalogue has since added defaults
-    to `true` — so a new obligation is visible rather than silently off.
+    Acknowledgements saved under a former non-India checklist are discarded so
+    an operator must re-confirm the Indian obligations. A newly added obligation
+    remains unconfirmed until it is explicitly acknowledged.
     """
-    base = compliance_for_country(country)
+    del country
+    base = compliance_for_country()
     stored = saved if isinstance(saved, dict) else {}
-    toggles = {t["key"]: bool(t.get("enabled", True)) for t in base["obligations"]}
-    for key, value in (stored.get("acknowledged") or {}).items():
+    toggles = {item["key"]: False for item in base["obligations"]}
+    saved_market = str(stored.get("country") or "").strip().upper()[:2]
+    acknowledgements = stored.get("acknowledged") if saved_market in {"", "IN"} else None
+    for key, value in (acknowledgements if isinstance(acknowledgements, dict) else {}).items():
         if key in toggles:
             toggles[key] = bool(value)
     return {
-        "country": base["country"],
-        "regulation": base["regulation"],
-        "summary": base["summary"],
+        **base,
         "acknowledged": toggles,
     }

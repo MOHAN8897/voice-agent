@@ -1,7 +1,7 @@
 import React from 'react';
 import { PageHeader } from './PageHeader';
 import { Footer } from '../components/Footer';
-import { Shield, Lock, FileText, CheckCircle2 } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 export function PrivacyPage({ onBackToLanding, onEnterConsole, onNavigatePage, onSignIn }) {
   return (
@@ -24,7 +24,7 @@ export function PrivacyPage({ onBackToLanding, onEnterConsole, onNavigatePage, o
               Dialtact Privacy Policy
             </h1>
             <p className="text-xs text-[#524E5E] mt-2">
-              Last Updated: October 2026 • Effective Date: January 1, 2026
+              Updated: 24 October 2026 · India
             </p>
           </div>
 
@@ -33,7 +33,7 @@ export function PrivacyPage({ onBackToLanding, onEnterConsole, onNavigatePage, o
               1. Scope &amp; Telephony Voice Data Processing
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
-              Dialtact Inc. ("Dialtact", "we", "us") provides autonomous AI voice employee infrastructure. This Privacy Policy details how we collect, process, transcribe, and secure audio streams, synthetic voice models, caller telemetry, and account data transmitted across our web services and telephone networks.
+              Dialtact ("we", "us") provides AI voice services. We process account details, contact lists, call audio, transcripts and call metadata to provide and support the service. Business customers are responsible for the purpose of their calls, the information they collect and the privacy notices they provide to callers.
             </p>
           </section>
 
@@ -42,16 +42,18 @@ export function PrivacyPage({ onBackToLanding, onEnterConsole, onNavigatePage, o
               2. Voice Recording, Transcription &amp; Consent Disclosures
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
-              Inbound and outbound telephone calls processed through Dialtact are digitized and transcribed in real-time. Customers deploying Dialtact agents are contractually responsible for providing two-party consent disclosures ("This call is monitored or recorded by an automated voice assistant") in compliance with applicable federal, state, and international telecommunication laws.
+              Identify your business and explain any recording or transcription, its purpose and the applicable privacy notice before collecting caller data. Obtain consent or other permission required for your use case. Commercial calls in India also need review under TRAI's TCCCPR framework for valid consent, recipient preferences and applicable registration.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-lg font-bold text-[#0F0E17]">
-              3. Voice Encryption &amp; Telephony Protocols
+              3. Indian data protection framework
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
-              Real-time RTP voice media is transmitted over Secure Real-Time Transport Protocol (SRTP) with AES-128 or AES-256 encryption. Web and API communications are strictly mandated under TLS 1.3. Call audio recordings are encrypted at rest using AES-256 keys managed in secure Hardware Security Modules (HSM).
+              The Information Technology Act, 2000 and SPDI Rules, 2011 apply where relevant. The Digital Personal Data Protection Act, 2023 and Rules, 2025 have phased commencement. Main notice, consent and data-principal duties commence 18 months after Gazette publication in November 2025; preparation for those duties does not mean they are all already in force. Review the{' '}
+              <a href="https://www.meity.gov.in/static/uploads/2025/11/c56ceae6c383460ca69577428d36828b.pdf" target="_blank" rel="noopener noreferrer" className="font-semibold underline">official commencement notification</a>{' '}and{' '}
+              <a href="https://www.meity.gov.in/static/uploads/2025/11/53450e6e5dc0bfa85ebd78686cadad39.pdf" target="_blank" rel="noopener noreferrer" className="font-semibold underline">DPDP Rules</a>.
             </p>
           </section>
 
@@ -60,7 +62,7 @@ export function PrivacyPage({ onBackToLanding, onEnterConsole, onNavigatePage, o
               4. Tenant Isolation &amp; Zero Model Training on Customer Audio
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
-              Dialtact does not sell, license, or use your proprietary voice recordings, customer caller transcripts, or business knowledge base materials to train foundational public LLMs. All workspace data is strictly partitioned using multi-tenant database isolations enforced at the application and database kernel layers.
+              Dialtact does not sell your personal information or use your customer calls, transcripts or business knowledge to train public foundation models. Workspace access is restricted by tenant and authorised roles. Only share information needed for your stated calling purpose and control which members can access it.
             </p>
           </section>
 
@@ -69,7 +71,7 @@ export function PrivacyPage({ onBackToLanding, onEnterConsole, onNavigatePage, o
               5. Data Retention &amp; Deletion
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
-              Subscribers retain full ownership and discretion over recording retention timelines. You may delete call logs, transcripts, and voice cache snapshots at any time via your workspace console or automated REST endpoints. Workspace deletion initiates a 14-day quarantine grace period followed by hard cryptographic purging.
+              Document a retention period appropriate to the purpose of your recordings, transcripts and contact data. Use the available deletion process or contact support for a request. Applicable recordkeeping requirements, disputes and the service's deletion process may affect when data can be removed; do not assume an unlimited archive or immediate erasure.
             </p>
           </section>
 
@@ -78,7 +80,7 @@ export function PrivacyPage({ onBackToLanding, onEnterConsole, onNavigatePage, o
               6. Privacy Rights &amp; Contact
             </h2>
             <p className="text-sm text-[#524E5E] leading-relaxed">
-              For questions regarding our privacy architecture or to exercise GDPR / CCPA data subject rights, contact our Data Privacy Office directly at{' '}
+              For privacy questions, correction or deletion requests, consent withdrawal or grievances under applicable Indian law, contact{' '}
               <a href="mailto:privacy@dialtact.com" className="font-semibold text-[#6344E7] hover:underline">
                 privacy@dialtact.com
               </a>{' '}

@@ -1,0 +1,58 @@
+{
+  "intents": {
+    "india-tenant-compliance": {
+      "declaredAt": 1792865547633,
+      "id": "india-tenant-compliance",
+      "state": "declared",
+      "statement": "Indian tenants see Indian calling consent and privacy obligations with truthful acknowledgements and phased DPDP guidance.",
+      "status": "proposed",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/AgentStudioModule.jsx"
+        ]
+      },
+      "updatedAt": 1792865702098
+    },
+    "inline:indian-tenants-see-indian-consent-and-privacy-gu-6d37e14a": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "IN · TRAI TCCCPR / Indian privacy law",
+            "kind": "text"
+          },
+          {
+            "contains": "Calling consent & privacy",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "TTS outage",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1792865692665,
+      "id": "inline:indian-tenants-see-indian-consent-and-privacy-gu-6d37e14a",
+      "provenBy": {
+        "at": 1792865692884,
+        "grade": "presence",
+        "runId": "drive-s7298985c-d5ff-4c6d-8a6c-966ce9dacca1",
+        "verdictId": "reticle_assert:1792865692884"
+      },
+      "state": "proved",
+      "statement": "Indian tenants see Indian consent and privacy guidance and do not see internal speech outage controls.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/AgentStudioModule.jsx"
+        ]
+      },
+      "updatedAt": 1792865692913
+    }
+  },
+  "subject": "console",
+  "version": 1
+}
