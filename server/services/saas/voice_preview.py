@@ -215,6 +215,7 @@ async def _synthesize_sarvam(
         model=model,
         pace=speed,
         temperature=temperature,
+        session_id=None,
     )
     audio = result.get("audio_bytes")
     if not isinstance(audio, bytes) or len(audio) < 44 or not audio.startswith(b"RIFF") or audio[8:12] != b"WAVE":

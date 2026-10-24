@@ -545,6 +545,74 @@ async def test_synthesize_preview_serves_from_stored_sample_with_zero_api_calls(
 
 
 @pytest.mark.asyncio
+async def test_sarvam_preview_ignores_an_unrelated_broken_live_stack(monkeypatch):
+    import server.services.sarvam_tts_service as sarvam_service
+    import server.services.tts_config as tts_config
+    from server.services.saas import voice_preview
+
+    audio = pcm16_to_wav(b"\x02\x00" * 200, 24000)
+    captured = {}
+
+    async def fake_synthesize(**kwargs):
+        captured.update(kwargs)
+        return {"audio_bytes": audio}
+
+    def fail_stack(*_args, **_kwargs):
+        raise RuntimeError("live session stack is unavailable")
+
+    monkeypatch.setattr(sarvam_service, "synthesize", fake_synthesize)
+    monkeypatch.setattr(tts_config, "_stack_for_session", fail_stack)
+
+    result = await voice_preview.synthesize_preview(
+        "Server owned preview line",
+        voice_id="pooja_te_conversation",
+        language="te-IN",
+        speed=1.0,
+        provider="sarvam",
+        model="bulbul:v4-flash",
+        tier="medium",
+    )
+
+    assert captured["session_id"] is None
+    assert captured["model"] == "bulbul:v4-flash"
+    assert captured["speaker"] == "pooja_te_conversation"
+    assert result["audio"] == audio
+
+
+@pytest.mark.asyncio
+async def test_catalog_preview_survives_unrelated_live_stack_failure(monkeypatch, tmp_path):
+    import server.services.sarvam_tts_service as sarvam_service
+    import server.services.tts_config as tts_config
+    from server.config.env import get_settings
+    from server.services.saas import voice_preview, voice_stack_profiles
+
+    monkeypatch.setattr(get_settings(), "data_dir", str(tmp_path))
+    monkeypatch.setitem(voice_stack_profiles._REVERSE_ALIAS_CACHE, "voc_v4_stack_test", {
+        "tier": "medium",
+        "provider": "sarvam",
+        "model": "bulbul:v4-flash",
+        "providerVoiceId": "pooja_te_conversation",
+        "label": "Voice 215",
+        "languages": ["te-IN"],
+    })
+    audio = pcm16_to_wav(b"\x02\x00" * 200, 24000)
+
+    async def fake_synthesize(**_kwargs):
+        return {"audio_bytes": audio}
+
+    def fail_stack(*_args, **_kwargs):
+        raise RuntimeError("live session stack is unavailable")
+
+    monkeypatch.setattr(sarvam_service, "synthesize", fake_synthesize)
+    monkeypatch.setattr(tts_config, "_stack_for_session", fail_stack)
+
+    result = await voice_preview.synthesize_catalog_preview("voc_v4_stack_test", "te-IN")
+
+    assert result["audio"] == audio
+    assert result["label"] == "Voice 215"
+
+
+@pytest.mark.asyncio
 async def test_long_gemini_voice_id_is_never_classified_as_cartesia(monkeypatch):
     from server.routes import app_telephony
     from server.services.saas import voice_preview

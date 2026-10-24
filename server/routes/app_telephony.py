@@ -385,7 +385,7 @@ async def catalog_voice_preview(
             "error": {"code": "voice_not_available", "message": "This voice sample is not available in the current catalog."}
         }) from None
     except Exception as exc:
-        logger.warning("[VOICE] catalog preview failed error=%s", type(exc).__name__)
+        logger.warning("[VOICE] catalog preview failed error=%s", type(exc).__name__, exc_info=True)
         raise HTTPException(status_code=502, detail={
             "error": {"code": "voice_preview_unavailable", "message": "The voice sample could not be prepared. Try again later."}
         }) from None
@@ -435,7 +435,7 @@ async def live_voice_preview(
             "error": {"code": "voice_not_available", "message": "This voice sample is not available in the current catalog."}
         }) from None
     except Exception as exc:
-        logger.warning("[VOICE] live preview failed error=%s", type(exc).__name__)
+        logger.warning("[VOICE] live preview failed error=%s", type(exc).__name__, exc_info=True)
         raise HTTPException(status_code=502, detail={
             "error": {"code": "voice_preview_unavailable", "message": "The voice sample could not be prepared. Try again later."}
         }) from None

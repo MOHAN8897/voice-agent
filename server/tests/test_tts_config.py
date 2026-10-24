@@ -158,3 +158,22 @@ def test_sarvam_tts_maps_en_us_to_provider_en_in():
     cfg = resolve_tts_config("cfg-test", language_code="en-US")
     assert cfg["provider"] == "sarvam"
     assert cfg["language_code"] == "en-IN"
+
+
+def test_stateless_config_never_resolves_the_live_session_stack(monkeypatch):
+    import server.services.tts_config as tts_config
+
+    def fail_stack(*_args, **_kwargs):
+        raise AssertionError("stateless synthesis must not resolve the live session stack")
+
+    monkeypatch.setattr(tts_config, "_stack_for_session", fail_stack)
+    cfg = resolve_tts_config(
+        None,
+        language_code="te-IN",
+        speaker="pooja_te_conversation",
+        model="bulbul:v4-flash",
+        pace=1.0,
+    )
+    assert cfg["provider"] == "sarvam"
+    assert cfg["model"] == "bulbul:v4-flash"
+    assert cfg["speaker"] == "pooja_te_conversation"

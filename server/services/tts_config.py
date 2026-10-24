@@ -105,7 +105,7 @@ def _effective_tts_model(
 
 
 def _resolve_cartesia_tts_config(
-    session_id: str,
+    session_id: str | None,
     *,
     language_code: str,
     speaker: str | None,
@@ -116,7 +116,7 @@ def _resolve_cartesia_tts_config(
     allow_runtime: bool = True,
 ) -> dict[str, Any]:
     settings = get_settings()
-    rt = runtime_settings.get(session_id) if allow_runtime else {}
+    rt = runtime_settings.get(session_id) if allow_runtime and session_id is not None else {}
     resolved_model = model or (stack.tts.model if stack else None) or rt.get("ttsModel") or settings.cartesia_tts_model
     if not _is_cartesia_model(str(resolved_model)):
         raise TtsConfigError("The selected speech model is unavailable")
@@ -185,7 +185,7 @@ def _resolve_cartesia_tts_config(
 
 
 def resolve_tts_config(
-    session_id: str = "default",
+    session_id: str | None = "default",
     *,
     language_code: str = "te-IN",
     speaker: str | None = None,
@@ -207,12 +207,19 @@ def resolve_tts_config(
     explicit argument → runtime override → provider stack → environment default.
     """
     settings = get_settings()
-    rt = runtime_settings.get(session_id)
-    stack = (
-        resolved_stack or _stack_for_session(session_id, call_id, language_code)
-        if provider_override is None
-        else None
-    )
+    if session_id is None:
+        # Stateless synthesis (server-owned previews) must not inherit or depend
+        # on the live call stack: an unrelated tier/stack failure would otherwise
+        # break every preview.
+        rt = {}
+        stack = None if provider_override is not None else resolved_stack
+    else:
+        rt = runtime_settings.get(session_id)
+        stack = (
+            resolved_stack or _stack_for_session(session_id, call_id, language_code)
+            if provider_override is None
+            else None
+        )
     stack_is_locked = bool(stack is not None and (call_id or resolved_stack is not None))
     if stack_is_locked:
         # Session controls can change while a call is active (and can retain stale

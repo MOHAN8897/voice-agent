@@ -30,7 +30,7 @@ async def synthesize(
     pace: Optional[float] = None,
     model: Optional[str] = None,
     temperature: Optional[float] = None,
-    session_id: str = "default",
+    session_id: Optional[str] = "default",
     timeout_ms: Optional[int] = None,
 ) -> dict:
     """
@@ -81,7 +81,7 @@ async def synthesize(
     if "temperature" in cfg:
         payload["temperature"] = cfg["temperature"]
 
-    log_tts("Synthesis started", chars=len(text), speaker=speaker, language_code=language_code, model=model, pace=pace, session=session_id)
+    log_tts("Synthesis started", chars=len(text), speaker=speaker, language_code=language_code, model=model, pace=pace, session=session_id or "preview")
 
     headers = {
         "api-subscription-key": dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key or "",
@@ -136,7 +136,7 @@ async def synthesize(
     except Exception as e:
         raise AppError(ErrorCode.PROVIDER_ERROR, provider="sarvam_tts", cause=e) from e
 
-    log_tts("Audio received", bytes=len(audio_bytes), request_id=body.get("request_id"), speaker=speaker, session=session_id)
+    log_tts("Audio received", bytes=len(audio_bytes), request_id=body.get("request_id"), speaker=speaker, session=session_id or "preview")
     return {
         "audio_bytes": audio_bytes,
         "content_type": "audio/wav",
