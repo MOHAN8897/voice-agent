@@ -3,6 +3,7 @@ Agent CRUD service — Phase 2 workspace entity.
 """
 from __future__ import annotations
 
+import asyncio
 import uuid
 from typing import Any
 
@@ -17,6 +18,7 @@ from server.db.models.entities import Agent, ConfigVersion, Tenant
 _MEM_AGENTS: dict[str, dict[str, Any]] = {}
 _DEFAULT_AGENT_ID: str | None = None
 _MEM_BUILD_REQUESTS: dict[str, dict[str, Any]] = {}
+_RECOMPILE_TASKS: set[asyncio.Task] = set()
 
 
 class AgentBuildRequestConflict(ValueError):
@@ -316,6 +318,14 @@ class AgentService:
             if tenant_id and str(row.tenant_id) != tenant_id:
                 raise KeyError(agent_id)
             current_voice = dict(row.voice_settings or {})
+            disclosure_changed = False
+            if "recording_disclosure_enabled" in patch or "recording_disclosure_text" in patch:
+                incoming_enabled = patch.get("recording_disclosure_enabled")
+                incoming_text = patch.get("recording_disclosure_text")
+                disclosure_changed = (
+                    (incoming_enabled is not None and bool(incoming_enabled) != bool(row.recording_disclosure_enabled))
+                    or (incoming_text is not None and (incoming_text or "") != (row.recording_disclosure_text or ""))
+                )
             try:
                 current_revision = max(0, int(current_voice.get("_voice_revision") or 0))
             except (TypeError, ValueError):
@@ -415,7 +425,34 @@ class AgentService:
                 flag_modified(row, "voice_settings")
             await session.commit()
             await session.refresh(row)
-            return self._row_to_dict(row)
+            result = self._row_to_dict(row)
+        if disclosure_changed:
+            self._schedule_disclosure_recompile(agent_id)
+        return result
+
+    @staticmethod
+    def _schedule_disclosure_recompile(agent_id: str) -> None:
+        """Rebuild the active snapshot so compiled-brain readers see the new policy."""
+        async def _run() -> None:
+            try:
+                from server.brain.compiled_brain_service import compiled_brain_service
+
+                await compiled_brain_service.compile_for_agent(agent_id)
+            except Exception as exc:
+                from server.utils.logger import logger
+
+                logger.warning(
+                    "[AGENT] disclosure recompile failed for %s: %s",
+                    agent_id,
+                    type(exc).__name__,
+                )
+
+        try:
+            task = asyncio.get_running_loop().create_task(_run())
+        except RuntimeError:
+            return
+        _RECOMPILE_TASKS.add(task)
+        task.add_done_callback(_RECOMPILE_TASKS.discard)
 
     async def delete_agent(self, agent_id: str, tenant_id: str | None = None) -> dict[str, Any]:
         from server.agent.instruction_store import instruction_store

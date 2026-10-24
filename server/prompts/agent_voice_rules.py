@@ -1335,6 +1335,40 @@ AGENT_VOICE_RULE_MARKERS: tuple[str, ...] = (
 )
 
 
+DISCLOSURE_BLOCK_MARKER = "### RECORDING DISCLOSURE POLICY"
+
+
+def strip_recording_disclosure(compiled_text: str) -> str:
+    """Remove any previously injected disclosure block so injection stays idempotent."""
+    return re.sub(
+        r"\n*### RECORDING DISCLOSURE POLICY[^\n]*\n.*?(?=\n---|\n###|\Z)",
+        "",
+        compiled_text or "",
+        flags=re.DOTALL,
+    ).strip()
+
+
+def inject_recording_disclosure(
+    compiled_text: str,
+    *,
+    enabled: bool,
+    disclosure_text: str | None,
+    language: str,
+) -> str:
+    """Apply the current disclosure setting to an already assembled or exact brain."""
+    text = strip_recording_disclosure(compiled_text)
+    if not enabled:
+        return text
+    block = build_recording_disclosure_instruction(
+        disclosure_text=disclosure_text,
+        language=language,
+    )
+    safety_idx = text.find("\n--- SAFETY ---")
+    if safety_idx >= 0:
+        return text[:safety_idx] + block + "\n" + text[safety_idx:]
+    return text + block
+
+
 def build_recording_disclosure_instruction(
     disclosure_text: str | None = None,
     language: str = "te-IN",

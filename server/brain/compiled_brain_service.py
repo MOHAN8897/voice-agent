@@ -108,17 +108,20 @@ class CompiledBrainService:
                     optimized_text = business_from_unified_brain(optimized_text)
 
         platform_rules = platform_body_for_agent_language(platform["body"], lang)
-        if disclosure_enabled:
-            from server.prompts.agent_voice_rules import build_recording_disclosure_instruction
-
-            platform_rules = (platform_rules or "").rstrip() + build_recording_disclosure_instruction(
-                disclosure_text=disclosure_text,
-                language=lang,
-            )
         compiled_text = optimized_text if exact_artifact else assemble_unified_brain(
             language=lang,
             script=optimized_text,
             platform_call_rules=platform_rules,
+        )
+        # Exact artifacts bypass platform assembly; apply the disclosure to both
+        # shapes so toggling it always reaches the compiled snapshot a call uses.
+        from server.prompts.agent_voice_rules import inject_recording_disclosure
+
+        compiled_text = inject_recording_disclosure(
+            compiled_text,
+            enabled=disclosure_enabled,
+            disclosure_text=disclosure_text,
+            language=lang,
         )
         checksum = checksum_instructions(compiled_text)
         compiled_version = f"cb_v{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:6]}"
@@ -226,13 +229,20 @@ class CompiledBrainService:
         lang, disclosure_enabled, disclosure_text = await self._agent_info(agent_id)
         if is_unified_compiled_brain(optimized_prompt):
             compiled_text = optimized_prompt
-            report["compiled_artifact_checksum"] = checksum_instructions(compiled_text)
+            # Keep the stored checksum on the artifact as published; the
+            # disclosure is re-applied on every compile for the active config.
+            report["compiled_artifact_checksum"] = checksum_instructions(optimized_prompt)
         else:
             platform_rules = platform_body_for_agent_language(platform["body"], lang)
-            if disclosure_enabled:
-                from server.prompts.agent_voice_rules import build_recording_disclosure_instruction
-                platform_rules = (platform_rules or "").rstrip() + build_recording_disclosure_instruction(disclosure_text=disclosure_text, language=lang)
             compiled_text = assemble_unified_brain(language=lang, script=optimized_prompt, platform_call_rules=platform_rules)
+        from server.prompts.agent_voice_rules import inject_recording_disclosure
+
+        compiled_text = inject_recording_disclosure(
+            compiled_text,
+            enabled=disclosure_enabled,
+            disclosure_text=disclosure_text,
+            language=lang,
+        )
         published = {
             "version_id": f"bb_v{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:12]}",
             "agent_id": agent_id, "optimized_prompt": optimized_prompt,

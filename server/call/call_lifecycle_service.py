@@ -116,26 +116,14 @@ def status_url(call_id: str) -> str:
 
 def apply_recording_disclosure(compiled_text: str, agent: dict[str, Any], language: str) -> str:
     """Use the same disclosure in the dial-time and connected-call snapshots."""
-    import re
+    from server.prompts.agent_voice_rules import inject_recording_disclosure
 
-    from server.prompts.agent_voice_rules import build_recording_disclosure_instruction
-
-    compiled_text = re.sub(
-        r"\n*### RECORDING DISCLOSURE POLICY[^\n]*\n.*?(?=\n---|\n###|\Z)",
-        "",
+    return inject_recording_disclosure(
         compiled_text,
-        flags=re.DOTALL,
-    ).strip()
-    if agent.get("recording_disclosure_enabled"):
-        block = build_recording_disclosure_instruction(
-            disclosure_text=agent.get("recording_disclosure_text"), language=language,
-        )
-        safety_idx = compiled_text.find("\n--- SAFETY ---")
-        if safety_idx >= 0:
-            compiled_text = compiled_text[:safety_idx] + block + "\n" + compiled_text[safety_idx:]
-        else:
-            compiled_text += block
-    return compiled_text
+        enabled=bool(agent.get("recording_disclosure_enabled")),
+        disclosure_text=agent.get("recording_disclosure_text"),
+        language=language,
+    )
 
 
 class CallLifecycleService:
