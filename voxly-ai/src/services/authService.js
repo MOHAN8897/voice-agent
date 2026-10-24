@@ -15,6 +15,7 @@ export const authService = {
    * Get current stored session from localStorage or API
    */
   getSession() {
+    if (typeof localStorage === 'undefined') return null;
     try {
       const data = localStorage.getItem(STORAGE_KEY);
       return data ? JSON.parse(data) : null;
@@ -99,7 +100,7 @@ export const authService = {
       tenantId: res.tenant?.tenantId,
     };
     this.saveSession(user);
-    return { ...res, user };
+    return { ...res, user: { ...res.user, ...user } };
   },
 
   /**
@@ -130,7 +131,7 @@ export const authService = {
       tenantId: res.tenant?.tenantId,
     };
     this.saveSession(user);
-    return { ...res, user };
+    return { ...res, user: { ...res.user, ...user } };
   },
 
   /**

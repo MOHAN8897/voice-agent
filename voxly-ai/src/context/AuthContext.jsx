@@ -19,6 +19,7 @@ import {
 import { IdleWarningModal } from '../components/IdleWarningModal';
 import { initializeGoogleIdentityOnce, loadGoogleIdentityScript } from '../utils/loadGoogleIdentity';
 import { syncReticleWithUser } from '../services/reticleGate';
+import { consoleHash, consumePostAuthTab } from '../lib/consoleEntry';
 
 const AuthContext = createContext(null);
 
@@ -101,6 +102,7 @@ export function AuthProvider({ children }) {
   const [signOutReason, setSignOutReason] = useState('');
   const idleRef = useRef(null);
   const googleLoginInFlightRef = useRef(null);
+  const authBootStarted = useRef(false);
 
   useEffect(() => {
     syncReticleWithUser(user);
@@ -194,15 +196,22 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    // A newly received session policy must not start another restore while a
+    // login or OAuth handoff is still completing.
+    if (authBootStarted.current) return;
+    authBootStarted.current = true;
     const run = async () => {
       initAuthSessionSync();
       const hash = window.location.hash || '';
-      if (hash.includes('auth/callback')) {
+      const isCallback = hash.includes('auth/callback');
+      let callbackAuthenticated = false;
+      if (isCallback) {
         const qs = hash.split('?')[1] || '';
         const params = new URLSearchParams(qs);
         const handoff = params.get('handoff');
         const access = params.get('accessToken');
-        window.location.hash = '#dashboard/employees';
+        // Remove the single-use credential without navigating before auth exists.
+        window.history.replaceState({}, '', window.location.pathname + window.location.search);
         if (handoff) {
           try {
             const data = await api.auth.consumeHandoff(handoff);
@@ -220,6 +229,7 @@ export function AuthProvider({ children }) {
               }
               authService.saveSession(normalized);
               setUser(normalized);
+              callbackAuthenticated = true;
             }
           } catch {
             /* refreshSession below will clear a dead handoff */
@@ -228,7 +238,13 @@ export function AuthProvider({ children }) {
           // Legacy redirect put access in the hash but Set-Cookie on the API host —
           // cookie never reaches the SPA origin. Prefer handoff; this still restores access.
           api.setToken(access);
+          callbackAuthenticated = true;
         }
+      }
+
+      if (callbackAuthenticated) {
+        clearStoredActivity();
+        setSignOutReason('');
       }
 
       const storedLastActivity = readStoredActivity();
@@ -258,9 +274,12 @@ export function AuthProvider({ children }) {
         }
       }
       setIsLoading(false);
+      if (isCallback && refreshed) {
+        window.location.hash = consoleHash(consumePostAuthTab());
+      }
     };
     run();
-  }, [refreshSession, sessionPolicy?.idleTimeoutMinutes]);
+  }, [refreshSession]);
 
   // Cross-tab logout / access adoption + proactive refresh on tab focus.
   useEffect(() => {
@@ -423,6 +442,7 @@ export function AuthProvider({ children }) {
   const loginWithEmail = async (email, password) => {
     const data = await authService.signInWithEmailPassword(email, password);
     const normalized = normalizeUser(data);
+    authService.saveSession(normalized);
     setUser(normalized);
     setSignOutReason('');
     idleRef.current?.resetSession();
@@ -436,6 +456,7 @@ export function AuthProvider({ children }) {
       return data;
     }
     const normalized = normalizeUser(data);
+    authService.saveSession(normalized);
     setUser(normalized);
     idleRef.current?.resetSession();
     window.dispatchEvent(new Event('voxly:session'));
