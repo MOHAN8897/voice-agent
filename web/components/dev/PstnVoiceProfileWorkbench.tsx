@@ -312,8 +312,18 @@ async function responseError(response: Response): Promise<string> {
   return `Request failed (${response.status}).`;
 }
 
+const PROFILE_SECTIONS = [
+  { id: "stack", label: "Voice Stack" },
+  { id: "pricing", label: "Pricing" },
+  { id: "telephony", label: "Telephony" },
+  { id: "transcription", label: "Transcription" },
+] as const;
+
+type ProfileSectionId = (typeof PROFILE_SECTIONS)[number]["id"];
+
 export function PstnVoiceProfileWorkbench() {
   const [rows, setRows] = useState<TierProfileRow[]>([]);
+  const [activeSection, setActiveSection] = useState<ProfileSectionId>("stack");
   const [environment, setEnvironment] = useState("");
   const [selected, setSelected] = useState<ProfileTier>("low");
   const [draft, setDraft] = useState<ComposedProfile>(defaultProfileForTier("low"));
@@ -1311,7 +1321,51 @@ export function PstnVoiceProfileWorkbench() {
         })}
       </div>
 
+      <div
+        role="tablist"
+        aria-label="Voice stack configuration sections"
+        className="flex flex-wrap gap-1.5 rounded-2xl border border-surface-border bg-surface-card p-1.5"
+      >
+        {PROFILE_SECTIONS.map((tab) => {
+          const active = activeSection === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              id={`pstn-section-tab-${tab.id}`}
+              aria-selected={active}
+              aria-controls={`pstn-section-panel-${tab.id}`}
+              tabIndex={active ? 0 : -1}
+              onClick={() => setActiveSection(tab.id)}
+              onKeyDown={(event) => {
+                if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+                event.preventDefault();
+                const current = PROFILE_SECTIONS.findIndex((section) => section.id === activeSection);
+                const step = event.key === "ArrowRight" ? 1 : -1;
+                const next = PROFILE_SECTIONS[(current + step + PROFILE_SECTIONS.length) % PROFILE_SECTIONS.length];
+                setActiveSection(next.id);
+                document.getElementById(`pstn-section-tab-${next.id}`)?.focus();
+              }}
+              className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/50 ${
+                active
+                  ? "bg-accent-dim text-text shadow-sm ring-1 ring-accent-primary/40"
+                  : "text-text-muted hover:bg-surface-raised/60 hover:text-text"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Selected Tier Management Panel */}
+      <div
+        role="tabpanel"
+        id="pstn-section-panel-stack"
+        aria-labelledby="pstn-section-tab-stack"
+        hidden={activeSection !== "stack"}
+      >
       <DevCard
         title={`${tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected} Configuration`}
         description="Select the provider and model for STT, LLM, and TTS. Changes apply to all new tenant calls in this tier."
@@ -2200,8 +2254,15 @@ export function PstnVoiceProfileWorkbench() {
           </div>
         </div>
       </DevCard>
+      </div>
 
       {/* Platform & Channel Prices (INR) Card */}
+      <div
+        role="tabpanel"
+        id="pstn-section-panel-pricing"
+        aria-labelledby="pstn-section-tab-pricing"
+        hidden={activeSection !== "pricing"}
+      >
       <DevCard
         title="Platform & Channel Prices (INR)"
         description="Centralized pricing management for call minutes, channels, and number DID rental in Indian Rupees (INR). Applied globally to tenant balance deduction and billing calculations."
@@ -2352,8 +2413,15 @@ export function PstnVoiceProfileWorkbench() {
           </Button>
         </div>
       </DevCard>
+      </div>
 
       {/* Telephony Infrastructure & PSTN Calling Trunk Card */}
+      <div
+        role="tabpanel"
+        id="pstn-section-panel-telephony"
+        aria-labelledby="pstn-section-tab-telephony"
+        hidden={activeSection !== "telephony"}
+      >
       <DevCard
         title="Telephony Infrastructure & PSTN Calling Trunk"
         description="Select and manage wholesale carrier trunks for inbound and outbound calls, DID provisioning, and bidirectional audio streaming."
@@ -2491,8 +2559,15 @@ export function PstnVoiceProfileWorkbench() {
           </span>
         </div>
       </DevCard>
+      </div>
 
       {/* Transcription Mode & Caller Transcripts Card */}
+      <div
+        role="tabpanel"
+        id="pstn-section-panel-transcription"
+        aria-labelledby="pstn-section-tab-transcription"
+        hidden={activeSection !== "transcription"}
+      >
       <DevCard
         title="Transcription Mode & Caller Transcripts"
         description="Choose when and how caller speech is transcribed into text records during PSTN telephone conversations."
@@ -2586,6 +2661,7 @@ export function PstnVoiceProfileWorkbench() {
           </div>
         </div>
       </DevCard>
+      </div>
 
       {/* Duplicate Stack Modal */}
       {showDuplicateModal && (
