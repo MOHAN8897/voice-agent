@@ -99,6 +99,46 @@ def test_fallback_resolution_prefers_same_language_then_english():
     assert resolve_fallback_language(None) == "en-IN"
 
 
+def test_callback_target_accepts_stored_e164_digits_without_plus():
+    # Call meta stores ``callee_e164`` as digits only (918897908470). Rejecting
+    # that shape skipped the callback row and silently downgraded the variant.
+    assert fallback._normalize_target("918897908470") == "+918897908470"
+    assert fallback._normalize_target("+91 88979 08470") == "+918897908470"
+    assert fallback._normalize_target("008897908470") == "+8897908470"
+    assert fallback._normalize_target("08897908470") == "+918897908470"
+    assert fallback._normalize_target("8897908470") == "+918897908470"
+    assert fallback._normalize_target("not a number") is None
+    assert fallback.callback_target({"callee_e164": "918897908470"}, "outbound") == "+918897908470"
+    assert fallback.callback_target({"caller_id": "918897908470"}, "inbound") == "+918897908470"
+
+
+@pytest.mark.asyncio
+async def test_global_switch_off_suppresses_audio_and_callback_promise(monkeypatch):
+    from server.services.speech_outage_config import SpeechOutageConfig
+
+    _patch_plan_inputs(monkeypatch)
+
+    async def disabled():
+        return SpeechOutageConfig(enabled=False, promise_callback=True)
+
+    monkeypatch.setattr(
+        "server.services.speech_outage_config.load_speech_outage_config", disabled,
+    )
+    loaded: list[dict] = []
+
+    async def loader(**kwargs):
+        loaded.append(kwargs)
+        return TenantFallbackConfig(available=True, promise_callback=True, callback_created=True)
+
+    monkeypatch.setattr(fallback, "_load_tenant_config", loader)
+    plan = await _plan(language="te-IN")
+    assert plan.pcm == b""
+    assert plan.text == ""
+    assert plan.defect == "announcement_disabled"
+    assert plan.callback_task_id is None
+    assert loaded == []
+
+
 def test_fallback_frames_follow_wire_codec():
     mulaw = fallback_wire_frames("te-IN", output_codec="mulaw", sample_rate=8000)
     l16 = fallback_wire_frames("te-IN", output_codec="linear16", sample_rate=16000)

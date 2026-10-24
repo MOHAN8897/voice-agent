@@ -41,6 +41,9 @@ DEFAULT_FALLBACK_VARIANT = CALL_BACK
 
 #: 300–500 ms of silence after the last frame before the carrier is released.
 FALLBACK_TAIL_SEC = 0.4
+#: Pause after clearing the failed reply. The carrier still holds a short
+#: jitter buffer, so emitting immediately clips the apology's first word.
+FALLBACK_SETTLE_SEC = 0.45
 #: A clip that cannot be emitted inside its own duration plus this grace is a
 #: broken wire, not slow speech; hang up immediately and record a defect.
 FALLBACK_WATCHDOG_GRACE_SEC = 8.0
@@ -266,8 +269,18 @@ def _normalize_target(value: str | None) -> str | None:
     cleaned = re.sub(r"[\s\-().]", "", raw)
     if cleaned.startswith("00"):
         cleaned = f"+{cleaned[2:]}"
-    elif cleaned.isdigit() and len(cleaned) == 10:
-        cleaned = f"+91{cleaned}"
+    elif cleaned.startswith("+"):
+        pass
+    elif cleaned.isdigit():
+        # Stored numbers are frequently E.164 digits without the plus sign
+        # (``918897908470``); treating those as invalid silently downgraded
+        # every promised callback to the safe "call us back" clip.
+        if len(cleaned) == 10:
+            cleaned = f"+91{cleaned}"
+        elif len(cleaned) == 11 and cleaned.startswith("0"):
+            cleaned = f"+91{cleaned[1:]}"
+        else:
+            cleaned = f"+{cleaned}"
     return cleaned if _CALLBACK_TARGET_RE.fullmatch(cleaned) else None
 
 
@@ -311,6 +324,7 @@ async def _load_tenant_config(
     agent_id: str | None,
     call_id: str | None,
     target: str | None,
+    promise_allowed: bool = True,
 ) -> TenantFallbackConfig:
     """Load agent promise setting + uploaded clips, creating the callback row first.
 
@@ -361,7 +375,7 @@ async def _load_tenant_config(
 
             config = TenantFallbackConfig(
                 available=True,
-                promise_callback=bool(agent.technical_fallback_promise_callback),
+                promise_callback=bool(agent.technical_fallback_promise_callback) and promise_allowed,
                 clips=clips,
                 note_text=str(agent.technical_fallback_text or "").strip(),
             )
@@ -510,19 +524,36 @@ async def prepare_technical_fallback_plan(
     voice_model: str | None = None,
     voice_id: str | None = None,
 ) -> FallbackPlan:
+    from server.services.speech_outage_config import load_speech_outage_config
+
     meta = _read_meta(call_id)
     transcript = _read_transcript(call_id)
     admitted_language = _normalize_language(language) or _DEFAULT_LANGUAGE
     target = callback_target(meta, direction)
+    outage = await load_speech_outage_config()
+    gender = resolve_voice_gender(provider=voice_provider, model=voice_model, voice_id=voice_id)
+    if not outage.enabled:
+        # The platform switch is authoritative and stops both the spoken
+        # announcement and any new callback promise it would have made.
+        log_pstn("fallback.disabled", call_id=call_id, reason=trigger)
+        return FallbackPlan(
+            variant=CALL_BACK,
+            language=admitted_language,
+            source="none",
+            gender=gender,
+            pcm=b"",
+            text="",
+            defect="announcement_disabled",
+        )
     config = await _load_tenant_config(
         tenant_id=tenant_id,
         agent_id=agent_id,
         call_id=call_id,
         target=target,
+        promise_allowed=outage.promise_callback,
     )
 
     variant = CALLBACK_PROMISE if config.callback_created else CALL_BACK
-    gender = resolve_voice_gender(provider=voice_provider, model=voice_model, voice_id=voice_id)
     clip = _select_clip(config.clips, admitted_language, variant, gender)
     defect = None if clip.pcm else "asset_missing"
     if defect:
@@ -571,6 +602,17 @@ async def prepare_technical_fallback_plan(
         callback_task_id=config.callback_task_id,
         defect=defect,
     )
+
+
+def platform_clip_coverage() -> dict[str, dict[str, list[str]]]:
+    """Languages with a shipped platform clip, per variant and voice gender."""
+    return {
+        variant: {
+            gender: [code for code in FALLBACK_TEXT[variant] if _load_pcm(variant, gender, code)]
+            for gender in _GENDERS
+        }
+        for variant in CLIP_VARIANTS
+    }
 
 
 def stamp_fallback_meta(

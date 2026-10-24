@@ -2337,6 +2337,7 @@ class PstnRealtimeVoiceLoop:
         self._technical_fallback_played = True
         self._technical_fallback_active = True
         from server.services.pstn_technical_fallback import (
+            FALLBACK_SETTLE_SEC,
             FALLBACK_TAIL_SEC,
             infer_voice_identity,
             prepare_technical_fallback_plan,
@@ -2405,6 +2406,9 @@ class PstnRealtimeVoiceLoop:
             self._farewell_response_active = True
             self._set_tts_active(True)
             try:
+                # Let the carrier's jitter buffer drain so the apology is not
+                # clipped by the tail of the failed response.
+                await asyncio.sleep(FALLBACK_SETTLE_SEC)
                 played = await asyncio.wait_for(_emit(), timeout=plan.watchdog_sec())
             except asyncio.TimeoutError:
                 played = sent_box["count"]
