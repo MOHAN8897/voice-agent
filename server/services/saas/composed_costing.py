@@ -144,34 +144,40 @@ async def load_provider_costs() -> dict[str, Any]:
         ).order_by(desc(ConfigVersion.version)).limit(1))
         row = result.scalar_one_or_none()
     stored_rates = copy.deepcopy(row.payload["rates"]) if row else []
-    defaults = default_provider_rates()
-    if stored_rates:
-        existing_ids = {r["id"] for r in stored_rates}
-        for d in defaults:
-            if d["id"] not in existing_ids:
-                stored_rates.append(copy.deepcopy(d))
-    else:
-        stored_rates = defaults
+    if not stored_rates:
+        # Unconfigured installations may preview published suggestions, but
+        # saving is what makes them authoritative for call costing.
+        stored_rates = default_provider_rates()
     view = {
         "schemaVersion": 1, "version": int(row.version) if row else 0, "configured": row is not None,
         "updatedAt": row.created_at.isoformat() if row else None,
         "reason": (row.payload.get("reason") or "") if row else "Published supplier tariff suggestions; save to configure.",
-        "editableTiers": ["low", "medium"], "premiumReadOnly": True,
+        "editableTiers": [], "premiumReadOnly": True,
         "rates": stored_rates,
     }
     from server.services.dev_runtime import effective_app_environment
     from server.services.saas.voice_stack_profiles import load_profile_records
 
-    profiles = await load_profile_records(effective_app_environment(), ("low", "medium"))
+    profiles = await load_profile_records(effective_app_environment(), None)
     view["stacks"] = provider_stack_views(view, profiles)
+    view["editableTiers"] = [stack["tier"] for stack in view["stacks"]]
     return view
+
+
+def _ordered_tiers(profiles: dict) -> list[str]:
+    custom = sorted(tier for tier in profiles if tier not in {"low", "medium", "premium"})
+    return ["low", "medium"] + custom
 
 
 def provider_stack_views(config: dict, profiles: dict) -> list[dict[str, Any]]:
     today = datetime.now(timezone.utc).date().isoformat()
     views = []
-    for tier, label in (("low", "Low"), ("medium", "Standard")):
-        profile = (profiles.get(tier) or {}).get("profile") or {}
+    for tier in _ordered_tiers(profiles):
+        record = profiles.get(tier) or {}
+        profile = record.get("profile") or {}
+        label = str(profile.get("label") or "").strip() or {"low": "Low", "medium": "Standard"}.get(
+            tier, tier.replace("_", " ").title()
+        )
         tts = [{"provider": model.get("provider"), "model": model.get("model")}
                for engine in profile.get("engines", []) for model in engine.get("models", [])]
         stages = {"stt": {"provider": (profile.get("stt") or {}).get("provider"), "model": (profile.get("stt") or {}).get("model")},
@@ -233,15 +239,11 @@ async def seed_default_provider_costs(*, actor: str, reason: str) -> dict[str, A
 
 
 def _rate(rates: list[dict], stage: str, selection: dict, unit: str, as_of: str) -> dict | None:
+    """Resolve only the rates pinned into a snapshot; no live/default fallback."""
     matched = [r for r in rates if r["stage"] == stage and r["provider"] == selection.get("provider")
                and r["model"] == selection.get("model") and r["unit"] == unit
                and r["effectiveFrom"] <= as_of and (r["effectiveUntil"] is None or as_of < r["effectiveUntil"])]
-    if not matched:
-        defaults = default_provider_rates()
-        matched = [r for r in defaults if r["stage"] == stage and r["provider"] == selection.get("provider")
-                   and r["model"] == selection.get("model") and r["unit"] == unit
-                   and r["effectiveFrom"] <= as_of and (r["effectiveUntil"] is None or as_of < r["effectiveUntil"])]
-    return matched[0] if len(matched) >= 1 else None
+    return matched[0] if len(matched) == 1 else None
 
 
 def build_cost_snapshot(config: dict, stack: dict, *, fx_rate_inr: Any, captured_at: datetime | None = None) -> dict[str, Any]:

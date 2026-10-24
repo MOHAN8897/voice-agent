@@ -312,7 +312,9 @@ class CallLedger:
         supplier_snapshot = meta.get("provider_cost_snapshot") if composed else None
         pinned_fx = supplier_snapshot.get("fxRateInr") if isinstance(supplier_snapshot, dict) else None
         fx_info = resolve_fx_rate_inr(preferred=pinned_fx or usage.get("fx_rate_inr"))
-        fx = float(fx_info["rate"] or 96.78)
+        fx = float(fx_info["rate"] or 0)
+        if fx <= 0:
+            raise ValueError("A positive INR per USD rate is required to stamp call costs.")
         model_usd = float(usage.get("model_cost_usd") if usage.get("model_cost_usd") is not None else usage.get("cost_usd") or 0)
         model_inr = model_usd * fx
         supplier_result = None

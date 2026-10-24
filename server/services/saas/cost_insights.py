@@ -56,17 +56,86 @@ def model_cost(usage: dict) -> tuple[Decimal | None, str]:
     return amount(usage.get("model_cost_usd")), "stored_model_cost"
 
 
+def _catalog_retail(row: dict, rates: dict, tier_records: dict | None) -> tuple[Any, Any] | None:
+    from server.services.saas.voice_stack_profiles import _native_tier_retail_rate
+
+    if str(row.get("channel") or "") == "browser":
+        return rates.get("web_agent_rate_inr_paise_per_min"), rates.get("web_agent_rate_usd_micros_per_min")
+    tier = str(row.get("tier") or "premium").lower()
+    record = (tier_records or {}).get(tier)
+    resolved = _native_tier_retail_rate(rates, tier, record=record)
+    return (resolved["inrPaisePerMin"], resolved["usdMicrosPerMin"]) if resolved else None
+
+
+def call_retail(row: dict, meta: dict, *, rates: dict, tier_records: dict | None, fallback_fx: float) -> dict | None:
+    """Customer price actually pinned to this call; never inferred from another tier."""
+    seconds = amount(meta.get("carrier_billable_duration_sec", row.get("duration_sec")))
+    if seconds is None:
+        return None
+    snapshot = meta.get("rate_snapshot") if isinstance(meta.get("rate_snapshot"), dict) else {}
+    supplier_snapshot = meta.get("provider_cost_snapshot") if isinstance(meta.get("provider_cost_snapshot"), dict) else {}
+    usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
+    fx = (
+        amount(row.get("applied_fx_rate_inr"))
+        or amount(snapshot.get("fxRateInr"))
+        or amount(supplier_snapshot.get("fxRateInr"))
+        or amount(usage.get("fx_rate_inr"))
+        or Decimal(str(fallback_fx))
+    )
+    candidates = [
+        (row.get("applied_rate_inr_paise_per_min"), row.get("applied_rate_usd_micros_per_min"), "applied"),
+        (snapshot.get("inrPaisePerMin"), snapshot.get("usdMicrosPerMin"), "rate_snapshot"),
+    ]
+    catalog = _catalog_retail(row, rates, tier_records)
+    if catalog:
+        candidates.append((catalog[0], catalog[1], "catalog"))
+    minutes = seconds / 60
+    for inr_paise, usd_micros, source in candidates:
+        inr_rate = amount(inr_paise)
+        usd_rate = amount(usd_micros)
+        if inr_rate is None and usd_rate is None:
+            continue
+        inr_per_min = inr_rate / 100 if inr_rate is not None else usd_rate * fx / 1_000_000
+        usd_per_min = usd_rate / 1_000_000 if usd_rate is not None else inr_rate / fx / 100
+        return {
+            "source": source,
+            "retailInr": inr_per_min * minutes,
+            "retailUsd": usd_per_min * minutes,
+            "fx": fx,
+        }
+    return None
+
+
 def call_cost(row: dict, meta: dict, fallback_fx: float) -> dict | None:
     from server.services.usage_pricing import cost_telnyx_call_breakdown, cost_vobiz_call_breakdown
 
     usage = meta.get("usage") or {}
     if not isinstance(usage, dict):
         return None
-    api_usd, model_source = model_cost(usage)
+    pipeline = str(meta.get("pipeline") or usage.get("pipeline") or "")
+    snapshot = meta.get("provider_cost_snapshot")
+    measured_inr = None
+    if pipeline == "composed_voice" and isinstance(snapshot, dict):
+        # The pinned snapshot and measured counters are the source of truth;
+        # stored usage totals can be stale after concurrent metadata writes.
+        from server.services.saas.composed_costing import price_composed_usage
+
+        try:
+            measured = price_composed_usage(snapshot, meta.get("stage_usage"))
+        except (ValueError, KeyError, TypeError, ArithmeticError):
+            measured = {"status": "incomplete"}
+        if measured.get("status") != "ready":
+            return None
+        api_usd, model_source = amount(measured.get("totalUsd")), "pinned_snapshot"
+        measured_inr = amount(measured.get("totalInr"))
+    else:
+        api_usd, model_source = model_cost(usage)
     if api_usd is None:
         return None
-    api_usd += amount(usage.get("post_call_analysis_usd")) or Decimal(0)
-    fx = amount(usage.get("fx_rate_inr")) or Decimal(str(fallback_fx))
+    analysis_usd = amount(usage.get("post_call_analysis_usd")) or Decimal(0)
+    api_usd += analysis_usd
+    snapshot_fx = amount(snapshot.get("fxRateInr")) if isinstance(snapshot, dict) else None
+    fx = snapshot_fx or amount(usage.get("fx_rate_inr")) or Decimal(str(fallback_fx))
     seconds = amount(meta.get("carrier_billable_duration_sec", row.get("duration_sec")))
     if seconds is None:
         return None
@@ -97,7 +166,9 @@ def call_cost(row: dict, meta: dict, fallback_fx: float) -> dict | None:
                 return None
             carrier_source = "tariff_estimate"
     transcript_usd = sum((amount(usage.get(key)) or Decimal(0) for key in ("live_transcript_usd", "post_call_transcript_usd")), Decimal(0))
-    api_inr = api_usd * fx
+    api_inr = (measured_inr if measured_inr is not None else api_usd * fx)
+    if measured_inr is not None:
+        api_inr += analysis_usd * fx
     transcript_inr = transcript_usd * fx
     call_tier = str(row.get("tier") or "premium").lower()
     return {
@@ -120,8 +191,18 @@ def call_cost(row: dict, meta: dict, fallback_fx: float) -> dict | None:
     }
 
 
+def _price_per_min(rates: dict, key: str, fallback_key: str | None = None, *, micros: bool) -> float | None:
+    value = amount(rates.get(key))
+    if value is None and fallback_key:
+        value = amount(rates.get(fallback_key))
+    if value is None:
+        return None
+    return float(value / (1_000_000 if micros else 100))
+
+
 def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datetime, capped: bool = False,
-                   ledger=None, overhead_rows: list[dict] | None = None) -> dict:
+                   ledger=None, overhead_rows: list[dict] | None = None,
+                   tier_records: dict | None = None) -> dict:
     from server.call.call_ledger import call_ledger
     ledger = ledger or call_ledger
     fx = float(rates["fx_rate_inr"])
@@ -131,19 +212,33 @@ def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datet
             meta = ledger.read_meta(row["call_id"])
             # Call attribution is checked against the authoritative database row.
             item = call_cost(row, meta, fx) if isinstance(meta, dict) and str(meta.get("tenant_id") or "") == str(row["tenant_id"]) else None
+            retail = call_retail(row, meta, rates=rates, tier_records=tier_records, fallback_fx=fx) if item is not None else None
         except (OSError, ValueError, TypeError, AttributeError, ArithmeticError):
             item = None  # Corrupt/incomplete records reduce coverage, never the divisor.
+            retail = None
         if item is not None:
+            if retail is not None:
+                item["retailInr"] = retail["retailInr"]
+                item["retailUsd"] = retail["retailUsd"]
+                item["retailSource"] = retail["source"]
+                item["marginInr"] = retail["retailInr"] - item["costInr"]
+                item["marginUsd"] = retail["retailUsd"] - item["costUsd"]
             eligible.append(item)
     # Full-window overhead would inflate a truncated call cohort's unit cost.
     overhead = [] if capped else (overhead_rows if overhead_rows is not None else read_unused_prewarm(since, now))
     
-    tier_configs = (
-        ("pstn_premium", "Flagship Live PSTN", "premium", True),
-        ("pstn_medium", "Standard Regional PSTN", "medium", False),
-        ("pstn_low", "Economical PSTN", "low", False),
-        ("browser", "Web Agent Test Calls", None, False),
-    )
+    from server.services.saas.voice_stack_profiles import _native_tier_retail_rate
+
+    tier_configs = [("pstn_premium", "Flagship Live PSTN", "premium", True)]
+    custom_tiers = sorted(tier for tier in (tier_records or {}) if tier not in {"premium", "medium", "low"})
+    for tier_name in ("medium", "low", *custom_tiers):
+        profile = ((tier_records or {}).get(tier_name) or {}).get("profile") or {}
+        label = str(profile.get("label") or "").strip() or {
+            "medium": "Standard Regional PSTN",
+            "low": "Economical PSTN",
+        }.get(tier_name, f"{tier_name.replace('_', ' ').title()} PSTN")
+        tier_configs.append((f"pstn_{tier_name}", label, tier_name, False))
+    tier_configs.append(("browser", "Web Agent Test Calls", None, False))
     channels = []
     for ch_key, label, tier_val, has_prewarm in tier_configs:
         if tier_val is not None:
@@ -161,24 +256,34 @@ def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datet
         inr = sum((item["costInr"] for item in records), setup_inr)
         call_count = len(records)
 
-        if tier_val == "premium":
-            current_price_usd = float(rates.get("pstn_premium_rate_usd_micros_per_min") or rates.get("pstn_rate_usd_micros_per_min") or 150000) / 1_000_000
-            current_price_inr = float(rates.get("pstn_premium_rate_inr_paise_per_min") or rates.get("pstn_rate_inr_paise_per_min") or 1410) / 100
-        elif tier_val == "medium":
-            current_price_usd = float(rates.get("pstn_medium_rate_usd_micros_per_min") or 90000) / 1_000_000
-            current_price_inr = float(rates.get("pstn_medium_rate_inr_paise_per_min") or 846) / 100
-        elif tier_val == "low":
-            current_price_usd = float(rates.get("pstn_low_rate_usd_micros_per_min") or 50000) / 1_000_000
-            current_price_inr = float(rates.get("pstn_low_rate_inr_paise_per_min") or 470) / 100
+        if tier_val is None:
+            current_price_usd = _price_per_min(rates, "web_agent_rate_usd_micros_per_min", micros=True)
+            current_price_inr = _price_per_min(rates, "web_agent_rate_inr_paise_per_min", micros=False)
         else:
-            current_price_usd = float(rates.get("web_agent_rate_usd_micros_per_min") or 0) / 1_000_000
-            current_price_inr = float(rates.get("web_agent_rate_inr_paise_per_min") or 0) / 100
+            resolved_price = _native_tier_retail_rate(
+                rates, tier_val, record=(tier_records or {}).get(tier_val)
+            )
+            current_price_usd = float(resolved_price["usdMicrosPerMin"]) / 1_000_000 if resolved_price else None
+            current_price_inr = float(resolved_price["inrPaisePerMin"]) / 100 if resolved_price else None
+
+        priced = [item for item in records if item.get("retailInr") is not None]
+        retail_inr = sum((item["retailInr"] for item in priced), Decimal(0))
+        retail_usd = sum((item["retailUsd"] for item in priced), Decimal(0))
+        margin_inr = sum((item["marginInr"] for item in priced), Decimal(0))
+        margin_usd = sum((item["marginUsd"] for item in priced), Decimal(0))
 
         channels.append({
             "channel": ch_key,
             "label": label,
             "costUsd": number(usd),
             "costInr": number(inr),
+            "retailUsd": number(retail_usd) if priced else None,
+            "retailInr": number(retail_inr) if priced else None,
+            "marginUsd": number(margin_usd) if priced else None,
+            "marginInr": number(margin_inr) if priced else None,
+            "marginPercent": round(float(margin_inr * 100 / retail_inr), 1) if retail_inr > 0 else None,
+            "retailPricedCalls": len(priced),
+            "retailCoveragePercent": round(len(priced) * 100 / call_count, 1) if call_count else None,
             "connectedMinutes": number(minutes),
             "calls": call_count,
             "tenants": len({r["tenantId"] for r in records}),
@@ -229,6 +334,11 @@ def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datet
                 "durationSec": number(r["seconds"]),
                 "costUsd": number(r["costUsd"]),
                 "costInr": number(r["costInr"]),
+                "retailUsd": number(r["retailUsd"]) if r.get("retailUsd") is not None else None,
+                "retailInr": number(r["retailInr"]) if r.get("retailInr") is not None else None,
+                "marginUsd": number(r["marginUsd"]) if r.get("marginUsd") is not None else None,
+                "marginInr": number(r["marginInr"]) if r.get("marginInr") is not None else None,
+                "retailSource": r.get("retailSource"),
                 "model": r["model"],
                 "carrierSource": r["carrierSource"],
             }
@@ -237,6 +347,7 @@ def build_insights(rows: list[dict], rates: dict, *, since: datetime, now: datet
         "notes": [
             "Average = known supplier costs / connected minutes; each minute has equal weight.",
             "API costs use reported tokens at published rates. Carrier CDR totals are used when available; tariffs are estimates.",
+            "Margin uses the retail rate pinned to each call; calls without a pinned price are excluded from margin and shown in retail coverage.",
             "Known unused prewarm spend is included in Flagship PSTN costs. Older unrecorded setup/summary spend, hosting, taxes and negotiated discounts are not included.",
             "Records without usable cost attribution are excluded and shown in coverage. This is pricing guidance, not a supplier invoice.",
         ],
@@ -277,7 +388,18 @@ async def load_cost_insights(days: int = 30) -> dict:
     since = now - timedelta(days=days)
     async with get_session_factory()() as db:
         result = await db.execute(
-            select(Call.call_id, Call.tenant_id, Call.channel, Call.direction, Call.duration_sec, Call.session_id, Call.tier)
+            select(
+                Call.call_id,
+                Call.tenant_id,
+                Call.channel,
+                Call.direction,
+                Call.duration_sec,
+                Call.session_id,
+                Call.tier,
+                Call.applied_rate_inr_paise_per_min,
+                Call.applied_rate_usd_micros_per_min,
+                Call.applied_fx_rate_inr,
+            )
             .join(Tenant, Tenant.tenant_id == Call.tenant_id)
             .where(Tenant.deleted_at.is_(None), Call.ended_at.is_not(None), Call.ended_at >= since, Call.channel.in_(["pstn", "browser"]))
             .order_by(desc(Call.ended_at))
@@ -293,4 +415,16 @@ async def load_cost_insights(days: int = 30) -> dict:
             for row in result
         ]
     rates = await load_current_rates()
-    return await asyncio.to_thread(build_insights, rows[:MAX_CALLS], rates, since=since, now=now, capped=len(rows) > MAX_CALLS)
+    from server.services.dev_runtime import effective_app_environment
+    from server.services.saas.voice_stack_profiles import load_profile_records
+
+    tier_records = await load_profile_records(effective_app_environment(), None)
+    return await asyncio.to_thread(
+        build_insights,
+        rows[:MAX_CALLS],
+        rates,
+        since=since,
+        now=now,
+        capped=len(rows) > MAX_CALLS,
+        tier_records=tier_records,
+    )

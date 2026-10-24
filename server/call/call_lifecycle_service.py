@@ -437,7 +437,9 @@ class CallLifecycleService:
                     if channel == "pstn"
                     else cur_rates["web_agent_rate_inr_paise_per_min"]
                 )
-                snap_fx = float(cur_rates.get("fx_rate_inr") or 95.64)
+                snap_fx = float(cur_rates.get("fx_rate_inr") or 0)
+                if snap_fx <= 0:
+                    raise ValueError("A positive INR per USD rate is required to price the call")
                 snap_ver = int(cur_rates.get("version") or 1)
                 if custom_rate and channel == "pstn":
                     snap_fx = float(custom_rate["fxRateInr"])

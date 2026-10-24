@@ -100,7 +100,7 @@ export function ProviderCostWorkbench() {
   }
 
   return (
-    <DevCard title="Low and Standard supplier costs" description="Provider billing units for internal cost attribution. Customer retail prices are managed below.">
+    <DevCard title="Composed tier supplier costs" description="Provider billing units for internal cost attribution. Customer retail prices are managed below.">
       <div className="flex flex-col gap-4" data-testid="provider-cost-workbench">
         {resource.loading && <p className="text-sm text-text-muted">Loading supplier rate version…</p>}
         {(resource.error || error) && <div role="alert" className="text-sm text-warning">
@@ -134,11 +134,11 @@ export function ProviderCostWorkbench() {
           <p className="text-xs text-text-muted">Speech, text and audio tokens use different billing units. A combined cost per call minute requires measured usage. Dates use UTC; the end date is excluded. Premium 3.8 Live uses its existing cost configuration.</p>
           <div className="overflow-x-auto rounded-xl border border-surface-border-subtle">
             <table className="w-full min-w-[1080px] border-collapse text-left text-xs">
-              <caption className="sr-only">Versioned supplier unit rates for Low and Standard voice stages</caption>
+              <caption className="sr-only">Versioned supplier unit rates for composed voice stages</caption>
               <thead className="bg-surface-raised text-text-muted"><tr>{["Provider / model", "Stage / unit", "Price", "Valid from", "Valid until", "Source"].map((label) => <th key={label} className="whitespace-nowrap px-3 py-3 font-medium">{label}</th>)}</tr></thead>
               <tbody>{draft.map((rate, index) => <tr key={rate.id} className="border-t border-surface-border-subtle align-top">
                 <td className="min-w-56 p-3"><label className="flex flex-col gap-1"><span className="sr-only">Provider for rate {index + 1}</span>
-                  <select className={controlClass} value={rate.provider} disabled={busy} onChange={(event) => updateRate(index, { provider: event.target.value })}><option value="sarvam">Sarvam</option><option value="gemini">Gemini</option></select></label>
+                  <select className={controlClass} value={rate.provider} disabled={busy} onChange={(event) => updateRate(index, { provider: event.target.value })}><option value="sarvam">Sarvam</option><option value="gemini">Gemini</option><option value="cartesia">Cartesia</option><option value="gnani">Gnani</option></select></label>
                   <input aria-label={`Model for rate ${index + 1}`} className={`${controlClass} mt-2 font-mono`} value={rate.model} disabled={busy} onChange={(event) => updateRate(index, { model: event.target.value })} /></td>
                 <td className="min-w-52 p-3"><select aria-label={`Stage for rate ${index + 1}`} className={controlClass} value={rate.stage} disabled={busy} onChange={(event) => { const stage = event.target.value; if (stage === "stt" || stage === "llm" || stage === "tts") updateRate(index, { stage }); }}>{["stt", "llm", "tts"].map((stage) => <option key={stage} value={stage}>{stage.toUpperCase()}</option>)}</select>
                   <select aria-label={`Unit for rate ${index + 1}`} className={`${controlClass} mt-2`} value={rate.unit} disabled={busy} onChange={(event) => updateRate(index, { unit: event.target.value })}>{Object.entries(UNITS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></td>

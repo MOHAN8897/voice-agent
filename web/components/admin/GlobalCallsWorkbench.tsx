@@ -21,19 +21,33 @@ interface CallRow {
   durationFormatted: string;
   createdAt: string | null;
   endedAt: string | null;
-  retailInr: number;
-  retailUsd: number;
-  supplierCostInr: number;
-  supplierCostUsd: number;
-  marginInr: number;
-  marginUsd: number;
-  marginPercent: number;
+  retailInr: number | null;
+  retailUsd: number | null;
+  supplierCostInr: number | null;
+  supplierCostUsd: number | null;
+  marginInr: number | null;
+  marginUsd: number | null;
+  marginPercent: number | null;
+  costStatus: "ready" | "incomplete";
+  missingCost: string[];
+  retailRateSource: string;
+  carrierCostStatus: string;
+  fxRateInr: number | null;
   breakdown: {
-    carrierInr: number;
-    sttInr: number;
-    llmInr: number;
-    ttsInr: number;
+    carrierInr: number | null;
+    sttInr: number | null;
+    llmInr: number | null;
+    ttsInr: number | null;
+    otherInr: number | null;
   };
+}
+
+interface StageComponent {
+  rateId?: string;
+  unit?: string;
+  quantity?: string;
+  nativeCost?: string;
+  costInr?: string;
 }
 
 interface CallDetail {
@@ -52,45 +66,61 @@ interface CallDetail {
   durationFormatted: string;
   createdAt: string | null;
   endedAt: string | null;
+  costStatus: "ready" | "incomplete";
+  missingCost: string[];
+  fxRateInr: number | null;
   retail: {
-    rateInrPerMin: number;
-    rateUsdPerMin: number;
-    totalBilledInr: number;
-    totalBilledUsd: number;
+    source: string;
+    rateInrPerMin: number | null;
+    rateUsdPerMin: number | null;
+    totalBilledInr: number | null;
+    totalBilledUsd: number | null;
   };
   supplier: {
-    totalInr: number;
-    totalUsd: number;
-    marginInr: number;
-    marginPercent: number;
+    status: "ready" | "incomplete";
+    missing: string[];
+    totalInr: number | null;
+    totalUsd: number | null;
+    marginInr: number | null;
+    marginPercent: number | null;
     carrier: {
+      status: string;
       source: string;
       billableSeconds: number;
-      amountInr: number;
-      currency: string;
+      amountInr: number | null;
+      amountUsd: number | null;
+      currency: string | null;
       raw: Record<string, unknown>;
     };
     stt: {
-      model: string;
+      model: string | null;
+      status: string | null;
       audioSeconds: number;
-      costInr: number;
-      components: Array<{ rateId?: string; unit?: string; quantity?: string; nativeCost?: string; costInr?: string }>;
+      costInr: number | null;
+      costUsd: number | null;
+      components: StageComponent[];
     };
     llm: {
-      model: string;
+      model: string | null;
+      status: string | null;
       inputTokens: number;
       outputTokens: number;
-      costInr: number;
-      components: Array<{ rateId?: string; unit?: string; quantity?: string; nativeCost?: string; costInr?: string }>;
+      costInr: number | null;
+      costUsd: number | null;
+      components: StageComponent[];
     };
     tts: {
-      model: string;
+      model: string | null;
+      status: string | null;
       characters: number;
       outputAudioSeconds: number;
-      costInr: number;
-      components: Array<{ rateId?: string; unit?: string; quantity?: string; nativeCost?: string; costInr?: string }>;
+      costInr: number | null;
+      costUsd: number | null;
+      components: StageComponent[];
     };
+    other: { costInr: number | null; costUsd: number | null };
   };
+  margin: { inr: number | null; usd: number | null; percent: number | null };
   transcriptSummary?: string | null;
 }
 
@@ -195,10 +225,32 @@ export function GlobalCallsWorkbench() {
   }, [selectedCallId]);
 
   // Aggregate metrics for visible page
-  const pageRetailInr = calls.reduce((acc, c) => acc + c.retailInr, 0);
-  const pageSupplierInr = calls.reduce((acc, c) => acc + c.supplierCostInr, 0);
-  const pageMarginInr = pageRetailInr - pageSupplierInr;
-  const pageMarginPct = pageRetailInr > 0 ? (pageMarginInr / pageRetailInr) * 100 : 0;
+  const pricedCalls = calls.filter((call) => call.marginInr != null);
+  const retailKnown = calls.filter((call) => call.retailInr != null);
+  const supplierKnown = calls.filter((call) => call.supplierCostInr != null);
+  const pageRetailInr = retailKnown.reduce((acc, call) => acc + (call.retailInr ?? 0), 0);
+  const pageSupplierInr = supplierKnown.reduce((acc, call) => acc + (call.supplierCostInr ?? 0), 0);
+  const pageMarginInr = pricedCalls.reduce((acc, call) => acc + (call.marginInr ?? 0), 0);
+  const pageMarginRetail = pricedCalls.reduce((acc, call) => acc + (call.retailInr ?? 0), 0);
+  const pageMarginPct = pageMarginRetail > 0 ? (pageMarginInr / pageMarginRetail) * 100 : null;
+  const incompleteCalls = calls.filter((call) => call.costStatus === "incomplete");
+
+  const money = (value: number | null, digits = 2) => (value == null ? "—" : `₹${value.toFixed(digits)}`);
+  const usd = (value: number | null, digits = 4) => (value == null ? "—" : `$${value.toFixed(digits)}`);
+  const componentLabel = (components: StageComponent[]) =>
+    components.length === 0
+      ? "—"
+      : components
+          .map((row) =>
+            [
+              row.rateId,
+              row.quantity != null && row.unit ? `${row.quantity} ${row.unit}` : row.unit,
+              row.costInr != null ? `₹${row.costInr}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · "),
+          )
+          .join("; ");
 
   return (
     <div className="space-y-6">
@@ -212,25 +264,46 @@ export function GlobalCallsWorkbench() {
 
         <div className="rounded-xl border border-surface-border-subtle bg-surface-card p-4 shadow-sm">
           <p className="text-xs font-medium text-text-muted">Page Retail Billed</p>
-          <p className="mt-1.5 text-2xl font-bold tracking-tight text-text">₹{pageRetailInr.toFixed(2)}</p>
-          <p className="mt-1 text-xs text-text-subtle">{calls.length} calls shown</p>
+          <p className="mt-1.5 text-2xl font-bold tracking-tight text-text">{money(pageRetailInr)}</p>
+          <p className="mt-1 text-xs text-text-subtle">
+            {retailKnown.length} of {calls.length} calls with a pinned retail rate
+          </p>
         </div>
 
         <div className="rounded-xl border border-surface-border-subtle bg-surface-card p-4 shadow-sm">
           <p className="text-xs font-medium text-text-muted">Page Supplier Cost</p>
-          <p className="mt-1.5 text-2xl font-bold tracking-tight text-amber-300">₹{pageSupplierInr.toFixed(2)}</p>
-          <p className="mt-1 text-xs text-text-subtle">Carrier + STT + LLM + TTS</p>
+          <p className="mt-1.5 text-2xl font-bold tracking-tight text-amber-300">{money(pageSupplierInr, 4)}</p>
+          <p className="mt-1 text-xs text-text-subtle">
+            {supplierKnown.length} of {calls.length} calls fully measured
+          </p>
         </div>
 
         <div className="rounded-xl border border-surface-border-subtle bg-surface-card p-4 shadow-sm">
           <p className="text-xs font-medium text-text-muted">Net Platform Profit</p>
           <div className="mt-1.5 flex items-baseline gap-2">
-            <span className="text-2xl font-bold tracking-tight text-emerald-400">₹{pageMarginInr.toFixed(2)}</span>
-            <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">
-              {pageMarginPct >= 0 ? `+${pageMarginPct.toFixed(1)}%` : `${pageMarginPct.toFixed(1)}%`}
+            <span
+              className={`text-2xl font-bold tracking-tight ${
+                pageMarginInr >= 0 ? "text-emerald-400" : "text-rose-300"
+              }`}
+            >
+              {money(pageMarginInr)}
             </span>
+            {pageMarginPct != null && (
+              <span
+                className={`rounded-full border px-2 py-0.5 text-xs font-semibold ${
+                  pageMarginInr >= 0
+                    ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400"
+                    : "border-rose-500/25 bg-rose-500/10 text-rose-300"
+                }`}
+              >
+                {pageMarginPct >= 0 ? `+${pageMarginPct.toFixed(1)}%` : `${pageMarginPct.toFixed(1)}%`}
+              </span>
+            )}
           </div>
-          <p className="mt-1 text-xs text-text-subtle">Average margin on this page</p>
+          <p className="mt-1 text-xs text-text-subtle">
+            {pricedCalls.length} priced calls
+            {incompleteCalls.length > 0 ? ` · ${incompleteCalls.length} incomplete` : ""}
+          </p>
         </div>
       </div>
 
@@ -334,6 +407,10 @@ export function GlobalCallsWorkbench() {
                     : isLow
                     ? call.tier === "low" ? "Economical" : `Economical (${call.tier.replace("low_", "")})`
                     : call.tier === "premium" ? "Flagship" : call.tier;
+                  const aiCosts = [call.breakdown.sttInr, call.breakdown.llmInr, call.breakdown.ttsInr];
+                  const aiCost = aiCosts.every((value) => value != null)
+                    ? aiCosts.reduce<number>((sum, value) => sum + (value ?? 0), 0)
+                    : null;
 
                   return (
                     <tr
@@ -378,23 +455,41 @@ export function GlobalCallsWorkbench() {
                       </td>
 
                       <td className="px-4 py-3 font-mono font-medium text-text">
-                        ₹{call.retailInr.toFixed(2)}
+                        {money(call.retailInr)}
                       </td>
 
                       <td className="px-4 py-3">
-                        <p className="font-mono font-semibold text-amber-300">
-                          ₹{call.supplierCostInr.toFixed(2)}
-                        </p>
-                        <p className="text-[10px] text-text-subtle">
-                          PSTN: ₹{call.breakdown.carrierInr.toFixed(2)} · AI: ₹{(call.breakdown.sttInr + call.breakdown.llmInr + call.breakdown.ttsInr).toFixed(2)}
-                        </p>
+                        <p className="font-mono font-semibold text-amber-300">{money(call.supplierCostInr, 4)}</p>
+                        {call.supplierCostInr == null ? (
+                          <p className="text-[10px] text-amber-400/80" title={call.missingCost.join(", ")}>
+                            Incomplete: {call.missingCost.join(", ") || "cost snapshot missing"}
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-text-subtle">
+                            PSTN: {money(call.breakdown.carrierInr)} · AI: {money(aiCost)}
+                          </p>
+                        )}
                       </td>
 
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400">
-                          +₹{call.marginInr.toFixed(2)}
-                          <span className="text-[10px] opacity-80">({call.marginPercent}%)</span>
-                        </span>
+                        {call.marginInr == null ? (
+                          <span className="text-xs text-text-subtle" title={call.missingCost.join(", ")}>
+                            Not calculable
+                          </span>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                              call.marginInr >= 0
+                                ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-400"
+                                : "border-rose-500/25 bg-rose-500/10 text-rose-300"
+                            }`}
+                          >
+                            {money(call.marginInr)}
+                            {call.marginPercent != null && (
+                              <span className="text-[10px] opacity-80">({call.marginPercent}%)</span>
+                            )}
+                          </span>
+                        )}
                       </td>
 
                       <td className="px-4 py-3 text-xs text-text-muted whitespace-nowrap">
@@ -498,6 +593,20 @@ export function GlobalCallsWorkbench() {
               </div>
             ) : detail ? (
               <>
+                {/* Cost Status */}
+                {detail.costStatus === "incomplete" && (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+                    <p className="font-semibold">Supplier or retail cost is incomplete for this call.</p>
+                    <p className="mt-1 text-amber-200/80">
+                      Missing: {detail.missingCost.join(", ") || "pinned cost data"}
+                      {detail.supplier.missing.length > 0 ? ` · Supplier: ${detail.supplier.missing.join(", ")}` : ""}
+                    </p>
+                    <p className="mt-1 text-amber-200/60">
+                      Unknown values are shown as “—” and are excluded from margin totals.
+                    </p>
+                  </div>
+                )}
+
                 {/* KPI Top Cards */}
                 <div className="grid gap-3 sm:grid-cols-4">
                   <div className="rounded-xl border border-surface-border bg-surface-raised/40 p-3">
@@ -508,30 +617,63 @@ export function GlobalCallsWorkbench() {
 
                   <div className="rounded-xl border border-surface-border bg-surface-raised/40 p-3">
                     <p className="text-xs text-text-subtle">Retail Billed</p>
-                    <p className="mt-1 font-mono text-lg font-bold text-text">₹{detail.retail.totalBilledInr.toFixed(2)}</p>
-                    <p className="text-[11px] text-text-muted">₹{detail.retail.rateInrPerMin.toFixed(2)}/min rate</p>
+                    <p className="mt-1 font-mono text-lg font-bold text-text">{money(detail.retail.totalBilledInr)}</p>
+                    <p className="text-[11px] text-text-muted">
+                      {detail.retail.rateInrPerMin != null
+                        ? `${money(detail.retail.rateInrPerMin)}/min · ${detail.retail.source}`
+                        : `No ${detail.retail.source === "unavailable" ? "pinned" : detail.retail.source} retail rate`}
+                    </p>
                   </div>
 
                   <div className="rounded-xl border border-surface-border bg-surface-raised/40 p-3">
                     <p className="text-xs text-text-subtle">Supplier Cost</p>
-                    <p className="mt-1 font-mono text-lg font-bold text-amber-300">₹{detail.supplier.totalInr.toFixed(4)}</p>
-                    <p className="text-[11px] text-text-muted">${detail.supplier.totalUsd.toFixed(4)} USD</p>
+                    <p className="mt-1 font-mono text-lg font-bold text-amber-300">{money(detail.supplier.totalInr, 4)}</p>
+                    <p className="text-[11px] text-text-muted">
+                      {detail.supplier.totalUsd != null ? `${usd(detail.supplier.totalUsd, 4)} USD` : detail.supplier.status}
+                    </p>
                   </div>
 
-                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
-                    <p className="text-xs text-emerald-300">Net Platform Profit</p>
-                    <p className="mt-1 font-mono text-lg font-bold text-emerald-400">
-                      +₹{detail.supplier.marginInr.toFixed(2)}
+                  <div
+                    className={`rounded-xl border p-3 ${
+                      detail.margin.inr != null && detail.margin.inr < 0
+                        ? "border-rose-500/30 bg-rose-500/10"
+                        : "border-emerald-500/30 bg-emerald-500/10"
+                    }`}
+                  >
+                    <p
+                      className={`text-xs ${
+                        detail.margin.inr != null && detail.margin.inr < 0 ? "text-rose-300" : "text-emerald-300"
+                      }`}
+                    >
+                      Net Platform Profit
                     </p>
-                    <p className="text-[11px] text-emerald-300 font-semibold">{detail.supplier.marginPercent}% gross margin</p>
+                    <p
+                      className={`mt-1 font-mono text-lg font-bold ${
+                        detail.margin.inr != null && detail.margin.inr < 0 ? "text-rose-300" : "text-emerald-400"
+                      }`}
+                    >
+                      {money(detail.margin.inr)}
+                    </p>
+                    <p
+                      className={`text-[11px] font-semibold ${
+                        detail.margin.inr != null && detail.margin.inr < 0 ? "text-rose-300" : "text-emerald-300"
+                      }`}
+                    >
+                      {detail.margin.percent != null ? `${detail.margin.percent}% gross margin` : "Not calculable"}
+                    </p>
                   </div>
                 </div>
 
                 {/* 4-Box Supplier Cost Breakdown */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-                    Wholesale Supplier Cost Breakdown (By Stage)
-                  </h4>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+                      Wholesale Supplier Cost Breakdown (By Stage)
+                    </h4>
+                    <span className="text-[11px] text-text-muted">
+                      Other measured: {money(detail.supplier.other.costInr, 4)} · FX {detail.fxRateInr ?? "—"}
+                    </span>
+                  </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
                     {/* Telephony Box */}
@@ -539,13 +681,16 @@ export function GlobalCallsWorkbench() {
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-text text-sm">1. PSTN Telephony Trunk</span>
                         <span className="font-mono text-xs font-bold text-amber-300">
-                          ₹{detail.supplier.carrier.amountInr.toFixed(4)}
+                          {money(detail.supplier.carrier.amountInr, 4)}
                         </span>
                       </div>
                       <div className="text-xs text-text-muted space-y-1">
-                        <p>Provider: <span className="text-text font-medium">Vobiz Carrier CDR</span></p>
+                        <p>Cost basis: <span className="text-text font-medium">{detail.supplier.carrier.status}</span></p>
                         <p>Billable Talk Time: <span className="font-mono text-text">{detail.supplier.carrier.billableSeconds}s</span></p>
                         <p>Source: <span className="font-mono text-[11px] text-text-subtle">{detail.supplier.carrier.source}</span></p>
+                        {detail.supplier.carrier.currency && (
+                          <p>Currency: <span className="font-mono text-text">{detail.supplier.carrier.currency}</span></p>
+                        )}
                       </div>
                     </div>
 
@@ -554,13 +699,13 @@ export function GlobalCallsWorkbench() {
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-text text-sm">2. Speech Recognition (STT)</span>
                         <span className="font-mono text-xs font-bold text-amber-300">
-                          ₹{detail.supplier.stt.costInr.toFixed(4)}
+                          {money(detail.supplier.stt.costInr, 4)}
                         </span>
                       </div>
                       <div className="text-xs text-text-muted space-y-1">
-                        <p>Model: <span className="text-text font-medium">{detail.supplier.stt.model}</span></p>
+                        <p>Model: <span className="text-text font-medium">{detail.supplier.stt.model || "—"}</span></p>
                         <p>Audio Processed: <span className="font-mono text-text">{detail.supplier.stt.audioSeconds.toFixed(1)}s</span> ({(detail.supplier.stt.audioSeconds / 60).toFixed(2)} min)</p>
-                        <p>Tariff: <span className="text-text-subtle">₹0.49 / audio minute</span></p>
+                        <p>Pinned rate: <span className="font-mono text-[11px] text-text-subtle">{componentLabel(detail.supplier.stt.components)}</span></p>
                       </div>
                     </div>
 
@@ -569,13 +714,14 @@ export function GlobalCallsWorkbench() {
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-text text-sm">3. Reasoning & LLM</span>
                         <span className="font-mono text-xs font-bold text-amber-300">
-                          ₹{detail.supplier.llm.costInr.toFixed(4)}
+                          {money(detail.supplier.llm.costInr, 4)}
                         </span>
                       </div>
                       <div className="text-xs text-text-muted space-y-1">
-                        <p>Model: <span className="text-text font-medium">{detail.supplier.llm.model}</span></p>
+                        <p>Model: <span className="text-text font-medium">{detail.supplier.llm.model || "—"}</span></p>
                         <p>Input Tokens: <span className="font-mono text-text">{detail.supplier.llm.inputTokens.toLocaleString()}</span></p>
                         <p>Output Tokens: <span className="font-mono text-text">{detail.supplier.llm.outputTokens.toLocaleString()}</span></p>
+                        <p>Pinned rate: <span className="font-mono text-[11px] text-text-subtle">{componentLabel(detail.supplier.llm.components)}</span></p>
                       </div>
                     </div>
 
@@ -584,13 +730,14 @@ export function GlobalCallsWorkbench() {
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-text text-sm">4. Speech Synthesis (TTS)</span>
                         <span className="font-mono text-xs font-bold text-amber-300">
-                          ₹{detail.supplier.tts.costInr.toFixed(4)}
+                          {money(detail.supplier.tts.costInr, 4)}
                         </span>
                       </div>
                       <div className="text-xs text-text-muted space-y-1">
-                        <p>Model: <span className="text-text font-medium">{detail.supplier.tts.model}</span></p>
+                        <p>Model: <span className="text-text font-medium">{detail.supplier.tts.model || "—"}</span></p>
                         <p>Characters Synthesized: <span className="font-mono text-text">{detail.supplier.tts.characters.toLocaleString()} chars</span></p>
                         <p>Output Audio: <span className="font-mono text-text">{detail.supplier.tts.outputAudioSeconds.toFixed(1)}s</span></p>
+                        <p>Pinned rate: <span className="font-mono text-[11px] text-text-subtle">{componentLabel(detail.supplier.tts.components)}</span></p>
                       </div>
                     </div>
                   </div>

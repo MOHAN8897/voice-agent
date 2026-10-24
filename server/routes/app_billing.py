@@ -258,7 +258,9 @@ async def billing_topup(body: TopupBody, principal: SubscriberPrincipal = Depend
     # Charge at the admin-configured rate, not the live market rate, so a
     # top-up cannot change price between quote and payment.
     rates = await load_current_rates()
-    fx = float(rates.get("fx_rate_inr") or 95.64)
+    fx = float(rates.get("fx_rate_inr") or 0)
+    if fx <= 0:
+        raise HTTPException(status_code=503, detail={"error": {"code": "fx_unavailable", "message": "A positive INR per USD rate is required for top-ups."}})
     amount_inr = max(100.0, round(float(body.amountUsd) * fx, 2))
     try:
         order = await create_wallet_order(principal.tenant_id, amount_inr)

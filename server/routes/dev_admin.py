@@ -285,7 +285,7 @@ async def list_tenants(
 
         from server.services.saas.billing_rates import load_current_rates
 
-        fx = float((await load_current_rates())["fx_rate_inr"]) or 95.64
+        fx = float((await load_current_rates())["fx_rate_inr"])
 
         def _usd_balance(tid: uuid.UUID) -> float:
             w = wallets.get(tid)
@@ -362,7 +362,7 @@ async def tenant_detail(tenant_id: str, session: SessionData = Depends(require_d
     from server.services.saas import kyc_service
     from server.services.saas.billing_rates import load_current_rates
 
-    fx_rate_inr = float((await load_current_rates())["fx_rate_inr"]) or 95.64
+    fx_rate_inr = float((await load_current_rates())["fx_rate_inr"])
     transactions = await list_wallet_transactions(tid, limit=50)
     verifications = []
     for _m, u in mems:
@@ -1959,7 +1959,7 @@ async def list_wallets(session: SessionData = Depends(require_dev_session)):
         rows = synced
     from server.services.saas.billing_rates import load_current_rates
 
-    fx = float((await load_current_rates())["fx_rate_inr"]) or 95.64
+    fx = float((await load_current_rates())["fx_rate_inr"])
     wallets = []
     for tenant, wallet in rows:
         paise = int(wallet.balance_inr_paise or 0) if wallet else 0
@@ -2010,7 +2010,7 @@ async def list_admin_calls(
     from sqlalchemy import cast, or_, String
 
     rates = await load_current_rates()
-    fx = float(rates.get("fx_rate_inr") or 95.64) or 95.64
+    fx = float(rates.get("fx_rate_inr") or 0) or None
 
     factory = get_session_factory()
     async with factory() as db:
@@ -2084,116 +2084,36 @@ async def list_admin_calls(
         rows = res.all()
 
         from server.services.dev_runtime import effective_app_environment
-        from server.services.saas.voice_stack_profiles import load_profile_records
+        from server.services.saas.admin_call_costs import build_call_costs
+        from server.services.saas.voice_stack_profiles import _native_tier_retail_rate, load_profile_records
         tier_records = await load_profile_records(effective_app_environment(), None)
 
         calls_data = []
         for r in rows:
             cid_str = str(r.call_id)
             meta = call_ledger.read_meta(cid_str) or {}
-
-            pcr = meta.get("provider_cost_result") or {}
-            cb = meta.get("carrier_billing") or {}
-            usage = meta.get("usage") or {}
-
-            stt_cost_inr = float(pcr.get("stages", {}).get("stt", {}).get("costInr") or 0.0)
-            stt_cost_usd = float(pcr.get("stages", {}).get("stt", {}).get("costUsd") or 0.0)
-            llm_cost_inr = float(pcr.get("stages", {}).get("llm", {}).get("costInr") or 0.0)
-            llm_cost_usd = float(pcr.get("stages", {}).get("llm", {}).get("costUsd") or 0.0)
-            tts_cost_inr = float(pcr.get("stages", {}).get("tts", {}).get("costInr") or 0.0)
-            tts_cost_usd = float(pcr.get("stages", {}).get("tts", {}).get("costUsd") or 0.0)
-            if tts_cost_inr == 0 or pcr.get("stages", {}).get("tts", {}).get("costInr") is None:
-                stage_u = meta.get("stage_usage") or {}
-                tts_u = stage_u.get("tts") or {}
-                t_chars = int(tts_u.get("input_characters") or 0) + int(tts_u.get("prewarm_input_characters") or 0)
-                if t_chars > 0:
-                    r_tts = (meta.get("resolved_stack") or {}).get("tts") or (meta.get("voice_stack_snapshot") or {}).get("tts") or (meta.get("provider_cost_snapshot") or {}).get("stages", {}).get("tts") or {}
-                    p_name = str(r_tts.get("provider") or "").lower()
-                    m_name = str(r_tts.get("model") or "").lower()
-                    if "timbre-v2" in m_name or (p_name == "gnani" and "2.5" in m_name):
-                        tts_cost_inr = round((t_chars / 1000.0) * 2.5, 4)
-                    elif "timbre" in m_name or p_name == "gnani":
-                        tts_cost_inr = round((t_chars / 1000.0) * 3.5, 4)
-                    elif "v4-flash" in m_name or (p_name == "sarvam" and "flash" in m_name):
-                        tts_cost_inr = round((t_chars / 1000.0) * 2.0, 4)
-                    elif "bulbul" in m_name or p_name == "sarvam":
-                        tts_cost_inr = round((t_chars / 1000.0) * 3.0, 4)
-                    elif "sonic" in m_name or p_name == "cartesia":
-                        tts_cost_inr = round((t_chars / 1000.0) * 0.075 * fx, 4)
-                    elif p_name == "gemini" or "gemini" in m_name:
-                        tts_cost_inr = round((t_chars / 1000.0) * 1.5, 4)
-                    tts_cost_usd = round(tts_cost_inr / fx, 6) if fx else 0.0
-
-            carrier_cost_inr = float(cb.get("amount") or 0.0) if cb.get("currency") == "INR" else float(cb.get("amount") or 0.0) * fx
-            carrier_cost_usd = carrier_cost_inr / fx if fx else 0.0
-
-            if not pcr and usage:
-                model_usd = float(usage.get("model_cost_usd") or usage.get("cost_usd") or 0.0)
-                llm_cost_usd = model_usd
-                llm_cost_inr = model_usd * fx
-                c_usd = float(usage.get("telephony_usd") or usage.get("vobiz_usd") or 0.0)
-                if c_usd > 0 and carrier_cost_usd == 0:
-                    carrier_cost_usd = c_usd
-                    carrier_cost_inr = c_usd * fx
-
-            supplier_cost_inr = round(stt_cost_inr + llm_cost_inr + tts_cost_inr + carrier_cost_inr, 4)
-            supplier_cost_usd = round(stt_cost_usd + llm_cost_usd + tts_cost_usd + carrier_cost_usd, 6)
-
             duration_sec = float(r.duration_sec or 0.0)
-            billable_minutes = duration_sec / 60.0
-
-            tier_slug = str(r.tier or "medium").strip().lower()
-            if supplier_cost_inr == 0 and billable_minutes > 0:
-                t_prof = (tier_records.get(tier_slug) or {}).get("profile") or {}
-                cfg_supplier = t_prof.get("supplierCostInr")
-                if cfg_supplier is not None and float(cfg_supplier) > 0:
-                    supplier_cost_inr = round(float(cfg_supplier) * billable_minutes, 4)
-                    supplier_cost_usd = round(supplier_cost_inr / fx, 6) if fx else 0.0
-
             channel_norm = str(r.channel or "pstn").strip().lower()
             tier_slug = str(r.tier or "medium").strip().lower()
-            parent_tier = (
-                "low" if (tier_slug == "low" or tier_slug.startswith("low") or "economical" in tier_slug or "budget" in tier_slug)
-                else ("premium" if (tier_slug == "premium" or "flagship" in tier_slug or "high" in tier_slug)
-                else "medium")
+            if channel_norm == "browser":
+                catalog_rate = {
+                    "inrPaisePerMin": rates.get("web_agent_rate_inr_paise_per_min"),
+                    "usdMicrosPerMin": rates.get("web_agent_rate_usd_micros_per_min"),
+                }
+            else:
+                catalog_rate = _native_tier_retail_rate(rates, tier_slug, record=tier_records.get(tier_slug))
+            costs = build_call_costs(
+                meta=meta,
+                channel=channel_norm,
+                tier=tier_slug,
+                duration_sec=duration_sec,
+                applied_inr_paise=r.applied_rate_inr_paise_per_min,
+                applied_usd_micros=r.applied_rate_usd_micros_per_min,
+                current_rates=rates,
+                tier_rate=catalog_rate,
             )
-
-            if r.applied_rate_inr_paise_per_min is not None and r.applied_rate_inr_paise_per_min > 0:
-                rate_inr_paise = float(r.applied_rate_inr_paise_per_min)
-            elif channel_norm == "browser":
-                rate_inr_paise = float(rates.get("web_agent_rate_inr_paise_per_min") or rates.get("web_rate_inr_paise_per_min") or rates.get("web_inr_paise_per_min") or 350)
-            else:
-                rate_inr_paise = float(
-                    rates.get(f"pstn_{tier_slug}_rate_inr_paise_per_min")
-                    or rates.get(f"pstn_{tier_slug}_inr_paise_per_min")
-                    or rates.get(f"pstn_{parent_tier}_rate_inr_paise_per_min")
-                    or rates.get(f"pstn_{parent_tier}_inr_paise_per_min")
-                    or rates.get("pstn_rate_inr_paise_per_min")
-                    or rates.get("pstn_inr_paise_per_min")
-                    or 500
-                )
-
-            if r.applied_rate_usd_micros_per_min is not None and r.applied_rate_usd_micros_per_min > 0:
-                rate_usd_micros = float(r.applied_rate_usd_micros_per_min)
-            elif channel_norm == "browser":
-                rate_usd_micros = float(rates.get("web_agent_rate_usd_micros_per_min") or rates.get("web_rate_usd_micros_per_min") or rates.get("web_usd_micros_per_min") or 37234)
-            else:
-                rate_usd_micros = float(
-                    rates.get(f"pstn_{tier_slug}_rate_usd_micros_per_min")
-                    or rates.get(f"pstn_{tier_slug}_usd_micros_per_min")
-                    or rates.get(f"pstn_{parent_tier}_rate_usd_micros_per_min")
-                    or rates.get(f"pstn_{parent_tier}_usd_micros_per_min")
-                    or rates.get("pstn_rate_usd_micros_per_min")
-                    or rates.get("pstn_usd_micros_per_min")
-                    or 53191
-                )
-
-            retail_inr = round((rate_inr_paise / 100.0) * billable_minutes, 2) if duration_sec > 0 else 0.0
-            retail_usd = round((rate_usd_micros / 1_000_000.0) * billable_minutes, 4) if duration_sec > 0 else 0.0
-
-            margin_inr = round(retail_inr - supplier_cost_inr, 2)
-            margin_usd = round(retail_usd - supplier_cost_usd, 4)
-            margin_pct = round((margin_inr / retail_inr) * 100, 1) if retail_inr > 0 else 0.0
+            supplier = costs["supplier"]
+            stages = supplier["stages"]
 
             calls_data.append({
                 "callId": cid_str,
@@ -2211,18 +2131,24 @@ async def list_admin_calls(
                 "durationFormatted": f"{int(duration_sec // 60)}m {int(duration_sec % 60)}s" if duration_sec >= 60 else f"{int(duration_sec)}s",
                 "createdAt": r.created_at.isoformat() if r.created_at else None,
                 "endedAt": r.ended_at.isoformat() if r.ended_at else None,
-                "retailInr": retail_inr,
-                "retailUsd": retail_usd,
-                "supplierCostInr": supplier_cost_inr,
-                "supplierCostUsd": supplier_cost_usd,
-                "marginInr": margin_inr,
-                "marginUsd": margin_usd,
-                "marginPercent": margin_pct,
+                "retailInr": costs["retail"]["totalBilledInr"],
+                "retailUsd": costs["retail"]["totalBilledUsd"],
+                "supplierCostInr": supplier["totalInr"],
+                "supplierCostUsd": supplier["totalUsd"],
+                "marginInr": costs["margin"]["inr"],
+                "marginUsd": costs["margin"]["usd"],
+                "marginPercent": costs["margin"]["percent"],
+                "costStatus": costs["status"],
+                "missingCost": costs["missing"],
+                "retailRateSource": costs["retail"]["source"],
+                "carrierCostStatus": supplier["carrier"]["status"],
+                "fxRateInr": costs["fxRateInr"],
                 "breakdown": {
-                    "carrierInr": round(carrier_cost_inr, 4),
-                    "sttInr": round(stt_cost_inr, 4),
-                    "llmInr": round(llm_cost_inr, 4),
-                    "ttsInr": round(tts_cost_inr, 4),
+                    "carrierInr": supplier["carrier"]["amountInr"],
+                    "sttInr": stages["stt"]["costInr"],
+                    "llmInr": stages["llm"]["costInr"],
+                    "ttsInr": stages["tts"]["costInr"],
+                    "otherInr": supplier["other"]["costInr"],
                 },
             })
 
@@ -2250,7 +2176,6 @@ async def get_admin_call_detail(
 
     cid_str = call_id.strip()
     rates = await load_current_rates()
-    fx = float(rates.get("fx_rate_inr") or 95.64) or 95.64
 
     factory = get_session_factory()
     async with factory() as db:
@@ -2281,107 +2206,66 @@ async def get_admin_call_detail(
         meta = call_ledger.read_meta(exact_cid) or {}
         review = call_ledger.review_fields(exact_cid)
 
-        pcr = meta.get("provider_cost_result") or {}
-        cb = meta.get("carrier_billing") or {}
-        stage_usage = meta.get("stage_usage") or {}
-
         duration_sec = float(call.duration_sec or 0.0)
-        billable_minutes = duration_sec / 60.0
         channel_norm = str(call.channel or "pstn").strip().lower()
         tier_slug = str(call.tier or "medium").strip().lower()
-        parent_tier = (
-            "low" if (tier_slug == "low" or tier_slug.startswith("low") or "economical" in tier_slug or "budget" in tier_slug)
-            else ("premium" if (tier_slug == "premium" or "flagship" in tier_slug or "high" in tier_slug)
-            else "medium")
+
+        from server.services.dev_runtime import effective_app_environment
+        from server.services.saas.admin_call_costs import build_call_costs
+        from server.services.saas.voice_stack_profiles import _native_tier_retail_rate, load_profile_records
+
+        tier_records = await load_profile_records(effective_app_environment(), None)
+        if channel_norm == "browser":
+            catalog_rate = {
+                "inrPaisePerMin": rates.get("web_agent_rate_inr_paise_per_min"),
+                "usdMicrosPerMin": rates.get("web_agent_rate_usd_micros_per_min"),
+            }
+        else:
+            catalog_rate = _native_tier_retail_rate(rates, tier_slug, record=tier_records.get(tier_slug))
+
+        costs = build_call_costs(
+            meta=meta,
+            channel=channel_norm,
+            tier=tier_slug,
+            duration_sec=duration_sec,
+            applied_inr_paise=call.applied_rate_inr_paise_per_min,
+            applied_usd_micros=call.applied_rate_usd_micros_per_min,
+            current_rates=rates,
+            tier_rate=catalog_rate,
         )
+        supplier = costs["supplier"]
+        measured_stages = supplier["stages"]
+        usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else {}
+        stage_usage = meta.get("stage_usage") if isinstance(meta.get("stage_usage"), dict) else {}
+        cost_snapshot = meta.get("provider_cost_snapshot") if isinstance(meta.get("provider_cost_snapshot"), dict) else {}
+        resolved_stack = meta.get("resolved_stack") if isinstance(meta.get("resolved_stack"), dict) else {}
 
-        if call.applied_rate_inr_paise_per_min is not None and call.applied_rate_inr_paise_per_min > 0:
-            rate_inr_paise = float(call.applied_rate_inr_paise_per_min)
-        elif channel_norm == "browser":
-            rate_inr_paise = float(rates.get("web_agent_rate_inr_paise_per_min") or rates.get("web_rate_inr_paise_per_min") or rates.get("web_inr_paise_per_min") or 350)
-        else:
-            rate_inr_paise = float(
-                rates.get(f"pstn_{tier_slug}_rate_inr_paise_per_min")
-                or rates.get(f"pstn_{tier_slug}_inr_paise_per_min")
-                or rates.get(f"pstn_{parent_tier}_rate_inr_paise_per_min")
-                or rates.get(f"pstn_{parent_tier}_inr_paise_per_min")
-                or rates.get("pstn_rate_inr_paise_per_min")
-                or rates.get("pstn_inr_paise_per_min")
-                or 500
-            )
+        def stage_label(stage: str, *fallbacks: Any) -> str | None:
+            stage_row = measured_stages.get(stage) or {}
+            for component in stage_row.get("components") or []:
+                if isinstance(component, dict) and component.get("rateId"):
+                    return str(component["rateId"])
+            for selection in ((cost_snapshot.get("stages") or {}).get(stage), resolved_stack.get(stage)):
+                if isinstance(selection, dict) and (selection.get("provider") or selection.get("model")):
+                    label = ":".join(
+                        str(selection[key]) for key in ("provider", "model") if selection.get(key)
+                    )
+                    if label:
+                        return label
+            for fallback in fallbacks:
+                if fallback not in (None, ""):
+                    return str(fallback)
+            return None
 
-        if call.applied_rate_usd_micros_per_min is not None and call.applied_rate_usd_micros_per_min > 0:
-            rate_usd_micros = float(call.applied_rate_usd_micros_per_min)
-        elif channel_norm == "browser":
-            rate_usd_micros = float(rates.get("web_agent_rate_usd_micros_per_min") or rates.get("web_rate_usd_micros_per_min") or rates.get("web_usd_micros_per_min") or 37234)
-        else:
-            rate_usd_micros = float(
-                rates.get(f"pstn_{tier_slug}_rate_usd_micros_per_min")
-                or rates.get(f"pstn_{tier_slug}_usd_micros_per_min")
-                or rates.get(f"pstn_{parent_tier}_rate_usd_micros_per_min")
-                or rates.get(f"pstn_{parent_tier}_usd_micros_per_min")
-                or rates.get("pstn_rate_usd_micros_per_min")
-                or rates.get("pstn_usd_micros_per_min")
-                or 53191
-            )
-
-        retail_inr = round((rate_inr_paise / 100.0) * billable_minutes, 2) if duration_sec > 0 else 0.0
-        retail_usd = round((rate_usd_micros / 1_000_000.0) * billable_minutes, 4) if duration_sec > 0 else 0.0
-
-        carrier_amount_inr = float(cb.get("amount") or 0.0) if cb.get("currency") == "INR" else float(cb.get("amount") or 0.0) * fx
-        stages_dict = pcr.get("stages") or {}
-        stt_stage = stages_dict.get("stt") or {}
-        llm_stage = stages_dict.get("llm") or {}
-        tts_stage = stages_dict.get("tts") or {}
-
-        stt_inr = float(stt_stage.get("costInr") or 0.0)
-        llm_inr = float(llm_stage.get("costInr") or 0.0)
-        tts_inr = float(tts_stage.get("costInr") or 0.0)
-
-        tts_components = tts_stage.get("components") or []
-        cost_snapshot = meta.get("provider_cost_snapshot") or {}
-        resolved_tts = (meta.get("resolved_stack") or {}).get("tts") or (cost_snapshot.get("stages") or {}).get("tts") or (meta.get("voice_stack_snapshot") or {}).get("tts") or {}
-        prov = str(resolved_tts.get("provider") or "").strip().lower()
-        mod = str(resolved_tts.get("model") or "").strip()
-        resolved_tts_label = f"{prov}:{mod}" if prov and mod else (mod or prov or "unconfigured")
-
-        tts_model = (tts_components[0].get("rateId") if tts_components and isinstance(tts_components[0], dict) else None) or resolved_tts_label
-        tts_usage = stage_usage.get("tts") or {}
+        stt_usage = stage_usage.get("stt") if isinstance(stage_usage.get("stt"), dict) else {}
+        llm_usage = stage_usage.get("llm") if isinstance(stage_usage.get("llm"), dict) else {}
+        tts_usage = stage_usage.get("tts") if isinstance(stage_usage.get("tts"), dict) else {}
         tts_chars = int(tts_usage.get("input_characters") or 0) + int(tts_usage.get("prewarm_input_characters") or 0)
-
-        if (tts_inr == 0 or tts_stage.get("costInr") is None) and tts_chars > 0:
-            if "timbre-v2" in tts_model.lower() or (prov == "gnani" and "2.5" in mod):
-                tts_inr = round((tts_chars / 1000.0) * 2.5, 4)
-            elif "timbre" in tts_model.lower() or prov == "gnani":
-                tts_inr = round((tts_chars / 1000.0) * 3.5, 4)
-            elif "v4-flash" in tts_model.lower() or (prov == "sarvam" and "flash" in mod):
-                tts_inr = round((tts_chars / 1000.0) * 2.0, 4)
-            elif "bulbul" in tts_model.lower() or prov == "sarvam":
-                tts_inr = round((tts_chars / 1000.0) * 3.0, 4)
-            elif "sonic" in tts_model.lower() or prov == "cartesia":
-                tts_inr = round((tts_chars / 1000.0) * 0.075 * fx, 4)
-            elif prov == "gemini" or "gemini" in tts_model.lower():
-                tts_inr = round((tts_chars / 1000.0) * 1.5, 4)
-
-        total_supplier_inr = round(carrier_amount_inr + stt_inr + llm_inr + tts_inr, 4)
-        if total_supplier_inr == 0 and billable_minutes > 0:
-            from server.services.dev_runtime import effective_app_environment
-            from server.services.saas.voice_stack_profiles import load_profile_records
-            t_recs = await load_profile_records(effective_app_environment(), (tier_slug,))
-            t_prof = (t_recs.get(tier_slug) or {}).get("profile") or {}
-            cfg_supplier = t_prof.get("supplierCostInr")
-            if cfg_supplier is not None and float(cfg_supplier) > 0:
-                total_supplier_inr = round(float(cfg_supplier) * billable_minutes, 4)
-        margin_inr = round(retail_inr - total_supplier_inr, 2)
-        margin_pct = round((margin_inr / retail_inr) * 100, 1) if retail_inr > 0 else 0.0
-
-        stt_components = stt_stage.get("components") or []
-        stt_model = (stt_components[0].get("rateId") if stt_components and isinstance(stt_components[0], dict) else None) or "saaras:v3-realtime"
-        stt_usage = stage_usage.get("stt") or {}
-
-        llm_components = llm_stage.get("components") or []
-        llm_model = (llm_components[0].get("rateId") if llm_components and isinstance(llm_components[0], dict) else None) or "sarvam-105b-conversations"
-        llm_usage = stage_usage.get("llm") or {}
+        carrier = supplier["carrier"]
+        carrier_raw = carrier.get("raw") if isinstance(carrier.get("raw"), dict) else {}
+        billable_seconds = carrier_raw.get("billable_seconds")
+        if billable_seconds is None:
+            billable_seconds = int(duration_sec)
 
         return {
             "ok": True,
@@ -2405,45 +2289,61 @@ async def get_admin_call_detail(
             "durationFormatted": f"{int(duration_sec // 60)}m {int(duration_sec % 60)}s" if duration_sec >= 60 else f"{int(duration_sec)}s",
             "createdAt": call.created_at.isoformat() if call.created_at else None,
             "endedAt": call.ended_at.isoformat() if call.ended_at else None,
+            "costStatus": costs["status"],
+            "missingCost": costs["missing"],
+            "fxRateInr": costs["fxRateInr"],
             "retail": {
-                "rateInrPerMin": round(rate_inr_paise / 100.0, 2),
-                "rateUsdPerMin": round(rate_usd_micros / 1_000_000.0, 4),
-                "totalBilledInr": retail_inr,
-                "totalBilledUsd": retail_usd,
+                "source": costs["retail"]["source"],
+                "rateInrPerMin": costs["retail"]["rateInrPerMin"],
+                "rateUsdPerMin": costs["retail"]["rateUsdPerMin"],
+                "totalBilledInr": costs["retail"]["totalBilledInr"],
+                "totalBilledUsd": costs["retail"]["totalBilledUsd"],
             },
             "supplier": {
-                "totalInr": total_supplier_inr,
-                "totalUsd": round(total_supplier_inr / fx, 4) if fx else 0.0,
-                "marginInr": margin_inr,
-                "marginPercent": margin_pct,
+                "status": supplier["status"],
+                "missing": supplier["missing"],
+                "totalInr": supplier["totalInr"],
+                "totalUsd": supplier["totalUsd"],
+                "marginInr": costs["margin"]["inr"],
+                "marginPercent": costs["margin"]["percent"],
                 "carrier": {
-                    "source": cb.get("source") or "carrier_cdr",
-                    "billableSeconds": cb.get("billable_seconds") or int(duration_sec),
-                    "amountInr": carrier_amount_inr,
-                    "currency": cb.get("currency") or "INR",
-                    "raw": cb,
+                    "status": carrier["status"],
+                    "source": carrier["source"],
+                    "billableSeconds": billable_seconds,
+                    "amountInr": carrier["amountInr"],
+                    "amountUsd": carrier["amountUsd"],
+                    "currency": carrier_raw.get("currency"),
+                    "raw": carrier_raw,
                 },
                 "stt": {
-                    "model": stt_model,
+                    "model": stage_label("stt"),
+                    "status": measured_stages["stt"]["status"],
                     "audioSeconds": float(stt_usage.get("audio_seconds") or 0.0),
-                    "costInr": stt_inr,
-                    "components": stt_components,
+                    "costInr": measured_stages["stt"]["costInr"],
+                    "costUsd": measured_stages["stt"]["costUsd"],
+                    "components": measured_stages["stt"]["components"],
                 },
                 "llm": {
-                    "model": llm_model,
+                    "model": stage_label("llm", usage.get("llm_model")),
+                    "status": measured_stages["llm"]["status"],
                     "inputTokens": int(llm_usage.get("input_tokens") or 0),
                     "outputTokens": int(llm_usage.get("output_tokens") or 0),
-                    "costInr": llm_inr,
-                    "components": llm_components,
+                    "costInr": measured_stages["llm"]["costInr"],
+                    "costUsd": measured_stages["llm"]["costUsd"],
+                    "components": measured_stages["llm"]["components"],
                 },
                 "tts": {
-                    "model": tts_model,
+                    "model": stage_label("tts"),
+                    "status": measured_stages["tts"]["status"],
                     "characters": tts_chars,
                     "outputAudioSeconds": float(tts_usage.get("output_audio_seconds") or 0.0),
-                    "costInr": tts_inr,
-                    "components": tts_components,
+                    "costInr": measured_stages["tts"]["costInr"],
+                    "costUsd": measured_stages["tts"]["costUsd"],
+                    "components": measured_stages["tts"]["components"],
                 },
+                "other": supplier["other"],
             },
+            "margin": costs["margin"],
             "transcriptSummary": review.get("transcript_preview") or meta.get("post_call_summary"),
         }
 
@@ -2461,7 +2361,9 @@ async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(r
     )
 
     rates = await load_current_rates()
-    fx = float(rates["fx_rate_inr"]) or 95.64
+    fx = float(rates["fx_rate_inr"])
+    if fx <= 0:
+        raise HTTPException(status_code=503, detail="A positive INR per USD rate is required for wallet adjustments.")
     cents = body.amountUsdCents
     if cents is None and body.amountInrPaise is not None:
         # Legacy clients send INR; convert so the rest of the path stays USD-authored.

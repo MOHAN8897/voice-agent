@@ -152,6 +152,60 @@ class FakeDb:
 
 
 @pytest.mark.asyncio
+async def test_saved_costs_are_authoritative_and_defaults_are_not_merged(monkeypatch):
+    saved = [rate for rate in costs.default_provider_rates() if rate["stage"] != "tts"]
+    row = SimpleNamespace(version=2, created_at=datetime(2026, 10, 24, tzinfo=timezone.utc), payload={"reason": "Verified tariffs", "rates": saved})
+    monkeypatch.setattr(costs, "get_session_factory", lambda: lambda: FakeDb(row))
+    monkeypatch.setattr("server.services.dev_runtime.effective_app_environment", lambda: "development")
+    monkeypatch.setattr(
+        "server.services.saas.voice_stack_profiles.load_profile_records",
+        AsyncMock(return_value={}),
+    )
+    view = await costs.load_provider_costs()
+    assert view["configured"] is True
+    assert view["rates"] == saved
+    assert all(rate["stage"] != "tts" for rate in view["rates"])
+
+
+def test_provider_stack_views_cover_custom_composed_tiers():
+    shared = {
+        "stt": {"provider": "sarvam", "model": "saaras:v3-realtime"},
+        "llm": {"provider": "sarvam", "modelId": "sarvam-105b-conversations"},
+        "engines": [{"models": [{"provider": "gnani", "model": "timbre-v3.0"}]}],
+    }
+    profiles = {
+        "low": {"profile": {**shared, "label": "Economical"}},
+        "medium": {"profile": {**shared, "label": "Standard"}},
+        "medium_copy_1": {"profile": {**shared, "label": "Standard copy"}},
+        "premium": {"profile": {**shared, "label": "Flagship"}},
+    }
+    config = {"version": 2, "configured": True, "rates": costs.default_provider_rates()}
+    views = costs.provider_stack_views(config, profiles)
+    assert [view["tier"] for view in views] == ["low", "medium", "medium_copy_1"]
+    custom = views[-1]
+    assert custom["label"] == "Standard copy"
+    assert custom["stages"]["tts"] == {"provider": "gnani", "model": "timbre-v3.0"}
+    assert custom["costStatus"] == "ready"
+
+
+def test_provider_stack_views_report_missing_pinned_rates_without_defaults():
+    profile = {
+        "stt": {"provider": "sarvam", "model": "saaras:v3-realtime"},
+        "llm": {"provider": "sarvam", "modelId": "sarvam-105b-conversations"},
+        "engines": [{"models": [{"provider": "sarvam", "model": "bulbul:v4-flash"}]}],
+    }
+    config = {
+        "version": 3,
+        "configured": True,
+        "rates": [rate for rate in costs.default_provider_rates() if not (rate["stage"] == "tts" and rate["model"] == "bulbul:v4-flash")],
+    }
+    views = costs.provider_stack_views(config, {"medium": {"profile": profile}})
+    medium = next(view for view in views if view["tier"] == "medium")
+    assert medium["costStatus"] == "missing_rates"
+    assert "tts:bulbul:v4-flash:characters_1000" in medium["missingRates"]
+
+
+@pytest.mark.asyncio
 async def test_save_locks_version_and_does_not_touch_retail_or_tier_rows(monkeypatch):
     db = FakeDb(SimpleNamespace(version=4))
     monkeypatch.setattr(costs, "get_session_factory", lambda: lambda: db)

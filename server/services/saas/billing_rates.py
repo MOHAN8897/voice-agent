@@ -62,7 +62,9 @@ def _to_scaled_int(value: Any, scale: int, *, label: str) -> int:
 
 def _expand_rate_data(data: dict[str, Any]) -> dict[str, int | float]:
     """Add exact/minor-unit rate fields while preserving legacy rate rows."""
-    fx = _decimal(data.get("fx_rate_inr") or 95.64)
+    fx = _decimal(data.get("fx_rate_inr") or get_settings().fx_rate_inr)
+    if fx <= 0:
+        raise BillingConfigurationError("A positive INR per USD rate is required to derive billing amounts.")
     expanded: dict[str, int | float] = {
         "version": int(data.get("version") or 1),
         "fx_rate_inr": float(fx),

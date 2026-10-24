@@ -248,7 +248,9 @@ async def _apply_transcript_billing(
     # Retain final carrier/usage metadata written while resolving FX.
     meta = call_ledger.read_meta(call_id) or meta
     usage = meta.get("usage") if isinstance(meta.get("usage"), dict) else usage
-    fx = float(fx_info["rate"] or 95.64)
+    fx = float(fx_info["rate"] or 0)
+    if fx <= 0:
+        raise ValueError("A positive INR per USD rate is required to price post-call transcription.")
     transcript_usd = float(cost.get("usd") or 0)
     transcript_inr = transcript_usd * fx
     usage["post_call_transcript_model"] = model
@@ -268,11 +270,23 @@ async def _apply_transcript_billing(
     total_usd = (model_usd + carrier_usd + transcript_usd + float(usage.get("live_transcript_usd") or 0)
                  + float(usage.get("post_call_analysis_usd") or 0))
     total_inr = total_usd * fx
-    usage["cost_usd"] = total_usd
-    usage["cost_inr"] = total_inr
     minutes = max(duration_sec / 60.0, 1e-9)
-    usage["cost_usd_per_min"] = total_usd / minutes
-    usage["cost_inr_per_min"] = total_inr / minutes
+    complete = not (
+        usage.get("cost_accounting_version") == 3
+        and usage.get("supplier_cost_status") != "ready"
+    )
+    if complete:
+        usage["cost_usd"] = total_usd
+        usage["cost_inr"] = total_inr
+        usage["cost_usd_per_min"] = total_usd / minutes
+        usage["cost_inr_per_min"] = total_inr / minutes
+    else:
+        # A partial supplier total would misstate a composed call whose pinned
+        # stage rates or counters are missing.
+        usage["cost_usd"] = None
+        usage["cost_inr"] = None
+        usage["cost_usd_per_min"] = None
+        usage["cost_inr_per_min"] = None
     if line_count > 0:
         usage["dialog_turns"] = sum(
             1 for row in call_ledger.read_lines(call_id) if row.get("role") == "assistant"
