@@ -4196,3 +4196,57 @@ async def get_agent_technical_fallback_clip_audio(
         media_type="audio/wav",
         headers={"Cache-Control": "no-store", "Content-Disposition": "inline"},
     )
+
+
+class SpeechOutageBody(BaseModel):
+    enabled: Optional[bool] = None
+    promiseCallback: Optional[bool] = None
+
+
+@router.get("/api/dev/admin/speech-outage")
+async def get_speech_outage(session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.admin.tenants")
+    from server.services.pstn_technical_fallback import CLIP_VARIANTS, platform_clip_coverage
+    from server.services.speech_outage_config import load_speech_outage_config
+
+    config = await load_speech_outage_config(force=True)
+    return {
+        "global": config.to_api(),
+        "coverage": platform_clip_coverage(),
+        "variants": [{"id": variant, "label": _VARIANT_LABELS.get(variant, variant)} for variant in CLIP_VARIANTS],
+    }
+
+
+@router.patch("/api/dev/admin/speech-outage")
+async def patch_speech_outage(
+    body: SpeechOutageBody,
+    request: Request,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.tenants")
+    from server.services.speech_outage_config import (
+        load_speech_outage_config,
+        save_speech_outage_config,
+    )
+
+    current = await load_speech_outage_config(force=True)
+    updated = await save_speech_outage_config(
+        enabled=current.enabled if body.enabled is None else bool(body.enabled),
+        promise_callback=(
+            current.promise_callback if body.promiseCallback is None else bool(body.promiseCallback)
+        ),
+        actor=session.subject,
+    )
+    await record_admin_action(
+        actor=session.subject,
+        action="speech_outage.patch",
+        resource_type="speech_outage",
+        resource_id="global",
+        payload={
+            "enabled": updated.enabled,
+            "promiseCallback": updated.promise_callback,
+            "version": updated.version,
+        },
+        request=request,
+    )
+    return {"ok": True, "global": updated.to_api()}

@@ -122,6 +122,11 @@ const ADMIN_GROUPS: Array<{
     label: "Platform",
     items: [
       {
+        href: "/dev/speech-outage",
+        label: "Speech outage",
+        icon: <IconActivity className="h-4 w-4" />,
+      },
+      {
         href: "/dev/environment",
         label: "Environment",
         icon: <IconSettings className="h-4 w-4" />,
