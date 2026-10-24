@@ -28,6 +28,8 @@ function cleanSnapshot(data) {
     numberId: data?.numberId || '',
     recordingDisclosureEnabled: Boolean(data?.recordingDisclosureEnabled),
     recordingDisclosureText: (data?.recordingDisclosureText || '').trim(),
+    technicalFallbackPromiseCallback: data?.technicalFallbackPromiseCallback !== false,
+    technicalFallbackText: (data?.technicalFallbackText || '').trim(),
     telephonyProfile: {
       greetingPhrase: (data?.telephonyProfile?.greetingPhrase || '').trim(),
       businessHours: data?.telephonyProfile?.businessHours || {},
@@ -40,6 +42,157 @@ function cleanSnapshot(data) {
     },
     compliance: data?.compliance || {},
   };
+}
+
+const FALLBACK_VARIANTS = [
+  { id: 'callback_promise', label: 'Callback promise' },
+  { id: 'call_back', label: 'Call-back request' },
+  { id: 'disclosure', label: 'Recording disclosure' },
+];
+
+function FallbackAnnouncementClips({ agentId, languages, primaryLanguage, noteText }) {
+  const [clips, setClips] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [busyKey, setBusyKey] = useState('');
+
+  const refresh = useCallback(async () => {
+    if (!agentId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await api.agents.listFallbackClips(agentId);
+      setClips(data.clips);
+    } catch (e) {
+      setError(e?.message || 'Could not load recorded announcements.');
+    } finally {
+      setLoading(false);
+    }
+  }, [agentId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const findClip = (language, variant) =>
+    clips.find(
+      (clip) =>
+        String(clip.language).toLowerCase() === language.toLowerCase() &&
+        clip.variant === variant
+    );
+
+  const hasCustomTechnical = FALLBACK_VARIANTS.filter((v) => v.id !== 'disclosure').some(
+    (v) => findClip(primaryLanguage, v.id)
+  );
+
+  const handleUpload = async (language, variant, file) => {
+    if (!file) return;
+    const key = `${language}:${variant}`;
+    setBusyKey(key);
+    setError(null);
+    try {
+      await api.agents.uploadFallbackClip(agentId, language, variant, file);
+      await refresh();
+      showToast('Recorded announcement saved', 'success');
+    } catch (e) {
+      setError(e?.message || 'Could not save that recording.');
+    } finally {
+      setBusyKey('');
+    }
+  };
+
+  const handleDelete = async (language, variant) => {
+    const key = `${language}:${variant}`;
+    setBusyKey(key);
+    setError(null);
+    try {
+      await api.agents.deleteFallbackClip(agentId, language, variant);
+      await refresh();
+      showToast('Custom recording removed — the platform recording is used', 'info');
+    } catch (e) {
+      setError(e?.message || 'Could not remove that recording.');
+    } finally {
+      setBusyKey('');
+    }
+  };
+
+  return (
+    <div className="space-y-3 pt-2 border-t border-[#E4E2EB]">
+      <div>
+        <p className="text-[11px] font-bold text-[#0F0E17]">Recorded announcements per language</p>
+        <p className="text-[10px] text-[#8C879A] mt-0.5">
+          A platform recording is used by default. Upload your own WAV (16-bit PCM, up to 2 MB or 30 s) to
+          replace it — the text above is never spoken during an outage.
+        </p>
+      </div>
+      {noteText.trim() && !hasCustomTechnical && (
+        <p
+          data-testid="agent-fallback-text-needs-clip"
+          className="rounded-xl border border-[#F0C36D] bg-[#FFF8E8] px-3 py-2 text-[11px] text-[#7A5B12]"
+        >
+          This text needs a recorded audio file to be used during a TTS outage.
+        </p>
+      )}
+      {error && (
+        <p role="alert" className="text-[11px] text-[#B42318]">
+          {error}
+        </p>
+      )}
+      {loading && <p className="text-[11px] text-[#8C879A]">Loading recordings…</p>}
+      {languages.map((language) => (
+        <div key={language} className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-3 space-y-2">
+          <p className="text-[11px] font-bold text-[#0F0E17]">{language}</p>
+          {FALLBACK_VARIANTS.map((variant) => {
+            const key = `${language}:${variant.id}`;
+            const clip = findClip(language, variant.id);
+            const busy = busyKey === key;
+            return (
+              <div key={variant.id} className="flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[11px] text-[#0F0E17]">{variant.label}</p>
+                  <p className="text-[10px] text-[#8C879A]">
+                    {clip ? `Your recording · ${Math.round((clip.durationMs || 0) / 1000)}s` : 'Platform recording'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label
+                    data-testid={`agent-fallback-upload-${variant.id}-${language}`}
+                    className={`cursor-pointer rounded-lg border border-[#E4E2EB] bg-white px-2.5 py-1.5 text-[10px] font-semibold text-[#524E5E] hover:border-[#6344E7] ${
+                      busy ? 'pointer-events-none opacity-60' : ''
+                    }`}
+                  >
+                    {clip ? 'Replace' : 'Upload'}
+                    <input
+                      type="file"
+                      accept="audio/wav,audio/x-wav,.wav"
+                      className="hidden"
+                      disabled={busy}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = '';
+                        handleUpload(language, variant.id, file);
+                      }}
+                    />
+                  </label>
+                  {clip && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      data-testid={`agent-fallback-delete-${variant.id}-${language}`}
+                      onClick={() => handleDelete(language, variant.id)}
+                      className="rounded-lg border border-[#E4E2EB] bg-white px-2.5 py-1.5 text-[10px] font-semibold text-[#B42318] hover:border-[#B42318] disabled:opacity-60"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /**
@@ -80,6 +233,12 @@ export function AgentSettingsPanel({
   const [recordingDisclosureText, setRecordingDisclosureText] = useState(
     agent?.recordingDisclosureText || 'This call may be recorded for quality and training purposes.'
   );
+  const [technicalFallbackPromiseCallback, setTechnicalFallbackPromiseCallback] = useState(
+    agent?.technicalFallbackPromiseCallback !== false
+  );
+  const [technicalFallbackText, setTechnicalFallbackText] = useState(
+    agent?.technicalFallbackText || ''
+  );
   const [telephonyProfile, setTelephonyProfile] = useState(() => ({
     ...DEFAULT_PROFILE,
     greetingPhrase: agentGreeting || '',
@@ -92,6 +251,11 @@ export function AgentSettingsPanel({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
+
+  const fallbackLanguages = useMemo(() => {
+    const list = Array.isArray(agent?.languages) && agent.languages.length ? agent.languages : [language];
+    return Array.from(new Set([language, ...list].filter(Boolean)));
+  }, [agent?.languages, language]);
 
   // Keep telephonyProfile.greetingPhrase in sync with universal agentGreeting
   useEffect(() => {
@@ -118,6 +282,8 @@ export function AgentSettingsPanel({
     setRecordingDisclosureText(
       agent?.recordingDisclosureText || 'This call may be recorded for quality and training purposes.'
     );
+    setTechnicalFallbackPromiseCallback(agent?.technicalFallbackPromiseCallback !== false);
+    setTechnicalFallbackText(agent?.technicalFallbackText || '');
 
     let cancelled = false;
     setComplianceLoading(true);
@@ -151,6 +317,8 @@ export function AgentSettingsPanel({
         recordingDisclosureEnabled: Boolean(agent?.recordingDisclosureEnabled),
         recordingDisclosureText:
           agent?.recordingDisclosureText || 'This call may be recorded for quality and training purposes.',
+        technicalFallbackPromiseCallback: agent?.technicalFallbackPromiseCallback !== false,
+        technicalFallbackText: agent?.technicalFallbackText || '',
         telephonyProfile: loadedProf,
         compliance: loadedComp,
       });
@@ -160,7 +328,7 @@ export function AgentSettingsPanel({
     return () => {
       cancelled = true;
     };
-  }, [agentId, agent?.name, agent?.status, agent?.language, agent?.recordingDisclosureEnabled, agent?.recordingDisclosureText, currentNumberId]);
+  }, [agentId, agent?.name, agent?.status, agent?.language, agent?.recordingDisclosureEnabled, agent?.recordingDisclosureText, agent?.technicalFallbackPromiseCallback, agent?.technicalFallbackText, currentNumberId]);
 
   // Current state snapshot
   const currentSnapshot = useMemo(() => {
@@ -171,10 +339,12 @@ export function AgentSettingsPanel({
       numberId,
       recordingDisclosureEnabled,
       recordingDisclosureText,
+      technicalFallbackPromiseCallback,
+      technicalFallbackText,
       telephonyProfile,
       compliance,
     });
-  }, [name, language, status, numberId, recordingDisclosureEnabled, recordingDisclosureText, telephonyProfile, compliance]);
+  }, [name, language, status, numberId, recordingDisclosureEnabled, recordingDisclosureText, technicalFallbackPromiseCallback, technicalFallbackText, telephonyProfile, compliance]);
 
   const isDirty = useMemo(() => {
     if (!initialSnapshot) return false;
@@ -196,6 +366,8 @@ export function AgentSettingsPanel({
       setNumberId(restored.numberId);
       setRecordingDisclosureEnabled(restored.recordingDisclosureEnabled);
       setRecordingDisclosureText(restored.recordingDisclosureText);
+      setTechnicalFallbackPromiseCallback(restored.technicalFallbackPromiseCallback !== false);
+      setTechnicalFallbackText(restored.technicalFallbackText || '');
       setTelephonyProfile(restored.telephonyProfile);
       setCompliance(restored.compliance);
       setError(null);
@@ -220,6 +392,8 @@ export function AgentSettingsPanel({
         languages: [language],
         recordingDisclosureEnabled,
         recordingDisclosureText: recordingDisclosureText.trim(),
+        technicalFallbackPromiseCallback,
+        technicalFallbackText: technicalFallbackText.trim(),
       });
 
       // 2. Assign or unassign phone number if changed
@@ -480,7 +654,7 @@ export function AgentSettingsPanel({
           <div>
             <h3 className="text-xs font-bold text-[#0F0E17]">Call Recording &amp; Disclosure</h3>
             <p className="text-[11px] text-[#524E5E] mt-0.5">
-              The agent will naturally deliver this disclosure during its first response turn after the caller speaks.
+              The agent says this naturally, once, after answering the caller&apos;s first point — never in the opening greeting.
             </p>
           </div>
           <button
@@ -512,15 +686,95 @@ export function AgentSettingsPanel({
                 value={recordingDisclosureText}
                 onChange={(e) => setRecordingDisclosureText(e.target.value)}
                 rows={2}
+                maxLength={255}
                 data-testid="agent-recording-disclosure-text"
                 placeholder="This call may be recorded for quality and training purposes."
                 className="mt-1 w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs text-[#0F0E17] focus:border-[#6344E7] focus:outline-none"
               />
+              <span className="mt-1 block text-right text-[10px] text-[#8C879A]">
+                {recordingDisclosureText.length}/255
+              </span>
             </label>
+            <div className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-[#8C879A]">Call preview</p>
+              <p className="mt-1 text-[11px] text-[#0F0E17]">
+                “{recordingDisclosureText.trim() || 'This call may be recorded for quality and training purposes.'}”
+              </p>
+            </div>
             <p className="text-[10px] text-[#8C879A]">
-              Spoken conversationally after the customer responds to the opening greeting. Zero legal disclaimers play in the sub-500ms prewarm greeting.
+              Spoken in the call&apos;s language. Zero legal disclaimers play in the sub-500ms prewarm greeting.
             </p>
           </div>
+        )}
+      </SolidCard>
+
+      {/* Card 5b: TTS Outage Announcement */}
+      <SolidCard className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-xs font-bold text-[#0F0E17]">TTS Outage Announcement</h3>
+            <p className="text-[11px] text-[#524E5E] mt-0.5">
+              A pre-recorded message played only when the speech service fails mid-call, so the caller hears
+              a professional apology instead of silence.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={technicalFallbackPromiseCallback}
+            data-testid="agent-fallback-promise-toggle"
+            onClick={() => setTechnicalFallbackPromiseCallback(!technicalFallbackPromiseCallback)}
+            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
+              technicalFallbackPromiseCallback
+                ? 'bg-[#FF5C35] border-[#FF5C35]'
+                : 'bg-[#D1CFDB] border-[#C4C0D0]'
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                technicalFallbackPromiseCallback ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+            <span className="sr-only">Promise the caller a callback</span>
+          </button>
+        </div>
+
+        <div className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] px-3 py-2">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-[#8C879A]">Callback promise</p>
+          <p className="mt-1 text-[11px] text-[#0F0E17]">
+            {technicalFallbackPromiseCallback
+              ? '“We will call you again.” A callback task is saved before this plays; if it cannot be saved, the call-back request recording is used instead.'
+              : '“Please call us back.” Used when no callback task will be created.'}
+          </p>
+        </div>
+
+        <label className="block">
+          <span className="text-[11px] font-bold text-[#0F0E17]">Announcement transcript:</span>
+          <textarea
+            value={technicalFallbackText}
+            onChange={(e) => setTechnicalFallbackText(e.target.value)}
+            rows={2}
+            maxLength={255}
+            data-testid="agent-fallback-text"
+            placeholder="Stored with the call record when you upload your own recording."
+            className="mt-1 w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs text-[#0F0E17] focus:border-[#6344E7] focus:outline-none"
+          />
+          <span className="mt-1 block text-right text-[10px] text-[#8C879A]">
+            {technicalFallbackText.length}/255
+          </span>
+        </label>
+        <p className="text-[10px] text-[#8C879A]">
+          Typed text is not synthesized during an outage. The platform recording or your uploaded clip is what
+          the caller hears.
+        </p>
+
+        {agentId && (
+          <FallbackAnnouncementClips
+            agentId={agentId}
+            languages={fallbackLanguages}
+            primaryLanguage={language}
+            noteText={technicalFallbackText}
+          />
         )}
       </SolidCard>
 

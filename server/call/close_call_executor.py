@@ -21,6 +21,7 @@ JUDGMENT_END_REASONS = frozenset(HANGUP_REASONS)
 LIFECYCLE_PASSTHROUGH = frozenset({
     "opt_out", "callback_cancelled", "silence_timeout", "max_duration",
     "provider_failure", "runtime_failure", "farewell_timeout", "response_timeout", "response_failure",
+    "technical_fallback",
     "user_stop",
     "timeout",
     "error",

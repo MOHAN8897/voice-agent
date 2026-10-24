@@ -77,7 +77,10 @@ def composed_system_prompt(ctx: Any) -> str:
             f"\n\n[Selected session language]\nThe admitted primary locale is {language}. "
             "Render script examples in this language even when authored in English. "
             "Use its conversational register rather than stiff example phrasing; preserve exact mandatory wording. "
-            "The opening has already been delivered; answer the caller without reintroducing yourself."
+            "The opening has already been delivered; do not restart or reintroduce yourself. "
+            "A later hello is an availability check. Give your name, company and purpose once only "
+            "if the caller asks who is calling or why. Answer brief small talk naturally, then "
+            "bridge back to the business topic within two replies."
         )
         text += "\n\n" + tts_delivery_rules(tts_prov, tts_model, language)
         cached = ComposedPromptSnapshot(key, text)

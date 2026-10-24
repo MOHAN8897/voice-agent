@@ -104,6 +104,19 @@ async def lifespan(app: FastAPI):
             from server.db.seed import ensure_default_tenant
 
             if await init_db():
+                from server.db.schema_revision import check_schema_revision
+
+                schema = await check_schema_revision()
+                if not schema.get("ok"):
+                    # /api/health also reports this, so the deploy healthcheck fails
+                    # instead of serving traffic from a half-migrated database.
+                    log_error(
+                        "Database schema is behind the application",
+                        detail=(
+                            f"current={schema.get('current')} expected={schema.get('expected')}. "
+                            "Run: python -m scripts.migrate_db"
+                        ),
+                    )
                 await ensure_default_tenant()
                 try:
                     from server.agent.instruction_store import instruction_store

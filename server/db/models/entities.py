@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, LargeBinary, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -68,6 +68,13 @@ class Agent(Base):
     recording_disclosure_text: Mapped[str] = mapped_column(
         String(255), default="This call may be recorded for quality and training purposes."
     )
+    #: When true the technical-failure apology may promise a callback — but only
+    #: after a pending CallCallback row is committed. Otherwise the clip asks the
+    #: caller to call back instead.
+    technical_fallback_promise_callback: Mapped[bool] = mapped_column(Boolean, default=True)
+    #: Console note only. Typed text is never synthesized during a TTS outage;
+    #: playback uses an uploaded clip or the platform recording.
+    technical_fallback_text: Mapped[str] = mapped_column(String(255), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     tenant: Mapped["Tenant"] = relationship(
@@ -75,6 +82,35 @@ class Agent(Base):
         foreign_keys=[tenant_id],
     )
     calls: Mapped[list["Call"]] = relationship(back_populates="agent")
+
+
+class AgentFallbackClip(Base):
+    """Tenant-uploaded pre-recorded clip for TTS-outage announcements.
+
+    Stored as normalized mono 8 kHz 16-bit PCM so the call path never decodes or
+    resamples during an outage. One clip per agent, language and variant.
+    """
+
+    __tablename__ = "agent_fallback_clips"
+    __table_args__ = (
+        UniqueConstraint("agent_id", "language", "variant", name="uq_agent_fallback_clip"),
+    )
+
+    clip_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True
+    )
+    agent_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=False, index=True
+    )
+    language: Mapped[str] = mapped_column(String(16), nullable=False)
+    #: callback_promise | call_back | disclosure
+    variant: Mapped[str] = mapped_column(String(24), nullable=False)
+    pcm_bytes: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    sample_rate: Mapped[int] = mapped_column(Integer, nullable=False, default=8000)
+    duration_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class TierAssignment(Base):
@@ -134,6 +170,9 @@ class Call(Base):
     applied_rate_inr_paise_per_min: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     applied_fx_rate_inr: Mapped[float | None] = mapped_column(Numeric(10, 4), nullable=True)
     rate_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: Owner-facing taxonomy produced after the call (see server/call/outcome_schema.py).
+    #: GIN-indexed so the console can filter a tenant's history by tag.
+    status_tags: Mapped[list[str]] = mapped_column(ARRAY(String(48)), default=list, server_default="{}")
     last_heartbeat_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 

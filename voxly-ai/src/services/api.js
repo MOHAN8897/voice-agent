@@ -536,19 +536,21 @@ export const api = {
     const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const fullUrl = `${backendUrl}${path.replace(/^\/api/, '')}`;
 
+    const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
     const headers = {
-      'Content-Type': 'application/json',
+      ...(isForm ? {} : { 'Content-Type': 'application/json' }),
       Accept: 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...customHeaders,
     };
+    const bodyInit = body == null ? undefined : isForm ? body : JSON.stringify(body);
 
     const doFetch = async () =>
       fetch(fullUrl, {
         method,
         headers,
         ...fetchOpts,
-        ...(body != null ? { body: JSON.stringify(body) } : {}),
+        ...(bodyInit !== undefined ? { body: bodyInit } : {}),
       });
 
     let response = await doFetch();
@@ -572,7 +574,7 @@ export const api = {
           method,
           headers,
           ...fetchOpts,
-          ...(body != null ? { body: JSON.stringify(body) } : {}),
+          ...(bodyInit !== undefined ? { body: bodyInit } : {}),
         });
       }
     }
@@ -861,8 +863,38 @@ export const api = {
       if (updates.recordingDisclosureText !== undefined) {
         body.recordingDisclosureText = updates.recordingDisclosureText;
       }
+      if (updates.technicalFallbackPromiseCallback !== undefined) {
+        body.technicalFallbackPromiseCallback = Boolean(updates.technicalFallbackPromiseCallback);
+      }
+      if (updates.technicalFallbackText !== undefined) {
+        body.technicalFallbackText = updates.technicalFallbackText;
+      }
       const data = await api.request('PATCH', `/api/agents/${id}`, body);
       return normalizeAgent(data.agent || data);
+    },
+    /** Recorded TTS-outage clips uploaded by the tenant, per language/variant. */
+    async listFallbackClips(agentId) {
+      const data = await api.request('GET', `/api/agents/${agentId}/fallback-clips`);
+      return {
+        clips: Array.isArray(data.clips) ? data.clips : [],
+        variants: Array.isArray(data.variants) ? data.variants : [],
+        languages: Array.isArray(data.languages) ? data.languages : [],
+      };
+    },
+    async uploadFallbackClip(agentId, language, variant, file) {
+      const body = new FormData();
+      body.append('file', file);
+      return api.request(
+        'PUT',
+        `/api/agents/${agentId}/fallback-clips/${encodeURIComponent(language)}/${encodeURIComponent(variant)}`,
+        body,
+      );
+    },
+    async deleteFallbackClip(agentId, language, variant) {
+      return api.request(
+        'DELETE',
+        `/api/agents/${agentId}/fallback-clips/${encodeURIComponent(language)}/${encodeURIComponent(variant)}`,
+      );
     },
     async toggleStatus(id, status) {
       return api.agents.update(id, { status });
@@ -1121,13 +1153,17 @@ export const api = {
      * (answered | missed | outbound | declined | failed | voicemail | in_progress)
      * and includes calls that never connected, so the Missed tab is real.
      */
-    async list({ agentId, status, statuses, direction, limit = 100, offset = 0, agentMap = null } = {}) {
+    async list({ agentId, status, statuses, direction, tags, tagMatch = 'any', limit = 100, offset = 0, agentMap = null } = {}) {
       const qs = new URLSearchParams({ limit: String(limit) });
       if (offset) qs.set('offset', String(offset));
       if (agentId) qs.set('agentId', agentId);
       if (status) qs.set('status', status);
       if (statuses?.length) qs.set('status', statuses.join(','));
       if (direction) qs.set('direction', direction);
+      if (tags?.length) {
+        qs.set('tags', tags.join(','));
+        qs.set('tag_match', tagMatch);
+      }
       const data = await api.request('GET', `/api/calls?${qs}`);
       const rows = data.calls || data;
       if (!Array.isArray(rows)) return [];
@@ -1140,6 +1176,14 @@ export const api = {
         });
       }
       return rows.map((r) => normalizeCall(r, map));
+    },
+    /** Tags present in history, with counts, for the filter menu. */
+    async tags({ agentId } = {}) {
+      const qs = new URLSearchParams();
+      if (agentId) qs.set('agentId', agentId);
+      const suffix = qs.toString() ? `?${qs}` : '';
+      const data = await api.request('GET', `/api/calls/tags${suffix}`);
+      return data.tags || [];
     },
     /** Counts and totals for the history header. */
     async stats({ agentId, since, until } = {}) {

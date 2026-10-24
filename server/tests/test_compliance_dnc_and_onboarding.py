@@ -152,14 +152,15 @@ async def test_phase2_onboarding_survey_completion_check():
 
 
 def test_phase3_recording_disclosure_instruction_prompt():
-    """Verify disclosure instruction generator creates clean Turn-1 policy with English and Telugu."""
+    """Verify disclosure instruction generator creates a natural once-only policy."""
     # English default
     en_rule = build_recording_disclosure_instruction(language="en-US")
-    assert "RECORDING DISCLOSURE POLICY (FIRST RESPONSE TURN ONLY)" in en_rule
+    assert "RECORDING DISCLOSURE POLICY (NATURAL, ONCE)" in en_rule
     assert "This call may be recorded for quality and training purposes." in en_rule
-    assert "FIRST RESPONSE TURN ONLY" in en_rule
-    assert "include this disclosure once" in en_rule
-    assert "repeat it later" in en_rule
+    assert "first substantive reply" in en_rule
+    assert "standalone legal announcement" in en_rule
+    assert "never repeat it later" in en_rule
+    assert "If the caller interrupts the opening" in en_rule
 
     # Telugu default
     te_rule = build_recording_disclosure_instruction(language="te-IN")
@@ -180,7 +181,7 @@ def test_phase3_zero_disclaimer_in_sub500ms_prewarm():
         "--- CANONICAL OPENING ---\n"
         "Hello! This is Maya with Acme Health. Am I speaking with Alex?\n\n"
         "--- PLATFORM CALL RULES ---\n"
-        "### RECORDING DISCLOSURE POLICY (FIRST RESPONSE TURN ONLY):\n"
+        "### RECORDING DISCLOSURE POLICY (NATURAL, ONCE):\n"
         'Recording disclosure is ENABLED. Deliver: "This call may be recorded for quality and training purposes."\n'
     )
 
@@ -193,8 +194,8 @@ def test_phase3_zero_disclaimer_in_sub500ms_prewarm():
 
 @pytest.mark.asyncio
 async def test_phase3_compiler_recording_disclosure_injection():
-    """Verify script compiler cleanly injects Turn 1 recording disclosure into platform rules when enabled."""
-    brief = "Maya from Acme Health calling about appointment confirmation."
+    """Verify the compiler injects the natural once-only disclosure into platform rules when enabled."""
+    brief = "agent name is Maya, business name is Acme Health, calling about appointment confirmation."
 
     # When disabled
     compiled_disabled, res_disabled, _, _, _ = await compile_agent_from_brief(
@@ -210,9 +211,9 @@ async def test_phase3_compiler_recording_disclosure_injection():
         language="en-US",
         recording_disclosure_enabled=True,
     )
-    assert "RECORDING DISCLOSURE POLICY (FIRST RESPONSE TURN ONLY)" in compiled_enabled
+    assert "RECORDING DISCLOSURE POLICY (NATURAL, ONCE)" in compiled_enabled
     assert "This call may be recorded for quality and training purposes." in compiled_enabled
-    assert "RECORDING DISCLOSURE POLICY (FIRST RESPONSE TURN ONLY)" in res_enabled.platform_call_rules
+    assert "RECORDING DISCLOSURE POLICY (NATURAL, ONCE)" in res_enabled.platform_call_rules
 
 
 @pytest.mark.asyncio

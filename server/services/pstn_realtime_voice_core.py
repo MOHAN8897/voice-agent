@@ -165,6 +165,12 @@ _UNCLEAR_NAME_FOLLOWUP = (
     "Ask them to repeat their name only. Do not invent a name or a messaging app. "
     "Do not re-introduce yourself."
 )
+_GREETING_INTERRUPT_ACK = (
+    "The caller interrupted your opening with a real request. "
+    "Answer what they asked first, in one or two short sentences. "
+    "Do not restart, repeat or continue the opening greeting. "
+    "If they asked who is calling, briefly give your name, the company and the purpose of the call."
+)
 
 
 def _is_simple_hello(text: str) -> bool:
@@ -219,6 +225,27 @@ def _is_foreign_script_junk(text: str) -> bool:
     if not t:
         return False
     return bool(_FOREIGN_SCRIPT_RE.search(t) and not _LATIN_OR_INDIC_RE.search(t))
+
+
+def _is_greeting_barge(text: str, spoken: str) -> bool:
+    """Only a real request may cut the opening — never a hello, nod or echo."""
+    from server.services.pstn_lexicon import _STRONG_HALT_RE, is_backchannel
+    from server.services.transcript_gate import effective_word_count, is_substantive_transcript
+
+    t = (text or "").strip()
+    if not t or _is_foreign_script_junk(t):
+        return False
+    if _is_pickup_phrase(t) or _is_availability_check(t) or _is_line_check(t) or _is_presence_reply(t):
+        return False
+    if is_backchannel(t):
+        return False
+    if spoken and is_likely_echo(t, spoken):
+        return False
+    if _STRONG_HALT_RE.fullmatch(t):
+        return True
+    if not is_substantive_transcript(t, after_barge=True):
+        return False
+    return effective_word_count(t) >= 2
 
 logger = logging.getLogger(__name__)
 
@@ -615,6 +642,8 @@ class PstnRealtimeVoiceLoop:
         self._callback_details: dict[str, str] = {}
         self._callback_close_phase = "idle"
         self._hangup_started = False
+        self._technical_fallback_played = False
+        self._technical_fallback_active = False
         self._stt = None
         self._live_model = ""
         self._voice_name = ""
@@ -625,6 +654,10 @@ class PstnRealtimeVoiceLoop:
         self._deferred_greeting_armed = False
         self._deferred_greeting_playing = False
         self._deferred_greeting_task: asyncio.Task | None = None
+        self._greeting_interrupted = False
+        self._greeting_interrupt_text = ""
+        self._greeting_interrupt_finished = False
+        self._greeting_interrupt_answered = False
         self._last_ledger_assistant = ""
         self._tts_started_emitted = False
         self._aec_loud_streak = 0
@@ -742,9 +775,21 @@ class PstnRealtimeVoiceLoop:
             return
 
     async def _on_caller_stt_final(self, text: str) -> None:
-        # Billing/history only — hangup and turn logic use Gemini native input_transcription.
+        # Turn logic normally uses Gemini native input_transcription. The sidecar
+        # still hears the opening (media is fed before the greeting gate), so it
+        # is the transcript source when the native path is unavailable.
         cleaned = (text or "").strip()
-        if not cleaned or not self.call_id or not self._persist_live_transcript_ledger():
+        if not cleaned:
+            return
+        if (self._deferred_greeting_playing or self._greeting_protected()) and _is_greeting_barge(
+            cleaned, (self._deferred_greeting_text or self._assistant_text or "").strip()
+        ):
+            self._last_user_final_text = cleaned
+            self._heard_user_turn = True
+            self._heard_content_turn = True
+            self._pickup_user_text = cleaned
+            await self._interrupt_greeting_for_caller(cleaned)
+        if not self.call_id or not self._persist_live_transcript_ledger():
             return
         from server.call.call_ledger import call_ledger
 
@@ -1265,15 +1310,18 @@ class PstnRealtimeVoiceLoop:
         return bool(rid and (rid in self._ignored_response_ids or (current and rid != current)))
 
     def _should_drop_user_final(self, text: str) -> bool:
+        if self._technical_fallback_active:
+            return True
         if not (text or "").strip():
             return True
         if _is_foreign_script_junk(text):
             return True
-        if self._deferred_greeting_armed or self._deferred_greeting_playing:
+        if self._deferred_greeting_armed:
             # Pickup speech only arms the cached greeting — never a model turn.
             return True
-        if self._greeting_protected():
-            return True
+        if self._deferred_greeting_playing or self._greeting_protected():
+            spoken = (self._deferred_greeting_text or self._assistant_text or "").strip()
+            return not _is_greeting_barge(text, spoken)
         if _is_pickup_phrase(text) or _is_availability_check(text):
             return False
         spoken = (self._assistant_text or self._deferred_greeting_text or "").strip()
@@ -1291,7 +1339,7 @@ class PstnRealtimeVoiceLoop:
 
     async def _commit_local_barge(self) -> None:
         """Cut agent audio as soon as local AEC commits a barge — do not wait for VAD."""
-        if self._closed:
+        if self._closed or self._technical_fallback_active:
             return
         if self._greeting_protected():
             log_pstn("realtime_voice.barge_ignored_greeting", call_id=self.call_id)
@@ -1326,6 +1374,103 @@ class PstnRealtimeVoiceLoop:
             self._abort_in_progress_hangup()
         else:
             self._set_phase(PHASE_LISTENING)
+
+    def _mark_greeting_interrupted(self) -> None:
+        if not self.call_id:
+            return
+        from datetime import datetime, timezone
+
+        from server.call.call_ledger import call_ledger
+
+        meta = call_ledger.read_meta(self.call_id) or {}
+        greeting = dict(meta.get("greeting") or {})
+        greeting.update(
+            interrupted=True,
+            interrupted_at=datetime.now(timezone.utc).isoformat(),
+            spoken_frames=int(self._wire_frames_out),
+        )
+        meta["greeting"] = greeting
+        call_ledger.write_meta(self.call_id, meta)
+
+    async def _interrupt_greeting_for_caller(self, text: str) -> None:
+        """A real request cuts the opening; hello, nods and echo never reach here."""
+        if self._greeting_interrupted or self._greeting_interrupt_finished:
+            return
+        self._greeting_interrupted = True
+        self._greeting_interrupt_text = (text or "").strip()
+        self._deferred_greeting_frames = None
+        self._greeting_protect_until = 0.0
+        self._cancel_pickup_finish()
+        self._cancel_pickup_fallback()
+        log_pstn(
+            "greeting.interrupted",
+            call_id=self.call_id,
+            frames_out=int(self._wire_frames_out),
+            words=len((text or "").split()),
+        )
+        self._mark_greeting_interrupted()
+        if self._on_barge:
+            try:
+                await asyncio.wait_for(self._on_barge(), timeout=1.0)
+            except Exception as exc:
+                log_pstn("playback.remote_clear.failed", call_id=self.call_id, error=str(exc)[:160])
+        await self.interrupt_tts()
+        if not self._deferred_greeting_playing:
+            await self._finish_interrupted_greeting()
+            await self._answer_interrupted_greeting()
+
+    async def _finish_interrupted_greeting(self) -> None:
+        if self._greeting_interrupt_finished:
+            return
+        self._greeting_interrupt_finished = True
+        self._deferred_greeting_playing = False
+        self._deferred_greeting_frames = None
+        self._greeting_protect_until = 0.0
+        self._intro_noted = True
+        self._pickup_user_text = ""
+        self._user_partial = ""
+        self._set_tts_active(False)
+        text = (self._deferred_greeting_text or "").strip()
+        if self._adapter is not None:
+            try:
+                await self._adapter.cancel_response()
+            except Exception as exc:
+                log_pstn("greeting.deferred.cancel.failed", call_id=self.call_id, error=str(exc)[:160])
+            clearer = getattr(self._adapter, "clear_input_audio", None)
+            if callable(clearer):
+                try:
+                    await clearer()
+                except Exception:
+                    pass
+            noter = getattr(self._adapter, "note_assistant_text", None)
+            if callable(noter) and text:
+                try:
+                    await noter(text)
+                except Exception as exc:
+                    log_pstn("realtime_voice.note_assistant.failed", call_id=self.call_id, error=str(exc)[:160])
+            await self._set_live_auto_response(True)
+        if text and self.call_id and self._persist_live_transcript_ledger():
+            from server.call.call_ledger import call_ledger
+
+            await call_ledger.append_assistant_turn(self.call_id, text)
+            self._last_ledger_assistant = text
+        self._set_phase(PHASE_LISTENING)
+
+    async def _answer_interrupted_greeting(self) -> None:
+        if self._adapter is None or self._greeting_interrupt_answered:
+            return
+        self._greeting_interrupt_answered = True
+        text = (self._greeting_interrupt_text or "").strip()
+        instruction = f"{_GREETING_INTERRUPT_ACK} The caller said: \"{text[:300]}\""
+        try:
+            await self._start_injected_response(instruction)
+        except Exception as exc:
+            log_pstn(
+                "greeting.interrupt_response.failed",
+                call_id=self.call_id,
+                error=str(exc)[:160],
+            )
+            self._pending_followup_instruction = instruction
 
     async def _start_injected_response(self, instruction: str) -> None:
         if self._adapter is None or not (instruction or "").strip():
@@ -1672,6 +1817,37 @@ class PstnRealtimeVoiceLoop:
         immediate_greeting: bool = False,
         greeting_already_sent: bool = False,
     ) -> None:
+        try:
+            await self._start_call_inner(
+                play_greeting=play_greeting,
+                greeting_wire_frames=greeting_wire_frames,
+                greeting_text=greeting_text,
+                immediate_greeting=immediate_greeting,
+                greeting_already_sent=greeting_already_sent,
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # The carrier leg is already answered; a failed provider/setup must
+            # not end in silence. The recorded clip does not need the provider.
+            if not self._closed:
+                try:
+                    if await self._play_technical_fallback():
+                        await self._fast_disconnect_after_farewell("technical_fallback", True)
+                        return
+                except Exception as exc:
+                    log_pstn("fallback.startup.failed", call_id=self.call_id, error=str(exc)[:160])
+            raise
+
+    async def _start_call_inner(
+        self,
+        *,
+        play_greeting: bool = True,
+        greeting_wire_frames: list[bytes] | None = None,
+        greeting_text: str | None = None,
+        immediate_greeting: bool = False,
+        greeting_already_sent: bool = False,
+    ) -> None:
         if self._call_started:
             return
         self._call_started = True
@@ -2008,12 +2184,12 @@ class PstnRealtimeVoiceLoop:
             return
         if self.call_id:
             self._archive.enqueue(self.call_id, "user", raw)
-        if self._greeting_protected():
-            return
         # Handset echo of agent audio looks like the caller to OpenAI VAD and
         # cuts the reply. Hold inbound (do not append zeros — that can look like
         # speech_stopped and spawn an overlapping response) until the level is a barge.
-        if self._agent_audio_playing():
+        # The opening uses the same gate: only sustained caller speech reaches the
+        # provider, where its transcript can end the greeting on a real request.
+        if self._agent_audio_playing() or self._greeting_protected():
             try:
                 from server.services.audio_transcode import pcm16_crest_factor, pcm16_rms
 
@@ -2134,7 +2310,187 @@ class PstnRealtimeVoiceLoop:
                 call_ledger.write_meta(self.call_id, meta)
             except Exception as exc:
                 log_pstn("runtime.disconnect_diagnostics_failed", error_type=type(exc).__name__)
+        if reason in {"provider_failure", "response_failure", "runtime_failure"}:
+            # The apology is best-effort. A failure here must never keep the
+            # caller connected after the runtime has already given up.
+            try:
+                if await self._play_technical_fallback(trigger=reason):
+                    # The recorded message replaced the failed response, so the
+                    # call ends under the fallback reason, not the carrier error.
+                    await self._fast_disconnect_after_farewell("technical_fallback", True)
+                    return
+            except Exception as exc:
+                log_pstn("fallback.runtime.failed", call_id=self.call_id, error=str(exc)[:160])
         await self._fast_disconnect_after_farewell(reason, self._response_had_audio)
+
+    async def _play_technical_fallback(self, *, trigger: str = "runtime_failure") -> bool:
+        """Play the shipped apology after a provider/runtime failure, then return.
+
+        The plan is resolved from the admitted call language and the tenant's
+        uploaded clips (or the platform recording). The clip never touches the
+        live provider, because that is the thing that just failed. Existing
+        audio is stopped first, the terminal message ignores barge-in, and the
+        carrier queue is drained before the caller leg is released.
+        """
+        if self._technical_fallback_played or self._closed:
+            return False
+        self._technical_fallback_played = True
+        self._technical_fallback_active = True
+        from server.services.pstn_technical_fallback import (
+            FALLBACK_TAIL_SEC,
+            infer_voice_identity,
+            prepare_technical_fallback_plan,
+            stamp_fallback_meta,
+        )
+        from server.call.call_context import get as get_ctx
+
+        ctx = get_ctx(self.call_id) if self.call_id else None
+        provider, model, voice_id = infer_voice_identity(
+            resolved_stack=ctx.resolved_stack if ctx else None,
+            stack_override=self.stack_override,
+        )
+        try:
+            plan = await prepare_technical_fallback_plan(
+                call_id=self.call_id,
+                tenant_id=self._tenant_id or (ctx.tenant_id if ctx else None),
+                agent_id=self._agent_id or (ctx.agent_id if ctx else None),
+                direction=self._resolve_direction(),
+                language=self._resolve_language(),
+                trigger=trigger,
+                voice_provider=provider,
+                voice_model=model,
+                voice_id=voice_id,
+            )
+        except Exception as exc:
+            log_pstn("fallback.resolve.failed", call_id=self.call_id, error=str(exc)[:160])
+            return False
+
+        # Stop the failed response's local audio and queued LLM speech. Skipping
+        # the provider cancel avoids waiting on the runtime that just failed.
+        try:
+            await self.interrupt_tts(cancel_provider=False)
+        except Exception as exc:
+            log_pstn("fallback.interrupt.failed", call_id=self.call_id, error=str(exc)[:160])
+        if self._on_barge:
+            # Also clear anything the carrier already queued, so the tail of the
+            # failed response cannot talk over the terminal announcement.
+            try:
+                await asyncio.wait_for(self._on_barge(), timeout=1.0)
+            except Exception as exc:
+                log_pstn("fallback.remote_clear.failed", call_id=self.call_id, error=str(exc)[:160])
+
+        frames = plan.disclosure_frames(
+            output_codec=self.current_output_codec,
+            sample_rate=self.sample_rate,
+        ) + plan.technical_frames(
+            output_codec=self.current_output_codec,
+            sample_rate=self.sample_rate,
+        )
+        played = 0
+        defect = plan.defect
+        if frames:
+            sent_box = {"count": 0}
+
+            async def _emit() -> int:
+                for wire in frames:
+                    if self._closed:
+                        break
+                    if self.call_id:
+                        self._archive.enqueue(self.call_id, "agent", wire)
+                    self._wire_frames_out += 1
+                    await self.on_agent_wire(wire)
+                    sent_box["count"] += 1
+                return sent_box["count"]
+
+            self._farewell_response_active = True
+            self._set_tts_active(True)
+            try:
+                played = await asyncio.wait_for(_emit(), timeout=plan.watchdog_sec())
+            except asyncio.TimeoutError:
+                played = sent_box["count"]
+                defect = "playback_watchdog"
+                log_pstn(
+                    "fallback.play.watchdog",
+                    call_id=self.call_id,
+                    variant=plan.variant,
+                    language=plan.language,
+                )
+            except Exception as exc:
+                played = sent_box["count"]
+                defect = defect or "playback_failed"
+                log_pstn("fallback.play.failed", call_id=self.call_id, error=str(exc)[:160])
+            finally:
+                self._set_tts_active(False)
+        elif not defect:
+            defect = "codec_unsupported"
+
+        disclosure_played = bool(plan.disclosure_pcm and played)
+        if not played:
+            # No usable recording: the wire is broken, so do not leave dead air.
+            stamp_fallback_meta(
+                self.call_id,
+                plan,
+                trigger=trigger,
+                played=False,
+                disclosure_played=False,
+                defect=defect,
+            )
+            log_pstn(
+                "fallback.played",
+                call_id=self.call_id,
+                language=plan.language,
+                variant=plan.variant,
+                source=plan.source,
+                frames=0,
+                trigger=trigger,
+                defect=defect,
+            )
+            await asyncio.sleep(FALLBACK_TAIL_SEC)
+            return False
+
+        self._response_had_audio = True
+        from server.call.natural_hangup import HANGUP_PLAYBACK_TIMEOUT_SEC, wait_for_farewell_playback
+
+        if defect in ("playback_watchdog", "playback_failed"):
+            # The wire is broken; a drain wait would hold the caller for nothing.
+            log_pstn("fallback.drain.skipped", call_id=self.call_id, defect=defect)
+        else:
+            await wait_for_farewell_playback(
+                self._farewell_still_on_the_line,
+                timeout_sec=HANGUP_PLAYBACK_TIMEOUT_SEC,
+                wait_for_start_sec=2.5,
+            )
+            await asyncio.sleep(FALLBACK_TAIL_SEC)
+        if self.call_id and self._persist_live_transcript_ledger():
+            try:
+                from server.call.call_ledger import call_ledger
+
+                if disclosure_played and plan.disclosure_text:
+                    await call_ledger.append_assistant_turn(self.call_id, plan.disclosure_text)
+                await call_ledger.append_assistant_turn(self.call_id, plan.text)
+                self._last_ledger_assistant = plan.text
+            except Exception as exc:
+                log_pstn("fallback.ledger.failed", call_id=self.call_id, error=str(exc)[:160])
+        stamp_fallback_meta(
+            self.call_id,
+            plan,
+            trigger=trigger,
+            played=True,
+            disclosure_played=disclosure_played,
+            defect=defect,
+        )
+        log_pstn(
+            "fallback.played",
+            call_id=self.call_id,
+            language=plan.language,
+            variant=plan.variant,
+            source=plan.source,
+            frames=played,
+            trigger=trigger,
+            asset=True,
+            defect=defect,
+        )
+        return True
 
     async def _watch_runtime(self) -> None:
         try:
@@ -3229,6 +3585,8 @@ class PstnRealtimeVoiceLoop:
                         text=text[:80],
                     )
                     return
+                if self._deferred_greeting_playing or self._greeting_protected():
+                    await self._interrupt_greeting_for_caller(text)
                 self._user_partial = text
                 self._last_user_final_text = text
                 self._language_user_turn += 1
@@ -3420,6 +3778,8 @@ class PstnRealtimeVoiceLoop:
             pstn_media_flow.emit(self.call_id or "", "llm_started", "outbound", turn_id=self.current_turn_id)
             return
         if kind == "audio_delta":
+            if self._technical_fallback_active:
+                return
             if self._is_stale_openai_event(event):
                 return
             if self._deferred_greeting_playing:
@@ -3814,6 +4174,10 @@ class PstnRealtimeVoiceLoop:
         self._deferred_greeting_armed = False
         self._cancel_pickup_finish()
         self._cancel_pickup_fallback()
+        self._greeting_interrupted = False
+        self._greeting_interrupt_text = ""
+        self._greeting_interrupt_finished = False
+        self._greeting_interrupt_answered = False
 
         pickup = (self._pickup_user_text or self._last_user_final_text or "").strip()
         if pickup and (caller_requested_hangup(pickup) or caller_firm_refusal(pickup)):
@@ -3841,7 +4205,7 @@ class PstnRealtimeVoiceLoop:
         )
         try:
             for wire in frames:
-                if self._closed:
+                if self._closed or self._greeting_interrupted:
                     break
                 if self.call_id:
                     self._archive.enqueue(self.call_id, "agent", wire)
@@ -3854,8 +4218,16 @@ class PstnRealtimeVoiceLoop:
 
         if self._closed:
             return
+        if self._greeting_interrupted:
+            await self._finish_interrupted_greeting()
+            await self._answer_interrupted_greeting()
+            return
 
         await self._wait_greeting_tail()
+        if self._greeting_interrupted:
+            await self._finish_interrupted_greeting()
+            await self._answer_interrupted_greeting()
+            return
 
         noter = getattr(self._adapter, "note_assistant_text", None) if self._adapter else None
         history_clean = bool(getattr(self._adapter, "opening_history_clean", False)
@@ -4138,7 +4510,18 @@ class PstnRealtimeVoiceLoop:
                 timeout_sec=playback_cap,
                 wait_for_start_sec=wait_start,
             )
-            if not heard and spoke:
+            if not heard and not spoke:
+                # The farewell never produced audio. Replace it with the same
+                # recorded apology used for runtime failures instead of hanging
+                # up silently.
+                log_pstn("hangup.farewell_missing", call_id=self.call_id)
+                try:
+                    if await self._play_technical_fallback(trigger="farewell_tts_failure"):
+                        await self._fast_disconnect_after_farewell("technical_fallback", True)
+                        return
+                except Exception as exc:
+                    log_pstn("hangup.farewell_fallback.failed", call_id=self.call_id, error=str(exc)[:160])
+            elif not heard and spoke:
                 log_pstn("hangup.playback_no_audio", call_id=self.call_id, spoke=True)
             if self._closed or (self._caller_speaking and not self._farewell_complete) or not self._hangup_started:
                 if self._hangup_started and self._caller_speaking:

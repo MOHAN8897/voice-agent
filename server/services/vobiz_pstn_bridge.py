@@ -371,6 +371,8 @@ class VobizPstnBridge:
             mark_call_connected(self.call_id, self._token_meta.get("answered_at") or local.get("answered_at"))
             billing_meta = call_ledger.read_meta(self.call_id)
             billing_meta.update({"telephony_provider": "vobiz", "vobiz_call_uuid": self.call_uuid})
+            if self._called_id:
+                billing_meta["callee_e164"] = self._called_id
             for key in ("tenant_id", "vobiz_account_scope", "vobiz_account_tenant_id"):
                 billing_meta[key] = self._token_meta.get(key) or local.get(key)
             call_ledger.write_meta(self.call_id, billing_meta)

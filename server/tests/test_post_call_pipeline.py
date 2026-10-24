@@ -13,9 +13,11 @@ from server.call.outcome_schema import (
     DISPOSITIONS,
     derive_status_tags,
     merge_outcome_facts,
+    normalize_custom_tags,
+    normalize_model_tags,
     validate_disposition,
 )
-from server.call.post_call_pipeline import process_now, read_outcome
+from server.call.post_call_pipeline import _detect_disclosure_delivery, process_now, read_outcome
 from server.config.env import get_settings
 
 FIXTURES = Path(__file__).parent / "fixtures" / "disposition_golden.json"
@@ -51,6 +53,31 @@ def test_owner_facts_and_status_tags_are_deterministic():
         "followup:callback",
         "outcome:callback_required",
     ]
+
+
+def test_model_tags_cannot_override_deterministic_categories():
+    tags = normalize_model_tags([
+        "intent:pricing",
+        "outcome:qualified",
+        "compliance:disclosure_missing",
+        "made-up",
+    ])
+    assert tags == ["intent:pricing"]
+    custom = normalize_custom_tags(["Solar Rooftop", "vobiz", "nango", "warranty", "extra", "fourth"])
+    assert custom == ["custom:solar-rooftop", "custom:warranty", "custom:extra"]
+
+
+def test_disclosure_delivery_is_audited_from_the_assistant_transcript():
+    meta = {"recording_disclosure": {"enabled": True, "injected": True, "text": "This call is recorded."}}
+    assert _detect_disclosure_delivery([], meta) == "missing"
+    transcript = [
+        {"role": "user", "text": "Hello?"},
+        {"role": "assistant", "text": "This call is being recorded for quality."},
+    ]
+    assert _detect_disclosure_delivery(transcript, meta) == "delivered"
+    assert _detect_disclosure_delivery(transcript, {}) is None
+    disabled = {"recording_disclosure": {"enabled": False, "injected": False}}
+    assert _detect_disclosure_delivery(transcript, disabled) is None
 
 
 @pytest.mark.asyncio
@@ -172,7 +199,7 @@ async def test_outcome_summary_is_english_only(monkeypatch, tmp_path):
         outcome = await process_now("en-only")
     assert outcome["summary_te"] == ""
     assert "Tis" in outcome["summary_en"]
-    assert outcome["prompt_version"] == "outcome_v3"
+    assert outcome["prompt_version"] == "outcome_v4"
     disk = read_outcome("en-only")
     assert disk is not None
     assert disk["summary_te"] == ""

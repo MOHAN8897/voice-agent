@@ -80,6 +80,7 @@ _FAILED_TOKENS: Final = (
     "carrier",
     "provider_failure",
     "runtime_failure",
+    "technical_fallback",
     "stale_recovery",
     "superseded",
     "stream_error",

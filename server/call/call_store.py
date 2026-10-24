@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import uuid
+from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import select, text, update
 
 from server.call.call_status import CALL_STATUSES, is_valid_call_status, status_for_record
 from server.db.connection import get_session_factory
@@ -61,6 +62,7 @@ def _row_to_dict(row: Call) -> dict[str, Any]:
         "applied_rate_inr_paise_per_min": row.applied_rate_inr_paise_per_min,
         "applied_fx_rate_inr": float(row.applied_fx_rate_inr) if row.applied_fx_rate_inr is not None else None,
         "rate_version": row.rate_version,
+        "status_tags": list(row.status_tags or []),
         "last_heartbeat_at": row.last_heartbeat_at.isoformat() if row.last_heartbeat_at else None,
     }
     # Rows written before the status column keep status=None; derive it so every
@@ -74,6 +76,7 @@ class CallStore:
         factory = get_session_factory()
         if factory is None:
             stored = dict(record)
+            stored.setdefault("status_tags", [])
             for key in ("started_at", "last_heartbeat_at", "ended_at"):
                 val = stored.get(key)
                 if isinstance(val, datetime):
@@ -103,6 +106,7 @@ class CallStore:
                 applied_rate_inr_paise_per_min=record.get("applied_rate_inr_paise_per_min"),
                 applied_fx_rate_inr=record.get("applied_fx_rate_inr"),
                 rate_version=record.get("rate_version"),
+                status_tags=record.get("status_tags") or [],
                 last_heartbeat_at=record.get("last_heartbeat_at") or _utcnow(),
             )
             if isinstance(row.started_at, str):
@@ -147,6 +151,7 @@ class CallStore:
             "finalization_status",
             "end_reason",
             "status",
+            "status_tags",
             "last_heartbeat_at",
         }
         parsed = _parse_uuid(call_id)
@@ -193,10 +198,14 @@ class CallStore:
         statuses: list[str] | None = None,
         direction: str | None = None,
         include_tests: bool = False,
+        tags: list[str] | None = None,
+        tag_match: str = "any",
     ) -> tuple[list[dict[str, Any]], int]:
         limit = max(1, min(limit, 100))
         offset = max(0, offset)
         wanted = {s for s in (statuses or []) if s in CALL_STATUSES}
+        wanted_tags = [str(tag).strip() for tag in (tags or []) if str(tag).strip()]
+        match_all = tag_match == "all"
         factory = get_session_factory()
         if factory is None:
             rows = list(_MEM.values())
@@ -210,6 +219,12 @@ class CallStore:
                 rows = [r for r in rows if (r.get("direction") or "") == direction]
             if not include_tests:
                 rows = [r for r in rows if not r.get("is_test")]
+            if wanted_tags:
+                tag_set = set(wanted_tags)
+                if match_all:
+                    rows = [r for r in rows if tag_set.issubset(set(r.get("status_tags") or []))]
+                else:
+                    rows = [r for r in rows if tag_set & set(r.get("status_tags") or [])]
             if since:
                 since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
                 rows = [r for r in rows if _as_dt(r.get("started_at")) is not None and _as_dt(r.get("started_at")) >= since_dt]
@@ -241,6 +256,14 @@ class CallStore:
             if not include_tests:
                 stmt = stmt.where(Call.is_test.is_(False))
                 count_stmt = count_stmt.where(Call.is_test.is_(False))
+            if wanted_tags:
+                tag_clause = (
+                    Call.status_tags.contains(wanted_tags)
+                    if match_all
+                    else Call.status_tags.overlap(wanted_tags)
+                )
+                stmt = stmt.where(tag_clause)
+                count_stmt = count_stmt.where(tag_clause)
             if since:
                 since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
                 stmt = stmt.where(Call.started_at >= since_dt)
@@ -268,6 +291,49 @@ class CallStore:
                 stmt.order_by(Call.started_at.desc()).offset(offset).limit(limit)
             )
             return [_row_to_dict(r) for r in result.scalars()], total
+
+    async def list_tags(
+        self,
+        *,
+        tenant_id: str,
+        agent_id: str | None = None,
+        limit: int = 300,
+    ) -> list[dict[str, Any]]:
+        """Distinct tags in a tenant's connected-call history, most used first."""
+        limit = max(1, min(limit, 500))
+        factory = get_session_factory()
+        if factory is None:
+            counts: Counter[str] = Counter()
+            for rec in _MEM.values():
+                if str(rec.get("tenant_id")) != str(tenant_id) or rec.get("is_test"):
+                    continue
+                if agent_id and str(rec.get("agent_id")) != str(agent_id):
+                    continue
+                counts.update(rec.get("status_tags") or [])
+            return [{"tag": tag, "count": count} for tag, count in counts.most_common(limit)]
+
+        tenant_uuid = _parse_uuid(tenant_id)
+        if tenant_uuid is None:
+            return []
+        agent_uuid = _parse_uuid(agent_id) if agent_id else None
+        sql = text(
+            """
+            SELECT tag, count(*)::int AS tag_count
+            FROM calls, unnest(calls.status_tags) AS tag
+            WHERE calls.tenant_id = :tenant_id
+              AND calls.is_test = false
+              AND (:agent_id IS NULL OR calls.agent_id = :agent_id)
+            GROUP BY tag
+            ORDER BY tag_count DESC, tag ASC
+            LIMIT :limit
+            """
+        )
+        async with factory() as session:
+            result = await session.execute(
+                sql,
+                {"tenant_id": tenant_uuid, "agent_id": agent_uuid, "limit": limit},
+            )
+            return [{"tag": str(row.tag), "count": int(row.tag_count)} for row in result]
 
     async def list_stale_open(self, older_than: datetime) -> list[dict[str, Any]]:
         factory = get_session_factory()

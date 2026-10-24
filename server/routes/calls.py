@@ -272,6 +272,10 @@ async def list_calls(
     include_tests: bool = Query(
         False, description="Include browser practice sessions (not real calls)"
     ),
+    tags: Optional[str] = Query(
+        None, description="Comma-separated tag filter, e.g. intent:pricing,followup:callback"
+    ),
+    tag_match: Literal["any", "all"] = Query("any", description="Match any or all requested tags"),
     scoped_tenant: str = Depends(resolve_calls_tenant_id),
 ):
     """One ordered call history, including calls that never connected.
@@ -293,6 +297,8 @@ async def list_calls(
         offset=offset,
         include_attempts=include_attempts,
         include_tests=include_tests,
+        tags=[tag for tag in (tags or "").split(",") if tag.strip()],
+        tag_match=tag_match,
     )
     enriched = [_enrich_timeline_item(item) for item in items]
     await _attach_tenant_wallet_charges(enriched, scoped_tenant)
@@ -383,6 +389,15 @@ async def _attach_tenant_wallet_charges(items: list[dict[str, Any]], tenant_id: 
             wallet_currency=getattr(wallet, "currency", "usd"),
             fx_rate_inr=fx_by_call.get(str(item.get("call_id"))) or get_settings().fx_rate_inr,
         )
+
+
+@router.get("/api/calls/tags")
+async def calls_tags(
+    agent_id: Optional[str] = Query(None, alias="agentId"),
+    scoped_tenant: str = Depends(resolve_calls_tenant_id),
+):
+    """Tags present in this tenant's history, with counts, for the filter menu."""
+    return {"tags": await call_store.list_tags(tenant_id=scoped_tenant, agent_id=agent_id)}
 
 
 @router.get("/api/calls/stats")

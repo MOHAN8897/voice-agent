@@ -46,6 +46,7 @@ def _attempt_to_item(row: dict[str, Any]) -> dict[str, Any]:
         "caller_phone": row.get("from_number"),
         "called_phone": row.get("to_number"),
         "summary": None,
+        "status_tags": [],
         "has_recording": False,
         "has_transcript": False,
     }
@@ -76,6 +77,7 @@ def _call_to_item(row: dict[str, Any]) -> dict[str, Any]:
         "caller_phone": None,
         "called_phone": None,
         "summary": row.get("summary"),
+        "status_tags": list(row.get("status_tags") or []),
         "has_recording": bool(row.get("has_recording")),
         "has_transcript": bool(row.get("summary")) or bool(row.get("has_transcript")),
     }
@@ -111,15 +113,20 @@ async def list_timeline(
     offset: int = 0,
     include_attempts: bool = True,
     include_tests: bool = False,
+    tags: list[str] | None = None,
+    tag_match: str = "any",
 ) -> tuple[list[dict[str, Any]], int]:
     """One chronological list of everything that rang, with canonical status.
 
     Browser practice sessions (``is_test``) are excluded unless ``include_tests``
     is set — they are not real conversations and must not inflate the rollups.
+    A tag filter only ever matches connected calls: a ringing attempt has no
+    transcript, so it has nothing to tag.
     """
     limit = max(1, min(limit, 100))
     offset = max(0, offset)
     wanted = set(normalize_call_statuses(statuses))
+    wanted_tags = [str(tag).strip() for tag in (tags or []) if str(tag).strip()]
 
     calls, _call_total = await call_store.list_calls(
         tenant_id=tenant_id,
@@ -129,9 +136,13 @@ async def list_timeline(
         limit=_MAX_FETCH,
         offset=0,
         include_tests=include_tests,
+        tags=wanted_tags or None,
+        tag_match=tag_match,
     )
     items = [_call_to_item(c) for c in calls]
 
+    if wanted_tags:
+        include_attempts = False
     if include_attempts:
         attempts, _attempt_total = await call_attempt_store.list_attempts(
             tenant_id=tenant_id,

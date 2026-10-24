@@ -35,6 +35,7 @@ from server.utils.logger import log_pstn, logger
 END_REASONS = {
     "opt_out", "callback_cancelled", "silence_timeout", "max_duration",
     "provider_failure", "runtime_failure", "farewell_timeout", "response_timeout", "response_failure",
+    "technical_fallback",
     "user_stop",
     "timeout",
     "error",
@@ -348,6 +349,13 @@ class CallLifecycleService:
             "contact": contact or {},
             "voicemail_mode": voicemail_mode,
             "billing_timing_version": 2,
+            "recording_disclosure": {
+                "enabled": bool(agent.get("recording_disclosure_enabled")),
+                "text": (agent.get("recording_disclosure_text") or "").strip(),
+                "injected": bool(
+                    compiled_text and "### RECORDING DISCLOSURE POLICY" in compiled_text
+                ),
+            },
         }
         from server.services.transcription_policy import attach_normalized_stack_override
 

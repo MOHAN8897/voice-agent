@@ -10,6 +10,7 @@ from server.config.constants import constants
 from server.config.env import ConfigError, config_presence, get_settings
 from server.db.connection import check_db_health
 from server.db.redis_health import check_redis_health
+from server.db.schema_revision import check_schema_revision
 
 router = APIRouter()
 
@@ -33,11 +34,16 @@ async def health():
     presence = config_presence()
     db_status: dict = {"ok": False, "configured": False, "message": "skipped"}
     redis_status: dict = {"ok": False, "configured": False, "message": "skipped"}
+    schema_status: dict = {"ok": True, "configured": False, "message": "skipped"}
     if env_valid:
         try:
             db_status = await check_db_health()
         except Exception as e:
             db_status = {"ok": False, "configured": False, "message": str(e)[:200]}
+        try:
+            schema_status = await check_schema_revision()
+        except Exception as e:
+            schema_status = {"ok": False, "configured": True, "message": type(e).__name__}
         try:
             redis_status = await check_redis_health()
         except Exception as e:
@@ -70,11 +76,16 @@ async def health():
     except Exception as e:
         r2_status = {"configured": False, "error": str(e)[:120]}
     return {
-        "ok": env_valid and (not db_status.get("configured") or db_status.get("ok")),
+        "ok": (
+            env_valid
+            and (not db_status.get("configured") or db_status.get("ok"))
+            and (not schema_status.get("configured") or schema_status.get("ok"))
+        ),
         "envValid": env_valid,
         "version": constants.APP_VERSION,
         "presence": presence,  # booleans only
         "database": db_status,
+        "schema": schema_status,
         "redis": redis_status,
         "r2": r2_status,
         "email": email_status,

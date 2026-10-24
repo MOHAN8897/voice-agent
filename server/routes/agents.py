@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
@@ -18,6 +18,9 @@ from server.services.saas.tenant_guard import (
 router = APIRouter()
 
 
+DEFAULT_RECORDING_DISCLOSURE = "This call may be recorded for quality and training purposes."
+
+
 class CreateAgentBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -25,7 +28,14 @@ class CreateAgentBody(BaseModel):
     tenantId: Optional[str] = None
     languages: Optional[list[str]] = None
     recordingDisclosureEnabled: Optional[bool] = None
-    recordingDisclosureText: Optional[str] = None
+    recordingDisclosureText: Optional[str] = Field(default=None, max_length=255)
+
+
+def _disclosure_text(enabled: bool, text: str | None) -> str:
+    cleaned = (text or "").strip()
+    if enabled and not cleaned:
+        return DEFAULT_RECORDING_DISCLOSURE
+    return cleaned
 
 
 class PatchAgentBody(BaseModel):
@@ -41,7 +51,9 @@ class PatchAgentBody(BaseModel):
     voiceSettings: Optional[dict[str, Any]] = None
     voice_settings: Optional[dict[str, Any]] = None
     recordingDisclosureEnabled: Optional[bool] = None
-    recordingDisclosureText: Optional[str] = None
+    recordingDisclosureText: Optional[str] = Field(default=None, max_length=255)
+    technicalFallbackPromiseCallback: Optional[bool] = None
+    technicalFallbackText: Optional[str] = Field(default=None, max_length=255)
 
 
 def _tenant_id(request: Request, principal: SubscriberPrincipal | None) -> str | None:
@@ -70,12 +82,13 @@ async def create_agent(
     tenant_id = _tenant_id(request, principal) or body.tenantId
     if principal and body.tenantId and body.tenantId != str(principal.tenant_id):
         raise HTTPException(status_code=400, detail={"error": {"code": "invalid_tenant", "message": "Invalid tenant"}})
+    disclosure_enabled = bool(body.recordingDisclosureEnabled)
     agent = await agent_service.create_agent(
         name=body.name,
         tenant_id=tenant_id,
         languages=body.languages,
-        recording_disclosure_enabled=body.recordingDisclosureEnabled or False,
-        recording_disclosure_text=body.recordingDisclosureText,
+        recording_disclosure_enabled=disclosure_enabled,
+        recording_disclosure_text=_disclosure_text(disclosure_enabled, body.recordingDisclosureText),
     )
     return {"ok": True, "agent": agent}
 
@@ -131,7 +144,14 @@ async def patch_agent(
     if body.recordingDisclosureEnabled is not None:
         patch["recording_disclosure_enabled"] = body.recordingDisclosureEnabled
     if body.recordingDisclosureText is not None:
-        patch["recording_disclosure_text"] = body.recordingDisclosureText
+        cleaned = body.recordingDisclosureText.strip()
+        if not cleaned and body.recordingDisclosureEnabled is not False:
+            cleaned = DEFAULT_RECORDING_DISCLOSURE
+        patch["recording_disclosure_text"] = cleaned
+    if body.technicalFallbackPromiseCallback is not None:
+        patch["technical_fallback_promise_callback"] = body.technicalFallbackPromiseCallback
+    if body.technicalFallbackText is not None:
+        patch["technical_fallback_text"] = body.technicalFallbackText.strip()
     expected_rev = body.expectedVoiceRevision if body.expectedVoiceRevision is not None else body.expected_voice_revision
     try:
         agent = await agent_service.patch_agent(
@@ -174,3 +194,96 @@ async def delete_agent(
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
     except ValueError:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
+
+
+def _clip_error(exc: Exception) -> HTTPException:
+    from server.services.fallback_clip_store import FallbackClipError
+
+    if isinstance(exc, FallbackClipError):
+        return HTTPException(
+            status_code=exc.status_code,
+            detail={"error": {"code": exc.code, "message": str(exc)}},
+        )
+    return HTTPException(
+        status_code=503,
+        detail={"error": {"code": "fallback_store_unavailable", "message": "Fallback clips are unavailable."}},
+    )
+
+
+@router.get("/api/agents/{agent_id}/fallback-clips")
+async def list_fallback_clips(
+    request: Request,
+    agent_id: str,
+    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+):
+    from server.services import fallback_clip_store
+
+    try:
+        clips = await fallback_clip_store.list_clips(
+            tenant_id=_tenant_id(request, principal),
+            agent_id=agent_id,
+        )
+    except KeyError:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
+    except Exception as exc:
+        raise _clip_error(exc)
+    return {
+        "clips": clips,
+        "variants": list(fallback_clip_store.CLIP_VARIANTS),
+        "languages": sorted({clip["language"] for clip in clips}),
+    }
+
+
+@router.put("/api/agents/{agent_id}/fallback-clips/{language}/{variant}")
+async def upload_fallback_clip(
+    request: Request,
+    agent_id: str,
+    language: str,
+    variant: str,
+    file: UploadFile = File(..., description="16-bit PCM WAV, mono or stereo, ≤2 MB, ≤30 s"),
+    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+):
+    if principal:
+        require_subscriber_permission(principal, "app.agents.write")
+    from server.services import fallback_clip_store
+
+    try:
+        raw = await file.read(fallback_clip_store.MAX_UPLOAD_BYTES + 1)
+        clip = await fallback_clip_store.upsert_clip(
+            tenant_id=_tenant_id(request, principal),
+            agent_id=agent_id,
+            language=language,
+            variant=variant,
+            raw=raw,
+        )
+    except KeyError:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
+    except Exception as exc:
+        raise _clip_error(exc)
+    return {"ok": True, "clip": clip}
+
+
+@router.delete("/api/agents/{agent_id}/fallback-clips/{language}/{variant}")
+async def delete_fallback_clip(
+    request: Request,
+    agent_id: str,
+    language: str,
+    variant: str,
+    principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+):
+    if principal:
+        require_subscriber_permission(principal, "app.agents.write")
+    from server.services import fallback_clip_store
+
+    try:
+        await fallback_clip_store.delete_clip(
+            tenant_id=_tenant_id(request, principal),
+            agent_id=agent_id,
+            language=language,
+            variant=variant,
+        )
+    except KeyError:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Clip not found"}})
+    except Exception as exc:
+        raise _clip_error(exc)
+    return {"ok": True}

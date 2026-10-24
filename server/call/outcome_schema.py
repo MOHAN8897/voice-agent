@@ -1,6 +1,7 @@
-"""Post-call outcome schema and disposition enum (locked)."""
+"""Post-call outcome schema, disposition enum and tag taxonomy (locked)."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 DISPOSITIONS = frozenset(
@@ -17,16 +18,71 @@ DISPOSITIONS = frozenset(
     }
 )
 
-STATUS_TAGS = frozenset(
+#: Controlled tag vocabulary. Deterministic categories (outcome/contact/
+#: compliance/quality) are derived by the server; the model may only choose the
+#: conversational categories below. Custom tags are namespaced and sanitised so
+#: tenant-facing surfaces never render model-invented markup or vendor names.
+TAG_VOCABULARY: dict[str, tuple[str, ...]] = {
+    "outcome": tuple(sorted(DISPOSITIONS)),
+    "intent": (
+        "booking",
+        "cancellation",
+        "complaint",
+        "demo",
+        "information",
+        "job_application",
+        "partnership",
+        "pricing",
+        "purchase",
+        "quote",
+        "renewal",
+        "reschedule",
+        "support",
+    ),
+    "sentiment": ("frustrated", "negative", "neutral", "positive"),
+    "signal": (
+        "budget_confirmed",
+        "competitor_mentioned",
+        "decision_maker",
+        "do_not_call",
+        "needs_approval",
+        "objection",
+        "price_sensitive",
+        "ready_to_buy",
+        "repeat_customer",
+        "urgent",
+    ),
+    "followup": ("callback", "schedule_pending", "send_info", "send_quote", "site_visit"),
+    "contact": ("email_known", "name_known", "phone_known", "preferred_language"),
+    "compliance": ("disclosure_delivered", "disclosure_missing", "recording_objected"),
+    "quality": ("inconclusive", "language_mismatch", "poor_audio", "short_call", "tts_failure"),
+    "action": ("required", "urgent"),
+}
+
+STATUS_TAGS = frozenset(f"{category}:{value}" for category, values in TAG_VOCABULARY.items() for value in values)
+
+#: Categories the model may choose from. Everything else is server-derived so a
+#: hallucinated compliance or outcome tag can never overwrite the truth.
+MODEL_TAG_CATEGORIES = frozenset({"intent", "sentiment", "signal", "followup", "action"})
+MODEL_STATUS_TAGS = frozenset(
+    tag for tag in STATUS_TAGS if tag.split(":", 1)[0] in MODEL_TAG_CATEGORIES
+)
+
+CUSTOM_TAG_PREFIX = "custom:"
+CUSTOM_TAG_LIMIT = 3
+STATUS_TAG_LIMIT = 12
+_CUSTOM_TAG_BLOCKED = frozenset(
     {
-        "action:required",
-        "contact:name_known",
-        "contact:phone_known",
-        "followup:callback",
-        "followup:site_visit",
-        "quality:inconclusive",
-        "signal:objection",
-        *(f"outcome:{disposition}" for disposition in DISPOSITIONS),
+        "composio",
+        "exotel",
+        "gemini",
+        "nango",
+        "openai",
+        "plivo",
+        "razorpay",
+        "sarvam",
+        "telnyx",
+        "vobiz",
     }
 )
 
@@ -54,6 +110,8 @@ OUTCOME_JSON_SCHEMA: dict[str, Any] = {
         "extracted_fields",
         "objections",
         "notes",
+        "tags",
+        "custom_tags",
     ],
     "properties": {
         "disposition": {"type": "string", "enum": sorted(DISPOSITIONS)},
@@ -64,6 +122,11 @@ OUTCOME_JSON_SCHEMA: dict[str, Any] = {
         "extracted_fields": {"type": "array", "items": _EXTRACTED_FIELD_ITEM},
         "objections": {"type": "array", "items": {"type": "string"}},
         "notes": {"type": ["string", "null"]},
+        "tags": {
+            "type": "array",
+            "items": {"type": "string", "enum": sorted(MODEL_STATUS_TAGS)},
+        },
+        "custom_tags": {"type": "array", "items": {"type": "string"}},
     },
 }
 
@@ -123,14 +186,60 @@ def merge_outcome_facts(
     return dict(sorted(merged.items()))
 
 
+def normalize_model_tags(raw: Any) -> list[str]:
+    """Keep only allow-listed conversational tags; order preserved, deduped."""
+    if isinstance(raw, str):
+        raw = [raw]
+    if not isinstance(raw, (list, tuple, set)):
+        return []
+    out: list[str] = []
+    for item in raw:
+        tag = str(item or "").strip().lower()
+        if tag in MODEL_STATUS_TAGS and tag not in out:
+            out.append(tag)
+    return out
+
+
+def _slug(value: Any) -> str:
+    text = re.sub(r"[^a-z0-9]+", "-", str(value or "").strip().lower()).strip("-")
+    return text[:28].strip("-")
+
+
+def normalize_custom_tags(raw: Any) -> list[str]:
+    """Sanitise free-form model tags into ``custom:<slug>`` values."""
+    if isinstance(raw, str):
+        raw = [raw]
+    if not isinstance(raw, (list, tuple, set)):
+        return []
+    out: list[str] = []
+    for item in raw:
+        slug = _slug(item)
+        if len(slug) < 2 or any(blocked in slug for blocked in _CUSTOM_TAG_BLOCKED):
+            continue
+        tag = f"{CUSTOM_TAG_PREFIX}{slug}"
+        if tag not in out:
+            out.append(tag)
+        if len(out) >= CUSTOM_TAG_LIMIT:
+            break
+    return out
+
+
 def derive_status_tags(
     disposition: str | None,
     facts: dict[str, str] | None,
     *,
     next_action: str | None = None,
     objections: list[Any] | None = None,
+    model_tags: Any = None,
+    custom_tags: Any = None,
+    disclosure_status: str | None = None,
 ) -> list[str]:
-    """Return a stable, allow-listed set of owner-facing status tags."""
+    """Merge server-derived truth with the model's bounded tag choices.
+
+    Deterministic tags are added first so the cap can never drop the outcome or
+    compliance signal. Model tags can only come from the conversational
+    categories, and custom tags are sanitised slugs.
+    """
     normalized = validate_disposition(disposition)
     tags = {f"outcome:{normalized}"}
     normalized_facts = {str(k).lower(): str(v).strip() for k, v in (facts or {}).items() if str(v).strip()}
@@ -138,6 +247,10 @@ def derive_status_tags(
         tags.add("contact:name_known")
     if any(k in normalized_facts for k in ("phone", "callback_phone", "contact", "phone_number", "mobile")):
         tags.add("contact:phone_known")
+    if any(k in normalized_facts for k in ("email", "mail", "email_address")):
+        tags.add("contact:email_known")
+    if any(k in normalized_facts for k in ("language", "preferred_language", "caller_language")):
+        tags.add("contact:preferred_language")
     action = str(next_action or "").lower()
     if normalized == "callback_required" or "callback" in action or "call back" in action:
         tags.add("followup:callback")
@@ -149,7 +262,23 @@ def derive_status_tags(
         tags.add("signal:objection")
     if normalized == "no_outcome":
         tags.add("quality:inconclusive")
-    return sorted(tag for tag in tags if tag in STATUS_TAGS)
+    if disclosure_status == "delivered":
+        tags.add("compliance:disclosure_delivered")
+    elif disclosure_status == "missing":
+        tags.add("compliance:disclosure_missing")
+
+    ordered = [tag for tag in sorted(tags) if tag in STATUS_TAGS]
+    for tag in normalize_model_tags(model_tags):
+        if len(ordered) >= STATUS_TAG_LIMIT:
+            break
+        if tag not in ordered:
+            ordered.append(tag)
+    for tag in normalize_custom_tags(custom_tags):
+        if len(ordered) >= STATUS_TAG_LIMIT:
+            break
+        if tag not in ordered:
+            ordered.append(tag)
+    return sorted(ordered)
 
 
 def empty_outcome(*, model: str, reason: str = "unavailable") -> dict[str, Any]:
@@ -162,8 +291,10 @@ def empty_outcome(*, model: str, reason: str = "unavailable") -> dict[str, Any]:
         "extracted_fields": {},
         "facts": {},
         "status_tags": ["outcome:no_outcome", "quality:inconclusive"],
+        "tags": [],
+        "custom_tags": [],
         "objections": [],
         "notes": reason,
         "model": model,
-        "prompt_version": "outcome_v1",
+        "prompt_version": "outcome_v4",
     }

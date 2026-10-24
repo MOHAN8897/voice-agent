@@ -289,6 +289,8 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   } = useWorkspace();
   const [filterDirection, setFilterDirection] = useState('All');
   const [filterAgentId, setFilterAgentId] = useState('all');
+  const [tagFilter, setTagFilter] = useState('');
+  const [availableTags, setAvailableTags] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [toNumber, setToNumber] = useState('');
   const [fromNumber, setFromNumber] = useState('');
@@ -339,13 +341,31 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   const statusRequest = React.useRef(0);
   const agentsById = useMemo(() => Object.fromEntries(agents.map(agent => [agent.id, agent])), [agents]);
 
+  const loadAvailableTags = useCallback(async () => {
+    try {
+      setAvailableTags(await api.calls.tags({ agentId: lockedAgentId || undefined }));
+    } catch {
+      /* The menu keeps its current options during a transient outage. */
+    }
+  }, [lockedAgentId]);
+
+  useEffect(() => {
+    loadAvailableTags();
+  }, [loadAvailableTags]);
+
   const loadByStatus = useCallback(
     async (bucket, quiet = false) => {
       const request = ++statusRequest.current;
       const status = bucketToApiStatus(bucket);
       if (!quiet) setStatusLoading(true);
       try {
-        const rows = await api.calls.list({ statuses: status ? [status] : undefined, agentId: lockedAgentId, limit: 100, agentMap: agentsById });
+        const rows = await api.calls.list({
+          statuses: status ? [status] : undefined,
+          agentId: lockedAgentId,
+          tags: tagFilter ? [tagFilter] : undefined,
+          limit: 100,
+          agentMap: agentsById,
+        });
         if (request === statusRequest.current) setStatusCalls(rows);
       } catch (e) {
         if (request === statusRequest.current && !quiet) showToast(e.message || 'Could not load calls', 'error');
@@ -353,7 +373,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
         if (request === statusRequest.current) setStatusLoading(false);
       }
     },
-    [lockedAgentId, agentsById]
+    [lockedAgentId, agentsById, tagFilter]
   );
 
   useEffect(() => {
@@ -372,13 +392,14 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
     try {
       await loadWorkspaceData?.();
       await loadByStatus(historyBucket);
+      await loadAvailableTags();
       showToast('Call list updated', 'success');
     } catch (e) {
       showToast(e.message || 'Could not refresh', 'error');
     } finally {
       setRefreshing(false);
     }
-  }, [loadWorkspaceData, historyBucket, loadByStatus]);
+  }, [loadWorkspaceData, historyBucket, loadByStatus, loadAvailableTags]);
 
   // Tab counts always describe the whole (unfiltered-by-status) list.
   const bucketCalls = useMemo(
@@ -405,7 +426,8 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
           (call.callerPhone || '').includes(q) ||
           (call.agentName || '').toLowerCase().includes(q) ||
           (call.outcome || '').toLowerCase().includes(q) ||
-          (call.summary || '').toLowerCase().includes(q);
+          (call.summary || '').toLowerCase().includes(q) ||
+          (call.statusTags || []).some((tag) => tag.includes(q));
         return matchesDir && matchesSearch && matchesAgent;
       }),
     [scopedCalls, filterAgentId, filterDirection, searchQuery, agents]
@@ -716,6 +738,20 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                     </option>
                   ))}
                 </select>
+                <select
+                  value={tagFilter}
+                  onChange={(e) => setTagFilter(e.target.value)}
+                  aria-label="Filter by tag"
+                  data-testid="calls-tag-filter"
+                  className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2 py-1.5 min-h-[36px] sm:min-h-[30px] text-base sm:text-xs"
+                >
+                  <option value="">All tags</option>
+                  {availableTags.map(({ tag, count }) => (
+                    <option key={tag} value={tag}>
+                      {tag} ({count})
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -788,6 +824,19 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                                 <span className="text-[11px] text-[#524E5E] truncate max-w-[150px] block">
                                   {call.outcome}
                                 </span>
+                                {call.statusTags?.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1 max-w-[170px]">
+                                    {call.statusTags.slice(0, 3).map((tag) => (
+                                      <span
+                                        key={tag}
+                                        title={tag}
+                                        className="text-[9px] font-mono px-1 py-0.5 rounded bg-[#F0EEF6] text-[#524E5E] border border-[#E4E2EB]"
+                                      >
+                                        {tag.replace(/^[a-z]+:/, '')}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                               </td>
                               <td className="py-3.5 px-4 text-right text-[11px] text-[#8C879A]">
                                 {call.startedAt ? new Date(call.startedAt).toLocaleString() : '—'}
@@ -953,7 +1002,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                     {outcome?.disposition && (
                       <div className="pt-2 border-t border-[#E4E2EB] flex flex-wrap gap-1.5">
                         <StatusBadge status={outcome.disposition} size="xs" />
-                        {(outcome.status_tags || []).slice(0, 6).map((tag) => (
+                        {(outcome.status_tags || []).slice(0, 12).map((tag) => (
                           <span
                             key={tag}
                             className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F0EEF6] text-[#524E5E] border border-[#E4E2EB]"

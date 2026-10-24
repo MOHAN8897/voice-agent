@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from datetime import datetime, timezone
 from typing import Any
 from weakref import WeakValueDictionary
@@ -13,11 +14,14 @@ from server.call.call_store import call_store
 from server.call.memory_manager import memory_manager
 from server.call.outcome_schema import (
     DISPOSITIONS,
+    MODEL_STATUS_TAGS,
     OUTCOME_JSON_SCHEMA,
     derive_status_tags,
     empty_outcome,
     merge_outcome_facts,
+    normalize_custom_tags,
     normalize_extracted_fields,
+    normalize_model_tags,
     validate_disposition,
 )
 from server.call.paths import call_dir
@@ -130,7 +134,7 @@ async def run_outcome(call_id: str, *, force: bool = False) -> dict[str, Any]:
         if (
             existing
             and existing.get("generation_ok")
-            and existing.get("prompt_version") == "outcome_v3"
+            and existing.get("prompt_version") == "outcome_v4"
             and not force
         ):
             if not existing.get("integration_dispatch_complete"):
@@ -160,7 +164,7 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     }
     _append_attempt(call_id, attempt)
     payload["model"] = model
-    payload["prompt_version"] = "outcome_v3"
+    payload["prompt_version"] = "outcome_v4"
     payload["generated_at"] = _utcnow()
     payload["generation_ok"] = error is None
     disposition = validate_disposition(payload.get("disposition"))
@@ -186,16 +190,23 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
             payload["next_action"] = f"Arrange a callback in {handoff['caller_language']}. No callback time has been booked."
     payload["extracted_fields"] = facts
     payload["facts"] = facts
+    payload["disclosure_status"] = _detect_disclosure_delivery(transcript, meta)
     payload["status_tags"] = derive_status_tags(
         payload.get("disposition"),
         facts,
         next_action=payload.get("next_action"),
         objections=payload.get("objections"),
+        model_tags=payload.get("tags"),
+        custom_tags=payload.get("custom_tags"),
+        disclosure_status=payload.get("disclosure_status"),
     )
     outcome_path(call_id).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     _write_call_summary(call_id, payload)
     status = "complete" if error is None else "failed"
-    await call_store.update(call_id, {"disposition": payload["disposition"]})
+    await call_store.update(
+        call_id,
+        {"disposition": payload["disposition"], "status_tags": payload["status_tags"]},
+    )
     # The judgement above is only useful if it lands in the CRM, attributed to the
     # agent that took the call. Runs last so a lead write can never invalidate the
     # outcome the console reads, and swallows its own errors for the same reason.
@@ -262,7 +273,16 @@ async def _generate_outcome(
                 "(positive, not yet qualified), qualified (meets criteria), site_visit_planned "
                 "(concrete appointment), callback_required (explicit follow-up), not_interested "
                 "(clear rejection), wrong_number, converted (goal achieved), no_outcome "
-                "(<3 turns or inconclusive)."
+                "(<3 turns or inconclusive). "
+                "tags: choose 2-6 tags that best describe what the caller wanted and how the "
+                "call went. Use only this allow-list: "
+                + ", ".join(sorted(MODEL_STATUS_TAGS))
+                + ". "
+                "custom_tags: up to 3 short lowercase hyphenated topical tags specific to this "
+                "business or conversation (for example solar-rooftop, two-bedroom, delivery-date). "
+                "Never include company, carrier or vendor names. "
+                "Do not emit outcome:, contact:, compliance: or quality: tags — the server "
+                "derives those from the transcript."
             ),
         },
         {
@@ -304,11 +324,13 @@ async def _generate_outcome(
                 OUTCOME_JSON_SCHEMA,
                 LLMConfig(provider=provider_id, model=locked_model),
                 schema_name="call_outcome",
-                max_output_tokens=800,
+                max_output_tokens=1200,
             )
             if not isinstance(payload, dict):
                 raise ValueError("outcome payload is not an object")
             payload["extracted_fields"] = normalize_extracted_fields(payload.get("extracted_fields"))
+            payload["tags"] = normalize_model_tags(payload.get("tags"))
+            payload["custom_tags"] = normalize_custom_tags(payload.get("custom_tags"))
             payload.setdefault("objections", [])
             payload.setdefault("next_action", None)
             payload.setdefault("summary_te", "")
@@ -333,6 +355,30 @@ async def _generate_outcome(
     return failed, last_error
 
 
+#: Recording disclosures are paraphrased, but every phrasing names "record" —
+#: including the loanword used across Indian languages. Used only to audit that
+#: the disclosure was delivered, never to generate it.
+_DISCLOSURE_RE = re.compile(
+    r"record|recording|recorded|రికార్డ|रिकॉर्ड|रेकॉर्ड|பதிவ|ರೆಕಾರ್ಡ|റെക്കോർഡ|রেকর্ড",
+    re.IGNORECASE,
+)
+
+
+def _detect_disclosure_delivery(
+    transcript: list[dict[str, Any]], meta: dict[str, Any]
+) -> str | None:
+    """Whether an enabled disclosure was actually spoken in the conversation."""
+    info = (meta or {}).get("recording_disclosure")
+    if not isinstance(info, dict) or not info.get("enabled") or not info.get("injected"):
+        return None
+    for row in transcript or []:
+        if str(row.get("role") or "").lower() not in ("assistant", "agent"):
+            continue
+        if _DISCLOSURE_RE.search(str(row.get("text") or "")):
+            return "delivered"
+    return "missing"
+
+
 def _english_only_summaries(payload: dict[str, Any]) -> None:
     en = str(payload.get("summary_en") or "").strip()
     te = str(payload.get("summary_te") or "").strip()
@@ -354,6 +400,9 @@ def _write_call_summary(call_id: str, outcome: dict[str, Any]) -> None:
         "extracted_fields": outcome.get("extracted_fields") or {},
         "facts": outcome.get("facts") or {},
         "status_tags": outcome.get("status_tags") or [],
+        "tags": outcome.get("tags") or [],
+        "custom_tags": outcome.get("custom_tags") or [],
+        "disclosure_status": outcome.get("disclosure_status"),
         "objections": outcome.get("objections") or [],
         "model": outcome.get("model"),
         "generated_at": outcome.get("generated_at"),

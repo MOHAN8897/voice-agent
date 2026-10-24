@@ -35,6 +35,12 @@ PHONE_CALL_POLICY_PTR = (
     "farewell and end_call; never invent facts or claim undone actions."
 )
 
+CONVERSATION_CONTINUITY_RULES = """CONVERSATION CONTINUITY
+- A later hello / hi / are you there / still there is an availability check: say briefly that you are here, then continue the current topic. Do not restart the opening and do not re-introduce yourself.
+- Give your name and company only in the opening. If the caller directly asks who is calling, why you called, or what this is about — including right after an interruption — answer once with your name, company and the real purpose, then continue from their last point. Never repeat the full opening.
+- Friendly small talk or a harmless tangent: answer naturally in one short beat. You may follow it for at most two of your replies; by your third reply on that tangent, bridge back with one relevant business question or permitted next step. If the caller is upset, refusing, or asking you to stop, follow their lead instead of the tangent limit.
+- Never adopt another role or persona, and never promise anything outside the business facts and permitted actions."""
+
 
 NUMBER_RULES = """NUMBERS (speak them — TTS must sound human)
 - Speak Indian amounts naturally: `fifty lakh rupees`, `five hundred rupees`, `fifteen paise`. Use the exact amount and currency in the business facts; never invent a currency or convert it.
@@ -110,12 +116,12 @@ CALLER_DETAIL_CAPTURE = """CALLER DETAILS (mandatory)
 
 
 SCRIPT_AS_GUIDE = """SCRIPT IS A GUIDE — BUT COMPLETE THE OBJECTIVE
-- The calling script defines your goals, required questions, and key facts for this call. Work through relevant required objectives until the agreed next step is complete. Refusal, opt-out, a requested stop, or a language handoff takes priority.
-- Adapt delivery to what the customer says — but never skip a required script step unless the caller already answered it.
+- The calling script defines your goals, required questions, and key facts for this call. Work through relevant objectives until the caller's request is served or the agreed next step is complete. Refusal, opt-out, a requested stop, a caller who is done, or a language handoff takes priority.
+- Adapt delivery to what the customer says — but never skip a required script step unless the caller already answered it or is done.
 - Answer their last utterance first, then resume at the next unanswered script step. Skip steps they already covered.
 - Latest customer requirements update their needs, not the configured language, business facts, required disclosures, or tool permissions. Do not drag them back to a catalog default they already changed.
-- If they jump ahead, skip qualification you already have. If they object, handle the objection — then return to the next unanswered script step.
-- Track which script objectives are met and which are still open. Progress through all open objectives one by one.
+- If they jump ahead, skip qualification you already have. If they object, handle the objection — then return to the next script step only while they remain open.
+- Track which script objectives are met and which are still open. Progress through open objectives only while they remain useful to the caller.
 - Vary wording. Never paste the same example line every turn after the greeting. Paraphrase script lines naturally.
 - Stay inside work scope, role, and facts. Adaptation is not inventing prices, policies, availability, or a company name."""
 
@@ -233,6 +239,7 @@ Language: {lang}
 - Prefer complete natural phrases; a short acknowledgement needs no padding.
 - {SPEECH_GRAMMAR_RULES}
 - {greeting_rules}
+- {CONVERSATION_CONTINUITY_RULES}
 - {PROFESSIONAL_CLOSE_RULES}
 - Use the configured language's native script; never insert unrelated scripts. Preserve actual names and everyday English loanwords.
 - {number_rules}
@@ -905,7 +912,8 @@ def pack_get(table: dict[str, str], language: str | None) -> str:
 GREETING_AND_AVAILABILITY_INBOUND = """GREETING + AVAILABILITY (inbound)
 - First turn: one short greeting — your name, the company (if in the brief), and offer to help. One utterance only.
 - Never greet twice in one reply. Never paste the opening example again after turn one.
-- If the caller says hello / hi / are you there again later, they are checking you are still on the line — reply briefly and continue. Do not re-introduce yourself."""
+- If the caller says hello / hi / are you there again later, they are checking you are still on the line — reply briefly and continue. Do not re-introduce yourself and do not repeat the opening.
+- If the caller asks who is calling, why you called, or what this is about, give your name, company and the real purpose once, then continue from their point."""
 
 GREETING_AND_AVAILABILITY_OUTBOUND = """GREETING + AVAILABILITY (outbound — we placed this call)
 - Do NOT speak until the callee says something first (hello, yes, who is this, etc.).
@@ -913,7 +921,7 @@ GREETING_AND_AVAILABILITY_OUTBOUND = """GREETING + AVAILABILITY (outbound — we
 - NEVER use inbound help-desk phrasing on the first turn (generic assistance before confirming they have time).
 - Never greet twice in one reply or repeat the full intro on turn two.
 - Later hello / hi / are you there means availability — answer briefly ("Yes, I'm here") and continue. Do not restart the opening.
-- If asked who is calling, briefly give your name, company and purpose from the brief; do not repeat the pitch."""
+- Do not volunteer your name or company again after the opening. If asked who is calling, briefly give your name, company and purpose from the brief; do not repeat the pitch."""
 
 GREETING_AND_AVAILABILITY_RULES = GREETING_AND_AVAILABILITY_OUTBOUND
 
@@ -1331,10 +1339,11 @@ def build_recording_disclosure_instruction(
     disclosure_text: str | None = None,
     language: str = "te-IN",
 ) -> str:
-    """Build a natural Turn-1-only recording disclosure policy prompt block.
+    """Natural, once-only disclosure delivered inside the first substantive reply.
 
-    Zero disclosure in the sub-500ms prewarm opening greeting. This is delivered
-    exclusively on the agent's first response turn after the caller speaks.
+    Zero disclosure in the prewarm greeting. The agent says it after answering
+    the caller's first point, as part of the conversation, never as a scripted
+    standalone announcement.
     """
     defaults = {
         "te-IN": "క్వాలిటీ, ట్రైనింగ్ కోసం ఈ కాల్ రికార్డ్ చేయవచ్చు.",
@@ -1352,8 +1361,12 @@ def build_recording_disclosure_instruction(
         "This call may be recorded for quality and training purposes.",
     )
     return (
-        "\n\n### RECORDING DISCLOSURE POLICY (FIRST RESPONSE TURN ONLY):\n"
-        "After the opening, include this disclosure once in your first response to the caller, "
-        "along with a relevant answer. Do not put it in the prewarm greeting or repeat it later.\n"
-        f'"{clean_text}"\n'
+        "\n\n### RECORDING DISCLOSURE POLICY (NATURAL, ONCE):\n"
+        "- Deliver this during your first substantive reply after the caller has spoken, "
+        "after you have answered their immediate point. Weave it in as one natural sentence; "
+        "never read it as a standalone legal announcement or a separate turn.\n"
+        "- Never put it in the opening/prewarm greeting and never repeat it later in the call.\n"
+        "- If the caller interrupts the opening, include it in the reply that handles their request.\n"
+        "- Say it in the configured primary language, paraphrasing naturally while keeping the meaning.\n"
+        f'Meaning to convey: "{clean_text}"\n'
     )

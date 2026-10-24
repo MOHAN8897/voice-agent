@@ -81,7 +81,10 @@ def first_turn_identity_rules(language: str | None, *, direction: str | None = N
 - NEVER use inbound help-desk phrasing on the first turn (generic assistance before confirming they have time).
 - Introduce yourself only once per call — never re-greet on turn two."""
     return f"""FIRST TURN / IDENTITY (inbound — they called you)
-- Language: {lang}. Answer promptly with a short greeting and offer to help."""
+- Language: {lang}. Answer promptly with a short greeting and offer to help.
+- If the opening was already delivered, do not greet or introduce yourself again.
+- A later hello / are you there is availability: answer briefly and continue.
+- Give your name and company once only if the caller asks who is calling or why."""
 
 
 def build_audio_session_instructions(

@@ -11,7 +11,7 @@
     "api": {
       "rootDirectory": ".",
       "dockerfilePath": "Dockerfile.api",
-      "releaseCommand": "python -m alembic -c alembic.ini upgrade head",
+      "releaseCommand": "python -m alembic -c alembic.ini upgrade head && python -m scripts.verify_postgres",
       "healthcheckPath": "/api/health",
       "healthcheckTimeout": 60,
       "sleepApplication": false

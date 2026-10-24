@@ -516,7 +516,7 @@ async def test_silent_greeting_is_not_recorded_as_spoken(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_tts_failure_retry_does_not_reenter_speak_lock(monkeypatch):
+async def test_tts_failure_plays_recorded_apology_without_reentering_speak_lock(monkeypatch):
     from server.call.live_turn_orchestrator import live_turn_orchestrator
     from server.tests.test_pstn_critical_loop import FakeTtsSession
     class BrokenTts(FakeTtsSession):
@@ -538,7 +538,12 @@ async def test_tts_failure_retry_does_not_reenter_speak_lock(monkeypatch):
         attempts.append(1)
     monkeypatch.setattr(voice, "speak", retry)
     await asyncio.wait_for(voice._run_turn("I need a plot"), timeout=0.5)
-    assert attempts == [1]
+    # The dead speech provider is not retried; the shipped clip speaks for it.
+    assert attempts == []
+    assert voice._technical_fallback_played is True
+    assert voice.on_agent_wire.await_count > 0
+    assert voice._hangup_started is True
+    assert not voice._speak_lock.locked()
 
 
 @pytest.mark.asyncio

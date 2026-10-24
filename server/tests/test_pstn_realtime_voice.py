@@ -1775,8 +1775,24 @@ def test_availability_matcher_covers_indic_and_who_is_this():
     assert not _is_presence_reply("I needed a service for my car")
 
 
+def test_greeting_barge_classifier_keeps_pickup_but_accepts_requests():
+    from server.services.pstn_realtime_voice_core import _is_greeting_barge
+
+    greeting = "Hi, this is Priya from Acme Solar. Do you have a moment?"
+    assert not _is_greeting_barge("hello", greeting)
+    assert not _is_greeting_barge("Hello?", greeting)
+    assert not _is_greeting_barge("yes", greeting)
+    assert not _is_greeting_barge("haan", greeting)
+    assert not _is_greeting_barge("ok", greeting)
+    assert not _is_greeting_barge("Do you have a moment?", greeting)
+    assert _is_greeting_barge("Who is this?", greeting)
+    assert _is_greeting_barge("I need a quote for solar panels", greeting)
+    assert _is_greeting_barge("stop", greeting)
+    assert _is_greeting_barge("I wanted to ask about the price", greeting)
+
+
 @pytest.mark.asyncio
-async def test_deferred_greeting_is_not_cut_by_hello_barge():
+async def test_deferred_greeting_ignores_pickup_and_cuts_on_real_request():
     import struct
 
     barged: list[int] = []
@@ -1808,13 +1824,29 @@ async def test_deferred_greeting_is_not_cut_by_hello_barge():
         greeting_wire_frames=[b"\x00" * 640],
         greeting_text="Hi, this is Priya. Do you have a moment?",
     )
+    loop._deferred_greeting_armed = False
+    loop._deferred_greeting_text = "Hi, this is Priya. Do you have a moment?"
     loop._deferred_greeting_playing = True
     loop._set_tts_active(True)
     loud = struct.pack("<" + "h" * 320, *([2200] * 320))
     for _ in range(REALTIME_AEC_LOUD_OPEN_FRAMES + 2):
         await loop.feed_user_pcm16(loud)
+    # Energy alone never cuts the opening; only a confirmed transcript can.
     assert barged == []
-    assert adapter.appended == []
+    assert loop._greeting_interrupted is False
+    await loop._handle_event({"type": "user_transcript", "text": "hello", "final": True})
+    assert loop._greeting_interrupted is False
+    await loop._handle_event({"type": "user_transcript", "text": "yes", "final": True})
+    assert loop._greeting_interrupted is False
+    await loop._handle_event(
+        {"type": "user_transcript", "text": "I need a quote for solar panels", "final": True}
+    )
+    assert loop._greeting_interrupted is True
+    assert barged == [1]
+    loop._deferred_greeting_playing = False
+    await loop._finish_interrupted_greeting()
+    await loop._answer_interrupted_greeting()
+    assert any("interrupted your opening" in text for text in adapter.started_responses)
     await loop.close()
 
 
