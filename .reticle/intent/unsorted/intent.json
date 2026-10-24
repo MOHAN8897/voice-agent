@@ -1,5 +1,14 @@
 {
   "intents": {
+    "complete-language-voices": {
+      "declaredAt": 1792865547633,
+      "id": "complete-language-voices",
+      "state": "declared",
+      "statement": "Tenants see every supported voice for their selected model and language, complete catalogue counts, and a successful saved selection.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792865547694
+    },
     "inline:admin-approved-kyc-shows-identity-verified-in-th-b62fafbc": {
       "binding": {
         "contains": "Identity verified",
@@ -1036,6 +1045,15 @@
       },
       "updatedAt": 1790958475823
     },
+    "provider-delivery-controls": {
+      "declaredAt": 1792865547633,
+      "id": "provider-delivery-controls",
+      "state": "declared",
+      "statement": "Admins see all documented delivery controls and each call uses its immutable saved provider model voice and delivery configuration.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792865547717
+    },
     "tenant-login-console": {
       "declaredAt": 1792818751488,
       "id": "tenant-login-console",
@@ -1044,6 +1062,15 @@
       "status": "proposed",
       "subject": "unsorted",
       "updatedAt": 1792818751539
+    },
+    "tenant-outage-private": {
+      "declaredAt": 1792865547633,
+      "id": "tenant-outage-private",
+      "state": "declared",
+      "statement": "Only platform admins can view and change speech outage announcements; tenant APIs and settings exclude the internal policy.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792865547643
     },
     "voice-single-test-save": {
       "declaredAt": 1792818751488,

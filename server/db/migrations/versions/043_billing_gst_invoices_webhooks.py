@@ -64,6 +64,10 @@ _ORDER_COLUMNS = (
 
 
 def upgrade() -> None:
+    # Alembic creates alembic_version.version_num as varchar(32); this
+    # revision id is 35 characters and the version stamp fails otherwise.
+    op.execute("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(64)")
+
     for name, column_type, default in _INVOICE_COLUMNS:
         kwargs = {"nullable": default is None}
         if default is not None:

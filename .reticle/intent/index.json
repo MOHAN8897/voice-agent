@@ -1,6 +1,18 @@
 {
   "entries": [
     {
+      "id": "india-tenant-compliance",
+      "statement": "Indian tenants see Indian calling consent and privacy obligations with…",
+      "status": "proposed",
+      "subject": "console"
+    },
+    {
+      "id": "inline:indian-tenants-see-indian-consent-and-privacy-gu-6d37e14a",
+      "statement": "Indian tenants see Indian consent and privacy guidance and do not see i…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
       "id": "inline:platform-admins-can-inspect-each-pstn-tier-s-sav-26368601",
       "statement": "Platform admins can inspect each PSTN tier’s saved profile and readines…",
       "status": "proved",
@@ -59,6 +71,12 @@
       "statement": "When identity is not approved, Buy Number shows only the modern verific…",
       "status": "proposed",
       "subject": "drive-when-identity-is-not-approved-buy"
+    },
+    {
+      "id": "complete-language-voices",
+      "statement": "Tenants see every supported voice for their selected model and language…",
+      "status": "proposed",
+      "subject": "unsorted"
     },
     {
       "id": "inline:admin-approved-kyc-shows-identity-verified-in-th-b62fafbc",
@@ -259,8 +277,20 @@
       "subject": "unsorted"
     },
     {
+      "id": "provider-delivery-controls",
+      "statement": "Admins see all documented delivery controls and each call uses its immu…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
       "id": "tenant-login-console",
       "statement": "A successful tenant sign-in opens the requested console and retains com…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "tenant-outage-private",
+      "statement": "Only platform admins can view and change speech outage announcements; t…",
       "status": "proposed",
       "subject": "unsorted"
     },
