@@ -169,14 +169,16 @@ class RuntimeSettingsStore:
             return val
         if key == "ttsSpeaker":
             v = str(val).strip()
+            from server.providers.voice_inventory import voices_for_model
             from server.services.cartesia_voices import is_cartesia_voice_id
 
             if is_cartesia_voice_id(v):
                 return v
-            v_lower = v.lower()
-            if v_lower in constants.TTS_SPEAKERS_V3 or v_lower in constants.TTS_SPEAKERS_V2:
-                return v_lower
-            raise SettingsValidationError("Unknown speaker — use Sarvam speaker id or Cartesia voice UUID")
+            for model in constants.TTS_MODELS:
+                for row in voices_for_model("sarvam", model):
+                    if row["providerVoiceId"].casefold() == v.casefold():
+                        return row["providerVoiceId"]
+            raise SettingsValidationError("Unknown speaker — use a published Sarvam voice or Cartesia voice UUID")
         if key == "ttsPace":
             return _clamp(float(val), 0.3, 3.0)  # per-model clamped at use
         if key == "ttsTemperature":
@@ -251,15 +253,20 @@ class RuntimeSettingsStore:
         model = values.get("ttsModel")
         spk = values.get("ttsSpeaker")
         if model and spk:
-            sarvam_ok = spk in constants.TTS_SPEAKERS_V3 if model == "bulbul:v3" else spk in constants.TTS_SPEAKERS_V2
-            cartesia_ok = model in constants.CARTESIA_TTS_MODELS
-            if model in constants.TTS_MODELS and not sarvam_ok:
-                raise SettingsValidationError(f"Speaker '{spk}' incompatible with {model}")
-            if cartesia_ok:
-                from server.services.cartesia_voices import is_cartesia_voice_id
+            from server.providers.voice_inventory import default_voice, validate_voice, voices_for_model
 
-                if not is_cartesia_voice_id(spk):
-                    values["ttsSpeaker"] = constants.CARTESIA_DEFAULT_VOICE_ID
+            language = values.get("sttLanguage")
+            language = None if language in (None, "unknown") else language
+            provider = "sarvam" if model in constants.TTS_MODELS else "cartesia" if model in constants.CARTESIA_TTS_MODELS else None
+            if provider:
+                published = {row["providerVoiceId"] for row in voices_for_model(provider, model)}
+                if spk not in published:
+                    values["ttsSpeaker"] = default_voice(provider, model, language, preferred=spk)
+                else:
+                    try:
+                        validate_voice(provider, model, spk, language)
+                    except ValueError as exc:
+                        raise SettingsValidationError(f"Speaker '{spk}' incompatible with {model}: {exc}") from exc
         pace = values.get("ttsPace")
         if model == "bulbul:v3" and pace is not None:
             values["ttsPace"] = _clamp(pace, 0.5, 2.0)

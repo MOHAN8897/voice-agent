@@ -38,17 +38,16 @@ def _set_nested(root: dict[str, Any], section: str, key: str, value: Any) -> Non
     block[key] = value
 
 
-def _sarvam_speaker_names() -> set[str]:
-    return {s.lower() for s in constants.TTS_SPEAKERS_V3 + constants.TTS_SPEAKERS_V2}
+def _default_sarvam_speaker(language: str, model: str) -> str:
+    from server.providers.voice_inventory import default_voice
+
+    return default_voice("sarvam", model, language)
 
 
-def _default_sarvam_speaker(language: str) -> str:
-    lang = constants.SUPPORTED_LANGUAGES.get(coerce_supported_language(language))
-    return str((lang or constants.SUPPORTED_LANGUAGES["te-IN"]).get("speaker") or "shubh")
+def _default_cartesia_voice_id(language: str, model: str) -> str:
+    from server.providers.voice_inventory import default_voice
 
-
-def _default_cartesia_voice_id() -> str:
-    return constants.CARTESIA_DEFAULT_VOICE_ID
+    return default_voice("cartesia", model, language)
 
 
 def _cartesia_stt_ok(model: str, language: str) -> bool:
@@ -83,8 +82,6 @@ def _normalize_realtime_voice_override(
         DEFAULT_REALTIME_MODEL,
         DEFAULT_REALTIME_TURN_DETECTION,
         DEFAULT_REALTIME_VOICE,
-        GEMINI_LIVE_LIBRARY_VOICES,
-        GEMINI_LIVE_VOICES,
         REALTIME_VOICES,
         is_gemini_live_voice_model,
         is_realtime_llm_model,
@@ -110,7 +107,9 @@ def _normalize_realtime_voice_override(
         out["realtime_voice"] = rv
     raw_voice = str(rv.get("voice") or "").strip()
     voice_language = coerce_supported_language(str(out.get("language") or language or "te-IN"))
-    gemini_voice_ids = {name.lower() for name in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)}
+    from server.providers.voice_inventory import voices_for_model
+
+    gemini_voice_ids = {row["providerVoiceId"].lower() for row in voices_for_model("gemini", model or DEFAULT_GEMINI_LIVE_MODEL)}
     explicit_provider = provider in {"openai", "gemini"}
     if provider and not explicit_provider:
         raise PstnStackValidationError("The selected provider does not support native audio calls")
@@ -144,11 +143,14 @@ def _normalize_realtime_voice_override(
         # A stale OpenAI slug cannot describe a Gemini selection. Resolve it to
         # the language's regional Gemini default instead of mapping to Puck/Aoede.
         if raw_voice and raw_voice.lower() not in gemini_voice_ids:
-            raise PstnStackValidationError("The selected voice does not belong to the native audio model")
-        if not raw_voice:
             voice = default_gemini_live_voice(voice_language)
+            adjustments.append(
+                f"realtime voice '{raw_voice}' is not published for {llm.get('model')}; using '{voice}'"
+            )
+        elif raw_voice:
+            voice = normalize_gemini_live_voice(raw_voice, str(llm.get("model") or ""))
         else:
-            voice = normalize_gemini_live_voice(raw_voice)
+            voice = default_gemini_live_voice(voice_language)
     else:
         if raw_voice and raw_voice.lower() not in {item.lower() for item in REALTIME_VOICES}:
             raise PstnStackValidationError("The selected voice does not belong to the native audio model")
@@ -273,50 +275,65 @@ def normalize_pstn_stack_override(
         if not tts_provider:
             _set_nested(out, "tts", "provider", "cartesia")
         if not tts_model or tts_model not in constants.CARTESIA_TTS_MODELS:
-            if not str(tts_model).startswith("sonic"):
+            if str(tts_model).startswith("sonic"):
+                _set_nested(out, "tts", "model", "sonic-3.5")
+                adjustments.append(f"tts.model {tts_model} is not published; using sonic-3.5")
+            else:
                 _set_nested(out, "tts", "model", "sonic-3.5")
                 adjustments.append("tts.model set to sonic-3.5 for Cartesia PSTN")
+        model = str(_deep_get(out, "tts", "model") or "sonic-3.5")
+        from server.providers.voice_inventory import default_voice, validate_voice
 
         speaker = tts_speaker
-        if not speaker or not is_cartesia_voice_id(speaker):
-            if speaker and speaker.lower() in _sarvam_speaker_names():
+        if speaker:
+            try:
+                validate_voice("cartesia", model, speaker, language)
+            except ValueError:
                 adjustments.append(
-                    f"tts speaker '{speaker}' is a Sarvam voice; replaced with default Cartesia voice for PSTN"
+                    f"Cartesia TTS speaker '{speaker}' is not published for {model} in {language}; using the catalog default"
                 )
-            elif speaker:
-                adjustments.append(f"tts speaker '{speaker}' is not a Cartesia voice id; using default")
-            speaker = _default_cartesia_voice_id()
-            tts_block = out.setdefault("tts", {})
-            if not isinstance(tts_block, dict):
-                tts_block = {}
-                out["tts"] = tts_block
-            cfg = tts_block.setdefault("config", {})
-            if not isinstance(cfg, dict):
-                cfg = {}
-                tts_block["config"] = cfg
-            cfg["speaker"] = speaker
+                speaker = ""
+        if not speaker:
+            speaker = default_voice("cartesia", model, language)
+        tts_block = out.setdefault("tts", {})
+        if not isinstance(tts_block, dict):
+            tts_block = {}
+            out["tts"] = tts_block
+        cfg = tts_block.setdefault("config", {})
+        if not isinstance(cfg, dict):
+            cfg = {}
+            tts_block["config"] = cfg
+        cfg["speaker"] = speaker
 
     elif tts_provider == "sarvam" or tts_model in constants.TTS_MODELS:
         if not tts_provider:
             _set_nested(out, "tts", "provider", "sarvam")
         model = tts_model or "bulbul:v3"
+        if model not in constants.TTS_MODELS:
+            raise PstnStackValidationError(f"Unknown Sarvam TTS model '{model}' for PSTN")
         _set_nested(out, "tts", "model", model)
+        from server.providers.voice_inventory import default_voice, validate_voice
+
         speaker = tts_speaker
         if speaker and is_cartesia_voice_id(speaker):
-            speaker = _default_sarvam_speaker(language)
-            adjustments.append("Cartesia voice id removed from Sarvam TTS; using language default speaker")
+            adjustments.append("Cartesia voice id removed from Sarvam TTS; using the catalog default")
+            speaker = ""
         if speaker:
-            allowed = constants.TTS_SPEAKERS_V3 if model == "bulbul:v3" else constants.TTS_SPEAKERS_V2
-            if speaker not in allowed:
-                raise PstnStackValidationError(
-                    f"Sarvam speaker '{speaker}' is not valid for model '{model}' on PSTN",
-                    details=[f"Pick one of: {', '.join(allowed[:8])}…"],
+            try:
+                validate_voice("sarvam", model, speaker, language)
+            except ValueError:
+                fallback = default_voice("sarvam", model, language)
+                adjustments.append(
+                    f"Sarvam TTS speaker '{speaker}' is not published for {model} in {language}; using '{fallback}'"
                 )
-            tts_block = out.setdefault("tts", {})
-            if isinstance(tts_block, dict):
-                cfg = tts_block.setdefault("config", {})
-                if isinstance(cfg, dict):
-                    cfg["speaker"] = speaker
+                speaker = fallback
+        else:
+            speaker = default_voice("sarvam", model, language)
+        tts_block = out.setdefault("tts", {})
+        if isinstance(tts_block, dict):
+            cfg = tts_block.setdefault("config", {})
+            if isinstance(cfg, dict):
+                cfg["speaker"] = speaker
 
     return _finalize_pstn_live_override(out, adjustments, language=language)
 

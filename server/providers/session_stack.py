@@ -107,10 +107,20 @@ def resolve_stack_for_session(session_id: str, *, language: str = "te-IN") -> Re
     if not speaker:
         if tts_provider == base.tts.provider:
             speaker = base.tts.config.get("speaker") or base.tts.config.get("voice_id")
-        if not speaker and tts_provider == "cartesia":
-            speaker = settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
-        elif not speaker and tts_provider == "sarvam":
-            speaker = settings.sarvam_tts_speaker_te
+    if tts_provider in {"sarvam", "cartesia"}:
+        from server.providers.voice_inventory import default_voice, validate_voice
+
+        preferred = speaker or (
+            settings.cartesia_tts_voice_id if tts_provider == "cartesia" else settings.sarvam_tts_speaker_te
+        )
+        try:
+            speaker = (
+                validate_voice(tts_provider, tts_model, str(preferred), lang)["providerVoiceId"]
+                if preferred
+                else default_voice(tts_provider, tts_model, lang)
+            )
+        except ValueError:
+            speaker = default_voice(tts_provider, tts_model, lang, preferred=str(preferred) if preferred else None)
     selection = StackSelection(
         stt=StageSelection(
             stt_provider,

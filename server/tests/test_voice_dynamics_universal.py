@@ -85,7 +85,7 @@ async def test_resolve_agent_selection_injects_tier_dynamics(monkeypatch):
     stack, snapshot = await voice_stack_profiles.resolve_agent_selection(
         environment="development",
         tier="medium",
-        voice_settings={"engineId": "eng_c1", "modelId": "mod_c1", "voiceId": "voc_c1"},
+        voice_settings={"profileRevision": 3, "engineId": "eng_c1", "modelId": "mod_c1", "voiceId": "voc_c1"},
         language="te-IN",
         allow_fallback=True,
     )

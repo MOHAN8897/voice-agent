@@ -41,6 +41,12 @@ def test_cartesia_voice_uuid_not_validated_as_sarvam_speaker(monkeypatch):
     monkeypatch.setenv("CARTESIA_API_KEY", "sk-cartesia-test")
     get_settings.cache_clear()
     init_provider_registry()
+    from server.providers import voice_inventory
+    original = voice_inventory.voices_for_model
+    monkeypatch.setattr(voice_inventory, "_voice_indexes", {})
+    monkeypatch.setattr(voice_inventory, "voices_for_model", lambda provider, model: [
+        {"id": "4418bb06-8329-49a1-bb11-53bb64ca0547", "providerVoiceId": "4418bb06-8329-49a1-bb11-53bb64ca0547", "languages": ["te-IN"]}
+    ] if provider == "cartesia" else original(provider, model))
     runtime_settings.update(
         "cfg-test",
         {
@@ -139,49 +145,13 @@ def test_explicit_prewarm_stack_ignores_stale_runtime_provider(monkeypatch):
     assert cfg["speaker"] == "shubh"
 
 
-def test_cartesia_sarvam_speaker_coerced_to_default(monkeypatch):
-    from server.config.constants import constants
-
+def test_cartesia_wrong_provider_speaker_is_rejected(monkeypatch):
     monkeypatch.setenv("ENABLE_CARTESIA", "true")
     monkeypatch.setenv("CARTESIA_API_KEY", "sk-cartesia-test")
     get_settings.cache_clear()
     init_provider_registry()
-    cfg = resolve_tts_config(
-        "cfg-test",
-        language_code="te-IN",
-        speaker="priya",
-        model="sonic-3.5",
-    )
-    assert cfg["provider"] == "cartesia"
-    assert cfg["speaker"] == constants.CARTESIA_DEFAULT_VOICE_ID
-
-
-def test_cartesia_default_voice_survives_english_cap():
-    from server.config.constants import constants
-    from server.services.cartesia_voices import _FALLBACK_VOICES, _build_studio_catalog
-
-    extras = [
-        {
-            "id": f"00000000-0000-4000-8000-{i:012d}",
-            "name": f"Aaa{i}",
-            "gender": "feminine",
-            "languages": ["en"],
-            "region": "english",
-        }
-        for i in range(40)
-    ]
-    _studio, groups = _build_studio_catalog(list(_FALLBACK_VOICES) + extras)
-    ids = {v["id"] for v in groups["english"]}
-    assert constants.CARTESIA_DEFAULT_VOICE_ID in ids
-    assert len(groups["english"]) <= 24
-    runtime_settings.update("cfg-test", {"ttsSpeaker": "priya"})
-    cfg = merge_ws_tts_config(
-        "cfg-test",
-        {"speaker": "shubh", "language_code": "te-IN"},
-        language_code="te-IN",
-        ws_model="bulbul:v3",
-    )
-    assert cfg["speaker"] == "priya"
+    with pytest.raises(TtsConfigError, match="Choose a voice"):
+        resolve_tts_config("cfg-test", language_code="te-IN", speaker="priya", model="sonic-3.5")
 
 
 def test_sarvam_tts_maps_en_us_to_provider_en_in():

@@ -295,8 +295,13 @@ async def web_agent_ws(websocket: WebSocket):
         pass
     except Exception as exc:
         logger.exception("[WEB_AGENT] session failed call=%s", call_id)
+        from server.services.saas.voice_setup_errors import voice_setup_error
+
+        setup_error = voice_setup_error(exc)
         raw_msg = str(exc)
-        if "API key" in raw_msg or "denied access" in raw_msg or "quota" in raw_msg.lower():
+        if setup_error:
+            user_msg = setup_error["message"]
+        elif "API key" in raw_msg or "denied access" in raw_msg or "quota" in raw_msg.lower():
             user_msg = "Voice provider connection failed. Please verify API configuration or try again."
         elif "timeout" in raw_msg.lower():
             user_msg = "Voice provider connection timed out. Please try again."
@@ -307,7 +312,7 @@ async def web_agent_ws(websocket: WebSocket):
 
             record_session_failure(
                 channel="web_agent",
-                code="session_failed",
+                code=setup_error["code"] if setup_error else "session_failed",
                 message=user_msg,
                 agent_id=agent_id,
                 tenant_id=str(getattr(principal, "tenant_id", "") or ""),
@@ -316,7 +321,7 @@ async def web_agent_ws(websocket: WebSocket):
             )
         except Exception:
             pass
-        await send_event({"type": "error", "code": "session_failed", "message": user_msg})
+        await send_event({"type": "error", "code": setup_error["code"] if setup_error else "session_failed", "message": user_msg})
     finally:
         closed = True
         from server.call.billing_timing import mark_call_disconnected

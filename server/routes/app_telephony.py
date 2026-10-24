@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import uuid
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field, model_validator
@@ -204,6 +205,13 @@ async def telephony_voice_options(
     voices = phone_voice_catalog()
     if active_voice_provider != "gemini":
         voices = [voice for voice in voices if voice.get("provider") != "gemini"]
+    voices = [
+        {**voice, "previewUrl": "/api/telephony/voice-preview/live?" + urlencode(
+            {"voiceId": voice.get("id"), "language": language}
+        )}
+        if voice.get("provider") == active_voice_provider else voice
+        for voice in voices
+    ]
     response.headers["Cache-Control"] = "private, no-store, max-age=0"
     rv = phone_stack.get("realtime_voice") if isinstance(phone_stack.get("realtime_voice"), dict) else {}
     return {
@@ -264,33 +272,20 @@ async def voice_preview(
         if alias_match and alias_match.get("provider"):
             provider = str(alias_match.get("provider"))
             model = alias_match.get("model")
-        elif "gnani" in (raw_voice_id or "").lower():
-            provider = "gnani"
-            model = "timbre-v3.0"
-        elif "cartesia" in (raw_voice_id or "").lower() or (raw_voice_id and len(raw_voice_id) > 25):
-            provider = "cartesia"
-            model = "sonic-3.5"
-        elif requested_tier == "medium":
-            provider = "sarvam"
-            model = "bulbul:v3"
-        elif requested_tier == "low":
-            provider = "gemini"
-            model = "gemini-3.8-flash-tts"
-        elif requested_tier and requested_tier != "premium":
+        elif requested_tier:
             from server.services.dev_runtime import effective_app_environment
             from server.services.saas.voice_stack_profiles import load_profile_records
-            custom_recs = await load_profile_records(effective_app_environment(), (requested_tier,))
-            custom_rec = custom_recs.get(requested_tier)
-            if custom_rec and isinstance(custom_rec.get("profile"), dict):
-                first_model = custom_rec["profile"].get("engines", [{}])[0].get("models", [{}])[0]
-                provider = str(first_model.get("provider") or ("gemini" if "low" in requested_tier else "sarvam"))
-                model = str(first_model.get("model") or "")
-            elif "low" in requested_tier or "economical" in requested_tier:
-                provider = "gemini"
-                model = "gemini-3.8-flash-tts"
-            else:
-                provider = "sarvam"
-                model = "bulbul:v3"
+
+            records = await load_profile_records(effective_app_environment(), (requested_tier,))
+            profile = (records.get(requested_tier) or {}).get("profile") or {}
+            matches = [(model_row, voice) for engine in profile.get("engines", []) for model_row in engine.get("models", [])
+                for voice in model_row.get("voices", []) if effective_voice_id in {voice.get("id"), voice.get("providerVoiceId")}
+                and raw_lang in voice.get("languages", [])]
+            if len(matches) != 1:
+                raise ValueError("voice_not_in_active_catalog")
+            selected_model, selected_voice = matches[0]
+            provider, model = selected_model["provider"], selected_model["model"]
+            effective_voice_id = selected_voice["providerVoiceId"]
         else:
             phone_stack = await resolve_platform_phone_stack(raw_lang or "te-IN")
             llm = phone_stack.get("llm") if isinstance(phone_stack.get("llm"), dict) else {}
@@ -348,9 +343,111 @@ async def voice_preview(
             "X-Voice-Name": public_label,
             "X-Voice-Label": public_label,
             "X-Voice-Model": "Enterprise Voice Engine",
-            "X-Voice-Stack-Model": "",
             "X-Voice-Cache": "hit" if result.get("cacheHit") else "miss",
             "Cache-Control": "private, max-age=86400" if result.get("cacheable") else "no-store",
+        },
+    )
+
+
+@router.get("/api/telephony/voice-preview/catalog")
+async def catalog_voice_preview(
+    voiceId: str = Query(..., min_length=4, max_length=64),
+    language: str = Query(default="en-IN", min_length=2, max_length=16),
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    """Serve the stored sample for one opaque public catalog voice.
+
+    Samples are generated once per voice/language with the server's own greeting
+    text, then served from the disk cache so repeat plays cost no provider call.
+    """
+    from server.auth.rbac import role_has_permission
+    if not (
+        role_has_permission(principal.role, "app.agents.write")
+        or role_has_permission(principal.role, "app.telephony.write")
+        or role_has_permission(principal.role, "app.billing.write")
+    ):
+        raise HTTPException(status_code=403, detail={"error": {"code": "auth_error", "message": "Permission denied"}})
+    from server.services.saas.voice_preview import VoicePreviewRateLimited, synthesize_catalog_preview
+
+    try:
+        result = await synthesize_catalog_preview(voiceId, language)
+    except VoicePreviewRateLimited as exc:
+        raise HTTPException(status_code=429, headers={"Retry-After": str(exc.retry_after)}, detail={
+            "error": {"code": "voice_preview_rate_limited", "message": "Voice generation is temporarily rate limited. Try this sample again later."}
+        }) from None
+    except ValueError as exc:
+        code = str(exc)
+        if code == "unsupported_language":
+            raise HTTPException(status_code=422, detail={
+                "error": {"code": code, "message": "Choose a supported agent language."}
+            }) from None
+        raise HTTPException(status_code=404, detail={
+            "error": {"code": "voice_not_available", "message": "This voice sample is not available in the current catalog."}
+        }) from None
+    except Exception as exc:
+        logger.warning("[VOICE] catalog preview failed error=%s", type(exc).__name__)
+        raise HTTPException(status_code=502, detail={
+            "error": {"code": "voice_preview_unavailable", "message": "The voice sample could not be prepared. Try again later."}
+        }) from None
+    label = str(result.get("label") or "Voice")
+    return Response(
+        content=result["audio"],
+        media_type="audio/wav",
+        headers={
+            "X-Voice-Name": label,
+            "X-Voice-Label": label,
+            "X-Voice-Model": "Enterprise Voice Engine",
+            "X-Voice-Cache": "hit" if result.get("cacheHit") else "miss",
+            "Cache-Control": "private, max-age=86400",
+        },
+    )
+
+
+@router.get("/api/telephony/voice-preview/live")
+async def live_voice_preview(
+    voiceId: str = Query(..., min_length=1, max_length=64),
+    language: str = Query(default="te-IN", min_length=2, max_length=16),
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+):
+    """Serve the stored sample for one voice of the live phone stack."""
+    from server.auth.rbac import role_has_permission
+    if not (
+        role_has_permission(principal.role, "app.agents.write")
+        or role_has_permission(principal.role, "app.telephony.write")
+        or role_has_permission(principal.role, "app.billing.write")
+    ):
+        raise HTTPException(status_code=403, detail={"error": {"code": "auth_error", "message": "Permission denied"}})
+    from server.services.saas.voice_preview import VoicePreviewRateLimited, synthesize_live_preview
+
+    try:
+        result = await synthesize_live_preview(voiceId, language)
+    except VoicePreviewRateLimited as exc:
+        raise HTTPException(status_code=429, headers={"Retry-After": str(exc.retry_after)}, detail={
+            "error": {"code": "voice_preview_rate_limited", "message": "Voice generation is temporarily rate limited. Try this sample again later."}
+        }) from None
+    except ValueError as exc:
+        code = str(exc)
+        if code == "unsupported_language":
+            raise HTTPException(status_code=422, detail={
+                "error": {"code": code, "message": "Choose a supported agent language."}
+            }) from None
+        raise HTTPException(status_code=404, detail={
+            "error": {"code": "voice_not_available", "message": "This voice sample is not available in the current catalog."}
+        }) from None
+    except Exception as exc:
+        logger.warning("[VOICE] live preview failed error=%s", type(exc).__name__)
+        raise HTTPException(status_code=502, detail={
+            "error": {"code": "voice_preview_unavailable", "message": "The voice sample could not be prepared. Try again later."}
+        }) from None
+    return Response(
+        content=result["audio"],
+        media_type="audio/wav",
+        headers={
+            "X-Voice-Name": "Voice",
+            "X-Voice-Label": "Voice",
+            "X-Voice-Model": "Enterprise Voice Engine",
+            "X-Voice-Cache": "hit" if result.get("cacheHit") else "miss",
+            "Cache-Control": "private, max-age=86400",
         },
     )
 

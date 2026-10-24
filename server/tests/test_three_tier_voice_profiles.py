@@ -167,6 +167,62 @@ def test_public_catalog_scrubs_internal_labels_and_does_not_invent_voice_samples
     voice = public["engines"][0]["models"][0]["voices"][0]
     assert voice["label"] == "Voice 1"
     assert voice["previewUrl"] is None
+    # Operator labels never reach tenants, even harmless-looking ones.
+    assert public["engines"][0]["label"] == "Voice engine 1"
+    assert public["engines"][0]["models"][0]["label"] == "Speech model 1"
+
+
+def test_public_catalog_scrubs_operator_tier_label(monkeypatch):
+    monkeypatch.setattr(profiles, "_runtime_profile_blockers", lambda _profile: [])
+    record = _record()
+    record["profile"]["label"] = "Sarvam Bulbul v4 Flash Stack"
+    public = profiles.public_catalog_profile("low", record, _rates())
+    assert public["label"] == "Economical"
+
+
+@pytest.mark.asyncio
+async def test_catalog_route_attaches_opaque_stored_sample_urls(monkeypatch):
+    from fastapi import BackgroundTasks
+    from server.routes import voice_stacks
+
+    record = _record()
+    record["publicAliases"]["voices"] = {
+        "internal-engine-id\u0000internal-model-id\u0000internal-voice-id": "voc_voice_a",
+    }
+    monkeypatch.setattr(profiles, "_runtime_profile_blockers", lambda _profile: [])
+
+    async def load_records(_environment, _tiers):
+        return {"low": record}
+
+    async def load_rates():
+        return _rates()
+
+    monkeypatch.setattr(voice_stacks, "load_profile_records", load_records)
+    monkeypatch.setattr(voice_stacks, "_load_rates_without_fallback", load_rates)
+    monkeypatch.setattr("server.services.dev_runtime.effective_app_environment", lambda: "test")
+
+    background = BackgroundTasks()
+    result = await voice_stacks.voice_stack_catalog(language="te-IN", background=background)
+
+    voice = result["profiles"][0]["engines"][0]["models"][0]["voices"][0]
+    assert voice["previewUrl"] == "/api/telephony/voice-preview/catalog?voiceId=voc_voice_a&language=te-IN"
+    assert [task.func.__name__ for task in background.tasks] == ["schedule_preview_warm"]
+    serialized = json.dumps(result).lower()
+    for internal in ("gemini", "sarvam", "zephyr", "internal-voice-id"):
+        assert internal not in serialized
+
+
+@pytest.mark.parametrize(
+    ("raw_gender", "expected"),
+    [("Female", "female"), ("feminine", "female"), ("MALE", "male"),
+     ("masculine", "male"), ("Neutral", "neutral"), ("gender_neutral", "neutral"), ("", ""), ("unknown", "")],
+)
+def test_public_catalog_normalizes_gender_without_guessing(monkeypatch, raw_gender, expected):
+    monkeypatch.setattr(profiles, "_runtime_profile_blockers", lambda _profile: [])
+    record = _record()
+    record["profile"]["engines"][0]["models"][0]["voices"][0]["gender"] = raw_gender
+    public = profiles.public_catalog_profile("low", record, _rates())
+    assert public["engines"][0]["models"][0]["voices"][0]["gender"] == expected
 
 
 @pytest.mark.asyncio

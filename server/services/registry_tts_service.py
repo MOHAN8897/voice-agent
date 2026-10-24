@@ -30,17 +30,16 @@ def _resolve_cartesia_voice(
     session_id: str,
     stack,
     speaker: str | None,
+    model: str,
+    language_code: str,
 ) -> str:
     settings = get_settings()
     runtime = runtime_settings.get(session_id)
     stack_speaker = stack.tts.config.get("speaker") if stack.tts.config else None
-    return (
-        speaker
-        or runtime.get("ttsSpeaker")
-        or stack_speaker
-        or settings.cartesia_tts_voice_id
-        or constants.CARTESIA_DEFAULT_VOICE_ID
-    )
+    preferred = speaker or runtime.get("ttsSpeaker") or stack_speaker or settings.cartesia_tts_voice_id
+    from server.providers.voice_inventory import default_voice
+
+    return default_voice("cartesia", model, language_code, preferred=str(preferred) if preferred else None)
 
 
 async def synthesize_via_registry(
@@ -110,7 +109,13 @@ async def synthesize_via_registry(
         )
 
     if provider_id == "cartesia":
-        voice_id = _resolve_cartesia_voice(session_id=session_id, stack=stack, speaker=speaker)
+        voice_id = _resolve_cartesia_voice(
+            session_id=session_id,
+            stack=stack,
+            speaker=speaker,
+            model=model or stack.tts.model,
+            language_code=language_code,
+        )
         try:
             cartesia_cfg = resolve_tts_config(
                 session_id,

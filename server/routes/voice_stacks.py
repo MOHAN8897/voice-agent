@@ -1,7 +1,9 @@
 """Tenant-safe catalog for explicitly enabled composed PSTN voice stacks."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from urllib.parse import urlencode
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enabled
 from server.config.constants import normalize_supported_language
@@ -21,6 +23,8 @@ router = APIRouter()
 async def voice_stack_catalog(
     language: str = Query(default="en-US", min_length=2, max_length=16),
     principal: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
+    # FastAPI injects this; the default keeps direct route calls in tests working.
+    background: BackgroundTasks = None,
 ):
     """Return only enabled choices mapped to opaque public aliases and safe labels."""
     # Catalog data is shared platform configuration; the explicit auth dependency
@@ -73,6 +77,7 @@ async def voice_stack_catalog(
             premium_profile = public_catalog_profile("premium", prem_rec, rates)
         profiles.append(premium_profile)
 
+    warm_targets: list[tuple[str, str, str]] = []
     for profile in profiles:
         for engine in profile.get("engines", []):
             for model in engine.get("models", []):
@@ -80,12 +85,22 @@ async def voice_stack_catalog(
                     voice for voice in model.get("voices", [])
                     if normalized_language in voice.get("languages", [])
                 ]
+                for voice in model["voices"]:
+                    if str(voice.get("id") or "").startswith("voc_"):
+                        voice["previewUrl"] = "/api/telephony/voice-preview/catalog?" + urlencode(
+                            {"voiceId": voice["id"], "language": normalized_language}
+                        )
+                        warm_targets.append(("catalog", voice["id"], normalized_language))
             engine["models"] = [model for model in engine.get("models", []) if model.get("voices")]
         profile["engines"] = [engine for engine in profile.get("engines", []) if engine.get("models")]
         if not profile["engines"] and profile.get("ready"):
             profile["ready"] = False
             if not any(b.get("code") == "language_voice_unavailable" for b in profile.get("blockers", [])):
                 profile["blockers"].append({"code": "language_voice_unavailable", "message": "No approved voice is available for this language."})
+    if background is not None and warm_targets:
+        from server.services.saas.voice_preview import schedule_preview_warm
+
+        background.add_task(schedule_preview_warm, warm_targets)
     active_profiles = [
         p for p in profiles
         if p.get("ready") is True

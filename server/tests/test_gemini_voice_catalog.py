@@ -7,16 +7,26 @@ from server.realtime.models import GEMINI_LIVE_LIBRARY_VOICES, GEMINI_LIVE_VOICE
 from server.services.saas.voice_preview import resolve_preview_voice
 
 
-def test_catalog_always_exposes_curated_conversational_and_promotional_voices():
-    rows = voice_catalog.phone_voice_catalog()
-    gemini_rows = [row for row in rows if row.get("provider") == "gemini"]
+def test_catalog_exposes_all_published_featured_voices_without_invented_categories():
+    from server.providers.voice_inventory import voices_for_model
+    rows = [row for row in voice_catalog.phone_voice_catalog() if row.get("provider") == "gemini"]
+    featured = voices_for_model("gemini", "gemini-3.1-flash-tts-preview")
+    assert {row["providerVoiceId"] for row in featured} <= {row["providerVoiceId"] for row in rows}
+    assert len(featured) == 30
+    assert all(row.get("tone") for row in featured)
 
-    expected = {"zephyr", "puck", "aoede", "leda", "kore", "charon", "fenrir", "sulafat", "pulcherrima"}
-    expected.update(voice.lower() for voice in GEMINI_LIVE_LIBRARY_VOICES)
-    assert {row["id"] for row in gemini_rows} == expected
-    assert all(row.get("category") in {"conversational", "promotional", "support", "operations"} for row in gemini_rows)
-    assert all(row.get("accent") for row in gemini_rows)
-    assert any(row.get("id") == "zephyr" for row in gemini_rows)
+
+def test_featured_gemini_voices_get_documented_genders_without_overriding_api_values():
+    from server.providers.voice_inventory import _gemini_gender, voices_for_model
+
+    rows = {row["id"]: row for row in voices_for_model("gemini", "gemini-3.1-flash-tts-preview")}
+    assert rows["Zephyr"]["gender"] == "female"
+    assert rows["Kore"]["gender"] == "female"
+    assert rows["Puck"]["gender"] == "male"
+    assert rows["Charon"]["gender"] == "male"
+    assert all(row["gender"] for row in rows.values())
+    # The API remains authoritative when it publishes a gender.
+    assert _gemini_gender({"id": "Zephyr", "gender": "male"}) == "male"
 
 
 def test_direct_gemini_voice_id_resolves_to_the_selected_voice():
@@ -68,5 +78,10 @@ async def test_voice_options_expose_direct_gemini_voices_and_hide_them_for_opena
         # IDs use those rows to resolve their Gemini equivalent in the UI.
         assert {voice["id"] for voice in result["voices"] if voice["provider"] == "gemini"} == {"zephyr"}
         assert "marin" in {voice["id"] for voice in result["voices"] if voice["provider"] == "openai"}
+        gemini_voice = next(voice for voice in result["voices"] if voice["id"] == "zephyr")
+        assert gemini_voice["previewUrl"] == "/api/telephony/voice-preview/live?voiceId=zephyr&language=te-IN"
+        assert all("previewUrl" not in voice for voice in result["voices"] if voice["provider"] != "gemini")
     else:
         assert "gemini" not in providers
+        assert all(voice.get("previewUrl") == "/api/telephony/voice-preview/live?voiceId=marin&language=te-IN"
+                   for voice in result["voices"])

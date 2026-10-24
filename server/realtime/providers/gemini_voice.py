@@ -61,13 +61,14 @@ _EAGERNESS_TO_START: dict[str, str] = {
 }
 
 
-def normalize_gemini_live_voice(voice: str | None) -> str:
-    slug = str(voice or "").strip()
-    direct = _GEMINI_VOICE_BY_LOWER.get(slug.lower())
-    if direct:
-        return direct
-    mapped = _OPENAI_TO_GEMINI_VOICE.get(normalize_realtime_voice(voice), "Puck")
-    return _GEMINI_VOICE_BY_LOWER.get(mapped.lower(), "Puck")
+def normalize_gemini_live_voice(voice: str | None, model: str = "gemini-3.8-live") -> str:
+    from server.providers.voice_inventory import voices_for_model
+
+    wanted = str(voice or "Puck").strip()
+    for row in voices_for_model("gemini", model):
+        if row["providerVoiceId"].casefold() == wanted.casefold():
+            return row["providerVoiceId"]
+    raise ValueError("The selected voice is unavailable for the selected live model")
 
 
 def _gemini_tools(extra_tools: list[dict] | None = None) -> list[types.Tool]:
@@ -236,7 +237,7 @@ class GeminiLiveVoiceAdapter:
         if not key:
             raise RuntimeError("GEMINI_API_KEY is not configured")
         self.model = (model or "gemini-3.8-live").strip()
-        self.voice = normalize_gemini_live_voice(voice)
+        self.voice = normalize_gemini_live_voice(voice, self.model)
         self.turn_detection = normalize_realtime_turn_detection(turn_detection)
         self.instructions = instructions
         self._max_output_tokens = max_output_tokens

@@ -98,8 +98,8 @@ async def test_web_agent_uses_selected_stack_and_private_ready_metadata(monkeypa
     async def stack_override(_agent):
         assert _agent["languages"] == ["hi-IN"]
         if profile_error:
-            from fastapi import HTTPException
-            raise HTTPException(status_code=409, detail={"error": {"code": "profile_unavailable"}})
+            from server.services.saas.voice_stack_profiles import VoiceProfileError
+            raise VoiceProfileError("profile_revision_conflict", "Private configuration detail", status_code=409)
         stack_used.update({"value": {"pipeline": pipeline, "language": "hi-IN", "llm": {"provider": "openai", "model": "private-provider-model"}, "_voice_stack_snapshot": {"tier": tier} if pipeline == "composed_voice" else None}})
         return stack_used["value"]
 
@@ -152,6 +152,10 @@ async def test_web_agent_uses_selected_stack_and_private_ready_metadata(monkeypa
 
     if profile_error:
         assert any(event.get("type") == "error" for event in websocket.events)
+        error = next(event for event in websocket.events if event.get("type") == "error")
+        assert error["code"] == "profile_revision_conflict"
+        assert "refresh" in error["message"]
+        assert "Private configuration" not in str(websocket.events)
         assert not any(event.get("type") == "ready" for event in websocket.events)
         assert started_kwargs == {}
         assert loops == []

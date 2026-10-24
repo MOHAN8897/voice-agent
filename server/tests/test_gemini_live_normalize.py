@@ -10,6 +10,17 @@ from server.realtime.providers.gemini_voice import GeminiLiveVoiceAdapter, norma
 from server.realtime.voice_manager import RealtimeVoiceManager
 
 
+@pytest.fixture(autouse=True)
+def regional_provider_inventory(monkeypatch):
+    """Isolated supplier response fixture, independent of developer API caches."""
+    import copy
+    from server.providers import voice_inventory
+    data = copy.deepcopy(voice_inventory.inventory())
+    data["gemini"]["voices"] = [{"id": voice, "providerVoiceId": voice, "label": voice,
+        "languages": ["-".join(voice.split("-")[:2]).replace("-in", "-IN")]} for voice in GEMINI_LIVE_LIBRARY_VOICES]
+    monkeypatch.setattr(voice_inventory, "inventory", lambda: data)
+
+
 def test_normalize_realtime_voice_keeps_gemini_prebuilt():
     assert normalize_realtime_voice("Puck") == "Puck"
     assert normalize_realtime_voice("aoede") == "Aoede"
@@ -141,7 +152,7 @@ async def test_voice_manager_does_not_fallback_legacy_voice_slug_to_openai():
         "realtime_voice": {"voice": "marin"},
     }
 
-    with pytest.raises(RuntimeError, match="Gemini Live unavailable"):
+    with pytest.raises(ValueError, match="selected voice") :
         await manager.create(
             "gemini-legacy-voice-no-fallback-test",
             instructions="Speak only in Telugu.",
@@ -149,7 +160,7 @@ async def test_voice_manager_does_not_fallback_legacy_voice_slug_to_openai():
             stack_override=stack,
         )
 
-    assert len(attempts) == 1
+    assert attempts == []
     assert manager.get("gemini-legacy-voice-no-fallback-test") is None
 
 

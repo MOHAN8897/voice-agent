@@ -1278,6 +1278,28 @@
       "subject": "unsorted",
       "updatedAt": 1790854447424
     },
+    "inline:saving-a-voice-setup-does-not-leave-an-unpublish-4d9c7736": {
+      "binding": {
+        "absent": true,
+        "kind": "element",
+        "query": {
+          "testid": "agent-studio-unsaved"
+        }
+      },
+      "declaredAt": 1792818819773,
+      "id": "inline:saving-a-voice-setup-does-not-leave-an-unpublish-4d9c7736",
+      "provenBy": {
+        "at": 1792818819895,
+        "grade": "presence",
+        "runId": "drive-lease-9efb05e1-b17d-446a-a6ee-d173067332c5",
+        "verdictId": "reticle_assert:1792818819894"
+      },
+      "state": "proved",
+      "statement": "Saving a voice setup does not leave an unpublished script change.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792818819919
+    },
     "inline:saving-from-the-agent-workspace-script-tab-persi-554e2153": {
       "binding": {
         "kind": "net",

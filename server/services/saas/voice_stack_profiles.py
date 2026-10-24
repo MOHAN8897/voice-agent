@@ -8,6 +8,7 @@ are present; the legacy universal stack is never used as a fallback.
 from __future__ import annotations
 
 import copy
+import hashlib
 import re
 import uuid
 from datetime import datetime, timezone
@@ -25,7 +26,7 @@ COMPOSED_TIERS = ("low", "medium")
 TIER_LABELS = {"low": "Economical", "medium": "Standard Regional", "premium": "Premium"}
 _VOICE_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,100}$")
 _PRIVATE_LABEL_RE = re.compile(
-    r"\b(vobiz|telnyx|nango|exotel|plivo|composio|sarvam|gemini|openai|elevenlabs|deepgram|playht|murf|azure)\b|https?://",
+    r"\b(vobiz|telnyx|nango|exotel|plivo|composio|sarvam|gemini|gnani|cartesia|openai|elevenlabs|deepgram|playht|murf|azure|bulbul|timbre|sonic|saaras|saarika)\b|https?://",
     re.IGNORECASE,
 )
 _SECRET_KEYS = {"api_key", "apikey", "secret", "token", "credential", "credentials", "authorization"}
@@ -221,12 +222,12 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
                 if any(str(lang) not in clean_languages for lang in voice_languages):
                     raise VoiceProfileError("invalid_profile", "A voice language must also be enabled for the profile.")
                 voice["languages"] = list(dict.fromkeys(str(lang) for lang in voice_languages))
-                if provider == "sarvam":
-                    from server.providers.sarvam_voice_catalog import validate_sarvam_voice
+                if provider in {"sarvam", "gnani", "gemini", "cartesia"}:
+                    from server.providers.voice_inventory import validate_voice
 
                     try:
                         for lang in voice["languages"]:
-                            validate_sarvam_voice(model["model"], voice["providerVoiceId"], lang)
+                            validate_voice(provider, model["model"], voice["providerVoiceId"], lang)
                     except ValueError as exc:
                         raise VoiceProfileError("invalid_profile", "The speech model, voice and language do not match.") from exc
 
@@ -310,81 +311,15 @@ _REVERSE_ALIAS_CACHE: dict[str, dict[str, Any]] = {}
 
 
 def _clean_catalog_voice_label(raw_label: Any, pvid: str, tier: str) -> str:
-    from server.services.saas.voice_catalog import _GEMINI_VOICE_META, _SARVAM_VOICE_META
-    sarvam_map = {str(item["id"]).lower(): item for item in _SARVAM_VOICE_META}
-    clean_speaker = pvid.removeprefix("voice-").strip()
-    if tier == "medium":
-        cat_meta = sarvam_map.get(clean_speaker.lower(), {})
-        authentic_name = cat_meta.get("id", clean_speaker).title()
-    else:
-        cat_meta = _GEMINI_VOICE_META.get(clean_speaker, {}) or _GEMINI_VOICE_META.get(clean_speaker.title(), {})
-        authentic_name = cat_meta.get("label", clean_speaker.title() if clean_speaker else "")
-    if "gnani" in pvid.lower() or pvid.lower() in {"nalini", "pranav", "shivani", "avinash", "lakshmi", "prakash"}:
-        if "4" in pvid.lower() or "prakash" in pvid.lower():
-            return "Voice 4"
-        if "3" in pvid.lower() or "lakshmi" in pvid.lower():
-            return "Voice 3"
-        if "2" in pvid.lower() or any(x in pvid.lower() for x in ("pranav", "avinash")):
-            return "Voice 2"
-        return "Voice 1"
-    if "cartesia" in pvid.lower() or "sonic" in pvid.lower():
-        m = re.search(r"voice-cartesia-(\d+)", pvid.lower())
-        if m:
-            return f"Voice {m.group(1)}"
-        if pvid.lower() in {"cartesia-4", "4"}:
-            return "Voice 4"
-        if pvid.lower() in {"cartesia-3", "3"}:
-            return "Voice 3"
-        if pvid.lower() in {"cartesia-2", "2"}:
-            return "Voice 2"
-        if pvid.lower() in {"cartesia-1", "1"}:
-            return "Voice 1"
-        from server.services.saas.voice_catalog import phone_voice_catalog
-        for row in phone_voice_catalog():
-            if row.get("provider") == "cartesia":
-                if str(row.get("providerVoiceId", "")).lower() == pvid.lower() or str(row.get("id", "")).lower() == pvid.lower():
-                    return str(row.get("label") or row.get("name") or "Voice")
-        return authentic_name or clean_speaker.title() or "Voice"
-    raw = str(raw_label or "").strip()
-    if not raw or re.match(r"^Voice\s+\d+$", raw, re.IGNORECASE) or _PRIVATE_LABEL_RE.search(raw):
-        return authentic_name or clean_speaker.title() or "Voice"
-    return raw[:100]
+    # Legacy presentation helper only. Voice numbers never resolve to providers.
+    match = re.search(r"(?:voice[- ](?:gnani-|cartesia-)?)?(\d+)$", pvid, re.IGNORECASE)
+    return f"Voice {match.group(1)}" if match else "Voice"
 
 
 def _resolve_catalog_voice_metadata(pvid: str, tier: str) -> dict[str, str]:
-    from server.services.saas.voice_catalog import _GEMINI_VOICE_META, _SARVAM_VOICE_META
-    sarvam_map = {str(item["id"]).lower(): item for item in _SARVAM_VOICE_META}
-    clean_speaker = pvid.removeprefix("voice-").strip()
-    gnani_names = {"nalini", "shivani", "lakshmi", "chitra", "pranav", "avinash", "prakash", "sanjay"}
-    cartesia_names = {"sarah", "caleb", "jacqueline", "michael", "skylar", "daniel", "katie", "leo", "bhavani", "charan", "aarti", "amrit", "maya", "devansh", "priya", "kiara", "indian lady", "indian_lady", "krishna", "aarav"}
-    spk_lower = clean_speaker.lower()
-    if "gnani" in spk_lower or any(n in spk_lower for n in gnani_names):
-        is_female = any(x in spk_lower for x in ("1", "3", "nalini", "shivani", "lakshmi", "chitra"))
-        gender = "female" if is_female else "male"
-        is_promo = any(x in spk_lower for x in ("chitra", "avinash", "sanjay", "promotional", "sales"))
-        tone = "Warm & expressive" if not is_promo else ("Professional & steady" if is_female else "Authoritative & clear")
-        category = "promotional" if is_promo else "conversational"
-        use_case = "Commercial Advisory & Sales" if is_promo else "Conversational Customer Support"
-    elif "cartesia" in spk_lower or "sonic" in spk_lower or len(clean_speaker) > 20 or any(n in spk_lower for n in cartesia_names):
-        is_female = any(x in spk_lower for x in ("1", "3", "female", "sarah", "jacqueline", "skylar", "katie", "bhavani", "aarti", "maya", "priya", "kiara", "indian lady", "db6b0ed5", "694f9389", "5c5ac573", "f114a346", "76961778", "9cebb910", "79a125e8", "045f0292", "f8f5f1b2", "3b554273"))
-        gender = "female" if is_female else "male"
-        is_promo = any(x in spk_lower for x in ("michael", "daniel", "katie", "amrit", "devansh", "promotional", "sales", "47c38ca4", "79a125e8", "f114a346", "97303aad", "2ee87190"))
-        tone = "Ultra-low-latency & clear" if not is_promo else ("Bright & energetic" if is_female else "Professional & direct")
-        category = "promotional" if is_promo else "conversational"
-        use_case = "Commercial & Retail Outreach" if is_promo else "Sub-100ms Multilingual Outreach"
-    elif clean_speaker.lower() in sarvam_map or (tier == "medium" and clean_speaker.lower() in {"shubh", "priya", "pooja", "simran", "neha", "rahul"}):
-        meta = sarvam_map.get(clean_speaker.lower(), {})
-        gender = meta.get("gender") if meta else ("female" if clean_speaker.lower() in {"ritu", "pooja", "neha", "priya", "kavitha", "ishita", "simran", "kavya", "shreya", "roopa", "tanya", "shruti", "suhani", "rupali"} else "male")
-        tone = meta.get("tone") if meta else "Warm & natural"
-        category = meta.get("category") if meta else "support"
-        use_case = meta.get("useCase") if meta else "Regional Customer Support"
-    else:
-        meta = _GEMINI_VOICE_META.get(clean_speaker, {}) or _GEMINI_VOICE_META.get(clean_speaker.title(), {})
-        gender = meta.get("gender") if meta else "female"
-        tone = meta.get("tone") if meta else "Bright & clear"
-        category = meta.get("category") if meta else "support"
-        use_case = meta.get("useCase") if meta else "Conversational Assistant"
-    return {"gender": gender, "tone": tone, "category": category, "useCase": use_case}
+    from server.services.saas.voice_catalog import phone_voice_catalog
+    row = next((voice for voice in phone_voice_catalog() if voice.get("providerVoiceId") == pvid), {})
+    return {key: row.get(key) or "" for key in ("gender", "tone", "category", "useCase")}
 
 
 def cache_aliases_from_record(tier: str, record: dict[str, Any] | None) -> None:
@@ -399,16 +334,14 @@ def cache_aliases_from_record(tier: str, record: dict[str, Any] | None) -> None:
                 vid = str(vc.get("id") or "")
                 pvid = str(vc.get("providerVoiceId") or vid)
                 label = f"Voice {voice_idx}"
-                for key, alias_val in voice_map.items():
-                    if key.endswith(f"::{vid}") or key.endswith(f"\u0000{vid}"):
-                        _REVERSE_ALIAS_CACHE[str(alias_val)] = {
-                            "tier": tier,
-                            "provider": mdl.get("provider"),
-                            "model": mdl.get("model"),
-                            "providerVoiceId": pvid,
-                            "label": label,
-                            "languages": list(vc.get("languages") or []),
-                        }
+                key = f"{eng['id']}::{mdl['id']}::{vid}"
+                alias_val = voice_map.get(key) or voice_map.get(key.replace("::", "\u0000"))
+                if alias_val:
+                    _REVERSE_ALIAS_CACHE[str(alias_val)] = {
+                        "tier": tier, "provider": mdl.get("provider"), "model": mdl.get("model"),
+                        "providerVoiceId": pvid, "label": label, "languages": list(vc.get("languages") or []),
+                    }
+
 
 
 def lookup_cached_voice_alias(alias_id: str) -> dict[str, Any] | None:
@@ -444,9 +377,32 @@ async def load_profile_records(environment: str, tiers: tuple[str, ...] | list[s
         for row in result.scalars().all():
             rec = _profile_record(row)
             if rec is not None:
+                rec = expand_model_voices(row.tier, rec)
                 cache_aliases_from_record(row.tier, rec)
                 loaded[row.tier] = copy.deepcopy(rec)
         return loaded
+
+
+def expand_model_voices(tier: str, record: dict[str, Any]) -> dict[str, Any]:
+    """Read-through provider inventory; never rewrite saved tiers or revisions."""
+    from server.providers.voice_inventory import profile_voice_rows
+
+    expanded = copy.deepcopy(record)
+    aliases = expanded.setdefault("publicAliases", {})
+    for kind in ("engines", "models", "voices"):
+        aliases.setdefault(kind, {})
+    for engine in (expanded.get("profile") or {}).get("engines") or []:
+        for model in engine.get("models") or []:
+            if model.get("provider") not in {"sarvam", "gnani", "gemini", "cartesia"}:
+                continue
+            model["voices"] = profile_voice_rows(model["provider"], model["model"],
+                expanded["profile"].get("supportedLanguages") or [], model.get("voices"))
+            for voice in model["voices"]:
+                key = f"{engine['id']}::{model['id']}::{voice['id']}"
+                legacy_key = key.replace("::", "\u0000")
+                if key not in aliases["voices"]:
+                    aliases["voices"][key] = aliases["voices"].get(legacy_key) or "voc_" + hashlib.sha256(f"{tier}:{key}".encode()).hexdigest()[:32]
+    return expanded
 
 
 def _native_tier_retail_rate(rates: dict[str, Any] | None, tier: str, record: dict[str, Any] | None = None) -> dict[str, Any] | None:
@@ -511,6 +467,9 @@ def _native_tier_retail_rate(rates: dict[str, Any] | None, tier: str, record: di
 
 def _runtime_profile_blockers(profile: dict[str, Any]) -> list[dict[str, str]]:
     """Require every advertised tuple to be executable by the current registry."""
+    engines = profile.get("engines") or []
+    if not engines or any(not engine.get("models") for engine in engines):
+        return [{"code": "speech_voice_mismatch", "message": "No verified voices are available for this speech setup."}]
     try:
         from server.providers import get_provider_registry
 
@@ -549,6 +508,17 @@ def _runtime_profile_blockers(profile: dict[str, Any]) -> list[dict[str, str]]:
                         return [{"code": "native_model_mismatch", "message": "The selected speech and conversation models do not match."}]
                 else:
                     selections.append(("tts", str(model.get("provider") or ""), str(model.get("model") or "")))
+                if not model.get("voices"):
+                    return [{"code": "speech_voice_mismatch", "message": "No verified voices are available for this speech setup."}]
+                if model.get("provider") in {"sarvam", "gnani", "gemini", "cartesia"}:
+                    from server.providers.voice_inventory import validate_voice
+
+                    try:
+                        for voice in model["voices"]:
+                            for language in voice.get("languages") or profile.get("supportedLanguages") or []:
+                                validate_voice(str(model.get("provider")), str(model.get("model") or ""), str(voice.get("providerVoiceId") or ""), language)
+                    except (ValueError, AttributeError):
+                        return [{"code": "speech_voice_mismatch", "message": "The speech model, voice and language do not match. Ask your administrator to update this voice setup."}]
 
     blockers: list[dict[str, str]] = []
     seen: set[tuple[str, str, str]] = set()
@@ -944,14 +914,28 @@ def _public_label(value: Any, fallback: str) -> str:
     return fallback if not label or _PRIVATE_LABEL_RE.search(label) else label[:100]
 
 
+def _public_gender(value: Any) -> str:
+    gender = str(value or "").strip().casefold()
+    if gender in {"female", "feminine", "woman"}:
+        return "female"
+    if gender in {"male", "masculine", "man"}:
+        return "male"
+    if gender in {"neutral", "gender_neutral"}:
+        return "neutral"
+    return ""
+
+
 def public_catalog_profile(tier: str, record: dict[str, Any] | None, rates: dict[str, Any] | None) -> dict[str, Any]:
     readiness = readiness_for_profile(tier, record, rates)
     profile = (record or {}).get("profile") if record else None
     aliases = (record or {}).get("publicAliases") if record else None
     custom_label = profile.get("label") if isinstance(profile, dict) else None
-    display_label = str(custom_label).strip() if custom_label else TIER_LABELS.get(tier, tier.title())
+    # Tenant surfaces never carry operator-authored stack names; only the
+    # approved tier label is public.
+    display_label = _public_label(custom_label, TIER_LABELS.get(tier, tier.title()))
     # Never expose disabled choices or provider/model/voice identifiers to tenants.
     engines: list[dict[str, Any]] = []
+    public_voice_count = 0
     if readiness["ready"] and readiness["enabled"] and isinstance(profile, dict):
         alias_map = aliases if isinstance(aliases, dict) else {}
         for engine in profile.get("engines") or []:
@@ -973,28 +957,27 @@ def public_catalog_profile(tier: str, record: dict[str, Any] | None, rates: dict
                         or (alias_map.get("voices") or {}).get(f"{engine.get('id')}\u0000{model.get('id')}\u0000{voice.get('id')}")
                     )
                     if voice_alias:
-                        pvid = str(voice.get("providerVoiceId") or voice.get("id") or "").strip()
-                        meta = _resolve_catalog_voice_metadata(pvid, tier)
-                        voice_idx = len(public_voices) + 1
-                        display_label_voice = f"Voice {voice_idx}"
+                        public_voice_count += 1
+                        display_label_voice = f"Voice {public_voice_count}"
                         public_voices.append({
                             "id": voice_alias,
                             "name": display_label_voice,
                             "label": display_label_voice,
-                            "gender": voice.get("gender") or meta["gender"],
-                            "tone": voice.get("tone") or meta["tone"],
-                            "category": voice.get("category") or meta["category"],
-                            "useCase": voice.get("useCase") or meta["useCase"],
+                            "gender": _public_gender(voice.get("gender")),
+                            "tone": _public_label(voice.get("tone"), ""),
+                            "category": _public_label(voice.get("category"), ""),
+                            "useCase": _public_label(voice.get("useCase"), ""),
+                            "preferredLanguages": list(voice.get("preferredLanguages") or []),
                             "languages": list(voice.get("languages") or []),
                             "previewUrl": None,
                         })
                 public_models.append({
                     "id": model_alias,
-                    "label": _public_label(model.get("label"), f"Speech model {len(public_models) + 1}"),
+                    "label": f"Speech model {len(public_models) + 1}",
                     "audioStreaming": str(model.get("apiMode") or "").lower() in {"websocket", "streaming_rest"},
                     "voices": public_voices,
                 })
-            engines.append({"id": engine_alias, "label": _public_label(engine.get("label"), f"Voice engine {len(engines) + 1}"), "models": public_models})
+            engines.append({"id": engine_alias, "label": f"Voice engine {len(engines) + 1}", "models": public_models})
     blockers = [
         {"code": item["code"], "message": item["message"]}
         for item in readiness["blockers"]

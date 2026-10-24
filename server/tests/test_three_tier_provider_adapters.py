@@ -279,7 +279,7 @@ async def test_gemini_tts_requests_and_validates_wav_and_returns_usage(monkeypat
     )
     _patch_client(monkeypatch, "server.providers.gemini_tts", fake)
     config = TTSConfig(
-        provider="gemini", model="gemini-3.8-flash-tts", language="te-IN", speaker="voice-from-config"
+        provider="gemini", model="gemini-3.8-flash-tts", language="te-IN", speaker="Puck"
     )
     result = await gemini_tts.GeminiTTSAdapter(api_key="test-key").synthesize_with_metadata(
         "Hello", config
@@ -293,7 +293,7 @@ async def test_gemini_tts_requests_and_validates_wav_and_returns_usage(monkeypat
     assert generation["responseFormat"]["audio"]["mimeType"] == "AUDIO_WAV"
     assert (
         generation["speechConfig"]["voiceConfig"]["prebuiltVoiceConfig"]["voiceName"]
-        == "voice-from-config"
+        == "Puck"
     )
     assert result.audio_bytes == audio
     assert result.content_type == "audio/wav"
@@ -345,7 +345,7 @@ async def test_gemini_tts_rejects_malformed_empty_and_unrequested_audio(
     with pytest.raises(RuntimeError, match=message):
         await adapter.synthesize_rest(
             "Hello",
-            TTSConfig(provider="gemini", model="gemini-3.8-flash-tts", speaker="voice-from-config"),
+            TTSConfig(provider="gemini", model="gemini-3.8-flash-tts", speaker="Puck"),
         )
     assert fake.closed
 
@@ -374,7 +374,7 @@ async def test_gemini_tts_rejects_malformed_wav_and_timeout(monkeypatch):
     )
     _patch_client(monkeypatch, "server.providers.gemini_tts", fake)
     adapter = gemini_tts.GeminiTTSAdapter(api_key="test-key")
-    config = TTSConfig(provider="gemini", model="gemini-3.8-flash-tts", speaker="voice-from-config")
+    config = TTSConfig(provider="gemini", model="gemini-3.8-flash-tts", speaker="Puck")
     with pytest.raises(RuntimeError, match="invalid PCM16 WAV"):
         await adapter.synthesize_rest("Hello", config)
     assert fake.closed
@@ -405,7 +405,7 @@ async def test_gemini_tts_cancellation_closes_request_and_legacy_streaming_is_un
     fake = Client()
     _patch_client(monkeypatch, "server.providers.gemini_tts", fake)
     adapter = gemini_tts.GeminiTTSAdapter(api_key="test-key")
-    config = TTSConfig(provider="gemini", model="gemini-3.8-flash-tts", speaker="voice-from-config")
+    config = TTSConfig(provider="gemini", model="gemini-3.8-flash-tts", speaker="Puck")
     request = asyncio.create_task(adapter.synthesize_rest("Hello", config))
     await waiting.wait()
     request.cancel()
@@ -430,11 +430,11 @@ async def test_sarvam_tts_validates_wav_and_propagates_cancellation(monkeypatch)
     config = TTSConfig(provider="sarvam", model="bulbul:v3", speaker="shubh")
     assert await sarvam_tts.SarvamTTSAdapter().synthesize_rest("Hello", config) == valid_audio
 
-    with pytest.raises(ValueError, match="configured provider catalog"):
+    with pytest.raises(ValueError, match="current catalog"):
         await sarvam_tts.SarvamTTSAdapter().synthesize_rest(
             "Hello", TTSConfig(provider="sarvam", model="unconfigured-model", speaker="shubh")
         )
-    with pytest.raises(ValueError, match="selected model's configured catalog"):
+    with pytest.raises(ValueError, match="selected model's current catalog"):
         await sarvam_tts.SarvamTTSAdapter().synthesize_rest(
             "Hello", TTSConfig(provider="sarvam", model="bulbul:v3", speaker="not-a-listed-voice")
         )

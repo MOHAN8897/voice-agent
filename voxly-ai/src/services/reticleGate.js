@@ -40,7 +40,11 @@ export async function syncReticleWithUser(user) {
       }
     }
     if (reticle && typeof reticle.connect === 'function') {
-      reticle.connect();
+      // inject:false keeps the auth/localhost gate in charge. The Vite plugin
+      // still supplies this compile-time pairing token for manual connects.
+      reticle.connect({
+        token: typeof __RETICLE_TOKEN__ === 'undefined' ? undefined : __RETICLE_TOKEN__,
+      });
       isReticleConnected = true;
       console.info('[Reticle] Connected for local development');
       // Load capabilities

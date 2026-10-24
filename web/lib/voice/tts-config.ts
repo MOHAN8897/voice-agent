@@ -48,12 +48,9 @@ export function voiceMatchesTtsProvider(provider: string, voiceId: string): bool
   return !isCartesiaVoiceId(id);
 }
 
-/** If the voice is empty or belongs to the other TTS, return that provider's default. */
-export function ensureTtsVoice(provider: string, voiceId: string, model = ""): string {
-  const p = ttsProviderFromStack(provider, model);
-  const id = (voiceId || "").trim();
-  if (voiceMatchesTtsProvider(p, id)) return id;
-  return defaultTtsVoice(p);
+/** Keep explicit supplier IDs unchanged; the model catalog validates compatibility. */
+export function ensureTtsVoice(_provider: string, voiceId: string, _model = ""): string {
+  return (voiceId || "").trim();
 }
 
 async function fetchStackTtsFallback(sessionId: string, languageCode: string): Promise<TtsConfig | null> {

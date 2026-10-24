@@ -210,6 +210,9 @@ class GeminiTTSAdapter:
         speaker = (config.speaker or "").strip()
         if not speaker:
             raise ValueError("Gemini TTS requires the voice selected in the resolved stack")
+        from server.providers.voice_inventory import validate_voice
+
+        validate_voice("gemini", model.removeprefix("models/"), speaker, config.language)
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Gemini TTS requires non-empty text")
 
@@ -319,6 +322,9 @@ class GeminiTTSAdapter:
         speaker = (config.speaker or "").strip()
         if not speaker:
             raise ValueError("Gemini TTS requires the voice selected in the resolved stack")
+        from server.providers.voice_inventory import validate_voice
+
+        validate_voice("gemini", model.removeprefix("models/"), speaker, config.language)
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Gemini TTS requires non-empty text")
 

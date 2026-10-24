@@ -1,0 +1,19 @@
+{
+  "intents": {
+    "flow:drive-tenants-can-filter-the-complete-model-voice-list": {
+      "declaredAt": 1792821708070,
+      "id": "flow:drive-tenants-can-filter-the-complete-model-voice-list",
+      "source": "decided on the dashboard",
+      "state": "declared",
+      "statement": "Tenants can filter the complete model voice list by supplier style without changing voice numbers or IDs.",
+      "status": "proved",
+      "subject": "drive-tenants-can-filter-the-complete-mo",
+      "surface": {
+        "flow": "drive-tenants-can-filter-the-complete-model-voice-list"
+      },
+      "updatedAt": 1792822831297
+    }
+  },
+  "subject": "drive-tenants-can-filter-the-complete-mo",
+  "version": 1
+}

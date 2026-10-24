@@ -257,6 +257,24 @@
       "statement": "When identity is not approved, Buy Number shows only the modern verific…",
       "status": "proved",
       "subject": "unsorted"
+    },
+    {
+      "id": "tenant-login-console",
+      "statement": "A successful tenant sign-in opens the requested console and retains com…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "voice-single-test-save",
+      "statement": "The voice workspace has one test action and one primary save action.",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "voice-tier-atomic-save",
+      "statement": "Choosing a voice tier saves its exact model and voice selection before…",
+      "status": "proposed",
+      "subject": "unsorted"
     }
   ],
   "version": 1

@@ -15,18 +15,20 @@ from server.services.dev_secrets_store import dev_secrets_store
 
 def _cartesia_language(language_code: str) -> str:
     code = (language_code or "te-IN").split("-")[0].lower()
-    return code if code in {
-        "en", "te", "hi", "ta", "kn", "ml", "mr", "bn", "gu", "pa",
-        "es", "fr", "de", "ja", "ko", "pt", "zh", "it", "nl", "pl", "ru", "sv", "tr"
-    } else "en"
+    from server.providers.voice_inventory import inventory
+
+    supported = {locale.split("-")[0] for languages in inventory().get("cartesia", {}).get("modelLanguages", {}).values() for locale in languages}
+    if code not in supported:
+        raise ValueError("The selected speech model does not support this language")
+    return code
 
 
 def _resolve_tts_model(model: str | None) -> str:
     settings = get_settings()
     raw = (model or settings.cartesia_tts_model or "sonic-3.5").strip()
-    if raw in constants.CARTESIA_TTS_MODELS or raw.startswith("sonic"):
+    if raw in constants.CARTESIA_TTS_MODELS:
         return raw
-    return "sonic-3.5"
+    raise ValueError("The selected speech model is unavailable")
 
 
 def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
@@ -94,6 +96,9 @@ def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
             cfg = self._cfg or {}
             from server.providers.cartesia_tts import resolve_cartesia_voice_id
             voice_id = resolve_cartesia_voice_id(cfg.get("speaker"))
+            from server.providers.voice_inventory import validate_voice
+
+            validate_voice("cartesia", self._model, voice_id, str(cfg.get("language_code") or "te-IN"))
             sample_rate = int(cfg.get("speech_sample_rate") or cfg.get("sample_rate") or 16000)
             self._sample_rate = sample_rate
             lang = _cartesia_language(str(cfg.get("language_code") or "te-IN"))

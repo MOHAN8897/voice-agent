@@ -127,6 +127,7 @@ export function TestStudioFineTuneWorkbench({
   activeTab,
   onTabChange,
   stackTtsProvider,
+  stackTtsModel,
   runtimeTtsSpeaker,
   onRuntimeSpeakerChange,
   sarvamSpeakersV3 = [],
@@ -154,6 +155,7 @@ export function TestStudioFineTuneWorkbench({
   onTabChange?: (tab: Tab) => void;
   callId?: string | null;
   stackTtsProvider?: string;
+  stackTtsModel?: string;
   runtimeTtsSpeaker?: string;
   onRuntimeSpeakerChange?: (speaker: string) => void;
   sarvamSpeakersV3?: string[];
@@ -806,9 +808,11 @@ export function TestStudioFineTuneWorkbench({
                 <>
                   <Field
                     label="Cartesia voice"
-                    hint="Telugu, Hindi, Indian English & US/UK English — pulled live from Cartesia."
+                    hint="Indian voices matched to the selected language and model."
                   >
                     <CartesiaVoiceSelect
+                      language={language}
+                      ttsModel={String(ft.runtime.ttsModel || "sonic-3.5")}
                       disabled={false}
                       value={String(ft.runtime.ttsSpeaker || runtimeTtsSpeaker || defaultCartesiaVoice)}
                       defaultVoiceId={defaultCartesiaVoice}
@@ -857,11 +861,13 @@ export function TestStudioFineTuneWorkbench({
                       )}
                     </select>
                   </Field>
-                  <Field label="Sarvam TTS speaker" hint="Auto-saves to runtime when changed">
+                  <Field label="Speech voice" hint="Auto-saves to runtime when changed">
                     <SarvamVoiceSelect
+                      provider={stackTtsProvider}
+                      language={language}
                       disabled={false}
                       value={String(ft.runtime.ttsSpeaker || runtimeTtsSpeaker || defaults.ttsSpeaker || "shubh")}
-                      model={String(ft.runtime.ttsModel || "bulbul:v3")}
+                      model={String(ft.runtime.ttsModel || stackTtsModel || "")}
                       speakersV3={sarvamSpeakersV3.length ? sarvamSpeakersV3 : ensureArray<string>(ttsCatalog?.speakersV3)}
                       speakersV2={sarvamSpeakersV2.length ? sarvamSpeakersV2 : ensureArray<string>(ttsCatalog?.speakersV2)}
                       onChange={(ttsSpeaker) => {

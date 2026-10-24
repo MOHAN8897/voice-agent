@@ -23,6 +23,13 @@ from server.services.saas.voice_stack_profiles import (
 
 
 def _composed_profile_with_tts(provider: str, model: str, api_mode: str, voice_id: str = "voice-test"):
+    from server.providers.voice_inventory import voices_for_model
+
+    provider_voice = "Zephyr" if provider == "gemini" else (
+        ("anushka" if model == "bulbul:v2" else "kavitha_te_conversation" if model == "bulbul:v4-flash" else "shubh")
+        if provider == "sarvam" else "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4")
+    row = next(row for row in voices_for_model(provider, model) if row["providerVoiceId"] == provider_voice)
+    languages = [code for code in ("te-IN", "hi-IN", "en-IN") if code in row["languages"]]
     return {
         "schemaVersion": 1,
         "enabled": False,
@@ -44,10 +51,8 @@ def _composed_profile_with_tts(provider: str, model: str, api_mode: str, voice_i
                             {
                                 "id": voice_id,
                                 "label": "Test Voice",
-                                "providerVoiceId": "Zephyr" if provider == "gemini" else (
-                                    ("anushka" if model == "bulbul:v2" else "kavitha_te_conversation" if model == "bulbul:v4-flash" else "shubh")
-                                    if provider == "sarvam" else "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4"),
-                                "languages": ["te-IN", "hi-IN", "en-IN"],
+                                "providerVoiceId": provider_voice,
+                                "languages": languages,
                             }
                         ],
                     }

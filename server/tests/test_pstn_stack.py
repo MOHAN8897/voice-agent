@@ -117,12 +117,12 @@ def test_full_pstn_keeps_place_call_noise_reduction():
     assert out["noise_reduction"] == "off"
 
 
-def test_invalid_sarvam_speaker_raises():
+def test_invalid_sarvam_speaker_falls_back_to_catalog_default():
+    from server.providers.voice_inventory import default_voice
+
     raw = {
         "tts": {"provider": "sarvam", "model": "bulbul:v3", "config": {"speaker": "not_a_real_voice"}},
     }
-    try:
-        normalize_pstn_stack_override(raw, language="te-IN")
-        assert False, "expected PstnStackValidationError"
-    except PstnStackValidationError as e:
-        assert "not_a_real_voice" in str(e)
+    out, adj = normalize_pstn_stack_override(raw, language="te-IN")
+    assert out["tts"]["config"]["speaker"] == default_voice("sarvam", "bulbul:v3", "te-IN")
+    assert any("not_a_real_voice" in a for a in adj)

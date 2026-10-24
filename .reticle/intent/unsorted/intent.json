@@ -1035,6 +1035,33 @@
         ]
       },
       "updatedAt": 1790958475823
+    },
+    "tenant-login-console": {
+      "declaredAt": 1792818751488,
+      "id": "tenant-login-console",
+      "state": "declared",
+      "statement": "A successful tenant sign-in opens the requested console and retains completed onboarding.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792818751539
+    },
+    "voice-single-test-save": {
+      "declaredAt": 1792818751488,
+      "id": "voice-single-test-save",
+      "state": "declared",
+      "statement": "The voice workspace has one test action and one primary save action.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792818751522
+    },
+    "voice-tier-atomic-save": {
+      "declaredAt": 1792818751488,
+      "id": "voice-tier-atomic-save",
+      "state": "declared",
+      "statement": "Choosing a voice tier saves its exact model and voice selection before the agent can be tested.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792818751500
     }
   },
   "subject": "unsorted",

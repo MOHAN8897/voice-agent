@@ -203,7 +203,7 @@ export function EmployeesModule({
                   <div className="flex items-center gap-1 font-semibold text-[#0F0E17] mt-0.5 truncate">
                     <Volume2 className="w-3 h-3 text-[#6344E7] shrink-0" />
                     <span className="truncate">
-                      {agent.voice?.provider || 'Default'} — {agent.voice?.voiceName?.split('—')[0] || 'preset'}
+                      {agent.voice?.voiceId || agent.voice?.voiceName ? 'Enterprise voice' : 'Default voice'}
                     </span>
                   </div>
                 </div>

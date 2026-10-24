@@ -37,14 +37,6 @@ class Constants:
         "bulbul:v3": {"label": "Bulbul v3 (recommended, temperature)", "pace": [0.5, 2.0], "temperature": [0.01, 1.0], "pitch": None, "loudness": None},
         "bulbul:v2": {"label": "Bulbul v2 (legacy, pitch/loudness)", "pace": [0.3, 3.0], "temperature": None, "pitch": [-0.75, 0.75], "loudness": [0.3, 3.0]},
     }
-    TTS_SPEAKERS_V3 = [
-        "shubh", "aditya", "ritu", "priya", "neha", "rahul", "pooja", "rohan", "simran",
-        "kavya", "amit", "dev", "ishita", "shreya", "ratan", "varun", "manan", "sumit",
-        "roopa", "kabir", "aayan", "ashutosh", "advait", "anand", "tanya", "tarun",
-        "sunny", "mani", "gokul", "vijay", "shruti", "suhani", "mohit", "kavitha",
-        "rehan", "soham", "rupali",
-    ]
-    TTS_SPEAKERS_V2 = ["anushka", "manisha", "vidya", "arya", "abhilash", "karun", "hitesh"]
     TTS_CODECS = ["mp3", "wav", "aac", "opus", "flac", "linear16", "mulaw", "alaw"]
     TTS_BITRATES = ["32k", "64k", "96k", "128k", "192k"]
     TTS_SAMPLE_RATES = [8000, 16000, 22050, 24000]
@@ -149,8 +141,8 @@ class Constants:
     GNANI_TTS_WS = "wss://api.vachana.ai/api/v1/tts"
     GNANI_TTS_REST = "https://api.vachana.ai/api/v1/tts/inference"
     GNANI_DEFAULT_MODEL = "timbre-v3.0"
-    GNANI_DEFAULT_VOICE_1 = "Nalini"
-    GNANI_DEFAULT_VOICE_2 = "Pranav"
+    GNANI_DEFAULT_VOICE_1 = "Shivani"
+    GNANI_DEFAULT_VOICE_2 = "Prakash"
 
     # LLM catalogs (verified from provider docs — Aug 2026)
     # OpenAI voice models: see server/prompts/voice_defaults.OPENAI_MODEL_CATALOG

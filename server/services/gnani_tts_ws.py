@@ -15,105 +15,42 @@ from server.services.dev_secrets_store import dev_secrets_store
 
 logger = logging.getLogger(__name__)
 
-# Map generic / anonymized voice IDs to authentic Gnani Vachana voice catalog personas
-_GNANI_VOICE_MAP: dict[str, str] = {
-    "voice-gnani-1": "Nalini",
-    "voice 1": "Nalini",
-    "voice-1": "Nalini",
-    "nalini": "Nalini",
-    "voice-gnani-2": "Pranav",
-    "voice 2": "Pranav",
-    "voice-2": "Pranav",
-    "pranav": "Pranav",
-    "voice-gnani-3": "Lakshmi",
-    "voice 3": "Lakshmi",
-    "voice-3": "Lakshmi",
-    "lakshmi": "Lakshmi",
-    "voice-gnani-4": "Prakash",
-    "voice 4": "Prakash",
-    "voice-4": "Prakash",
-    "prakash": "Prakash",
-    "voice-gnani-5": "Shivani",
-    "voice 5": "Shivani",
-    "voice-5": "Shivani",
-    "shivani": "Shivani",
-    "voice-gnani-6": "Avinash",
-    "voice 6": "Avinash",
-    "voice-6": "Avinash",
-    "avinash": "Avinash",
-    "voice-gnani-7": "Chitra",
-    "voice 7": "Chitra",
-    "voice-7": "Chitra",
-    "chitra": "Chitra",
-    "voice-gnani-8": "Sanjay",
-    "voice 8": "Sanjay",
-    "voice-8": "Sanjay",
-    "sanjay": "Sanjay",
-}
+def _resolve_gnani_voice(speaker: str | None, *, model: str | None = None, language: str | None = None) -> str:
+    from server.providers.voice_inventory import default_voice, voices_for_model
+
+    selected_model = str(model or constants.GNANI_DEFAULT_MODEL)
+    rows = voices_for_model("gnani", selected_model)
+    if not rows:
+        raise ValueError("The selected speech model is unavailable")
+    requested = str(language or "").strip()
+    if requested == "hi-en":
+        requested = "hi-IN"
+    elif requested == "auto":
+        requested = ""
+    wanted = str(speaker or "").strip()
+    if wanted:
+        # Case normalization preserves identity; aliases from another model do not.
+        match = next((row for row in rows if row["providerVoiceId"].casefold() == wanted.casefold()), None)
+        if match is not None and (not requested or requested in match["languages"]):
+            return str(match["providerVoiceId"])
+    return default_voice("gnani", selected_model, requested or None)
 
 
-TIMBRE_V3_SUPPORTED_VOICES: dict[str, str] = {
-    "avinash": "Avinash",
-    "shivani": "Shivani",
-    "lakshmi": "Lakshmi",
-    "kalpana": "Kalpana",
-    "shubham": "Shubham",
-    "prakash": "Prakash",
-    "devansh": "Devansh",
-    "yashraj": "Yashraj",
-    "chetana": "Chetana",
-    "vasudha": "Vasudha",
-    "harshad": "Harshad",
-}
+def _gnani_language_code(language_code: str | None, *, model: str | None = None) -> str:
+    from server.providers.voice_inventory import voices_for_model
 
-
-def _resolve_gnani_voice(raw: str | None, model: str | None = None) -> str:
-    key = str(raw or "").strip().lower()
-    voice = _GNANI_VOICE_MAP.get(key)
-    if not voice and raw and not key.startswith("voice"):
-        voice = raw.strip().title()
-    if not voice:
-        voice = "Shivani"
-
-    # v2.5 has its own voices; the shared "timbre" prefix does not imply v3.
-    is_timbre_v3 = str(model or constants.GNANI_DEFAULT_MODEL).strip().lower() == "timbre-v3.0"
-    if is_timbre_v3:
-        if voice.lower() in TIMBRE_V3_SUPPORTED_VOICES:
-            return TIMBRE_V3_SUPPORTED_VOICES[voice.lower()]
-        legacy_map = {
-            "nalini": "Shivani",
-            "chitra": "Chetana",
-            "pranav": "Prakash",
-            "sanjay": "Shubham",
-        }
-        return legacy_map.get(voice.lower(), "Shivani")
-
-    return voice
-
-
-def _gnani_language_code(language_code: str | None) -> str:
-    lang = (language_code or "te-IN").strip()
-    if lang.startswith("te"):
-        return "te-IN"
-    if lang.startswith("hi"):
-        return "hi-IN"
-    if lang.startswith("en"):
-        return "en-IN"
-    if lang.startswith("ta"):
-        return "ta-IN"
-    if lang.startswith("kn"):
-        return "kn-IN"
-    if lang.startswith("ml"):
-        return "ml-IN"
-    if lang.startswith("mr"):
-        return "mr-IN"
-    if lang.startswith("gu"):
-        return "gu-IN"
-    if lang.startswith("bn"):
-        return "bn-IN"
-    if lang.startswith("pa"):
-        return "pa-IN"
-    return "te-IN"
+    lang = str(language_code or "te-IN").strip()
+    if lang == "auto":
+        return lang
+    if lang == "hi-en":
+        lang = "hi-IN"
+    if lang in {"en-GB", "en-US"}:
+        lang = "en-IN"
+    selected_model = str(model or constants.GNANI_DEFAULT_MODEL)
+    supported = {code for row in voices_for_model("gnani", selected_model) for code in row["languages"]}
+    if lang not in supported:
+        raise ValueError("The selected speech model does not support this language")
+    return lang
 
 
 def _gnani_api_key() -> str:
@@ -129,7 +66,7 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
 
     resolved_model = str(model or settings.gnani_tts_model or constants.GNANI_DEFAULT_MODEL).strip()
     if resolved_model not in constants.GNANI_TTS_MODELS:
-        resolved_model = constants.GNANI_DEFAULT_MODEL
+        raise ValueError("The selected speech model is unavailable")
 
     url = constants.GNANI_TTS_WS
     headers = {"X-API-Key-ID": key}
@@ -142,7 +79,8 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
             self._model = resolved_model
             self._sample_rate = 16000
             self._language = "te-IN"
-            self._speaker = _resolve_gnani_voice(None, model=resolved_model)
+            self._requested_speaker: str | None = None
+            self._speaker = _resolve_gnani_voice(None, model=resolved_model, language=self._language)
             self._queue: asyncio.Queue[str] = asyncio.Queue()
             self._requests_sent = 0
             self._requests_completed = 0
@@ -162,10 +100,13 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                 self._cfg = dict(obj.get("data") or {})
                 if self._cfg.get("model"):
                     self._model = str(self._cfg["model"])
-                if self._cfg.get("speaker"):
-                    self._speaker = _resolve_gnani_voice(str(self._cfg["speaker"]), model=self._model)
                 if self._cfg.get("language_code"):
-                    self._language = _gnani_language_code(str(self._cfg["language_code"]))
+                    self._language = _gnani_language_code(str(self._cfg["language_code"]), model=self._model)
+                if self._cfg.get("speaker"):
+                    self._requested_speaker = str(self._cfg["speaker"])
+                self._speaker = _resolve_gnani_voice(
+                    self._requested_speaker, model=self._model, language=self._language
+                )
                 try:
                     self._sample_rate = int(
                         self._cfg.get("speech_sample_rate")
@@ -205,6 +146,9 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                     await self._queue.put(json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}}))
 
         async def _send_chunk(self, text: str) -> None:
+            from server.providers.voice_inventory import provider_language
+
+            language = provider_language("gnani", self._model, self._speaker, self._language)
             self._stripped_header = False
             pace_val = 1.0
             if self._cfg and self._cfg.get("pace"):
@@ -217,7 +161,7 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                 "text": text,
                 "voice": self._speaker,
                 "model": self._model,
-                "language": self._language,
+                "language": language,
                 "speed": pace_val,
                 "audio_config": {
                     "sample_rate": self._sample_rate,

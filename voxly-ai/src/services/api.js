@@ -488,6 +488,7 @@ export const api = {
         label: response.headers.get('X-Voice-Label'),
         model: response.headers.get('X-Voice-Model'),
         stackModel: response.headers.get('X-Voice-Stack-Model'),
+        cache: response.headers.get('X-Voice-Cache'),
       },
     };
   },
@@ -1046,6 +1047,16 @@ export const api = {
         model: headers.model,
         stackModel: headers.stackModel,
       };
+    },
+
+    /** Stored server-side sample addressed by a URL the catalog returned. */
+    async fetchVoicePreview(previewUrl) {
+      const path = String(previewUrl || '');
+      if (!/^\/api\/telephony\/voice-preview\/(catalog|live)\?/.test(path)) {
+        throw new Error('A stored voice sample is not available.');
+      }
+      const { blob } = await api.requestBinary('GET', path);
+      return blob;
     },
 
     /** Per-country compliance obligations for an agent. */

@@ -22,15 +22,6 @@ class TtsConfigError(Exception):
         self.speaker = speaker
 
 
-def _validate_speaker(model: str, speaker: str) -> None:
-    from server.providers.sarvam_voice_catalog import validate_sarvam_voice
-
-    try:
-        validate_sarvam_voice(model, speaker)
-    except ValueError as exc:
-        raise TtsConfigError(f"Speaker '{speaker}' is incompatible with model '{model}'", speaker=speaker) from exc
-
-
 def _stack_for_session(session_id: str, call_id: str | None, language_code: str):
     settings = get_settings()
     if not settings.use_provider_registry:
@@ -128,15 +119,25 @@ def _resolve_cartesia_tts_config(
     rt = runtime_settings.get(session_id) if allow_runtime else {}
     resolved_model = model or (stack.tts.model if stack else None) or rt.get("ttsModel") or settings.cartesia_tts_model
     if not _is_cartesia_model(str(resolved_model)):
-        resolved_model = settings.cartesia_tts_model or "sonic-3.5"
+        raise TtsConfigError("The selected speech model is unavailable")
 
     stack_speaker = stack.tts.config.get("speaker") if stack and stack.tts.config else None
-    resolved_speaker = speaker or rt.get("ttsSpeaker") or stack_speaker or settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
-
+    configured_speaker = speaker or rt.get("ttsSpeaker") or stack_speaker
     from server.services.cartesia_voices import is_cartesia_voice_id
+    from server.providers.voice_inventory import default_voice, validate_voice
 
-    if not is_cartesia_voice_id(str(resolved_speaker)):
-        resolved_speaker = settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
+    if configured_speaker and not is_cartesia_voice_id(str(configured_speaker)):
+        raise TtsConfigError("Choose a voice from the selected speech model's catalog")
+    if configured_speaker:
+        try:
+            resolved_speaker = validate_voice("cartesia", str(resolved_model), str(configured_speaker), language_code)["providerVoiceId"]
+        except ValueError as exc:
+            raise TtsConfigError(str(exc)) from exc
+    else:
+        preferred = settings.cartesia_tts_voice_id
+        resolved_speaker = default_voice(
+            "cartesia", str(resolved_model), language_code, preferred=str(preferred) if preferred else None
+        )
 
     from server.services.tts_voice_direction import cartesia_generation_config
 
@@ -257,31 +258,29 @@ def resolve_tts_config(
         raise TtsConfigError("The selected speech model is unavailable")
 
     from server.services.cartesia_voices import is_cartesia_voice_id
+    from server.providers.voice_inventory import default_voice, validate_voice
 
-    resolved_speaker = speaker or rt.get("ttsSpeaker")
-    if resolved_speaker and is_cartesia_voice_id(str(resolved_speaker)):
+    explicit_speaker = speaker or rt.get("ttsSpeaker")
+    if explicit_speaker and is_cartesia_voice_id(str(explicit_speaker)):
         raise TtsConfigError("The selected voice does not match the speech provider")
-    if not resolved_speaker:
+    if explicit_speaker:
+        resolved_speaker = str(explicit_speaker)
+        try:
+            validate_voice("sarvam", resolved_model, resolved_speaker, language_code)
+        except ValueError as exc:
+            log_tts("SPEAKER_INVALID", speaker=resolved_speaker, model=resolved_model)
+            raise TtsConfigError(str(exc), speaker=resolved_speaker) from exc
+    else:
         stack_speaker = stack.tts.config.get("speaker") if stack and stack.tts.config else None
-        if stack_speaker and not is_cartesia_voice_id(str(stack_speaker)):
-            resolved_speaker = stack_speaker
-    if not resolved_speaker:
-        if language_code == "te-IN":
-            resolved_speaker = settings.sarvam_tts_speaker_te
-        else:
-            resolved_speaker = get_speaker_for_language(language_code)
-    resolved_speaker = str(resolved_speaker).lower()
-
-    try:
-        _validate_speaker(resolved_model, resolved_speaker)
-        from server.providers.sarvam_voice_catalog import validate_sarvam_voice
-
-        validate_sarvam_voice(resolved_model, resolved_speaker, language_code)
-    except ValueError as exc:
-        raise TtsConfigError(str(exc), speaker=resolved_speaker) from exc
-    except TtsConfigError:
-        log_tts("SPEAKER_INVALID", speaker=resolved_speaker, model=resolved_model)
-        raise
+        preferred = stack_speaker if stack_speaker and not is_cartesia_voice_id(str(stack_speaker)) else None
+        if not preferred:
+            preferred = settings.sarvam_tts_speaker_te if language_code == "te-IN" else get_speaker_for_language(language_code)
+        try:
+            resolved_speaker = default_voice(
+                "sarvam", resolved_model, language_code, preferred=str(preferred) if preferred else None
+            )
+        except ValueError as exc:
+            raise TtsConfigError(str(exc), speaker=str(preferred) if preferred else None) from exc
 
     resolved_pace = pace if pace is not None else rt.get("ttsPace", settings.sarvam_tts_pace)
     resolved_pace = float(resolved_pace)

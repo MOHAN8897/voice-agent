@@ -6,8 +6,6 @@ from typing import Any
 from server.realtime.models import (
     DEFAULT_GEMINI_LIVE_MODEL,
     DEFAULT_REALTIME_VOICE,
-    GEMINI_LIVE_LIBRARY_VOICES,
-    GEMINI_LIVE_VOICES,
     REALTIME_VOICES,
     default_gemini_live_voice,
 )
@@ -115,7 +113,9 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     )
     llm = stack.get("llm") if isinstance(stack.get("llm"), dict) else {}
     if str(llm.get("provider") or "").lower() == "gemini":
-        gemini_ids = {item.lower() for item in (*GEMINI_LIVE_VOICES, *GEMINI_LIVE_LIBRARY_VOICES)}
+        from server.providers.voice_inventory import voices_for_model
+
+        gemini_ids = {row["providerVoiceId"].lower() for row in voices_for_model("gemini", str(llm.get("model") or ""))}
         if not realtime_voice:
             realtime_voice = default_gemini_live_voice(lang)
         elif realtime_voice.lower() not in gemini_ids:

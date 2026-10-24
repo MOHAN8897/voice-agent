@@ -1,4 +1,4 @@
-import { defaultTtsVoice, ensureTtsVoice, ttsProviderFromStack } from "@/lib/voice/tts-config";
+import { ensureTtsVoice } from "@/lib/voice/tts-config";
 import {
   DEFAULT_REALTIME_NOISE_REDUCTION,
   DEFAULT_REALTIME_SILENCE_MS,
@@ -78,7 +78,7 @@ export function defaultStackForm(row?: TierResolved): StackForm {
     llmModel: row?.llm?.model || "gpt-realtime-2.1-mini",
     ttsProvider,
     ttsModel,
-    ttsVoiceId: defaultTtsVoice(ttsProviderFromStack(ttsProvider, ttsModel)),
+    ttsVoiceId: "",
     language: row?.language || "te-IN",
     realtimeVoice: DEFAULT_REALTIME_VOICE,
     realtimeTurnDetection: DEFAULT_REALTIME_TURN_DETECTION,

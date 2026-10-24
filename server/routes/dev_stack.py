@@ -23,6 +23,7 @@ from server.db.tier_store import (
     upsert_tier_assignment,
 )
 from server.providers import get_provider_registry, resolve_stack
+from server.utils.logger import logger
 from server.providers.base import StackSelection, StageSelection
 from server.services.dev_fallback_store import dev_fallback_store
 from server.services.dev_runtime import effective_app_environment, effective_config_mode
@@ -112,12 +113,31 @@ def _voice_profile_http_error(exc) -> HTTPException:
 
 
 @router.get("/api/dev/stack/catalog")
-async def dev_stack_catalog(session: SessionData = Depends(require_dev_session)):
+async def dev_stack_catalog(session: SessionData = Depends(require_dev_session), refreshVoices: bool = False):
     require_permission(session, "dev.stack.read")
     from server.providers.catalog_refresh import get_fresh_catalog
 
     try:
-        catalog = get_fresh_catalog()
+        import copy
+        from server.providers.voice_inventory import inventory, profile_voice_rows, refresh_inventory
+        from server.config.constants import constants
+
+        if refreshVoices:
+            refresh_result = await refresh_inventory()
+        else:
+            refresh_result = {"checkedAt": inventory().get("checkedAt"), "errors": []}
+        catalog = copy.deepcopy(get_fresh_catalog())
+        for provider in catalog.get("providers", []):
+            models = provider.get("models") or {}
+            # Native audio has a single model for conversation and speech.
+            native = [row for row in models.get("llm", []) if row.get("realtime") and provider["id"] == "gemini"]
+            tts_models = models.setdefault("tts", [])
+            for row in native:
+                if not any(item["id"] == row["id"] for item in tts_models):
+                    tts_models.append({**row, "api_mode": "websocket", "api_modes": ["websocket"]})
+            for row in tts_models:
+                row["voices"] = profile_voice_rows(provider["id"], row["id"], list(constants.SUPPORTED_LANGUAGES))
+        catalog["voiceInventory"] = refresh_result
     except Exception as exc:
         logger.warning(f"[VOICE] Catalog fetch failed: {exc}")
         catalog = {"providers": [], "fx_rate_inr": 94.0}

@@ -21,7 +21,7 @@ import {
 } from "@/lib/pstn-stack";
 import { cn } from "@/lib/cn";
 import { StudioTabRail } from "@/components/test-studio/StudioTabRail";
-import { defaultTtsVoice, ensureTtsVoice, ttsProviderFromStack } from "@/lib/voice/tts-config";
+import { ensureTtsVoice } from "@/lib/voice/tts-config";
 import type { TestStudioMode } from "@/components/test-studio/TestStudioModePicker";
 import {
   DEFAULT_REALTIME_NOISE_REDUCTION,
@@ -386,7 +386,7 @@ export function TestStudioConfigRack({
                     patchStack({
                       ttsProvider,
                       ttsModel,
-                      ttsVoiceId: defaultTtsVoice(ttsProviderFromStack(ttsProvider, ttsModel)),
+                      ttsVoiceId: "",
                     });
                   }}
                   onModelChange={(ttsModel) => patchStack({ ttsModel })}
@@ -464,6 +464,7 @@ export function TestStudioConfigRack({
                 <div className="mt-2">
                   <CartesiaVoiceSelect
                     key="cartesia-voice"
+                    language={language}
                     disabled={false}
                     value={voiceValue}
                     ttsModel={stack.ttsModel || "sonic-3.5"}
@@ -474,10 +475,12 @@ export function TestStudioConfigRack({
               </label>
             ) : (
               <label className="block text-sm">
-                <span className="text-text-muted">Sarvam voice</span>
+                <span className="text-text-muted">Speech voice</span>
                 <div className="mt-2">
                   <SarvamVoiceSelect
                     key="sarvam-voice"
+                    provider={stack.ttsProvider}
+                    language={language}
                     disabled={false}
                     value={voiceValue}
                     model={stack.ttsModel || "bulbul:v3"}

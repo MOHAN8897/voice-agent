@@ -145,14 +145,21 @@ class StackResolver:
         if any(not isinstance(value, str) or not value.strip() for value in values.values()):
             raise AppError(ErrorCode.VALIDATION_ERROR,
                 message="The selected tier has an incomplete stack configuration", status_code=409)
+        if language not in constants.SUPPORTED_LANGUAGES and language != "unknown":
+            raise AppError(ErrorCode.VALIDATION_ERROR,
+                message=f"Language '{language}' is not supported", status_code=400)
         stt_provider, stt_model = values["stt_provider"], values["stt_model"]
         llm_provider, llm_model = values["llm_provider"], values["llm_model"]
         tts_provider, tts_model = values["tts_provider"], values["tts_model"]
 
         tts_config: dict[str, Any] = {}
         if tts_provider == "sarvam":
-            lang = constants.SUPPORTED_LANGUAGES.get(language, constants.SUPPORTED_LANGUAGES["te-IN"])
-            tts_config["speaker"] = lang.get("speaker", getattr(s, "sarvam_tts_speaker_te", "shubh"))
+            from server.providers.voice_inventory import default_voice
+
+            tts_config["speaker"] = default_voice(
+                "sarvam", tts_model, None if language == "unknown" else language,
+                preferred=getattr(s, "sarvam_tts_speaker_te", None),
+            )
 
         return StackSelection(
             stt=StageSelection(stt_provider, stt_model, {"mode": "realtime" if "realtime" in stt_model else "rest"}),
@@ -188,11 +195,12 @@ class StackResolver:
                 or not isinstance(sel.model, str) or not sel.model.strip() or not isinstance(sel.config, dict)):
                 raise AppError(ErrorCode.VALIDATION_ERROR,
                     message="The selected stage configuration is incomplete", status_code=409)
-            if stage == "tts" and sel.provider == "sarvam" and (sel.config.get("speaker") or sel.model == "bulbul:v4-flash"):
-                from server.providers.sarvam_voice_catalog import validate_sarvam_voice
+            speaker = str(sel.config.get("speaker") or "").strip()
+            if stage == "tts" and speaker and sel.provider in {"sarvam", "gnani", "cartesia", "gemini"}:
+                from server.providers.voice_inventory import validate_voice
 
                 try:
-                    validate_sarvam_voice(sel.model, str(sel.config.get("speaker") or ""), language)
+                    validate_voice(sel.provider, sel.model, speaker, language)
                 except ValueError as exc:
                     raise AppError(ErrorCode.VALIDATION_ERROR,
                         message="The selected speech model, voice and language do not match", status_code=409) from exc

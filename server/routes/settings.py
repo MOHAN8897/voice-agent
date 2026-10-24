@@ -12,6 +12,7 @@ from typing import Optional
 from server.config.constants import constants
 from server.config.env import get_settings
 from server.providers import resolve_stack_for_session
+from server.providers.voice_inventory import voices_for_model
 from server.utils.log_config import get_log_flags
 from server.prompts.voice_defaults import (
     DEFAULT_BEHAVIOUR_INSTRUCTIONS,
@@ -87,8 +88,12 @@ async def catalog():
         },
         "tts": {
             "models": [{"id": k, "label": v["label"], "pace": v["pace"], "temperature": v["temperature"]} for k, v in constants.TTS_MODELS.items()],
-            "speakersV3": constants.TTS_SPEAKERS_V3,
-            "speakersV2": constants.TTS_SPEAKERS_V2,
+            "speakersV3": [row["providerVoiceId"] for row in voices_for_model("sarvam", "bulbul:v3")],
+            "speakersV2": [row["providerVoiceId"] for row in voices_for_model("sarvam", "bulbul:v2")],
+            "speakersByModel": {
+                model: [row["providerVoiceId"] for row in voices_for_model("sarvam", model)]
+                for model in constants.TTS_MODELS
+            },
             "codecs": constants.TTS_CODECS,
             "bitrates": constants.TTS_BITRATES,
             "sampleRates": constants.TTS_SAMPLE_RATES,

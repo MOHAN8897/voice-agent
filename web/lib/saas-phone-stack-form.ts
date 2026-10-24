@@ -20,33 +20,6 @@ import {
   type StackForm,
 } from "@/lib/test-studio-stack";
 
-/** PSTN Gemini Live maps OpenAI Realtime voice slugs → Gemini prebuilt names (server parity). */
-export const OPENAI_TO_GEMINI_VOICE_MAP: Record<string, string> = {
-  ash: "Aoede",
-  marin: "Puck",
-  cedar: "Charon",
-  alloy: "Kore",
-  echo: "Fenrir",
-  shimmer: "Leda",
-  sage: "Orus",
-  ballad: "Zephyr",
-  coral: "Aoede",
-  verse: "Puck",
-};
-
-const GEMINI_INDIC_VOICE_IDS = new Set([
-  "hi-in-csagent-1", "hi-in-csagent-2", "ta-in-csagent-2", "ta-in-csagent-3",
-  "te-in-csagent-1", "te-in-csagent-4", "te-in-csagent-5", "te-in-csagent-7",
-  "te-in-concierge-2", "te-in-concierge-7", "te-in-techagent-1",
-  "en-in-csagent-1", "en-in-csagent-3",
-]);
-const GEMINI_PREBUILT_VOICES = new Set([
-  "zephyr", "kore", "orus", "autonoe", "umbriel", "erinome", "laomedeia", "schedar",
-  "achird", "sadachbia", "puck", "fenrir", "aoede", "enceladus", "algieba", "algenib",
-  "achernar", "gacrux", "zubenelgenubi", "sadaltager", "charon", "leda", "callirrhoe",
-  "iapetus", "despina", "rasalgethi", "alnilam", "pulcherrima", "vindemiatrix", "sulafat",
-]);
-
 export function defaultGeminiLiveVoice(language: string | undefined): string {
   const locale = String(language || "").replaceAll("_", "-").toLowerCase();
   if (locale.startsWith("te")) return "te-in-csagent-5";
@@ -58,24 +31,14 @@ export function defaultGeminiLiveVoice(language: string | undefined): string {
 
 function normalizeGeminiVoice(value: string | undefined, language: string): string {
   const raw = String(value || "").trim();
-  if (GEMINI_INDIC_VOICE_IDS.has(raw.toLowerCase())) return raw.toLowerCase();
-  if (GEMINI_PREBUILT_VOICES.has(raw.toLowerCase())) {
-    return raw[0].toUpperCase() + raw.slice(1).toLowerCase();
-  }
-  if (Object.prototype.hasOwnProperty.call(OPENAI_TO_GEMINI_VOICE_MAP, raw.toLowerCase())) {
-    return defaultGeminiLiveVoice(language);
-  }
-  return defaultGeminiLiveVoice(language);
+  // Preserve the selected supplier ID. The model catalog validates it on save.
+  return raw || defaultGeminiLiveVoice(language);
 }
 
-export function geminiMappedVoice(openAiSlug: string | undefined): string {
-  const raw = String(openAiSlug || "").trim();
-  if (GEMINI_INDIC_VOICE_IDS.has(raw.toLowerCase()) || GEMINI_PREBUILT_VOICES.has(raw.toLowerCase())) {
-    return raw;
-  }
-  const slug = normalizeRealtimeVoice(openAiSlug);
-  return OPENAI_TO_GEMINI_VOICE_MAP[slug] || "Puck";
+export function geminiMappedVoice(selectedVoice: string | undefined): string {
+  return String(selectedVoice || "").trim();
 }
+
 
 export const SAAS_PHONE_LANGUAGES: { id: string; label: string }[] = [
   { id: "te-IN", label: "Telugu (India)" },

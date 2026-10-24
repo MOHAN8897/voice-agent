@@ -19,10 +19,11 @@ from server.config.env import get_settings
 from server.db.connection import get_session_factory
 from server.db.models.entities import Call, Tenant
 from server.db.models.phase5_models import PstnDialRequest
+from server.services.saas.voice_setup_errors import VOICE_SETUP_MESSAGES
 
 ACTIVE = ("reserved", "accepted", "answered", "uncertain")
 logger = logging.getLogger(__name__)
-NO_DIAL_CODES = frozenset({"voice_preparation_failed", "live_transcription_unavailable"})
+NO_DIAL_CODES = frozenset({"voice_preparation_failed", "live_transcription_unavailable", *VOICE_SETUP_MESSAGES})
 
 
 def _now():
@@ -157,9 +158,10 @@ def safe_response(result: dict) -> dict:
     # Carrier bridge responses contain internal stream URLs/tokens and history.
     response = {key: result[key] for key in ("ok", "call_id", "callId", "call_control_id", "code", "error", "status") if key in result}
     if not response.get("ok"):
-        response["error"] = ("The agent could not get ready. No call was placed. Contact your administrator or try again."
+        response["error"] = (VOICE_SETUP_MESSAGES.get(response.get("code")) or
+                             ("The agent could not get ready. No call was placed. Contact your administrator or try again."
                              if response.get("code") in NO_DIAL_CODES else
-                             "The call could not be confirmed. Check the call status before retrying.")
+                             "The call could not be confirmed. Check the call status before retrying."))
     return response
 
 

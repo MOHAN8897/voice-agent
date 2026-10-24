@@ -81,7 +81,10 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
             { id: 'te-in-concierge-2', label: 'Telugu Concierge · Male', provider: 'gemini', languageCode: 'te-IN', accent: 'Telugu (India)', category: 'support', gender: 'male', sampleText: 'నమస్కారం. మీకు ఎలా సహాయం చేయగలను?' },
             { id: 'te-in-concierge-7', label: 'Telugu Concierge · Female', provider: 'gemini', languageCode: 'te-IN', accent: 'Telugu (India)', category: 'support', gender: 'female', sampleText: 'నమస్కారం. మీకు ఎలా సహాయం చేయగలను?' },
             { id: 'te-in-techagent-1', label: 'Telugu Tech Support · Female', provider: 'gemini', languageCode: 'te-IN', accent: 'Telugu (India)', category: 'operations', gender: 'female', sampleText: 'నమస్కారం. మీ సాంకేతిక సమస్యకు సహాయం చేస్తాను.' },
-          ],
+          ].map((voice) => ({
+            ...voice,
+            previewUrl: `/api/telephony/voice-preview/live?voiceId=${voice.id}&language=te-IN`,
+          })),
           languages: [{ code: 'te-IN', label: 'Telugu' }],
         }),
       })
@@ -93,8 +96,15 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
         body: JSON.stringify({ balanceUsd: 100, balanceInr: 0, fxRateInr: 94 }),
       })
     );
-    await page.route('**/api/voice-stacks/catalog*', (route) =>
-      route.fulfill({
+    await page.route('**/api/voice-stacks/catalog*', (route) => {
+      const language = new URL(route.request().url()).searchParams.get('language') || 'te-IN';
+      const catalogVoice = (id, label) => ({
+        id,
+        label,
+        languages: ['te-IN', 'hi-IN', 'en-IN'],
+        previewUrl: `/api/telephony/voice-preview/catalog?voiceId=${id}&language=${language}`,
+      });
+      return route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
@@ -112,7 +122,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
                   models: [{
                     id: 'turbo-regional',
                     label: 'Turbo Regional',
-                    voices: [{ id: 'voice-economical-te', label: 'Telugu Assistant', languages: ['te-IN', 'hi-IN', 'en-IN'] }],
+                    voices: [catalogVoice('voice-economical-te', 'Telugu Assistant')],
                   }],
                 },
               ],
@@ -131,7 +141,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
                     id: 'regional-fast',
                     label: 'Regional Fast',
                     audioStreaming: true,
-                    voices: [{ id: 'voice-regional-te', label: 'Telugu Support', languages: ['te-IN', 'hi-IN', 'en-IN'] }],
+                    voices: [catalogVoice('voice-regional-te', 'Telugu Support')],
                   }],
                 },
                 {
@@ -140,7 +150,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
                   models: [{
                     id: 'turbo-standard',
                     label: 'Turbo Standard',
-                    voices: [{ id: 'voice-standard-te', label: 'Telugu Assistant', languages: ['te-IN', 'hi-IN', 'en-IN'] }],
+                    voices: [catalogVoice('voice-standard-te', 'Telugu Assistant')],
                   }],
                 },
               ],
@@ -155,8 +165,8 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
             },
           ],
         }),
-      })
-    );
+      });
+    });
     await page.route('**/api/agents/**', async (route) => {
       const method = route.request().method().toUpperCase();
       const pathname = new URL(route.request().url()).pathname;
@@ -236,6 +246,18 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
   }
 
   test('saved spoken language wins over stale English voice metadata in browser tests', async ({ page }) => {
+    persistedTestAgent = {
+      ...testAgent,
+      defaultTier: 'low',
+      voiceRevision: 1,
+      voiceSettings: {
+        stackSelectionVersion: 1,
+        profileRevision: 2,
+        engineId: 'turbo-natural',
+        modelId: 'turbo-regional',
+        voiceId: 'voice-economical-te',
+      },
+    };
     await page.route('**/business-brain', (route) => route.fulfill({
       status: 200, contentType: 'application/json', body: JSON.stringify({
         draft: { sections: [{ title: 'saas_voice_config', raw_text: JSON.stringify({ language: 'en-IN', realtimeVoice: 'Puck' }) }] },
@@ -251,7 +273,8 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     });
     await openVoiceStudio(page);
     await expect(page.getByTestId('language-selection-card')).toContainText('Active: Telugu (te-IN)');
-    await page.getByTestId('voice-open-test-call-btn').click();
+    await expect(page.getByTestId('agent-test-call')).toBeEnabled();
+    await page.getByTestId('agent-test-call').click();
     await page.getByTestId('test-call-start-browser').click();
     await expect(page.getByTestId('test-call-end-browser')).toBeVisible();
     expect(new URL(socketUrl).searchParams.get('language')).toBe('te-IN');
@@ -273,7 +296,6 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     await openVoiceStudio(page);
     await page.getByTestId('voice-tier-select-btn-te-in-csagent-4').click();
     await expect(page.getByTestId('voice-tier-select-btn-te-in-csagent-4')).toContainText('Saving…');
-    await expect(page.getByTestId('voice-open-test-call-btn')).toBeDisabled();
     await expect(page.getByTestId('agent-test-call')).toBeDisabled();
     releaseSave();
     await expect(page.getByTestId('voice-stack-save-status')).toContainText('Voice setup saved.');
@@ -282,14 +304,17 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
       voiceSettings: { stackSelectionVersion: 1, realtimeVoice: 'te-in-csagent-4' },
     });
     expect(voiceStackPatchBody.voiceSettings).not.toHaveProperty('voiceId');
-    await expect(page.getByTestId('voice-open-test-call-btn')).toBeEnabled();
+    // A live voice choice is persisted with the voice save, but its script
+    // metadata still needs one publish before a test call may reuse it.
+    await expect(page.getByTestId('agent-studio-unsaved')).toBeVisible();
+    await expect(page.getByTestId('agent-test-call')).toBeDisabled();
     await page.reload();
     await page.getByTestId('agent-tab-voice').click();
     await expect(page.getByTestId('voice-select-btn-te-in-csagent-4')).toContainText('Selected');
     await expect(page.getByTestId('voice-select-btn-te-in-csagent-5')).toContainText('Choose');
   });
 
-  test('a conflicting tier save keeps the draft unsaved and blocks stale test calls until reload', async ({ page }) => {
+  test('a conflicting tier save retains the saved tier and blocks stale test calls until reload', async ({ page }) => {
     persistedTestAgent = {
       ...testAgent, defaultTier: 'medium', voiceRevision: 1,
       voiceSettings: { stackSelectionVersion: 1, profileRevision: 5, engineId: 'regional-expressive', modelId: 'regional-fast', voiceId: 'voice-regional-te' },
@@ -303,7 +328,8 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     await page.getByTestId('voice-select-btn-voice-economical-te').click();
     await expect(page.getByTestId('voice-stack-save-error')).toContainText('Your choice was not applied');
     await expect(page.getByTestId('voice-stack-save-status')).toHaveCount(0);
-    await expect(page.getByTestId('voice-stack-tier-low')).toBeChecked();
+    // The rejected choice must not replace the last saved tier.
+    await expect(page.getByTestId('voice-stack-tier-medium')).toBeChecked();
     await expect(page.getByTestId('agent-test-call')).toBeDisabled();
     await page.getByTestId('voice-stack-conflict-reload').click();
     await expect(page.getByTestId('voice-stack-tier-medium')).toBeChecked();
@@ -361,7 +387,7 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
       await expect(page.getByTestId('voice-stack-save-error')).toContainText(message);
       await expect(page.getByTestId('voice-stack-save-error')).not.toContainText('Another editor');
       await expect(page.getByTestId('voice-stack-conflict-reload')).toHaveCount(0);
-      await expect(page.getByTestId('voice-open-test-call-btn')).toBeDisabled();
+      await expect(page.getByTestId('agent-test-call')).toBeDisabled();
       await expect(page.getByTestId('voice-stack-save-status')).toHaveCount(0);
     });
   }
@@ -403,7 +429,6 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     await page.getByTestId('voice-tier-select-btn-te-in-csagent-4').click();
     await expect(page.getByTestId('voice-stack-save-error')).toContainText('save could not be confirmed');
     await expect(page.getByTestId('voice-stack-save-status')).toHaveCount(0);
-    await expect(page.getByTestId('voice-open-test-call-btn')).toBeDisabled();
     await expect(page.getByTestId('agent-test-call')).toBeDisabled();
   });
 
@@ -448,7 +473,12 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     // Verify key sections are present
     await expect(page.locator('[data-testid="language-selection-card"]')).toBeVisible();
     await expect(page.locator('[data-testid="speaking-voice-showcase"]')).toBeVisible();
-    await expect(page.locator('[data-testid="acoustic-calibration-card"]')).toBeVisible();
+    // Calibration controls are platform-admin only and must stay hidden from tenants.
+    await expect(page.locator('[data-testid="acoustic-calibration-card"]')).toHaveCount(0);
+    // Internal supplier, carrier, stack and model names are a business secret.
+    await expect(voicePanel).not.toContainText(
+      /vobiz|telnyx|nango|exotel|plivo|composio|sarvam|gemini|gnani|cartesia|openai|elevenlabs|deepgram|playht|murf|azure|bulbul|timbre|sonic|saaras|saarika/i
+    );
 
     // 6. Test Language Selection: Select Telugu (te-IN)
     console.log('Testing Telugu (te-IN) language card selection...');
@@ -478,25 +508,18 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
 
     // 7. Test Voice Filtering and category counts
     console.log('Testing voice filtering by category...');
-    const careFilter = page.locator('[data-testid="voice-filter-care"]');
+    const careFilter = page.locator('[data-testid="voice-filter-conversational"]');
     await careFilter.click();
     await page.waitForTimeout(400);
     expect(await page.locator('[data-testid^="voice-card-"]').count()).toBe(
       visibleVoiceRows.filter((voice) => ['support', 'care'].includes(voice.category)).length
     );
 
-    const formalFilter = page.locator('[data-testid="voice-filter-formal"]');
-    await formalFilter.click();
-    await page.waitForTimeout(400);
-    expect(await page.locator('[data-testid^="voice-card-"]').count()).toBe(
-      visibleVoiceRows.filter((voice) => ['operations', 'formal'].includes(voice.category)).length
-    );
-
-    const salesFilter = page.locator('[data-testid="voice-filter-energetic"]');
+    const salesFilter = page.locator('[data-testid="voice-filter-promotional"]');
     await salesFilter.click();
     await page.waitForTimeout(400);
     expect(await page.locator('[data-testid^="voice-card-"]').count()).toBe(
-      visibleVoiceRows.filter((voice) => ['sales', 'energetic'].includes(voice.category)).length
+      visibleVoiceRows.filter((voice) => ['sales', 'operations'].includes(voice.category)).length
     );
 
     // All Filter
@@ -505,18 +528,37 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     await page.waitForTimeout(400);
     expect(await page.locator('[data-testid^="voice-card-"]').count()).toBe(visibleVoiceRows.length);
 
-    // 8. Verify voice playback through the selected provider.
+    // Gender split: unknown genders stay out of Male/Female/Neutral.
+    await page.locator('[data-testid="voice-gender-female"]').click();
+    await page.waitForTimeout(400);
+    expect(await page.locator('[data-testid^="voice-card-"]').count()).toBe(
+      visibleVoiceRows.filter((voice) => voice.gender === 'female').length
+    );
+    await page.locator('[data-testid="voice-gender-male"]').click();
+    await page.waitForTimeout(400);
+    expect(await page.locator('[data-testid^="voice-card-"]').count()).toBe(
+      visibleVoiceRows.filter((voice) => voice.gender === 'male').length
+    );
+    await page.locator('[data-testid="voice-gender-neutral"]').click();
+    await page.waitForTimeout(400);
+    expect(await page.locator('[data-testid^="voice-card-"]').count()).toBe(
+      visibleVoiceRows.filter((voice) => voice.gender === 'neutral').length
+    );
+    await page.locator('[data-testid="voice-gender-all"]').click();
+    await page.waitForTimeout(400);
+
+    // 8. Verify voice playback is streamed from the server-issued stored sample URL.
     const previewVoice = visibleVoiceRows[0];
     expect(previewVoice).toBeTruthy();
     const previewCard = page.locator(`[data-testid="voice-card-${previewVoice.id}"]`);
     await expect(previewCard).toBeVisible();
     const playBtn = page.locator(`[data-testid="voice-play-btn-${previewVoice.id}"]`);
     await expect(playBtn).toBeVisible();
-    let previewRequest = null;
+    let previewRequestUrl = null;
     if (activeVoiceProvider === 'gemini') {
       const samplePath = path.resolve(__dirname, '../public/audio/voxly/samples/marin.wav');
-      await page.route('**/api/telephony/voice-preview*', async (route) => {
-        previewRequest = route.request().postDataJSON();
+      await page.route('**/api/telephony/voice-preview/live*', async (route) => {
+        previewRequestUrl = new URL(route.request().url());
         await route.fulfill({ status: 200, contentType: 'audio/wav', body: fs.readFileSync(samplePath) });
       });
     }
@@ -530,7 +572,8 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     const renderedVoiceName = (await previewCard.locator('span.font-bold').innerText().catch(() => '')) || 'Voice';
     await expect(playingIndicator).toContainText(new RegExp(renderedVoiceName || previewVoice.label || previewVoice.name || 'Voice', 'i'));
     if (activeVoiceProvider === 'gemini') {
-      await expect.poll(() => previewRequest).toMatchObject({ voiceId: previewVoice.id, language: 'te-IN' });
+      await expect.poll(() => previewRequestUrl?.searchParams.get('voiceId')).toBe(previewVoice.id);
+      await expect.poll(() => previewRequestUrl?.searchParams.get('language')).toBe('te-IN');
     }
 
     // Stop playback
@@ -542,8 +585,8 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     }
 
     if (activeVoiceProvider === 'gemini') {
-      const accessMessage = 'Google denied this project access to the configured Gemini Live model.';
-      await page.route('**/api/telephony/voice-preview*', (route) =>
+      const accessMessage = 'The voice sample could not be prepared. Try again later.';
+      await page.route('**/api/telephony/voice-preview/live*', (route) =>
         route.fulfill({
           status: 502,
           contentType: 'application/json',
@@ -554,7 +597,8 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
           }),
         })
       );
-      await playBtn.click();
+      const unavailablePlayBtn = page.locator(`[data-testid="voice-play-btn-${visibleVoiceRows[1].id}"]`);
+      await unavailablePlayBtn.click();
       await expect(page.locator('[data-testid="voice-preview-error"]')).toContainText(accessMessage);
     }
 
@@ -567,98 +611,10 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
 
     await expect(previewCard).toContainText(/Selected/i);
 
-    // 11. Test Acoustic Calibration Sliders
-    console.log('Testing speed slider...');
-    const speedSlider = page.locator('[data-testid="speed-slider"]');
-    await expect(speedSlider).toBeVisible();
+    // 11. Acoustic calibration controls stay admin-only.
+    await expect(page.locator('[data-testid="speed-slider"]')).toHaveCount(0);
 
-    // 12. Verify Unsaved changes bar appeared
-    const unsavedBar = page.locator('[data-testid="agent-studio-unsaved"]');
-    await expect(unsavedBar).toBeVisible({ timeout: 5000 });
-
-    // 13. Save changes
-    const saveBtn = page.locator('[data-testid="agent-save"]');
-    await expect(saveBtn).toBeVisible();
-    await saveBtn.click();
-    await page.waitForTimeout(2000);
-
-    // 14. Test Live Browser Test Call Initiation from Voice Tab
-    console.log('Testing Test Live Agent button from Voice Tab...');
-    const testLiveBtn = page.locator('[data-testid="voice-open-test-call-btn"]');
-    await expect(testLiveBtn).toBeVisible();
-    await testLiveBtn.click();
-    await page.waitForTimeout(1200);
-
-    // Verify modal is open and AgentTestCallPanel mounted without crashing
-    const testCallPanel = page.locator('[data-testid="agent-test-call-panel"]');
-    await expect(testCallPanel).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=Unable to initialize test call')).not.toBeVisible();
-
-    // Verify Start Call button is present and enabled
-    const startCallBtn = page.locator('[data-testid="test-call-start-browser"]');
-    await expect(startCallBtn).toBeVisible();
-    await expect(startCallBtn).toBeEnabled();
-
-    await page.evaluate(() => {
-      navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('Permission denied', 'NotAllowedError'); };
-      Object.defineProperty(navigator.permissions, 'query', {
-        configurable: true,
-        value: async () => ({ state: 'denied' }),
-      });
-      window.__webAgentSocketRequests = [];
-      class TestWebSocket {
-        static OPEN = 1;
-
-        constructor(url, protocols) {
-          this.url = String(url);
-          this.protocols = protocols;
-          this.readyState = 0;
-          window.__webAgentSocketRequests.push({ url: this.url, protocols });
-          queueMicrotask(() => {
-            this.readyState = TestWebSocket.OPEN;
-            this.onmessage?.({
-              data: JSON.stringify({ type: 'ready', callId: 'playwright-ui-call', sampleRate: 16000 }),
-            });
-          });
-        }
-
-        send() {}
-
-        close() {
-          this.readyState = 3;
-          this.onclose?.();
-        }
-      }
-      window.WebSocket = TestWebSocket;
-    });
-    await startCallBtn.click();
-    const endCallBtn = page.locator('[data-testid="test-call-end-browser"]');
-    await expect(endCallBtn).toBeVisible({ timeout: 10000 });
-    await expect(testCallPanel).toContainText('Connected in listen-only mode');
-    const browserCallRequest = await page.evaluate(() =>
-      window.__webAgentSocketRequests.find(({ url }) => new URL(url).pathname === '/ws/web-agent') || null
-    );
-    expect(browserCallRequest).toBeTruthy();
-    const browserCallUrl = new URL(browserCallRequest.url);
-    expect(browserCallUrl.searchParams.has('token')).toBe(false);
-    expect(browserCallUrl.searchParams.get('language')).toBe('te-IN');
-    expect(browserCallRequest.protocols[0]).toBe('voxly-web-agent');
-    expect(browserCallRequest.protocols[1]).toMatch(/^voxly-auth\./);
-    await endCallBtn.click();
-
-    // Capture screenshot of the test call panel
-    const testCallScreenshotPath = testInfo.outputPath('test_call_panel_verified.png');
-    await page.screenshot({ path: testCallScreenshotPath });
-    console.log('Saved test call modal screenshot to:', testCallScreenshotPath);
-
-    // Close modal
-    const closeBtn = page.locator('button[aria-label="Close modal"], button:has-text("✕")').first();
-    if (await closeBtn.isVisible()) {
-      await closeBtn.click();
-      await page.waitForTimeout(500);
-    }
-
-    // 15. Capture high-res screenshots for visual verification
+    // 12. Capture high-res screenshots for visual verification
     const artifactPath = testInfo.outputPath('voice_language_studio.png');
     await page.screenshot({ path: artifactPath, fullPage: false });
     console.log('Saved screenshot to:', artifactPath);
@@ -790,10 +746,15 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
   });
 
   test('three stack columns render scrollable voice lists and play back voice previews across tiers according to selected language', async ({ page }) => {
-    let lastPreviewPayload = null;
+    let lastPreviewRequest = null;
     const previewSample = path.resolve(__dirname, '../public/audio/voxly/samples/marin.wav');
-    await page.route('**/api/telephony/voice-preview*', async (route) => {
-      lastPreviewPayload = route.request().postDataJSON();
+    await page.route('**/api/telephony/voice-preview/**', async (route) => {
+      const url = new URL(route.request().url());
+      lastPreviewRequest = {
+        path: url.pathname,
+        voiceId: url.searchParams.get('voiceId'),
+        language: url.searchParams.get('language'),
+      };
       await route.fulfill({ status: 200, contentType: 'audio/wav', body: fs.readFileSync(previewSample) });
     });
 
@@ -825,62 +786,63 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     // 3. Play sample in Low tier (Telugu is default active language)
     const playLowBtn = page.locator('[data-testid="voice-play-btn-voice-economical-te"]');
     await expect(playLowBtn).toBeVisible();
-    lastPreviewPayload = null;
+    lastPreviewRequest = null;
     await playLowBtn.click();
     await page.waitForTimeout(500);
 
-    expect(lastPreviewPayload).toBeTruthy();
-    expect(lastPreviewPayload.tier).toBe('low');
-    expect(lastPreviewPayload.language).toBe('te-IN');
-    expect(lastPreviewPayload.voiceId).toBe('voice-economical-te');
-    expect(lastPreviewPayload.text).toContain('నమస్కారం');
+    expect(lastPreviewRequest).toBeTruthy();
+    expect(lastPreviewRequest.path).toBe('/api/telephony/voice-preview/catalog');
+    expect(lastPreviewRequest.language).toBe('te-IN');
+    expect(lastPreviewRequest.voiceId).toBe('voice-economical-te');
 
     // 4. Play sample in Medium tier
     const playMedBtn = page.locator('[data-testid="voice-play-btn-voice-regional-te"]');
     await expect(playMedBtn).toBeVisible();
-    lastPreviewPayload = null;
+    lastPreviewRequest = null;
     await playMedBtn.click();
     await page.waitForTimeout(500);
 
-    expect(lastPreviewPayload).toBeTruthy();
-    expect(lastPreviewPayload.tier).toBe('medium');
-    expect(lastPreviewPayload.language).toBe('te-IN');
-    expect(lastPreviewPayload.voiceId).toBe('voice-regional-te');
-    expect(lastPreviewPayload.text).toContain('నమస్కారం');
+    expect(lastPreviewRequest).toBeTruthy();
+    expect(lastPreviewRequest.path).toBe('/api/telephony/voice-preview/catalog');
+    expect(lastPreviewRequest.language).toBe('te-IN');
+    expect(lastPreviewRequest.voiceId).toBe('voice-regional-te');
 
-    // 5. Switch Language to Hindi (hi-IN)
+    // 5. Switch Language to Hindi (hi-IN). The catalog re-issues URLs for the
+    // new language, and playback must follow those server-owned URLs.
     const hindiCard = page.locator('[data-testid="language-card-hi-IN"]');
     await expect(hindiCard).toBeVisible();
+    const hindiCatalog = page.waitForResponse(
+      (response) => response.url().includes('/api/voice-stacks/catalog') && response.url().includes('language=hi-IN')
+    );
     await hindiCard.click();
-    await page.waitForTimeout(600);
+    await hindiCatalog;
+    await page.waitForTimeout(300);
 
-    // Play sample in Low tier with Hindi active - text should now be Hindi
-    lastPreviewPayload = null;
+    lastPreviewRequest = null;
     await playLowBtn.click();
     await page.waitForTimeout(500);
 
-    expect(lastPreviewPayload).toBeTruthy();
-    expect(lastPreviewPayload.tier).toBe('low');
-    expect(lastPreviewPayload.language).toBe('hi-IN');
-    expect(lastPreviewPayload.voiceId).toBe('voice-economical-te');
-    expect(lastPreviewPayload.text).toContain('नमस्ते');
+    expect(lastPreviewRequest).toBeTruthy();
+    expect(lastPreviewRequest.language).toBe('hi-IN');
+    expect(lastPreviewRequest.voiceId).toBe('voice-economical-te');
 
-    // Play sample in Medium tier with Hindi active
-    lastPreviewPayload = null;
+    lastPreviewRequest = null;
     await playMedBtn.click();
     await page.waitForTimeout(500);
 
-    expect(lastPreviewPayload).toBeTruthy();
-    expect(lastPreviewPayload.tier).toBe('medium');
-    expect(lastPreviewPayload.language).toBe('hi-IN');
-    expect(lastPreviewPayload.voiceId).toBe('voice-regional-te');
-    expect(lastPreviewPayload.text).toContain('नमस्ते');
+    expect(lastPreviewRequest).toBeTruthy();
+    expect(lastPreviewRequest.language).toBe('hi-IN');
+    expect(lastPreviewRequest.voiceId).toBe('voice-regional-te');
 
     // 6. Switch back to persisted language (te-IN) to allow saving voice setup
     const teluguCard = page.locator('[data-testid="language-card-te-IN"]');
     await expect(teluguCard).toBeVisible();
+    const teluguCatalog = page.waitForResponse(
+      (response) => response.url().includes('/api/voice-stacks/catalog') && response.url().includes('language=te-IN')
+    );
     await teluguCard.click();
-    await page.waitForTimeout(600);
+    await teluguCatalog;
+    await page.waitForTimeout(300);
 
     // 7. Test voice selection in Low tier
     const selectLowBtn = page.locator('[data-testid="voice-select-btn-voice-economical-te"]');

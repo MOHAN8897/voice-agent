@@ -720,6 +720,11 @@ async def _outbound_vobiz(
     except Exception as exc:
         log_pstn("vobiz.prewarm_failed", control=tracking_id, error_type=type(exc).__name__)
         if prepared_voice_opening_required:
+            from server.services.saas.voice_setup_errors import voice_setup_error
+
+            setup_error = voice_setup_error(exc)
+            if setup_error:
+                return {"ok": False, "error": setup_error["message"], "code": setup_error["code"], "status": 409}
             return {"ok": False, "error": "The agent could not get ready. No phone call was placed. Please try again.", "code": "voice_preparation_failed"}
         logger.warning("[PSTN] Composed prewarm failed (%s), proceeding with live synthesis on answer", type(exc).__name__)
 

@@ -55,7 +55,20 @@ async def test_resolve_inbound_route_active_agent():
         async def __aexit__(self, *args):
             pass
 
-    with patch("server.services.saas.inbound_routing.get_session_factory", return_value=MockFactory()):
+    def _resolved_stack():
+        return {
+            "pipeline": "composed_voice",
+            "voice_flow": "composed_stages",
+            "language": "te-IN",
+            "stt": {"provider": "sarvam", "model": "saaras:v3-realtime", "config": {}},
+            "llm": {"provider": "gemini", "model": "gemini-3.8-live", "config": {}},
+            "tts": {"provider": "sarvam", "model": "bulbul:v3", "config": {"speaker": "shubh"}},
+            "_voice_stack_snapshot": {"tier": "medium"},
+        }
+
+    with patch("server.services.saas.inbound_routing.get_session_factory", return_value=MockFactory()), \
+         patch("server.services.saas.voice_stack_profiles.resolve_agent_selection",
+               AsyncMock(return_value=(_resolved_stack(), {}))):
         route = await resolve_inbound_route(e164)
         assert route is not None
         assert route.tenant_id == tid

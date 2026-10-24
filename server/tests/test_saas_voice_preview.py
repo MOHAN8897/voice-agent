@@ -1,21 +1,138 @@
+import asyncio
 import pytest
 import wave
 import io
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from server.services.saas.voice_preview import (
+    CATALOG_PREVIEW_TEXTS,
+    STANDARD_SAMPLE_TEXTS,
+    catalog_preview_text,
     normalize_preview_text,
     pcm16_to_wav,
     resolve_preview_voice,
     resolve_openai_tts_voice,
+    synthesize_live_preview,
     synthesize_preview,
 )
+
+
+@pytest.fixture(autouse=True)
+def supplied_regional_catalog(monkeypatch):
+    import copy
+    from server.providers import voice_inventory
+    data = copy.deepcopy(voice_inventory.inventory())
+    data["gemini"]["voices"] = [{"id": "te-in-csagent-5", "providerVoiceId": "te-in-csagent-5", "label": "Telugu Support", "languages": ["te-IN"]}]
+    monkeypatch.setattr(voice_inventory, "inventory", lambda: data)
+    async def phone_stack(_language):
+        return {"llm": {"provider": "gemini", "model": "gemini-3.8-live"}, "realtime_voice": {"voice": "te-in-csagent-5"}}
+    monkeypatch.setattr("server.services.saas.platform_phone_stack.resolve_platform_phone_stack", phone_stack)
 
 
 def test_normalize_preview_text():
     assert normalize_preview_text("  Hello   world!  ") == "Hello world!"
     with pytest.raises(ValueError):
         normalize_preview_text("   ")
+
+
+def test_catalog_preview_text_is_server_owned_and_cacheable():
+    assert catalog_preview_text("te-IN") == CATALOG_PREVIEW_TEXTS["te"]
+    assert catalog_preview_text("en-US") == CATALOG_PREVIEW_TEXTS["en"]
+    assert catalog_preview_text("xx-XX") == CATALOG_PREVIEW_TEXTS["en"]
+    assert all(text in STANDARD_SAMPLE_TEXTS for text in CATALOG_PREVIEW_TEXTS.values())
+
+
+@pytest.mark.asyncio
+async def test_catalog_preview_resolves_alias_and_uses_server_text(monkeypatch):
+    from server.services.saas import voice_preview, voice_stack_profiles
+
+    monkeypatch.setitem(voice_stack_profiles._REVERSE_ALIAS_CACHE, "voc_catalog_test", {
+        "tier": "medium",
+        "provider": "sarvam",
+        "model": "bulbul:v4-flash",
+        "providerVoiceId": "shubh_hi_conversational",
+        "label": "Voice 7",
+        "languages": ["hi-IN"],
+    })
+    captured = {}
+
+    async def fake_synthesize(text, **kwargs):
+        captured.update({"text": text, **kwargs})
+        return {"audio": pcm16_to_wav(b"\x01\x00" * 200, 16000), "cacheable": True, "cacheHit": True}
+
+    monkeypatch.setattr(voice_preview, "synthesize_preview", fake_synthesize)
+    result = await voice_preview.synthesize_catalog_preview("voc_catalog_test", "hi-IN")
+
+    assert captured["text"] == catalog_preview_text("hi-IN")
+    assert captured["voice_id"] == "shubh_hi_conversational"
+    assert captured["language"] == "hi-IN"
+    assert captured["provider"] == "sarvam"
+    assert captured["model"] == "bulbul:v4-flash"
+    assert captured["tier"] == "medium"
+    assert result["label"] == "Voice 7"
+
+    with pytest.raises(ValueError, match="voice_not_in_active_catalog"):
+        await voice_preview.synthesize_catalog_preview("voc_catalog_test", "te-IN")
+    with pytest.raises(ValueError, match="voice_not_in_active_catalog"):
+        await voice_preview.synthesize_catalog_preview("shubh_hi_conversational", "hi-IN")
+    with pytest.raises(ValueError, match="unsupported_language"):
+        await voice_preview.synthesize_catalog_preview("voc_catalog_test", "xx-XX")
+
+
+@pytest.mark.asyncio
+async def test_live_preview_speaks_the_server_greeting_in_the_selected_live_voice(monkeypatch):
+    from server.services.saas import voice_preview
+
+    audio = pcm16_to_wav(b"\x01\x00" * 240, 24000)
+    calls = []
+
+    async def fake_gemini(line, voice, speed):
+        calls.append((line, voice, speed))
+        return audio
+
+    monkeypatch.setattr(voice_preview, "_synthesize_gemini", fake_gemini)
+    result = await synthesize_live_preview("te-in-csagent-5", "te-IN")
+
+    assert calls == [(catalog_preview_text("te-IN"), "te-in-csagent-5", 1.0)]
+    assert result["audio"] == audio
+    assert result["label"] == "Voice"
+    with pytest.raises(ValueError, match="unsupported_language"):
+        await synthesize_live_preview("te-in-csagent-5", "xx-XX")
+    with pytest.raises(ValueError, match="voice_not_in_active_catalog"):
+        await synthesize_live_preview("not-a-live-voice", "te-IN")
+
+
+@pytest.mark.asyncio
+async def test_preview_warm_dedupes_and_cools_down_failures(monkeypatch):
+    from server.services.saas import voice_preview
+
+    calls = []
+
+    async def fail(*args):
+        calls.append(args)
+        raise RuntimeError("provider unavailable")
+
+    monkeypatch.setattr(voice_preview, "synthesize_catalog_preview", fail)
+    voice_preview._WARM_INFLIGHT.clear()
+    voice_preview._WARM_COOLDOWN.clear()
+    try:
+        voice_preview.schedule_preview_warm([
+            ("catalog", "voc_warm_test", "te-IN"),
+            ("catalog", "voc_warm_test", "te-IN"),
+        ])
+        await asyncio.gather(*list(voice_preview._WARM_TASKS))
+        await asyncio.sleep(0)
+        assert len(calls) == 1
+        assert not voice_preview._WARM_TASKS
+
+        voice_preview.schedule_preview_warm([("catalog", "voc_warm_test", "te-IN")])
+        await asyncio.sleep(0)
+        assert len(calls) == 1
+        assert not voice_preview._WARM_TASKS
+    finally:
+        voice_preview._WARM_INFLIGHT.clear()
+        voice_preview._WARM_COOLDOWN.clear()
+        voice_preview._WARM_TASKS.clear()
 
 
 def test_pcm16_to_wav():
@@ -32,6 +149,8 @@ def test_pcm16_to_wav():
 def test_resolve_preview_voice():
     voice, label = resolve_preview_voice("marin", provider="openai")
     assert (voice, label) == ("marin", "Marin")
+    # OpenAI has no per-model voice list; a pinned TTS model must not empty it.
+    assert resolve_preview_voice("marin", provider="openai", model="tts-1")[0] == "marin"
     voice, label = resolve_preview_voice("te-in-csagent-5", provider="gemini")
     assert voice == "te-in-csagent-5"
     assert "Telugu" in label
@@ -162,7 +281,7 @@ async def test_gemini_preview_does_not_fall_back_to_openai_on_permission_error(m
     with pytest.raises(RuntimeError, match="permission_denied"):
         await voice_preview.synthesize_preview(
             "नमस्ते",
-            voice_id="te-in-csagent-5",
+            voice_id="Puck",
             language="hi-IN",
             provider="gemini",
         )
@@ -221,7 +340,7 @@ async def test_synthesize_preview_supports_sarvam(monkeypatch):
 
     audio = voice_preview.pcm16_to_wav(b"\x02\x00" * 300, 24000)
 
-    async def mock_sarvam(line, voice, speed, language=None):
+    async def mock_sarvam(line, voice, speed, language=None, **kwargs):
         assert voice == "shubh"
         assert speed == 1.0
         return audio
@@ -244,7 +363,7 @@ async def test_synthesize_preview_supports_low_gemini_tts(monkeypatch):
 
     audio = voice_preview.pcm16_to_wav(b"\x03\x00" * 300, 24000)
 
-    async def mock_gemini_tts(line, voice, speed, language=None, model=None):
+    async def mock_gemini_tts(line, voice, speed, language=None, model=None, **kwargs):
         assert voice == "Zephyr"
         assert speed == 1.0
         assert language == "te-IN"
@@ -268,7 +387,7 @@ async def test_synthesize_preview_supports_medium_sarvam_tts(monkeypatch):
 
     audio = voice_preview.pcm16_to_wav(b"\x02\x00" * 200, 16000)
 
-    async def mock_sarvam(line, voice, speed, language=None):
+    async def mock_sarvam(line, voice, speed, language=None, **kwargs):
         assert voice == "shubh"
         assert speed == 1.0
         assert language == "te-IN"
@@ -333,6 +452,60 @@ async def test_voice_preview_route_with_tier_and_alias(monkeypatch):
     assert resp.body == dummy_audio
 
 
+@pytest.mark.asyncio
+async def test_catalog_preview_route_serves_generic_headers(monkeypatch):
+    from server.routes import app_telephony
+    from server.services.saas import voice_preview
+
+    monkeypatch.setattr("server.auth.rbac.role_has_permission", lambda *_args: True)
+    audio = voice_preview.pcm16_to_wav(b"\x01\x00" * 200, 16000)
+    monkeypatch.setattr(
+        voice_preview,
+        "synthesize_catalog_preview",
+        AsyncMock(return_value={"audio": audio, "label": "Voice 3", "cacheHit": True}),
+    )
+
+    resp = await app_telephony.catalog_voice_preview(
+        voiceId="voc_catalog_test",
+        language="te-IN",
+        principal=SimpleNamespace(role="subscriber"),
+    )
+
+    assert resp.status_code == 200
+    assert resp.body == audio
+    assert resp.headers["X-Voice-Name"] == "Voice 3"
+    assert resp.headers["X-Voice-Model"] == "Enterprise Voice Engine"
+    assert "X-Voice-Stack-Model" not in resp.headers
+    assert resp.headers["X-Voice-Cache"] == "hit"
+    assert "sarvam" not in str(dict(resp.headers)).lower()
+    assert "gemini" not in str(dict(resp.headers)).lower()
+
+
+@pytest.mark.asyncio
+async def test_catalog_preview_route_hides_unknown_voice_details(monkeypatch):
+    from fastapi import HTTPException
+    from server.routes import app_telephony
+    from server.services.saas import voice_preview
+
+    monkeypatch.setattr("server.auth.rbac.role_has_permission", lambda *_args: True)
+    monkeypatch.setattr(
+        voice_preview,
+        "synthesize_catalog_preview",
+        AsyncMock(side_effect=ValueError("voice_not_in_active_catalog")),
+    )
+
+    with pytest.raises(HTTPException) as caught:
+        await app_telephony.catalog_voice_preview(
+            voiceId="voc_unknown_alias",
+            language="te-IN",
+            principal=SimpleNamespace(role="subscriber"),
+        )
+    assert caught.value.status_code == 404
+    assert caught.value.detail["error"]["code"] == "voice_not_available"
+    message = caught.value.detail["error"]["message"].lower()
+    assert "sarvam" not in message and "gemini" not in message
+
+
 def test_find_static_sample_locates_sarvam_and_gemini_wavs():
     from server.services.saas.voice_preview import find_static_sample
     from server.services.saas.voice_sample_cache import valid_wav
@@ -369,3 +542,16 @@ async def test_synthesize_preview_serves_from_stored_sample_with_zero_api_calls(
     assert len(res["audio"]) > 1000
     assert res["audio"].startswith(b"RIFF")
 
+
+
+@pytest.mark.asyncio
+async def test_long_gemini_voice_id_is_never_classified_as_cartesia(monkeypatch):
+    from server.routes import app_telephony
+    from server.services.saas import voice_preview
+    monkeypatch.setattr("server.auth.rbac.role_has_permission", lambda *_: True)
+    synthesize = AsyncMock(return_value={"audio": pcm16_to_wav(b"\x00\x00" * 160, 16000),
+        "voice": "te-in-conversational-advisor-123", "label": "Voice 1", "model": "gemini-3.8-flash-tts", "cacheable": False, "cacheHit": False})
+    monkeypatch.setattr(voice_preview, "synthesize_preview", synthesize)
+    await app_telephony.voice_preview(SimpleNamespace(text="Hello", voiceId="te-in-conversational-advisor-123", language="te-IN", speed=None), SimpleNamespace(role="subscriber"))
+    assert synthesize.call_args.kwargs["provider"] == "gemini"
+    assert synthesize.call_args.kwargs["voice_id"] == "te-in-conversational-advisor-123"

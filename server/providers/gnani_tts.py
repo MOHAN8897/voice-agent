@@ -10,10 +10,10 @@ from server.providers.base import TTSConfig
 from server.services.dev_secrets_store import dev_secrets_store
 
 
-def _resolve_voice_id(config: TTSConfig) -> str:
+def _resolve_voice_id(config: TTSConfig, *, language: str | None = None) -> str:
     from server.services.gnani_tts_ws import _resolve_gnani_voice
 
-    return _resolve_gnani_voice(config.speaker, model=config.model)
+    return _resolve_gnani_voice(config.speaker, model=config.model, language=language)
 
 
 class GnaniTTSAdapter:
@@ -41,8 +41,11 @@ class GnaniTTSAdapter:
         text = sanitize_tts_tags(text, provider="gnani", model=model)
         if not text:
             raise ValueError("Speech text must contain words, not only audio tags")
-        voice = _resolve_voice_id(config)
-        lang = _gnani_language_code(config.language)
+        lang = _gnani_language_code(config.language, model=model)
+        voice = _resolve_voice_id(config, language=lang)
+        from server.providers.voice_inventory import provider_language
+
+        lang = provider_language("gnani", model, voice, lang)
         pace = max(0.85, min(1.15, float(config.pace or 1.0)))
 
         payload = {

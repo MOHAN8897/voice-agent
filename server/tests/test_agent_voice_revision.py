@@ -123,6 +123,7 @@ async def test_versioned_voice_patch_refuses_premium_and_requires_durable_store(
     row = _agent(revision=2)
     session = _Session(row)
     monkeypatch.setattr("server.brain.agent_service.get_session_factory", lambda: lambda: session)
+    monkeypatch.setattr(voice_stack_profiles, "load_profile_records", AsyncMock(return_value={}))
     with pytest.raises(AgentVoiceRevisionConflict) as premium:
         await AgentService().patch_agent(
             str(row.agent_id),
@@ -143,6 +144,26 @@ async def test_versioned_voice_patch_refuses_premium_and_requires_durable_store(
         )
     assert unavailable.value.status_code == 503
     assert unavailable.value.code == "durable_store_unavailable"
+
+
+@pytest.mark.asyncio
+async def test_flagship_persisted_profile_accepts_exact_catalog_selection(monkeypatch):
+    row = _agent()
+    row.voice_settings['realtimeVoice'] = 'old-platform-voice'
+    session = _Session(row)
+    monkeypatch.setattr("server.brain.agent_service.get_session_factory", lambda: lambda: session)
+    monkeypatch.setattr(voice_stack_profiles, "load_profile_records", AsyncMock(return_value={"premium": {"revision": 5}}))
+    validate = AsyncMock()
+    monkeypatch.setattr(voice_stack_profiles, "validate_agent_voice_selection_async", validate)
+    saved = await AgentService().patch_agent(str(row.agent_id), {"default_tier": "premium", "voice_settings": _selection()},
+        tenant_id=str(row.tenant_id), expected_voice_revision=2)
+    assert saved["default_tier"] == 'premium'
+    assert row.voice_settings['voiceId'] == 'voice-a'
+    assert row.voice_settings['profileRevision'] == 5
+    assert 'realtimeVoice' not in row.voice_settings
+    assert row.voice_settings['_voice_revision'] == 3
+    validate.assert_awaited_once()
+    assert validate.call_args.args[0] == 'premium'
 
 
 @pytest.mark.asyncio

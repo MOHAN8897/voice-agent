@@ -444,6 +444,32 @@
       },
       "updatedAt": 1792502330737
     },
+    "inline:the-single-workspace-test-call-action-opens-the-fbaeaae4": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call-panel"
+        }
+      },
+      "declaredAt": 1792818820338,
+      "id": "inline:the-single-workspace-test-call-action-opens-the-fbaeaae4",
+      "provenBy": {
+        "at": 1792818820515,
+        "grade": "presence",
+        "runId": "drive-lease-9efb05e1-b17d-446a-a6ee-d173067332c5",
+        "verdictId": "reticle_act_and_wait:1792818820515"
+      },
+      "state": "proved",
+      "statement": "The single workspace Test call action opens the test dialog after a voice setup is saved.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792818820589
+    },
     "primary-script-review": {
       "declaredAt": 1792471243539,
       "id": "primary-script-review",

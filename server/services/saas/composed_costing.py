@@ -81,8 +81,6 @@ def default_provider_rates() -> list[dict[str, Any]]:
     for unit, price in (("input_tokens_million", "15"), ("cached_input_tokens_million", "5"), ("output_tokens_million", "60")):
         add("llm", "sarvam", "sarvam-105b-conversations", unit, price, "INR", "2026-10-10")
         add("llm", "sarvam", "sarvam-105b", unit, price, "INR", "2026-10-10")
-    for unit, price in (("input_tokens_million", "1"), ("cached_input_tokens_million", "0.5"), ("output_tokens_million", "3")):
-        add("llm", "sarvam", "sarvam-2b", unit, price, "INR", "2026-10-10")
     for model, output in (("gemini-3.8-flash-lite-tts", "6"), ("gemini-3.8-flash-tts", "9")):
         add("tts", "gemini", model, "input_tokens_million", "0.5", "USD", "2026-10-22", "2027-01-01")
         add("tts", "gemini", model, "output_audio_tokens_million", output, "USD", "2026-10-22", "2027-01-01")

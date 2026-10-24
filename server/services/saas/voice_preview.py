@@ -5,6 +5,7 @@ import asyncio
 import base64
 import io
 import logging
+import time
 import wave
 from typing import Any
 
@@ -13,6 +14,10 @@ logger = logging.getLogger(__name__)
 MAX_PREVIEW_CHARS = 400
 PREVIEW_TIMEOUT_S = 25.0
 GEMINI_TTS_MODEL = "gemini-3.8-flash-tts"
+_WARM_INFLIGHT: set[str] = set()
+_WARM_COOLDOWN: dict[str, float] = {}
+_WARM_TASKS: set[asyncio.Task] = set()
+_WARM_COOLDOWN_S = 900.0
 
 
 class VoicePreviewRateLimited(RuntimeError):
@@ -40,136 +45,33 @@ def normalize_preview_text(raw: str) -> str:
 
 
 def resolve_preview_voice(
-    voice_id: str | None,
-    *,
-    provider: str = "gemini",
-    language: str | None = None,
-    tier: str | None = None,
+    voice_id: str | None, *, provider: str = "gemini", language: str | None = None,
+    tier: str | None = None, model: str | None = None,
 ) -> tuple[str, str]:
-    """Resolve an exact catalog voice for the active provider; reject stale IDs."""
-    from server.config.constants import constants
-    from server.realtime.models import default_gemini_live_voice
+    """Resolve an exact provider/model voice; never infer a speaker from its number."""
+    from server.providers.voice_inventory import validate_voice, voices_for_model
     from server.services.saas.voice_catalog import phone_voice_catalog
-    from server.services.saas.voice_stack_defaults import STANDARD_TTS_VOICES
     from server.services.saas.voice_stack_profiles import lookup_cached_voice_alias
 
-    active_provider = str(provider or "gemini").strip().lower()
     wanted = str(voice_id or "").strip()
-
-    # 1. Reverse alias lookup (voc_...)
-    alias_match = lookup_cached_voice_alias(wanted)
-    if alias_match:
-        pvid = str(alias_match.get("providerVoiceId") or wanted)
-        label = str(alias_match.get("label") or pvid)
-        return pvid, label
-
-    # Gnani Voices (Voice 1, Voice 2, Voice 3, Voice 4)
-    if active_provider == "gnani" or "gnani" in wanted.lower():
-        clean_g = wanted.removeprefix("voice-").strip().lower()
-        if "4" in clean_g or clean_g in {"prakash", "gnani-4"}:
-            return "Prakash", "Voice 4"
-        if "3" in clean_g or clean_g in {"lakshmi", "gnani-3"}:
-            return "Lakshmi", "Voice 3"
-        if "2" in clean_g or clean_g in {"pranav", "avinash", "gnani-2"}:
-            return "Pranav", "Voice 2"
-        return "Nalini", "Voice 1"
-
-    # Cartesia Voices
-    if active_provider == "cartesia" or "cartesia" in wanted.lower() or "sonic" in wanted.lower() or len(wanted) > 20:
-        clean_c = wanted.removeprefix("voice-").strip().lower()
-        from server.providers.cartesia_tts import _CARTESIA_VOICE_MAP
-        from server.services.cartesia_voices import _UUID_RE, _FALLBACK_VOICES
-
-        # 1. Exact catalog match
-        for row in phone_voice_catalog():
-            if row.get("provider") == "cartesia":
-                rid = str(row.get("id") or "").casefold()
-                rpvid = str(row.get("providerVoiceId") or "").casefold()
-                rname = str(row.get("name") or "").casefold()
-                if wanted.casefold() in (rid, rpvid, rname) or clean_c in (rid, rpvid, rname):
-                    return str(row.get("providerVoiceId") or row.get("id")), str(row.get("label") or row.get("name") or wanted)
-
-        # 2. Numbered aliases (voice-cartesia-1, cartesia-1, etc.)
-        if clean_c in {"cartesia-4", "4"}:
-            return "47c38ca4-ff9b-4e89-a2e1-456956b46452", "Voice 4"
-        if clean_c in {"cartesia-3", "3"}:
-            return "694f9389-aac1-45b6-b726-9d9369183238", "Voice 3"
-        if clean_c in {"cartesia-2", "2"}:
-            return "a0e99841-438c-4a64-b679-ae501e7d6091", "Voice 2"
-        if clean_c in {"cartesia-1", "1"}:
-            return "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", "Voice 1"
-
-        # 3. Known names in map
-        if clean_c in _CARTESIA_VOICE_MAP:
-            uid = _CARTESIA_VOICE_MAP[clean_c]
-            matched_fallback = next((v for v in _FALLBACK_VOICES if v["id"] == uid), None)
-            lbl = matched_fallback["name"] if matched_fallback else clean_c.title()
-            return uid, lbl
-
-        # 4. Direct UUID
-        if _UUID_RE.match(clean_c):
-            matched_fallback = next((v for v in _FALLBACK_VOICES if v["id"].lower() == clean_c.lower()), None)
-            lbl = matched_fallback["name"] if matched_fallback else "Cartesia Voice"
-            return clean_c, lbl
-
-        # 5. Default by language
-        lang_prefix = (language or "te").split("-")[0].lower()
-        if lang_prefix == "te":
-            return "76961778-84da-4b51-8d42-2e8e6e6a5e8a", "Bhavani"
-        elif lang_prefix == "hi":
-            return "9cebb910-d4b7-4a4a-85a4-12c79137724c", "Aarti"
-        return "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", "Voice 1"
-
-    # 2. Defaults if empty
-    if not wanted:
-        if active_provider == "sarvam" or tier == "medium":
-            wanted = "shubh"
-        elif tier == "low":
-            wanted = "Zephyr"
-        elif active_provider == "gemini":
-            wanted = default_gemini_live_voice(language)
-        else:
-            wanted = "marin"
-
-    # 3. Regional Sarvam speakers (Standard Regional tier - medium)
-    clean_sarvam = wanted.removeprefix("voice-").lower()
-    if active_provider == "sarvam" or tier == "medium":
-        if clean_sarvam in {s.lower() for s in constants.TTS_SPEAKERS_V3}:
-            matched = next(s for s in constants.TTS_SPEAKERS_V3 if s.lower() == clean_sarvam)
-            return matched, matched.title()
-        for row in phone_voice_catalog():
-            if str(row.get("id", "")).casefold() == wanted.casefold():
-                return str(row.get("id")), str(row.get("label") or wanted)
-        if clean_sarvam:
-            return clean_sarvam, clean_sarvam.title()
-        if tier == "medium":
+    alias = lookup_cached_voice_alias(wanted)
+    if alias:
+        if alias.get("provider") and alias["provider"] != provider:
             raise ValueError("voice_not_in_active_catalog")
-
-    # 4. Standard Gemini regional TTS voices (Economical tier - low)
-    clean_standard = wanted.removeprefix("voice-").casefold()
-    if tier == "low":
-        matched_std = next((s for s in STANDARD_TTS_VOICES if s.casefold() == clean_standard), None)
-        if matched_std:
-            return matched_std, matched_std
-        for row in phone_voice_catalog():
-            if str(row.get("id", "")).casefold() == wanted.casefold():
-                return str(row.get("geminiVoice") or row.get("id")), str(row.get("label") or wanted)
-        if clean_standard:
-            return clean_standard.title(), clean_standard.title()
-        raise ValueError("voice_not_in_active_catalog")
-
-    # 5. Live phone voice catalog (Zephyr, Aoede, Kore, te-in-csagent-5, marin, etc.)
-    for row in phone_voice_catalog():
-        if row.get("provider") != active_provider or str(row.get("id", "")).casefold() != wanted.casefold():
-            continue
-        voice = row.get("geminiVoice") if active_provider == "gemini" else row.get("id")
-        return str(voice or wanted), str(row.get("label") or wanted)
-
-    # 6. Fallback standard voice matching for Gemini provider
-    matched_std = next((s for s in STANDARD_TTS_VOICES if s.casefold() == clean_standard), None)
-    if active_provider == "gemini" and matched_std:
-        return matched_std, matched_std
-
+        wanted = str(alias.get("providerVoiceId") or "")
+    rows = (
+        voices_for_model(provider, model)
+        if model and provider != "openai"
+        else [row for row in phone_voice_catalog() if row.get("provider") == provider]
+    )
+    for row in rows:
+        pvid = str(row.get("providerVoiceId") or row.get("geminiVoice") or row.get("id") or "")
+        if wanted and wanted.casefold() in {pvid.casefold(), str(row.get("id") or "").casefold()}:
+            if language and row.get("languages") and language not in row["languages"]:
+                continue
+            if model and provider != "openai":
+                validate_voice(provider, model, pvid, language)
+            return pvid, str(row.get("label") or pvid)
     raise ValueError("voice_not_in_active_catalog")
 
 
@@ -302,6 +204,7 @@ async def _synthesize_sarvam(
     language: str | None = None,
     temperature: float | None = None,
     pitch: float | None = None,
+    model: str | None = None,
 ) -> bytes:
     from server.services.sarvam_tts_service import synthesize
 
@@ -309,6 +212,7 @@ async def _synthesize_sarvam(
         text=line,
         language_code=language or "te-IN",
         speaker=voice,
+        model=model,
         pace=speed,
         temperature=temperature,
     )
@@ -358,16 +262,6 @@ async def _synthesize_gnani(
 
     clean_v = str(voice or "").strip()
     req_model = model or "timbre-v3.0"
-    if "v3" in req_model.lower():
-        if clean_v.lower() in {"nalini", "voice-gnani-1", "voice 1"}:
-            clean_v = "Shivani"
-        elif clean_v.lower() in {"pranav", "voice-gnani-2", "voice 2"}:
-            clean_v = "Avinash"
-        elif clean_v.lower() in {"lakshmi", "voice-gnani-3", "voice 3"}:
-            clean_v = "Shivani"
-        elif clean_v.lower() in {"prakash", "voice-gnani-4", "voice 4"}:
-            clean_v = "Avinash"
-
     adapter = GnaniTTSAdapter()
     cfg = TTSConfig(
         provider="gnani",
@@ -422,7 +316,11 @@ def find_static_sample(voice: str, language: str | None = None) -> bytes | None:
     from server.services.saas.voice_sample_cache import valid_wav
     from server.config.env import get_settings
 
-    clean_voice = voice.removeprefix("voice-").strip().lower()
+    import re
+
+    clean_voice = voice.strip().lower()
+    if not re.fullmatch(r"[a-z0-9_-]+", clean_voice):
+        return None
     lang_prefix = (language.split("-")[0] if language else "te").lower()
 
     base_dirs = [
@@ -438,22 +336,6 @@ def find_static_sample(voice: str, language: str | None = None) -> bytes | None:
         f"voice-{clean_voice}_{lang_prefix}.wav",
         f"voice-{clean_voice}.wav",
     ]
-    female_cartesia_hints = {"priya", "kiara", "indian lady", "indian_lady", "bhavani", "aarti", "maya", "sarah", "jacqueline", "skylar", "katie", "045f0292", "f8f5f1b2", "3b554273", "76961778", "9cebb910", "79a125e8", "cartesia-1", "cartesia-3"}
-    male_cartesia_hints = {"devansh", "krishna", "aarav", "charan", "amrit", "caleb", "michael", "daniel", "leo", "87a983d8", "2ee87190", "efa653e5", "39d518b7", "82c2afc8", "97303aad", "cartesia-2", "cartesia-4"}
-
-    if any(h in clean_voice for h in female_cartesia_hints):
-        filenames.extend([f"voice-cartesia-1_{lang_prefix}.wav", "voice-cartesia-1.wav", f"cartesia-1_{lang_prefix}.wav"])
-    elif any(h in clean_voice for h in male_cartesia_hints):
-        filenames.extend([f"voice-cartesia-2_{lang_prefix}.wav", "voice-cartesia-2.wav", f"cartesia-2_{lang_prefix}.wav"])
-    elif "nalini" in clean_voice or "shivani" in clean_voice or "gnani-1" in clean_voice:
-        filenames.extend([f"voice-gnani-1_{lang_prefix}.wav", "voice-gnani-1.wav", f"gnani-1_{lang_prefix}.wav"])
-    elif "pranav" in clean_voice or "avinash" in clean_voice or "gnani-2" in clean_voice:
-        filenames.extend([f"voice-gnani-2_{lang_prefix}.wav", "voice-gnani-2.wav", f"gnani-2_{lang_prefix}.wav"])
-    elif "lakshmi" in clean_voice or "gnani-3" in clean_voice:
-        filenames.extend([f"voice-gnani-3_{lang_prefix}.wav", "voice-gnani-3.wav", f"gnani-3_{lang_prefix}.wav"])
-    elif "prakash" in clean_voice or "gnani-4" in clean_voice:
-        filenames.extend([f"voice-gnani-4_{lang_prefix}.wav", "voice-gnani-4.wav", f"gnani-4_{lang_prefix}.wav"])
-
     for bdir in base_dirs:
         for fname in filenames:
             cand = bdir / fname
@@ -467,8 +349,28 @@ def find_static_sample(voice: str, language: str | None = None) -> bytes | None:
     return None
 
 
+# Server-owned greeting per language. Catalog previews always speak this line so
+# every listener compares voices on the same script, and the result is cacheable.
+CATALOG_PREVIEW_TEXTS: dict[str, str] = {
+    "te": "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?",
+    "hi": "नमस्ते। मैं आपकी कैसे मदद कर सकता हूँ?",
+    "ta": "வணக்கம். உங்களுக்கு எப்படி உதவலாம்?",
+    "kn": "ನಮಸ್ಕಾರ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+    "ml": "നമസ്കാരം. ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കാം?",
+    "mr": "नमस्कार. मी तुम्हाला कशी मदत करू शकतो?",
+    "bn": "নমস্কার. আমি আপনাকে কিভাবে সাহায্য করতে পারি?",
+    "gu": "નમસ્તે. હું તમને કેવી રીતે મદદ કરી શકું?",
+    "pa": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ। ਮੈਂ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?",
+    "en": "Hello. Thank you for calling. How can I help you today?",
+}
+
+
+def catalog_preview_text(language: str | None) -> str:
+    base = str(language or "").strip().lower().split("-", 1)[0]
+    return CATALOG_PREVIEW_TEXTS.get(base, CATALOG_PREVIEW_TEXTS["en"])
+
+
 STANDARD_SAMPLE_TEXTS: set[str] = {
-    # Telugu
     "నమస్కారం. మీకు ఎలా సహాయం చేయగలను?",
     "నమస్కారం, నేను మీకు ఎలా సహాయం చేయగలను?",
     "నమస్కారం, మీ ప్రశ్నలకు సమాధానాలు అందించడానికి నేను సిద్ధంగా ఉన్నాను.",
@@ -512,7 +414,7 @@ STANDARD_SAMPLE_TEXTS: set[str] = {
     "নমস্কার. আমি আপনাকে কিভাবে সাহায্য করতে পারি?",
     "નમસ્તે. હું તમને કેવી રીતે મદદ કરી શકું?",
     "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ। ਮੈਂ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?",
-}
+} | set(CATALOG_PREVIEW_TEXTS.values())
 
 
 async def synthesize_preview(
@@ -525,7 +427,7 @@ async def synthesize_preview(
     temperature: float | None = None,
     emotion: str | None = None,
     volume: float | None = None,
-    provider: str = "gemini",
+    provider: str | None = None,
     model: str | None = None,
     tier: str | None = None,
 ) -> dict[str, Any]:
@@ -541,23 +443,24 @@ async def synthesize_preview(
             active_provider = "gemini"
     if active_provider not in {"gemini", "openai", "sarvam", "cartesia", "gnani"}:
         raise ValueError("unsupported_voice_provider")
-    voice, label = resolve_preview_voice(voice_id, provider=active_provider, language=language, tier=tier)
+    voice, label = resolve_preview_voice(voice_id, provider=active_provider, language=language, tier=tier, model=model)
     pace = max(0.5, min(2.0, float(speed) if speed is not None else 1.0))
     if active_provider == "gnani":
         preview_model = model or "timbre-v3.0"
     elif active_provider == "cartesia":
         preview_model = model or "sonic-3.5"
-    elif tier == "medium" or active_provider == "sarvam":
+    elif active_provider == "sarvam":
         preview_model = model or "bulbul:v3"
-    elif tier == "low" or (model and "tts" in model):
+    elif active_provider == "gemini" and ((model and "tts" in model) or tier == "low"):
         preview_model = model if (model and "tts" in model) else "gemini-3.8-flash-lite-tts"
     elif active_provider == "gemini":
         preview_model = GEMINI_TTS_MODEL
     else:
         preview_model = "tts-1"
-    from server.config.constants import constants
+    if active_provider in {"sarvam", "gnani", "gemini", "cartesia"}:
+        from server.providers.voice_inventory import validate_voice
+        validate_voice(active_provider, preview_model, voice, language)
     from server.services.saas.voice_catalog import phone_voice_catalog
-    from server.services.saas.voice_stack_defaults import STANDARD_TTS_VOICES
 
     # Only built-in samples are public. A tenant's custom greeting stays private
     # and is never written into this shared sample directory.
@@ -570,15 +473,10 @@ async def synthesize_preview(
             if row.get("sampleText")
         )
     )
-    is_catalog_voice = (
-        active_provider in {"gnani", "cartesia"}
-        or any(
-            str(row.get("id", "")).casefold() == voice.casefold()
-            or str(row.get("geminiVoice", "")).casefold() == voice.casefold()
-            for row in phone_voice_catalog()
-        )
-        or any(s.casefold() == voice.casefold() for s in constants.TTS_SPEAKERS_V3)
-        or any(s.casefold() == voice.casefold() for s in STANDARD_TTS_VOICES)
+    is_catalog_voice = active_provider in {"sarvam", "gnani", "gemini", "cartesia"} or any(
+        str(row.get("id", "")).casefold() == voice.casefold()
+        or str(row.get("geminiVoice", "")).casefold() == voice.casefold()
+        for row in phone_voice_catalog()
     )
     is_speed_standard = abs(pace - 1.0) < 0.01 and (pitch is None or abs(pitch) < 0.01) and (emotion is None or emotion == "neutral")
     cacheable = is_catalog_voice and is_standard_sample
@@ -588,9 +486,9 @@ async def synthesize_preview(
             return await _synthesize_gnani(line, voice, pace, language=language, model=preview_model, pitch=pitch, volume=volume)
         elif active_provider == "cartesia":
             return await _synthesize_cartesia(line, voice, pace, language=language, model=preview_model, emotion=emotion, volume=volume)
-        elif tier == "medium" or active_provider == "sarvam":
-            return await _synthesize_sarvam(line, voice, pace, language=language, temperature=temperature, pitch=pitch)
-        elif tier == "low" or (model and "tts" in model):
+        elif active_provider == "sarvam":
+            return await _synthesize_sarvam(line, voice, pace, language=language, temperature=temperature, pitch=pitch, model=preview_model)
+        elif active_provider == "gemini" and ((model and "tts" in model) or tier == "low"):
             return await _synthesize_gemini_tts(line, voice, pace, language=language, model=preview_model, pitch=pitch)
         elif active_provider == "gemini":
             return await _synthesize_gemini(line, voice, pace)
@@ -664,3 +562,129 @@ async def synthesize_preview(
         "cacheable": cacheable,
         "cacheHit": cache_hit,
     }
+
+
+async def synthesize_catalog_preview(alias_id: str, language: str) -> dict[str, Any]:
+    """Speak the server-owned sample for one opaque tenant catalog alias.
+
+    Only aliases from the active public catalog are allowed, so a tenant cannot
+    ask the platform to synthesize arbitrary provider voices.
+    """
+    from server.config.constants import language_in_supported, normalize_supported_language
+    from server.services.saas.voice_stack_profiles import lookup_cached_voice_alias, resolve_voice_alias
+
+    wanted = str(alias_id or "").strip()
+    if not wanted.startswith("voc_"):
+        raise ValueError("voice_not_in_active_catalog")
+    if not language_in_supported(language):
+        raise ValueError("unsupported_language")
+    normalized = normalize_supported_language(language)
+    alias = lookup_cached_voice_alias(wanted) or await resolve_voice_alias(wanted)
+    if not alias:
+        raise ValueError("voice_not_in_active_catalog")
+    if alias.get("languages") and normalized not in alias["languages"]:
+        raise ValueError("voice_not_in_active_catalog")
+    provider = str(alias.get("provider") or "").strip().lower()
+    if provider not in {"gemini", "sarvam", "cartesia", "gnani", "openai"}:
+        raise ValueError("unsupported_voice_provider")
+    result = await synthesize_preview(
+        catalog_preview_text(normalized),
+        voice_id=alias.get("providerVoiceId"),
+        language=normalized,
+        speed=1.0,
+        provider=provider,
+        model=alias.get("model"),
+        tier=alias.get("tier"),
+    )
+    result["label"] = str(alias.get("label") or "Voice")
+    return result
+
+
+async def synthesize_live_preview(voice_id: str, language: str) -> dict[str, Any]:
+    """Speak the server-owned greeting in one voice of the live phone stack.
+
+    Runs through the same disk cache as catalog samples, so a voice is
+    synthesized once per language and then served from storage.
+    """
+    from server.config.constants import language_in_supported, normalize_supported_language
+    from server.realtime.models import is_gemini_live_voice_model
+    from server.services.saas.platform_phone_stack import resolve_platform_phone_stack
+
+    if not language_in_supported(language):
+        raise ValueError("unsupported_language")
+    normalized = normalize_supported_language(language)
+    stack = await resolve_platform_phone_stack(normalized)
+    llm = stack.get("llm") if isinstance(stack.get("llm"), dict) else {}
+    provider = str(llm.get("provider") or "gemini").strip().lower()
+    model = str(llm.get("model") or "")
+    if is_gemini_live_voice_model(model):
+        provider = "gemini"
+    if provider not in {"gemini", "openai", "sarvam", "cartesia", "gnani"}:
+        raise ValueError("voice_not_in_active_catalog")
+    tts = stack.get("tts") if isinstance(stack.get("tts"), dict) else {}
+    if str(tts.get("provider") or "").strip().lower() == provider and tts.get("model"):
+        model = str(tts["model"])
+    elif provider in {"sarvam", "cartesia", "gnani"}:
+        from server.services.saas.voice_catalog import phone_voice_catalog
+
+        row = next((item for item in phone_voice_catalog()
+                    if item.get("provider") == provider and str(item.get("id") or "") == str(voice_id)), None)
+        model = str((row or {}).get("model") or "")
+    result = await synthesize_preview(
+        catalog_preview_text(normalized),
+        voice_id=voice_id,
+        language=normalized,
+        speed=1.0,
+        provider=provider,
+        model=None if provider == "openai" else (model or None),
+    )
+    result["label"] = "Voice"
+    return result
+
+
+def schedule_preview_warm(targets: list[tuple[str, str, str]]) -> None:
+    """Warm missing samples after a catalog response without blocking the request.
+
+    `targets` are `(kind, voice_id, language)` tuples where kind is `catalog`
+    or `live`. Repeated loads dedupe in-flight work, and a provider failure is
+    retried after a cooldown instead of on every request.
+    """
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return
+    now = time.monotonic()
+    pending = []
+    for kind, voice_id, language in targets:
+        key = f"{kind}:{voice_id}:{language}"
+        if key in _WARM_INFLIGHT or _WARM_COOLDOWN.get(key, 0.0) > now:
+            continue
+        _WARM_INFLIGHT.add(key)
+        pending.append((key, kind, voice_id, language))
+    if not pending:
+        return
+
+    async def warm(key: str, kind: str, voice_id: str, language: str) -> None:
+        try:
+            if kind == "catalog":
+                await synthesize_catalog_preview(voice_id, language)
+            else:
+                await synthesize_live_preview(voice_id, language)
+        except Exception as exc:
+            _WARM_COOLDOWN[key] = time.monotonic() + _WARM_COOLDOWN_S
+            logger.info("[VOICE] sample warm skipped kind=%s error=%s", kind, type(exc).__name__)
+        finally:
+            _WARM_INFLIGHT.discard(key)
+
+    async def run() -> None:
+        gate = asyncio.Semaphore(2)
+
+        async def limited(item: tuple[str, str, str, str]) -> None:
+            async with gate:
+                await warm(*item)
+
+        await asyncio.gather(*(limited(item) for item in pending))
+
+    task = asyncio.create_task(run())
+    _WARM_TASKS.add(task)
+    task.add_done_callback(_WARM_TASKS.discard)

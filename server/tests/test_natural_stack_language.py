@@ -193,13 +193,13 @@ def test_legacy_platform_pack_refresh_keeps_business_source_and_new_register():
 def test_gnani_voice_selection_respects_model_specific_catalog():
     from server.services.gnani_tts_ws import _resolve_gnani_voice
 
-    assert _resolve_gnani_voice("voice-gnani-1", model="timbre-v2.5") == "Nalini"
-    assert _resolve_gnani_voice("voice-gnani-1", model="timbre-v3.0") == "Shivani"
-    assert _resolve_gnani_voice("Prakash", model="timbre-v3.0") == "Prakash"
+    assert _resolve_gnani_voice("voice-gnani-1", model="timbre-v2.5", language="te-IN") == "Lavanya"
+    assert _resolve_gnani_voice("voice-gnani-1", model="timbre-v3.0", language="te-IN") == "Avinash"
+    assert _resolve_gnani_voice("Prakash", model="timbre-v3.0", language="te-IN") == "Prakash"
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("model,voice", [("timbre-v2.5", "Nalini"), ("timbre-v3.0", "Shivani")])
+@pytest.mark.parametrize("model,voice", [("timbre-v2.5", "Lavanya"), ("timbre-v3.0", "Avinash")])
 async def test_gnani_rest_and_websocket_send_matching_model_tags_and_voice(monkeypatch, model, voice):
     import httpx
 

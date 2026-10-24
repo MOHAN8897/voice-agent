@@ -243,7 +243,15 @@ async def subscriber_outbound(
         digits = "".join(c for c in clean_to if c.isdigit())
         clean_to = f"+91{digits}" if len(digits) == 10 else (f"+{digits}" if digits else clean_to)
 
-    stack = await saas_stack_override_for_agent(agent)
+    try:
+        stack = await saas_stack_override_for_agent(agent)
+    except Exception as exc:
+        from server.services.saas.voice_setup_errors import voice_setup_error
+
+        setup_error = voice_setup_error(exc)
+        if setup_error:
+            raise HTTPException(status_code=409, detail={"error": setup_error}) from exc
+        raise
     lang = str(stack.get("language") or (agent.get("languages") or ["te-IN"])[0])
     saved_voice_settings = agent.get("voice_settings") if isinstance(agent.get("voice_settings"), dict) else (agent.get("voiceSettings") if isinstance(agent.get("voiceSettings"), dict) else {})
     raw_tier = agent.get("default_tier") or agent.get("defaultTier") or "medium"

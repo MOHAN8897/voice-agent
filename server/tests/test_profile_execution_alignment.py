@@ -21,6 +21,53 @@ def choice_for(record):
         "modelId": next(iter(aliases["models"].values())), "voiceId": next(iter(aliases["voices"].values()))}
 
 
+@pytest.mark.parametrize("speaker,ready", [
+    ("shubh", False),
+    ("shubh_enhi_ads", False),
+    ("kavitha_te_conversation", True),
+])
+def test_persisted_v4_profile_readiness_validates_voice_before_advertising(approved_registry, speaker, ready):
+    profile = recommended_composed_profile("medium")
+    profile.update(enabled=True, retailRateInr=9, supportedLanguages=["te-IN"])
+    profile["evidence"] = {key: True for key in profiles._EVIDENCE_KEYS}
+    model = profile["engines"][0]["models"][0]
+    model["model"] = "bulbul:v4-flash"
+    model["voices"] = [{"id": "shubh", "providerVoiceId": speaker, "label": "Voice one", "languages": ["te-IN"]}]
+    record = record_for(profile)
+    status = profiles.readiness_for_profile("medium", record, {"fx_rate_inr": 100})
+    assert status["ready"] is ready
+    catalog = profiles.public_catalog_profile("medium", record, {"fx_rate_inr": 100})
+    assert catalog["ready"] is ready
+    assert bool(catalog["engines"]) is ready
+    if ready:
+        public_voice = catalog["engines"][0]["models"][0]["voices"][0]
+        assert public_voice["label"] == "Voice 1" and public_voice["name"] == "Voice 1"
+        assert "providerVoiceId" not in public_voice and public_voice["id"].startswith("voc_")
+    else:
+        assert status["blockers"][0]["code"] == "speech_voice_mismatch"
+
+
+def test_nonprofile_pstn_normalization_accepts_v4_persona_without_replacing_it():
+    from server.services.pstn_stack import normalize_pstn_stack_override
+
+    override = {"pipeline": "classic", "tts": {"provider": "sarvam", "model": "bulbul:v4-flash",
+        "config": {"speaker": "kavitha_te_conversation"}}}
+    normalized, _ = normalize_pstn_stack_override(override, language="te-IN")
+    assert normalized["tts"]["model"] == "bulbul:v4-flash"
+    assert normalized["tts"]["config"]["speaker"] == "kavitha_te_conversation"
+
+
+def test_phone_setup_failure_is_actionable_without_forwarding_vendor_details():
+    from server.services.saas.call_admission import safe_response, NO_DIAL_CODES
+    from server.services.saas.voice_setup_errors import voice_setup_error
+
+    error = voice_setup_error(profiles.VoiceProfileError("profile_revision_conflict", "private vendor response"))
+    response = safe_response({"ok": False, "code": error["code"], "error": "private vendor response"})
+    assert error["code"] in NO_DIAL_CODES
+    assert "refresh" in response["error"]
+    assert "private vendor" not in str(response)
+
+
 @pytest.fixture
 def approved_registry(monkeypatch):
     import server.providers

@@ -296,7 +296,9 @@ export function AgentStudioModule({
   const [callPanel, setCallPanel] = useState(() => resolveEmployeeStep(flowStep).callPanel || 'history');
   const [testCallOpen, setTestCallOpen] = useState(() => Boolean(resolveEmployeeStep(flowStep).openTestCall));
   const [voiceStackReady, setVoiceStackReady] = useState(true);
-  useEffect(() => { setVoiceStackReady(true); }, [selectedAgentId]);
+  // Reset before the voice panel's passive validation effect. Resetting here
+  // with useEffect used to overwrite the child's initial "not ready" verdict.
+  React.useLayoutEffect(() => { setVoiceStackReady(true); }, [selectedAgentId]);
   // The Test call modal is a header action, so closing it must return focus to the
   // button that opened it rather than dropping the user back at the top of the page.
   const testCallButtonRef = useRef(null);
@@ -448,7 +450,7 @@ export function AgentStudioModule({
         ? voiceStackAgent.voice_revision
         : 0;
     const voiceSettings = { stackSelectionVersion: 1 };
-    if (selection.tier === 'premium') {
+    if (selection.tier === 'premium' && !selection.engineId) {
       if (selection.realtimeVoice) voiceSettings.realtimeVoice = selection.realtimeVoice;
     } else {
       voiceSettings.profileRevision = selection.profileRevision;
@@ -469,7 +471,7 @@ export function AgentStudioModule({
       const response = await api.request('PATCH', `/api/agents/${voiceStackAgent.id}`, patchPayload);
       const responseAgent = response?.agent || response;
       const normalizedResponse = normalizeAgent(responseAgent);
-      const isPremium = selection.tier === 'premium';
+      const isPremium = selection.tier === 'premium' && !selection.engineId;
       const responseIsComplete =
         normalizedResponse?.defaultTier === selection.tier &&
         normalizedResponse?.voiceSettings?.stackSelectionVersion === 1 &&
@@ -1099,15 +1101,6 @@ export function AgentStudioModule({
             >
               Discard
             </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              data-testid="agent-studio-save-inline"
-              className="rounded-lg bg-[#0F0E17] px-2.5 py-1 font-semibold text-white disabled:opacity-50 hover:bg-[#2A2938]"
-            >
-              {saving ? 'Saving…' : 'Save changes'}
-            </button>
           </span>
         </div>
       )}
@@ -1206,7 +1199,7 @@ export function AgentStudioModule({
             variant="secondary"
             size="sm"
             icon={Radio}
-            disabled={dirty || saving || brainLoading || !!brainLoadError}
+            disabled={!voiceStackReady || dirty || saving || brainLoading || !!brainLoadError}
             title={dirty ? 'Save your changes before testing the agent.' : 'Test the published script'}
             onClick={(e) => {
               testCallButtonRef.current = e.currentTarget;
@@ -1227,7 +1220,7 @@ export function AgentStudioModule({
             data-testid="agent-save"
             className="min-h-[38px]"
           >
-            {isSaved ? 'Saved!' : saving ? 'Saving…' : 'Save & Publish'}
+            {isSaved ? 'Saved!' : saving ? 'Saving…' : 'Save changes'}
           </TactileButton>
         </div>
       </div>
@@ -1314,7 +1307,9 @@ export function AgentStudioModule({
                   {LANGUAGE_OPTIONS.find((l) => l.code === formData.language)?.label || formData.language}
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]">
-                  {phoneVoices.find((voice) => voice.id === formData.voice?.voiceId)?.label || formData.voice?.voiceName || formData.voice?.voiceId || 'Puck'}
+                  {/^Voice \d+$/.test(String(formData.voice?.voiceName || '').trim())
+                    ? formData.voice.voiceName
+                    : 'Selected voice'}
                 </span>
               </div>
             </div>

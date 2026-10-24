@@ -1,6 +1,42 @@
 {
   "entries": [
     {
+      "id": "inline:choosing-a-tier-confirms-that-its-voice-setup-wa-a5d9e928",
+      "statement": "Choosing a tier confirms that its voice setup was saved.",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:selecting-a-filtered-voice-saves-that-exact-voic-2856511b",
+      "statement": "Selecting a filtered voice saves that exact voice before the tenant can…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:selecting-a-style-filtered-voice-saves-its-exact-7cc1ddd7",
+      "statement": "Selecting a style-filtered voice saves its exact identity before the ag…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:tenants-can-filter-complete-provider-voice-lists-d02617d7",
+      "statement": "Tenants can filter complete provider voice lists by style without chang…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:tenants-can-filter-the-complete-model-voice-list-df4456be",
+      "statement": "Tenants can filter the complete model voice list by supplier style with…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:the-saved-voice-tier-remains-selected-after-relo-d6966828",
+      "statement": "The saved voice tier remains selected after reloading the voice catalog.",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
       "id": "inline:campaigns-that-the-server-marks-completed-no-lon-0c4dd1d9",
       "statement": "Campaigns that the server marks completed no longer show a pause action.",
       "status": "proved",
@@ -151,6 +187,12 @@
       "subject": "console"
     },
     {
+      "id": "inline:the-single-workspace-test-call-action-opens-the-fbaeaae4",
+      "statement": "The single workspace Test call action opens the test dialog after a voi…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
       "id": "primary-script-review",
       "statement": "Tenants can review an unsaved calling script without saving it; publish…",
       "status": "proposed",
@@ -277,6 +319,12 @@
       "subject": "drive-signup-completes"
     },
     {
+      "id": "flow:drive-tenants-can-filter-the-complete-model-voice-list",
+      "statement": "Tenants can filter the complete model voice list by supplier style with…",
+      "status": "proved",
+      "subject": "drive-tenants-can-filter-the-complete-mo"
+    },
+    {
       "id": "flow:drive-tenants-prepare-recipients-and-review-a-campaign",
       "statement": "Tenants prepare recipients and review a campaign on one setup page.",
       "status": "proved",
@@ -305,6 +353,12 @@
       "statement": "The Open builder action on an agent card enters the workspace with Over…",
       "status": "proposed",
       "subject": "drive-the-open-builder-action-on-an-agen"
+    },
+    {
+      "id": "flow:drive-the-single-workspace-test-call-action-opens-the",
+      "statement": "The single workspace Test call action opens the test dialog after a voi…",
+      "status": "proved",
+      "subject": "drive-the-single-workspace-test-call-act"
     },
     {
       "id": "flow:drive-the-tenant-voice-editor-only-offers-administrato",
@@ -640,6 +694,12 @@
       "id": "inline:retry-sync-is-unnecessary-because-data-already-l-50c88dac",
       "statement": "Retry sync is unnecessary because data already loaded",
       "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:saving-a-voice-setup-does-not-leave-an-unpublish-4d9c7736",
+      "statement": "Saving a voice setup does not leave an unpublished script change.",
+      "status": "proved",
       "subject": "unsorted"
     },
     {

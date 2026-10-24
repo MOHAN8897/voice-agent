@@ -123,7 +123,7 @@ class Settings(BaseSettings):
         alias="OPENAI_ALLOWED_MODELS",
     )
     sarvam_llm_models_csv: str = Field(
-        "sarvam-2b,sarvam-105b,sarvam-105b-conversations",
+        "sarvam-105b,sarvam-105b-conversations",
         alias="SARVAM_LLM_ALLOWED_MODELS",
     )
     gemini_tts_models_csv: str = Field(

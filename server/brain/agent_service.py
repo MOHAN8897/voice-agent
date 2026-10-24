@@ -346,7 +346,11 @@ class AgentService:
                 )
             if opted_in and voice_selection_changed:
                 effective_tier = str(patch.get("default_tier") or row.default_tier or "medium")
-                if effective_tier == "premium":
+                from server.services.saas.voice_stack_profiles import load_profile_records
+
+                premium_profile = ((await load_profile_records(str(row.environment or "development"), ("premium",))).get("premium")
+                    if effective_tier == "premium" else None)
+                if effective_tier == "premium" and premium_profile is None:
                     composed_keys = ("engineId", "modelId", "voiceId", "profileRevision")
                     if isinstance(incoming_voice, dict) and any(key in incoming_voice for key in composed_keys):
                         raise AgentVoiceRevisionConflict(
@@ -357,6 +361,7 @@ class AgentService:
                     for key in composed_keys:
                         effective_voice.pop(key, None)
                 else:
+                    effective_voice.pop("realtimeVoice", None)
                     required = ("profileRevision", "engineId", "modelId", "voiceId")
                     if any(not str(effective_voice.get(key) or "").strip() for key in required):
                         raise AgentVoiceRevisionConflict(

@@ -1,130 +1,58 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
+import { portalFetch } from "@/lib/auth-client";
 import { persistTestStudioVoice } from "@/lib/persist-test-studio-voice";
 import { useTestStudioSessionOptional } from "@/components/test-studio/TestStudioSessionContext";
-import { DEFAULT_SARVAM_SPEAKER, isCartesiaVoiceId } from "@/lib/voice/tts-config";
 
-const FEMALE = new Set([
-  "ritu", "priya", "neha", "pooja", "simran", "kavya", "ishita", "shreya", "roopa", "tanya",
-  "shruti", "suhani", "kavitha", "rupali", "anushka", "manisha", "vidya",
-]);
-const MALE = new Set([
-  "shubh", "aditya", "rahul", "rohan", "amit", "dev", "ratan", "varun", "manan", "sumit",
-  "kabir", "aayan", "ashutosh", "advait", "anand", "tarun", "sunny", "mani", "gokul", "vijay",
-  "mohit", "rehan", "soham", "arya", "abhilash", "karun", "hitesh",
-]);
+type Voice = { id: string; providerVoiceId: string; category?: string; languages: string[] };
 
-function groupSpeakers(speakers: string[]) {
-  const female: string[] = [];
-  const male: string[] = [];
-  const other: string[] = [];
-  for (const s of speakers) {
-    const id = s.toLowerCase();
-    if (FEMALE.has(id)) female.push(id);
-    else if (MALE.has(id)) male.push(id);
-    else other.push(id);
-  }
-  return { female, male, other };
-}
-
-export function SarvamVoiceSelect({
-  value,
-  onChange,
-  disabled,
-  className,
-  model = "bulbul:v3",
-  speakersV3 = [],
-  speakersV2 = [],
-}: {
-  value: string;
-  onChange: (speaker: string) => void;
-  disabled?: boolean;
-  className?: string;
-  model?: string;
-  speakersV3?: string[];
-  speakersV2?: string[];
+export function SarvamVoiceSelect({ value, onChange, disabled, className, model = "bulbul:v3", provider = "sarvam", language,
+}: { value: string; onChange: (speaker: string) => void; disabled?: boolean; className?: string;
+  model?: string; provider?: string; language?: string; speakersV3?: string[]; speakersV2?: string[];
 }) {
+  const [voices, setVoices] = useState<Voice[]>([]);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saveHint, setSaveHint] = useState<string | null>(null);
-  const autoAppliedRef = useRef("");
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-  const studioSession = useTestStudioSessionOptional();
-
-  const list = model === "bulbul:v3" ? speakersV3 : speakersV2;
-  const options = (list.length ? list : ["shubh", "priya", "kavya", "aditya"]).map((s) => s.toLowerCase());
-  const known = new Set(options);
-  const groups = groupSpeakers(options);
-  const fallback = known.has(DEFAULT_SARVAM_SPEAKER) ? DEFAULT_SARVAM_SPEAKER : options[0] || DEFAULT_SARVAM_SPEAKER;
-  const normalized = (value || "").trim().toLowerCase();
-  const resolved =
-    normalized && known.has(normalized) && !isCartesiaVoiceId(normalized) ? normalized : fallback;
-
+  const [error, setError] = useState("");
+  const session = useTestStudioSessionOptional();
   useEffect(() => {
-    if (normalized && known.has(normalized) && !isCartesiaVoiceId(normalized)) return;
-    if (autoAppliedRef.current === fallback) return;
-    autoAppliedRef.current = fallback;
-    onChangeRef.current(fallback);
-    void persistTestStudioVoice({ ttsSpeaker: fallback, ttsModel: model, sessionId: studioSession?.sessionId }).then((result) => {
-      setSaveHint(result.ok ? "Default Sarvam voice applied" : result.error || "Save failed");
-    });
-  }, [normalized, fallback, model]);
-
-  async function pick(speaker: string) {
-    autoAppliedRef.current = speaker;
-    onChange(speaker);
-    setSaving(true);
-    setSaveHint(null);
-    const result = await persistTestStudioVoice({ ttsSpeaker: speaker, ttsModel: model, sessionId: studioSession?.sessionId });
-    setSaving(false);
-    setSaveHint(result.ok ? "Voice saved — applies on next spoken turn" : result.error || "Save failed");
+    let current = true;
+    setVoices([]); setLoading(true); setError("");
+    void (async () => {
+      try {
+        const response = await portalFetch("dev", "/api/dev/stack/catalog");
+        if (!response.ok) throw new Error("Could not load the model's voice catalog.");
+        const data = await response.json();
+        const rows = data.providers?.find((entry: { id: string }) => entry.id === provider)?.models?.tts?.find((entry: { id: string }) => entry.id === model)?.voices;
+        if (!Array.isArray(rows)) throw new Error("No verified voices are available for this model.");
+        if (current) setVoices(rows);
+      } catch (caught) { if (current) setError(caught instanceof Error ? caught.message : "Could not load voices."); }
+      finally { if (current) setLoading(false); }
+    })();
+    return () => { current = false; };
+  }, [provider, model]);
+  const available = voices.map((voice, index) => ({ ...voice, number: index + 1 })).filter((voice) => !language || voice.languages.includes(language));
+  const known = available.some((voice) => voice.providerVoiceId === value);
+  async function pick(id: string) {
+    setSaving(true); setError("");
+    try {
+      const result = await persistTestStudioVoice({ ttsSpeaker: id, ttsModel: model, sessionId: session?.sessionId });
+      if (!result.ok) throw new Error(result.error || "Could not save voice.");
+      onChange(id);
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not save voice."); }
+    finally { setSaving(false); }
   }
-
-  return (
-    <div className="space-y-2">
-      <select
-        disabled={disabled || saving}
-        className={cn(
-          "w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm disabled:opacity-50",
-          className
-        )}
-        value={resolved}
-        onChange={(e) => void pick(e.target.value)}
-      >
-        {groups.female.length > 0 && (
-          <optgroup label={`Female (${groups.female.length})`}>
-            {groups.female.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </optgroup>
-        )}
-        {groups.male.length > 0 && (
-          <optgroup label={`Male (${groups.male.length})`}>
-            {groups.male.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </optgroup>
-        )}
-        {groups.other.length > 0 && (
-          <optgroup label="Other">
-            {groups.other.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </optgroup>
-        )}
-      </select>
-      <p className="text-[10px] text-text-subtle">
-        Sarvam Bulbul · {options.length || 0} voices
-        {saving ? " · saving…" : saveHint ? ` · ${saveHint}` : ""}
-      </p>
-    </div>
-  );
+  return <div className="space-y-2">
+    <select aria-label="Speech model voice" disabled={disabled || loading || saving} value={known ? value : ""}
+      className={cn("w-full rounded border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm disabled:opacity-50", className)}
+      onChange={(event) => void pick(event.target.value)}>
+      <option value="" disabled>{loading ? "Loading voices…" : "Choose a voice"}</option>
+      {available.map((voice) => <option key={voice.providerVoiceId} value={voice.providerVoiceId}>Voice {voice.number}{voice.category ? ` · ${voice.category}` : ""}</option>)}
+    </select>
+    <p className="text-xs text-text-muted">{available.length} model voices{saving ? " · saving…" : ""}</p>
+    {value && !known && !loading && <p role="alert" className="text-xs text-status-warning">The saved voice is unavailable for this model and language. Choose a current voice.</p>}
+    {error && <p role="alert" className="text-xs text-status-warning">{error}</p>}
+  </div>;
 }

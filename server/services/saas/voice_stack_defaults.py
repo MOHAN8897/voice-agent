@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from server.config.constants import constants
 from server.services.saas.voice_stack_profiles import VoiceProfileError, _EVIDENCE_KEYS
 
 # Shared recognition/text support determines the intersection for both tiers.
@@ -11,13 +10,6 @@ COMPOSED_LANGUAGES = [
     "te-IN", "hi-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN",
     "bn-IN", "gu-IN", "pa-IN", "en-IN",
 ]
-# Curated voices: Conversational & Commercial/Promotional only
-STANDARD_TTS_VOICES = (
-    "Zephyr", "Puck", "Kore", "Charon", "Aoede", "Fenrir", "Leda", "Sulafat", "Pulcherrima",
-)
-SARVAM_COMPOSED_VOICES = (
-    "shubh", "priya", "pooja", "simran", "neha", "rahul",
-)
 
 
 def recommended_composed_profile(tier: str, *, allow_premium: bool = False) -> dict[str, Any]:
@@ -30,20 +22,9 @@ def recommended_composed_profile(tier: str, *, allow_premium: bool = False) -> d
     if tier == "premium" and not allow_premium:
         raise VoiceProfileError("read_only_tier", "The premium tier is read-only for composed voice profiles.", status_code=409)
     if tier == "premium":
-        from server.realtime.models import DEFAULT_GEMINI_LIVE_MODEL, GEMINI_LIVE_VOICES
-        voices = []
-        for v in GEMINI_LIVE_VOICES[:10]:
-            voices.append({
-                "id": f"voice-{v.lower()}",
-                "name": v,
-                "label": v,
-                "gender": "female" if v in {"Kore", "Aoede", "Leda", "Despina", "Zephyr"} else "male",
-                "tone": "Ultra-low latency & expressive",
-                "category": "conversational",
-                "useCase": "Real-time Telephony Assistant",
-                "providerVoiceId": v,
-                "languages": list(COMPOSED_LANGUAGES),
-            })
+        from server.realtime.models import DEFAULT_GEMINI_LIVE_MODEL
+        from server.providers.voice_inventory import profile_voice_rows
+        voices = profile_voice_rows("gemini", DEFAULT_GEMINI_LIVE_MODEL, COMPOSED_LANGUAGES)
         return {
             "schemaVersion": 1,
             "enabled": False,
@@ -67,29 +48,8 @@ def recommended_composed_profile(tier: str, *, allow_premium: bool = False) -> d
         }
     # Economical tier (low) is Gemini TTS; Standard tier (medium) is Sarvam natural regional TTS; Custom tiers inherit appropriate base
     regional = tier == "medium" or (not tier.startswith("low") and "economical" not in tier)
-    speakers = SARVAM_COMPOSED_VOICES if regional else STANDARD_TTS_VOICES
-    from server.services.saas.voice_catalog import _GEMINI_VOICE_META, _SARVAM_VOICE_META
-    sarvam_map = {str(item["id"]).lower(): item for item in _SARVAM_VOICE_META}
-
-    voices = []
-    for speaker in speakers:
-        clean_name = speaker.title() if regional else speaker
-        meta = sarvam_map.get(speaker.lower()) if regional else _GEMINI_VOICE_META.get(speaker, {})
-        gender = meta.get("gender") if meta else ("female" if speaker.lower() in {"pooja", "neha", "priya", "simran"} else "male")
-        tone = meta.get("tone") if meta else ("Warm & conversational" if regional else "Bright & clear")
-        category = meta.get("category") if meta else "conversational"
-        use_case = meta.get("useCase") if meta else ("Conversational Customer Support" if regional else "Conversational Assistant")
-        voices.append({
-            "id": f"voice-{speaker.lower()}",
-            "name": clean_name,
-            "label": clean_name,
-            "gender": gender,
-            "tone": tone,
-            "category": category,
-            "useCase": use_case,
-            "providerVoiceId": speaker,
-            "languages": list(COMPOSED_LANGUAGES),
-        })
+    from server.providers.voice_inventory import profile_voice_rows
+    voices = profile_voice_rows("sarvam" if regional else "gemini", "bulbul:v3" if regional else "gemini-3.8-flash-tts", COMPOSED_LANGUAGES)
 
     return {
         "schemaVersion": 1,

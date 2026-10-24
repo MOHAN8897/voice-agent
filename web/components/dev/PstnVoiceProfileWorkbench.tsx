@@ -15,6 +15,9 @@ type VoiceProfile = {
   label: string;
   providerVoiceId: string;
   languages: string[];
+  category?: string;
+  gender?: string;
+  tone?: string;
 };
 type ModelProfile = {
   id: string;
@@ -66,9 +69,9 @@ type TierProfileRow = {
   readOnly?: boolean;
 };
 type ProfilesResponse = { environment: string; profiles: TierProfileRow[] };
-type CatalogModel = { id: string; label?: string; realtime?: boolean; api_mode?: string; api_modes?: string[] };
+type CatalogModel = { id: string; label?: string; realtime?: boolean; api_mode?: string; api_modes?: string[]; voices?: VoiceProfile[] };
 type CatalogProvider = { id: string; label?: string; enabled?: boolean; configured?: boolean; models?: { stt?: CatalogModel[]; llm?: CatalogModel[]; tts?: CatalogModel[] } };
-type CatalogResponse = { providers?: CatalogProvider[] };
+type CatalogResponse = { providers?: CatalogProvider[]; voiceInventory?: { errors?: string[] } };
 
 type TelephonyProvider = {
   id: string;
@@ -93,212 +96,26 @@ const DEFAULT_TIER_LABELS: Record<string, string> = {
   premium: "Gemini 3.8 Live (Flagship)",
 };
 
-const STT_PROVIDERS = [
-  { id: "sarvam", label: "Sarvam AI (Saaras Realtime)" },
-  { id: "gemini", label: "Google Gemini (Gemini Live Native)" },
-  { id: "deepgram", label: "Deepgram (Nova-2 Realtime)" },
-  { id: "cartesia", label: "Cartesia (Ink Whisper)" },
-];
-
-const STT_MODELS_BY_PROVIDER: Record<string, { id: string; label: string }[]> = {
-  sarvam: [
-    { id: "saaras:v2", label: "saaras:v2 · Indian Multilingual Realtime" },
-    { id: "saaras:v1", label: "saaras:v1 · Fast Streaming" },
-  ],
-  gemini: [
-    { id: "gemini-3.8-live-audio", label: "gemini-3.8-live-audio · Native Multimodal Realtime" },
-    { id: "gemini-live", label: "gemini-live · Multimodal Bidirectional" },
-    { id: "default", label: "default · Universal Speech" },
-  ],
-  deepgram: [
-    { id: "nova-2", label: "nova-2 · Low-Latency Telephony" },
-    { id: "nova-2-general", label: "nova-2-general · General Audio" },
-  ],
-  cartesia: [
-    { id: "ink-whisper", label: "ink-whisper · Fast Multilingual" },
-  ],
-};
-
-const LLM_PROVIDERS = [
-  { id: "gemini", label: "Google Gemini" },
-  { id: "sarvam", label: "Sarvam AI" },
-  { id: "openai", label: "OpenAI" },
-  { id: "deepseek", label: "DeepSeek" },
-  { id: "groq", label: "Groq" },
-];
-
-const LLM_MODELS_BY_PROVIDER: Record<string, { id: string; label: string; apiMode: string }[]> = {
-  gemini: [
-    { id: "gemini-3.8-live", label: "gemini-3.8-live · Gemini Live Multimodal WebSocket (Flagship)", apiMode: "websocket" },
-    { id: "gemini-2.0-flash", label: "gemini-2.0-flash · Fast Generative Reasoning", apiMode: "chat_completions_v1" },
-    { id: "gemini-1.5-flash", label: "gemini-1.5-flash · High Throughput", apiMode: "chat_completions_v1" },
-    { id: "gemini-1.5-pro", label: "gemini-1.5-pro · Deep Context", apiMode: "chat_completions_v1" },
-  ],
-  sarvam: [
-    { id: "sarvam-2b", label: "sarvam-2b · Indian Languages Optimized", apiMode: "chat_completions_v1" },
-    { id: "sarvam-105b-conversations", label: "sarvam-105b-conversations · Extended Dialogue", apiMode: "chat_completions_v1" },
-  ],
-  openai: [
-    { id: "gpt-4o-mini", label: "gpt-4o-mini · Fast & Cost Effective", apiMode: "chat_completions_v1" },
-    { id: "gpt-4o", label: "gpt-4o · Flagship Intelligence", apiMode: "chat_completions_v1" },
-  ],
-  deepseek: [
-    { id: "deepseek-chat", label: "deepseek-chat · DeepSeek V3", apiMode: "chat_completions_v1" },
-    { id: "deepseek-coder", label: "deepseek-coder · Logic & Functions", apiMode: "chat_completions_v1" },
-  ],
-  groq: [
-    { id: "llama-3.3-70b-versatile", label: "llama-3.3-70b-versatile · Ultra Fast Groq LPU", apiMode: "chat_completions_v1" },
-    { id: "llama-3.1-8b-instant", label: "llama-3.1-8b-instant · Instantaneous Turn", apiMode: "chat_completions_v1" },
-  ],
-};
-
-const TTS_PROVIDERS = [
-  { id: "gemini", label: "Google Gemini (Gemini TTS Low-Latency WebSocket)" },
-  { id: "sarvam", label: "Sarvam AI (Bulbul Regional Natural WebSocket)" },
-  { id: "cartesia", label: "Cartesia (Sonic Sub-100ms WebSocket)" },
-  { id: "gnani", label: "Gnani.ai (Timbre Expressive Audio Tags WebSocket)" },
-];
-
-const TTS_MODELS_BY_PROVIDER: Record<string, { id: string; label: string; apiMode: string }[]> = {
-  gemini: [
-    { id: "gemini-3.8-live", label: "gemini-3.8-live · Gemini Live Native Audio WebSocket (Flagship)", apiMode: "websocket" },
-    { id: "gemini-3.8-flash-tts", label: "gemini-3.8-flash-tts · Realtime Low-Latency WebSocket (Recommended)", apiMode: "websocket" },
-    { id: "gemini-3.8-flash-lite-tts", label: "gemini-3.8-flash-lite-tts · High-Speed Streaming WebSocket", apiMode: "websocket" },
-    { id: "gemini-3.1-flash-tts-preview", label: "gemini-3.1-flash-tts-preview · Preview Model WebSocket", apiMode: "websocket" },
-  ],
-  sarvam: [
-    { id: "bulbul:v4-flash", label: "bulbul:v4-flash · Ultra Low Latency Flash (Recommended)", apiMode: "websocket" },
-    { id: "bulbul:v3", label: "bulbul:v3 · Expressive Indian Regional WebSocket", apiMode: "websocket" },
-    { id: "bulbul:v2", label: "bulbul:v2 · Standard Regional WebSocket", apiMode: "websocket" },
-  ],
-  cartesia: [
-    { id: "sonic-3.5", label: "sonic-3.5 · Sub-100ms Ultra Fast WebSocket (Recommended)", apiMode: "websocket" },
-    { id: "sonic-3.5-2026-05-04", label: "sonic-3.5-2026-05-04 · Snapshot Model WebSocket", apiMode: "websocket" },
-  ],
-  gnani: [
-    { id: "timbre-v3.0", label: "timbre-v3.0 · Audio Tags Expressive WebSocket (Recommended)", apiMode: "websocket" },
-    { id: "timbre-v2.5", label: "timbre-v2.5 · Standard Telephony WebSocket", apiMode: "websocket" },
-  ],
-};
-
-function getVoicesForTtsProvider(provider: string, languages: string[]): VoiceProfile[] {
-  const langs = languages.length > 0 ? languages : ["te-IN", "hi-IN", "en-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN", "bn-IN", "gu-IN", "pa-IN"];
-  if (provider === "sarvam") {
-    return [
-      { id: "voice-shubh", label: "Shubh (Male · Conversational)", providerVoiceId: "shubh", languages: langs },
-      { id: "voice-priya", label: "Priya (Female · Warm & Natural)", providerVoiceId: "priya", languages: langs },
-      { id: "voice-pooja", label: "Pooja (Female · Soft & Pleasant)", providerVoiceId: "pooja", languages: langs },
-      { id: "voice-simran", label: "Simran (Female · Upbeat & Clear)", providerVoiceId: "simran", languages: langs },
-      { id: "voice-neha", label: "Neha (Female · Customer Support)", providerVoiceId: "neha", languages: langs },
-      { id: "voice-rahul", label: "Rahul (Male · Professional Outreach)", providerVoiceId: "rahul", languages: langs },
-    ];
-  }
-  if (provider === "cartesia") {
-    return [
-      { id: "voice-cartesia-priya", label: "Priya (Female · Conversational Hindi/Telugu · Indian)", providerVoiceId: "045f0292-0731-4a4c-971d-64594fc2c35a", languages: ["hi-IN", "te-IN", "en-IN", ...langs.filter((l) => !["hi-IN", "te-IN", "en-IN"].includes(l))] },
-      { id: "voice-kiara", label: "Kiara (Female · Hospitality & Onboarding · Indian)", providerVoiceId: "f8f5f1b2-f02d-4d8e-a40d-fd850a487b3d", languages: ["en-IN", "hi-IN", ...langs.filter((l) => !["en-IN", "hi-IN"].includes(l))] },
-      { id: "voice-indian-lady", label: "Indian Lady (Female · Priority Helpdesk · Indian)", providerVoiceId: "3b554273-4299-48b9-9aaf-eefd438e3941", languages: ["en-IN", "hi-IN", "te-IN", ...langs.filter((l) => !["en-IN", "hi-IN", "te-IN"].includes(l))] },
-      { id: "voice-bhavani", label: "Bhavani (Female · Telugu Conversational · Indian)", providerVoiceId: "76961778-84da-4b51-8d42-2e8e6e6a5e8a", languages: ["te-IN", ...langs.filter((l) => l !== "te-IN")] },
-      { id: "voice-aarti", label: "Aarti (Female · Hindi Friendly · Indian)", providerVoiceId: "9cebb910-d4b7-4a4a-85a4-12c79137724c", languages: ["hi-IN", ...langs.filter((l) => l !== "hi-IN")] },
-      { id: "voice-maya", label: "Maya (Female · Indian English Clear · Indian)", providerVoiceId: "79a125e8-cd45-4c13-8a67-0491c5ad1b8a", languages: ["en-IN", ...langs.filter((l) => l !== "en-IN")] },
-      { id: "voice-devansh", label: "Devansh (Male · Indian English Crisp · Indian)", providerVoiceId: "87a983d8-3471-4c4b-9ade-f1d10a4110ac", languages: ["en-IN", ...langs.filter((l) => l !== "en-IN")] },
-      { id: "voice-krishna", label: "Krishna (Male · Financial & Advisory · Indian)", providerVoiceId: "efa653e5-314d-46ca-9f90-70ac7d6ca71e", languages: ["te-IN", "hi-IN", "en-IN", ...langs.filter((l) => !["te-IN", "hi-IN", "en-IN"].includes(l))] },
-      { id: "voice-aarav", label: "Aarav (Male · Sales & Announcements · Indian)", providerVoiceId: "39d518b7-fd0b-4676-9b8b-29d64ff31e12", languages: ["en-IN", "hi-IN", ...langs.filter((l) => !["en-IN", "hi-IN"].includes(l))] },
-      { id: "voice-charan", label: "Charan (Male · Telugu Conversational · Indian)", providerVoiceId: "82c2afc8-4f0d-4c3e-9c3e-8e8e8e8e8e8e", languages: ["te-IN", ...langs.filter((l) => l !== "te-IN")] },
-      { id: "voice-amrit", label: "Amrit (Male · Hindi Professional · Indian)", providerVoiceId: "97303aad-0000-0000-0000-000000000001", languages: ["hi-IN", ...langs.filter((l) => l !== "hi-IN")] },
-      { id: "voice-sarah", label: "Sarah (Female · Conversational Assistant)", providerVoiceId: "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4", languages: langs },
-      { id: "voice-caleb", label: "Caleb (Male · Upbeat & Friendly)", providerVoiceId: "a0e99841-438c-4a64-b679-ae501e7d6091", languages: langs },
-      { id: "voice-jacqueline", label: "Jacqueline (Female · Warm Customer Support)", providerVoiceId: "694f9389-aac1-45b6-b726-9d9369183238", languages: langs },
-      { id: "voice-michael", label: "Michael (Male · Professional & Clear)", providerVoiceId: "47c38ca4-ff9b-4e89-a2e1-456956b46452", languages: langs },
-      { id: "voice-skylar", label: "Skylar (Female · Empathetic & Natural)", providerVoiceId: "5c5ac573-455b-4d85-8ccb-a78c187bc954", languages: langs },
-      { id: "voice-daniel", label: "Daniel (Male · Authoritative Presenter)", providerVoiceId: "79a125e8-cd45-4c13-8a67-188112f4dd22", languages: langs },
-      { id: "voice-katie", label: "Katie (Female · Bright & Energetic)", providerVoiceId: "f114a346-765b-4ff2-8067-1601d0a52026", languages: langs },
-      { id: "voice-leo", label: "Leo (Male · Calm Storyteller)", providerVoiceId: "b7d50908-b47d-4404-be6c-033100685600", languages: langs },
-    ];
-  }
-  if (provider === "gnani") {
-    return [
-      { id: "voice-shivani", label: "Shivani (Female · Clear Conversational · Recommended)", providerVoiceId: "Shivani", languages: langs },
-      { id: "voice-lakshmi", label: "Lakshmi (Female · Soft & Engaging)", providerVoiceId: "Lakshmi", languages: langs },
-      { id: "voice-kalpana", label: "Kalpana (Female · Warm & Expressive)", providerVoiceId: "Kalpana", languages: langs },
-      { id: "voice-chetana", label: "Chetana (Female · Professional Support)", providerVoiceId: "Chetana", languages: langs },
-      { id: "voice-vasudha", label: "Vasudha (Female · Calm & Natural)", providerVoiceId: "Vasudha", languages: langs },
-      { id: "voice-avinash", label: "Avinash (Male · Authoritative & Calm)", providerVoiceId: "Avinash", languages: langs },
-      { id: "voice-prakash", label: "Prakash (Male · Direct & Warm)", providerVoiceId: "Prakash", languages: langs },
-      { id: "voice-shubham", label: "Shubham (Male · Crisp & Friendly)", providerVoiceId: "Shubham", languages: langs },
-      { id: "voice-devansh", label: "Devansh (Male · Dynamic Outreach)", providerVoiceId: "Devansh", languages: langs },
-      { id: "voice-yashraj", label: "Yashraj (Male · Resonant & Clear)", providerVoiceId: "Yashraj", languages: langs },
-      { id: "voice-harshad", label: "Harshad (Male · Confident Presenter)", providerVoiceId: "Harshad", languages: langs },
-    ];
-  }
-  // gemini
-  return [
-    { id: "voice-zephyr", label: "Zephyr (Female · Conversational Assistant)", providerVoiceId: "Zephyr", languages: langs },
-    { id: "voice-puck", label: "Puck (Male · Upbeat & Friendly)", providerVoiceId: "Puck", languages: langs },
-    { id: "voice-aoede", label: "Aoede (Female · Breezy & Engaging)", providerVoiceId: "Aoede", languages: langs },
-    { id: "voice-leda", label: "Leda (Female · Warm & Pleasant)", providerVoiceId: "Leda", languages: langs },
-    { id: "voice-kore", label: "Kore (Female · Calm & Informative)", providerVoiceId: "Kore", languages: langs },
-    { id: "voice-fenrir", label: "Fenrir (Male · Authoritative)", providerVoiceId: "Fenrir", languages: langs },
-    { id: "voice-charon", label: "Charon (Male · Deep & Resonant)", providerVoiceId: "Charon", languages: langs },
-  ];
+function getVoicesForTtsProvider(providers: CatalogProvider[], provider: string, model: string, languages: string[], previous: VoiceProfile[] = []): VoiceProfile[] {
+  const rows = providers.find((entry) => entry.id === provider)?.models?.tts?.find((entry) => entry.id === model)?.voices || [];
+  return rows.map((voice) => ({ ...voice,
+    id: previous.find((item) => item.providerVoiceId === voice.providerVoiceId)?.id || voice.id,
+    languages: voice.languages.filter((language) => !languages.length || languages.includes(language)),
+  })).filter((voice) => voice.languages.length > 0);
 }
 
 const EMPTY_EVIDENCE: ProfileEvidence = {
-  sarvamModelAccess: true,
-  sttVerified: true,
-  ttsCatalogVerified: true,
-  toolsVerified: true,
-  capacityVerified: true,
-  mediaFormatsVerified: true,
-  credentialRefConfigured: true,
+  sarvamModelAccess: false, sttVerified: false, ttsCatalogVerified: false,
+  toolsVerified: false, capacityVerified: false, mediaFormatsVerified: false, credentialRefConfigured: false,
 };
 
 function defaultProfileForTier(tier: ProfileTier): ComposedProfile {
-  const isMedium = tier === "medium";
-  const isPremium = tier === "premium";
-  const sttProv = isPremium ? "gemini" : "sarvam";
-  const sttMdl = isPremium ? "gemini-3.8-live-audio" : "saaras:v2";
-  const llmProv = isMedium ? "sarvam" : "gemini";
-  const llmMdl = isMedium ? "sarvam-2b" : isPremium ? "gemini-3.8-live" : "gemini-2.0-flash";
-  const ttsProv = isMedium ? "sarvam" : "gemini";
-  const ttsMdl = isMedium ? "bulbul:v3" : isPremium ? "gemini-3.8-live" : "gemini-3.8-flash-tts";
-  const ttsApi = "websocket";
-  const languages = ["te-IN", "hi-IN", "en-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN", "bn-IN", "gu-IN", "pa-IN"];
-  const voices = getVoicesForTtsProvider(ttsProv, languages);
-
   return {
-    schemaVersion: 1,
-    enabled: true,
-    label: DEFAULT_TIER_LABELS[tier] || tier.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-    retailRateInr: isPremium ? 6.50 : isMedium ? 5.00 : 3.50,
-    supplierCostInr: isPremium ? 3.00 : isMedium ? 2.00 : 1.20,
-    supportedLanguages: languages,
-    stt: { provider: sttProv, model: sttMdl },
-    llm: { provider: llmProv, modelId: llmMdl, apiMode: isPremium ? "websocket" : "chat_completions_v1" },
-    engines: [
-      {
-        id: ttsProv,
-        label: ttsProv === "sarvam" ? "Sarvam Bulbul" : isPremium ? "Gemini 3.8 Live Native Audio" : "Gemini TTS",
-        models: [
-          {
-            id: ttsMdl,
-            label: ttsMdl,
-            provider: ttsProv,
-            model: ttsMdl,
-            apiMode: ttsApi,
-            voices,
-          },
-        ],
-      },
-    ],
-    evidence: { ...EMPTY_EVIDENCE },
-    voiceDynamics: {
-      speed: 1.0,
-      pitch: 0.0,
-      temperature: 0.7,
-      emotion: "neutral",
-      volume: 1.0,
-    },
+    schemaVersion: 1, enabled: false, label: DEFAULT_TIER_LABELS[tier] || tier,
+    retailRateInr: null, supplierCostInr: null, supportedLanguages: [],
+    stt: { provider: "", model: "" }, llm: { provider: "", modelId: "", apiMode: "" },
+    engines: [], evidence: { ...EMPTY_EVIDENCE },
+    voiceDynamics: { speed: 1, pitch: 0, temperature: 0.7, emotion: "neutral", volume: 1 },
   };
 }
 
@@ -387,6 +204,9 @@ export function PstnVoiceProfileWorkbench() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [providers, setProviders] = useState<CatalogProvider[]>([]);
+  const [catalogError, setCatalogError] = useState("");
+  const [catalogRefreshing, setCatalogRefreshing] = useState(false);
+  const [voiceCategory, setVoiceCategory] = useState("");
   const [autoSaveStatus, setAutoSaveStatus] = useState<string>("");
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -451,16 +271,20 @@ export function PstnVoiceProfileWorkbench() {
     return list;
   }, [rows]);
 
-  const loadCatalog = useCallback(async () => {
+  const loadCatalog = useCallback(async (refreshVoices = false) => {
+    setCatalogRefreshing(true);
     try {
-      const response = await portalFetch("dev", "/api/dev/stack/catalog");
-      if (!response.ok) return;
+      const response = await portalFetch("dev", `/api/dev/stack/catalog${refreshVoices ? "?refreshVoices=true" : ""}`);
+      if (!response.ok) throw new Error("The provider catalog could not be loaded.");
       const payload: CatalogResponse = await response.json();
       if (Array.isArray(payload.providers)) {
         setProviders(payload.providers);
+        setCatalogError(payload.voiceInventory?.errors?.join(" ") || "");
       }
     } catch {
-      // Non-blocking catalog fetch
+      setCatalogError("The provider catalog could not be loaded. Refresh before changing a stack.");
+    } finally {
+      setCatalogRefreshing(false);
     }
   }, []);
 
@@ -596,7 +420,7 @@ export function PstnVoiceProfileWorkbench() {
 
   // STT Options
   const availableSttProviders = useMemo(() => {
-    return STT_PROVIDERS.map((p) => {
+    return providers.filter((p) => (p.models?.stt?.length || 0) > 0).map((p) => {
       const cat = providers.find((cp) => cp.id === p.id);
       const suffix = cat && (!cat.enabled || !cat.configured) ? " · setup required" : "";
       return { id: p.id, label: `${p.label}${suffix}` };
@@ -608,12 +432,12 @@ export function PstnVoiceProfileWorkbench() {
     if (catModels && catModels.length > 0) {
       return catModels.map((m) => ({ id: m.id, label: m.label || m.id }));
     }
-    return STT_MODELS_BY_PROVIDER[draft.stt.provider] || [{ id: "default", label: "Default Model" }];
+    return [];
   }, [providers, draft.stt.provider]);
 
   // LLM Options
   const availableLlmProviders = useMemo(() => {
-    return LLM_PROVIDERS.map((p) => {
+    return providers.filter((p) => (p.models?.llm?.length || 0) > 0).map((p) => {
       const cat = providers.find((cp) => cp.id === p.id);
       const suffix = cat && (!cat.enabled || !cat.configured) ? " · setup required" : "";
       return { id: p.id, label: `${p.label}${suffix}` };
@@ -625,16 +449,16 @@ export function PstnVoiceProfileWorkbench() {
     if (catModels && catModels.length > 0) {
       return catModels.map((m) => ({ id: m.id, label: m.label || m.id, apiMode: m.api_mode || "chat_completions_v1" }));
     }
-    return LLM_MODELS_BY_PROVIDER[draft.llm.provider] || [{ id: "default", label: "Default Model", apiMode: "chat_completions_v1" }];
+    return [];
   }, [providers, draft.llm.provider]);
 
   // TTS Options
   const currentTtsModelObj = draft.engines[0]?.models[0];
-  const currentTtsProvider = currentTtsModelObj?.provider || "sarvam";
-  const currentTtsModel = currentTtsModelObj?.model || "bulbul:v3";
+  const currentTtsProvider = currentTtsModelObj?.provider || "";
+  const currentTtsModel = currentTtsModelObj?.model || "";
 
   const availableTtsProviders = useMemo(() => {
-    return TTS_PROVIDERS.map((p) => {
+    return providers.filter((p) => (p.models?.tts?.length || 0) > 0).map((p) => {
       const cat = providers.find((cp) => cp.id === p.id);
       const isConfigured = cat ? cat.enabled && cat.configured : true;
       const suffix = !isConfigured ? " ⚠️ (setup/credits required)" : "";
@@ -647,7 +471,7 @@ export function PstnVoiceProfileWorkbench() {
     if (catModels && catModels.length > 0) {
       return catModels.map((m) => ({ id: m.id, label: m.label || m.id, apiMode: m.api_mode || "websocket" }));
     }
-    return TTS_MODELS_BY_PROVIDER[currentTtsProvider] || [{ id: "default", label: "Default Speech Model", apiMode: "websocket" }];
+    return [];
   }, [providers, currentTtsProvider]);
 
   async function executeSaveProfile(targetDraft?: ComposedProfile, customLabel?: string) {
@@ -655,11 +479,17 @@ export function PstnVoiceProfileWorkbench() {
     const labelVal = (customLabel !== undefined ? customLabel : tierLabelInput).trim() || DEFAULT_TIER_LABELS[selected] || selected;
     const ttsProv = activeDraft.engines[0]?.models[0]?.provider || currentTtsProvider;
     const ttsMdl = activeDraft.engines[0]?.models[0]?.model || currentTtsModel;
-    const matchedTtsModel = (TTS_MODELS_BY_PROVIDER[ttsProv] || []).find((m) => m.id === ttsMdl);
+    const matchedTtsModel = providers.find((entry) => entry.id === ttsProv)?.models?.tts?.find((entry) => entry.id === ttsMdl);
     const languages = activeDraft.supportedLanguages.length > 0
       ? activeDraft.supportedLanguages
-      : ["te-IN", "hi-IN", "en-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN", "bn-IN", "gu-IN", "pa-IN"];
-    const voices = getVoicesForTtsProvider(ttsProv, languages);
+      : [...new Set((matchedTtsModel?.voices || []).flatMap((voice) => voice.languages))];
+    const voices = getVoicesForTtsProvider(providers, ttsProv, ttsMdl, languages, activeDraft.engines[0]?.models[0]?.voices);
+
+    if (!voices.length || !activeDraft.llm.modelId || !activeDraft.stt.model) {
+      setError("Choose a complete stack with voices from the current provider catalog.");
+      setDirty(true);
+      return;
+    }
 
     const parsedRetail = activeDraft.retailRateInr !== undefined && activeDraft.retailRateInr !== null
       ? activeDraft.retailRateInr
@@ -676,31 +506,33 @@ export function PstnVoiceProfileWorkbench() {
       supplierCostInr: parsedSupplier !== null && !isNaN(parsedSupplier) ? parsedSupplier : null,
       supportedLanguages: languages,
       stt: {
-        provider: activeDraft.stt.provider || (selected === "premium" ? "gemini" : "sarvam"),
-        model: activeDraft.stt.model || (selected === "premium" ? "gemini-3.8-live-audio" : "saaras:v2"),
+        provider: activeDraft.stt.provider,
+        model: activeDraft.stt.model,
       },
       llm: {
-        provider: activeDraft.llm.provider || "gemini",
-        modelId: activeDraft.llm.modelId || (selected === "premium" ? "gemini-3.8-live" : "gemini-2.0-flash"),
-        apiMode: activeDraft.llm.apiMode || (selected === "premium" ? "websocket" : "chat_completions_v1"),
+        provider: activeDraft.llm.provider,
+        modelId: activeDraft.llm.modelId,
+        apiMode: activeDraft.llm.apiMode,
       },
       engines: [
         {
-          id: ttsProv,
+          id: activeDraft.engines[0]?.id || ttsProv,
           label: ttsProv === "sarvam" ? "Sarvam Bulbul" : ttsProv === "gemini" ? "Gemini TTS" : ttsProv === "cartesia" ? "Cartesia Sonic" : "Gnani.ai Timbre",
           models: [
             {
-              id: ttsMdl,
+              id: activeDraft.engines[0]?.models[0]?.id || ttsMdl,
               label: ttsMdl,
               provider: ttsProv,
               model: ttsMdl,
-              apiMode: matchedTtsModel?.apiMode || activeDraft.engines[0]?.models[0]?.apiMode || "websocket",
+              apiMode: activeDraft.engines[0]?.models[0]?.apiMode || matchedTtsModel?.api_mode || "",
               voices,
             },
+            ...(activeDraft.engines[0]?.models.slice(1) || []),
           ],
         },
+        ...activeDraft.engines.slice(1),
       ],
-      evidence: { ...EMPTY_EVIDENCE },
+      evidence: { ...activeDraft.evidence },
       voiceDynamics: activeDraft.voiceDynamics || {
         speed: 1.0,
         pitch: 0.0,
@@ -754,8 +586,9 @@ export function PstnVoiceProfileWorkbench() {
   }
 
   function handleSttProviderChange(provider: string) {
-    const models = STT_MODELS_BY_PROVIDER[provider] || [];
-    const firstModel = models[0]?.id || "default";
+    const models = providers.find((entry) => entry.id === provider)?.models?.stt || [];
+    const firstModel = models[0]?.id;
+    if (!firstModel) return;
     const nextDraft = {
       ...draft,
       stt: { provider, model: firstModel },
@@ -776,11 +609,12 @@ export function PstnVoiceProfileWorkbench() {
   }
 
   function handleLlmProviderChange(provider: string) {
-    const models = LLM_MODELS_BY_PROVIDER[provider] || [];
-    const first = models[0] || { id: "default", apiMode: "chat_completions_v1" };
+    const models = providers.find((entry) => entry.id === provider)?.models?.llm || [];
+    const first = models[0];
+    if (!first) return;
     const nextDraft = {
       ...draft,
-      llm: { provider, modelId: first.id, apiMode: first.apiMode },
+      llm: { provider, modelId: first.id, apiMode: first.api_mode || "" },
     };
     setDraft(nextDraft);
     setDirty(false);
@@ -799,13 +633,15 @@ export function PstnVoiceProfileWorkbench() {
   }
 
   function handleTtsProviderChange(provider: string) {
-    const models = TTS_MODELS_BY_PROVIDER[provider] || [];
-    const first = models[0] || { id: "default", apiMode: "websocket" };
-    const languages = draft.supportedLanguages.length > 0 ? draft.supportedLanguages : ["te-IN", "hi-IN", "en-IN"];
-    const voices = getVoicesForTtsProvider(provider, languages);
+    const models = providers.find((entry) => entry.id === provider)?.models?.tts || [];
+    const first = models[0];
+    if (!first) return;
+    const languages = draft.supportedLanguages;
+    const voices = getVoicesForTtsProvider(providers, provider, first.id, []);
 
     const nextDraft: ComposedProfile = {
       ...draft,
+      supportedLanguages: [...new Set(voices.flatMap((voice) => voice.languages))],
       engines: [
         {
           id: provider,
@@ -816,7 +652,7 @@ export function PstnVoiceProfileWorkbench() {
               label: first.id,
               provider,
               model: first.id,
-              apiMode: first.apiMode || "websocket",
+              apiMode: first.api_mode || "",
               voices,
             },
           ],
@@ -830,8 +666,8 @@ export function PstnVoiceProfileWorkbench() {
 
   function handleTtsModelChange(model: string) {
     const matched = currentTtsModels.find((m) => m.id === model);
-    const languages = draft.supportedLanguages.length > 0 ? draft.supportedLanguages : ["te-IN", "hi-IN", "en-IN"];
-    const voices = getVoicesForTtsProvider(currentTtsProvider, languages);
+    const languages = draft.supportedLanguages;
+    const voices = getVoicesForTtsProvider(providers, currentTtsProvider, model, []);
 
     const engines = [...draft.engines];
     const engine = { ...(engines[0] || { id: currentTtsProvider, label: currentTtsProvider, models: [] }) };
@@ -845,7 +681,7 @@ export function PstnVoiceProfileWorkbench() {
         voices,
       },
     ];
-    const nextDraft: ComposedProfile = { ...draft, engines: [engine] };
+    const nextDraft: ComposedProfile = { ...draft, supportedLanguages: [...new Set(voices.flatMap((voice) => voice.languages))], engines: [engine] };
     setDraft(nextDraft);
     setDirty(false);
     triggerAutoSave(nextDraft);
@@ -905,16 +741,17 @@ export function PstnVoiceProfileWorkbench() {
     setIsTestingDynamics(true);
     setError("");
     try {
-      const activeVoice = testVoiceId || currentVoices[0]?.id || "default";
+      const activeVoice = currentVoices.find((voice) => voice.id === testVoiceId) || currentVoices[0];
+      if (!activeVoice) throw new Error("Choose a verified voice first.");
       const dyn = draft.voiceDynamics || { speed: 1.0, pitch: 0.0, temperature: 0.7, emotion: "neutral", volume: 1.0 };
       const response = await portalFetch("dev", "/api/dev/stack/voice-preview", {
         method: "POST",
         body: JSON.stringify({
           provider: currentTtsProvider,
           model: currentTtsModel,
-          voiceId: activeVoice,
+          voiceId: activeVoice.providerVoiceId,
           text: testText,
-          language: draft.supportedLanguages[0] || "te-IN",
+          language: activeVoice.languages[0],
           speed: dyn.speed,
           pitch: dyn.pitch,
           temperature: dyn.temperature,
@@ -1023,9 +860,11 @@ export function PstnVoiceProfileWorkbench() {
   }
 
   const currentVoices = useMemo(() => {
-    const languages = draft.supportedLanguages.length > 0 ? draft.supportedLanguages : ["te-IN", "hi-IN", "en-IN"];
-    return getVoicesForTtsProvider(currentTtsProvider, languages);
-  }, [currentTtsProvider, draft.supportedLanguages]);
+    const languages = draft.supportedLanguages;
+    return getVoicesForTtsProvider(providers, currentTtsProvider, currentTtsModel, languages, currentTtsModelObj?.voices);
+  }, [providers, currentTtsProvider, currentTtsModel, currentTtsModelObj?.voices, draft.supportedLanguages]);
+
+  useEffect(() => { setVoiceCategory(""); }, [currentTtsProvider, currentTtsModel]);
 
   const handlePlayVoicePreview = useCallback(async (voiceId: string) => {
     if (playingVoiceId === voiceId && audioRef.current) {
@@ -1041,13 +880,15 @@ export function PstnVoiceProfileWorkbench() {
     setPreviewLoadingId(voiceId);
     setError("");
     try {
+      const voice = currentVoices.find((item) => item.id === voiceId);
+      if (!voice) throw new Error("Choose a current model voice.");
       const response = await portalFetch("dev", "/api/dev/stack/voice-preview", {
         method: "POST",
         body: JSON.stringify({
           provider: currentTtsProvider,
           model: currentTtsModel,
-          voiceId,
-          language: draft.supportedLanguages[0] || "te-IN",
+          voiceId: voice.providerVoiceId,
+          language: voice.languages[0],
         }),
       });
       if (!response.ok) {
@@ -1073,7 +914,7 @@ export function PstnVoiceProfileWorkbench() {
     } finally {
       setPreviewLoadingId(null);
     }
-  }, [currentTtsProvider, currentTtsModel, draft.supportedLanguages, playingVoiceId]);
+  }, [currentTtsProvider, currentTtsModel, currentVoices, playingVoiceId]);
 
   function handleOpenDuplicateModal() {
     const basePrefix = selected.slice(0, 10).replace(/[^a-z0-9_]/g, "_");
@@ -1487,11 +1328,13 @@ export function PstnVoiceProfileWorkbench() {
                   STT Provider
                 </label>
                 <select
+                  aria-label="STT provider"
                   value={draft.stt.provider}
                   onChange={(e) => handleSttProviderChange(e.target.value)}
                   disabled={busy || selected === "premium"}
                   className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 disabled:opacity-75"
                 >
+                  <option value="" disabled>Choose a provider</option>
                   {availableSttProviders.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.label}
@@ -1505,11 +1348,13 @@ export function PstnVoiceProfileWorkbench() {
                   STT Model
                 </label>
                 <select
+                  aria-label="STT model"
                   value={draft.stt.model}
                   onChange={(e) => handleSttModelChange(e.target.value)}
                   disabled={busy || selected === "premium"}
                   className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 font-mono text-xs disabled:opacity-75"
                 >
+                  <option value="" disabled>Choose a model</option>
                   {currentSttModels.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.label}
@@ -1520,7 +1365,7 @@ export function PstnVoiceProfileWorkbench() {
             </div>
 
             <p className="text-[11px] text-text-subtle">
-              Streaming audio chunk recognition over low-latency WebSockets. Default fallback routes to Sarvam Saaras Indian Multilingual.
+              Streaming audio chunk recognition over low-latency WebSockets. The selected recognition model stays bound to this stack.
             </p>
           </div>
 
@@ -1542,11 +1387,13 @@ export function PstnVoiceProfileWorkbench() {
                   LLM Provider
                 </label>
                 <select
+                  aria-label="LLM provider"
                   value={draft.llm.provider}
                   onChange={(e) => handleLlmProviderChange(e.target.value)}
                   disabled={busy || selected === "premium"}
                   className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 disabled:opacity-75"
                 >
+                  <option value="" disabled>Choose a provider</option>
                   {availableLlmProviders.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.label}
@@ -1560,11 +1407,13 @@ export function PstnVoiceProfileWorkbench() {
                   LLM Model
                 </label>
                 <select
+                  aria-label="LLM model"
                   value={draft.llm.modelId}
                   onChange={(e) => handleLlmModelChange(e.target.value)}
                   disabled={busy || selected === "premium"}
                   className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 font-mono text-xs disabled:opacity-75"
                 >
+                  <option value="" disabled>Choose a model</option>
                   {currentLlmModels.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.label}
@@ -1597,11 +1446,13 @@ export function PstnVoiceProfileWorkbench() {
                   TTS Provider
                 </label>
                 <select
+                  aria-label="TTS provider"
                   value={currentTtsProvider}
                   onChange={(e) => handleTtsProviderChange(e.target.value)}
                   disabled={busy || selected === "premium"}
                   className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 disabled:opacity-75"
                 >
+                  <option value="" disabled>Choose a provider</option>
                   {availableTtsProviders.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.label}
@@ -1615,11 +1466,13 @@ export function PstnVoiceProfileWorkbench() {
                   TTS Model
                 </label>
                 <select
+                  aria-label="TTS model"
                   value={currentTtsModel}
                   onChange={(e) => handleTtsModelChange(e.target.value)}
                   disabled={busy || selected === "premium"}
                   className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40 font-mono text-xs disabled:opacity-75"
                 >
+                  <option value="" disabled>Choose a model</option>
                   {currentTtsModels.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.label}
@@ -2086,23 +1939,27 @@ export function PstnVoiceProfileWorkbench() {
                 Active Speech Engine: {currentTtsProvider.toUpperCase()} ({currentTtsModel})
               </p>
               <p className="mt-0.5 text-xs text-text-muted">
-                {currentTtsProvider === "sarvam"
-                  ? "Curated Indian Regional personas enabled: Shubh, Priya, Pooja, Simran, Neha, Rahul."
-                  : currentTtsProvider === "cartesia"
-                  ? "Sonic ultra-low-latency multilingual voices: Voice 1 (Female), Voice 2 (Male)."
-                  : currentTtsProvider === "gnani"
-                  ? "Timbre expressive audio tag voices: Voice 1 (Female), Voice 2 (Male)."
-                  : "Gemini conversational voices enabled: Zephyr, Puck, Aoede, Leda, Kore, Fenrir, Charon."}
+                {currentVoices.length} verified voices for this model and the configured languages.
               </p>
             </div>
             <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300">
-              Curated Voices Linked
+              Provider voice catalog
             </span>
           </div>
 
           {/* Voice Preview Playback Grid */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {currentVoices.map((v) => {
+          <div className="mb-3 flex items-center gap-3">
+            <label className="text-xs text-text-muted">Voice style
+              <select aria-label="Voice style" value={voiceCategory} onChange={(event) => setVoiceCategory(event.target.value)} className="ml-2 rounded-lg border border-surface-border bg-surface-panel p-2">
+                <option value="">All styles</option>
+                {[...new Set(currentVoices.map((voice) => voice.category).filter(Boolean))].sort().map((category) => <option key={category} value={category}>{category}</option>)}
+              </select>
+            </label>
+            <Button variant="secondary" disabled={catalogRefreshing} onClick={() => void loadCatalog(true)}>{catalogRefreshing ? "Refreshing voices…" : "Refresh provider voices"}</Button>
+            {catalogError && <p role="alert" className="text-xs text-red-400">{catalogError}</p>}
+          </div>
+          <div role="region" aria-label="Available model voices" tabIndex={0} className="grid max-h-96 overflow-y-auto gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {currentVoices.map((v, index) => ({ ...v, number: index + 1 })).filter((voice) => !voiceCategory || voice.category === voiceCategory).map((v) => {
               const isPlaying = playingVoiceId === v.id;
               const isLoading = previewLoadingId === v.id;
               return (
@@ -2115,10 +1972,13 @@ export function PstnVoiceProfileWorkbench() {
                   }`}
                 >
                   <div className="space-y-0.5 min-w-0 pr-2">
-                    <p className="text-xs font-medium text-text truncate">{v.label}</p>
-                    <p className="text-[10px] font-mono text-text-subtle truncate">
-                      ID: {v.providerVoiceId}
-                    </p>
+                    <p className="text-xs font-medium text-text truncate">Voice {v.number}</p>
+                    <p className="text-[10px] text-text-muted">{v.category || ""} · {v.languages.join(", ")}</p>
+                    {(v.gender || v.tone) && (
+                      <p className="text-[10px] text-text-subtle truncate">
+                        {v.gender ? `${v.gender} · ` : ""}{v.tone || ""}
+                      </p>
+                    )}
                   </div>
                   <button
                     type="button"

@@ -73,13 +73,13 @@ async def save_test_studio_prefs(body: TestStudioUiPrefs):
 
 
 @router.get("/api/settings/cartesia-voices")
-async def list_cartesia_voices(refresh: bool = False):
+async def list_cartesia_voices(refresh: bool = False, model: str = "sonic-3.5"):
     await fetch_cartesia_voices(force=refresh)
     from server.config.constants import constants
     from server.services import cartesia_voices as cv
 
-    groups = cv.voices_grouped_for_ui()
-    voices = cv.voices_for_catalog()
+    groups = cv.voices_grouped_for_ui(model)
+    voices = cv.voices_for_catalog(model)
     return {
         "voices": voices,
         "groups": groups,

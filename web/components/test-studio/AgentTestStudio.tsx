@@ -1019,6 +1019,7 @@ export function AgentTestStudio({
           activeTab={fineTuneTab}
           onTabChange={setFineTuneTab}
           stackTtsProvider={stack.ttsProvider}
+          stackTtsModel={stack.ttsModel}
           runtimeTtsSpeaker={runtimeTtsSpeaker}
           onRuntimeSpeakerChange={setRuntimeTtsSpeaker}
           sarvamSpeakersV3={sarvamSpeakersV3}
