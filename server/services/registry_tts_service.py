@@ -52,6 +52,8 @@ async def synthesize_via_registry(
     pace: float | None = None,
     model: str | None = None,
     temperature: float | None = None,
+    pitch: float | None = None,
+    volume: float | None = None,
 ) -> dict[str, Any]:
     """Returns {audio_bytes, content_type, speaker, language_code, request_id, provider}."""
     settings = get_settings()
@@ -71,6 +73,8 @@ async def synthesize_via_registry(
             pace=pace,
             model=model,
             temperature=temperature,
+            pitch=pitch,
+            volume=volume,
             session_id=session_id,
         )
 
@@ -85,6 +89,8 @@ async def synthesize_via_registry(
                 model=model or stack.tts.model,
                 pace=pace,
                 temperature=temperature,
+                pitch=pitch,
+                volume=volume,
             )
         except TtsConfigError as e:
             raise AppError(ErrorCode.VALIDATION_ERROR, str(e), status_code=400) from e
@@ -95,6 +101,8 @@ async def synthesize_via_registry(
             pace=cfg["pace"],
             model=cfg["model"],
             temperature=cfg.get("temperature"),
+            pitch=cfg.get("pitch"),
+            volume=cfg.get("loudness"),
             session_id=session_id,
         )
         result["provider"] = "sarvam"
@@ -124,6 +132,7 @@ async def synthesize_via_registry(
                 model=model or stack.tts.model,
                 pace=pace,
                 temperature=temperature,
+                volume=volume,
                 call_id=call_id,
             )
         except TtsConfigError:
@@ -137,7 +146,11 @@ async def synthesize_via_registry(
             temperature=temperature,
             emotion=cartesia_cfg.get("emotion"),
             speed=cartesia_cfg.get("speed"),
-            volume=cartesia_cfg.get("volume"),
+            volume=(
+                cartesia_cfg.get("volume")
+                if cartesia_cfg.get("volume") is not None
+                else volume
+            ),
         )
     else:
         try:
@@ -148,12 +161,16 @@ async def synthesize_via_registry(
                 model=model or stack.tts.model,
                 pace=pace,
                 temperature=temperature,
+                pitch=pitch,
+                volume=volume,
             )
         except TtsConfigError:
             runtime_cfg = {
                 "speaker": speaker or stack.tts.config.get("speaker"),
                 "pace": pace,
                 "temperature": temperature,
+                "pitch": pitch,
+                "volume": volume,
             }
         config = TTSConfig(
             provider=provider_id,
@@ -162,6 +179,12 @@ async def synthesize_via_registry(
             speaker=runtime_cfg.get("speaker") or stack.tts.config.get("speaker", "shubh"),
             pace=runtime_cfg.get("pace"),
             temperature=runtime_cfg.get("temperature"),
+            pitch=runtime_cfg.get("pitch"),
+            volume=(
+                runtime_cfg.get("loudness")
+                if runtime_cfg.get("loudness") is not None
+                else runtime_cfg.get("volume")
+            ),
         )
 
     log_tts(

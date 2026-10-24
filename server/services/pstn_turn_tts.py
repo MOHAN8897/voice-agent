@@ -336,28 +336,36 @@ class PstnTurnTtsSession:
             "output_audio_codec": "linear16",
             "speech_sample_rate": str(self._tts_rate),
         }
-        from server.services.tts_voice_direction import resolve_speech_pace
+        from server.services.tts_voice_direction import (
+            normalize_tts_dynamics,
+            provider_tts_payload,
+            resolve_speech_pace,
+        )
 
-        pace_value = config.get("pace")
-        if config.get("speed") is not None and (provider == "cartesia" or pace_value is None):
-            pace_value = config["speed"]
-        pace = resolve_speech_pace(provider, pace_value)
-        self._merged["pace"] = pace
-        if provider == "cartesia":
-            self._merged["speed"] = pace
-        temperature_value = config.get("temperature")
-        try:
-            temperature = float(temperature_value) if temperature_value is not None else None
-        except (TypeError, ValueError):
-            temperature = None
+        saved_dynamics = {
+            "speed": config["speed"] if config.get("speed") is not None else config.get("pace"),
+            "pitch": config.get("pitch"),
+            "temperature": config.get("temperature"),
+            "emotion": config.get("emotion"),
+            "volume": config.get("volume"),
+        }
+        dynamics = normalize_tts_dynamics(provider, model, saved_dynamics)
+        if "speed" not in dynamics:
+            dynamics["speed"] = resolve_speech_pace(provider, config.get("pace"), model=model)
+        else:
+            dynamics["speed"] = resolve_speech_pace(provider, dynamics["speed"], model=model)
+        self._merged.update(provider_tts_payload(provider, model, dynamics))
         tts_config = TTSConfig(
             provider=provider,
             model=model,
             language=language_code,
             speaker=speaker,
-            pace=pace,
-            speed=pace if provider == "cartesia" else None,
-            temperature=temperature,
+            pace=dynamics["speed"],
+            speed=dynamics["speed"] if provider == "cartesia" else None,
+            temperature=dynamics.get("temperature"),
+            pitch=dynamics.get("pitch"),
+            volume=dynamics.get("volume"),
+            emotion=dynamics.get("emotion"),
         )
 
         if provider == "gemini" and api_mode == "unary_rest":

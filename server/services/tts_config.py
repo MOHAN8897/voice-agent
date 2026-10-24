@@ -113,6 +113,7 @@ def _resolve_cartesia_tts_config(
     pace: float | None,
     sample_rate: int | None,
     stack,
+    volume: float | None = None,
     allow_runtime: bool = True,
 ) -> dict[str, Any]:
     settings = get_settings()
@@ -152,7 +153,11 @@ def _resolve_cartesia_tts_config(
     gen = cartesia_generation_config(
         emotion=str(emotion) if emotion else None,
         speed=float(speed_raw) if speed_raw is not None else None,
-        volume=float(rt["ttsVolume"]) if rt.get("ttsVolume") is not None else None,
+        volume=(
+            float(volume)
+            if volume is not None
+            else (float(rt["ttsVolume"]) if rt.get("ttsVolume") is not None else None)
+        ),
     )
 
     cfg: dict[str, Any] = {
@@ -192,6 +197,8 @@ def resolve_tts_config(
     model: str | None = None,
     pace: float | None = None,
     temperature: float | None = None,
+    pitch: float | None = None,
+    volume: float | None = None,
     codec: str | None = None,
     sample_rate: int | None = None,
     min_buffer_size: int | None = None,
@@ -251,6 +258,7 @@ def resolve_tts_config(
             pace=pace,
             sample_rate=sample_rate,
             stack=stack,
+            volume=volume,
             allow_runtime=not stack_is_locked,
         )
 
@@ -299,6 +307,8 @@ def resolve_tts_config(
     resolved_temp = temperature if temperature is not None else rt.get("ttsTemperature")
     if resolved_temp is None:
         resolved_temp = settings.sarvam_tts_temperature
+    resolved_pitch = pitch if pitch is not None else rt.get("ttsPitch")
+    resolved_volume = volume if volume is not None else rt.get("ttsVolume")
     resolved_codec = codec or rt.get("ttsCodec") or "mp3"
     resolved_sample_rate = sample_rate or rt.get("ttsSampleRate") or 24000
     resolved_min_buf = min_buffer_size if min_buffer_size is not None else rt.get("ttsMinBuffer", 30)
@@ -317,8 +327,19 @@ def resolve_tts_config(
         "min_buffer_size": int(resolved_min_buf),
         "max_chunk_length": int(resolved_max_chunk),
     }
-    if resolved_temp is not None and resolved_model == "bulbul:v3":
-        cfg["temperature"] = max(0.01, min(1.0, float(resolved_temp)))
+    # Knob support is model-specific: v3 accepts temperature but not
+    # pitch/loudness; v4-flash accepts all four; v2 accepts pitch/loudness
+    # but not temperature. Never send a knob the selected model ignores.
+    model_meta = constants.TTS_MODELS.get(resolved_model) or {}
+    temp_range = model_meta.get("temperature")
+    if resolved_temp is not None and temp_range:
+        cfg["temperature"] = max(float(temp_range[0]), min(float(temp_range[1]), float(resolved_temp)))
+    pitch_range = model_meta.get("pitch")
+    if resolved_pitch is not None and pitch_range:
+        cfg["pitch"] = max(float(pitch_range[0]), min(float(pitch_range[1]), float(resolved_pitch)))
+    loudness_range = model_meta.get("loudness")
+    if resolved_volume is not None and loudness_range:
+        cfg["loudness"] = max(float(loudness_range[0]), min(float(loudness_range[1]), float(resolved_volume)))
 
     log_tts(
         "CONFIG",
@@ -351,6 +372,8 @@ def merge_ws_tts_config(
         call_id=call_id,
         pace=data.get("pace"),
         temperature=data.get("temperature"),
+        pitch=data.get("pitch"),
+        volume=data.get("volume"),
         codec=data.get("output_audio_codec"),
         sample_rate=data.get("sample_rate"),
         min_buffer_size=data.get("min_buffer_size"),
@@ -384,6 +407,8 @@ def merge_pstn_tts_config(
             resolved_stack=resolved_stack,
             pace=data.get("pace"),
             temperature=data.get("temperature"),
+            pitch=data.get("pitch"),
+            volume=data.get("volume"),
             codec="mp3",
             sample_rate=24000,
             min_buffer_size=data.get("min_buffer_size"),
@@ -459,6 +484,8 @@ def merge_pstn_tts_config(
             resolved_stack=resolved_stack,
             pace=data.get("pace"),
             temperature=data.get("temperature"),
+            pitch=data.get("pitch"),
+            volume=data.get("volume"),
             codec="linear16",
             sample_rate=16000,
             min_buffer_size=data.get("min_buffer_size"),
@@ -493,6 +520,8 @@ def merge_pstn_tts_config(
         resolved_stack=resolved_stack,
         pace=data.get("pace"),
         temperature=data.get("temperature"),
+        pitch=data.get("pitch"),
+        volume=data.get("volume"),
         codec="mulaw",
         sample_rate=8000,
         min_buffer_size=data.get("min_buffer_size"),

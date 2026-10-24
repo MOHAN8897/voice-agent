@@ -43,6 +43,15 @@ def _upstream_tts_config_payload(merged: dict) -> dict:
     }
     if "temperature" in merged:
         out["temperature"] = merged["temperature"]
+    if "pitch" in merged:
+        out["pitch"] = merged["pitch"]
+    if "loudness" in merged:
+        out["loudness"] = merged["loudness"]
+    for key in ("emotion", "speed", "volume"):
+        if merged.get(key) is not None:
+            out[key] = merged[key]
+    if isinstance(merged.get("generation_config"), dict):
+        out["generation_config"] = merged["generation_config"]
     rate = merged.get("sample_rate")
     if rate is not None:
         rate_str = str(int(rate))
@@ -199,6 +208,16 @@ def _connect_tts_upstream(
             model=effective_model,
             language=language,
             speaker=speaker,
+            pace=cfg.get("pace"),
+            temperature=cfg.get("temperature"),
+            pitch=cfg.get("pitch"),
+            volume=(
+                cfg.get("loudness")
+                if cfg.get("loudness") is not None
+                else cfg.get("volume")
+            ),
+            emotion=cfg.get("emotion"),
+            speed=cfg.get("speed"),
         )
         log_ws(
             "TTS upstream opening",

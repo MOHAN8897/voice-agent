@@ -89,9 +89,9 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
             else:
                 tts = dict(stack["tts"])
                 config = dict(tts.get("config") or {})
-                config["pace"] = resolve_speech_pace(tts["provider"], speed_val)
-                if tts["provider"] == "cartesia":
-                    config["speed"] = config["pace"]
+                resolved_pace = resolve_speech_pace(tts["provider"], speed_val, model=tts.get("model"))
+                config["pace"] = resolved_pace
+                config["speed"] = resolved_pace
                 stack = {**stack, "tts": {**tts, "config": config}}
         normalized, _ = normalize_pstn_stack_override(stack, language=lang, tier=tier)
         if not normalized:

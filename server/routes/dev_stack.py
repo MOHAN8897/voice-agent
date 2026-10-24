@@ -121,6 +121,7 @@ async def dev_stack_catalog(session: SessionData = Depends(require_dev_session),
         import copy
         from server.providers.voice_inventory import inventory, profile_voice_rows, refresh_inventory
         from server.config.constants import constants
+        from server.services.tts_voice_direction import tts_knob_specs
 
         if refreshVoices:
             refresh_result = await refresh_inventory()
@@ -137,6 +138,7 @@ async def dev_stack_catalog(session: SessionData = Depends(require_dev_session),
                     tts_models.append({**row, "api_mode": "websocket", "api_modes": ["websocket"]})
             for row in tts_models:
                 row["voices"] = profile_voice_rows(provider["id"], row["id"], list(constants.SUPPORTED_LANGUAGES))
+                row["knobs"] = tts_knob_specs(provider["id"], row["id"])
         catalog["voiceInventory"] = refresh_result
     except Exception as exc:
         logger.warning(f"[VOICE] Catalog fetch failed: {exc}")

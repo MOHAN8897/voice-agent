@@ -63,8 +63,11 @@ class GnaniTTSAdapter:
             },
         }
         if getattr(config, "pitch", None) is not None:
-            p_val = float(config.pitch)
-            payload["pitch"] = max(0.5, min(1.5, (1.0 + p_val) if abs(p_val) <= 0.5 else p_val))
+            from server.services.tts_voice_direction import gnani_pitch_multiplier
+
+            pitch_multiplier = gnani_pitch_multiplier(config.pitch)
+            if pitch_multiplier is not None:
+                payload["pitch"] = pitch_multiplier
         if getattr(config, "volume", None) is not None:
             payload["volume"] = max(0.5, min(2.0, float(config.volume)))
 

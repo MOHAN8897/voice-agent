@@ -242,14 +242,16 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
         spd = voice_dynamics.get("speed") if voice_dynamics.get("speed") is not None else voice_dynamics.get("pace")
         if spd is not None:
             try:
-                clean_dynamics["speed"] = max(0.5, min(2.0, round(float(spd), 2)))
+                # Union of every provider band; per-provider clamping happens at
+                # apply time so a profile can switch engines without losing values.
+                clean_dynamics["speed"] = max(0.25, min(3.0, round(float(spd), 2)))
                 clean_dynamics["pace"] = clean_dynamics["speed"]
             except (TypeError, ValueError):
                 pass
         pitch_val = voice_dynamics.get("pitch")
         if pitch_val is not None:
             try:
-                clean_dynamics["pitch"] = max(-0.15, min(0.15, round(float(pitch_val), 2)))
+                clean_dynamics["pitch"] = max(-0.75, min(0.75, round(float(pitch_val), 2)))
             except (TypeError, ValueError):
                 pass
         temp_val = voice_dynamics.get("temperature")
@@ -264,7 +266,7 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
         vol_val = voice_dynamics.get("volume")
         if vol_val is not None:
             try:
-                clean_dynamics["volume"] = max(0.5, min(2.0, round(float(vol_val), 2)))
+                clean_dynamics["volume"] = max(0.3, min(3.0, round(float(vol_val), 2)))
             except (TypeError, ValueError):
                 pass
         profile["voiceDynamics"] = clean_dynamics

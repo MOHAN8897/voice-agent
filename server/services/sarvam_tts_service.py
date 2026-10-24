@@ -30,12 +30,16 @@ async def synthesize(
     pace: Optional[float] = None,
     model: Optional[str] = None,
     temperature: Optional[float] = None,
+    pitch: Optional[float] = None,
+    volume: Optional[float] = None,
     session_id: Optional[str] = "default",
     timeout_ms: Optional[int] = None,
 ) -> dict:
     """
     REST synthesis — returns {audio_bytes, content_type, request_id, speaker, language_code}
-    temperature: bulbul:v3 only (0.01-1.0). Raises AppError on failure.
+    temperature: bulbul:v3 / bulbul:v4-flash (0.01-1.0).
+    pitch / volume (loudness): model-dependent — see constants.TTS_MODELS.
+    Raises AppError on failure.
     """
     settings = get_settings()
     text = (text or "").strip()
@@ -61,6 +65,8 @@ async def synthesize(
             model=model,
             pace=pace,
             temperature=temperature,
+            pitch=pitch,
+            volume=volume,
         )
     except TtsConfigError as e:
         raise AppError(ErrorCode.VALIDATION_ERROR, str(e), status_code=400) from e
@@ -80,8 +86,12 @@ async def synthesize(
     }
     if "temperature" in cfg:
         payload["temperature"] = cfg["temperature"]
+    if "pitch" in cfg:
+        payload["pitch"] = cfg["pitch"]
+    if "loudness" in cfg:
+        payload["loudness"] = cfg["loudness"]
 
-    log_tts("Synthesis started", chars=len(text), speaker=speaker, language_code=language_code, model=model, pace=pace, session=session_id or "preview")
+    log_tts("Synthesis started", chars=len(text), speaker=speaker, language_code=language_code, model=model, pace=pace, temperature=cfg.get("temperature"), pitch=cfg.get("pitch"), loudness=cfg.get("loudness"), session=session_id or "preview")
 
     headers = {
         "api-subscription-key": dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key or "",
@@ -155,6 +165,8 @@ async def synthesize_stream(
     output_audio_codec: str = "mp3",
     session_id: str = "default",
     temperature: float | None = None,
+    pitch: float | None = None,
+    volume: float | None = None,
     timeout_ms: int | None = None,
 ) -> AsyncIterator[bytes]:
     """
@@ -180,6 +192,8 @@ async def synthesize_stream(
             model=model,
             pace=pace,
             temperature=temperature,
+            pitch=pitch,
+            volume=volume,
             codec=output_audio_codec,
         )
     except TtsConfigError as e:
@@ -202,6 +216,10 @@ async def synthesize_stream(
     }
     if "temperature" in cfg:
         payload["temperature"] = cfg["temperature"]
+    if "pitch" in cfg:
+        payload["pitch"] = cfg["pitch"]
+    if "loudness" in cfg:
+        payload["loudness"] = cfg["loudness"]
     headers = {
         "api-subscription-key": dev_secrets_store.effective_secret("sarvam_api_key") or settings.sarvam_api_key or "",
         "Content-Type": "application/json",

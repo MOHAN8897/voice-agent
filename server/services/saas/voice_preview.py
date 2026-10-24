@@ -204,6 +204,7 @@ async def _synthesize_sarvam(
     language: str | None = None,
     temperature: float | None = None,
     pitch: float | None = None,
+    volume: float | None = None,
     model: str | None = None,
 ) -> bytes:
     from server.services.sarvam_tts_service import synthesize
@@ -215,6 +216,8 @@ async def _synthesize_sarvam(
         model=model,
         pace=speed,
         temperature=temperature,
+        pitch=pitch,
+        volume=volume,
         session_id=None,
     )
     audio = result.get("audio_bytes")
@@ -445,7 +448,6 @@ async def synthesize_preview(
     if active_provider not in {"gemini", "openai", "sarvam", "cartesia", "gnani"}:
         raise ValueError("unsupported_voice_provider")
     voice, label = resolve_preview_voice(voice_id, provider=active_provider, language=language, tier=tier, model=model)
-    pace = max(0.5, min(2.0, float(speed) if speed is not None else 1.0))
     if active_provider == "gnani":
         preview_model = model or "timbre-v3.0"
     elif active_provider == "cartesia":
@@ -461,6 +463,26 @@ async def synthesize_preview(
     if active_provider in {"sarvam", "gnani", "gemini", "cartesia"}:
         from server.providers.voice_inventory import validate_voice
         validate_voice(active_provider, preview_model, voice, language)
+
+    # The preview must apply the same knob matrix as a live call: unsupported
+    # knobs are dropped and supported knobs are clamped to the model's band.
+    from server.services.tts_voice_direction import normalize_tts_dynamics, resolve_speech_pace
+
+    dynamics = normalize_tts_dynamics(
+        active_provider,
+        preview_model,
+        {"speed": speed, "pitch": pitch, "temperature": temperature, "emotion": emotion, "volume": volume},
+    )
+    raw_speed = dynamics.get("speed", speed)
+    pace = resolve_speech_pace(
+        active_provider,
+        raw_speed if raw_speed is not None else 1.0,
+        model=preview_model,
+    )
+    pitch = dynamics.get("pitch")
+    temperature = dynamics.get("temperature")
+    emotion = dynamics.get("emotion")
+    volume = dynamics.get("volume")
     from server.services.saas.voice_catalog import phone_voice_catalog
 
     # Only built-in samples are public. A tenant's custom greeting stays private
@@ -479,7 +501,12 @@ async def synthesize_preview(
         or str(row.get("geminiVoice", "")).casefold() == voice.casefold()
         for row in phone_voice_catalog()
     )
-    is_speed_standard = abs(pace - 1.0) < 0.01 and (pitch is None or abs(pitch) < 0.01) and (emotion is None or emotion == "neutral")
+    is_speed_standard = (
+        abs(pace - 1.0) < 0.01
+        and (pitch is None or abs(pitch) < 0.01)
+        and (emotion is None or emotion == "neutral")
+        and (volume is None or abs(volume - 1.0) < 0.01)
+    )
     cacheable = is_catalog_voice and is_standard_sample
 
     async def generate():
@@ -488,7 +515,7 @@ async def synthesize_preview(
         elif active_provider == "cartesia":
             return await _synthesize_cartesia(line, voice, pace, language=language, model=preview_model, emotion=emotion, volume=volume)
         elif active_provider == "sarvam":
-            return await _synthesize_sarvam(line, voice, pace, language=language, temperature=temperature, pitch=pitch, model=preview_model)
+            return await _synthesize_sarvam(line, voice, pace, language=language, temperature=temperature, pitch=pitch, volume=volume, model=preview_model)
         elif active_provider == "gemini" and ((model and "tts" in model) or tier == "low"):
             return await _synthesize_gemini_tts(line, voice, pace, language=language, model=preview_model, pitch=pitch)
         elif active_provider == "gemini":
@@ -511,7 +538,7 @@ async def synthesize_preview(
         )
 
         if not is_mocked_test:
-            cache_key = [active_provider, preview_model, voice, language, round(pace, 2), pitch, temperature, emotion, norm_line]
+            cache_key = [active_provider, preview_model, voice, language, round(pace, 2), pitch, temperature, emotion, volume, norm_line]
             cache_file = sample_path(cache_key)
 
             # 1. Direct hit on persisted cache

@@ -39,10 +39,25 @@ type ProfileEvidence = {
 };
 type VoiceDynamics = {
   speed: number;
-  pitch: number;
+  pitch?: number;
   temperature?: number;
   emotion?: string;
   volume?: number;
+};
+type TtsKnobOption = { value: string; label: string };
+type TtsKnobKey = "speed" | "pitch" | "temperature" | "emotion" | "volume";
+type TtsKnobSpec = {
+  key: TtsKnobKey;
+  label: string;
+  description?: string;
+  kind: "range" | "select";
+  min?: number;
+  max?: number;
+  step?: number;
+  default?: number | string;
+  unit?: string;
+  native?: string;
+  options?: TtsKnobOption[];
 };
 type ComposedProfile = {
   schemaVersion: 1;
@@ -69,7 +84,7 @@ type TierProfileRow = {
   readOnly?: boolean;
 };
 type ProfilesResponse = { environment: string; profiles: TierProfileRow[] };
-type CatalogModel = { id: string; label?: string; realtime?: boolean; api_mode?: string; api_modes?: string[]; voices?: VoiceProfile[] };
+type CatalogModel = { id: string; label?: string; realtime?: boolean; api_mode?: string; api_modes?: string[]; voices?: VoiceProfile[]; knobs?: TtsKnobSpec[] };
 type CatalogProvider = { id: string; label?: string; enabled?: boolean; configured?: boolean; models?: { stt?: CatalogModel[]; llm?: CatalogModel[]; tts?: CatalogModel[] } };
 type CatalogResponse = { providers?: CatalogProvider[]; voiceInventory?: { errors?: string[] } };
 
@@ -102,6 +117,110 @@ function getVoicesForTtsProvider(providers: CatalogProvider[], provider: string,
     id: previous.find((item) => item.providerVoiceId === voice.providerVoiceId)?.id || voice.id,
     languages: voice.languages.filter((language) => !languages.length || languages.includes(language)),
   })).filter((voice) => voice.languages.length > 0);
+}
+
+const DEFAULT_VOICE_DYNAMICS: VoiceDynamics = { speed: 1.0, pitch: 0.0, temperature: 0.7, emotion: "neutral", volume: 1.0 };
+
+// Native live voice (Gemini Live / OpenAI Realtime) exposes one delivery knob:
+// speed, clamped by server/realtime/models.normalize_realtime_speed.
+const NATIVE_LIVE_KNOBS: TtsKnobSpec[] = [
+  {
+    key: "speed",
+    label: "Live Voice Pace",
+    description: "Applied to the native realtime voice instruction; no separate TTS engine is used.",
+    kind: "range",
+    min: 0.25,
+    max: 1.5,
+    step: 0.05,
+    default: 1.0,
+    native: "speed",
+    unit: "x",
+  },
+];
+
+const FALLBACK_SPEED_KNOB: TtsKnobSpec = {
+  key: "speed",
+  label: "Speaking Pace",
+  description: "Speech engine pace.",
+  kind: "range",
+  min: 0.25,
+  max: 2.0,
+  step: 0.05,
+  default: 1.0,
+  native: "pace",
+  unit: "x",
+};
+
+function resolveModelKnobs(providers: CatalogProvider[], provider: string, model: string): TtsKnobSpec[] | null {
+  const specs = providers.find((entry) => entry.id === provider)?.models?.tts?.find((entry) => entry.id === model)?.knobs;
+  return Array.isArray(specs) && specs.length > 0 ? specs : null;
+}
+
+function dynamicsValue(dynamics: VoiceDynamics | undefined, key: TtsKnobKey): number | string | undefined {
+  if (!dynamics) return undefined;
+  switch (key) {
+    case "speed": return dynamics.speed;
+    case "pitch": return dynamics.pitch;
+    case "temperature": return dynamics.temperature;
+    case "emotion": return dynamics.emotion;
+    case "volume": return dynamics.volume;
+  }
+}
+
+function knobPatch(key: TtsKnobKey, value: number | string): Partial<VoiceDynamics> {
+  switch (key) {
+    case "speed": return { speed: Number(value) };
+    case "pitch": return { pitch: Number(value) };
+    case "temperature": return { temperature: Number(value) };
+    case "emotion": return { emotion: String(value) };
+    case "volume": return { volume: Number(value) };
+  }
+}
+
+function assignKnob(target: VoiceDynamics, key: TtsKnobKey, value: number | string): void {
+  switch (key) {
+    case "speed": target.speed = Number(value); break;
+    case "pitch": target.pitch = Number(value); break;
+    case "temperature": target.temperature = Number(value); break;
+    case "emotion": target.emotion = String(value); break;
+    case "volume": target.volume = Number(value); break;
+  }
+}
+
+function normalizeDynamicsForKnobs(dynamics: VoiceDynamics | undefined, knobs: TtsKnobSpec[]): VoiceDynamics {
+  const next: VoiceDynamics = { speed: 1.0 };
+  const speedSpec = knobs.find((spec) => spec.key === "speed");
+  const rawSpeed = Number(dynamics?.speed ?? speedSpec?.default ?? 1.0);
+  const speedMin = Number(speedSpec?.min ?? FALLBACK_SPEED_KNOB.min);
+  const speedMax = Number(speedSpec?.max ?? FALLBACK_SPEED_KNOB.max);
+  next.speed = Math.max(speedMin, Math.min(speedMax, Number.isFinite(rawSpeed) ? rawSpeed : 1.0));
+  for (const spec of knobs) {
+    if (spec.key === "speed") continue;
+    if (spec.kind === "select") {
+      const allowed = (spec.options || []).map((option) => option.value);
+      const current = String(dynamicsValue(dynamics, spec.key) ?? spec.default ?? "");
+      if (allowed.includes(current)) assignKnob(next, spec.key, current);
+      continue;
+    }
+    const raw = dynamicsValue(dynamics, spec.key);
+    if (raw === undefined || raw === null || raw === "") continue;
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed)) continue;
+    assignKnob(next, spec.key, Math.max(Number(spec.min), Math.min(Number(spec.max), parsed)));
+  }
+  return next;
+}
+
+function speedPresetsFor(spec: TtsKnobSpec): Array<{ value: number; label: string }> {
+  const min = Number(spec.min);
+  const max = Number(spec.max);
+  const candidates = [
+    { value: 0.9, label: "Patient" },
+    { value: 1.0, label: "Standard" },
+    { value: 1.1, label: "Dynamic" },
+    { value: 1.25, label: "Energetic" },
+  ].filter((preset) => preset.value >= min && preset.value <= max);
+  return candidates.length > 0 ? candidates : [{ value: Math.max(min, Math.min(max, 1.0)), label: "Standard" }];
 }
 
 const EMPTY_EVIDENCE: ProfileEvidence = {
@@ -474,6 +593,16 @@ export function PstnVoiceProfileWorkbench() {
     return [];
   }, [providers, currentTtsProvider]);
 
+  // Native realtime voice (Gemini Live / OpenAI Realtime) bypasses the composed
+  // TTS engine, so only the live voice pace knob applies.
+  const isNativeRealtimeLlm = draft.llm.apiMode === "websocket";
+  const currentTtsKnobs = useMemo(() => {
+    if (isNativeRealtimeLlm) return NATIVE_LIVE_KNOBS;
+    return resolveModelKnobs(providers, currentTtsProvider, currentTtsModel) || [FALLBACK_SPEED_KNOB];
+  }, [providers, currentTtsProvider, currentTtsModel, isNativeRealtimeLlm]);
+  const speedKnob = currentTtsKnobs.find((spec) => spec.key === "speed") || FALLBACK_SPEED_KNOB;
+  const secondaryKnobs = currentTtsKnobs.filter((spec) => spec.key !== "speed");
+
   async function executeSaveProfile(targetDraft?: ComposedProfile, customLabel?: string) {
     const activeDraft = targetDraft || draft;
     const labelVal = (customLabel !== undefined ? customLabel : tierLabelInput).trim() || DEFAULT_TIER_LABELS[selected] || selected;
@@ -484,6 +613,9 @@ export function PstnVoiceProfileWorkbench() {
       ? activeDraft.supportedLanguages
       : [...new Set((matchedTtsModel?.voices || []).flatMap((voice) => voice.languages))];
     const voices = getVoicesForTtsProvider(providers, ttsProv, ttsMdl, languages, activeDraft.engines[0]?.models[0]?.voices);
+    const targetKnobs = activeDraft.llm.apiMode === "websocket"
+      ? NATIVE_LIVE_KNOBS
+      : resolveModelKnobs(providers, ttsProv, ttsMdl);
 
     if (!voices.length || !activeDraft.llm.modelId || !activeDraft.stt.model) {
       setError("Choose a complete stack with voices from the current provider catalog.");
@@ -533,13 +665,9 @@ export function PstnVoiceProfileWorkbench() {
         ...activeDraft.engines.slice(1),
       ],
       evidence: { ...activeDraft.evidence },
-      voiceDynamics: activeDraft.voiceDynamics || {
-        speed: 1.0,
-        pitch: 0.0,
-        temperature: 0.7,
-        emotion: "neutral",
-        volume: 1.0,
-      },
+      voiceDynamics: targetKnobs
+        ? normalizeDynamicsForKnobs(activeDraft.voiceDynamics, targetKnobs)
+        : (activeDraft.voiceDynamics || { ...DEFAULT_VOICE_DYNAMICS }),
     };
 
     const expectedRev = selectedRow?.profileRevision !== null && selectedRow?.profileRevision !== undefined
@@ -612,9 +740,13 @@ export function PstnVoiceProfileWorkbench() {
     const models = providers.find((entry) => entry.id === provider)?.models?.llm || [];
     const first = models[0];
     if (!first) return;
+    const nextKnobs = first.api_mode === "websocket"
+      ? NATIVE_LIVE_KNOBS
+      : (resolveModelKnobs(providers, currentTtsProvider, currentTtsModel) || [FALLBACK_SPEED_KNOB]);
     const nextDraft = {
       ...draft,
       llm: { provider, modelId: first.id, apiMode: first.api_mode || "" },
+      voiceDynamics: normalizeDynamicsForKnobs(draft.voiceDynamics, nextKnobs),
     };
     setDraft(nextDraft);
     setDirty(false);
@@ -623,9 +755,14 @@ export function PstnVoiceProfileWorkbench() {
 
   function handleLlmModelChange(modelId: string) {
     const matched = currentLlmModels.find((m) => m.id === modelId);
+    const apiMode = matched?.apiMode || "chat_completions_v1";
+    const nextKnobs = apiMode === "websocket"
+      ? NATIVE_LIVE_KNOBS
+      : (resolveModelKnobs(providers, currentTtsProvider, currentTtsModel) || [FALLBACK_SPEED_KNOB]);
     const nextDraft = {
       ...draft,
-      llm: { ...draft.llm, modelId, apiMode: matched?.apiMode || "chat_completions_v1" },
+      llm: { ...draft.llm, modelId, apiMode },
+      voiceDynamics: normalizeDynamicsForKnobs(draft.voiceDynamics, nextKnobs),
     };
     setDraft(nextDraft);
     setDirty(false);
@@ -638,10 +775,14 @@ export function PstnVoiceProfileWorkbench() {
     if (!first) return;
     const languages = draft.supportedLanguages;
     const voices = getVoicesForTtsProvider(providers, provider, first.id, []);
+    const nextKnobs = draft.llm.apiMode === "websocket"
+      ? NATIVE_LIVE_KNOBS
+      : (resolveModelKnobs(providers, provider, first.id) || [FALLBACK_SPEED_KNOB]);
 
     const nextDraft: ComposedProfile = {
       ...draft,
       supportedLanguages: [...new Set(voices.flatMap((voice) => voice.languages))],
+      voiceDynamics: normalizeDynamicsForKnobs(draft.voiceDynamics, nextKnobs),
       engines: [
         {
           id: provider,
@@ -668,6 +809,9 @@ export function PstnVoiceProfileWorkbench() {
     const matched = currentTtsModels.find((m) => m.id === model);
     const languages = draft.supportedLanguages;
     const voices = getVoicesForTtsProvider(providers, currentTtsProvider, model, []);
+    const nextKnobs = draft.llm.apiMode === "websocket"
+      ? NATIVE_LIVE_KNOBS
+      : (resolveModelKnobs(providers, currentTtsProvider, model) || [FALLBACK_SPEED_KNOB]);
 
     const engines = [...draft.engines];
     const engine = { ...(engines[0] || { id: currentTtsProvider, label: currentTtsProvider, models: [] }) };
@@ -681,7 +825,12 @@ export function PstnVoiceProfileWorkbench() {
         voices,
       },
     ];
-    const nextDraft: ComposedProfile = { ...draft, supportedLanguages: [...new Set(voices.flatMap((voice) => voice.languages))], engines: [engine] };
+    const nextDraft: ComposedProfile = {
+      ...draft,
+      supportedLanguages: [...new Set(voices.flatMap((voice) => voice.languages))],
+      voiceDynamics: normalizeDynamicsForKnobs(draft.voiceDynamics, nextKnobs),
+      engines: [engine],
+    };
     setDraft(nextDraft);
     setDirty(false);
     triggerAutoSave(nextDraft);
@@ -711,17 +860,17 @@ export function PstnVoiceProfileWorkbench() {
   }
 
   function handleDynamicsChange(patch: Partial<VoiceDynamics>) {
-    const nextDynamics: VoiceDynamics = {
+    const merged: VoiceDynamics = {
       speed: draft.voiceDynamics?.speed ?? 1.0,
-      pitch: draft.voiceDynamics?.pitch ?? 0.0,
-      temperature: draft.voiceDynamics?.temperature ?? 0.7,
-      emotion: draft.voiceDynamics?.emotion ?? "neutral",
-      volume: draft.voiceDynamics?.volume ?? 1.0,
+      pitch: draft.voiceDynamics?.pitch,
+      temperature: draft.voiceDynamics?.temperature,
+      emotion: draft.voiceDynamics?.emotion,
+      volume: draft.voiceDynamics?.volume,
       ...patch,
     };
     const nextDraft: ComposedProfile = {
       ...draft,
-      voiceDynamics: nextDynamics,
+      voiceDynamics: normalizeDynamicsForKnobs(merged, currentTtsKnobs),
     };
     setDraft(nextDraft);
     triggerAutoSave(nextDraft, undefined, 400);
@@ -743,7 +892,7 @@ export function PstnVoiceProfileWorkbench() {
     try {
       const activeVoice = currentVoices.find((voice) => voice.id === testVoiceId) || currentVoices[0];
       if (!activeVoice) throw new Error("Choose a verified voice first.");
-      const dyn = draft.voiceDynamics || { speed: 1.0, pitch: 0.0, temperature: 0.7, emotion: "neutral", volume: 1.0 };
+      const dyn = normalizeDynamicsForKnobs(draft.voiceDynamics || DEFAULT_VOICE_DYNAMICS, currentTtsKnobs);
       const response = await portalFetch("dev", "/api/dev/stack/voice-preview", {
         method: "POST",
         body: JSON.stringify({
@@ -1524,7 +1673,9 @@ export function PstnVoiceProfileWorkbench() {
                 </span>
               </div>
               <p className="text-xs text-text-muted">
-                Fine-tune speaking pace, prosody, and audio delivery for <strong>{currentTtsProvider.toUpperCase()}</strong> on this tier. Applied universally to all platform calls.
+                {isNativeRealtimeLlm
+                  ? <>Fine-tune the native live voice pace. This tier speaks through the realtime voice, so no separate TTS engine is active.</>
+                  : <>Only the knobs supported by <strong>{currentTtsProvider ? currentTtsProvider.toUpperCase() : "the selected engine"}</strong> are shown. Every saved value is applied to all platform calls.</>}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -1534,199 +1685,136 @@ export function PstnVoiceProfileWorkbench() {
             </div>
           </div>
 
-          {/* Dynamic Knobs based on Chosen Provider */}
+          <div className="flex flex-wrap gap-1.5">
+            {currentTtsKnobs.map((spec) => (
+              <span
+                key={spec.key}
+                className="inline-flex items-center gap-1.5 rounded-full border border-surface-border bg-surface-raised px-2.5 py-1 text-[10px] font-medium text-text-muted"
+              >
+                <span className="size-1.5 rounded-full bg-emerald-400" />
+                {spec.label}
+                {spec.native ? <code className="text-[9px] text-text-subtle">{spec.native}</code> : null}
+              </span>
+            ))}
+          </div>
+
+          {/* Dynamic Knobs — driven by the selected model's catalog capability list */}
           <div className="grid gap-6 md:grid-cols-2">
-            {/* Speaking Pace (Speed) - All Providers */}
             <div className="space-y-3 rounded-xl border border-surface-border/60 bg-surface-panel/70 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-semibold text-text block">Speaking Pace (Speed)</span>
-                  <span className="text-[10px] text-text-subtle">Real-time speech velocity without audio artifacting</span>
+                  <span className="text-xs font-semibold text-text block">{speedKnob.label}</span>
+                  <span className="text-[10px] text-text-subtle">{speedKnob.description}</span>
                 </div>
                 <span className="font-mono text-xs font-bold text-accent-primary px-2 py-0.5 rounded bg-accent-primary/10 border border-accent-primary/20">
-                  {Number(draft.voiceDynamics?.speed || 1.0).toFixed(2)}x
+                  {Number(draft.voiceDynamics?.speed ?? speedKnob.default ?? 1.0).toFixed(2)}{speedKnob.unit || "x"}
                 </span>
               </div>
 
-              {(() => {
-                const isGnani = currentTtsProvider === "gnani";
-                const isCartesia = currentTtsProvider === "cartesia";
-                const minSpeed = isGnani ? 0.85 : isCartesia ? 0.60 : 0.50;
-                const maxSpeed = isGnani ? 1.15 : isCartesia ? 1.50 : 2.00;
-                const presets = isGnani
-                  ? [
-                      { label: "Patient (0.9x)", speed: 0.9 },
-                      { label: "Standard (1.0x)", speed: 1.0 },
-                      { label: "Dynamic Sales (1.1x)", speed: 1.1 },
-                      { label: "Max Speed (1.15x)", speed: 1.15 },
-                    ]
-                  : isCartesia
-                  ? [
-                      { label: "Patient Support (0.85x)", speed: 0.85 },
-                      { label: "Standard (1.0x)", speed: 1.0 },
-                      { label: "Dynamic Sales (1.15x)", speed: 1.15 },
-                      { label: "Fast (1.3x)", speed: 1.3 },
-                    ]
-                  : [
-                      { label: "Patient Support (0.9x)", speed: 0.9 },
-                      { label: "Standard (1.0x)", speed: 1.0 },
-                      { label: "Dynamic Sales (1.1x)", speed: 1.1 },
-                      { label: "Energetic (1.25x)", speed: 1.25 },
-                    ];
+              <input
+                type="range"
+                min={speedKnob.min}
+                max={speedKnob.max}
+                step={speedKnob.step || 0.05}
+                value={Number(draft.voiceDynamics?.speed ?? speedKnob.default ?? 1.0)}
+                onChange={(e) => handleDynamicsChange({ speed: parseFloat(e.target.value) })}
+                className="w-full h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-primary"
+              />
 
-                return (
-                  <>
-                    <input
-                      type="range"
-                      min={minSpeed}
-                      max={maxSpeed}
-                      step="0.05"
-                      value={draft.voiceDynamics?.speed || 1.0}
-                      onChange={(e) => handleDynamicsChange({ speed: parseFloat(e.target.value) })}
-                      className="w-full h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-primary"
-                    />
+              <div className="flex justify-between text-[10px] text-text-subtle font-mono">
+                <span>{Number(speedKnob.min).toFixed(2)}{speedKnob.unit || "x"} (Slow)</span>
+                <span className="text-accent-primary font-semibold">1.00{speedKnob.unit || "x"} (Standard)</span>
+                <span>{Number(speedKnob.max).toFixed(2)}{speedKnob.unit || "x"} (Fast)</span>
+              </div>
 
-                    <div className="flex justify-between text-[10px] text-text-subtle font-mono">
-                      <span>{minSpeed.toFixed(2)}x (Slow)</span>
-                      <span className="text-accent-primary font-semibold">1.00x (Standard)</span>
-                      <span>{maxSpeed.toFixed(2)}x (Fast)</span>
-                    </div>
-
-                    {/* Pacing Presets */}
-                    <div className="pt-2 border-t border-surface-border-subtle">
-                      <span className="text-[10px] font-semibold text-text-muted uppercase block mb-1.5">
-                        Pacing Presets ({currentTtsProvider.toUpperCase()})
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {presets.map((p) => {
-                          const active = Math.abs((draft.voiceDynamics?.speed || 1.0) - p.speed) < 0.01;
-                          return (
-                            <button
-                              key={p.label}
-                              type="button"
-                              onClick={() => handleDynamicsChange({ speed: p.speed })}
-                              className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
-                                active
-                                  ? "bg-accent-primary text-white shadow-xs"
-                                  : "border border-surface-border bg-surface-raised text-text hover:bg-surface-raised/80"
-                              }`}
-                            >
-                              {p.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </>
-                );
-              })()}
+              <div className="pt-2 border-t border-surface-border-subtle">
+                <span className="text-[10px] font-semibold text-text-muted uppercase block mb-1.5">
+                  Pacing Presets ({isNativeRealtimeLlm ? "LIVE VOICE" : currentTtsProvider.toUpperCase()})
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {speedPresetsFor(speedKnob).map((preset) => {
+                    const active = Math.abs(Number(draft.voiceDynamics?.speed ?? 1.0) - preset.value) < 0.01;
+                    return (
+                      <button
+                        key={`${preset.label}-${preset.value}`}
+                        type="button"
+                        onClick={() => handleDynamicsChange({ speed: preset.value })}
+                        className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+                          active
+                            ? "bg-accent-primary text-white shadow-xs"
+                            : "border border-surface-border bg-surface-raised text-text hover:bg-surface-raised/80"
+                        }`}
+                      >
+                        {preset.label} ({preset.value.toFixed(2)}x)
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
-            {/* Provider-Specific Options */}
             <div className="space-y-4 rounded-xl border border-surface-border/60 bg-surface-panel/70 p-4">
-              {/* Pitch for Sarvam, Gnani, and Gemini */}
-              {(currentTtsProvider === "sarvam" || currentTtsProvider === "gnani" || currentTtsProvider === "gemini") && (
+              {secondaryKnobs.length === 0 ? (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-semibold text-text block">Pitch Offset</span>
-                      <span className="text-[10px] text-text-subtle">Adjusts vocal pitch frequency</span>
-                    </div>
-                    <span className="font-mono text-xs font-bold text-accent-primary px-2 py-0.5 rounded bg-accent-primary/10 border border-accent-primary/20">
-                      {Number(draft.voiceDynamics?.pitch || 0.0).toFixed(2)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-0.15"
-                    max="0.15"
-                    step="0.01"
-                    value={draft.voiceDynamics?.pitch || 0.0}
-                    onChange={(e) => handleDynamicsChange({ pitch: parseFloat(e.target.value) })}
-                    className="w-full h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-primary"
-                  />
-                  <div className="flex justify-between text-[10px] text-text-subtle font-mono">
-                    <span>-0.15 (Deeper)</span>
-                    <span className="text-accent-primary font-semibold">0.00 (Neutral)</span>
-                    <span>+0.15 (Higher)</span>
-                  </div>
+                  <span className="text-xs font-semibold text-text block">No additional delivery knobs</span>
+                  <p className="text-[11px] text-text-subtle">
+                    {isNativeRealtimeLlm
+                      ? "The native live voice exposes pace only; tone and expression come from the voice model itself. Unsupported settings are never sent."
+                      : "This engine exposes speaking pace only. Other controls are hidden because the provider would ignore them."}
+                  </p>
                 </div>
+              ) : (
+                secondaryKnobs.map((spec, index) => {
+                  const raw = dynamicsValue(draft.voiceDynamics, spec.key);
+                  if (spec.kind === "select") {
+                    const current = String(raw ?? spec.default ?? "");
+                    return (
+                      <div key={spec.key} className={index > 0 ? "pt-3 border-t border-surface-border-subtle" : ""}>
+                        <label className="block text-xs font-medium text-text-muted mb-1">{spec.label}</label>
+                        <select
+                          value={current}
+                          onChange={(e) => handleDynamicsChange(knobPatch(spec.key, e.target.value))}
+                          className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
+                        >
+                          {(spec.options || []).map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                        {spec.description ? <p className="mt-1 text-[10px] text-text-subtle">{spec.description}</p> : null}
+                      </div>
+                    );
+                  }
+                  const current = Number(raw ?? spec.default ?? 1);
+                  return (
+                    <div key={spec.key} className={index > 0 ? "space-y-2 pt-3 border-t border-surface-border-subtle" : "space-y-2"}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-semibold text-text block">{spec.label}</span>
+                          <span className="text-[10px] text-text-subtle">{spec.description}</span>
+                        </div>
+                        <span className="font-mono text-xs font-bold text-accent-primary px-2 py-0.5 rounded bg-accent-primary/10 border border-accent-primary/20">
+                          {current.toFixed(2)}{spec.unit || ""}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={spec.min}
+                        max={spec.max}
+                        step={spec.step || 0.01}
+                        value={current}
+                        onChange={(e) => handleDynamicsChange(knobPatch(spec.key, parseFloat(e.target.value)))}
+                        className="w-full h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-primary"
+                      />
+                      <div className="flex justify-between text-[10px] text-text-subtle font-mono">
+                        <span>{Number(spec.min).toFixed(2)}{spec.unit || ""} (Low)</span>
+                        <span className="text-accent-primary font-semibold">{Number(spec.default ?? 1).toFixed(2)}{spec.unit || ""} (Default)</span>
+                        <span>{Number(spec.max).toFixed(2)}{spec.unit || ""} (High)</span>
+                      </div>
+                    </div>
+                  );
+                })
               )}
 
-              {/* Temperature / Prosody Inflection for Sarvam */}
-              {currentTtsProvider === "sarvam" && (
-                <div className="space-y-2 pt-2 border-t border-surface-border-subtle">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-semibold text-text block">Expressive Inflection (Temperature)</span>
-                      <span className="text-[10px] text-text-subtle">Higher values increase tone variance &amp; prosodic richness</span>
-                    </div>
-                    <span className="font-mono text-xs font-bold text-accent-primary px-2 py-0.5 rounded bg-accent-primary/10 border border-accent-primary/20">
-                      {Number(draft.voiceDynamics?.temperature || 0.7).toFixed(2)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.05"
-                    max="1.0"
-                    step="0.05"
-                    value={draft.voiceDynamics?.temperature || 0.7}
-                    onChange={(e) => handleDynamicsChange({ temperature: parseFloat(e.target.value) })}
-                    className="w-full h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-primary"
-                  />
-                  <div className="flex justify-between text-[10px] text-text-subtle font-mono">
-                    <span>0.05 (Rigid / Monotone)</span>
-                    <span className="text-accent-primary font-semibold">0.70 (Natural)</span>
-                    <span>1.00 (Highly Expressive)</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Cartesia Emotion & Volume Knobs */}
-              {currentTtsProvider === "cartesia" && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-text-muted mb-1">
-                      Sonic Emotion Director
-                    </label>
-                    <select
-                      value={draft.voiceDynamics?.emotion || "neutral"}
-                      onChange={(e) => handleDynamicsChange({ emotion: e.target.value })}
-                      className="w-full rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-xs text-text focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-                    >
-                      <option value="neutral">Neutral · Balanced Natural</option>
-                      <option value="calm">Calm · Relaxed &amp; Patient</option>
-                      <option value="content">Content · Friendly &amp; Pleasant</option>
-                      <option value="happy">Happy · Upbeat &amp; Enthusiastic</option>
-                      <option value="confident">Confident · Direct &amp; Professional</option>
-                      <option value="curious">Curious · Engaging Questioning</option>
-                      <option value="grateful">Grateful · Warm &amp; Welcoming</option>
-                      <option value="peaceful">Peaceful · Serene Consultation</option>
-                      <option value="sympathetic">Sympathetic · Empathetic Support</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-text-muted">Volume Multiplier</span>
-                      <span className="font-mono text-xs text-accent-primary font-bold">
-                        {Number(draft.voiceDynamics?.volume || 1.0).toFixed(2)}x
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0.5"
-                      max="1.5"
-                      step="0.05"
-                      value={draft.voiceDynamics?.volume || 1.0}
-                      onChange={(e) => handleDynamicsChange({ volume: parseFloat(e.target.value) })}
-                      className="w-full h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-accent-primary"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Gnani Timbre Audio Tags */}
               {currentTtsProvider === "gnani" && (
                 <div className="space-y-2 pt-2 border-t border-surface-border-subtle">
                   <div className="flex items-center justify-between">
@@ -1741,17 +1829,30 @@ export function PstnVoiceProfileWorkbench() {
                 </div>
               )}
 
-              {/* Gemini Native Instructions */}
-              {currentTtsProvider === "gemini" && (
+              {currentTtsProvider === "gemini" && !isNativeRealtimeLlm && (
                 <div className="space-y-2 pt-2 border-t border-surface-border-subtle">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-text">Delivery Persona Modulation</span>
                     <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                      WebSocket Realtime
+                      Speech Metadata
                     </span>
                   </div>
                   <p className="text-[11px] text-text-subtle">
-                    Pacing and pitch dynamically guide the low-latency Gemini WebSocket stream to articulate natural, unhurried Indian conversational cadences.
+                    Pace and pitch character are sent as speech metadata directions on every turn; Gemini has no numeric pitch, temperature, or volume parameters.
+                  </p>
+                </div>
+              )}
+
+              {currentTtsProvider === "sarvam" && (
+                <div className="space-y-2 pt-2 border-t border-surface-border-subtle">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-text">Model Knob Matrix</span>
+                    <span className="text-[10px] font-mono text-sky-300 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                      Per-model
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-text-subtle">
+                    v3 exposes pace + temperature. v4-flash exposes pace + pitch + loudness. v2 exposes pace + pitch + loudness. Unsupported knobs are hidden and never sent.
                   </p>
                 </div>
               )}

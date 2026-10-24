@@ -58,7 +58,7 @@ def _speech_part(text: str, config: TTSConfig, model: str) -> dict[str, Any]:
     text = sanitize_tts_tags(text, provider="gemini", model=model)
     if not text:
         raise ValueError("Speech text must contain words, not only audio tags")
-    style = gemini_speech_style(config.pace)
+    style = gemini_speech_style(config.pace, config.pitch)
     if model.startswith("gemini-3.8"):
         # 3.8 reads text verbatim: delivery directions belong in metadata.
         return {"text": text.strip(), "speech_metadata": {"style": style}}
