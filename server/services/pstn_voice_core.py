@@ -8,7 +8,7 @@ import json
 import logging
 import time
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Any
 
 from server.services.pstn_debug import log_pstn
@@ -62,6 +62,12 @@ PSTN_LISTEN_COALESCE_S = 0.03
 PSTN_LISTEN_COALESCE_PARTIAL_GRACE_S = 0.2
 # Keep enough of a long utterance for the LLM (was 500 — truncated mid-thought).
 PSTN_PENDING_TRANSCRIPT_MAX = 1500
+# No reply audio within this window after the caller stops → re-ask once.
+PSTN_REPLY_WATCHDOG_S = 4.5
+# Tool execution is a legitimate wait; never re-ask while an action is in flight.
+# The gateway caps each call at 8s and a turn runs at most four, so the budget
+# only has to notice a genuinely stuck stream after the tools return.
+PSTN_REPLY_WATCHDOG_TOOL_S = 40.0
 
 # Call FSM (mutually exclusive phases).
 PHASE_INTRO = "intro"
@@ -214,6 +220,8 @@ class PstnVoiceLoop:
         self._technical_fallback_active = False
         self._turn_audio_delivered = False
         self._tts_retry_used_for_turn = False
+        self._turn_tool_wait = False
+        self._watchdog_retry_used = False
         # TTS text layers: generated/queued ≠ heard (echo must use heard only).
         self._tts_generated_text = ""
         self._tts_queued_text = ""
@@ -471,6 +479,7 @@ class PstnVoiceLoop:
         log_pstn("tts.fallback_speech", call_id=self.call_id, recorded=True)
         if self.stack_override.get("pipeline") != "composed_voice":
             return
+        await self._record_tts_failure(defect=defect)
         from server.services.saas.session_failure_log import record_session_failure
 
         record_session_failure(
@@ -479,7 +488,40 @@ class PstnVoiceLoop:
             call_id=self.call_id, detail=defect,
         )
 
-    async def _play_technical_fallback_and_hangup(self, *, trigger: str = "runtime_failure") -> None:
+    async def _close_after_non_tts_failure(self, *, reason: str = "agent_hangup", session: Any = None) -> None:
+        """Use the working voice for a courteous close; reserve the clip for TTS failure."""
+        if self._hangup_started or self._closed or self._phase == PHASE_ENDED:
+            return
+        from server.call.hangup_judge import default_farewell_for
+
+        farewell = default_farewell_for(self._resolve_language())
+        await self._recover_tts_after_failure(session)
+        frames_before = self._wire_frames_out
+        try:
+            await self.speak(farewell, language_code=self._resolve_language())
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            log_pstn("turn.close.tts_failed", call_id=self.call_id, error_type=type(exc).__name__)
+            await self._record_failed_reply(defect="failure_farewell_tts")
+            await self._play_technical_fallback_and_hangup(trigger="tts_failure")
+            return
+        if self._closed or self._hangup_started:
+            return
+        if self._wire_frames_out == frames_before:
+            await self._record_failed_reply(defect="failure_farewell_empty_audio")
+            await self._play_technical_fallback_and_hangup(trigger="tts_failure")
+            return
+        if self.call_id:
+            try:
+                from server.call.call_ledger import call_ledger
+
+                await call_ledger.append_assistant_turn(self.call_id, farewell)
+            except Exception as exc:
+                log_pstn("turn.close.ledger_failed", call_id=self.call_id, error_type=type(exc).__name__)
+        await self._finish_agent_hangup(reason=reason)
+
+    async def _play_technical_fallback_and_hangup(self, *, trigger: str) -> None:
         """Play a pre-recorded apology in the call language, then close the line.
 
         The clip never touches the configured TTS/LLM, which is the thing that
@@ -487,6 +529,8 @@ class PstnVoiceLoop:
         for the terminal message, waits for the carrier queue to drain, leaves a
         short tail pause, and ends through the normal lifecycle.
         """
+        if trigger not in {"tts_failure", "farewell_tts_failure"}:
+            raise ValueError("Recorded speech outage requires a TTS failure")
         if self._technical_fallback_played or self._hangup_started or self._closed:
             return
         self._technical_fallback_played = True
@@ -1388,6 +1432,7 @@ class PstnVoiceLoop:
             audio_archive.set_agent_sample_rate(self.call_id, self.sample_rate)
 
         greeting = greeting_text if play_greeting else None
+        greeting_tts_attempted = False
         if greeting is None and play_greeting and self.call_id:
             from server.call.call_context import get as get_ctx
 
@@ -1419,7 +1464,7 @@ class PstnVoiceLoop:
             log_tts("PSTN greeting", call_id=self.call_id, chars=len(greeting))
             # Speak first; note_spoken after so Realtime history matches what the caller heard.
             async def speak_opening() -> None:
-                nonlocal greeting
+                nonlocal greeting, greeting_tts_attempted
                 if self.stack_override.get("pipeline") == "composed_voice":
                     from server.call.call_context import get as get_ctx
                     from server.services.composed_voice_session import localize_composed_opening
@@ -1434,6 +1479,7 @@ class PstnVoiceLoop:
                     if usage:
                         record_composed_stage_usage(self.call_id, "llm", composed_llm_usage(usage))
                     self._tts_generated_text = greeting
+                greeting_tts_attempted = True
                 await self.speak(greeting)
 
             jobs.append(asyncio.create_task(speak_opening()))
@@ -1446,7 +1492,10 @@ class PstnVoiceLoop:
             if greet_err and not isinstance(greet_err, asyncio.CancelledError):
                 log_pstn("greeting.failed", call_id=self.call_id, error=str(greet_err)[:200])
                 if self.stack_override.get("pipeline") == "composed_voice":
-                    await self._play_technical_fallback_and_hangup(trigger="tts_failure")
+                    if greeting_tts_attempted:
+                        await self._play_technical_fallback_and_hangup(trigger="tts_failure")
+                    else:
+                        await self._close_after_non_tts_failure()
                     raise greet_err
                 if self._wire_frames_out == before_frames and not self._closed:
                     # Retry a cold greeting once; a second failure gets the recorded
@@ -1469,7 +1518,7 @@ class PstnVoiceLoop:
         if stt_err:
             log_pstn("stt.open.failed", call_id=self.call_id, error=str(stt_err)[:200])
             log_error("PSTN STT open failed", call_id=self.call_id, detail=str(stt_err)[:300])
-            await self._play_technical_fallback_and_hangup(trigger="stt_failure")
+            await self._close_after_non_tts_failure()
             raise stt_err
 
     async def _play_buffered_greeting(self, frames: list[bytes], greeting: str) -> None:
@@ -1666,10 +1715,8 @@ class PstnVoiceLoop:
             return
 
         async def _announce_then_hangup() -> None:
-            # The configured STT is gone, so use the recorded apology rather than
-            # a speech service that may share the same outage.
             try:
-                await self._play_technical_fallback_and_hangup(trigger="stt_failure")
+                await self._close_after_non_tts_failure()
             except Exception as exc:
                 log_pstn("stt.terminal_fallback.failed", call_id=self.call_id, error=str(exc)[:160])
                 self._set_phase(PHASE_ENDED)
@@ -2184,6 +2231,179 @@ class PstnVoiceLoop:
 
         task.add_done_callback(_log_orphan)
 
+    def _reply_watchdog_budget(self) -> float:
+        return PSTN_REPLY_WATCHDOG_TOOL_S if self._turn_tool_wait else PSTN_REPLY_WATCHDOG_S
+
+    def _watchdog_retry_allowed(self) -> bool:
+        if self._turn_tool_wait or self._turn_audio_delivered:
+            return False
+        session = self._active_tts_session
+        if session is not None and getattr(session, "has_sent_text", False):
+            return False
+        return not self._technical_fallback_active and self._phase != PHASE_ENDED
+
+    async def _watched_turn_stream(
+        self, turn_kwargs: dict[str, Any]
+    ) -> AsyncIterator[dict[str, Any]]:
+        """Run one turn; re-ask once when the first attempt never starts speaking."""
+        from server.call.live_turn_orchestrator import live_turn_orchestrator
+
+        kwargs = dict(turn_kwargs)
+        retry_used = False
+        started = False
+        stream = live_turn_orchestrator.handle_user_turn_stream(**kwargs)
+        try:
+            while True:
+                try:
+                    chunk = await asyncio.wait_for(
+                        stream.__anext__(),
+                        timeout=None if started else self._reply_watchdog_budget(),
+                    )
+                except StopAsyncIteration:
+                    return
+                except asyncio.TimeoutError:
+                    await self._close_stream(stream)
+                    if not retry_used and not started and self._watchdog_retry_allowed():
+                        retry_used = True
+                        self._watchdog_retry_used = True
+                        log_pstn(
+                            "turn.watchdog",
+                            call_id=self.call_id,
+                            turn_id=self.current_turn_id,
+                            event="reask",
+                            timeout_s=self._reply_watchdog_budget(),
+                        )
+                        kwargs["retry_attempt"] = True
+                        stream = live_turn_orchestrator.handle_user_turn_stream(**kwargs)
+                        yield {"status": "watchdog_retry"}
+                        continue
+                    log_pstn(
+                        "turn.watchdog",
+                        call_id=self.call_id,
+                        turn_id=self.current_turn_id,
+                        event="gave_up",
+                        timeout_s=self._reply_watchdog_budget(),
+                        retry_used=retry_used,
+                    )
+                    raise TimeoutError("The selected voice service did not answer in time") from None
+                if chunk.get("delta") or chunk.get("done"):
+                    # The agent has spoken/finished; silence is no longer total.
+                    started = True
+                yield chunk
+        finally:
+            await self._close_stream(stream)
+
+    @staticmethod
+    async def _close_stream(stream: AsyncIterator[dict[str, Any]]) -> None:
+        close = getattr(stream, "aclose", None)
+        if close is None:
+            return
+        try:
+            await close()
+        except (RuntimeError, GeneratorExit):
+            pass
+
+    async def _record_agent_failure(
+        self,
+        exc: BaseException,
+        *,
+        delivered: bool,
+        turn_completed: bool,
+    ) -> None:
+        if not self.call_id:
+            return
+        from server.call.call_context import get as get_ctx
+        from server.services.turn_failure_log import record_turn_failure
+
+        ctx = get_ctx(self.call_id)
+        try:
+            await record_turn_failure(
+                call_id=self.call_id,
+                tenant_id=str(ctx.tenant_id) if ctx and ctx.tenant_id else None,
+                agent_id=str(ctx.agent_id) if ctx and ctx.agent_id else None,
+                transcript=self._current_turn_transcript,
+                partial_text=str(getattr(exc, "partial_text", "") or ""),
+                finish_reason=getattr(exc, "finish_reason", None),
+                error_type=type(exc).__name__,
+                error=str(exc)[:300],
+                delivered=delivered,
+                turn_completed=turn_completed,
+                retry_used=bool(getattr(exc, "retry_used", False)),
+                watchdog_retry=self._watchdog_retry_used,
+                tool_wait=self._turn_tool_wait,
+            )
+        except Exception as record_error:
+            log_pstn(
+                "turn.failure.record_failed",
+                call_id=self.call_id,
+                error_type=type(record_error).__name__,
+            )
+
+    async def _record_watchdog_recovery(self) -> None:
+        """Keep a recovered silence event visible: the turn was late, then safe."""
+        if not self.call_id:
+            return
+        from server.call.call_context import get as get_ctx
+        from server.services.turn_failure_log import record_turn_failure
+
+        ctx = get_ctx(self.call_id)
+        try:
+            await record_turn_failure(
+                call_id=self.call_id,
+                tenant_id=str(ctx.tenant_id) if ctx and ctx.tenant_id else None,
+                agent_id=str(ctx.agent_id) if ctx and ctx.agent_id else None,
+                transcript=self._current_turn_transcript,
+                partial_text="",
+                finish_reason="watchdog_timeout",
+                error_type="ReplyWatchdogTimeout",
+                error=(
+                    f"No reply within {self._reply_watchdog_budget():.1f}s; "
+                    "the watchdog re-asked once and the retry completed."
+                ),
+                delivered=True,
+                turn_completed=True,
+                retry_used=False,
+                watchdog_retry=True,
+                tool_wait=False,
+            )
+        except Exception as record_error:
+            log_pstn(
+                "turn.watchdog.record_failed",
+                call_id=self.call_id,
+                error_type=type(record_error).__name__,
+            )
+
+    async def _record_tts_failure(self, *, defect: str) -> None:
+        """The model finished but the speech service returned no usable audio."""
+        if not self.call_id:
+            return
+        from server.call.call_context import get as get_ctx
+        from server.services.turn_failure_log import record_turn_failure
+
+        ctx = get_ctx(self.call_id)
+        try:
+            await record_turn_failure(
+                call_id=self.call_id,
+                tenant_id=str(ctx.tenant_id) if ctx and ctx.tenant_id else None,
+                agent_id=str(ctx.agent_id) if ctx and ctx.agent_id else None,
+                transcript=self._current_turn_transcript,
+                partial_text=str(self._tts_generated_text or ""),
+                finish_reason="tts_empty_audio",
+                error_type="TTSAudioFailure",
+                error=f"Speech synthesis produced no usable audio ({defect}).",
+                delivered=False,
+                turn_completed=True,
+                retry_used=self._tts_retry_used_for_turn,
+                watchdog_retry=self._watchdog_retry_used,
+                tool_wait=self._turn_tool_wait,
+            )
+        except Exception as record_error:
+            log_pstn(
+                "turn.tts.record_failed",
+                call_id=self.call_id,
+                error_type=type(record_error).__name__,
+            )
+
     async def _run_turn(self, text: str) -> None:
         if self._turn_busy:
             self._queue_user_transcript(text)
@@ -2228,6 +2448,9 @@ class PstnVoiceLoop:
         hangup_reason = "agent_hangup"
         self._tts_retry_used_for_turn = False
         self._turn_audio_delivered = False
+        self._turn_tool_wait = False
+        self._watchdog_retry_used = False
+        turn_completed = False
         try:
             # Finish previous turn's control messages before starting another response;
             # a late carrier clear / Realtime cancel must never target the new turn.
@@ -2249,7 +2472,7 @@ class PstnVoiceLoop:
                 self._active_speak_task = asyncio.current_task()
                 tts_prepare = asyncio.create_task(tts_session.prepare_for_turn())
                 try:
-                    async for chunk in live_turn_orchestrator.handle_user_turn_stream(
+                    turn_kwargs = dict(
                         transcript=text,
                         language_code=self._resolve_language(),
                         session_id=self.session_id,
@@ -2258,7 +2481,17 @@ class PstnVoiceLoop:
                         temperature=llm_rt.get("temperature"),
                         reasoning_effort=llm_rt.get("reasoning_effort"),
                         max_output_tokens=llm_rt.get("max_output_tokens"),
-                    ):
+                    )
+                    async for chunk in self._watched_turn_stream(turn_kwargs):
+                        if chunk.get("status") == "tool_wait":
+                            # An action is in flight; a re-ask could repeat its side effect.
+                            self._turn_tool_wait = True
+                            continue
+                        if chunk.get("status") == "watchdog_retry":
+                            # Nothing from the first attempt reached TTS or the wire.
+                            pending = ""
+                            first_token_seen = False
+                            continue
                         if self.emission_blocked():
                             turn_cancelled = True
                             break
@@ -2292,6 +2525,7 @@ class PstnVoiceLoop:
                                     tts_session = await self._send_tts_text(tts_session, combined)
                                     spoke_from_stream = True
                         elif chunk.get("done"):
+                            turn_completed = True
                             if chunk.get("cancelled"):
                                 turn_cancelled = True
                             tail = resolve_stream_tts_tail(
@@ -2353,6 +2587,13 @@ class PstnVoiceLoop:
                     await self._release_tts_turn(tts_session)
                     self._active_tts_session = None
                     self._active_speak_task = None
+            if (
+                self._watchdog_retry_used
+                and turn_completed
+                and not turn_cancelled
+                and not self.emission_blocked()
+            ):
+                await self._record_watchdog_recovery()
             if accepted_end_call and self.call_id and not turn_cancelled and not self.emission_blocked():
                 # Synthesis complete != playback complete, and the TTS turn is
                 # released so a failed farewell can be replaced by the clip.
@@ -2373,10 +2614,21 @@ class PstnVoiceLoop:
         except Exception as e:
             detail = f"{type(e).__name__}: {str(e)[:160]}"
             logger.warning("[PSTN] turn error: %s", detail)
-            log_pstn("turn.error", call_id=self.call_id, error=type(e).__name__, detail=str(e)[:200])
-            delivered = self._turn_audio_delivered or bool(
-                getattr(tts_session, "audio_emitted", False)
+            finish_reason = getattr(e, "finish_reason", None)
+            log_pstn(
+                "turn.error",
+                call_id=self.call_id,
+                error_type=type(e).__name__,
+                finish_reason=str(finish_reason) if finish_reason else None,
+                partial_chars=len(getattr(e, "partial_text", "") or ""),
+                retry_used=bool(getattr(e, "retry_used", False)),
+                delivered=turn_completed,
             )
+            tts_audio_emitted = bool(getattr(tts_session, "audio_emitted", False))
+            # A reply counts as delivered only when the model finished the turn.
+            # Partial audio from an early stop is exactly the dead air the
+            # outage apology exists to replace.
+            delivered = bool(turn_completed and (self._turn_audio_delivered or tts_audio_emitted))
             if self.stack_override.get("pipeline") == "composed_voice":
                 from server.services.saas.session_failure_log import record_session_failure
 
@@ -2385,35 +2637,44 @@ class PstnVoiceLoop:
                     message="The selected voice service could not complete the reply.",
                     call_id=self.call_id, detail=detail,
                 )
-                self._pending_transcript = None
+                await self._record_agent_failure(
+                    e,
+                    delivered=delivered,
+                    turn_completed=turn_completed,
+                )
                 if self._on_session_error:
                     try:
                         await self._on_session_error("The selected voice service could not complete the reply.")
                     except Exception as notify_error:
-                        log_pstn("turn.error.notify_failed", call_id=self.call_id, error=type(notify_error).__name__)
+                        log_pstn("turn.error.notify_failed", call_id=self.call_id, error_type=type(notify_error).__name__)
                 if delivered:
-                    # The caller already heard this reply; replacing it with the
-                    # outage apology and hanging up is the unnecessary failure
-                    # these calls hit. Drop the broken socket and keep listening.
                     log_pstn(
                         "turn.error.audio_delivered",
                         call_id=self.call_id,
                         turn_id=self.current_turn_id,
-                        error=type(e).__name__,
+                        error_type=type(e).__name__,
                     )
                     await self._recover_tts_after_failure(tts_session)
                     if accepted_end_call and not turn_cancelled and not self.emission_blocked():
                         await self._finish_agent_hangup(reason=hangup_reason)
                 else:
-                    await self._play_technical_fallback_and_hangup(trigger="runtime_failure")
+                    from server.call.end_call_validate import caller_firm_refusal
+
+                    reason = "firm_refusal" if caller_firm_refusal(text) else "agent_hangup"
+                    if getattr(tts_session, "had_error", False):
+                        await self._record_failed_reply(defect="tts_provider_error")
+                        await self._play_technical_fallback_and_hangup(trigger="tts_failure")
+                    else:
+                        await self._close_after_non_tts_failure(reason=reason, session=tts_session)
             elif not spoke_from_stream and not delivered and self._phase != PHASE_ENDED and not self._closed:
-                await self._play_technical_fallback_and_hangup(trigger="runtime_failure")
+                await self._close_after_non_tts_failure(session=tts_session)
             if self.call_id:
                 pstn_media_flow.emit(self.call_id, "turn_error", "outbound", status="failed", detail=detail)
         finally:
             self._reset_ducking()
             self._set_tts_active(False)
             self._turn_busy = False
+            self._turn_tool_wait = False
             if self._phase not in (PHASE_ENDED, PHASE_INTERRUPTING):
                 self._set_phase(PHASE_LISTENING)
             elif self._phase == PHASE_INTERRUPTING and not self._awaiting_barge_final:
@@ -2496,9 +2757,11 @@ class PstnVoiceLoop:
         speaker: str | None = None,
         language_code: str | None = None,
     ) -> None:
-        if not text or self._closed:
+        if not text or self._closed or self._hangup_started:
             return
         async with self._speak_lock:
+            if self._closed or self._hangup_started:
+                return
             self._active_speak_task = asyncio.current_task()
             await self._flush_stale_outbound_playback(reason="speak")
             self.current_generation_id = uuid.uuid4().hex[:12]

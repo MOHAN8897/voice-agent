@@ -199,6 +199,7 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
         model_tags=payload.get("tags"),
         custom_tags=payload.get("custom_tags"),
         disclosure_status=payload.get("disclosure_status"),
+        agent_failure=bool(call_ledger.read_failed_turns(call_id)),
     )
     outcome_path(call_id).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     _write_call_summary(call_id, payload)

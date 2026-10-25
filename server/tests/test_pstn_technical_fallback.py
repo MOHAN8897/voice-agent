@@ -9,7 +9,7 @@ import pytest
 
 from server.config.constants import constants
 from server.services import pstn_technical_fallback as fallback
-from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop, VoiceProviderUnavailable
 from server.services.pstn_technical_fallback import (
     CALL_BACK,
     CALLBACK_PROMISE,
@@ -61,7 +61,7 @@ def _patch_plan_inputs(monkeypatch, *, config=None, meta=None, transcript=None):
     monkeypatch.setattr(fallback, "_load_tenant_config", loader)
 
 
-async def _plan(*, language="en-IN", direction="outbound", trigger="runtime_failure"):
+async def _plan(*, language="en-IN", direction="outbound", trigger="tts_failure"):
     return await prepare_technical_fallback_plan(
         call_id="call-1",
         tenant_id="tenant-1",
@@ -137,6 +137,32 @@ async def test_global_switch_off_suppresses_audio_and_callback_promise(monkeypat
     assert plan.defect == "announcement_disabled"
     assert plan.callback_task_id is None
     assert loaded == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("trigger", "last_user"),
+    [
+        ("runtime_failure", "Tell me more."),
+        ("tts_failure", "ఇప్పుడైతే ఇంట్రెస్ట్ ఏం లేదండి."),
+        ("tts_failure", "Please don't call me again."),
+    ],
+)
+async def test_callback_promise_is_suppressed_without_tts_failure_or_after_refusal(
+    monkeypatch, trigger, last_user,
+):
+    _patch_plan_inputs(monkeypatch, transcript=[{"role": "user", "text": last_user}])
+    allowed: list[bool] = []
+
+    async def loader(**kwargs):
+        allowed.append(kwargs["promise_allowed"])
+        return TenantFallbackConfig(available=True, promise_callback=kwargs["promise_allowed"])
+
+    monkeypatch.setattr(fallback, "_load_tenant_config", loader)
+    plan = await _plan(trigger=trigger)
+    assert allowed == [False]
+    assert plan.callback_task_id is None
+    assert plan.variant == CALL_BACK
 
 
 def test_fallback_frames_follow_wire_codec():
@@ -286,7 +312,7 @@ async def test_classic_fallback_plays_once_then_closes_with_technical_reason(mon
     close = AsyncMock(return_value=SimpleNamespace(background_task=None))
     monkeypatch.setattr("server.call.close_call_executor.execute_agent_close", close)
 
-    await loop._play_technical_fallback_and_hangup(trigger="runtime_failure")
+    await loop._play_technical_fallback_and_hangup(trigger="tts_failure")
     played = len(wires)
     assert played > 0
     assert {len(frame) for frame in wires[:-1]} == {160}
@@ -296,9 +322,18 @@ async def test_classic_fallback_plays_once_then_closes_with_technical_reason(mon
     assert close.await_args.kwargs["trail_sec"] == FALLBACK_TAIL_SEC
     assert close.await_args.kwargs["spoke_farewell"] is True
 
-    await loop._play_technical_fallback_and_hangup(trigger="runtime_failure")
+    await loop._play_technical_fallback_and_hangup(trigger="tts_failure")
     assert len(wires) == played
     close.assert_awaited_once()
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_classic_outage_clip_rejects_non_tts_trigger():
+    loop = PstnVoiceLoop(session_id="fallback-guard", call_id=None, on_agent_wire=AsyncMock())
+    with pytest.raises(ValueError, match="requires a TTS failure"):
+        await loop._play_technical_fallback_and_hangup(trigger="runtime_failure")
+    assert loop._technical_fallback_played is False
     await loop.close()
 
 
@@ -344,13 +379,16 @@ async def test_classic_greeting_failure_plays_apology_before_raising(monkeypatch
 
 
 @pytest.mark.asyncio
-async def test_stt_terminal_failure_uses_recorded_apology(monkeypatch):
+async def test_stt_terminal_failure_closes_without_speech_outage(monkeypatch):
     loop = PstnVoiceLoop(session_id="stt-failed", call_id=None, on_agent_wire=AsyncMock())
+    close = AsyncMock()
     announce = AsyncMock()
+    monkeypatch.setattr(loop, "_close_after_non_tts_failure", close)
     monkeypatch.setattr(loop, "_play_technical_fallback_and_hangup", announce)
     loop._stt_failed("socket closed")
     await asyncio.sleep(0)
-    announce.assert_awaited_once_with(trigger="stt_failure")
+    close.assert_awaited_once_with()
+    announce.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -442,7 +480,7 @@ async def test_realtime_startup_failure_ends_as_technical_fallback(monkeypatch):
     loop = PstnRealtimeVoiceLoop(session_id="rt-start", call_id=None, on_agent_wire=AsyncMock())
 
     async def failed_start(**_kwargs):
-        raise RuntimeError("provider refused connection")
+        raise VoiceProviderUnavailable("provider refused connection")
 
     announce = AsyncMock(return_value=True)
     disconnect = AsyncMock()
@@ -460,17 +498,50 @@ async def test_realtime_startup_failure_without_clip_propagates_for_bridge_teard
     loop = PstnRealtimeVoiceLoop(session_id="rt-start-none", call_id=None, on_agent_wire=AsyncMock())
 
     async def failed_start(**_kwargs):
-        raise RuntimeError("provider refused connection")
+        raise VoiceProviderUnavailable("provider refused connection")
 
     announce = AsyncMock(return_value=False)
     disconnect = AsyncMock()
     monkeypatch.setattr(loop, "_start_call_inner", failed_start)
     monkeypatch.setattr(loop, "_play_technical_fallback", announce)
     monkeypatch.setattr(loop, "_fast_disconnect_after_farewell", disconnect)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(VoiceProviderUnavailable):
         await loop.start_call(greeting_text="Hello")
     announce.assert_awaited_once()
     disconnect.assert_not_awaited()
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_realtime_local_startup_error_does_not_claim_speech_outage(monkeypatch):
+    loop = PstnRealtimeVoiceLoop(session_id="rt-local-start", call_id=None, on_agent_wire=AsyncMock())
+
+    async def failed_start(**_kwargs):
+        raise RuntimeError("local setup failed")
+
+    announce = AsyncMock(return_value=True)
+    monkeypatch.setattr(loop, "_start_call_inner", failed_start)
+    monkeypatch.setattr(loop, "_play_technical_fallback", announce)
+    with pytest.raises(RuntimeError, match="local setup failed"):
+        await loop.start_call(greeting_text="Hello")
+    announce.assert_not_awaited()
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_native_adapter_connection_rejection_is_classified_as_voice_failure(monkeypatch):
+    from server.realtime.testing import FakeRealtimeVoiceAdapter
+
+    adapter = FakeRealtimeVoiceAdapter()
+    adapter.connect = AsyncMock(side_effect=RuntimeError("provider rejected connection"))
+    loop = PstnRealtimeVoiceLoop(
+        session_id="rt-provider-start", call_id=None, on_agent_wire=AsyncMock(), adapter=adapter,
+    )
+    announce = AsyncMock(return_value=False)
+    monkeypatch.setattr(loop, "_play_technical_fallback", announce)
+    with pytest.raises(VoiceProviderUnavailable):
+        await loop.start_call(play_greeting=False)
+    announce.assert_awaited_once()
     await loop.close()
 
 
@@ -501,4 +572,17 @@ async def test_realtime_runtime_end_falls_back_to_carrier_reason_without_audio(m
     monkeypatch.setattr(loop, "_fast_disconnect_after_farewell", disconnect)
     await loop._runtime_end("provider_failure")
     assert disconnect.await_args.args[0] == "provider_failure"
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_realtime_internal_runtime_error_does_not_claim_speech_outage(monkeypatch):
+    loop = PstnRealtimeVoiceLoop(session_id="rt-internal-end", call_id=None, on_agent_wire=AsyncMock())
+    announce = AsyncMock(return_value=True)
+    disconnect = AsyncMock()
+    monkeypatch.setattr(loop, "_play_technical_fallback", announce)
+    monkeypatch.setattr(loop, "_fast_disconnect_after_farewell", disconnect)
+    await loop._runtime_end("runtime_failure")
+    announce.assert_not_awaited()
+    disconnect.assert_awaited_once_with("runtime_failure", False)
     await loop.close()

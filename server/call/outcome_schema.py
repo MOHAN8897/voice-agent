@@ -55,7 +55,14 @@ TAG_VOCABULARY: dict[str, tuple[str, ...]] = {
     "followup": ("callback", "schedule_pending", "send_info", "send_quote", "site_visit"),
     "contact": ("email_known", "name_known", "phone_known", "preferred_language"),
     "compliance": ("disclosure_delivered", "disclosure_missing", "recording_objected"),
-    "quality": ("inconclusive", "language_mismatch", "poor_audio", "short_call", "tts_failure"),
+    "quality": (
+        "agent_failure",
+        "inconclusive",
+        "language_mismatch",
+        "poor_audio",
+        "short_call",
+        "tts_failure",
+    ),
     "action": ("required", "urgent"),
 }
 
@@ -233,6 +240,7 @@ def derive_status_tags(
     model_tags: Any = None,
     custom_tags: Any = None,
     disclosure_status: str | None = None,
+    agent_failure: bool = False,
 ) -> list[str]:
     """Merge server-derived truth with the model's bounded tag choices.
 
@@ -262,6 +270,8 @@ def derive_status_tags(
         tags.add("signal:objection")
     if normalized == "no_outcome":
         tags.add("quality:inconclusive")
+    if agent_failure:
+        tags.add("quality:agent_failure")
     if disclosure_status == "delivered":
         tags.add("compliance:disclosure_delivered")
     elif disclosure_status == "missing":

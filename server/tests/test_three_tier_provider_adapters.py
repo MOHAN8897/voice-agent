@@ -143,7 +143,7 @@ async def test_sarvam_llm_uses_selected_model_and_emits_terminal_usage(monkeypat
     "lines, message",
     [
         (["data: not-json"], "malformed SSE"),
-        (["data: [DONE]"], "empty response"),
+        (["data: [DONE]"], "did not complete the turn \\(empty\\)"),
     ],
 )
 async def test_sarvam_llm_rejects_malformed_and_empty_streams(monkeypatch, lines, message):

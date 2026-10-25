@@ -17,6 +17,7 @@ SAFE_FIELDS = frozenset({
     "greeting_frames", "greeting_chars", "deferred_frames", "deferred_greeting",
     "play_greeting", "queue_qsize", "queued", "grace_sec", "wait_sec",
     "retry_count", "attempt", "lag_ms", "bidirectional", "timeout_s",
+    "finish_reason", "partial_chars", "output_tokens", "delivered", "retry_used",
 })
 
 

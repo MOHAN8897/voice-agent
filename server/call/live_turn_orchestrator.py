@@ -22,7 +22,9 @@ from server.call.memory_manager import memory_manager
 from server.call.rolling_summary import maybe_refresh_rolling_summary
 from server.call.turn_coordinator import drain, lock_for
 from server.config.env import get_settings
+from server.providers.llm_protocol import IncompleteTurnError
 from server.services.openai_brain_service import generate_response, generate_response_stream
+from server.services.pstn_debug import log_pstn
 from server.services.voice_pipeline_limits import LiveReplyStreamCap, clamp_live_spoken_reply
 from server.utils.logger import log_perf, logger
 
@@ -66,6 +68,33 @@ _SEND_REQUEST = re.compile(
     r"\b(?:send|pamp|పంప|చేయండి|chey)\w*.{0,40}\b(?:email|whatsapp)\b)",
     re.I,
 )
+
+#: Spoken replies are clamped to ~280 chars; this budget only has to cover the
+#: model's structured envelope. 320 tokens truncated Sarvam turns mid-JSON.
+COMPOSED_MIN_OUTPUT_TOKENS = 640
+COMPOSED_RETRY_TOKEN_CEILING = 1600
+_COMPOSED_CONTINUATION_PROMPT = (
+    "Your previous reply stopped mid-turn. Continue it from exactly where it "
+    "stopped, without repeating anything already said or greeting again. "
+    "Finish the thought in one or two short spoken sentences."
+)
+
+
+def _merged_usage(*parts: dict[str, Any] | None) -> dict[str, int]:
+    total: dict[str, int] = {}
+    for part in parts:
+        if not isinstance(part, dict):
+            continue
+        for key in ("input_tokens", "output_tokens", "cached_tokens", "cache_write_tokens"):
+            try:
+                value = int(part.get(key) or 0)
+            except (TypeError, ValueError):
+                value = 0
+            if value:
+                total[key] = total.get(key, 0) + value
+        if total.get("input_tokens") or total.get("output_tokens"):
+            total["total_tokens"] = total.get("input_tokens", 0) + total.get("output_tokens", 0)
+    return total
 
 
 def _should_cap_response(user_text: str) -> bool:
@@ -325,6 +354,7 @@ class LiveTurnOrchestrator:
         reasoning_effort: str | None = None,
         max_output_tokens: int | None = None,
         stt_latency_ms: int | None = None,
+        retry_attempt: bool = False,
     ) -> AsyncIterator[dict[str, Any]]:
         settings = get_settings()
         ctx = call_context.get(call_id) if call_id else None
@@ -340,7 +370,9 @@ class LiveTurnOrchestrator:
         user_seq = 0
         ledger_task: asyncio.Task | None = None
         try:
-            if call_id and settings.enable_call_archive:
+            # A watchdog re-ask repeats the same caller utterance; its first
+            # attempt already owns the single user ledger row.
+            if call_id and settings.enable_call_archive and not retry_attempt:
                 ledger_task = asyncio.create_task(
                     self._safe_append_user(call_id, transcript, stt_latency_ms)
                 )
@@ -397,66 +429,97 @@ class LiveTurnOrchestrator:
             memory_parse_failed = False
             stream_usage: dict[str, Any] = {}
             turn_cancelled_empty = False
-            async for chunk in self._stream_llm(
-                transcript=transcript,
-                language_code=language_code,
-                session_id=session_id,
-                call_id=call_id,
-                user_instructions=user_instructions,
-                business_instructions=business_instructions,
-                response_style=response_style,
-                brain_prompt=brain_prompt,
-                openai_model=openai_model,
-                temperature=temperature,
-                reasoning_effort=reasoning_effort,
-                max_output_tokens=max_output_tokens,
-                memory_projection=projection,
-                rolling_summary=rolling,
-                structured_live_turn=structured,
-                input_messages=input_messages,
-                ctx=ctx,
-            ):
-                if chunk.get("delta") and brain_latency_ms is None:
-                    brain_latency_ms = int((time.perf_counter() - t0) * 1000)
-                if chunk.get("done"):
-                    raw_assistant_text = chunk.get("text") or ""
-                    assistant_text = finalize_live_spoken_text(transcript, raw_assistant_text, ctx=ctx)
-                    memory_update = chunk.get("memory_update") or {"operations": []}
-                    memory_parse_failed = bool(chunk.get("memory_parse_failed"))
-                    if realtime and assistant_text.strip() and not (memory_update.get("operations")):
-                        memory_parse_failed = True
-                    stream_usage = chunk.get("usage") or {}
-                    if chunk.get("cancelled") and not assistant_text.strip():
-                        turn_cancelled_empty = True
-                    gated = dict(chunk)
-                    gated["end_call"] = self._gate_end_call(
-                        chunk.get("end_call"),
-                        transcript=transcript,
-                        language_code=language_code,
-                        call_id=call_id,
-                        spoken_text=assistant_text,
-                    )
-                    if gated["end_call"].get("should_end") and not assistant_text.strip():
-                        assistant_text = str(gated["end_call"].get("farewell") or "").strip()
-                    gated["text"] = assistant_text
-                    yield gated
-                    continue
-                delta = str(chunk.get("delta") or "")
-                if not delta:
-                    yield chunk
-                    continue
-                if cap_reactive:
-                    reactive_raw += delta
-                    visible = cap_reactive_response(transcript, reactive_raw)
-                    new_delta = visible[len(reactive_emitted) :]
-                    reactive_emitted = visible
-                    emit = stream_cap.feed(new_delta)
-                else:
-                    emit = stream_cap.feed(delta)
-                if emit:
-                    guarded = dict(chunk)
-                    guarded["delta"] = emit
-                    yield guarded
+            finish_reason: str | None = None
+            retry_count = 0
+            try:
+                async for chunk in self._stream_llm(
+                    transcript=transcript,
+                    language_code=language_code,
+                    session_id=session_id,
+                    call_id=call_id,
+                    user_instructions=user_instructions,
+                    business_instructions=business_instructions,
+                    response_style=response_style,
+                    brain_prompt=brain_prompt,
+                    openai_model=openai_model,
+                    temperature=temperature,
+                    reasoning_effort=reasoning_effort,
+                    max_output_tokens=max_output_tokens,
+                    memory_projection=projection,
+                    rolling_summary=rolling,
+                    structured_live_turn=structured,
+                    input_messages=input_messages,
+                    ctx=ctx,
+                ):
+                    if chunk.get("delta") and brain_latency_ms is None:
+                        brain_latency_ms = int((time.perf_counter() - t0) * 1000)
+                    if chunk.get("done"):
+                        raw_assistant_text = chunk.get("text") or ""
+                        assistant_text = finalize_live_spoken_text(transcript, raw_assistant_text, ctx=ctx)
+                        finish_reason = str(chunk.get("finish_reason") or "unknown")
+                        retry_count = int(chunk.get("retry_count") or 0)
+                        memory_update = chunk.get("memory_update") or {"operations": []}
+                        memory_parse_failed = bool(chunk.get("memory_parse_failed"))
+                        if realtime and assistant_text.strip() and not (memory_update.get("operations")):
+                            memory_parse_failed = True
+                        stream_usage = chunk.get("usage") or {}
+                        if chunk.get("cancelled") and not assistant_text.strip():
+                            turn_cancelled_empty = True
+                        gated = dict(chunk)
+                        gated["end_call"] = self._gate_end_call(
+                            chunk.get("end_call"),
+                            transcript=transcript,
+                            language_code=language_code,
+                            call_id=call_id,
+                            spoken_text=assistant_text,
+                        )
+                        if gated["end_call"].get("should_end") and not assistant_text.strip():
+                            assistant_text = str(gated["end_call"].get("farewell") or "").strip()
+                        gated["text"] = assistant_text
+                        yield gated
+                        continue
+                    delta = str(chunk.get("delta") or "")
+                    if not delta:
+                        yield chunk
+                        continue
+                    if cap_reactive:
+                        reactive_raw += delta
+                        visible = cap_reactive_response(transcript, reactive_raw)
+                        new_delta = visible[len(reactive_emitted) :]
+                        reactive_emitted = visible
+                        emit = stream_cap.feed(new_delta)
+                    else:
+                        emit = stream_cap.feed(delta)
+                    if emit:
+                        guarded = dict(chunk)
+                        guarded["delta"] = emit
+                        yield guarded
+            except Exception as exc:
+                if ledger_task is not None:
+                    try:
+                        await ledger_task
+                    except Exception:
+                        pass
+                if transcript.strip():
+                    from server.agent.conversation_manager import conversation_manager
+
+                    # The failed turn still belongs to the conversation: the next
+                    # reply must be able to answer what the caller actually said.
+                    conversation_manager.add_user_only(session_id, transcript)
+                self._log_incomplete_turn(call_id=call_id, ctx=ctx, exc=exc)
+                raise
+
+            if finish_reason is not None and call_id:
+                llm = getattr(getattr(ctx, "resolved_stack", None), "llm", None)
+                log_pstn(
+                    "llm.finish",
+                    call_id=call_id,
+                    provider=getattr(llm, "provider", None),
+                    model=getattr(llm, "model", None),
+                    finish_reason=finish_reason,
+                    retry_count=retry_count,
+                    output_tokens=int(stream_usage.get("output_tokens") or 0),
+                )
 
             if ledger_task is not None:
                 user_line = await ledger_task
@@ -494,12 +557,31 @@ class LiveTurnOrchestrator:
                         rolling=rolling,
                         memory_parse_failed=memory_parse_failed,
                         usage=stream_usage,
+                        finish_reason=finish_reason,
                         skip_live_memory=False,
                     )
                 )
         finally:
             if turn_lock and turn_lock.locked():
                 turn_lock.release()
+
+    @staticmethod
+    def _log_incomplete_turn(*, call_id: str | None, ctx: Any, exc: Exception) -> None:
+        finish_reason = getattr(exc, "finish_reason", None)
+        if not call_id or not finish_reason:
+            return
+        llm = getattr(getattr(ctx, "resolved_stack", None), "llm", None)
+        log_pstn(
+            "llm.finish",
+            call_id=call_id,
+            provider=getattr(llm, "provider", None),
+            model=getattr(llm, "model", None),
+            finish_reason=str(finish_reason),
+            retry_count=1 if getattr(exc, "retry_used", False) else 0,
+            retry_used=bool(getattr(exc, "retry_used", False)),
+            partial_chars=len(getattr(exc, "partial_text", "") or ""),
+            delivered=False,
+        )
 
     async def handle_user_turn(self, **kwargs: Any) -> dict[str, Any]:
         settings = get_settings()
@@ -658,6 +740,7 @@ class LiveTurnOrchestrator:
                 yield {"delta": farewell}
                 yield {"done": True, "text": farewell,
                        "end_call": {"should_end": True, "reason": decision.reason, "farewell": farewell},
+                       "finish_reason": "rule_close",
                        "usage": {}, "memory_update": {"operations": []}, "memory_parse_failed": False}
                 return
         from server.realtime.manager import realtime_text_manager
@@ -780,7 +863,21 @@ class LiveTurnOrchestrator:
                     else:
                         first_events.append(chunk)
                 if first_done is None:
-                    raise RuntimeError("The selected composed text model returned an incomplete turn")
+                    raise IncompleteTurnError(
+                        provider=llm_sel.provider,
+                        finish_reason="empty_stream",
+                    )
+                log_pstn(
+                    "llm.finish",
+                    call_id=call_id,
+                    provider=llm_sel.provider,
+                    model=llm_sel.model,
+                    finish_reason=str(first_done.get("finish_reason") or "tool_calls"),
+                    retry_count=0,
+                    output_tokens=int(
+                        (first_done.get("usage") or {}).get("output_tokens") or 0
+                    ),
+                )
                 tool_calls = first_done.get("tool_calls")
                 if not isinstance(tool_calls, list) or not tool_calls:
                     for event in first_events:
@@ -788,6 +885,9 @@ class LiveTurnOrchestrator:
                     yield first_done
                     return
 
+                # Tools have side effects. A turn waiting on them must not be
+                # re-asked by the PSTN watchdog, and must not be retried here.
+                yield {"status": "tool_wait"}
                 tool_messages = await self._execute_composed_tools(
                     ctx=ctx,
                     messages=messages,
@@ -800,10 +900,14 @@ class LiveTurnOrchestrator:
                 # Keep them present while forbidding a second execution round.
                 final_kwargs["tools"] = tool_schemas
                 final_kwargs["tool_choice"] = "none"
-                async for chunk in adapter.stream_structured_turn(
-                    input_messages=tool_messages,
+                async for chunk in self._stream_composed_turn(
+                    stream_fn=adapter.stream_structured_turn,
+                    messages=tool_messages,
                     schema=LIVE_TURN_JSON_SCHEMA,
-                    **final_kwargs,
+                    stream_kwargs=final_kwargs,
+                    call_id=call_id,
+                    provider=llm_sel.provider,
+                    model=llm_sel.model,
                 ):
                     record_request_usage(chunk)
                     if chunk.get("tool_calls"):
@@ -811,10 +915,14 @@ class LiveTurnOrchestrator:
                     yield chunk
                 return
             stream_fn = adapter.stream_structured_turn if schema else adapter.stream_live_turn
-            async for chunk in stream_fn(
-                input_messages=messages,
+            async for chunk in self._stream_composed_turn(
+                stream_fn=stream_fn,
+                messages=messages,
                 schema=schema,
-                **stream_kwargs,
+                stream_kwargs=stream_kwargs,
+                call_id=call_id,
+                provider=llm_sel.provider,
+                model=llm_sel.model,
             ):
                 record_request_usage(chunk)
                 yield chunk
@@ -855,6 +963,110 @@ class LiveTurnOrchestrator:
         direct_kwargs = {k: v for k, v in stream_kwargs.items() if k != "model"}
         async for chunk in generate_response_stream(**direct_kwargs):
             yield chunk
+
+    async def _stream_composed_turn(
+        self,
+        *,
+        stream_fn: Any,
+        messages: list[dict[str, Any]] | None,
+        schema: dict[str, Any] | None,
+        stream_kwargs: dict[str, Any],
+        call_id: str | None,
+        provider: str,
+        model: str,
+    ) -> AsyncIterator[dict[str, Any]]:
+        """Stream one composed reply; an early stop gets exactly one larger retry."""
+        try:
+            base_cap = int(stream_kwargs.get("max_output_tokens") or 0)
+        except (TypeError, ValueError):
+            base_cap = 0
+        base_cap = max(base_cap, COMPOSED_MIN_OUTPUT_TOKENS)
+        retry_cap = min(base_cap * 2, COMPOSED_RETRY_TOKEN_CEILING)
+        spoken: list[str] = []
+        usage: dict[str, int] = {}
+        attempt = 1
+        while True:
+            attempt_spoken: list[str] = []
+            retry_used = attempt > 1
+            kwargs = dict(stream_kwargs)
+            kwargs["max_output_tokens"] = retry_cap if retry_used else base_cap
+            attempt_messages = messages
+            partial = "".join(spoken).strip()
+            if retry_used and partial and messages:
+                # Continue after speech the caller already heard instead of
+                # repeating the whole reply with a larger budget.
+                attempt_messages = [
+                    *messages,
+                    {"role": "assistant", "content": partial},
+                    {"role": "user", "content": _COMPOSED_CONTINUATION_PROMPT},
+                ]
+            done: dict[str, Any] | None = None
+            try:
+                async for chunk in stream_fn(
+                    input_messages=attempt_messages,
+                    schema=schema,
+                    **kwargs,
+                ):
+                    if chunk.get("done"):
+                        done = chunk
+                        break
+                    delta = str(chunk.get("delta") or "")
+                    if delta:
+                        attempt_spoken.append(delta)
+                    yield chunk
+                if done is None:
+                    raise IncompleteTurnError(
+                        provider=provider,
+                        finish_reason="empty_stream",
+                        partial_text="".join(attempt_spoken),
+                    )
+            except IncompleteTurnError as exc:
+                attempt_text = (exc.partial_text or "".join(attempt_spoken)).strip()
+                prior_text = "".join(spoken).strip()
+                spoken.extend(attempt_spoken)
+                usage = _merged_usage(usage, exc.usage)
+                log_pstn(
+                    "llm.incomplete",
+                    call_id=call_id,
+                    provider=provider,
+                    model=model,
+                    finish_reason=exc.finish_reason,
+                    retry_count=1 if retry_used else 0,
+                    retry_used=retry_used,
+                    partial_chars=len((exc.partial_text or "".join(spoken)).strip()),
+                )
+                can_continue = bool(attempt_text or "".join(spoken).strip())
+                if retry_used or not exc.retryable or (can_continue and not messages):
+                    # Keep every partial the caller heard, across both attempts.
+                    exc.partial_text = " ".join(
+                        part for part in (prior_text, attempt_text) if part
+                    )
+                    exc.retry_used = retry_used
+                    raise
+                attempt += 1
+                continue
+
+            done_text = str(done.get("text") or "").strip() or "".join(attempt_spoken).strip()
+            combined = " ".join(
+                part for part in ("".join(spoken).strip(), done_text.strip()) if part
+            ).strip()
+            if not combined:
+                raise IncompleteTurnError(
+                    provider=provider,
+                    finish_reason="empty",
+                    usage=_merged_usage(
+                        usage,
+                        done.get("usage") if isinstance(done.get("usage"), dict) else {},
+                    ),
+                )
+            done["usage"] = _merged_usage(
+                usage, done.get("usage") if isinstance(done.get("usage"), dict) else {}
+            )
+            done["text"] = combined
+            done["finish_reason"] = str(done.get("finish_reason") or "stop")
+            done["retry_count"] = attempt - 1
+            yield done
+            return
 
     async def _load_composed_tenant_tools(self, ctx) -> list[dict[str, Any]]:
         """Load only this active tenant/agent's permitted in-call tool schemas."""
@@ -1048,6 +1260,7 @@ class LiveTurnOrchestrator:
         rolling: str | None = None,
         memory_parse_failed: bool = False,
         usage: dict[str, Any] | None = None,
+        finish_reason: str | None = None,
         skip_live_memory: bool = False,
     ) -> None:
         try:
@@ -1117,6 +1330,7 @@ class LiveTurnOrchestrator:
             "cached_tokens": int((usage or {}).get("cached_tokens") or 0),
             "cache_write_tokens": int((usage or {}).get("cache_write_tokens") or 0),
             "memory_ops_proposed": len(ops),
+            "finish_reason": finish_reason or "unknown",
         }
         await call_ledger.append_trace_turn(call_id, turn)
         ctx = call_context.get(call_id)

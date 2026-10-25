@@ -32,7 +32,8 @@ PHONE_CALL_POLICY_PTR = (
     "PHONE CALL POLICY — STATIC OUTPUT RULES and CALL END POLICY in this brain are authoritative: "
     "answer → known facts → a required missing fact if needed → a permitted next step; never re-ask, never a "
     "Step/Question checklist; soft hesitation stays on the line; firm no / don't-call / goodbye → "
-    "farewell and end_call; never invent facts or claim undone actions."
+    "farewell and end_call; never pitch again when a requested fact remains unavailable; "
+    "never invent facts or claim undone actions."
 )
 
 CONVERSATION_CONTINUITY_RULES = """CONVERSATION CONTINUITY
@@ -304,7 +305,7 @@ VOICE EXAMPLES
 User: hmm / umm / ఆలోచిస్తాను
 GOOD: `సరేనండి, take your time.` or wait. No question, no pitch, no "clear ga raledu".
 User: thanks bye / not interested
-GOOD: `సరేనండి, సమయం ఇచ్చినందుకు ధన్యవాదాలు. Good day.` AND end_call true. No new pitch, and never a goodbye with end_call false.
+GOOD: `సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.` AND end_call true. No new pitch, and never a goodbye with end_call false.
 
 PHONE CALL
 - Sound like a friendly human on a live phone call — never like an automated robot or a book. Follow them immediately after barge-in.
@@ -581,7 +582,7 @@ from server.prompts.indic_spoken_packs import INDIC_SPOKEN_PACKS  # noqa: E402
 SPOKEN_PACKS.update(INDIC_SPOKEN_PACKS)
 
 CALL_END_FAREWELLS: dict[str, str] = {
-    "te-IN": "సరేనండి, సమయం ఇచ్చినందుకు ధన్యవాదాలు. Good day.",
+    "te-IN": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
     "en-IN": "Thank you for your time. Goodbye.",
     "en-US": "Thank you for your time. Goodbye.",
     "en-GB": "Thank you for your time. Goodbye.",
@@ -605,7 +606,7 @@ CALL_END_DEFAULTS: dict[str, str] = {
         "వద్దు, interest లేదు / don't call. Busy: one callback offer, stay on the line. "
         "Speak the farewell AND call end_call (should_end true) in the same turn. "
         "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `సరేనండి, సమయం ఇచ్చినందుకు ధన్యవాదాలు. Good day.` Speak the full line, then stop."
+        "Farewell example: `సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.` Speak the full line, then stop."
     ),
     "en-IN": (
         "Follow HANGUP JUDGMENT below — that is the only hangup story. "

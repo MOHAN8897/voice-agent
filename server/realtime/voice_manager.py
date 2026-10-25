@@ -15,6 +15,10 @@ from server.utils.logger import logger
 AdapterFactory = Callable[[], Any]
 
 
+class RealtimeVoiceConnectionError(RuntimeError):
+    """The selected voice provider rejected its audio session."""
+
+
 class RealtimeVoiceManager:
     def __init__(self, adapter_factory: AdapterFactory | None = None) -> None:
         self._sessions: dict[str, Any] = {}
@@ -79,9 +83,12 @@ class RealtimeVoiceManager:
 
                 if "input_transcription_enabled" in inspect.signature(session.connect).parameters:
                     connect_kwargs["input_transcription_enabled"] = tx_policy.openai_session_input_transcription()
-            await session.connect(**connect_kwargs)
-            if wait_ready and hasattr(session, "wait_ready"):
-                await session.wait_ready()
+            try:
+                await session.connect(**connect_kwargs)
+                if wait_ready and hasattr(session, "wait_ready"):
+                    await session.wait_ready()
+            except Exception as exc:
+                raise RealtimeVoiceConnectionError(str(exc)) from exc
             logger.info("[REALTIME_VOICE] session started call=%s model=%s", call_id, live_model)
         except Exception:
             self._sessions.pop(call_id, None)

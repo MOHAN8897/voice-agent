@@ -195,7 +195,8 @@ async def test_gemini_stream_structured_turn_and_memory(monkeypatch):
                             )
                         }
                     ]
-                }
+                },
+                "finishReason": "STOP",
             }
         ],
         "usageMetadata": {

@@ -528,6 +528,17 @@ async def prepare_technical_fallback_plan(
 
     meta = _read_meta(call_id)
     transcript = _read_transcript(call_id)
+    from server.call.end_call_validate import caller_firm_refusal, caller_requested_hangup
+
+    last_user = next(
+        (str(row.get("text") or "") for row in reversed(transcript) if row.get("role") == "user"),
+        "",
+    )
+    callback_allowed = (
+        trigger in {"tts_failure", "farewell_tts_failure"}
+        and not caller_firm_refusal(last_user)
+        and not caller_requested_hangup(last_user)
+    )
     admitted_language = _normalize_language(language) or _DEFAULT_LANGUAGE
     target = callback_target(meta, direction)
     outage = await load_speech_outage_config()
@@ -550,7 +561,7 @@ async def prepare_technical_fallback_plan(
         agent_id=agent_id,
         call_id=call_id,
         target=target,
-        promise_allowed=outage.promise_callback,
+        promise_allowed=outage.promise_callback and callback_allowed,
     )
 
     variant = CALLBACK_PROMISE if config.callback_created else CALL_BACK

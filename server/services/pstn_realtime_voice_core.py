@@ -85,6 +85,10 @@ PENDING_HANGUP_STUCK_SEC = 8.0
 _BACKGROUND_HANGUP_TASKS: set[asyncio.Task] = set()
 
 
+class VoiceProviderUnavailable(RuntimeError):
+    """The native voice provider could not open an audio session."""
+
+
 def _transcription_policy_for_stack(stack: dict[str, Any] | None):
     from server.services.transcription_policy import transcription_policy_from_stack
 
@@ -1827,10 +1831,9 @@ class PstnRealtimeVoiceLoop:
             )
         except asyncio.CancelledError:
             raise
-        except Exception:
-            # The carrier leg is already answered; a failed provider/setup must
-            # not end in silence. The recorded clip does not need the provider.
-            if not self._closed:
+        except Exception as exc:
+            # Local setup failures are not evidence of a speech-provider outage.
+            if isinstance(exc, VoiceProviderUnavailable) and not self._closed:
                 try:
                     if await self._play_technical_fallback():
                         await self._fast_disconnect_after_farewell("technical_fallback", True)
@@ -1870,7 +1873,7 @@ class PstnRealtimeVoiceLoop:
             except Exception:
                 pass
 
-        from server.realtime.voice_manager import realtime_voice_manager
+        from server.realtime.voice_manager import RealtimeVoiceConnectionError, realtime_voice_manager
         adopted = realtime_voice_manager.get(self.call_id)
         prepared_tools = getattr(adopted, "pstn_prewarm_tools", None)
         tenant_tool_schemas: list[dict[str, Any]] = list(prepared_tools or [])
@@ -1905,7 +1908,6 @@ class PstnRealtimeVoiceLoop:
         brain = self._compiled_brain()
         cfg = realtime_voice_config(self.stack_override)
         from server.call.call_context import get as get_ctx
-        from server.realtime.voice_manager import realtime_voice_manager
         from server.services.runtime_settings import runtime_settings
 
         ctx = get_ctx(self.call_id) if self.call_id else None
@@ -1958,19 +1960,22 @@ class PstnRealtimeVoiceLoop:
         if adapter is None and self.call_id:
             adapter = realtime_voice_manager.get(self.call_id)
         if adapter is None:
-            adapter = await realtime_voice_manager.create(
-                self.call_id or f"voice-{uuid.uuid4().hex[:10]}",
-                instructions=instructions,
-                compiled_brain=brain,
-                model=model,
-                language=language,
-                voice=cfg["voice"],
-                turn_detection=cfg["turn_detection"],
-                stack_override=self.stack_override,
-                max_output_tokens=max_output_tokens,
-                wait_ready=True,
-                extra_tools=tenant_tool_schemas,
-            )
+            try:
+                adapter = await realtime_voice_manager.create(
+                    self.call_id or f"voice-{uuid.uuid4().hex[:10]}",
+                    instructions=instructions,
+                    compiled_brain=brain,
+                    model=model,
+                    language=language,
+                    voice=cfg["voice"],
+                    turn_detection=cfg["turn_detection"],
+                    stack_override=self.stack_override,
+                    max_output_tokens=max_output_tokens,
+                    wait_ready=True,
+                    extra_tools=tenant_tool_schemas,
+                )
+            except RealtimeVoiceConnectionError as exc:
+                raise VoiceProviderUnavailable("Native voice session was rejected") from exc
         else:
             warm = _existing_adapter_instructions(adapter)
             # Gemini system instructions and tools are immutable after setup. At answer
@@ -2001,8 +2006,11 @@ class PstnRealtimeVoiceLoop:
 
                 if "input_transcription_enabled" in inspect.signature(adapter.connect).parameters:
                     connect_kw["input_transcription_enabled"] = input_transcription
-                await adapter.connect(**connect_kw)
-                await adapter.wait_ready()
+                try:
+                    await adapter.connect(**connect_kw)
+                    await adapter.wait_ready()
+                except Exception as exc:
+                    raise VoiceProviderUnavailable("Native voice session was rejected") from exc
             else:
                 warm = _existing_adapter_instructions(adapter)
                 updater = getattr(adapter, "update_instructions", None)
@@ -2310,7 +2318,7 @@ class PstnRealtimeVoiceLoop:
                 call_ledger.write_meta(self.call_id, meta)
             except Exception as exc:
                 log_pstn("runtime.disconnect_diagnostics_failed", error_type=type(exc).__name__)
-        if reason in {"provider_failure", "response_failure", "runtime_failure"}:
+        if reason in {"provider_failure", "response_failure"}:
             # The apology is best-effort. A failure here must never keep the
             # caller connected after the runtime has already given up.
             try:
@@ -4514,10 +4522,9 @@ class PstnRealtimeVoiceLoop:
                 timeout_sec=playback_cap,
                 wait_for_start_sec=wait_start,
             )
-            if not heard and not spoke:
-                # The farewell never produced audio. Replace it with the same
-                # recorded apology used for runtime failures instead of hanging
-                # up silently.
+            if not heard and not spoke and self._pending_end_call and farewell_required:
+                # Only an explicitly requested farewell with missing voice output
+                # can use the recorded speech-failure announcement.
                 log_pstn("hangup.farewell_missing", call_id=self.call_id)
                 try:
                     if await self._play_technical_fallback(trigger="farewell_tts_failure"):

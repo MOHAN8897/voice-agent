@@ -13,6 +13,7 @@ import httpx
 from server.call.live_turn_schema import SpokenResponseExtractor
 from server.config.env import get_settings
 from server.providers.base import LLMConfig
+from server.providers.llm_protocol import IncompleteTurnError
 from server.providers.openai_messages import message_text, openai_input_to_gemini
 from server.services.dev_secrets_store import dev_secrets_store
 from server.utils.logger import log_brain, log_error
@@ -304,6 +305,7 @@ class GeminiLLMAdapter:
         legacy_response: dict[str, Any] | None = None
         seen_ids: set[str] = set()
         completed = False
+        finish_reason: str | None = None
         url = f"{_GEMINI_BASE}/{model}:streamGenerateContent"
         timeout = max(15.0, settings.request_timeout_ms / 1000)
         try:
@@ -337,10 +339,7 @@ class GeminiLLMAdapter:
                             usage = gemini_usage_from_metadata(meta)
                         candidates = payload.get("candidates") or []
                         candidate = candidates[0] if candidates and isinstance(candidates[0], dict) else {}
-                        if candidate.get("finishReason") not in (None, "STOP"):
-                            raise RuntimeError("Gemini did not complete the requested turn")
-                        if candidate.get("finishReason") == "STOP":
-                            completed = True
+                        stop_reason = str(candidate.get("finishReason") or "").strip().upper()
                         content = candidate.get("content") or {}
                         for part in content.get("parts") or []:
                             if not isinstance(part, dict):
@@ -368,26 +367,59 @@ class GeminiLLMAdapter:
                             tool_calls.append({"id": identifier, "type": "function", "function": {
                                 "name": name, "arguments": json.dumps(arguments, ensure_ascii=False)}})
                         delta = _chunk_text(payload)
-                        if not delta:
-                            continue
-                        if extractor is not None:
-                            spoken = extractor.feed(delta)
-                        else:
-                            plain_parts.append(delta)
-                            spoken = delta
-                        if spoken and not declarations:
-                            yield {"delta": spoken, "language_context": {}}
+                        if delta:
+                            if extractor is not None:
+                                spoken = extractor.feed(delta)
+                            else:
+                                plain_parts.append(delta)
+                                spoken = delta
+                            if spoken and not declarations:
+                                yield {"delta": spoken, "language_context": {}}
+                        if stop_reason:
+                            finish_reason = stop_reason.lower()
+                            if stop_reason == "STOP":
+                                completed = True
+                            else:
+                                # Text in this final candidate was already spoken above.
+                                raise IncompleteTurnError(
+                                    provider=self.provider_id,
+                                    finish_reason=finish_reason,
+                                    partial_text=(
+                                        extractor.spoken_text
+                                        if extractor is not None
+                                        else "".join(plain_parts)
+                                    ),
+                                    usage=usage,
+                                )
         except Exception as e:
             log_error("Gemini stream failed", error_type=type(e).__name__, model=model)
             raise
 
+        if not completed and not tool_calls:
+            raise IncompleteTurnError(
+                provider=self.provider_id,
+                finish_reason=finish_reason or "no_finish_reason",
+                partial_text=(
+                    extractor.spoken_text if extractor is not None else "".join(plain_parts)
+                ),
+                usage=usage,
+            )
+
         if tool_calls:
             if not completed:
-                raise RuntimeError("Gemini function response was interrupted before completion")
+                raise IncompleteTurnError(
+                    provider=self.provider_id,
+                    finish_reason=finish_reason or "interrupted",
+                    partial_text=(
+                        extractor.spoken_text if extractor is not None else "".join(plain_parts)
+                    ),
+                    usage=usage,
+                )
             if legacy_response is not None:
                 raise RuntimeError("Gemini combined a final response with an unfinished action")
             yield {"done": True, "text": "", "language_context": {}, "usage": usage,
                 "tool_calls": tool_calls, "_gemini_content": {"role": "model", "parts": native_parts},
+                "finish_reason": finish_reason or "stop",
                 "memory_update": {"operations": []}, "memory_parse_failed": False,
                 "end_call": {"should_end": False, "reason": "none", "farewell": ""}}
             return
@@ -412,7 +444,12 @@ class GeminiLLMAdapter:
             memory_parse_failed = False
             end_call = {"should_end": False, "reason": "none", "farewell": ""}
         if not full_text or (declarations and memory_parse_failed):
-            raise RuntimeError("Gemini returned an empty or incomplete spoken response")
+            raise IncompleteTurnError(
+                provider=self.provider_id,
+                finish_reason="empty" if not full_text else "incomplete_schema",
+                partial_text=full_text,
+                usage=usage,
+            )
         if declarations:
             yield {"delta": full_text, "language_context": {}}
 
@@ -444,6 +481,7 @@ class GeminiLLMAdapter:
             "text": full_text,
             "language_context": {},
             "usage": usage,
+            "finish_reason": finish_reason or "stop",
             "memory_update": memory_update,
             "memory_parse_failed": memory_parse_failed,
             "end_call": end_call,

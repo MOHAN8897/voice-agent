@@ -40,6 +40,22 @@ interface CallRow {
     ttsInr: number | null;
     otherInr: number | null;
   };
+  agentFailureCount?: number;
+  agentFailureLast?: AgentFailure | null;
+  statusTags?: string[];
+}
+
+interface AgentFailure {
+  at?: string | null;
+  finish_reason?: string | null;
+  error_type?: string | null;
+  error?: string | null;
+  retry_used?: boolean | null;
+  watchdog_retry?: boolean | null;
+  tool_wait?: boolean | null;
+  delivered?: boolean | null;
+  partial_text?: string | null;
+  transcript?: string | null;
 }
 
 interface StageComponent {
@@ -121,6 +137,9 @@ interface CallDetail {
     other: { costInr: number | null; costUsd: number | null };
   };
   margin: { inr: number | null; usd: number | null; percent: number | null };
+  statusTags?: string[];
+  agentFailureCount?: number;
+  agentFailures?: AgentFailure[];
   transcriptSummary?: string | null;
 }
 
@@ -422,6 +441,18 @@ export function GlobalCallsWorkbench() {
                         <span className="rounded bg-accent-primary/10 px-2 py-0.5">
                           #{call.shortId}
                         </span>
+                        {(call.agentFailureCount ?? 0) > 0 && (
+                          <p
+                            className="mt-1 inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-medium text-rose-300"
+                            title={
+                              call.agentFailureLast?.finish_reason
+                                ? `Agent failure · stop reason: ${call.agentFailureLast.finish_reason}`
+                                : "Agent failure — open the cost audit for detail"
+                            }
+                          >
+                            Agent failure{call.agentFailureCount! > 1 ? ` ×${call.agentFailureCount}` : ""}
+                          </p>
+                        )}
                       </td>
 
                       <td className="px-4 py-3">
@@ -768,6 +799,101 @@ export function GlobalCallsWorkbench() {
                       </p>
                     </div>
                   </div>
+                </div>
+
+                {/* Agent Failures */}
+                <div className="rounded-xl border border-surface-border-subtle bg-surface-raised/20 p-4 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+                      Agent Failures
+                    </h4>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
+                        (detail.agentFailureCount ?? 0) > 0
+                          ? "border-rose-500/30 bg-rose-500/10 text-rose-300"
+                          : "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
+                      }`}
+                    >
+                      {(detail.agentFailureCount ?? 0) > 0
+                        ? `${detail.agentFailureCount} failed turn${detail.agentFailureCount === 1 ? "" : "s"}`
+                        : "No agent failures"}
+                    </span>
+                  </div>
+
+                  {(detail.agentFailures ?? []).length === 0 ? (
+                    <p className="text-xs text-text-subtle">
+                      Every generated turn finished. Stop reasons are still recorded in the call trace.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {(detail.agentFailures ?? []).map((failure, index) => (
+                        <div
+                          key={`${failure.at || "failure"}-${index}`}
+                          className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-3 text-xs space-y-1.5"
+                        >
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-[11px] text-text-subtle">
+                              {failure.at ? new Date(failure.at).toLocaleTimeString() : `Turn ${index + 1}`}
+                            </span>
+                            <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-300">
+                              stop: {failure.finish_reason || "unknown"}
+                            </span>
+                            {failure.error_type && (
+                              <span className="rounded-full border border-surface-border bg-surface-raised px-2 py-0.5 font-mono text-[10px] text-text-muted">
+                                {failure.error_type}
+                              </span>
+                            )}
+                            {failure.retry_used && (
+                              <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
+                                retried
+                              </span>
+                            )}
+                            {failure.watchdog_retry && (
+                              <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
+                                silence watchdog
+                              </span>
+                            )}
+                            {failure.tool_wait && (
+                              <span className="rounded-full border border-sky-500/25 bg-sky-500/10 px-2 py-0.5 text-[10px] text-sky-300">
+                                during tool call
+                              </span>
+                            )}
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[10px] ${
+                                failure.delivered
+                                  ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
+                                  : "border-rose-500/25 bg-rose-500/10 text-rose-300"
+                              }`}
+                            >
+                              {failure.finish_reason === "watchdog_timeout"
+                                ? failure.delivered
+                                  ? "recovered after silence"
+                                  : "silence, no reply"
+                                : failure.delivered
+                                ? "audio delivered"
+                                : "no audio delivered"}
+                            </span>
+                          </div>
+                          {failure.error && (
+                            <p className="font-mono text-[11px] text-rose-200/90 break-words">{failure.error}</p>
+                          )}
+                          {failure.transcript && (
+                            <p className="text-text-muted">
+                              Caller: <span className="text-text">“{failure.transcript}”</span>
+                            </p>
+                          )}
+                          {failure.partial_text && (
+                            <p className="text-text-muted">
+                              Partial reply: <span className="text-text">“{failure.partial_text}”</span>
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                      <p className="text-[11px] text-text-subtle">
+                        Failed turns are kept for audit and tagged quality:agent_failure on the call record.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </>
             ) : null}

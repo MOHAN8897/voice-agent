@@ -109,6 +109,27 @@ async def test_provider_failure_leaves_voice_retryable():
 
 
 @pytest.mark.asyncio
+async def test_hangup_without_pending_farewell_does_not_claim_speech_outage():
+    loop = voice()
+    loop._play_technical_fallback = AsyncMock(return_value=True)
+    await loop._finish_hangup()
+    loop._play_technical_fallback.assert_not_awaited()
+    loop._on_remote_hangup.assert_awaited_once()
+    await loop._background_hangup_task
+
+
+@pytest.mark.asyncio
+async def test_explicit_farewell_without_provider_audio_can_use_speech_fallback():
+    loop = voice()
+    loop._pending_end_call = {"reason": "goodbye", "farewell_required": True}
+    loop._play_technical_fallback = AsyncMock(return_value=True)
+    loop._fast_disconnect_after_farewell = AsyncMock()
+    await loop._finish_hangup()
+    loop._play_technical_fallback.assert_awaited_once_with(trigger="farewell_tts_failure")
+    loop._fast_disconnect_after_farewell.assert_awaited_once_with("technical_fallback", True)
+
+
+@pytest.mark.asyncio
 async def test_slow_archive_and_notice_do_not_delay_disconnect():
     loop = voice()
     blocked = asyncio.Event()

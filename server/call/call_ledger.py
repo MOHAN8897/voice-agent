@@ -108,6 +108,9 @@ class CallLedger:
     def trace_path(self, call_id: str) -> Path:
         return call_dir(call_id) / "trace.json"
 
+    def failed_turns_path(self, call_id: str) -> Path:
+        return call_dir(call_id) / "failed_turns.jsonl"
+
     async def init(self, call_id: str, meta: dict[str, Any]) -> None:
         directory = call_dir(call_id)
         directory.mkdir(parents=True, exist_ok=True)
@@ -508,6 +511,27 @@ class CallLedger:
                 json.dumps(trace, ensure_ascii=False, indent=2),
                 encoding="utf-8",
             )
+
+    async def append_failed_turn(self, call_id: str, turn: dict[str, Any]) -> None:
+        async with _lock(call_id):
+            path = self.failed_turns_path(call_id)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(turn, ensure_ascii=False) + "\n")
+
+    def read_failed_turns(self, call_id: str) -> list[dict[str, Any]]:
+        path = self.failed_turns_path(call_id)
+        if not path.exists():
+            return []
+        records: list[dict[str, Any]] = []
+        for line in path.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(row, dict):
+                records.append(row)
+        return records
 
     def reset_for_tests(self) -> None:
         _locks.clear()

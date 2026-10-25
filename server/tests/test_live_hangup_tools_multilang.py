@@ -1,6 +1,8 @@
 """Live hangup tools — parser + gate across languages (tool-sourced trust)."""
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from server.call.end_call_validate import caller_firm_refusal, validate_end_call
@@ -50,6 +52,34 @@ def test_parse_live_hangup_tool_end_call_alias():
 def test_telugu_refusal_regex_repair_path():
     user = "అంటే ప్రస్తుతానికి నాకు ఏ ఇంట్రెస్ట్ లేదు. నాకు బైక్ బాగానే ఉంది ప్రస్తుతానికి."
     assert caller_firm_refusal(user)
+
+
+def test_telugu_polite_no_interest_with_intervening_word_is_firm_refusal():
+    assert caller_firm_refusal("అదే మొత్తం ఇప్పుడే ప్రొసీజర్ నాకు ఇప్పుడైతే ఇంట్రెస్ట్ ఏం లేదండి.")
+    assert not caller_firm_refusal("ఇంట్రెస్ట్ ఏం లేదండి అని మీరు అడుగుతున్నారా?")
+
+
+@pytest.mark.asyncio
+async def test_call_58102ce4_refusal_closes_before_requesting_an_llm_reply():
+    from server.call.live_turn_orchestrator import live_turn_orchestrator
+
+    ctx = SimpleNamespace(
+        status="active", agent_hangup_armed=False, barge_in_flight=False,
+        last_stt_partial_at=None, call_end_policy=None,
+        callback_request_text="", callback_close_phase="idle",
+    )
+    chunks = [
+        chunk async for chunk in live_turn_orchestrator._stream_llm(
+            ctx=ctx,
+            transcript="అదే మొత్తం ఇప్పుడే ప్రొసీజర్ నాకు ఇప్పుడైతే ఇంట్రెస్ట్ ఏం లేదండి.",
+            language_code="te-IN",
+        )
+    ]
+    assert len(chunks) == 2
+    assert chunks[-1]["finish_reason"] == "rule_close"
+    assert chunks[-1]["end_call"]["reason"] == "firm_refusal"
+    assert chunks[-1]["text"] == chunks[0]["delta"]
+    assert "నమస్కారం" in chunks[-1]["text"]
 
 
 def test_telugu_tool_trust_without_latin_refusal_regex():

@@ -102,6 +102,12 @@ def test_sentence_and_output_limits_survive_in_the_static_rules():
     assert str(LIVE_REPLY_MAX_CHARS) in static
 
 
+def test_repeated_unavailable_fact_rule_survives_compilation():
+    static = _brain().split("--- STATIC OUTPUT RULES ---", 1)[1]
+    assert "If the caller repeats a question you cannot answer" in static
+    assert "without another pitch" in static
+
+
 def test_outbound_numbering_rules_still_ship():
     """The 'dialed number already known' rule must survive the pack trim."""
     pack = _brain().split("--- SPOKEN LANGUAGE (te-IN) ---", 1)[1]

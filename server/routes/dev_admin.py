@@ -2032,6 +2032,7 @@ async def list_admin_calls(
                 Call.created_at,
                 Call.ended_at,
                 Call.end_reason,
+                Call.status_tags,
                 Tenant.name.label("tenant_name"),
                 Agent.name.label("agent_name"),
             )
@@ -2116,6 +2117,7 @@ async def list_admin_calls(
             )
             supplier = costs["supplier"]
             stages = supplier["stages"]
+            failure_last = meta.get("agent_failure_last") if isinstance(meta.get("agent_failure_last"), dict) else {}
 
             calls_data.append({
                 "callId": cid_str,
@@ -2145,6 +2147,9 @@ async def list_admin_calls(
                 "retailRateSource": costs["retail"]["source"],
                 "carrierCostStatus": supplier["carrier"]["status"],
                 "fxRateInr": costs["fxRateInr"],
+                "agentFailureCount": int(meta.get("agent_failure_count") or 0),
+                "agentFailureLast": failure_last or None,
+                "statusTags": list(r.status_tags or []),
                 "breakdown": {
                     "carrierInr": supplier["carrier"]["amountInr"],
                     "sttInr": stages["stt"]["costInr"],
@@ -2207,6 +2212,7 @@ async def get_admin_call_detail(
         exact_cid = str(call.call_id)
         meta = call_ledger.read_meta(exact_cid) or {}
         review = call_ledger.review_fields(exact_cid)
+        failed_turns = call_ledger.read_failed_turns(exact_cid)
 
         duration_sec = float(call.duration_sec or 0.0)
         channel_norm = str(call.channel or "pstn").strip().lower()
@@ -2287,6 +2293,26 @@ async def get_admin_call_detail(
             "direction": call.direction or "inbound",
             "status": call.status or "completed",
             "endReason": call.end_reason or meta.get("end_reason"),
+            "statusTags": list(call.status_tags or []),
+            "agentFailureCount": len(failed_turns),
+            "agentFailures": [
+                {
+                    key: row.get(key)
+                    for key in (
+                        "at",
+                        "finish_reason",
+                        "error_type",
+                        "error",
+                        "retry_used",
+                        "watchdog_retry",
+                        "tool_wait",
+                        "delivered",
+                        "partial_text",
+                        "transcript",
+                    )
+                }
+                for row in failed_turns[-10:]
+            ],
             "durationSec": int(duration_sec),
             "durationFormatted": f"{int(duration_sec // 60)}m {int(duration_sec % 60)}s" if duration_sec >= 60 else f"{int(duration_sec)}s",
             "createdAt": call.created_at.isoformat() if call.created_at else None,

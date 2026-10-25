@@ -1,6 +1,41 @@
 """Validated text transports for the models used by composed voice calls."""
 from __future__ import annotations
 
+from typing import Any
+
+#: Content refusals repeat byte-for-byte; every other early stop gets one retry.
+NON_RETRYABLE_FINISH_REASONS = frozenset(
+    {"content_filter", "safety", "recitation", "blocked", "prohibited_content"}
+)
+
+
+class IncompleteTurnError(RuntimeError):
+    """The provider stopped before a usable turn completed.
+
+    Carries the stop reason and whatever was already produced so the caller can
+    retry once, preserve diagnostics, or fall back without guessing.
+    """
+
+    def __init__(
+        self,
+        *,
+        provider: str,
+        finish_reason: str | None,
+        partial_text: str = "",
+        usage: dict[str, Any] | None = None,
+        retry_used: bool = False,
+    ) -> None:
+        self.provider = provider
+        self.finish_reason = str(finish_reason or "unknown")
+        self.partial_text = partial_text or ""
+        self.usage = dict(usage or {})
+        self.retry_used = retry_used
+        super().__init__(f"{provider} did not complete the turn ({self.finish_reason})")
+
+    @property
+    def retryable(self) -> bool:
+        return self.finish_reason not in NON_RETRYABLE_FINISH_REASONS
+
 
 def sarvam_chat_modes(model: str) -> list[str]:
     if model == "sarvam-105b-conversations":

@@ -12,6 +12,7 @@ import httpx
 from server.call.live_turn_schema import SpokenResponseExtractor
 from server.config.env import get_settings
 from server.providers.base import LLMConfig
+from server.providers.llm_protocol import IncompleteTurnError
 from server.providers.openai_messages import message_text
 from server.services.dev_secrets_store import dev_secrets_store
 
@@ -347,6 +348,7 @@ class SarvamLLMAdapter:
         usage: dict[str, int] = {}
         tool_calls: dict[int, dict[str, Any]] = {}
         completed = False
+        finish_reason: str | None = None
         buffer_output = bool(kwargs.get("tools"))
         async with httpx.AsyncClient(timeout=self._timeout()) as client:
             try:
@@ -387,30 +389,46 @@ class SarvamLLMAdapter:
                         if not isinstance(choices, list) or not choices:
                             continue
                         choice = choices[0]
-                        if isinstance(choice, dict) and choice.get("finish_reason"):
-                            if choice["finish_reason"] not in {"stop", "tool_calls"}:
-                                raise RuntimeError("Sarvam did not complete the requested turn")
-                            completed = True
+                        stop_reason = (
+                            str(choice.get("finish_reason") or "").strip()
+                            if isinstance(choice, dict)
+                            else ""
+                        )
                         delta = choice.get("delta") if isinstance(choice, dict) else None
-                        if not isinstance(delta, dict):
-                            continue
-                        _stream_tool_call_deltas(tool_calls, delta.get("tool_calls"))
-                        content = delta.get("content")
-                        if isinstance(content, list):
-                            content = "".join(
-                                str(part.get("text") or "")
-                                for part in content
-                                if isinstance(part, dict)
-                            )
-                        if not isinstance(content, str) or not content:
-                            continue
-                        if extractor is not None:
-                            spoken = extractor.feed(content)
-                        else:
-                            plain_parts.append(content)
-                            spoken = content
-                        if spoken and not buffer_output:
-                            yield {"delta": spoken, "language_context": {}}
+                        if isinstance(delta, dict):
+                            _stream_tool_call_deltas(tool_calls, delta.get("tool_calls"))
+                            content = delta.get("content")
+                            if isinstance(content, list):
+                                content = "".join(
+                                    str(part.get("text") or "")
+                                    for part in content
+                                    if isinstance(part, dict)
+                                )
+                            if isinstance(content, str) and content:
+                                if extractor is not None:
+                                    spoken = extractor.feed(content)
+                                else:
+                                    plain_parts.append(content)
+                                    spoken = content
+                                if spoken and not buffer_output:
+                                    yield {"delta": spoken, "language_context": {}}
+                        if stop_reason:
+                            finish_reason = stop_reason
+                            if stop_reason in {"stop", "tool_calls"}:
+                                completed = True
+                            else:
+                                # Read the final chunk's content before raising so
+                                # a stop reason can never discard spoken text.
+                                raise IncompleteTurnError(
+                                    provider=self.provider_id,
+                                    finish_reason=stop_reason,
+                                    partial_text=(
+                                        extractor.spoken_text
+                                        if extractor is not None
+                                        else "".join(plain_parts)
+                                    ),
+                                    usage=usage,
+                                )
             except asyncio.CancelledError:
                 raise
             except httpx.TimeoutException as exc:
@@ -423,15 +441,34 @@ class SarvamLLMAdapter:
         )
         completed_tool_calls = [tool_calls[index] for index in sorted(tool_calls)]
         if completed_tool_calls and not completed:
-            raise RuntimeError("Sarvam function response was interrupted before completion")
+            raise IncompleteTurnError(
+                provider=self.provider_id,
+                finish_reason=finish_reason or "interrupted",
+                partial_text=full_text,
+                usage=usage,
+            )
         if not full_text and not completed_tool_calls:
-            raise RuntimeError("Sarvam Chat Completions returned an empty response")
+            raise IncompleteTurnError(
+                provider=self.provider_id,
+                finish_reason=finish_reason or "empty",
+                partial_text="",
+                usage=usage,
+            )
+        if not completed:
+            # HTTP 200 without either a terminal finish reason or [DONE].
+            raise IncompleteTurnError(
+                provider=self.provider_id,
+                finish_reason=finish_reason or "no_finish_reason",
+                partial_text=full_text,
+                usage=usage,
+            )
 
         event: dict[str, Any] = {
             "done": True,
             "text": full_text,
             "language_context": {},
             "usage": usage,
+            "finish_reason": finish_reason or "stop",
         }
         if completed_tool_calls:
             event["tool_calls"] = completed_tool_calls

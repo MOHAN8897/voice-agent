@@ -384,7 +384,7 @@ async def test_direct_stream_path_drops_model_kwarg(monkeypatch):
     assert captured["openai_model"] == "gpt-5.6-luna"
 
 
-def test_align_stream_model_rewrites_gemini_id_for_openai():
+def test_align_stream_model_rejects_a_model_outside_the_adapter_provider():
     class FakeAdapter:
         provider_id = "openai"
 
@@ -403,10 +403,12 @@ def test_align_stream_model_rewrites_gemini_id_for_openai():
             }
 
     kw = {"model": "gemini-3.5-flash-lite", "openai_model": "gemini-3.5-flash-lite"}
-    live_turn_orchestrator._align_stream_model(kw, FakeAdapter(), FakeReg())
-    assert str(kw["model"]).startswith("gpt-")
-    assert "gemini" not in str(kw["model"])
-    assert str(kw["openai_model"]).startswith("gpt-")
+    with pytest.raises(RuntimeError, match="not available for its provider"):
+        live_turn_orchestrator._align_stream_model(kw, FakeAdapter(), FakeReg())
+
+    allowed = {"model": "gpt-5.6-luna", "openai_model": "gpt-5.6-luna"}
+    live_turn_orchestrator._align_stream_model(allowed, FakeAdapter(), FakeReg())
+    assert allowed["model"] == "gpt-5.6-luna"
 
 
 def test_messages_for_model_strips_breakpoint_on_gpt55():
