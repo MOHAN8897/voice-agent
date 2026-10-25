@@ -57,8 +57,8 @@ def hint_for_phase(phase: str, missing: str | None = None) -> str | None:
     if phase == PHASE_CLOSING_ALLOWED:
         return (
             "[Internal] Caller already asked to be contacted later. Confirm the callback in one "
-            "short sentence, thank them, say goodbye, and call end_call with should_end true "
-            "and reason=goal_complete. Do not pitch or ask another question."
+            "short sentence and close the call with decision close and reason=goal_complete. "
+            "Never speak a farewell; the platform does on approval. Do not pitch or ask another question."
         )
     return None
 

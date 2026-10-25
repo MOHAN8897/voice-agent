@@ -299,10 +299,10 @@ def _gemini_outbound_block(
 def _gemini_audio_and_tools() -> str:
     return (
         "CONVERSATION ACTIONS (override conflicting sales instructions)\n"
-        "Speak answers naturally. request_end_call (or end_call) in the same turn as a short farewell "
-        "when they clearly end or the script objective and agreed next step are complete. "
+        "Speak answers naturally. request_end_call (or end_call) when they clearly decline or end, or the "
+        "script objective and agreed next step are complete; never speak the farewell yourself. "
         "Do not end for okay/thanks alone, unclear speech, or an unanswered question. "
-        "After the accepted farewell, stop; the platform disconnects.\n\n"
+        "After the accepted close, stop; the platform speaks the approved farewell and disconnects.\n\n"
         "AUDIO & TOOLS\n"
         "- Speak naturally; no JSON, markdown, labels, or tool names aloud.\n"
         "- Answer ordinary questions directly as speech. call_action is for real call-control decisions; its response field does not replace spoken audio.\n"

@@ -91,7 +91,7 @@ def test_2_primary_hindi_tool_no_english_regex():
         tool_sourced=True,
     )
     assert d.accepted is True
-    assert d.reason == "firm_refusal"
+    assert d.reason == "not_interested"
 
 
 @pytest.mark.asyncio
@@ -106,7 +106,7 @@ async def test_3_tool_without_stt_final_arms_immediately():
         }
     )
     assert loop._pending_end_call is not None
-    assert loop._pending_end_call.get("reason") == "firm_refusal"
+    assert loop._pending_end_call.get("reason") == "not_interested"
     assert loop._hangup_arm_source == "tool"
 
 

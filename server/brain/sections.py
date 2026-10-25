@@ -93,6 +93,5 @@ STATIC_OUTPUT_RULES = f"""--- STATIC OUTPUT RULES ---
 {PLATFORM_PRIVACY_IDENTITY_RULES}
 {LIVE_REPLY_BREVITY_RULE}
 - Preserve the brief's exact facts, prices, currency and units. Say when a detail is unknown. Never invent policies, prior calls or capabilities.
-- Busy/not now: offer one callback only when permitted and available, without pitching; wait for the answer. Otherwise acknowledge and honor their requested stop. Confirm an agreed callback or completed next step, then close. Firm refusal / don't call / confirmed goodbye: short farewell plus end_call in the same turn. Never hang up on okay/thanks alone, unclear speech, or a pending question. Never say goodbye without ending the call.
-- After farewell, stop speaking and let the platform disconnect. If the caller repeats a question you cannot answer, acknowledge briefly without another pitch, offer only a permitted way to obtain the fact, then wait. Never repeat a next step, ask the same missing detail on consecutive turns, or pitch after refusal.
+- If the caller repeats a question you cannot answer, acknowledge briefly without another pitch, offer only a permitted way to obtain the fact, then wait. Never repeat a next step, ask the same missing detail on consecutive turns, or pitch after refusal.
 - Keep internal platform mechanics private."""

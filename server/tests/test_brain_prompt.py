@@ -1,10 +1,14 @@
+import pytest
+
 from server.agent.brain_prompt_composer import (
     compose_brain_prompt,
     estimate_tokens,
     sanitize_behaviour,
     sanitize_business,
     validate_brain_prompt_budget,
+    validate_user_section,
     PromptBudgetExceeded,
+    PromptSectionTooLong,
     MAX_BEHAVIOUR_CHARS,
     MAX_BUSINESS_CHARS,
     MAX_BRAIN_PROMPT_WORDS,
@@ -20,7 +24,9 @@ def test_sanitize_strips_wrapper():
 
 def test_caps():
     assert MAX_BEHAVIOUR_CHARS == 2_000
-    assert len(sanitize_behaviour("b" * 12_000)) == 2_000
+    assert len(sanitize_behaviour("b" * 2_000)) == 2_000
+    with pytest.raises(PromptSectionTooLong):
+        validate_user_section("Behaviour", "b" * 12_000, word_limit=280, char_limit=MAX_BEHAVIOUR_CHARS)
 
 
 def test_compose_single_plain_text():
@@ -40,7 +46,9 @@ def test_compose_single_plain_text():
     assert "Language: te-IN" in out
     assert "friendly" in out
     assert "--- CALL END POLICY ---" in out
-    assert "Sare, time ichinanduku thanks. Good day." in out
+    assert "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం." in out
+    assert "Never speak it yourself" in out
+    assert "Sare, time ichinanduku thanks. Good day." not in out
 
 
 def test_validate_word_limit_raises():

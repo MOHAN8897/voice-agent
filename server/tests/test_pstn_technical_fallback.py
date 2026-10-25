@@ -354,7 +354,7 @@ async def test_classic_fallback_suppresses_barge_and_new_turns(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_classic_greeting_failure_plays_apology_before_raising(monkeypatch):
+async def test_classic_greeting_provider_outage_plays_apology_before_raising(monkeypatch):
     wires: list[bytes] = []
 
     async def on_wire(wire: bytes) -> None:
@@ -365,8 +365,11 @@ async def test_classic_greeting_failure_plays_apology_before_raising(monkeypatch
     loop.set_hangup_handler(hangup)
     monkeypatch.setattr(loop, "open_stt", AsyncMock())
     monkeypatch.setattr(loop, "_warm_tts_connection", AsyncMock())
+    loop._last_tts_session = SimpleNamespace(
+        failure_evidence={"kind": "balance", "provider": "sarvam", "retained": True}
+    )
 
-    async def failing_speak(_text: str) -> None:
+    async def failing_speak(_text: str, **_kwargs) -> None:
         raise RuntimeError("speech provider down")
 
     monkeypatch.setattr(loop, "speak", failing_speak)
@@ -375,6 +378,28 @@ async def test_classic_greeting_failure_plays_apology_before_raising(monkeypatch
     assert wires
     hangup.assert_awaited_once()
     assert loop._technical_fallback_played is True
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_classic_greeting_transport_failure_closes_without_outage_clip(monkeypatch):
+    loop = PstnVoiceLoop(session_id="fallback-start", call_id=None, on_agent_wire=AsyncMock())
+    hangup = AsyncMock()
+    loop.set_hangup_handler(hangup)
+    monkeypatch.setattr(loop, "open_stt", AsyncMock())
+    monkeypatch.setattr(loop, "_warm_tts_connection", AsyncMock())
+    loop._last_tts_session = SimpleNamespace(
+        failure_evidence={"kind": "transport", "provider": "sarvam", "retained": False}
+    )
+
+    async def failing_speak(_text: str, **_kwargs) -> None:
+        raise RuntimeError("socket reset")
+
+    monkeypatch.setattr(loop, "speak", failing_speak)
+    with pytest.raises(RuntimeError):
+        await loop.start_call(greeting_text="Hello, how can I help?")
+    hangup.assert_awaited_once()
+    assert loop._technical_fallback_played is False
     await loop.close()
 
 

@@ -103,8 +103,10 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
             block = spoken_pack_for(language, include_brevity=False, core_only=True)
         elif title == "CALL END POLICY":
             old = raw[match.start():end]
-            reasons = re.search(r"Allowed hangup reasons for this agent:\s*([^\n.]+)", old)
-            farewells = re.findall(r"Farewell example:\s*`([^`]+)`", old)
+            reasons = re.search(r"Allowed (?:hangup|close) reasons for this agent:\s*([^\n.]+)", old)
+            farewells = re.findall(
+                r"(?:Farewell example|platform speaks this farewell):\s*`([^`]+)`", old,
+            )
             policy: dict[str, Any] = {}
             if reasons:
                 policy["allowedReasons"] = [reason.strip() for reason in reasons.group(1).split(",")]

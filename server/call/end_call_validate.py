@@ -8,11 +8,21 @@ from typing import Any
 
 from server.call.call_end_policy import HANGUP_REASONS as POLICY_REASONS
 from server.call.call_end_policy import allowed_reasons_for
+from server.call.close_decision import (
+    contact_preference_for,
+    evidence_matches,
+    meaningful_remaining_request,
+    opt_out_evidence,
+    parse_close_proposal,
+)
 from server.call.hangup_judge import (
     agent_spoke_closing,
     agent_spoke_disqualification_close,
     agent_spoke_terminal_farewell,
     agent_still_collecting_lead,
+    caller_complains_about_repeated_calls,
+    caller_negated_refusal,
+    caller_polite_thanks_only,
     caller_wants_to_continue,
     default_farewell_for,
     user_short_close_ack,
@@ -26,14 +36,14 @@ HANGUP_REASONS = frozenset(POLICY_REASONS)
 _QUESTION_RE = re.compile(
     r"(\?|^(what|why|how|when|where|who|can you|could you|please tell|will you)\b"
     r"|ఏమిటి|ఎలా|ఎందుకు|కదా\s*\?|क्या|कैसे|क्यों"
-    r"|என்ன|எப்படி|ஏன்|எப்போது|எங்கே|யார்|எவ்வளவு|வேண்டுமா|தெரியுமா)",
+    r"|என்ன(?![\u0BBE-\u0BCD])|எப்படி|ஏன்|எப்போது|எங்கே|யார்|எவ்வளவு|வேண்டுமா|தெரியுமா)",
     re.I,
 )
 _GOODBYE = re.compile(
-    r"\b(bye|goodbye|good night|hang up|hangup|don't call|do not call|stop calling|"
-    r"keep calling|stop the calls|alvida|call cheyoddu|call cheyaku|call cheyakandi|"
+    r"\b(bye|goodbye|good night|hang up|hangup|stop calling|"
+    r"stop the calls|alvida|call cheyoddu|call cheyaku|call cheyakandi|"
     r"குட்\s*பை|விடைபெறுகிறேன்|போய்\s*வருகிறேன்|போகிறேன்)\b|"
-    r"వద్దు\s*call|కాల్\s*చేయొద్దు|call\s*చేయక|இனி.{0,12}(?:அழைக்க|தொடர்பு).{0,12}வேண்டாம்|"
+    r"వద్దు\s*call|కాల్\s*చేయొద్దు|call\s*చేయక|(?:இனி|மீண்டும்).{0,12}(?:அழைக்க|தொடர்பு).{0,12}வேண்டாம்|"
     r"மீண்டும்\s*அழைக்காதீர்கள்|இனி\s*அழைக்காதீர்கள்|இனிமேல்\s*அழைக்காதீர்கள்|இனி\s*call|చేయకండి",
     re.I,
 )
@@ -50,7 +60,7 @@ _REFUSAL = re.compile(
     r"दिलचस्पी\s*नहीं|रुचि\s*नहीं|मुझे\s+नहीं\s+चाहिए|नहीं\s*चाहिए|"
     r"விருப்பமில்லை|ஆர்வம்\s*இல்லை|எனக்கு.{0,16}(?:வேண்டாம்|தேவையில்லை)|"
     r"(?:அழைப்பு|கால்).{0,20}(?:வேண்டாம்|தேவையில்லை)|(?:வேண்டாம்|தேவையில்லை).{0,20}(?:அழைப்பு|கால்)|"
-    r"இனி.{0,16}(?:அழைக்க|தொடர்பு).{0,16}வேண்டாம்",
+    r"(?:இனி|மீண்டும்).{0,16}(?:அழைக்க|தொடர்பு).{0,16}வேண்டாம்",
     re.I | re.S,
 )
 _ABUSE = re.compile(
@@ -108,10 +118,15 @@ _GOAL_COMPLETE_USER = re.compile(
     re.I,
 )
 _OPT_OUT = re.compile(
-    r"don't call|do not call|stop calling|keep calling|stop the calls|never (?:call|contact)|please stop calling|"
+    # "Don't call me at night" is a preference, not an opt-out; require finality.
+    r"(?:please\s+)?(?:don'?t|do not)\s+(?:ever\s+)?(?:call|contact)(?:\s+me)?"
+    r"(?:\s+(?:again|anymore|ever|at\s+all))?\s*[.!]?\s*$|"
+    r"(?:please\s+)?(?:don'?t|do not)\s+(?:ever\s+)?(?:call|contact)\s+me\s+(?:again|anymore|ever|at\s+all)\b|"
+    r"stop calling|stop the calls|never (?:call|contact)|please stop calling|"
     r"\b(?:you\s+)?(?:don['’]?t|do not)\s+(?:have|need)\s+to\s+(?:call|contact)\s+me\b|"
     r"\b(?:cancel|forget)\s+(?:the |my |that )?callback\b|"
-    r"இனி.{0,16}(?:அழைக்க|தொடர்பு).{0,16}வேண்டாம்|மீண்டும்\s*அழைக்காதீர்கள்",
+    r"இனி.{0,16}(?:அழைக்க|தொடர்பு).{0,16}வேண்டாம்|"
+    r"(?:இனி|மீண்டும்)\s*அழைக்காதீர்கள்",
     re.I,
 )
 
@@ -310,7 +325,7 @@ def callback_ready_to_close(
 def caller_requested_callback(user_text: str) -> bool:
     """A direct request to move this conversation to a later call, not a question about callbacks."""
     text = user_text or ""
-    if _NEGATED_CALLBACK.search(text):
+    if _NEGATED_CALLBACK.search(text) or opt_out_evidence(text):
         return False
     return bool(_CALLBACK_REQUEST.search(text) or _RECORD_DETAILS.search(text))
 
@@ -337,17 +352,38 @@ class EndCallDecision:
     reason: str
     farewell: str
     reject_code: str | None = None
+    contact_preference: str = "none"
+    #: False only when the model proposed a close without a real caller quote;
+    #: such a proposal is a continuation, not a counted close attempt.
+    evidence_valid: bool = True
 
 
 def parse_end_call_payload(raw: Any) -> dict[str, Any]:
     if not isinstance(raw, dict):
-        return {"should_end": False, "reason": "none", "farewell": ""}
-    should_end = bool(raw.get("should_end"))
+        return {
+            "should_end": False,
+            "reason": "none",
+            "farewell": "",
+            "decision": "continue",
+            "evidence": "",
+            "remaining_request": "",
+            "contact_preference": "",
+            "conflict": False,
+        }
+    proposal = parse_close_proposal(raw)
     reason = str(raw.get("reason") or "none").strip().lower()
     if reason not in END_CALL_REASONS:
         reason = "none"
-    farewell = str(raw.get("farewell") or "")[:240]
-    return {"should_end": should_end, "reason": reason, "farewell": farewell}
+    return {
+        "should_end": proposal.should_end,
+        "reason": reason,
+        "farewell": proposal.farewell,
+        "decision": proposal.decision,
+        "evidence": proposal.evidence,
+        "remaining_request": proposal.remaining_request,
+        "contact_preference": proposal.contact_preference,
+        "conflict": proposal.conflict,
+    }
 
 
 _COURTEOUS_CLOSING_CONFIRMATION = re.compile(
@@ -415,12 +451,16 @@ def _evidence_ok(
     if reason == "goodbye":
         return bool(
             _GOODBYE.search(text)
+            or _OPT_OUT.search(text)
+            or caller_complains_about_repeated_calls(text)
             or _CALLER_DONE.search(text)
             or caller_explicit_end_request(text)
             or caller_unavailable_now(text)
         )
     if reason == "firm_refusal":
         return caller_firm_refusal(text)
+    if reason == "not_interested":
+        return caller_not_interested(text)
     if reason == "abuse":
         return bool(_ABUSE.search(text))
     if reason == "goal_complete":
@@ -461,18 +501,22 @@ def _trust_live_tool_evidence(
     text = (user_text or "").strip()
     spoken = spoken_text or ""
     if not text:
-        if reason in {"goodbye", "firm_refusal", "abuse"}:
+        if reason in {"goodbye", "firm_refusal", "not_interested", "abuse"}:
             return True
         if reason == "goal_complete":
             return bool(memory_has_goal_complete(memory_snapshot))
         if reason == "out_of_scope":
             return completed_turns >= 1
         return False
+    if caller_negated_refusal(text) and reason in {
+        "goodbye", "firm_refusal", "not_interested", "goal_complete",
+    }:
+        return False
     if caller_wants_to_continue(text):
         if reason == "goal_complete" and agent_spoke_disqualification_close(spoken):
             return True
         return False
-    if reason == "firm_refusal":
+    if reason in {"firm_refusal", "not_interested"}:
         return not (user_short_close_ack(text) and not caller_firm_refusal(text))
     if reason == "goodbye":
         return True
@@ -507,14 +551,46 @@ def caller_backup_end_intent(user_text: str) -> bool:
     return bool(_BACKUP_STRUCT.search(compact))
 
 
-def caller_firm_refusal(user_text: str) -> bool:
-    """True when the caller clearly refuses — hang up (not soft maybe / not looking)."""
+def caller_stop_contact(user_text: str) -> bool:
+    """True only when the caller asked to stop being contacted at all."""
+    text = user_text or ""
+    if not text.strip():
+        return False
+    from server.call.close_decision import opt_out_evidence
+
+    return bool(_OPT_OUT.search(text) or opt_out_evidence(text))
+
+
+def caller_not_interested(user_text: str) -> bool:
+    """A clear refusal that is not an opt-out, an end request, or a deferral."""
     text = user_text or ""
     if not text.strip() or looks_like_question(text):
         return False
-    if _STAY_ON_LINE.search(text):
+    if caller_stop_contact(text) or caller_explicit_end_request(text):
+        return False
+    if (
+        _STAY_ON_LINE.search(text)
+        or caller_wants_to_continue(text)
+        or caller_negated_refusal(text)
+    ):
         return False
     return bool(_REFUSAL.search(text) or caller_backup_end_intent(text))
+
+
+def caller_firm_refusal(user_text: str) -> bool:
+    """Any clear refusal (not interested or stop-contact); reason choice is separate."""
+    return caller_stop_contact(user_text) or caller_not_interested(user_text)
+
+
+def caller_close_reason(user_text: str) -> str | None:
+    """The close reason the caller's own words justify, most specific first."""
+    if caller_stop_contact(user_text):
+        return "firm_refusal"
+    if _user_wants_hangup(user_text):
+        return "goodbye"
+    if caller_not_interested(user_text):
+        return "not_interested"
+    return None
 
 
 def caller_confirmed_goal_complete(user_text: str) -> bool:
@@ -534,18 +610,30 @@ def _user_wants_hangup(user_text: str) -> bool:
         return False
     if _OPT_OUT.search(text) or _CALLER_DONE.search(text):
         return True
+    if caller_complains_about_repeated_calls(text):
+        return True
     if caller_requested_callback(text):
         return False
     if caller_unavailable_now(text):
         return True
+    if caller_wants_to_continue(text) or caller_negated_refusal(text):
+        return False
     if looks_like_question(text):
         return False
     return bool(_GOODBYE.search(text))
 
 
-def _force_end(reason: str, farewell: str, spoken: str, language: str) -> dict[str, Any]:
+def _force_end(
+    reason: str,
+    farewell: str,
+    spoken: str,
+    language: str,
+    parsed: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     text = (farewell or spoken or "").strip() or default_farewell_for(language)
-    return {"should_end": True, "reason": reason, "farewell": text[:240]}
+    merged = dict(parsed or {})
+    merged.update({"should_end": True, "reason": reason, "farewell": text[:240]})
+    return merged
 
 
 def validate_end_call(
@@ -571,17 +659,55 @@ def validate_end_call(
     user = user_text or ""
     spoken = spoken_text or ""
     lang = normalize_compile_language(language)
+    wants_hangup = _user_wants_hangup(user)
+    stop_contact = caller_stop_contact(user)
+    not_interested = False if (wants_hangup or stop_contact) else caller_not_interested(user)
+    firm_refusal = stop_contact or not_interested
+    hard_end = wants_hangup or firm_refusal
     agent_concluded = bool(
         agent_farewell_ends_call and parsed.get("should_end")
         and parsed.get("reason") in {"goal_complete", "goodbye"}
         and agent_spoke_terminal_farewell(spoken)
     )
+    # Whether this proposal carries proof the server can verify. A close the
+    # server established (caller intent, tool call, already-spoken farewell)
+    # needs no model quote; a model-proposed close needs one from this turn.
+    quoted = bool(
+        hard_end
+        or agent_concluded
+        or tool_sourced
+        or evidence_matches(parsed.get("evidence") or "", user)
+    )
+    if parsed.get("conflict") and not hard_end:
+        logger.info("[END_CALL] rejected code=decision_conflict")
+        return EndCallDecision(
+            False, False, "none", parsed.get("farewell") or "", "decision_conflict", evidence_valid=quoted
+        )
+    if (
+        parsed["should_end"]
+        and parsed.get("reason") != "abuse"
+        and not wants_hangup
+        and meaningful_remaining_request(parsed.get("remaining_request") or "")
+    ):
+        logger.info("[END_CALL] rejected code=remaining_request reason=%s", parsed.get("reason"))
+        return EndCallDecision(
+            False, False, "none", parsed.get("farewell") or "", "remaining_request", evidence_valid=quoted
+        )
 
-    # Don't-call / goodbye always wins over a wrong model reason (e.g. goal_complete).
-    if _user_wants_hangup(user):
-        parsed = _force_end("goodbye", parsed.get("farewell") or "", spoken, lang)
-    elif caller_firm_refusal(user):
-        parsed = _force_end("firm_refusal", parsed.get("farewell") or "", spoken, lang)
+    # True when the server, not the model, established this close from the
+    # caller's own words. Those closes need no model evidence span.
+    server_forced = False
+    # The caller's own words win over a wrong model reason. Stop-contact stays
+    # firm_refusal; a plain decline is not a permanent opt-out.
+    if stop_contact:
+        parsed = _force_end("firm_refusal", parsed.get("farewell") or "", spoken, lang, parsed)
+        server_forced = True
+    elif wants_hangup:
+        parsed = _force_end("goodbye", parsed.get("farewell") or "", spoken, lang, parsed)
+        server_forced = True
+    elif not_interested:
+        parsed = _force_end("not_interested", parsed.get("farewell") or "", spoken, lang, parsed)
+        server_forced = True
     elif agent_still_collecting_lead(spoken) and not (
         (
             tool_sourced
@@ -592,7 +718,9 @@ def validate_end_call(
         or _user_wants_hangup(user)
     ):
         logger.info("[END_CALL] rejected code=lead_details_missing spoken_collecting=1")
-        return EndCallDecision(False, False, "none", parsed.get("farewell") or "", "lead_details_missing")
+        return EndCallDecision(
+            False, False, "none", parsed.get("farewell") or "", "lead_details_missing", evidence_valid=quoted
+        )
     elif caller_requested_callback(user) or callback_close_phase in {
         "collecting_name",
         "collecting_phone",
@@ -603,20 +731,25 @@ def validate_end_call(
             if parsed["should_end"]:
                 logger.info("[END_CALL] rejected code=lead_details_missing")
                 return EndCallDecision(
-                    False, False, "none", parsed.get("farewell") or "", "lead_details_missing"
+                    False, False, "none", parsed.get("farewell") or "", "lead_details_missing", evidence_valid=quoted
                 )
         elif callback_close_phase == "closing_allowed" or callback_ready_to_close(user, memory_snapshot):
-            parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang)
+            parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang, parsed)
+            server_forced = True
         elif parsed["should_end"] and caller_asked_to_record_details(user):
             logger.info("[END_CALL] rejected code=lead_details_missing")
-            return EndCallDecision(False, False, "none", parsed.get("farewell") or "", "lead_details_missing")
+            return EndCallDecision(
+                False, False, "none", parsed.get("farewell") or "", "lead_details_missing", evidence_valid=quoted
+            )
     elif parsed["should_end"] and _STAY_ON_LINE.search(user) and not caller_requested_callback(user):
         logger.info("[END_CALL] rejected code=stay_on_line reason=%s", parsed.get("reason"))
-        return EndCallDecision(False, False, "none", parsed.get("farewell") or "", "stay_on_line")
+        return EndCallDecision(
+            False, False, "none", parsed.get("farewell") or "", "stay_on_line", evidence_valid=quoted
+        )
     elif (
         parsed["should_end"]
         and caller_wants_to_continue(user)
-        and parsed.get("reason") in {"firm_refusal", "goal_complete", "goodbye"}
+        and parsed.get("reason") in {"firm_refusal", "not_interested", "goal_complete", "goodbye"}
         and not looks_like_question(user)
         and not caller_firm_refusal(user)
         and not caller_confirmed_goal_complete(user)
@@ -624,7 +757,7 @@ def validate_end_call(
         and not agent_concluded
         and not (
             tool_sourced
-            and parsed.get("reason") in {"goal_complete", "firm_refusal", "goodbye"}
+            and parsed.get("reason") in {"goal_complete", "firm_refusal", "not_interested", "goodbye"}
             and (
                 agent_spoke_disqualification_close(spoken)
                 or agent_spoke_closing(spoken)
@@ -632,7 +765,7 @@ def validate_end_call(
         )
     ):
         logger.info("[END_CALL] rejected code=caller_engaged reason=%s", parsed.get("reason"))
-        return EndCallDecision(False, False, "none", "", "caller_engaged")
+        return EndCallDecision(False, False, "none", "", "caller_engaged", evidence_valid=quoted)
     elif not parsed["should_end"]:
         if callback_close_phase in {"collecting_name", "collecting_phone"}:
             return EndCallDecision(False, False, "none", "", "lead_details_missing")
@@ -641,19 +774,29 @@ def validate_end_call(
             (caller_confirmed_goal_complete(user) or _user_wants_hangup(user) or caller_explicit_end_request(user) or caller_firm_refusal(user))
             and (agent_spoke_closing(spoken) or agent_spoke_terminal_farewell(spoken) or parsed.get("farewell"))
         ):
-            end_reason = "goodbye" if (_user_wants_hangup(user) or caller_explicit_end_request(user)) else ("firm_refusal" if caller_firm_refusal(user) else "goal_complete")
-            parsed = _force_end(end_reason, parsed.get("farewell") or "", spoken, lang)
+            end_reason = caller_close_reason(user) or (
+                "goal_complete" if caller_confirmed_goal_complete(user) else "goodbye"
+            )
+            parsed = _force_end(end_reason, parsed.get("farewell") or "", spoken, lang, parsed)
+            server_forced = True
         # Do not repair hangup from a spoken goodbye plus okay/thanks or turn count.
 
     if not parsed["should_end"]:
         return EndCallDecision(False, False, "none", "", None)
 
     reason = parsed["reason"]
+    # firm_refusal is reserved for a stop-contact request; any other clear
+    # refusal is recorded as not_interested so DNC and reporting stay separate.
+    if reason == "firm_refusal" and user.strip() and not caller_stop_contact(user):
+        reason = "not_interested"
+        parsed["reason"] = reason
     farewell = parsed["farewell"] or spoken or default_farewell_for(lang)
 
     def _reject(code: str) -> EndCallDecision:
         logger.info("[END_CALL] rejected code=%s reason=%s lang=%s", code, reason, lang)
-        return EndCallDecision(False, False, reason, farewell, code)
+        return EndCallDecision(
+            False, False, reason, farewell, code, evidence_valid=bool(server_forced or quoted)
+        )
 
     if already_armed:
         return _reject("already_armed")
@@ -691,7 +834,24 @@ def validate_end_call(
         and not caller_firm_refusal(user)
     ):
         return _reject("open_question")
-    evidence_ok = agent_concluded or (
+    if not (server_forced or quoted):
+        # Evidence proves intent; it is not decoration. A proposal that does not
+        # quote the caller's current turn is a continuation, not a close attempt.
+        logger.info("[END_CALL] rejected code=evidence_not_quoted reason=%s", reason)
+        return EndCallDecision(False, False, "none", "", "evidence_not_quoted", evidence_valid=False)
+    # The model's evidence span is semantic evidence: it must be the caller's own
+    # words and must not contain a request to keep talking. This is what lets a
+    # valid refusal in an unlisted phrasing close without a phrase-list match.
+    semantic_close = bool(
+        reason in {"firm_refusal", "not_interested", "goodbye"}
+        and parsed.get("evidence")
+        and evidence_matches(parsed.get("evidence") or "", user)
+        and not caller_wants_to_continue(user)
+        and not caller_negated_refusal(user)
+        and not caller_polite_thanks_only(user)
+        and not meaningful_remaining_request(parsed.get("remaining_request") or "")
+    )
+    evidence_ok = agent_concluded or semantic_close or (
         _trust_live_tool_evidence(
             reason,
             user,
@@ -714,4 +874,12 @@ def validate_end_call(
     if len(farewell) > 240:
         return _reject("farewell_too_long")
 
-    return EndCallDecision(True, True, reason, farewell, None)
+    contact_preference = contact_preference_for(
+        parsed.get("contact_preference") or "",
+        reason=reason,
+        user_text=user,
+        evidence=parsed.get("evidence") or "",
+        opt_out_matched=bool(_OPT_OUT.search(user)),
+        callback_requested=caller_requested_callback(user),
+    )
+    return EndCallDecision(True, True, reason, farewell, None, contact_preference)

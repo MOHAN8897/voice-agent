@@ -274,6 +274,7 @@ class CallLedger:
         for key in (
             "caller_id",
             "end_reason",
+            "contact_preference",
             "hangup_reason",
             "hangup_playback_wait_ms",
             "hangup_trail_ms",

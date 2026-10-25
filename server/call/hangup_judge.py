@@ -44,12 +44,12 @@ _USER_SHORT_ACK = re.compile(
     r"^\s*(?:ok|okay|yes|yeah|yep|sure|fine|alright|great|perfect|"
     r"thanks|thank you|thankyou|thanks a lot|thank you so much|thank you very much|"
     r"ja[,.]?\s*danke|danke(?:\s*sch[oö]n)?|"
-    r"sare|సరే|ठीक|हाँ|अच्छा|சரி|ஆமாம்|ஆம்|நன்றி)[.!]?\s*$",
+    r"sare|సరే|ठीक(?:\s*है)?|हाँ|अच्छा|சரி|ஆமாம்|ஆம்|நன்றி)[.!]?\s*$",
     re.I,
 )
 _INTERESTED_CONTINUE = re.compile(
     r"\b("
-    r"i(?:'m| am) interested|interested in|tell me more|go on|"
+    r"i(?:'m| am) interested|tell me more|go on|"
     r"yes (?:please )?(?:tell|explain|share|continue)|"
     r"sounds interesting|i want (?:to )?(?:know|see|visit|buy|book)|"
     r"please (?:explain|continue|tell)|what (?:else|next)|"
@@ -59,6 +59,34 @@ _INTERESTED_CONTINUE = re.compile(
     r"ஆர்வமாக\s*இருக்கிறது|ஆர்வம்\s*இருக்கு|மேலும்\s*சொல்லுங்கள்|இன்னும்\s*விவரமாக"
     r")\b",
     re.I,
+)
+# Staying in contact / receiving updates is continuation intent, not a goodbye.
+_KEEP_UPDATES = re.compile(
+    r"\bkeep\s+me\s+(?:updated|informed|posted|in\s+the\s+loop)\b|"
+    r"\b(?:please\s+)?keep\s+calling\s+me\s+(?:with|for)\b|"
+    r"\b(?:send|share|give)\s+me\s+(?:the\s+)?(?:updates?|details|information|info)\b|"
+    r"\bcall\s+me\s+(?:with|for)\s+(?:updates?|details|information|info)\b|"
+    r"\bi\s+(?:want|need|would\s+like)\s+(?:to\s+be\s+)?(?:kept\s+)?(?:updated|informed)\b|"
+    r"\blet\s+me\s+know\b",
+    re.I,
+)
+# A complaint about repeated calls is the opposite of "keep calling me".
+_KEEP_CALLING_COMPLAINT = re.compile(
+    r"\b(?:why|how\s+many\s+times)\s+(?:do|are|have)\s+you(?:r)?(?:\s+people)?\s+"
+    r"(?:keep|always|still)\s+(?:calling|contacting|phoning)\b|"
+    r"\byou(?:r)?\s+people\s+keep\s+(?:calling|contacting)\b|"
+    r"\bstop\s+these\s+calls\b",
+    re.I,
+)
+# Denying a refusal ("I never said I wasn't interested") is not a refusal.
+_NEGATED_REFUSAL = re.compile(
+    r"\b(?:never|didn'?t|did\s+not|haven'?t|have\s+not)\s+(?:say|said|mean|mention)\b"
+    r".{0,40}\b(?:not\s+interested|don'?t\s+want|do\s+not\s+want|no\s+need|not\s+for\s+me|no|nothing)\b|"
+    r"\bnot\s+saying\s+(?:no|not\s+interested)\b|"
+    r"\bdon'?t\s+(?:assume|think|decide)\b.{0,30}\b(?:not\s+interested|no)\b|"
+    r"\bi(?:'m| am)\s+still\s+interested\b|"
+    r"\bwhy\s+(?:do|would)\s+you\s+(?:think|assume)\b.{0,30}\bnot\s+interested\b",
+    re.I | re.S,
 )
 _LEAD_CONTEXT = re.compile(
     r"contact details for the team|callback|team (?:will |to )?follow",
@@ -181,7 +209,19 @@ def caller_wants_to_continue(user_text: str) -> bool:
     text = (user_text or "").strip()
     if not text:
         return False
+    if _KEEP_UPDATES.search(text) or _NEGATED_REFUSAL.search(text):
+        return True
     return bool(_INTERESTED_CONTINUE.search(text))
+
+
+def caller_negated_refusal(user_text: str) -> bool:
+    """The caller is denying a refusal ("I never said no"), not making one."""
+    return bool(_NEGATED_REFUSAL.search((user_text or "").strip()))
+
+
+def caller_complains_about_repeated_calls(user_text: str) -> bool:
+    """A complaint about being called repeatedly — close-worthy, unlike a request for updates."""
+    return bool(_KEEP_CALLING_COMPLAINT.search((user_text or "").strip()))
 
 
 _CALLBACK_WITHDRAWAL = re.compile(
@@ -260,8 +300,8 @@ def callback_farewell_for(language: str | None) -> str:
 def silence_close_instruction(language: str | None) -> str:
     farewell = default_farewell_for(language)
     return (
-        "The caller has been silent. Speak a brief goodbye in the configured language "
-        f"(example: {farewell}), then stop. No question, no pitch."
+        "The caller has been silent. Propose a close; the platform will speak the approved "
+        f"farewell (example: {farewell}). Do not say goodbye yourself. No question, no pitch."
     )
 
 
@@ -271,6 +311,7 @@ def map_call_action_end_reason(reason: str | None) -> str:
         "goodbye": "goodbye",
         "goal_complete": "goal_complete",
         "firm_refusal": "firm_refusal",
+        "not_interested": "not_interested",
         "opt_out": "goodbye",
         "callback_cancelled": "goodbye",
         "abuse": "abuse",
@@ -278,35 +319,16 @@ def map_call_action_end_reason(reason: str | None) -> str:
     }.get(raw, "goodbye")
 
 
-HANGUP_JUDGMENT_RULES = """HANGUP JUDGMENT (one story — the platform owns disconnect timing)
-Call request_end_call (or end_call) in the SAME turn as a short farewell when the caller confirms they are done or the script objective and agreed next step are complete.
+HANGUP_JUDGMENT_RULES = """HANGUP JUDGMENT (one story — judge meaning; the platform owns disconnect timing and farewell)
+Decide from what the caller means, in any language or mix, never from a fixed phrase list.
+- KEEP TALKING (decision continue): interested, asking, objecting, busy or not now, hello or wait. Answer first and stay on the line.
+- One callback offer is allowed only when the business permits that workflow. A bare okay or thanks is never permission to hang up.
+- CLARIFY (decision clarify): garbled or ambiguous input — ask one short question, then follow the answer.
+- HANG UP (decision close) only for: firm_refusal — an explicit stop-contact request; not_interested — a clear refusal that is not an opt-out; goodbye — an explicit end request (bye, hang up, that's all, I have to go); goal_complete — the script objective and agreed next step are confirmed; abuse — hostile or threatening; answer briefly and leave.
+- Default is continue. A price, service or product question is never a reason to close.
+When you close:
+- JSON sessions: end_call = evidence = the caller's own words from THIS turn that justify it, reason, decision "close", remaining_request = anything they still want (a real request cancels the close), contact_preference. Never put a farewell in your reply text.
+- Live audio: request_end_call (or end_call) with the matching reason and contact_preference. Do not speak a goodbye.
+contact_preference is do_not_call only when they asked to stop being contacted; otherwise end_call.
+The platform validates the decision and speaks its own approved farewell. Never say goodbye before an approved close, and after a close do not start another turn."""
 
-HANG UP (farewell + request_end_call / end_call.should_end true):
-1) firm_refusal — not interested / no thanks / don't want / don't call / no need for a call.
-2) goodbye — bye, hang up, cut the call, that's all / that's it, stop calling,
-   I'm sleeping, I have to go. 'Can you cut the call, please?' and ASR 'can you call this call'
-   are end requests, not information questions. Do not ask 'are you still there?' after that.
-3) goal_complete — the script's required outcome is met, required details are captured, and
-   the caller confirmed the next step (callback/visit/handoff where applicable). Confirm it
-   in one line, say goodbye (or have a great day), and invoke the tool in that SAME turn.
-Understand refusal, stop, callback, and continue intent from the caller's supported language.
-For Tamil: `விருப்பமில்லை` / `எனக்கு ஆர்வம் இல்லை` means firm refusal; `அழைப்பை முடிக்கவும்`
-means end this call; `நாளை மீண்டும் அழைக்கவும்` requests a callback; `இன்னும் சொல்லுங்கள்`
-or a question means stay on the line. Keep the farewell in the configured agent language.
-   After callback is agreed and they thank you, do not start a new topic — farewell + tool.
-   An offer alone, unclear audio or an unanswered question is not completion.
-
-KEEP TALKING (never goodbye, never end_call):
-- Interested callers, questions, tell me more, price, objections you can still handle.
-- Bare okay / thanks / alright — that is not permission to hang up.
-- Busy / not now / maybe / I'll decide: offer ONE callback only when the business permits
-  that workflow. Otherwise acknowledge without pitching or inventing a next step.
-  Respect a requested stop; while they want to continue, stay on the line.
-- I'm here / wait / hold on: continue the topic. A bare hello during farewell is not re-engage.
-- A fact they already said on this call (name, phone, area, budget): never ask it again.
-
-HOW A CLOSE WORKS:
-- Thank them, say goodbye once, then stop. The platform disconnects immediately when farewell playback finishes.
-- Before committing to a farewell, answer a caller who clearly wants to continue. After the farewell finishes, do not start another turn.
-- Use request_end_call or end_call only — do not also require call_action to hang up.
-- Never say goodbye unless end_call.should_end is true."""

@@ -190,7 +190,7 @@ def test_dont_call_inferred_when_model_forgets_end_call():
         completed_turns=4,
     )
     assert d.accepted is True
-    assert d.reason == "goodbye"
+    assert d.reason == "firm_refusal"
 
 
 def test_location_dislike_is_not_hangup():

@@ -101,7 +101,12 @@ class DeepSeekLLMAdapter:
                 continue
             spoken = extractor.feed(delta)
             if spoken:
-                yield {"delta": spoken, "language_context": {}}
+                yield {
+                    "delta": spoken,
+                    "language_context": {},
+                    "close_preview": extractor.preview_decision(),
+                    "order_preview": extractor.preview_order_claim(),
+                }
         from server.agent.conversation_manager import conversation_manager
         from server.services.openai_brain_service import _after_turn_memory
 

@@ -24,12 +24,12 @@ EXPECTED_SECTIONS = (
     "STATIC OUTPUT RULES",
 )
 
-# Size ceiling. The brief asked for 3_000; the measured result is 2_877 for the
-# te-IN agent and 2_638 for en-IN, the largest locale. The number/phone TTS
-# blocks and the worked examples are not shipped in the compiled brain — the
-# standalone pack still carries them. Reaching materially below this would mean
-# dropping a rule the model needs (caller details, grammar, or the hangup
-# policy), so this is the floor, not a soft target.
+# Size ceiling. The brief asked for 3_000; the measured result is 2_662 for the
+# te-IN agent and 2_560 for en-IN. The number/phone TTS blocks and the worked
+# examples are not shipped in the compiled brain — the standalone pack still
+# carries them. Reaching materially below this would mean dropping a rule the
+# model needs (caller details, grammar, or the hangup policy), so this is the
+# floor, not a soft target.
 COMPILED_BRAIN_TOKEN_CEILING = 3_000
 
 SCRIPT = """--- ENTITY TAGS ---
@@ -61,14 +61,19 @@ def test_spoken_pack_matches_the_configured_language():
 def test_hangup_story_is_intact():
     brain = _brain()
     # The call end policy is the authoritative hangup story; these markers are
-    # what keeps a spoken goodbye bound to a real disconnect.
+    # what keeps a spoken goodbye bound to an approved close decision.
     for marker in (
         "end_call",
-        "Never say goodbye unless should_end is true.",
+        "Never say goodbye before an approved close",
         "firm_refusal",
         "goal_complete",
+        "contact_preference",
+        "remaining_request",
     ):
         assert marker in brain, f"hangup marker lost: {marker}"
+    # The retired phrase-list contract must not survive in the prompt.
+    assert "should_end" not in brain
+    assert "request_end_call" in brain
 
 
 def test_call_end_policy_section_is_present_and_unembellished():

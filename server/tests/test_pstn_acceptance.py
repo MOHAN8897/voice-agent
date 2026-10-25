@@ -522,6 +522,12 @@ async def test_tts_failure_plays_recorded_apology_without_reentering_speak_lock(
     class BrokenTts(FakeTtsSession):
         had_error = True
         audio_emitted = False
+        failure_evidence = {
+            "kind": "provider_rejection",
+            "provider": "sarvam",
+            "code": 402,
+            "retained": True,
+        }
 
         async def synthesize_to_frames(self, text: str) -> list[bytes]:
             await self.send_text(text)
@@ -537,7 +543,9 @@ async def test_tts_failure_plays_recorded_apology_without_reentering_speak_lock(
         assert not voice._speak_lock.locked()
         attempts.append(1)
     monkeypatch.setattr(voice, "speak", retry)
-    await asyncio.wait_for(voice._run_turn("I need a plot"), timeout=0.5)
+    # The proven-outage clip settles (0.45 s) and leaves a normal hangup tail
+    # (0.4 s) before disconnect, so the turn needs more than half a second.
+    await asyncio.wait_for(voice._run_turn("I need a plot"), timeout=5.0)
     # The dead speech provider is not retried; the shipped clip speaks for it.
     assert attempts == []
     assert voice._technical_fallback_played is True

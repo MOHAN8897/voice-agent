@@ -125,8 +125,11 @@ async def test_start_call_propagates_greeting_failure_when_warmup_succeeds(monke
     with pytest.raises(RuntimeError, match="speech unavailable"):
         await loop.start_call(greeting_text="Hello there.", greeting_wire_frames=[b"\xff" * 160] if buffered else None)
 
-    assert speak.await_count == (1 if buffered else 2)
+    # Greeting (and its one cold retry when unbuffered) plus one courteous
+    # farewell attempt: an unproven outage never selects the recorded clip.
+    assert speak.await_count == (2 if buffered else 3)
     assert play_buffered.await_count == int(buffered)
+    assert loop._technical_fallback_played is False
 
 
 @pytest.mark.asyncio
@@ -255,7 +258,7 @@ async def test_run_turn_firm_refusal_hangup(monkeypatch):
 
     monkeypatch.setattr(lifecycle, "end", fake_end)
 
-    await loop._run_turn("I'm not interested")
+    await loop._run_turn("Don't call me again.")
     await loop._background_hangup_task
     assert ended == {"call_id": "c-refuse", "reason": "firm_refusal"}
     assert hung_up.get("ok") is True

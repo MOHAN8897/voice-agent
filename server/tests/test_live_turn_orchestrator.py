@@ -93,7 +93,8 @@ async def test_first_delta_not_blocked_by_ledger(monkeypatch, tmp_path):
         return {"seq": 2, "role": "assistant", "text": "hi"}
 
     async def fake_stream(**_k):
-        yield {"delta": "hi"}
+        # Structured deltas carry the close preview; without it speech is held.
+        yield {"delta": "hi", "close_preview": "continue"}
         yield {"done": True, "text": "hi"}
 
     with (
@@ -190,7 +191,7 @@ async def test_memory_merge_does_not_block_first_delta(monkeypatch, tmp_path):
     applied = {"n": 0}
 
     async def fake_stream(**_k):
-        yield {"delta": "hi"}
+        yield {"delta": "hi", "close_preview": "continue"}
         yield {
             "done": True,
             "text": "hi",

@@ -85,6 +85,12 @@ class Settings(BaseSettings):
     max_history_user_chars: int = Field(300, alias="MAX_HISTORY_USER_CHARS")
     request_timeout_ms: int = Field(15000, alias="REQUEST_TIMEOUT_MS")
     max_retries: int = Field(2, alias="MAX_RETRIES")
+    # A structured turn carries the close decision plus up to three memory ops;
+    # 640 tokens truncated most composed turns before the reply finished.
+    composed_first_attempt_max_tokens: int = Field(
+        1280, alias="COMPOSED_FIRST_ATTEMPT_MAX_TOKENS"
+    )
+    composed_retry_max_tokens: int = Field(2560, alias="COMPOSED_RETRY_MAX_TOKENS")
 
     # --- Brain prompt budget (single composed prompt) ---
     brain_prompt_budget_tokens: int = Field(6000, alias="BRAIN_PROMPT_BUDGET_TOKENS")

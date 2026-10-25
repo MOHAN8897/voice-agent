@@ -50,7 +50,7 @@ class AgentAction:
 
 
 ACTION_REASONS = (
-    "continue", "goodbye", "goal_complete", "firm_refusal", "opt_out",
+    "continue", "goodbye", "goal_complete", "firm_refusal", "not_interested", "opt_out",
     "callback_cancelled", "callback_requested", "transfer_requested", "voicemail",
 )
 
@@ -94,7 +94,10 @@ class CallLifecycleController:
         if action.reason in {"opt_out", "firm_refusal", "callback_cancelled"}:
             self.callback_cancelled = True
         if action.action == CallAction.END_CALL:
-            if action.reason not in {"goodbye", "goal_complete", "firm_refusal", "opt_out", "callback_cancelled"}:
+            if action.reason not in {
+                "goodbye", "goal_complete", "firm_refusal", "not_interested",
+                "opt_out", "callback_cancelled",
+            }:
                 return "invalid_end_reason"
             if caller_speaking:
                 return "caller_still_talking"

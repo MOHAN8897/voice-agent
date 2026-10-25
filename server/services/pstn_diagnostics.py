@@ -18,6 +18,16 @@ SAFE_FIELDS = frozenset({
     "play_greeting", "queue_qsize", "queued", "grace_sec", "wait_sec",
     "retry_count", "attempt", "lag_ms", "bidirectional", "timeout_s",
     "finish_reason", "partial_chars", "output_tokens", "delivered", "retry_used",
+    # Close-decision evidence is logged as codes and lengths, never text.
+    "approved", "reject_code", "proposed_decision", "proposed_reason",
+    "evidence_chars", "remaining_request_chars", "evidence_valid", "close_attempt",
+    "contact_preference", "farewell_chars",
+    # Request/token settings and schema outcomes for the structured turn.
+    "requested_max_tokens", "effective_max_tokens", "reasoning_effort",
+    "temperature", "has_schema", "schema_valid", "input_tokens", "cached_tokens",
+    "finish_reason_raw", "turn_id", "chars", "tool", "proposed", "rejected",
+    # Native order proof: outcome codes only, never names or addresses.
+    "held_as_preview", "quantity",
 })
 
 

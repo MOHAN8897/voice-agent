@@ -11,19 +11,22 @@ from server.realtime.models import END_CALL_REASONS, END_CALL_TOOL
 REQUEST_END_CALL_REASONS: tuple[str, ...] = (
     "customer_declined",
     "caller_goodbye",
+    "not_interested",
+    "firm_refusal",
     "goal_complete",
     "abuse",
     "out_of_scope",
 )
 
 _REQUEST_TO_INTERNAL: dict[str, str] = {
-    "customer_declined": "firm_refusal",
+    # Declining is not the same as asking never to be contacted again.
+    "customer_declined": "not_interested",
     "caller_goodbye": "goodbye",
+    "not_interested": "not_interested",
+    "firm_refusal": "firm_refusal",
     "goal_complete": "goal_complete",
     "abuse": "abuse",
     "out_of_scope": "out_of_scope",
-    # allow internal names if the model mirrors legacy schema
-    "firm_refusal": "firm_refusal",
     "goodbye": "goodbye",
 }
 
@@ -38,6 +41,14 @@ REQUEST_END_CALL_TOOL: dict[str, Any] = {
             "reason": {"type": "string", "enum": list(REQUEST_END_CALL_REASONS)},
             "farewell_required": {"type": "boolean"},
             "farewell_text": {"type": "string", "maxLength": 240},
+            "contact_preference": {
+                "type": "string",
+                "enum": ["none", "end_call", "do_not_call", "callback"],
+                "description": (
+                    "do_not_call only when the caller asked to stop being contacted; "
+                    "end_call when they only want this call to end."
+                ),
+            },
         },
         "required": ["reason"],
     },
@@ -51,7 +62,7 @@ REQUEST_LANGUAGE_CALLBACK_TOOL: dict[str, Any] = {
         "If the meaning is understood, answer in the configured language without this tool. "
         "First use remind, politely ask for the configured language and wait. Only after a later "
         "caller turn still needs another language use request_callback. On success confirm the "
-        "request (not a scheduled booking), say farewell in configured language, then end_call. "
+        "request (not a scheduled booking) and make the end_call decision; never speak the farewell yourself. "
         "Do not use for loanwords, transliteration, unclear audio, or opt-outs."
     ),
     "parameters": {
@@ -105,6 +116,7 @@ def parse_request_end_call_tool(raw: Any) -> dict[str, Any] | None:
         "reason": internal,
         "farewell": farewell,
         "farewell_required": bool(farewell_required),
+        "contact_preference": str(payload.get("contact_preference") or "").strip().lower(),
     }
 
 

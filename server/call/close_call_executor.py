@@ -129,6 +129,15 @@ async def execute_agent_close(
         trail_ms=trail_ms,
         reason=canonical,
     )
+    log_pstn(
+        "hangup.disconnect",
+        call_id=call_id,
+        reason=canonical,
+        heard_playback=heard,
+        spoke_farewell=spoke_farewell,
+        playback_wait_ms=wait_ms,
+        trail_ms=trail_ms,
+    )
     async def complete_in_background():
         try:
             await _maybe_await(drain_archive)
@@ -186,6 +195,7 @@ def _stamp_hangup_telemetry(call_id: str | None, result: CloseCallResult) -> Non
         ctx = call_context.get(call_id)
         if ctx is not None:
             meta["callback_close_phase"] = ctx.callback_close_phase
+            meta["contact_preference"] = ctx.contact_preference
         call_ledger.write_meta(call_id, meta)
     except Exception:
         pass

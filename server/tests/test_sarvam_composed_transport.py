@@ -165,7 +165,7 @@ async def test_composed_orchestrator_pins_v1_and_records_each_provider_request(m
         is_model_allowed=lambda *_args: True,
     )
     monkeypatch.setattr(server.providers, "get_provider_registry", lambda: registry)
-    monkeypatch.setattr(orchestrator_module, "get_settings", lambda: SimpleNamespace(use_provider_registry=True))
+    monkeypatch.setattr(orchestrator_module, "get_settings", lambda: SimpleNamespace(use_provider_registry=True, composed_first_attempt_max_tokens=1280, composed_retry_max_tokens=2560))
     monkeypatch.setattr(composed_costing, "record_composed_stage_usage", lambda *args: recorded.append(args))
     orchestrator = orchestrator_module.LiveTurnOrchestrator()
     tools = [{"name": "DIAGNOSTIC_PING"}] if use_tools else []

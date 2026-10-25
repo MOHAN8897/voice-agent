@@ -45,6 +45,7 @@ END_REASONS = {
     "agent_hangup",
     "goodbye",
     "firm_refusal",
+    "not_interested",
     "goal_complete",
     "abuse",
     "out_of_scope",

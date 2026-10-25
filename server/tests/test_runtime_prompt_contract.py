@@ -56,7 +56,7 @@ def test_language_refresh_updates_farewell_disclosure_and_preserves_allowlist(lo
     )
     refreshed = refresh_platform_sections(source, locale)
     assert CALL_END_FAREWELLS[locale] in refreshed
-    assert "Allowed hangup reasons for this agent: goodbye, firm_refusal." in refreshed
+    assert "Allowed close reasons for this agent: goodbye, firm_refusal." in refreshed
     assert build_recording_disclosure_instruction(language=locale).strip() in refreshed
     if locale != "te-IN":
         assert CALL_END_FAREWELLS["te-IN"] not in refreshed
@@ -87,7 +87,7 @@ def test_same_language_refresh_preserves_custom_farewell():
 
 def test_both_hangup_aliases_share_one_runtime_closing_contract():
     assert END_CALL_TOOL["description"] == REQUEST_END_CALL_TOOL["description"] == CLOSING_TOOL_DESCRIPTION
-    assert "immediately when farewell playback finishes" in CLOSING_TOOL_DESCRIPTION
+    assert "immediately when the farewell playback finishes" in CLOSING_TOOL_DESCRIPTION
     assert "when that workflow applies and is permitted" in CLOSING_TOOL_DESCRIPTION
     assert "only if they stay silent" not in CLOSING_TOOL_DESCRIPTION
 

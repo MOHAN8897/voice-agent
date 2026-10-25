@@ -225,4 +225,4 @@ def test_llm_judgment_layer_firm_refusal_accepts_customer_declined_tool():
         tool_sourced=True,
     )
     assert d.accepted is True
-    assert d.reason == "firm_refusal"
+    assert d.reason == "not_interested"

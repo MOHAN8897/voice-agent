@@ -119,7 +119,7 @@ async def test_composed_early_stop_retries_once_with_a_bigger_cap_and_continuati
         )
     ]
 
-    assert [call["max_output_tokens"] for call in calls] == [640, 1280]
+    assert [call["max_output_tokens"] for call in calls] == [1280, 2560]
     assert calls[1]["messages"][-2] == {"role": "assistant", "content": "The price is"}
     assert calls[1]["messages"][-1] == {
         "role": "user",
@@ -203,3 +203,139 @@ async def test_failed_turn_keeps_the_callers_words_for_the_next_reply(monkeypatc
             pass
 
     assert added == [("session-1", "book a demo tomorrow")]
+
+
+def test_uppercase_safety_stop_is_normalized_and_never_retried():
+    error = IncompleteTurnError(
+        provider="gemini",
+        finish_reason="SAFETY",
+        raw_finish_reason="SAFETY",
+    )
+
+    assert error.finish_reason == "safety"
+    assert error.raw_finish_reason == "SAFETY"
+    assert error.retryable is False
+
+
+@pytest.mark.asyncio
+async def test_configured_token_cap_never_shrinks_on_retry():
+    calls: list[int] = []
+
+    async def stream_fn(*, input_messages, schema, **kwargs):
+        calls.append(int(kwargs["max_output_tokens"]))
+        raise IncompleteTurnError(
+            provider="sarvam", finish_reason="length", partial_text="partial",
+        )
+        yield  # pragma: no cover - keeps this an async generator
+
+    with pytest.raises(IncompleteTurnError) as caught:
+        async for _ in LiveTurnOrchestrator()._stream_composed_turn(
+            stream_fn=stream_fn,
+            messages=[{"role": "user", "content": "price?"}],
+            schema=None,
+            stream_kwargs={"max_output_tokens": 3000},
+            call_id=None,
+            provider="sarvam",
+            model="sarvam-105b-conversations",
+        ):
+            pass
+
+    assert calls == [3000, 3000]
+    assert caught.value.retry_used is True
+
+
+@pytest.mark.asyncio
+async def test_complete_sentence_at_the_cap_is_not_retried_into_a_second_goodbye():
+    calls: list[int] = []
+
+    async def stream_fn(*, input_messages, schema, **kwargs):
+        calls.append(int(kwargs["max_output_tokens"]))
+        yield {"delta": "ధన్యవాదాలు. నమస్కారం."}
+        raise IncompleteTurnError(
+            provider="sarvam",
+            finish_reason="length",
+            partial_text="ధన్యవాదాలు. నమస్కారం.",
+            usage={"input_tokens": 10, "output_tokens": 640},
+        )
+        yield  # pragma: no cover - keeps this an async generator
+
+    events = [
+        event
+        async for event in LiveTurnOrchestrator()._stream_composed_turn(
+            stream_fn=stream_fn,
+            messages=[{"role": "user", "content": "సరే బై"}],
+            schema=None,
+            stream_kwargs={"max_output_tokens": 640},
+            call_id=None,
+            provider="sarvam",
+            model="sarvam-105b-conversations",
+        )
+    ]
+
+    assert len(calls) == 1
+    done = events[-1]
+    assert done["text"] == "ధన్యవాదాలు. నమస్కారం."
+    assert done["finish_reason"] == "length"
+    assert done["memory_parse_failed"] is True
+    assert done["retry_count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_first_attempt_floor_and_retry_ceiling_are_configurable(monkeypatch):
+    calls: list[int] = []
+
+    async def stream_fn(*, input_messages, schema, **kwargs):
+        calls.append(int(kwargs["max_output_tokens"]))
+        raise IncompleteTurnError(
+            provider="sarvam",
+            finish_reason="length",
+            partial_text="partial",
+        )
+        yield  # pragma: no cover - keeps this an async generator
+
+    monkeypatch.setattr(
+        orchestrator_module,
+        "get_settings",
+        lambda: SimpleNamespace(
+            composed_first_attempt_max_tokens=900,
+            composed_retry_max_tokens=1800,
+        ),
+    )
+    with pytest.raises(IncompleteTurnError):
+        async for _ in LiveTurnOrchestrator()._stream_composed_turn(
+            stream_fn=stream_fn,
+            messages=[{"role": "user", "content": "price?"}],
+            schema=None,
+            stream_kwargs={"max_output_tokens": 320},
+            call_id=None,
+            provider="sarvam",
+            model="sarvam-105b-conversations",
+        ):
+            pass
+
+    assert calls == [900, 1800]
+
+
+@pytest.mark.asyncio
+async def test_done_event_reports_requested_effective_tokens_and_reasoning():
+    async def stream_fn(*, input_messages, schema, **kwargs):
+        yield {"delta": "hello"}
+        yield {"done": True, "text": "hello", "usage": {"output_tokens": 3}}
+
+    events = [
+        event
+        async for event in LiveTurnOrchestrator()._stream_composed_turn(
+            stream_fn=stream_fn,
+            messages=[{"role": "user", "content": "hi"}],
+            schema=None,
+            stream_kwargs={"max_output_tokens": 3000, "reasoning_effort": "none"},
+            call_id=None,
+            provider="sarvam",
+            model="sarvam-105b-conversations",
+        )
+    ]
+
+    done = events[-1]
+    assert done["requested_max_tokens"] == 3000
+    assert done["effective_max_tokens"] == 3000
+    assert done["reasoning_effort"] == "none"

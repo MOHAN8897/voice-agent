@@ -31,6 +31,7 @@ class CallContext:
     last_heartbeat: datetime = field(default_factory=_utcnow)
     ws_clients: int = 0
     end_reason: str | None = None
+    contact_preference: str = "none"
     agent_hangup_armed: bool = False
     language_mismatch_handled: bool = False
     barge_in_flight: bool = False

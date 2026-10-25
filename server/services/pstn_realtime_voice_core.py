@@ -17,6 +17,7 @@ from typing import Any
 from server.call.call_controller import AgentAction, CallAction, CallLifecycleController, CallState
 from server.call.end_call_validate import (
     caller_asked_to_record_details,
+    caller_close_reason,
     caller_firm_refusal,
     caller_requested_callback,
     caller_requested_hangup,
@@ -740,7 +741,7 @@ class PstnRealtimeVoiceLoop:
         if self._firm_refusal_close or self._fast_script_farewell or self._farewell_complete:
             return True
         reason = str((self._pending_end_call or {}).get("reason") or "")
-        return reason in {"goal_complete", "goodbye", "firm_refusal"}
+        return reason in {"goal_complete", "goodbye", "firm_refusal", "not_interested"}
 
     def _caller_text(self) -> str:
         return (self._last_user_final_text or self._user_partial or "").strip()
@@ -1202,7 +1203,10 @@ class PstnRealtimeVoiceLoop:
     def _commit_pending_hangup(self, accepted: dict[str, Any], *, source: str) -> None:
         reason = str(accepted.get("reason") or "agent_hangup")
         self._pending_end_call = accepted
-        self._pending_farewell_text = self._localized_farewell(str(accepted.get("farewell") or ""))
+        # The gate returns a server-authored farewell; never a model close line.
+        self._pending_farewell_text = (
+            str(accepted.get("farewell") or "").strip() or self._localized_farewell()
+        )
         self._pending_followup_instruction = None
         self._apply_hangup_close_flags(reason)
         self._set_hangup_arm_source(source)
@@ -1225,7 +1229,7 @@ class PstnRealtimeVoiceLoop:
         if self._response_had_audio:
             self._farewell_response_active = False
             self._pending_followup_instruction = None
-            if reason in ("goal_complete", "goodbye", "firm_refusal"):
+            if reason in ("goal_complete", "goodbye", "firm_refusal", "not_interested"):
                 self._apply_hangup_close_flags(reason)
             self._farewell_complete = True
             await self._finish_hangup()
@@ -3012,12 +3016,12 @@ class PstnRealtimeVoiceLoop:
             return
         self._pending_followup_instruction = (
             "The caller already asked to record their details and be contacted later. "
-            "Confirm the callback in one short sentence, thank them, say goodbye, "
-            "and call end_call with should_end true and reason goal_complete. Do not pitch."
+            "Confirm the callback in one short sentence and request_end_call with reason goal_complete. "
+            "Never speak a farewell; the platform does on approval. Do not pitch."
         )
 
     def _apply_hangup_close_flags(self, reason: str) -> None:
-        if reason == "firm_refusal":
+        if reason in ("firm_refusal", "not_interested"):
             self._firm_refusal_close = True
         if reason in ("goal_complete", "goodbye"):
             self._fast_script_farewell = True
@@ -3129,8 +3133,8 @@ class PstnRealtimeVoiceLoop:
                     instruction = (
                         f"Speak only {lang}. Professionally confirm that a callback request in "
                         f"{handoff['caller_language']} has been recorded for the team. "
-                        "Do not promise a booked time. Say a brief farewell, then use "
-                        "request_end_call with reason=goal_complete."
+                        "Do not promise a booked time. Use "
+                        "request_end_call with reason=goal_complete; never speak the farewell yourself."
                     )
         else:
             result["error"] = "invalid_action"
@@ -3252,7 +3256,13 @@ class PstnRealtimeVoiceLoop:
             self._pending_followup_instruction = None
         if ctx:
             ctx.agent_hangup_armed = True
-        farewell = decision.farewell
+        from server.call.call_end_policy import server_farewell_for
+
+        farewell = server_farewell_for(
+            self._resolve_language(),
+            policy=ctx.call_end_policy if ctx else None,
+            contact_preference=decision.contact_preference,
+        )
         if self.controller.callback_cancelled:
             from server.call.hangup_judge import default_farewell_for
             farewell = default_farewell_for(self._resolve_language())
@@ -3262,10 +3272,14 @@ class PstnRealtimeVoiceLoop:
             farewell = callback_farewell_for(self._resolve_language())
             if state.when and self._resolve_language().startswith("en"):
                 farewell = f"Your request for a callback {state.when} is noted. Thank you. Goodbye."
+        from server.call.contact_preference import record_contact_preference
+
+        await record_contact_preference(self.call_id, decision.contact_preference)
         return {
             "should_end": True,
             "reason": decision.reason,
             "farewell": farewell,
+            "contact_preference": decision.contact_preference,
         }
 
     def _schedule_backup_hangup_from_words(self, text: str) -> None:
@@ -3312,7 +3326,7 @@ class PstnRealtimeVoiceLoop:
             self._pending_followup_instruction = None
             self._set_hangup_arm_source("backup")
             return
-        end_reason = "firm_refusal" if caller_firm_refusal(text) else "goodbye"
+        end_reason = caller_close_reason(text) or "goodbye"
         accepted = await self._gate_end_call_payload(
             {
                 "should_end": True,
@@ -3455,7 +3469,7 @@ class PstnRealtimeVoiceLoop:
                     "using the business facts. If unclear, ask one clarification instead of guessing. "
                     "Continue the next unfinished script objective. Do not repeat the greeting or farewell. "
                     "Only after the objective and agreed next step are complete, call end_call with "
-                    "reason goal_complete and a short farewell in the same turn."
+                    "reason goal_complete; never speak the farewell yourself."
                 )
                 log_pstn("end_call.recover_unarmed_farewell", call_id=self.call_id)
             return

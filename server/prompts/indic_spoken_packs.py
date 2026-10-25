@@ -16,7 +16,7 @@ from server.prompts.agent_voice_rules import (
 )
 
 
-def _pack(locale: str, intro: str, filler_ban: str, goodbye_good: str) -> str:
+def _pack(locale: str, intro: str, filler_ban: str) -> str:
     lock = LANGUAGE_LOCK[locale]
     mismatch = LANGUAGE_MISMATCH_FALLBACK[locale]
     unclear = UNCLEAR_FALLBACK[locale]
@@ -38,7 +38,7 @@ Unclear audio (garbled STT, not a language change): `{unclear}` then wait for cl
 
 VOICE EXAMPLES
 User: thanks bye / not interested
-GOOD: `{goodbye_good}` AND end_call true.
+GOOD: propose the close, quoting the caller's words; never speak the farewell yourself.
 User: contact number / office number
 GOOD: `{phone_ask}`
 
@@ -53,31 +53,26 @@ INDIC_SPOKEN_PACKS: dict[str, str] = {
         "ml-IN",
         "Speak natural Malayalam: conversational Malayalam script with everyday English business loanwords (`budget`, `order`, `booking`, `office`). Warm phone register, avoiding overly formal literary phrasing.",
         "do not repeat the exact same acknowledgment every turn (vary naturally with ശരി / അതെ / തീർച്ചയായും). Answer directly and politely.",
-        "ശരി, സമയത്തിന് നന്ദി. നമസ്കാരം.",
     ),
     "mr-IN": _pack(
         "mr-IN",
         "Speak natural Marathi: conversational Marathi in Devanagari with everyday English business loanwords (`budget`, `order`, `booking`, `office`). Polite respectful phone register (`aapan`), avoiding overly bookish formal Marathi.",
         "do not repeat the exact same acknowledgment every turn (vary naturally with हो / ठीक आहे / नक्कीच / बरं). Answer directly and politely.",
-        "हो, तुमच्या वेळेबद्दल धन्यवाद. नमस्कार.",
     ),
     "bn-IN": _pack(
         "bn-IN",
         "Speak natural Bengali: conversational Bengali script with everyday English business loanwords (`budget`, `order`, `booking`, `office`). Polite warm phone register (`aapni`), avoiding archaic literary Sadhu bhasha.",
         "do not repeat the exact same acknowledgment every turn (vary naturally with হ্যাঁ / ঠিক আছে / আচ্ছা / নিশ্চয়ই). Answer directly and politely.",
-        "ঠিক আছে, সময়ের জন্য ধন্যবাদ। নমস্কার।",
     ),
     "gu-IN": _pack(
         "gu-IN",
         "Speak natural Gujarati: conversational Gujarati script with everyday English business loanwords (`budget`, `order`, `booking`, `office`). Courteous respectful phone register (`tame`), avoiding formal textbook Gujarati.",
         "do not repeat the exact same acknowledgment every turn (vary naturally with હા / બરાબર / ચોક્કસ / સારું). Answer directly and politely.",
-        "સારું, તમારા સમય માટે આભાર. આવજો.",
     ),
     "pa-IN": _pack(
         "pa-IN",
         "Speak natural Punjabi: conversational Punjabi in Gurmukhi with everyday English business loanwords (`budget`, `order`, `booking`, `office`). Respectful warm phone register (`tusi`), avoiding overly formal written Punjabi.",
         "do not repeat the exact same acknowledgment every turn (vary naturally with ਹਾਂਜੀ / ਠੀਕ ਹੈ / ਬਿਲਕੁਲ / ਅੱਛਾ). Answer directly and politely.",
-        "ਹਾਂਜੀ, ਤੁਹਾਡੇ ਸਮੇਂ ਲਈ ਧੰਨਵਾਦ। ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ।",
     ),
 }
 

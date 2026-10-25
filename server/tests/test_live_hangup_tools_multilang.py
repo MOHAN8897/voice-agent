@@ -38,7 +38,7 @@ def test_parse_request_end_call_customer_declined():
     )
     assert parsed is not None
     assert parsed["should_end"] is True
-    assert parsed["reason"] == "firm_refusal"
+    assert parsed["reason"] == "not_interested"
 
 
 def test_parse_live_hangup_tool_end_call_alias():
@@ -77,7 +77,7 @@ async def test_call_58102ce4_refusal_closes_before_requesting_an_llm_reply():
     ]
     assert len(chunks) == 2
     assert chunks[-1]["finish_reason"] == "rule_close"
-    assert chunks[-1]["end_call"]["reason"] == "firm_refusal"
+    assert chunks[-1]["end_call"]["reason"] == "not_interested"
     assert chunks[-1]["text"] == chunks[0]["delta"]
     assert "నమస్కారం" in chunks[-1]["text"]
 
@@ -89,7 +89,7 @@ def test_telugu_tool_trust_without_latin_refusal_regex():
         user,
     )
     assert d.accepted is True
-    assert d.reason == "firm_refusal"
+    assert d.reason == "not_interested"
 
 
 def test_hindi_tool_customer_declined():
@@ -100,7 +100,7 @@ def test_hindi_tool_customer_declined():
         lang="hi-IN",
     )
     assert d.accepted is True
-    assert d.reason == "firm_refusal"
+    assert d.reason == "not_interested"
 
 
 def test_english_tool_goodbye():
@@ -140,7 +140,7 @@ def test_tool_firm_refusal_without_stt_text():
         lang="te-IN",
     )
     assert d.accepted is True
-    assert d.reason == "firm_refusal"
+    assert d.reason == "not_interested"
 
 
 def test_tool_goodbye_still_blocks_continue():
@@ -193,7 +193,7 @@ async def test_hangup_tool_without_live_native_transcript_events():
         }
     )
     assert loop._pending_end_call is not None
-    assert loop._pending_end_call.get("reason") == "firm_refusal"
+    assert loop._pending_end_call.get("reason") == "not_interested"
     assert loop._hangup_arm_source == "tool"
     assert loop._last_user_final_text == ""
 
@@ -230,7 +230,7 @@ async def test_loop_accepts_request_end_call_telugu_refusal():
         }
     )
     assert loop._pending_end_call is not None
-    assert loop._pending_end_call.get("reason") == "firm_refusal"
+    assert loop._pending_end_call.get("reason") == "not_interested"
     assert loop._firm_refusal_close is True
     assert loop._close_listen_sec() == 0.0
 

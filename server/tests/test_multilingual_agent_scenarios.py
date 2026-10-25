@@ -88,7 +88,7 @@ async def test_refusal_transcript_arms_backup_and_keeps_farewell_pending(languag
     await loop._handle_event({"type": "user_transcript", "text": refusal, "final": True})
 
     assert loop._pending_end_call is not None
-    assert loop._pending_end_call["reason"] == "firm_refusal"
+    assert loop._pending_end_call["reason"] == "not_interested"
     assert loop._hangup_arm_source == "backup"
     assert loop._farewell_response_active is True
     assert loop._farewell_complete is False
@@ -102,6 +102,8 @@ def test_compiled_brain_keeps_language_lock_and_shared_hangup_policy(language, _
 
     assert LANGUAGE_LOCK[language] in prompt
     assert "request_end_call" in prompt or "end_call" in prompt
-    if language == "ta-IN":
-        assert "விருப்பமில்லை" in prompt
-        assert "நாளை மீண்டும் அழைக்கவும்" in prompt
+    assert "HANGUP JUDGMENT" in prompt
+    assert "Never say goodbye before an approved close" in prompt
+    # One semantic contract for every locale — no per-language phrase tables.
+    assert "விருப்பமில்லை" not in prompt
+    assert "நாளை மீண்டும் அழைக்கவும்" not in prompt

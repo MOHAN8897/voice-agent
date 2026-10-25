@@ -187,7 +187,7 @@ async def test_firm_refusal_infers_hangup_signal():
         chunks.append(chunk)
     done = next(c for c in chunks if c.get("done"))
     assert done["end_call"]["should_end"] is True
-    assert done["end_call"]["reason"] == "firm_refusal"
+    assert done["end_call"]["reason"] == "not_interested"
     assert "Goodbye" in (done.get("text") or done["end_call"].get("farewell") or "")
     await realtime_text_manager.destroy("hangup-refuse")
 

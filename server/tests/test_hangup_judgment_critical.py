@@ -61,7 +61,7 @@ def test_not_interested_hangs_even_without_model_tool():
         turns=0,
     )
     assert d.accepted is True
-    assert d.reason == "firm_refusal"
+    assert d.reason == "not_interested"
     assert d.farewell
 
 
@@ -76,7 +76,7 @@ def test_not_interested_with_model_tool():
         spoken="Thank you for your time. Goodbye.",
     )
     assert d.accepted is True
-    assert d.reason == "firm_refusal"
+    assert d.reason == "not_interested"
 
 
 def test_interested_caller_continues_despite_premature_goal_complete():

@@ -4,9 +4,15 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from server.call.close_decision import CONTACT_PREFERENCES
 from server.realtime.models import END_CALL_REASONS
 
-_ALLOWED_KEYS = frozenset({"should_end", "reason", "farewell"})
+_ALLOWED_KEYS = frozenset({"should_end", "reason", "farewell", "contact_preference"})
+
+
+def _contact_preference(raw: Any) -> str:
+    value = str(raw or "").strip().lower()
+    return value if value in CONTACT_PREFERENCES else ""
 
 
 def parse_end_call_tool(raw: Any) -> dict[str, Any] | None:
@@ -52,4 +58,5 @@ def parse_end_call_tool(raw: Any) -> dict[str, Any] | None:
         "should_end": should_end,
         "reason": reason if reason in END_CALL_REASONS else ("none" if not should_end else reason),
         "farewell": farewell,
+        "contact_preference": _contact_preference(payload.get("contact_preference")),
     }

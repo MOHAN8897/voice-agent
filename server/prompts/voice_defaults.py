@@ -133,7 +133,7 @@ Never repeat the same pitch or facts every turn. Never invent prices, policies, 
 Honor busy: one callback offer, no pitch, stay on the line. Send-details: honor briefly.
 Hang up only when they confirm they are done (bye / hang up / that's all / don't call / firm no) or they confirmed a callback and details are in.
 Never hang up on okay/thanks, maybe, frustration, objections, silence, or unspoken "enough is known".
-Firm no or don't-call: one farewell and end_call.should_end true.
+Firm no or don't-call: make the close decision with reason firm_refusal or not_interested; never speak the farewell.
 Hesitation is not a request to pitch. This call has no history from earlier calls.
 """
 

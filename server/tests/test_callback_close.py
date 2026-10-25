@@ -20,7 +20,8 @@ def test_simple_callback_is_ready_to_close():
     assert state.phase == PHASE_CLOSING_ALLOWED
     assert state.missing is None
     assert state.when.lower() == "tomorrow"
-    assert "end_call" in (state.hint or "")
+    assert "reason=goal_complete" in (state.hint or "")
+    assert "decision close" in (state.hint or "")
 
 
 def test_junk_stt_name_and_ani_are_not_lead_details():

@@ -1882,8 +1882,9 @@ def _platform_call_rules(
         f"{lead_capture}"
         f"--- PROFESSIONAL CLOSE ---\n"
         f"Follow CALL END POLICY for refusal, confirmed endings and completed next steps. "
-        f"Bare okay/thanks is not a hangup. Confirm in one line, thank them, short farewell, end_call. "
-        f"Then stop — the platform disconnects when farewell playback finishes.\n\n"
+        f"Bare okay/thanks is not a hangup. Confirm in one line and thank them, then make the close decision; "
+        f"never speak the farewell yourself. "
+        f"Then stop — the platform speaks the approved farewell and disconnects when playback finishes.\n\n"
         f"--- OBJECTION HANDLING ---\n"
         f"Acknowledge the concern in one sentence; do not restart the full pitch. "
         f"After handling the objection, continue only if the caller is still open to the next step.\n\n"
@@ -1977,7 +1978,7 @@ def _legacy_deterministic_script(
         "Politely end the call when the user says goodbye or don't-call.\n\n"
         "--- CLOSING ---\n"
         "One next step that fits this role, in one sentence. Thank them and close naturally.\n"
-        "Firm no: short farewell and hang up.\n\n"
+        "Firm no: make the close decision; never speak the farewell yourself.\n\n"
         f"Source facts and duties:\n{work_scope}"
     )
     return ensure_script_identity_and_scope(

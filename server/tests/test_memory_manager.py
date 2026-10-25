@@ -75,6 +75,7 @@ def test_append_context_and_summary_caps(tmp_path, monkeypatch):
         "c3",
         [{"op": "update_summary", "value": "word " * 80}],
         turn_seq=2,
+        source="rolling_summary",
     )
     snap = memory_manager.get_snapshot("c3")
     assert len(snap["summary"]) <= 80

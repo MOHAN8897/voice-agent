@@ -23,6 +23,50 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+#: Only a provider-reported balance failure or an explicit provider rejection may
+#: select the recorded speech-outage clip. Transport, decode, timeout and
+#: internal errors are this process's problem, not evidence of an outage.
+OUTAGE_EVIDENCE_KINDS = frozenset({"balance", "provider_rejection"})
+
+_BALANCE_TOKENS = (
+    "insufficient", "balance", "credit", "quota", "exceeded your limit",
+    "402", "429",
+)
+
+
+def _http_status(exc: BaseException | None) -> int | None:
+    if exc is None:
+        return None
+    for holder in (exc, getattr(exc, "response", None)):
+        status = getattr(holder, "status_code", None) or getattr(holder, "status", None)
+        if isinstance(status, int) and 400 <= status <= 599:
+            return status
+    return None
+
+
+def _looks_like_balance_failure(text: str) -> bool:
+    lowered = (text or "").lower()
+    return any(token in lowered for token in _BALANCE_TOKENS)
+
+
+def classify_tts_exception(exc: BaseException | None, *, provider: str = "") -> dict[str, Any]:
+    """Evidence a provider returned, never a guess from a local exception type."""
+    detail = str(exc or "")[:400]
+    if isinstance(exc, asyncio.TimeoutError):
+        return {"kind": "timeout", "provider": provider, "retained": False}
+    if _looks_like_balance_failure(detail):
+        return {"kind": "balance", "provider": provider, "retained": True}
+    status = _http_status(exc)
+    if status is not None and status != 402 and status != 429:
+        return {
+            "kind": "provider_rejection",
+            "provider": provider,
+            "status": status,
+            "retained": True,
+        }
+    return {"kind": "transport", "provider": provider, "retained": False}
+
+
 
 def _tts_config_sample_rate(merged: dict[str, Any], *, fallback: int) -> int:
     """Prefer explicit TTS output rate from config over the PSTN wire rate."""
@@ -103,6 +147,7 @@ class PstnTurnTtsSession:
         self._chars_sent = 0
         self._interrupted = False
         self._had_error = False
+        self._failure: dict[str, Any] | None = None
         self.partial_timeout = False
         self._bound_generation: str | None = None
         self._awaiting_audio = False
@@ -116,6 +161,15 @@ class PstnTurnTtsSession:
     @property
     def had_error(self) -> bool:
         return self._had_error
+
+    @property
+    def failure_evidence(self) -> dict[str, Any] | None:
+        return dict(self._failure) if self._failure else None
+
+    def _mark_failure(self, evidence: dict[str, Any] | None = None, *, kind: str = "internal") -> None:
+        self._had_error = True
+        if self._failure is None or evidence is not None:
+            self._failure = evidence or {"kind": kind, "provider": "", "retained": False}
 
     @property
     def audio_emitted(self) -> bool:
@@ -213,7 +267,7 @@ class PstnTurnTtsSession:
             except Exception:
                 pass
             self._tts_cm = None
-            self._had_error = True
+            self._mark_failure(classify_tts_exception(exc, provider=prov))
             log_error("TTS connection failed without fallback", call_id=voice.call_id, provider=prov, detail=str(exc)[:300])
             log_pstn("tts.connect.failed", call_id=voice.call_id, provider=prov, error=str(exc)[:200])
             if "credit" in str(exc).lower() or "quota" in str(exc).lower() or "402" in str(exc) or "429" in str(exc):
@@ -409,7 +463,7 @@ class PstnTurnTtsSession:
                 except Exception:
                     pass
                 self._tts_cm = None
-                self._had_error = True
+                self._mark_failure(classify_tts_exception(exc, provider=provider))
                 if "credit" in str(exc).lower() or "quota" in str(exc).lower() or "402" in str(exc) or "429" in str(exc):
                     log_pstn("tts.credits_exhausted", call_id=voice.call_id, provider=provider, detail=str(exc)[:200])
                     setattr(voice, "_tts_credits_exhausted", True)
@@ -519,8 +573,8 @@ class PstnTurnTtsSession:
                         if isinstance(key, str) and isinstance(value, int) and not isinstance(value, bool):
                             self._tts_native_usage[key] = int(self._tts_native_usage.get(key, 0) or 0) + value
                 await self._emit_audio_chunk(pcm)
-            except Exception:
-                self._had_error = True
+            except Exception as exc:
+                self._mark_failure(classify_tts_exception(exc))
                 raise
             finally:
                 self._awaiting_audio = False
@@ -559,8 +613,8 @@ class PstnTurnTtsSession:
             self._audio_buf.clear()
             self._pcm_resampler = None
             raise
-        except Exception:
-            self._had_error = True
+        except Exception as exc:
+            self._mark_failure(classify_tts_exception(exc))
             self._audio_buf.clear()
             self._pcm_resampler = None
             raise
@@ -597,6 +651,7 @@ class PstnTurnTtsSession:
         self._audio_buf.clear()
         self._interrupted = False
         self._had_error = False
+        self._failure = None
         self.partial_timeout = False
         self._awaiting_audio = False
         self._collecting_frames = False
@@ -649,7 +704,7 @@ class PstnTurnTtsSession:
         except asyncio.TimeoutError:
             if self._tts_audio_bytes <= 0:
                 log_pstn("tts.finish.timeout", call_id=self._voice.call_id)
-                self._had_error = True
+                self._mark_failure(kind="timeout")
             else:
                 log_pstn("tts.finish.partial_timeout", call_id=self._voice.call_id, bytes=self._tts_audio_bytes)
                 self.partial_timeout = True
@@ -669,8 +724,12 @@ class PstnTurnTtsSession:
             generation_id=voice.current_generation_id,
             chars=self._chars_sent,
             tts_audio_bytes=self._tts_audio_bytes,
+            tts_audio_seconds=round(self._tts_audio_seconds, 3),
             wire_frames=voice._wire_frames_out,
             tts_ws_msgs=self._tts_ws_msgs,
+            partial_timeout=self.partial_timeout,
+            had_error=self._had_error,
+            failure_kind=(self._failure or {}).get("kind"),
         )
         voice.current_output_codec = "L16" if voice.sample_rate >= 16000 else "PCMU"
 
@@ -776,18 +835,22 @@ class PstnTurnTtsSession:
                 if msg_type == "error":
                     log_error("PSTN TTS error", call_id=voice.call_id, detail=str(obj)[:300])
                     log_pstn("tts.error", call_id=voice.call_id, detail=str(obj)[:200])
-                    self._had_error = True
                     err_code = str(obj.get("code") or "")
                     err_msg = str(obj.get("message") or "")
                     prov = str(self._merged.get("provider") or "tts")
-                    if (
-                        "credit" in err_code.lower()
-                        or "credit" in err_msg.lower()
-                        or "quota" in err_msg.lower()
-                        or "429" in err_msg
-                        or "402" in err_msg
-                        or "balance" in err_msg.lower()
-                    ):
+                    credits = _looks_like_balance_failure(f"{err_code} {err_msg}")
+                    # An explicit provider error event IS retained provider
+                    # evidence; only its kind decides whether it can select the
+                    # recorded outage clip.
+                    self._mark_failure(
+                        {
+                            "kind": "balance" if credits else "provider_rejection",
+                            "provider": prov,
+                            "code": err_code[:80],
+                            "retained": True,
+                        }
+                    )
+                    if credits:
                         log_pstn("tts.credits_exhausted", call_id=voice.call_id, provider=prov, detail=err_msg[:200])
                         setattr(voice, "_tts_credits_exhausted", True)
                         setattr(voice, "_tts_exhausted_provider", prov)
@@ -835,7 +898,10 @@ class PstnTurnTtsSession:
         except asyncio.CancelledError:
             pass
         except Exception as exc:
-            self._had_error = True
+            self._mark_failure(
+                {"kind": "decode" if isinstance(exc, (json.JSONDecodeError, UnicodeDecodeError)) else "transport",
+                 "provider": "", "retained": False}
+            )
             log_pstn("tts.reader.failed", call_id=voice.call_id, error=str(exc)[:200])
             logger.warning("[PSTN] turn TTS reader: %s", str(exc)[:200])
         finally:

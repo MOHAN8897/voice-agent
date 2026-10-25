@@ -411,7 +411,20 @@ class SarvamLLMAdapter:
                                     plain_parts.append(content)
                                     spoken = content
                                 if spoken and not buffer_output:
-                                    yield {"delta": spoken, "language_context": {}}
+                                    yield {
+                                        "delta": spoken,
+                                        "language_context": {},
+                                        "close_preview": (
+                                            extractor.preview_decision()
+                                            if extractor is not None
+                                            else None
+                                        ),
+                                        "order_preview": (
+                                            extractor.preview_order_claim()
+                                            if extractor is not None
+                                            else None
+                                        ),
+                                    }
                         if stop_reason:
                             finish_reason = stop_reason
                             if stop_reason in {"stop", "tool_calls"}:
@@ -422,6 +435,7 @@ class SarvamLLMAdapter:
                                 raise IncompleteTurnError(
                                     provider=self.provider_id,
                                     finish_reason=stop_reason,
+                                    raw_finish_reason=stop_reason,
                                     partial_text=(
                                         extractor.spoken_text
                                         if extractor is not None
@@ -486,7 +500,16 @@ class SarvamLLMAdapter:
         # for a final structured answer, or releases this text if no tool call
         # was requested.
         if buffer_output and not completed_tool_calls and full_text:
-            yield {"delta": full_text, "language_context": {}}
+            yield {
+                "delta": full_text,
+                "language_context": {},
+                "close_preview": (
+                    extractor.preview_decision() if extractor is not None else None
+                ),
+                "order_preview": (
+                    extractor.preview_order_claim() if extractor is not None else None
+                ),
+            }
 
         yield event
 

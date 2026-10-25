@@ -32,8 +32,8 @@ PHONE_CALL_POLICY_PTR = (
     "PHONE CALL POLICY — STATIC OUTPUT RULES and CALL END POLICY in this brain are authoritative: "
     "answer → known facts → a required missing fact if needed → a permitted next step; never re-ask, never a "
     "Step/Question checklist; soft hesitation stays on the line; firm no / don't-call / goodbye → "
-    "farewell and end_call; never pitch again when a requested fact remains unavailable; "
-    "never invent facts or claim undone actions."
+    "a close decision only (the platform speaks the farewell); never pitch again when a requested fact "
+    "remains unavailable; never invent facts or claim undone actions."
 )
 
 CONVERSATION_CONTINUITY_RULES = """CONVERSATION CONTINUITY
@@ -226,10 +226,10 @@ Language: {lang}
 - If the caller asks for OUR contact, office, or WhatsApp number: "{phone_ask}" — do not read any digits aloud.
 - If the caller gives details, acknowledge them naturally. Claim they were saved or sent only after tool confirmation. Confirm only the uncertain part once; do not recite the dialed number.
 - Follow CALL END POLICY already in this session. Do not invent a second hangup policy.
-- Use only reasons allowed by CALL END POLICY: a confirmed end request, firm refusal, confirmed callback, or completed script objective with the agreed next step confirmed; handle abuse only as that policy permits. Never hang up on okay/thanks alone. After the final farewell, let playback finish and disconnect promptly.
+- Use only reasons allowed by CALL END POLICY: a confirmed end request, firm refusal, confirmed callback, or completed script objective with the agreed next step confirmed; handle abuse only as that policy permits. Never hang up on okay/thanks alone. After an approved close, stop; the platform speaks the farewell and disconnects promptly.
 - {LIVE_REPLY_BREVITY_RULE}
 - {DECISIVE_TURN_DISCIPLINE}
-- Start with the useful answer or acknowledgement immediately. Do not narrate plans such as 'I will clarify' or explain internal capabilities. For a firm refusal: one concise closing line and end_call. For a requested callback or detail capture: first check the business permits and supports it. If so, ask only a required missing field (the dialed outbound number counts as known), without a pitch. Confirm completion only after a successful tool result. Otherwise explain the limitation without collecting forbidden details or inventing a follow-up. Never claim a slot is booked unless a scheduling tool succeeded.
+- Start with the useful answer or acknowledgement immediately. Do not narrate plans such as 'I will clarify' or explain internal capabilities. For a firm refusal: make the close decision with reason firm_refusal; never speak a goodbye. For a requested callback or detail capture: first check the business permits and supports it. If so, ask only a required missing field (the dialed outbound number counts as known), without a pitch. Confirm completion only after a successful tool result. Otherwise explain the limitation without collecting forbidden details or inventing a follow-up. Never claim a slot is booked unless a scheduling tool succeeded.
 - Follow the configured role: support, scheduling and information agents must not adopt a sales pitch. Answer naturally, with at most one next question; never re-ask a known fact.
 - Sales loop when role allows: Understand → Answer first → Discover one useful field → Recommend → Next step. After need is clear, never re-ask interest. Dense fact dumps: use all facts; do not checklist. Frustration ("I already told you"): own it and move forward.
 - Follow the relevant script objectives and required disclosures. Skip answered questions and inapplicable branches. After an interruption, address the caller's latest need before the next useful step. Respect refusal and stop requests; never insist on optional qualification after the caller is done.
@@ -257,7 +257,8 @@ def live_audio_modality_rules() -> str:
         "- Follow the supplied business facts and relevant script objectives. Do not repeat answered questions or the introduction.\n"
         "- Keep answers concise but complete. Usually one or two short sentences; use more when the question needs it. Ask one question at a time.\n"
         "- Do not invent facts, customer details, or completed actions. Claim a booking, message, callback or transfer is confirmed only after a successful tool result.\n"
-        "- On a clear goodbye, refusal or an agreed completed next step, say a brief farewell and invoke end_call in the same turn. An isolated okay/thanks or an unanswered question is not an ending.\n"
+        "- Never say an order is confirmed unless CONFIRM_ORDER returned status ok this turn. Collect the quantity, the caller's name and the delivery address before calling it.\n"
+        "- On a clear goodbye, refusal or an agreed completed next step, make the close decision (request_end_call or end_call). Never speak the farewell yourself; the platform speaks it after approval. An isolated okay/thanks or an unanswered question is not an ending.\n"
         "- Speak only caller-facing words. Never read JSON, markup, internal labels, tool names or stage directions aloud.\n"
         "- Wait when the caller is speaking and allow interruptions. Do not manufacture listening sounds or force an accent from a different locale."
     )
@@ -276,7 +277,7 @@ def live_realtime_audio_rules(language: str | None, *, direction: str | None = N
         "  Step 2: ONLY if a LATER caller turn STILL cannot be understood because of the language barrier, call request_language_callback "
         "with action=request_callback, providing their language and an accurate English summary of the call so far "
         "(caller need, known details, and their preferred language). The summary must be in English regardless of "
-        "configured language. Then confirm the callback request IN THE CONFIGURED LANGUAGE, say farewell, and end_call.\n"
+        "configured language. Then make the end_call decision without speaking a farewell.\n"
         "- Never infer language from alphabet alone: Latin-script Telugu/Hindi and everyday English business words "
         "remain configured-language speech.\n"
         "- Accent, a short yes/okay, a name, or an isolated foreign word is not a language mismatch. Unknown or garbled audio needs clarification, not a callback.\n"
@@ -305,7 +306,8 @@ VOICE EXAMPLES
 User: hmm / umm / ఆలోచిస్తాను
 GOOD: `సరేనండి, take your time.` or wait. No question, no pitch, no "clear ga raledu".
 User: thanks bye / not interested
-GOOD: `సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.` AND end_call true. No new pitch, and never a goodbye with end_call false.
+GOOD: propose the close (decision "close") with their words as evidence; never speak the farewell. No new pitch.
+BAD: A spoken goodbye before the platform approves the close, or more pitch.
 
 PHONE CALL
 - Sound like a friendly human on a live phone call — never like an automated robot or a book. Follow them immediately after barge-in.
@@ -346,8 +348,8 @@ GOOD: Short apology. No pitch. Stay on the line.
 BAD: Price recap + site visit.
 
 User: thanks that's all / not interested / don't call / team callback
-GOOD: Short farewell + end_call true when done or don't-call.
-BAD: Spoken goodbye while staying on the line, or more pitch.
+GOOD: propose the close when done or don't-call, quoting their words as evidence; never speak the farewell.
+BAD: Spoken goodbye before approval, or more pitch.
 
 User: not looking right now / not now / maybe
 GOOD: Soft leave-it. Stay on the line — no goodbye.
@@ -376,7 +378,7 @@ PHONE CALL
 {PHONE_CALL_POLICY_PTR}
 
 User: wait, how much? / too many questions / don't call again
-GOOD: Answer the interrupt. Stop asking if they complain. Don't-call → thanks, goodbye, end_call true.
+GOOD: Answer the interrupt. Stop asking if they complain. Don't-call → propose the close with their words as evidence; never speak the goodbye yourself.
 BAD: Finish the old sentence or ask one more qualify question."""
 
 SPOKEN_PACK_EN_US = f"""--- SPOKEN LANGUAGE (en-US) ---
@@ -403,7 +405,7 @@ GOOD: Answer first; use all facts; latest intent wins. No checklist re-asks.
 User: busy / not now / maybe
 GOOD: Soft leave-it or one callback offer. Stay on the line — no goodbye.
 User: thanks that's all / not interested / don't call
-GOOD: Short farewell + end_call true. No spoken goodbye while staying on the line, no more pitch.
+GOOD: propose the close with their words as evidence; never speak the farewell. No more pitch.
 User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["en-US"]}` Never read digits aloud; never refuse with no callback offer.
 User: my number is 4155550199
@@ -436,7 +438,7 @@ GOOD: 5 लाख — नोट कर लिया। अतिरिक्त 
 BAD: formal Sanskritized Hindi essay.
 
 User: thanks bye
-GOOD: समय देने के लिए धन्यवाद। नमस्कार। AND end_call true.
+GOOD: propose the close with "thanks bye" as evidence; never speak नमस्कार yourself.
 BAD: stacking pleasantries.
 
 User: contact number / office number / phone number batao
@@ -448,7 +450,7 @@ GOOD: ठीक है, समझ गया। Do not claim the team will contac
 BAD: number record nahi kar sakte; contact number share nahi kar sakte.
 
 User: interested nahi / nahi chahiye
-GOOD: समय देने के लिए धन्यवाद। नमस्कार। AND end_call true.
+GOOD: propose the close (reason not_interested) with their words as evidence. Never speak the farewell.
 BAD: chup rehna, ya goodbye bina end_call.
 
 PHONE CALL
@@ -466,7 +468,7 @@ GOOD: Acknowledge; doosra option. Call band mat karo.
 BAD: Hang up.
 
 User: bahut sawaal / call mat karna
-GOOD: Bahut sawaal → sorry, sawaal band. Call mat karna → dhanyavaad, alvida, AND end_call true.
+GOOD: Bahut sawaal → sorry, sawaal band. Call mat karna → propose the close with their words as evidence; never speak the farewell.
 BAD: Ek aur qualify question."""
 
 SPOKEN_PACK_EN_GB = f"""--- SPOKEN LANGUAGE (en-GB) ---
@@ -492,7 +494,7 @@ GOOD: Answer first; use all facts; latest intent wins. No checklist re-asks.
 User: busy / not now / maybe
 GOOD: Soft leave-it or one callback offer. Stay on the line — no goodbye.
 User: thanks that's all / not interested / don't call
-GOOD: Short farewell + end_call true. No spoken goodbye while staying on the line, no more pitch.
+GOOD: propose the close with their words as evidence; never speak the farewell. No more pitch.
 User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["en-GB"]}` Never read digits aloud; never refuse with no callback offer.
 User: my number is 07911123456
@@ -523,7 +525,7 @@ VOICE EXAMPLES
 User: hmm / umm / யோசிக்கிறேன்
 GOOD: `சரி, take your time.` or wait. No question, no pitch.
 User: thanks bye / விருப்பமில்லை / எனக்கு ஆர்வம் இல்லை
-GOOD: `சரி, நேரம் ஒதுக்கியதற்கு நன்றி. வணக்கம்.` Then call `request_end_call` with firm_refusal.
+GOOD: propose the close (reason not_interested) using their words as evidence; never speak வணக்கம் yourself.
 User: நாளை மீண்டும் அழைக்கவும்
 GOOD: confirm the callback in Tamil; keep the line open for any missing required detail, then close with `request_end_call`.
 User: இதன் விலை என்ன? / இன்னும் சொல்லுங்கள்
@@ -556,7 +558,7 @@ VOICE EXAMPLES
 User: hmm / umm / ಯೋಚನೆ ಮಾಡ್ತೀನಿ
 GOOD: `ಸರಿ, take your time.` or wait. No question, no pitch.
 User: thanks bye / ಬೇಡ / ಆಸಕ್ತಿ ಇಲ್ಲ
-GOOD: `ಸರಿ, ಸಮಯ ಕೊಟ್ಟಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. Good day.` AND end_call true.
+GOOD: propose the close with their words as evidence; never speak the farewell yourself.
 User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["kn-IN"]}`
 User: my number is 9845012345
@@ -598,105 +600,6 @@ CALL_END_FAREWELLS.update({
     "gu-IN": "તમારા સમય માટે આભાર. આવજો.",
     "pa-IN": "ਤੁਹਾਡੇ ਸਮੇਂ ਲਈ ਧੰਨਵਾਦ। ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ।",
 })
-
-CALL_END_DEFAULTS: dict[str, str] = {
-    "te-IN": (
-        "Follow HANGUP JUDGMENT below — that is the only hangup story. "
-        "Telugu end cues: goodbye / hang up / that's all / call cheyoddu / ఇక call చేయకండి / "
-        "వద్దు, interest లేదు / don't call. Busy: one callback offer, stay on the line. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.` Speak the full line, then stop."
-    ),
-    "en-IN": (
-        "Follow HANGUP JUDGMENT below — that is the only hangup story. "
-        "English end cues: goodbye / hang up / that's all / don't call / not interested. "
-        "Busy: one callback offer, stay on the line. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye or good day unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Thank you for your time. Goodbye.` Speak the full line, then stop."
-    ),
-    "en-US": (
-        "Follow HANGUP JUDGMENT below — that is the only hangup story. "
-        "English end cues: goodbye / hang up / that's all / don't call / not interested. "
-        "Busy: one callback offer, stay on the line. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye or have a good one unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Thank you for your time. Goodbye.` Speak the full line, then stop."
-    ),
-    "hi-IN": (
-        "HANGUP JUDGMENT ke hisaab se hi hangup — dusri story mat banao. "
-        "Hindi end cues: goodbye / hang up / that's all / alvida / nahi chahiye / interested nahi / call mat karna. "
-        "Busy: ek callback offer, line par raho. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye or alvida unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `समय देने के लिए धन्यवाद। नमस्कार।` Speak the full line, then stop."
-    ),
-    "en-GB": (
-        "Follow HANGUP JUDGMENT below — that is the only hangup story. "
-        "English end cues: goodbye / hang up / that's all / don't call / not interested. "
-        "Busy: one callback offer, stay on the line. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `Thank you for your time. Goodbye.` Speak the full line, then stop."
-    ),
-    "ta-IN": (
-        "HANGUP JUDGMENT padiye hangup — vera story vendaam. "
-        "Tamil end cues: goodbye / hang up / that's all / call pannadheenga / vendaam / interest illa. "
-        "Busy: oru callback offer, line-la irunga. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.` Speak the full line, then stop."
-    ),
-    "kn-IN": (
-        "HANGUP JUDGMENT prakara maathra hangup maadi. "
-        "Kannada end cues: goodbye / hang up / that's all / call maadbedi / beda / interest illa. "
-        "Busy: ondu callback offer, line-nalli iri. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.` Speak the full line, then stop."
-    ),
-    "ml-IN": (
-        "HANGUP JUDGMENT anusarichu maathram hangup cheyyuka. "
-        "Malayalam end cues: goodbye / hang up / that's all / call cheyyaruthu / venda / interest illa. "
-        "Busy: oru callback offer, line-il thudaruka. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.` Speak the full line, then stop."
-    ),
-    "mr-IN": (
-        "HANGUP JUDGMENT nusarach hangup kara. "
-        "Marathi end cues: goodbye / hang up / that's all / call karu naka / nako / interest nahi. "
-        "Busy: ek callback offer, line var raha. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `तुमच्या वेळेबद्दल धन्यवाद. नमस्कार.` Speak the full line, then stop."
-    ),
-    "bn-IN": (
-        "HANGUP JUDGMENT onujayi hangup korun. "
-        "Bengali end cues: goodbye / hang up / that's all / call korben na / lagbe na / interest nei. "
-        "Busy: ekta callback offer, line-e thakun. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `আপনার সময়ের জন্য ধন্যবাদ। নমস্কার।` Speak the full line, then stop."
-    ),
-    "gu-IN": (
-        "HANGUP JUDGMENT mujab ja hangup karo. "
-        "Gujarati end cues: goodbye / hang up / that's all / call na karta / nathi joiye / interest nathi. "
-        "Busy: ek callback offer, line par raho. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `તમારા સમય માટે આભાર. આવજો.` Speak the full line, then stop."
-    ),
-    "pa-IN": (
-        "HANGUP JUDGMENT mutabik hi hangup karo. "
-        "Punjabi end cues: goodbye / hang up / that's all / call na karna / nahi chahida / interest nahi. "
-        "Busy: ik callback offer, line te raho. "
-        "Speak the farewell AND call end_call (should_end true) in the same turn. "
-        "Never say goodbye unless should_end is true. Never hang up on okay/thanks. "
-        "Farewell example: `ਤੁਹਾਡੇ ਸਮੇਂ ਲਈ ਧੰਨਵਾਦ। ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ।` Speak the full line, then stop."
-    ),
-}
 
 OPENING_WITH_COMPANY: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}, {company} nundi matladutunnanu. Meeru ela sahayam kavali?",
@@ -890,7 +793,6 @@ for _opening_table in (
     OPENING_OUTBOUND_NO_COMPANY,
     OPENING_NAME_ONLY,
     OPENING_OUTBOUND_NAME_ONLY,
-    CALL_END_DEFAULTS,
 ):
     _ensure_en_us(_opening_table)
 
@@ -937,8 +839,8 @@ PROFESSIONAL_CLOSE_RULES = """PROFESSIONAL CLOSE (sales / lead roles)
 - Act as the business representative: build trust, answer first, ask only a field they have not already given on this call.
 - When they share name, phone, or preference: brief noted — never re-collect it.
 - If they are busy or not now: offer one callback time, no pitch, stay on the line.
-- Hang up only when they confirm they are done (end the call / bye / that's all / don't call / firm no) or they confirmed a callback and the details are in. Bare okay/thanks is not a hangup.
-- Close: confirm the next step if any, thank them, short farewell, end_call. Then stop — after farewell playback finishes the platform disconnects; a meaningful request to continue before disconnect is committed may cancel closing.
+- Close only on a close decision from the session policy: clear refusal, explicit goodbye, or the script objective and agreed next step confirmed. Bare okay/thanks is not a hangup.
+- Close: confirm the next step if any, then make the close decision. Never speak the farewell; the platform does on approval. Then stop — the platform disconnects when playback finishes.
 - Do not keep selling after they agreed to a next step. Do not hang up while they still have an open question."""
 
 DECISIVE_TURN_DISCIPLINE = """DECISIVE TURN DISCIPLINE (every turn)
@@ -1173,9 +1075,9 @@ def opening_requirements_for(language: str | None) -> str:
         "- Example lines must be in the selected language. Set opening_line_te to that exact example line.\n"
         "- WORK SCOPE lists only duties and real facts from the brief. Stay inside that scope.\n"
         "- CLOSING: hang up only when they confirm they are done or they confirmed a callback/next step "
-        "(or send-details was honored). One professional wrap-up, then farewell + end_call — do not keep pitching. "
+        "(or send-details was honored). One professional wrap-up, then propose the close — the platform speaks the farewell. Do not keep pitching. "
         "Never close just because name/phone are already known. Busy: one callback offer, stay on the line.\n"
-        "- Never contradict platform rules (no re-greet, no repeat pitch, no invented facts, no goodbye unless ending)."
+        "- Never contradict platform rules (no re-greet, no repeat pitch, no invented facts, never say goodbye; the platform speaks the approved farewell)."
     )
 
 
@@ -1277,7 +1179,7 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "information-only means stop converting; busy: one callback offer and stay on the line; honor send-details; "
         "stop interrogating if they complain; "
         "handle the actual objection; if they ask you to suggest, recommend from known facts; "
-        "buying or booking intent goes to a next step; firm no / don't-call gets a short farewell and hangup; "
+        "buying or booking intent goes to a next step; firm no / don't-call gets a close decision (the platform speaks the farewell); "
         "hang up only when they confirm they are done or confirm that next step — never because details are already known.\n"
         "- OPENING in the script must match platform greeting rules (name + company + brief purpose once). "
         "Never instruct a second full greeting mid-call or on every hello.\n"

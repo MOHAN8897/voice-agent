@@ -1,6 +1,8 @@
-"""Model failures close with TTS speech; only missing TTS audio uses the clip."""
+"""Model failures close with TTS speech; the outage clip needs provider proof."""
 from __future__ import annotations
 
+import asyncio
+import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -9,15 +11,17 @@ import pytest
 from server.call.live_turn_orchestrator import live_turn_orchestrator
 from server.providers.llm_protocol import IncompleteTurnError
 from server.services import turn_failure_log
+from server.services.pstn_turn_tts import PstnTurnTtsSession, classify_tts_exception
 from server.services.pstn_voice_core import PstnVoiceLoop
 
 
 class _TurnTts:
-    def __init__(self, loop: PstnVoiceLoop, *, emit_audio: bool):
+    def __init__(self, loop: PstnVoiceLoop, *, emit_audio: bool, evidence: dict | None = None):
         self._loop = loop
         self._emit_audio = emit_audio
         self._chars_sent = 0
         self._audio_bytes = 0
+        self._evidence = evidence
         self.closed = False
         self._closed = False
 
@@ -27,7 +31,11 @@ class _TurnTts:
 
     @property
     def had_error(self) -> bool:
-        return False
+        return self._evidence is not None
+
+    @property
+    def failure_evidence(self) -> dict | None:
+        return dict(self._evidence) if self._evidence else None
 
     @property
     def audio_emitted(self) -> bool:
@@ -171,7 +179,7 @@ async def test_call_58102ce4_refusal_gets_one_honorific_farewell_without_callbac
     assert len(spoken) == 1
     assert "సరేనండి" in spoken[0] and "ధన్యవాదాలు" in spoken[0]
     assert "Goodbye" not in spoken[0]
-    loop._finish_agent_hangup.assert_awaited_once_with(reason="firm_refusal")
+    loop._finish_agent_hangup.assert_awaited_once_with(reason="not_interested")
     fallback.assert_not_awaited()
     assert failures and failures[0]["finish_reason"] == "length"
     await loop.close()
@@ -198,7 +206,7 @@ async def test_exact_refusal_stream_speaks_once_and_drains_before_hangup(monkeyp
     await loop._run_turn("అదే మొత్తం ఇప్పుడే ప్రొసీజర్ నాకు ఇప్పుడైతే ఇంట్రెస్ట్ ఏం లేదండి.")
 
     assert session._chars_sent > 0
-    loop._finish_agent_hangup.assert_awaited_once_with(reason="firm_refusal")
+    loop._finish_agent_hangup.assert_awaited_once_with(reason="not_interested")
     fallback.assert_not_awaited()
     assert not failures
     await loop.close()
@@ -261,7 +269,7 @@ async def test_completed_turn_keeps_the_call_alive_on_late_error(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_missing_tts_audio_still_plays_the_outage_apology(monkeypatch):
+async def test_missing_tts_audio_without_provider_evidence_does_not_claim_outage(monkeypatch):
     loop = PstnVoiceLoop(
         session_id="no-delivery",
         call_id="c-empty-turn",
@@ -278,14 +286,15 @@ async def test_missing_tts_audio_still_plays_the_outage_apology(monkeypatch):
     await loop._run_turn("yes please share the details")
 
     assert loop._turn_audio_delivered is False
-    fallback.assert_awaited_once()
-    assert fallback.await_args.kwargs["trigger"] == "tts_failure"
+    fallback.assert_not_awaited()
+    loop._finish_agent_hangup.assert_awaited_once()
+    assert loop._finish_agent_hangup.await_args.kwargs["spoke_farewell"] is False
     assert failures and failures[0]["delivered"] is False
     await loop.close()
 
 
 @pytest.mark.asyncio
-async def test_completed_reply_without_tts_audio_is_recorded_and_apologized(monkeypatch):
+async def test_completed_reply_without_tts_audio_is_recorded_without_outage(monkeypatch):
     loop = PstnVoiceLoop(
         session_id="silent-tts",
         call_id="c-silent-tts",
@@ -306,9 +315,112 @@ async def test_completed_reply_without_tts_audio_is_recorded_and_apologized(monk
 
     await loop._run_turn("yes please share the details")
 
-    fallback.assert_awaited_once()
-    assert fallback.await_args.kwargs["trigger"] == "tts_failure"
+    fallback.assert_not_awaited()
     assert failures and failures[0]["finish_reason"] == "tts_empty_audio"
     assert failures[0]["delivered"] is False
     assert failures[0]["turn_completed"] is True
     await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_balance_failure_evidence_plays_the_recorded_outage_clip(monkeypatch):
+    loop = PstnVoiceLoop(
+        session_id="balance",
+        call_id="c-balance",
+        on_agent_wire=AsyncMock(),
+        stack_override={"pipeline": "composed_voice"},
+    )
+    session = _TurnTts(
+        loop,
+        emit_audio=False,
+        evidence={"kind": "balance", "provider": "sarvam", "retained": True},
+    )
+
+    async def fake_stream(**_kwargs):
+        yield {"delta": "Namaste, I can help with that. "}
+        yield {"done": True, "text": "Namaste, I can help with that.", "finish_reason": "stop"}
+
+    fallback, failures = _install_runtime(monkeypatch, loop, session, fake_stream)
+
+    await loop._run_turn("yes please share the details")
+
+    fallback.assert_awaited_once()
+    assert fallback.await_args.kwargs["trigger"] == "tts_failure"
+    assert failures and failures[0]["finish_reason"] == "tts_empty_audio"
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_transport_failure_evidence_never_plays_the_recorded_clip(monkeypatch):
+    loop = PstnVoiceLoop(
+        session_id="transport",
+        call_id="c-transport",
+        on_agent_wire=AsyncMock(),
+        stack_override={"pipeline": "composed_voice"},
+    )
+    session = _TurnTts(
+        loop,
+        emit_audio=False,
+        evidence={"kind": "transport", "provider": "sarvam", "retained": False},
+    )
+
+    async def fake_stream(**_kwargs):
+        raise RuntimeError("connect reset")
+        yield  # pragma: no cover
+
+    fallback, failures = _install_runtime(monkeypatch, loop, session, fake_stream)
+
+    await loop._run_turn("yes please share the details")
+
+    fallback.assert_not_awaited()
+    assert failures and failures[0]["delivered"] is False
+    await loop.close()
+
+
+def test_classify_tts_exception_keeps_only_provider_evidence():
+    status_error = RuntimeError("rejected")
+    status_error.status_code = 401
+
+    assert classify_tts_exception(asyncio.TimeoutError())["kind"] == "timeout"
+    assert classify_tts_exception(RuntimeError("insufficient credits"))["kind"] == "balance"
+    rejected = classify_tts_exception(status_error)
+    assert rejected["kind"] == "provider_rejection"
+    assert rejected["retained"] is True
+    assert classify_tts_exception(RuntimeError("socket closed"))["retained"] is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("code", "message", "kind"),
+    [
+        ("quota_exceeded", "quota exhausted", "balance"),
+        ("invalid_api_key", "rejected credentials", "provider_rejection"),
+    ],
+)
+async def test_tts_error_event_keeps_retained_provider_evidence(code, message, kind):
+    class Socket:
+        def __aiter__(self):
+            async def messages():
+                yield json.dumps({"type": "error", "code": code, "message": message})
+
+            return messages()
+
+    voice = SimpleNamespace(
+        call_id="c-tts-error",
+        current_turn_id=None,
+        current_generation_id=None,
+        _interrupted_generation=None,
+        _closed=False,
+        sample_rate=8000,
+        emission_blocked=lambda: False,
+    )
+    session = PstnTurnTtsSession(voice)
+    session._tts = Socket()
+
+    await session._reader_loop()
+
+    assert session.had_error is True
+    evidence = session.failure_evidence
+    assert evidence["kind"] == kind
+    assert evidence["code"] == code
+    assert evidence["retained"] is True

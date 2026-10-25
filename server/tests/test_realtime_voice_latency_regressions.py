@@ -217,6 +217,6 @@ def test_voice_tool_description_prefers_speech_without_changing_text_tool():
 
     session = build_realtime_voice_session(model="gpt-realtime-2.1-mini", instructions="test")
     voice_tool = next(t for t in session["tools"] if t["name"] == "call_action")
-    assert "speak a short farewell, then report END_CALL" in voice_tool["description"]
+    assert "Hangup is owned by end_call" in voice_tool["description"]
     assert "before speaking" in CALL_ACTION_TOOL["description"]
     assert voice_tool["parameters"] == CALL_ACTION_TOOL["parameters"]

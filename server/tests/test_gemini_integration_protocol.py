@@ -114,7 +114,7 @@ async def test_both_composed_llms_use_same_authorized_gateway_without_switching(
     registry = SimpleNamespace(get_llm=get_llm, is_provider_enabled=lambda *_: True,
         is_model_allowed=lambda *_: True)
     monkeypatch.setattr(server.providers, "get_provider_registry", lambda: registry)
-    monkeypatch.setattr(module, "get_settings", lambda: SimpleNamespace(use_provider_registry=True))
+    monkeypatch.setattr(module, "get_settings", lambda: SimpleNamespace(use_provider_registry=True, composed_first_attempt_max_tokens=1280, composed_retry_max_tokens=2560))
     orchestrator = module.LiveTurnOrchestrator()
     monkeypatch.setattr(orchestrator, "_load_composed_tenant_tools", AsyncMock(return_value=[TOOL]))
     gateway = AsyncMock(return_value={"status": "success", "slots": []})
@@ -138,8 +138,15 @@ async def test_both_composed_llms_use_same_authorized_gateway_without_switching(
 async def test_older_gemini_uses_forced_schema_function_for_final_reply(monkeypatch):
     from server.agent.conversation_manager import conversation_manager
 
-    reply = {"spoken_response": "Here are the times.", "memory_update": {"operations": []},
-        "end_call": {"should_end": False, "reason": "none", "farewell": ""}}
+    reply = {
+        "end_call": {
+            "decision": "continue", "reason": "none", "evidence": "",
+            "remaining_request": "", "contact_preference": "none",
+        },
+        "order_claimed": False,
+        "spoken_response": "Here are the times.",
+        "memory_update": {"operations": []},
+    }
     requests = mocked_gemini(monkeypatch, [{"candidates": [{"content": {"role": "model", "parts": [
         {"functionCall": {"name": "VOXLY_RETURN_SPOKEN_TURN", "args": reply}}]}, "finishReason": "STOP"}]}])
     before = copy.deepcopy(conversation_manager.get_history("default"))
@@ -200,7 +207,7 @@ async def test_selected_provider_failure_is_propagated_without_fallback(monkeypa
 
     monkeypatch.setattr(server.providers, "get_provider_registry", lambda: SimpleNamespace(get_llm=selected,
         is_provider_enabled=lambda *_: True, is_model_allowed=lambda *_: True))
-    monkeypatch.setattr(module, "get_settings", lambda: SimpleNamespace(use_provider_registry=True))
+    monkeypatch.setattr(module, "get_settings", lambda: SimpleNamespace(use_provider_registry=True, composed_first_attempt_max_tokens=1280, composed_retry_max_tokens=2560))
     orchestrator = module.LiveTurnOrchestrator()
     monkeypatch.setattr(orchestrator, "_load_composed_tenant_tools", AsyncMock(return_value=[]))
     ctx = SimpleNamespace(pipeline="composed_voice", call_id="call", callback_request_text="",

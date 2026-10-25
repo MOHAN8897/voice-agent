@@ -545,7 +545,7 @@ def _spoken_and_memory(raw_text: str) -> tuple[str, dict, bool, dict]:
     return spoken, extractor.parse_memory_update(), extractor.structured_parse_failed(), extractor.parse_end_call()
 
 
-def _gate_end_call_for_brain(
+async def _gate_end_call_for_brain(
     raw: Any,
     *,
     transcript: str,
@@ -589,11 +589,26 @@ def _gate_end_call_for_brain(
         callback_close_phase=state.phase,
     )
     if not decision.accepted:
-        return {"should_end": False, "reason": "none", "farewell": ""}
+        return {
+            "should_end": False,
+            "reason": "none",
+            "farewell": "",
+            "contact_preference": "none",
+            "reject_code": decision.reject_code,
+        }
+    from server.call.call_end_policy import server_farewell_for
+    from server.call.contact_preference import record_contact_preference
+
+    await record_contact_preference(call_id, decision.contact_preference)
     return {
         "should_end": True,
         "reason": decision.reason,
-        "farewell": (decision.farewell or spoken_text or "")[:240],
+        "farewell": server_farewell_for(
+            language_code,
+            policy=ctx.call_end_policy if ctx else None,
+            contact_preference=decision.contact_preference,
+        ),
+        "contact_preference": decision.contact_preference,
     }
 
 
@@ -766,7 +781,7 @@ async def generate_response(
                 text, memory_update, memory_parse_failed, end_call = _spoken_and_memory(text)
                 if not text:
                     text = unclear_fallback_for(language_code)
-            end_call = _gate_end_call_for_brain(
+            end_call = await _gate_end_call_for_brain(
                 end_call,
                 transcript=transcript,
                 language_code=language_code,
@@ -1035,7 +1050,20 @@ async def generate_response_stream(
                         )
                     full_text_parts.append(delta)
                     if spoken_delta:
-                        yield {"delta": spoken_delta, "language_context": language_context}
+                        yield {
+                            "delta": spoken_delta,
+                            "language_context": language_context,
+                            "close_preview": (
+                                extractor.preview_decision()
+                                if extractor is not None
+                                else None
+                            ),
+                            "order_preview": (
+                                extractor.preview_order_claim()
+                                if extractor is not None
+                                else None
+                            ),
+                        }
             elif event_type == "response.completed":
                 resp = getattr(event, "response", None)
                 if resp is not None:
@@ -1057,7 +1085,7 @@ async def generate_response_stream(
             end_call = extractor.parse_end_call()
         else:
             full_text = raw_text or unclear_fallback_for(language_code)
-        end_call = _gate_end_call_for_brain(
+        end_call = await _gate_end_call_for_brain(
             end_call,
             transcript=transcript,
             language_code=language_code,

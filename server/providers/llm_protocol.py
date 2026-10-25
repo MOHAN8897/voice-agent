@@ -24,9 +24,13 @@ class IncompleteTurnError(RuntimeError):
         partial_text: str = "",
         usage: dict[str, Any] | None = None,
         retry_used: bool = False,
+        raw_finish_reason: str | None = None,
     ) -> None:
         self.provider = provider
-        self.finish_reason = str(finish_reason or "unknown")
+        self.raw_finish_reason = str(raw_finish_reason or finish_reason or "unknown").strip()
+        # Providers disagree on casing ("SAFETY" vs "safety"); the retry policy is
+        # decided on the normalized value so a refusal is never retried.
+        self.finish_reason = self.raw_finish_reason.lower()
         self.partial_text = partial_text or ""
         self.usage = dict(usage or {})
         self.retry_used = retry_used

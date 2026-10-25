@@ -374,7 +374,20 @@ class GeminiLLMAdapter:
                                 plain_parts.append(delta)
                                 spoken = delta
                             if spoken and not declarations:
-                                yield {"delta": spoken, "language_context": {}}
+                                yield {
+                                    "delta": spoken,
+                                    "language_context": {},
+                                    "close_preview": (
+                                        extractor.preview_decision()
+                                        if extractor is not None
+                                        else None
+                                    ),
+                                    "order_preview": (
+                                        extractor.preview_order_claim()
+                                        if extractor is not None
+                                        else None
+                                    ),
+                                }
                         if stop_reason:
                             finish_reason = stop_reason.lower()
                             if stop_reason == "STOP":
@@ -384,6 +397,7 @@ class GeminiLLMAdapter:
                                 raise IncompleteTurnError(
                                     provider=self.provider_id,
                                     finish_reason=finish_reason,
+                                    raw_finish_reason=stop_reason,
                                     partial_text=(
                                         extractor.spoken_text
                                         if extractor is not None
@@ -399,6 +413,7 @@ class GeminiLLMAdapter:
             raise IncompleteTurnError(
                 provider=self.provider_id,
                 finish_reason=finish_reason or "no_finish_reason",
+                raw_finish_reason=finish_reason or "no_finish_reason",
                 partial_text=(
                     extractor.spoken_text if extractor is not None else "".join(plain_parts)
                 ),
@@ -410,6 +425,7 @@ class GeminiLLMAdapter:
                 raise IncompleteTurnError(
                     provider=self.provider_id,
                     finish_reason=finish_reason or "interrupted",
+                    raw_finish_reason=finish_reason or "interrupted",
                     partial_text=(
                         extractor.spoken_text if extractor is not None else "".join(plain_parts)
                     ),

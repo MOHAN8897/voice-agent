@@ -19,7 +19,8 @@ def test_rejects_goodbye_without_evidence():
         language="en-IN",
     )
     assert d.accepted is False
-    assert d.reject_code == "no_evidence"
+    assert d.reject_code == "evidence_not_quoted"
+    assert d.evidence_valid is False
 
 
 def test_accepts_english_goodbye():
@@ -51,7 +52,7 @@ def test_rejects_firm_refusal_on_first_turn():
         completed_turns=0,
     )
     assert d.accepted is True
-    assert d.reason == "firm_refusal"
+    assert d.reason == "not_interested"
 
 
 def test_infers_firm_refusal_when_model_forgets_end_call():
@@ -63,20 +64,31 @@ def test_infers_firm_refusal_when_model_forgets_end_call():
         spoken_text="Thank you for your time. Goodbye.",
     )
     assert d.accepted is True
-    assert d.reason == "firm_refusal"
+    assert d.reason == "not_interested"
 
 
 def test_goal_complete_needs_memory():
+    quote = "please wrap up the paperwork"
     d = validate_end_call(
-        {"should_end": True, "reason": "goal_complete", "farewell": "Thanks, visit booked."},
-        user_text="please wrap up the paperwork",
+        {
+            "should_end": True,
+            "reason": "goal_complete",
+            "farewell": "Thanks, visit booked.",
+            "evidence": quote,
+        },
+        user_text=quote,
         language="en-IN",
         completed_turns=2,
     )
     assert d.reject_code == "no_evidence"
     ok = validate_end_call(
-        {"should_end": True, "reason": "goal_complete", "farewell": "Thanks, visit booked."},
-        user_text="please wrap up the paperwork",
+        {
+            "should_end": True,
+            "reason": "goal_complete",
+            "farewell": "Thanks, visit booked.",
+            "evidence": quote,
+        },
+        user_text=quote,
         language="en-IN",
         completed_turns=2,
         memory_snapshot={"facts": {"visit_status": "booked"}},
@@ -191,7 +203,7 @@ def test_dont_call_overrides_wrong_goal_complete_reason():
         completed_turns=3,
     )
     assert d.accepted is True
-    assert d.reason == "goodbye"
+    assert d.reason == "firm_refusal"
 
 
 def test_false_should_end_is_noop_without_goodbye():
@@ -226,14 +238,52 @@ def test_rejects_second_hangup():
 
 
 def test_explicitly_completed_information_goal_can_end():
+    text = "Okay, I know the closing time now."
     d = validate_end_call(
-        {"should_end": True, "reason": "goal_complete", "farewell": "Goodbye."},
-        user_text="Okay, I know the closing time now.",
+        {"should_end": True, "reason": "goal_complete", "farewell": "Goodbye.", "evidence": text},
+        user_text=text,
         language="en-IN",
         completed_turns=3,
     )
     assert d.accepted is True
     assert d.reason == "goal_complete"
+
+
+def test_close_without_a_caller_quote_is_a_continuation_not_an_attempt():
+    d = validate_end_call(
+        {
+            "should_end": True,
+            "reason": "not_interested",
+            "farewell": "",
+            "evidence": "I already told you this is too expensive",
+        },
+        user_text="Actually, what is the price of the visiting cards?",
+        language="en-IN",
+        completed_turns=4,
+    )
+    assert d.accepted is False
+    assert d.should_end is False
+    # A different guard may reject first; the proposal is still not a valid
+    # close attempt because it carries no caller quote.
+    assert d.reject_code in {"evidence_not_quoted", "user_asked_question", "caller_engaged"}
+    assert d.evidence_valid is False
+
+
+def test_paraphrased_evidence_does_not_close_the_call():
+    d = validate_end_call(
+        {
+            "should_end": True,
+            "reason": "goodbye",
+            "farewell": "",
+            "evidence": "the caller is saying goodbye",
+        },
+        user_text="No, tell me more about the service.",
+        language="en-IN",
+        completed_turns=4,
+    )
+    assert d.accepted is False
+    assert d.reject_code in {"evidence_not_quoted", "caller_engaged"}
+    assert d.evidence_valid is False
 
 
 def test_out_of_scope_is_not_a_default_hangup_reason():

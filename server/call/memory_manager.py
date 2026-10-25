@@ -177,6 +177,14 @@ class MemoryManager:
         reason: str | None = None,
     ) -> dict[str, Any]:
         ops = operations or []
+        if source == "model":
+            # The rolling summary is server-written; a model-written one is a
+            # conclusion channel, not a fact.
+            ops = [
+                op
+                for op in ops
+                if not (isinstance(op, dict) and str(op.get("op") or "") == "update_summary")
+            ]
         accepted: list[dict[str, Any]] = []
         errors: list[str] = []
         for raw in ops:

@@ -207,6 +207,9 @@ class PstnVoiceLoop:
         self._active_speak_task: asyncio.Task | None = None
         self._active_tts_session = None
         self._call_tts_session = None
+        # Evidence for routing a speech failure: only a session that actually
+        # failed can prove a provider outage.
+        self._last_tts_session = None
         self._pending_transcript: str | None = None
         self.current_output_codec = "L16" if sample_rate >= TELNYX_PCM_SAMPLE_RATE else "PCMU"
         self._last_barge_at = 0.0
@@ -475,8 +478,8 @@ class PstnVoiceLoop:
             self._hangup_started = False
             raise
 
-    async def _record_failed_reply(self, *, defect: str) -> None:
-        log_pstn("tts.fallback_speech", call_id=self.call_id, recorded=True)
+    async def _record_failed_reply(self, *, defect: str, clip: bool = True) -> None:
+        log_pstn("tts.fallback_speech", call_id=self.call_id, recorded=clip, defect=defect)
         if self.stack_override.get("pipeline") != "composed_voice":
             return
         await self._record_tts_failure(defect=defect)
@@ -488,8 +491,71 @@ class PstnVoiceLoop:
             call_id=self.call_id, detail=defect,
         )
 
+    def _speech_outage_evidence(self, session: Any = None) -> dict[str, Any] | None:
+        """Only a retained provider balance/rejection failure proves an outage."""
+        from server.services.pstn_turn_tts import OUTAGE_EVIDENCE_KINDS
+
+        target = session if session is not None else self._last_tts_session
+        evidence = getattr(target, "failure_evidence", None)
+        if not isinstance(evidence, dict):
+            return None
+        if evidence.get("kind") not in OUTAGE_EVIDENCE_KINDS:
+            return None
+        if evidence.get("retained") is not True:
+            return None
+        return dict(evidence)
+
+    async def _end_without_farewell(self, *, reason: str = "agent_hangup") -> None:
+        """No usable voice and no proven outage: leave a short tail, then end."""
+        if self._hangup_started or self._closed or self._phase == PHASE_ENDED:
+            return
+        from server.services.pstn_technical_fallback import FALLBACK_TAIL_SEC
+
+        await asyncio.sleep(FALLBACK_TAIL_SEC)
+        await self._finish_agent_hangup(
+            reason=reason,
+            spoke_farewell=False,
+            trail_sec=FALLBACK_TAIL_SEC,
+        )
+
+    async def _close_after_tts_failure(
+        self,
+        *,
+        defect: str,
+        session: Any,
+        trigger: str,
+        reason: str = "agent_hangup",
+        retry_farewell: bool = True,
+    ) -> None:
+        """Prefer a healthy-voice farewell; the recorded clip needs provider proof."""
+        evidence = self._speech_outage_evidence(session)
+        await self._record_failed_reply(defect=defect, clip=evidence is not None)
+        if evidence is None:
+            failure = getattr(session, "failure_evidence", None) or {}
+            log_pstn(
+                "speech.outage_unproven",
+                call_id=self.call_id,
+                defect=defect,
+                failure_kind=str(failure.get("kind") or "none"),
+            )
+            if retry_farewell:
+                await self._close_after_non_tts_failure(reason=reason, session=session)
+            else:
+                await self._end_without_farewell(reason=reason)
+            return
+        log_pstn(
+            "speech.outage_proven",
+            call_id=self.call_id,
+            defect=defect,
+            kind=evidence.get("kind"),
+            provider=evidence.get("provider"),
+            code=evidence.get("code"),
+            status=evidence.get("status"),
+        )
+        await self._play_technical_fallback_and_hangup(trigger=trigger)
+
     async def _close_after_non_tts_failure(self, *, reason: str = "agent_hangup", session: Any = None) -> None:
-        """Use the working voice for a courteous close; reserve the clip for TTS failure."""
+        """Use the working voice for a courteous close; the clip needs outage proof."""
         if self._hangup_started or self._closed or self._phase == PHASE_ENDED:
             return
         from server.call.hangup_judge import default_farewell_for
@@ -503,14 +569,24 @@ class PstnVoiceLoop:
             raise
         except Exception as exc:
             log_pstn("turn.close.tts_failed", call_id=self.call_id, error_type=type(exc).__name__)
-            await self._record_failed_reply(defect="failure_farewell_tts")
-            await self._play_technical_fallback_and_hangup(trigger="tts_failure")
+            await self._close_after_tts_failure(
+                defect="failure_farewell_tts",
+                session=self._last_tts_session,
+                trigger="tts_failure",
+                reason=reason,
+                retry_farewell=False,
+            )
             return
         if self._closed or self._hangup_started:
             return
         if self._wire_frames_out == frames_before:
-            await self._record_failed_reply(defect="failure_farewell_empty_audio")
-            await self._play_technical_fallback_and_hangup(trigger="tts_failure")
+            await self._close_after_tts_failure(
+                defect="failure_farewell_empty_audio",
+                session=self._last_tts_session,
+                trigger="tts_failure",
+                reason=reason,
+                retry_farewell=False,
+            )
             return
         if self.call_id:
             try:
@@ -1493,18 +1569,27 @@ class PstnVoiceLoop:
                 log_pstn("greeting.failed", call_id=self.call_id, error=str(greet_err)[:200])
                 if self.stack_override.get("pipeline") == "composed_voice":
                     if greeting_tts_attempted:
-                        await self._play_technical_fallback_and_hangup(trigger="tts_failure")
+                        await self._close_after_tts_failure(
+                            defect="greeting_tts_failed",
+                            session=self._last_tts_session,
+                            trigger="tts_failure",
+                        )
                     else:
                         await self._close_after_non_tts_failure()
                     raise greet_err
                 if self._wire_frames_out == before_frames and not self._closed:
-                    # Retry a cold greeting once; a second failure gets the recorded
-                    # apology instead of a silent bridge teardown.
+                    # Retry a cold greeting once; a second failure closes with a
+                    # farewell when the voice works, or the clip when the outage
+                    # itself is proven by the provider.
                     try:
                         await self.speak(greeting)
                     except Exception as retry_error:
                         log_pstn("greeting.retry.failed", call_id=self.call_id, error=str(retry_error)[:200])
-                        await self._play_technical_fallback_and_hangup(trigger="tts_failure")
+                        await self._close_after_tts_failure(
+                            defect="greeting_retry_tts_failed",
+                            session=self._last_tts_session,
+                            trigger="tts_failure",
+                        )
                         raise
             await self._wait_for_intro_playback(self._wire_frames_out - before_frames)
             if not self._closed and self._intro_phase and self._wire_frames_out > before_frames:
@@ -2286,8 +2371,13 @@ class PstnVoiceLoop:
                         retry_used=retry_used,
                     )
                     raise TimeoutError("The selected voice service did not answer in time") from None
-                if chunk.get("delta") or chunk.get("done"):
-                    # The agent has spoken/finished; silence is no longer total.
+                if (
+                    chunk.get("delta")
+                    or chunk.get("done")
+                    or chunk.get("status") in {"close_pending", "reply_buffered"}
+                ):
+                    # The stream is alive and may already hold a close decision;
+                    # re-asking would repeat the caller turn for no benefit.
                     started = True
                 yield chunk
         finally:
@@ -2466,6 +2556,7 @@ class PstnVoiceLoop:
             self._clear_tts_text_layers()
             self._tts_started_at = 0.0
             tts_session = self._get_call_tts_session()
+            self._last_tts_session = tts_session
             self._active_tts_session = tts_session
             turn_cancelled = False
             async with self._speak_lock:
@@ -2528,10 +2619,14 @@ class PstnVoiceLoop:
                             turn_completed = True
                             if chunk.get("cancelled"):
                                 turn_cancelled = True
-                            tail = resolve_stream_tts_tail(
-                                pending,
-                                chunk.get("text") or "",
-                                spoke_from_stream=spoke_from_stream,
+                            tail = (
+                                (chunk.get("text") or "").strip()
+                                if chunk.get("replace_speech")
+                                else resolve_stream_tts_tail(
+                                    pending,
+                                    chunk.get("text") or "",
+                                    spoke_from_stream=spoke_from_stream,
+                                )
                             )
                             if tail and not turn_cancelled and not self.emission_blocked():
                                 await tts_prepare
@@ -2599,14 +2694,21 @@ class PstnVoiceLoop:
                 # released so a failed farewell can be replaced by the clip.
                 self._set_tts_active(False)
                 if needs_tts_fallback:
-                    await self._record_failed_reply(defect="empty_tts_audio")
-                    await self._play_technical_fallback_and_hangup(trigger="farewell_tts_failure")
+                    await self._close_after_tts_failure(
+                        defect="empty_tts_audio",
+                        session=tts_session,
+                        trigger="farewell_tts_failure",
+                        reason=hangup_reason,
+                    )
                 else:
                     await self._finish_agent_hangup(reason=hangup_reason)
                 return
             if needs_tts_fallback and not turn_cancelled and not self.emission_blocked():
-                await self._record_failed_reply(defect="empty_tts_audio")
-                await self._play_technical_fallback_and_hangup(trigger="tts_failure")
+                await self._close_after_tts_failure(
+                    defect="empty_tts_audio",
+                    session=tts_session,
+                    trigger="tts_failure",
+                )
                 return
         except asyncio.CancelledError:
             cancelled = True
@@ -2658,12 +2760,16 @@ class PstnVoiceLoop:
                     if accepted_end_call and not turn_cancelled and not self.emission_blocked():
                         await self._finish_agent_hangup(reason=hangup_reason)
                 else:
-                    from server.call.end_call_validate import caller_firm_refusal
+                    from server.call.end_call_validate import caller_close_reason
 
-                    reason = "firm_refusal" if caller_firm_refusal(text) else "agent_hangup"
+                    reason = caller_close_reason(text) or "agent_hangup"
                     if getattr(tts_session, "had_error", False):
-                        await self._record_failed_reply(defect="tts_provider_error")
-                        await self._play_technical_fallback_and_hangup(trigger="tts_failure")
+                        await self._close_after_tts_failure(
+                            defect="tts_provider_error",
+                            session=tts_session,
+                            trigger="tts_failure",
+                            reason=reason,
+                        )
                     else:
                         await self._close_after_non_tts_failure(reason=reason, session=tts_session)
             elif not spoke_from_stream and not delivered and self._phase != PHASE_ENDED and not self._closed:
@@ -2770,6 +2876,7 @@ class PstnVoiceLoop:
                 self.playback.set_current_generation(self.current_generation_id)
             self._begin_turn_playout_metrics()
             session = await self._acquire_tts_session()
+            self._last_tts_session = session
             if speaker or language_code:
                 await session.open(speaker=speaker, language_code=language_code)
             self._active_tts_session = session

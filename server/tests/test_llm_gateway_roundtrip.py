@@ -87,7 +87,7 @@ async def test_selected_model_gateway_roundtrip_is_authorized_and_write_is_not_r
     registry = SimpleNamespace(get_llm=lambda selected: adapter if selected == provider else pytest.fail("Provider changed"),
         is_provider_enabled=lambda *_: True, is_model_allowed=lambda *_: True)
     monkeypatch.setattr(server.providers, "get_provider_registry", lambda: registry)
-    monkeypatch.setattr(module, "get_settings", lambda: SimpleNamespace(use_provider_registry=True))
+    monkeypatch.setattr(module, "get_settings", lambda: SimpleNamespace(use_provider_registry=True, composed_first_attempt_max_tokens=1280, composed_retry_max_tokens=2560))
     orchestrator = module.LiveTurnOrchestrator()
     tools = [tool for tool in get_tools_for_tenant(["SLACK"]) if tool["name"] == "SLACK_SEND_MESSAGE"]
     monkeypatch.setattr(orchestrator, "_load_composed_tenant_tools", AsyncMock(return_value=tools))

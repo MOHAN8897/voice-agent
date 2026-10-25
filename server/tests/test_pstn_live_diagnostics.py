@@ -39,6 +39,41 @@ def test_timeline_merges_ids_redacts_and_paginates():
     assert store.snapshot("missing") is None
 
 
+def test_close_and_token_fields_reach_the_timeline_without_text():
+    store = PstnDiagnostics()
+    store.record(
+        "close.gate",
+        call_id="c",
+        approved=False,
+        reject_code="evidence_not_quoted",
+        proposed_decision="close",
+        proposed_reason="firm_refusal",
+        evidence_chars=42,
+        evidence_valid=False,
+        close_attempt=False,
+        remaining_request_chars=0,
+        farewell_chars=0,
+        contact_preference="end_call",
+    )
+    store.record(
+        "llm.request",
+        call_id="c",
+        requested_max_tokens=1280,
+        effective_max_tokens=1280,
+        reasoning_effort="low",
+        temperature=0.2,
+        has_schema=True,
+    )
+    store.record("order.claim_blocked", call_id="c", held_as_preview=True)
+    events = store.snapshot("c")["events"]
+    assert events[0]["fields"]["reject_code"] == "evidence_not_quoted"
+    assert events[0]["fields"]["evidence_chars"] == 42
+    assert events[1]["fields"]["requested_max_tokens"] == 1280
+    assert events[1]["fields"]["has_schema"] is True
+    assert events[2]["fields"]["held_as_preview"] is True
+    assert "evidence" not in events[0]["fields"]
+
+
 def test_timeline_bounds_calls_events_and_aliases():
     store = PstnDiagnostics(max_calls=2, max_events=2)
     for n in range(4):

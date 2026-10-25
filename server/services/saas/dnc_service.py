@@ -112,20 +112,30 @@ async def handle_call_opt_out(
     disposition: str | None = None,
 ) -> bool:
     """Inspects call termination reason/disposition and auto-enrolls into DND if opt-out occurred."""
+    from server.call.call_context import get as get_call_ctx
+    from server.call.call_ledger import call_ledger
+
+    ctx = get_call_ctx(call_id)
+    meta = call_ledger.read_meta(call_id) or {}
+    # The live gate records the caller's contact preference separately from the
+    # hangup reason. The ledger copy survives context eviction before lifecycle end.
+    recorded_preference = (
+        str(getattr(ctx, "contact_preference", "") or "").strip().lower()
+        or str(meta.get("contact_preference") or "").strip().lower()
+    )
     is_opt_out = (
         (reason and str(reason).strip().lower() == "opt_out")
         or (disposition and str(disposition).strip().lower() in _OPT_OUT_DISPOSITIONS)
+        # A firm refusal that asked to stop contact still enrolls even when the
+        # lifecycle reason is not opt_out.
+        or recorded_preference == "do_not_call"
     )
     if not is_opt_out:
         return False
 
-    from server.call.call_context import get as get_call_ctx
-    from server.call.call_ledger import call_ledger
     from server.call.call_store import call_store
 
-    ctx = get_call_ctx(call_id)
     stored = await call_store.get(call_id)
-    meta = call_ledger.read_meta(call_id) or {}
 
     tenant_id = (ctx.tenant_id if ctx else None) or (stored or {}).get("tenant_id")
     if not tenant_id:

@@ -47,7 +47,10 @@ async def extract_and_apply(
             schema_name="memory_extraction",
             max_output_tokens=settings.memory_extraction_max_output_tokens,
         )
-        ops = (payload.get("memory_update") or {}).get("operations") or []
+        from server.call.memory_guard import sanitize_model_operations
+
+        raw_ops = (payload.get("memory_update") or {}).get("operations") or []
+        ops, _rejected = sanitize_model_operations(raw_ops)
         return memory_manager.apply_proposals(call_id, ops, turn_seq=turn_seq, source="extraction_fallback")
     except Exception as e:
         logger.warning(f"[MEMORY] extraction fallback failed call={call_id}: {str(e)[:200]}")

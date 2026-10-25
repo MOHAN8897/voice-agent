@@ -105,7 +105,7 @@ async def test_golden_transcripts_to_disposition(monkeypatch, tmp_path):
         if case["memory"].get("summary"):
             ops.append({"op": "update_summary", "value": case["memory"]["summary"]})
         if ops:
-            memory_manager.apply_proposals(call_id, ops, turn_seq=1)
+            memory_manager.apply_proposals(call_id, ops, turn_seq=1, source="rolling_summary")
 
         async def fake_completion(*_a, **_k):
             return {

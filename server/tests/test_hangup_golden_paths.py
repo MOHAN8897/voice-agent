@@ -35,8 +35,8 @@ def _end(
 def test_not_interested_hangs_up():
     d = _end("I'm not interested", spoken="Thank you for your time. Goodbye.")
     assert d.accepted is True
-    assert d.reason == "firm_refusal"
-    assert canonical_lifecycle_reason(d.reason) == "firm_refusal"
+    assert d.reason == "not_interested"
+    assert canonical_lifecycle_reason(d.reason) == "not_interested"
 
 
 def test_bye_hangs_up():

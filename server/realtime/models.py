@@ -115,6 +115,7 @@ PIPELINE_MODES: tuple[str, ...] = ("classic", "realtime_text", "realtime_voice",
 END_CALL_REASONS: tuple[str, ...] = (
     "goodbye",
     "firm_refusal",
+    "not_interested",
     "goal_complete",
     "abuse",
     "out_of_scope",
@@ -130,6 +131,14 @@ END_CALL_TOOL: dict[str, Any] = {
         "properties": {
             "should_end": {"type": "boolean"},
             "reason": {"type": "string", "enum": list(END_CALL_REASONS)},
+            "contact_preference": {
+                "type": "string",
+                "enum": ["none", "end_call", "do_not_call", "callback"],
+                "description": (
+                    "do_not_call only when the caller asked to stop being contacted; "
+                    "end_call when they only want this call to end."
+                ),
+            },
             "farewell": {"type": "string"},
         },
         "required": ["should_end", "reason", "farewell"],

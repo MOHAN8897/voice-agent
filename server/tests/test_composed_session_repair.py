@@ -156,7 +156,7 @@ async def test_composed_start_speaks_and_remembers_localized_opening_once(monkey
 
 
 @pytest.mark.asyncio
-async def test_composed_model_failure_reports_service_error_and_plays_recorded_apology(monkeypatch):
+async def test_composed_model_failure_reports_service_error_without_claiming_outage(monkeypatch):
     from server.call.live_turn_orchestrator import live_turn_orchestrator
     from server.services.pstn_voice_core import PHASE_ENDED, PstnVoiceLoop
 
@@ -176,10 +176,47 @@ async def test_composed_model_failure_reports_service_error_and_plays_recorded_a
     loop.set_error_handler(error)
     loop.set_hangup_handler(hangup)
     await loop._run_turn("నాకు వివరాలు చెప్పండి")
+    speak.assert_awaited_once()
+    error.assert_awaited_once()
+    hangup.assert_awaited_once()
+    # No provider evidence: a courtesy farewell is attempted, not the outage clip.
+    assert loop._technical_fallback_played is False
+    assert loop._phase == PHASE_ENDED
+    await loop.close()
+
+
+@pytest.mark.asyncio
+async def test_composed_model_failure_with_provider_outage_plays_recorded_apology(monkeypatch):
+    from server.call.live_turn_orchestrator import live_turn_orchestrator
+    from server.services.pstn_voice_core import PHASE_ENDED, PstnVoiceLoop
+
+    async def failed(**_kwargs):
+        raise RuntimeError("Synthetic provider 400")
+        yield
+
+    monkeypatch.setattr(live_turn_orchestrator, "handle_user_turn_stream", failed)
+    loop = PstnVoiceLoop(session_id="failed-turn", call_id="failed-turn", on_agent_wire=AsyncMock(),
+                         stack_override={"pipeline": "composed_voice"})
+    tts = SimpleNamespace(
+        prepare_for_turn=AsyncMock(),
+        has_sent_text=False,
+        had_error=True,
+        failure_evidence={
+            "kind": "provider_rejection", "provider": "sarvam", "status": 503, "retained": True,
+        },
+    )
+    monkeypatch.setattr(loop, "_get_call_tts_session", lambda: tts)
+    monkeypatch.setattr(loop, "_release_tts_turn", AsyncMock())
+    speak = AsyncMock()
+    monkeypatch.setattr(loop, "speak", speak)
+    error, hangup = AsyncMock(), AsyncMock()
+    loop.set_error_handler(error)
+    loop.set_hangup_handler(hangup)
+    await loop._run_turn("నాకు వివరాలు చెప్పండి")
     speak.assert_not_awaited()
     error.assert_awaited_once()
     hangup.assert_awaited_once()
-    # Broken TTS must not be used for the apology; the shipped clip is sent instead.
+    # Retained provider rejection is proof enough to use the shipped clip.
     assert loop._technical_fallback_played is True
     assert loop.on_agent_wire.await_count > 0
     assert loop._phase == PHASE_ENDED

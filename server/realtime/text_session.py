@@ -131,8 +131,8 @@ def build_audio_session_instructions(
             "- If they are busy or not now: offer one callback only when that workflow is permitted. Otherwise acknowledge and honor a requested stop; no pitch.\n"
             "- For a permitted callback they still want, collect only required missing fields. "
             "The connected outbound number already counts as the callback phone.\n"
-            "- Once they confirm the callback and details are ready, say the confirmation, thank them, "
-            "say goodbye, and call end_call. Never hang up on okay/thanks alone."
+            "- Once they confirm the callback and details are ready, say the confirmation and "
+            "call end_call. Never speak a farewell; the platform does on approval. Never hang up on okay/thanks alone."
         )
         line = (opening_greeting or "").strip()
         if line:
@@ -142,20 +142,21 @@ def build_audio_session_instructions(
     parts.append(
         "CONVERSATION ACTIONS (override conflicting sales or callback instructions)\n"
         "For ordinary questions, speak the answer. Do not announce tools. "
-        "Hang up with end_call in the same turn as a short farewell only when they confirm they are done "
+        "Hang up with end_call when they confirm they are done "
         "(bye, hang up, cut the call, that's all, don't call, not interested) or the script objective "
-        "and agreed next step are complete. Do not require a separate goodbye after completion. "
+        "and agreed next step are complete. Never speak the farewell; the platform speaks it after approval. "
+        "Do not require a separate goodbye after completion. "
         "Do not also require call_action to disconnect. "
         "Busy or not now: one callback offer only when the business permits it; otherwise acknowledge without inventing a next step. Honor a requested stop. "
         "Do not end for okay, thanks, alright, uncertainty, or a follow-up question. "
-        "After an accepted end_call, finish the farewell once and stop. The platform disconnects immediately after playback, in every language. "
+        "After an accepted end_call, stop generating turns. The platform speaks the farewell and disconnects after playback, in every language. "
         "If a tool rejects an action, follow its result and do not claim it succeeded."
     )
     if not unified:
         parts.append(
             f"FINAL LANGUAGE CONSTRAINT: Keep {language} as the primary language, with natural English mixing, including answers, tool confirmations and farewell. "
             "This overrides conflicting language directions and examples in the business script. "
-            "A successful language callback tool permits the handoff farewell and end_call."
+            "A successful language callback tool permits the handoff end_call decision; the platform speaks the farewell."
         )
     if PLATFORM_PRIVACY_IDENTITY_RULES not in brain:
         parts.insert(0, PLATFORM_PRIVACY_IDENTITY_RULES)
@@ -431,12 +432,13 @@ class RealtimeTextSession:
                         "farewell": str(end_call.get("farewell") or spoken or default_farewell),
                     }
                 elif caller_firm_refusal(transcript) and (failed or not end_call.get("should_end")):
+                    from server.call.end_call_validate import caller_close_reason
                     from server.prompts.agent_voice_rules import CALL_END_FAREWELLS, normalize_compile_language
 
                     default_farewell = CALL_END_FAREWELLS[normalize_compile_language(lang)]
                     end_call = {
                         "should_end": True,
-                        "reason": "firm_refusal",
+                        "reason": caller_close_reason(transcript) or "not_interested",
                         "farewell": str(end_call.get("farewell") or spoken or default_farewell),
                     }
                 elif (

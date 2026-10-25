@@ -48,8 +48,8 @@ def _brain(*, with_spoken_pack: str | None = "en-IN", with_other_pack: str | Non
         "- Never invent prices.",
         "",
         "--- CALL END POLICY ---",
-        "Speak the farewell AND call end_call in the same turn.",
-        "Never say goodbye unless should_end is true.",
+        "The platform owns the farewell; never speak it yourself.",
+        "Never say goodbye before an approved close.",
         "",
         "--- STATIC OUTPUT RULES ---",
         "- Turn priority: answer first, then one next step.",
@@ -84,8 +84,9 @@ def test_hangup_policy_survives_the_budget():
     instruction = build_gemini_audio_session_instructions(
         _brain(), language="en-IN", direction="outbound", opening_greeting="Hi, this is Alex."
     )
-    assert "Speak the farewell AND call end_call in the same turn." in instruction
-    assert "Never say goodbye unless should_end is true." in instruction
+    assert "HANGUP JUDGMENT" in instruction
+    assert "The platform validates the decision and speaks its own approved farewell" in instruction
+    assert "Never say goodbye before an approved close" in instruction
 
 
 def test_brevity_rule_ships_once_not_once_per_section():

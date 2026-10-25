@@ -190,6 +190,20 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
             payload["next_action"] = f"Arrange a callback in {handoff['caller_language']}. No callback time has been booked."
     payload["extracted_fields"] = facts
     payload["facts"] = facts
+    from server.call.order_confirmation import enforce_order_proof, read_order_proof
+
+    order_proof = read_order_proof(
+        call_id, tenant_id=str(meta.get("tenant_id") or "") or None
+    )
+    downgraded = enforce_order_proof(payload, order_proof)
+    if downgraded:
+        # Codes only: the proof holds customer details, the transcript holds words.
+        logger.info("[ORDER] outcome downgraded call=%s reason=%s", call_id, downgraded)
+        payload["summary_en"] = (
+            (payload.get("summary_en") or "").rstrip()
+            + "\n\nServer check: no confirmed order was recorded for this call, "
+            "so it was not marked as converted."
+        ).strip()
     payload["disclosure_status"] = _detect_disclosure_delivery(transcript, meta)
     payload["status_tags"] = derive_status_tags(
         payload.get("disposition"),
