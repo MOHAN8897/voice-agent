@@ -1,0 +1,445 @@
+{
+  "key": "cleaning-hi-IN-connected-6_hangup",
+  "business": "cleaning",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "0af54b3b-2e52-5467-8d8d-282e03815984",
+  "call_id": "8a3b6dff-c0ec-4e83-b3b8-43020cd94535",
+  "session_id": "audit-cleaning-hi-IN-connected-6_hangup-5d31f27d",
+  "compiled_checksum": "69e98222770e2e24f02661040eef848ed4e9f3d30154dd23b101bb2a21ea0d3c",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 226,
+      "sse_content_preview": "ठीक है। Sofa cleaning 349 rupees per seat है, minimum 3 seats चाहिए. Kitchen cleaning 1599 rupees total है. Hum sirf Pune mein kaam karte hain, Monday se Saturday, subah 9 baje se shaam 6 baje tak. Aapko kiski details chahiye?",
+      "sse_content_tail": "ठीक है। Sofa cleaning 349 rupees per seat है, minimum 3 seats चाहिए. Kitchen cleaning 1599 rupees total है. Hum sirf Pune mein kaam karte hain, Monday se Saturday, subah 9 baje se shaam 6 baje tak. Aapko kiski details chahiye?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 66,
+        "prompt_tokens": 4069,
+        "total_tokens": 4135,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है। Sofa cleaning 349 rupees per seat है, minimum 3 seats चाहिए. Kitchen cleaning 1599 rupees total है. Hum sirf Pune mein kaam karte hain, Monday se Saturday, subah 9 baje se shaam 6 baje tak. Aapko kiski details chahiye?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4069,
+          "output_tokens": 66,
+          "total_tokens": 4135
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.328
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 226,
+      "sse_content_preview": "देखिए, sofa cleaning 349 rupees per seat है और minimum 3 seats चाहिए। Kitchen cleaning का total 1599 rupees है। हम सिर्फ Pune में काम करते हैं, Monday से Saturday, सुबह 9 बजे से शाम 6 बजे तक। आपको किस service की details चाहिए?",
+      "sse_content_tail": "देखिए, sofa cleaning 349 rupees per seat है और minimum 3 seats चाहिए। Kitchen cleaning का total 1599 rupees है। हम सिर्फ Pune में काम करते हैं, Monday से Saturday, सुबह 9 बजे से शाम 6 बजे तक। आपको किस service की details चाहिए?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4029,
+        "total_tokens": 4091,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "देखिए, sofa cleaning 349 rupees per seat है और minimum 3 seats चाहिए। Kitchen cleaning का total 1599 rupees है। हम सिर्फ Pune में काम करते हैं, Monday से Saturday, सुबह 9 बजे से शाम 6 बजे तक। आपको किस service की details चाहिए?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4029,
+          "output_tokens": 62,
+          "total_tokens": 4091
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.64
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 258,
+      "sse_content_preview": "Sofa cleaning three hundred forty nine rupees per seat है, minimum 3 seats चाहिए। Kitchen cleaning one thousand five hundred ninety nine rupees total है। Visit अभी confirm नहीं है, यह सिर्फ team review के लिए enquiry होती है। क्या aapka locality Pune में है?",
+      "sse_content_tail": "Sofa cleaning three hundred forty nine rupees per seat है, minimum 3 seats चाहिए। Kitchen cleaning one thousand five hundred ninety nine rupees total है। Visit अभी confirm नहीं है, यह सिर्फ team review के लिए enquiry होती है। क्या aapka locality Pune में है?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 4138,
+        "total_tokens": 4193,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Sofa cleaning three hundred forty nine rupees per seat है, minimum 3 seats चाहिए। Kitchen cleaning one thousand five hundred ninety nine rupees total है। Visit अभी confirm नहीं है, यह सिर्फ team review के लिए enquiry होती है। क्या aapka locality Pune में है?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4138,
+          "output_tokens": 55,
+          "total_tokens": 4193
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.578
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 250,
+      "sse_content_preview": "सोफा cleaning three hundred forty nine rupees per seat है, minimum 3 seats चाहिए, और kitchen cleaning one thousand five hundred ninety nine rupees total है। Visit अभी confirm नहीं है, यह सिर्फ team review के लिए enquiry है। क्या आप Pune में रहते हैं?",
+      "sse_content_tail": "सोफा cleaning three hundred forty nine rupees per seat है, minimum 3 seats चाहिए, और kitchen cleaning one thousand five hundred ninety nine rupees total है। Visit अभी confirm नहीं है, यह सिर्फ team review के लिए enquiry है। क्या आप Pune में रहते हैं?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 54,
+        "prompt_tokens": 4098,
+        "total_tokens": 4152,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "सोफा cleaning three hundred forty nine rupees per seat है, minimum 3 seats चाहिए, और kitchen cleaning one thousand five hundred ninety nine rupees total है। Visit अभी confirm नहीं है, यह सिर्फ team review के लिए enquiry है। क्या आप Pune में रहते हैं?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4098,
+          "output_tokens": 54,
+          "total_tokens": 4152
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.578
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 163,
+      "sse_content_preview": "ठीक है। Visit अभी confirm नहीं है, yeh sirf team review ke liye enquiry hoti hai. Kya aapka locality Pune mein hai aur kya aap apna preferred naam bata sakte hain?",
+      "sse_content_tail": "ठीक है। Visit अभी confirm नहीं है, yeh sirf team review ke liye enquiry hoti hai. Kya aapka locality Pune mein hai aur kya aap apna preferred naam bata sakte hain?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 37,
+        "prompt_tokens": 4182,
+        "total_tokens": 4219,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है। Visit अभी confirm नहीं है, yeh sirf team review ke liye enquiry hoti hai. Kya aapka locality Pune mein hai aur kya aap apna preferred naam bata sakte hain?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4182,
+          "output_tokens": 37,
+          "total_tokens": 4219
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.532
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 101,
+      "sse_content_preview": "ठीक है। Enquiry submit करने के लिए बस अपना preferred नाम और locality बता दीजिए, क्या आप Pune में हैं?",
+      "sse_content_tail": "ठीक है। Enquiry submit करने के लिए बस अपना preferred नाम और locality बता दीजिए, क्या आप Pune में हैं?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 24,
+        "prompt_tokens": 4142,
+        "total_tokens": 4166,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है। Enquiry submit करने के लिए बस अपना preferred नाम और locality बता दीजिए, क्या आप Pune में हैं?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4142,
+          "output_tokens": 24,
+          "total_tokens": 4166
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.516
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "देखिए, sofa cleaning three hundred forty nine rupees per seat है और minimum 3 seats चाहिए। Kitchen cleaning का total one thousand five hundred ninety nine rupees है। हम सिर्फ Pune में काम करते हैं, Monday से Saturday, सुबह 9 बजे से शाम 6 बजे तक। आपको किस service की details चाहिए?",
+      "turn": 1,
+      "at": 4.297
+    },
+    {
+      "text": "सोफा cleaning three hundred forty nine rupees per seat है, minimum 3 seats चाहिए, और kitchen cleaning one thousand five hundred ninety nine rupees total है। Visit अभी confirm नहीं है, यह सिर्फ team review के लिए enquiry है। क्या आप Pune में रहते हैं?",
+      "turn": 2,
+      "at": 8.672
+    },
+    {
+      "text": "ठीक है। Enquiry submit करने के लिए बस अपना preferred नाम और locality बता दीजिए, क्या आप Pune में हैं?",
+      "turn": 3,
+      "at": 13.016
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 4,
+      "at": 13.047
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।",
+      "spoken": "देखिए, sofa cleaning three hundred forty nine rupees per seat है और minimum 3 seats चाहिए। Kitchen cleaning का total one thousand five hundred ninety nine rupees है। हम सिर्फ Pune में काम करते हैं, Monday से Saturday, सुबह 9 बजे से शाम 6 बजे तक। आपको किस service की details चाहिए?",
+      "elapsed_s": 4.297,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "अभी कुछ book या save मत कीजिए। पहले मेरा सवाल बताइए: सोफा और kitchen cleaning की कीमत और minimum seats कितनी हैं? क्या visit अभी confirm है?",
+      "spoken": "सोफा cleaning three hundred forty nine rupees per seat है, minimum 3 seats चाहिए, और kitchen cleaning one thousand five hundred ninety nine rupees total है। Visit अभी confirm नहीं है, यह सिर्फ team review के लिए enquiry है। क्या आप Pune में रहते हैं?",
+      "elapsed_s": 4.36,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ठीक है, धन्यवाद।",
+      "spoken": "ठीक है। Enquiry submit करने के लिए बस अपना preferred नाम और locality बता दीजिए, क्या आप Pune में हैं?",
+      "elapsed_s": 4.297,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 13.109,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "8a3b6dff-c0ec-4e83-b3b8-43020cd94535",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "62eb3e5b361717422b79802ecb8768c3fa08608d615d0b4a7cca5ea6497eafc7",
+  "prompt_chars": 17121,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste. Main Nila hoon FreshNest Cleaning se. Kya hum abhi safai sevaon ke bare mein baat kar sakte hain?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "देखिए, sofa cleaning three hundred forty nine rupees per seat है और minimum 3 seats चाहिए। Kitchen cleaning का total one thousand five hundred ninety nine rupees है। हम सिर्फ Pune में काम करते हैं, Monday से Saturday, सुबह 9 बजे से शाम 6 बजे तक। आपको किस service की details चाहिए?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "सोफा cleaning three hundred forty nine rupees per seat है, minimum 3 seats चाहिए, और kitchen cleaning one thousand five hundred ninety nine rupees total है। Visit अभी confirm नहीं है, यह सिर्फ team review के लिए enquiry है। क्या आप Pune में रहते हैं?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "ठीक है। Enquiry submit करने के लिए बस अपना preferred नाम और locality बता दीजिए, क्या आप Pune में हैं?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "lead_details_missing"
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 13.109,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

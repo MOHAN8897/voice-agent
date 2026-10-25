@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_interest": "interested"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.\nassistant: ಖಂಡಿತ, ಹೇಳಿ.\nuser: ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: Course final fee, ಅವಧಿ ಮತ್ತು class timings ಏನು? Job guarantee ಕೊಡುತ್ತೀರಾ?\nassistant: ಖಂಡಿತ, ಹೇಳಿ.\nuser: ಸರಿ, ಧನ್ಯವಾದಗಳು.\nassistant: ಖಂಡಿತ, ಹೇಳಿ."
+}

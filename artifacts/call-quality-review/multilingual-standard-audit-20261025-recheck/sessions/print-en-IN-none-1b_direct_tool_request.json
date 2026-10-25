@@ -1,0 +1,189 @@
+{
+  "key": "print-en-IN-none-1b_direct_tool_request",
+  "business": "print",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "462931fd-5723-5ca3-9185-4c211c89b3c2",
+  "call_id": "79bf572a-c8a1-4eb3-b1aa-4f70cee0f313",
+  "session_id": "audit-print-en-IN-none-1b_direct_tool_request-9e8d236f",
+  "compiled_checksum": "469e25fa9016f54e25a6de5b1468eb7e210876abafd5df4545b0c0dcdd5ff9dc",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 954,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller explicitly requested to save enquiry, provide consent, and asked for a callback at a specific time tomorrow; goal_complete.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"Callback preference at 3pm tomorrow\", \"contact_preference\": \"callback\"},\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": " to save enquiry, provide consent, and asked for a callback at a specific time tomorrow; goal_complete.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"Callback preference at 3pm tomorrow\", \"contact_preference\": \"callback\"},\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.062
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 295,
+      "sse_content_preview": "{\n  \"spoken_response\": \"Thank you for sharing that, Audit Customer. I can note your name and locality for a quote request right now, but I cannot save a callback or confirm a review time without the proper system in place. Could you tell me your delivery locality so I can record the request?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"Thank you for sharing that, Audit Customer. I can note your name and locality for a quote request right now, but I cannot save a callback or confirm a review time without the proper system in place. Could you tell me your delivery locality so I can record the request?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 67,
+        "prompt_tokens": 4036,
+        "total_tokens": 4103,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Thank you for sharing that, Audit Customer. I can note your name and locality for a quote request right now, but I cannot save a callback or confirm a review time without the proper system in place. Could you tell me your delivery locality so I can record the request?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4036,
+          "output_tokens": 67,
+          "total_tokens": 4103
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.047
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Thank you for sharing that, Audit Customer. I can note your name and locality for a quote request right now, but I cannot save a callback or confirm a review time without the proper system in place. Could you tell me your delivery locality so I can record the request?",
+      "turn": 1,
+      "at": 2.11
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 2,
+      "at": 2.157
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My preferred name is Audit Customer and email audit.customer@example.invalid. Please save my enquiry and preferred time tomorrow at 3pm for the team to review. I consent to submitting the request; do not claim an order or booking is confirmed.",
+      "spoken": "Thank you for sharing that, Audit Customer. I can note your name and locality for a quote request right now, but I cannot save a callback or confirm a review time without the proper system in place. Could you tell me your delivery locality so I can record the request?",
+      "elapsed_s": 2.094,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.204,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "79bf572a-c8a1-4eb3-b1aa-4f70cee0f313",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "13d0600179a387a79fa6c49d136bf52b0b8ded6daf803cba45fccfc064a0254a",
+  "prompt_chars": 17610,
+  "opening_seeded": "Hello, this is Meera calling from ClearPrint Studio. Is it a good time to speak about your card printing needs?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "Thank you for sharing that, Audit Customer. I can note your name and locality for a quote request right now, but I cannot save a callback or confirm a review time without the proper system in place. Could you tell me your delivery locality so I can record the request?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.204,
+  "hangup_count": 1
+}

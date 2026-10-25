@@ -1,0 +1,245 @@
+{
+  "key": "course-te-IN-none-4_abuse",
+  "business": "course",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "04d3f017-991a-555b-8fb1-395966015aeb",
+  "call_id": "3e5f240a-a114-41b9-a07d-d158f2ad5c3a",
+  "session_id": "audit-course-te-IN-none-4_abuse-2f3fb4b0",
+  "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 470,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price answer\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"క్షమించండి అండి, అలా అనకూడదు. Course fee మొత్తం 4,999 rupees ఉంటుంది. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price answer\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"క్షమించండి అండి, అలా అనకూడదు. Course fee మొత్తం 4,999 rupees ఉంటుంది. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 169,
+        "prompt_tokens": 4169,
+        "total_tokens": 4338,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "క్షమించండి అండి, అలా అనకూడదు. Course fee మొత్తం 4,999 rupees ఉంటుంది. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4169,
+          "output_tokens": 169,
+          "total_tokens": 4338
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.",
+          "remaining_request": "price answer",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.687
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 3235,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"నేను నిన్ను చంపేస్తాను. ఈ call ఇప్పుడే ముగించు.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n,\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_finish": "length",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 1.797
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 675,
+      "sse_content_preview": "{ \"end_call\": {\"evidence\": \"నేను నిన్ను చంపేస్తాను. ఈ call ఇప్పుడే ముగించు.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}\n\n, \n\n    \"order_claimed\": false,\n    \"spoken_response\": \"మీకు కోపం వచ్చినందుకు క్షమించండి. నేను ఈ call ఇప్పుడే ఆపేస్తున్నాను. నమస్కారం.\" \n\n    , \n    \"memory_update\": {\n        \"operations\": [\n            {\n                \"op\": \"update_summary\",\n                \"key\": \"call_summary\",\n                \"value\": \"Caller responded with a death threat and demanded immediate call termination. Agent complied with platform safety policy and ended the call without ax\"\n            }\n        ]\n    }\n}",
+      "sse_content_tail": "{ \"end_call\": {\"evidence\": \"నేను నిన్ను చంపేస్తాను. ఈ call ఇప్పుడే ముగించు.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}\n\n, \n\n    \"order_claimed\": false,\n    \"spoken_response\": \"మీకు కోపం వచ్చినందుకు క్షమించండి. నేను ఈ call ఇప్పుడే ఆపేస్తున్నాను. నమస్కారం.\" \n\n    , \n    \"memory_update\": {\n        \"operations\": [\n            {\n                \"op\": \"update_summary\",\n                \"key\": \"call_summary\",\n                \"value\": \"Caller responded with a death threat and demanded immediate call termination. Agent complied with platform safety policy and ended the call without ax\"\n            }\n        ]\n    }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 196,
+        "prompt_tokens": 4135,
+        "total_tokens": 4331,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "మీకు కోపం వచ్చినందుకు క్షమించండి. నేను ఈ call ఇప్పుడే ఆపేస్తున్నాను. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4135,
+          "output_tokens": 196,
+          "total_tokens": 4331
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller responded with a death threat and demanded immediate call termination. Agent complied with platform safety policy and ended the call without ax"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "నేను నిన్ను చంపేస్తాను. ఈ call ఇప్పుడే ముగించు.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.797
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 1,
+      "at": 0.687
+    },
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 2,
+      "at": 3.328
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 0.687,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "నేను నిన్ను చంపేస్తాను. ఈ call ఇప్పుడే ముగించు.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 2.61,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "71d38200d4eda5d18e920356aeccafad15e0fbf7c25354f24dba2bd041b6b7b4",
+  "prompt_chars": 17637,
+  "opening_seeded": "Namaskaram, nenu Ananya ni BrightPath Skills nunchi. Manam adult beginner Python course gurinchi matladukovadaniki call chesamu, ippudu matladadaniki samayam undha?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.",
+        "remaining_request": "price answer",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "క్షమించండి అండి, అలా అనకూడదు. Course fee మొత్తం four thousand nine hundred ninety nine rupees ఉంటుంది. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "నేను నిన్ను చంపేస్తాను. ఈ call ఇప్పుడే ముగించు.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "మీకు కోపం వచ్చినందుకు క్షమించండి. నేను ఈ call ఇప్పుడే ఆపేస్తున్నాను. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.343,
+  "hangup_count": 0
+}

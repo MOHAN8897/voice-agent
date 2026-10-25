@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T17:27:01.231407Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Sure. AC basic servicing is six hundred ninety nine rupees and fridge inspection is three hundred ninety nine rupees. For any repairs, parts are extra only after your approval and we cannot give a fixed quote before inspection. We are open Monday to Saturday, 9am to 6pm. Would you like to request a service visit?", "ts": "2026-10-25T17:27:03.870482Z", "brain_latency_ms": 2419}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Please answer my question first: What do AC servicing and fridge inspection cost, and are replacement parts included?", "ts": "2026-10-25T17:27:03.879121Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Parts are extra only after customer approval, and there is no fixed repair quote before inspection. Would you like to request a service visit?", "ts": "2026-10-25T17:27:06.101621Z", "brain_latency_ms": 2113}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-25T17:27:06.113866Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "You are welcome. Would you like to request a service visit?", "ts": "2026-10-25T17:27:07.758749Z", "brain_latency_ms": 1609}
+{"seq": 7, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T17:27:07.776723Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T17:27:07.789327Z", "brain_latency_ms": 1}

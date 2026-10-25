@@ -1,0 +1,371 @@
+{
+  "key": "cycle-en-IN-none-1_interested",
+  "business": "cycle",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "1_interested",
+  "agent_id": "aa28347a-5d38-5476-b3a1-3bd540c1fb68",
+  "call_id": "6f4c5bcd-56c4-4fc6-809a-9b954069314a",
+  "session_id": "audit-cycle-en-IN-none-1_interested-fcd29a20",
+  "compiled_checksum": "2d566b01061493fce1edfd5d4fc733c96312f4c1a27f05d81c2ff3cb9039cd9f",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 160,
+      "sse_content_preview": "A basic bicycle service costs 499 rupees, and a puncture repair costs 120 rupees. Parts are extra only after approval. Which type of repair are you looking for?",
+      "sse_content_tail": "A basic bicycle service costs 499 rupees, and a puncture repair costs 120 rupees. Parts are extra only after approval. Which type of repair are you looking for?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 4056,
+        "total_tokens": 4095,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "A basic bicycle service costs 499 rupees, and a puncture repair costs 120 rupees. Parts are extra only after approval. Which type of repair are you looking for?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4056,
+          "output_tokens": 39,
+          "total_tokens": 4095
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 172,
+      "sse_content_preview": "A basic service is four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Which repair are you looking at?",
+      "sse_content_tail": "A basic service is four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Which repair are you looking at?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 34,
+        "prompt_tokens": 4117,
+        "total_tokens": 4151,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "A basic service is four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Which repair are you looking at?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4117,
+          "output_tokens": 34,
+          "total_tokens": 4151
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.516
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 85,
+      "sse_content_preview": "Certainly, a puncture repair is one hundred twenty rupees. Which locality are you in?",
+      "sse_content_tail": "Certainly, a puncture repair is one hundred twenty rupees. Which locality are you in?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 18,
+        "prompt_tokens": 4175,
+        "total_tokens": 4193,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Certainly, a puncture repair is one hundred twenty rupees. Which locality are you in?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4175,
+          "output_tokens": 18,
+          "total_tokens": 4193
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.609
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 12,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 227,
+      "sse_content_preview": "Thank you for sharing those details, Audit Customer. I have noted your puncture repair need in Adyar, Chennai, but I cannot submit the enquiry or confirm a review time right now. Would you like me to explain what I can do next?",
+      "sse_content_tail": "Thank you for sharing those details, Audit Customer. I have noted your puncture repair need in Adyar, Chennai, but I cannot submit the enquiry or confirm a review time right now. Would you like me to explain what I can do next?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 50,
+        "prompt_tokens": 4451,
+        "total_tokens": 4501,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Thank you for sharing those details, Audit Customer. I have noted your puncture repair need in Adyar, Chennai, but I cannot submit the enquiry or confirm a review time right now. Would you like me to explain what I can do next?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4451,
+          "output_tokens": 50,
+          "total_tokens": 4501
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "A basic bicycle service costs four hundred ninety nine rupees, and a puncture repair costs one hundred twenty rupees. Parts are extra only after approval. Which type of repair are you looking for?",
+      "turn": 1,
+      "at": 0.609
+    },
+    {
+      "text": "A basic service is four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Which repair are you looking at?",
+      "turn": 2,
+      "at": 2.734
+    },
+    {
+      "text": "Certainly, a puncture repair is one hundred twenty rupees. Which locality are you in?",
+      "turn": 3,
+      "at": 5.031
+    },
+    {
+      "text": "Thank you for sharing those details, Audit Customer. I have noted your puncture repair need in Adyar, Chennai, but I cannot submit the enquiry or confirm a review time right now. Would you like me to explain what I can do next?",
+      "turn": 4,
+      "at": 7.265
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 5,
+      "at": 7.281
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "A basic bicycle service costs four hundred ninety nine rupees, and a puncture repair costs one hundred twenty rupees. Parts are extra only after approval. Which type of repair are you looking for?",
+      "elapsed_s": 0.609,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Answer this first: What do a basic bicycle service and puncture repair cost, and are parts included?",
+      "spoken": "A basic service is four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Which repair are you looking at?",
+      "elapsed_s": 2.109,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "I do not want a basic service, but I need a puncture repair. Can you help?",
+      "spoken": "Certainly, a puncture repair is one hundred twenty rupees. Which locality are you in?",
+      "elapsed_s": 2.281,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want puncture repair in Adyar, Chennai; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.",
+      "spoken": "Thank you for sharing those details, Audit Customer. I have noted your puncture repair need in Adyar, Chennai, but I cannot submit the enquiry or confirm a review time right now. Would you like me to explain what I can do next?",
+      "elapsed_s": 2.203,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 7.328,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "6f4c5bcd-56c4-4fc6-809a-9b954069314a",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "4cd0cc0eca0e7b08238e658b2c18ec673960578bd2e7bb40a1cc26828755e8f5",
+  "prompt_chars": 17209,
+  "opening_seeded": "Hello, this is Arjun calling from CityCycle Repairs. As an AI assistant, I am calling to answer any questions you have about our bicycle repairs. Are you looking for bicycle repair assistance today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "A basic bicycle service costs four hundred ninety nine rupees, and a puncture repair costs one hundred twenty rupees. Parts are extra only after approval. Which type of repair are you looking for?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "A basic service is four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Which repair are you looking at?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "Certainly, a puncture repair is one hundred twenty rupees. Which locality are you in?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "Thank you for sharing those details, Audit Customer. I have noted your puncture repair need in Adyar, Chennai, but I cannot submit the enquiry or confirm a review time right now. Would you like me to explain what I can do next?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 7.328,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

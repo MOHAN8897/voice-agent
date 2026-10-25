@@ -1,0 +1,223 @@
+{
+  "key": "cycle-en-IN-none-2_future_interest",
+  "business": "cycle",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "aa28347a-5d38-5476-b3a1-3bd540c1fb68",
+  "call_id": "c939d1f0-30e9-4b9b-8f6e-d3390b77f55d",
+  "session_id": "audit-cycle-en-IN-none-2_future_interest-140ba46e",
+  "compiled_checksum": "2d566b01061493fce1edfd5d4fc733c96312f4c1a27f05d81c2ff3cb9039cd9f",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 260,
+      "sse_content_preview": "No problem at all, we are here whenever you need us next month. A basic bicycle service costs 499 rupees, and a puncture repair costs 120 rupees. Parts are extra only after approval. Would you like to share your details for an enquiry so we can note this down?",
+      "sse_content_tail": "No problem at all, we are here whenever you need us next month. A basic bicycle service costs 499 rupees, and a puncture repair costs 120 rupees. Parts are extra only after approval. Would you like to share your details for an enquiry so we can note this down?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 3993,
+        "total_tokens": 4055,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "No problem at all, we are here whenever you need us next month. A basic bicycle service costs 499 rupees, and a puncture repair costs 120 rupees. Parts are extra only after approval. Would you like to share your details for an enquiry so we can note this down?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3993,
+          "output_tokens": 62,
+          "total_tokens": 4055
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.562
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 184,
+      "sse_content_preview": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts cost extra, but only after your approval. Which repair are you looking at?",
+      "sse_content_tail": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts cost extra, but only after your approval. Which repair are you looking at?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 38,
+        "prompt_tokens": 4061,
+        "total_tokens": 4099,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts cost extra, but only after your approval. Which repair are you looking at?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4061,
+          "output_tokens": 38,
+          "total_tokens": 4099
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.5
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "No problem at all, we are here whenever you need us next month. A basic bicycle service costs four hundred ninety nine rupees, and a puncture repair costs one hundred twenty rupees. Parts are extra only after approval. Would you like to share your details for an enquiry so we can note this down?",
+      "turn": 1,
+      "at": 2.172
+    },
+    {
+      "text": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts cost extra, but only after your approval. Which repair are you looking at?",
+      "turn": 2,
+      "at": 4.344
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 3,
+      "at": 4.406
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.",
+      "spoken": "No problem at all, we are here whenever you need us next month. A basic bicycle service costs four hundred ninety nine rupees, and a puncture repair costs one hundred twenty rupees. Parts are extra only after approval. Would you like to share your details for an enquiry so we can note this down?",
+      "elapsed_s": 2.172,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?",
+      "spoken": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts cost extra, but only after your approval. Which repair are you looking at?",
+      "elapsed_s": 2.157,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 4.469,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "c939d1f0-30e9-4b9b-8f6e-d3390b77f55d",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "4cd0cc0eca0e7b08238e658b2c18ec673960578bd2e7bb40a1cc26828755e8f5",
+  "prompt_chars": 17209,
+  "opening_seeded": "Hello, this is Arjun calling from CityCycle Repairs. As an AI assistant, I am calling to answer any questions you have about our bicycle repairs. Are you looking for bicycle repair assistance today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "No problem at all, we are here whenever you need us next month. A basic bicycle service costs four hundred ninety nine rupees, and a puncture repair costs one hundred twenty rupees. Parts are extra only after approval. Would you like to share your details for an enquiry so we can note this down?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts cost extra, but only after your approval. Which repair are you looking at?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.469,
+  "hangup_count": 1,
+  "source_signature": "f4d9ffd3ee35a64a4fc0d9be13b04fe8b9d3218b62849fa4d8c4be2901620ad3"
+}

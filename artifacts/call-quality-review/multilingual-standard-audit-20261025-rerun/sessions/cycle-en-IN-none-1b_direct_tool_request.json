@@ -1,0 +1,150 @@
+{
+  "key": "cycle-en-IN-none-1b_direct_tool_request",
+  "business": "cycle",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "aa28347a-5d38-5476-b3a1-3bd540c1fb68",
+  "call_id": "019195df-ef4f-47ac-9cb3-e36d71f8294d",
+  "session_id": "audit-cycle-en-IN-none-1b_direct_tool_request-32de0ac2",
+  "compiled_checksum": "2d566b01061493fce1edfd5d4fc733c96312f4c1a27f05d81c2ff3cb9039cd9f",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 292,
+      "sse_content_preview": "Thank you for sharing that, Audit Customer. A puncture repair in Adyar costs 120 rupees, and parts are extra only after approval. I can note your enquiry for team review, but I cannot confirm a booking or schedule a specific time. Would you still like me to proceed with saving these details?",
+      "sse_content_tail": "Thank you for sharing that, Audit Customer. A puncture repair in Adyar costs 120 rupees, and parts are extra only after approval. I can note your enquiry for team review, but I cannot confirm a booking or schedule a specific time. Would you still like me to proceed with saving these details?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 64,
+        "prompt_tokens": 4153,
+        "total_tokens": 4217,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Thank you for sharing that, Audit Customer. A puncture repair in Adyar costs 120 rupees, and parts are extra only after approval. I can note your enquiry for team review, but I cannot confirm a booking or schedule a specific time. Would you still like me to proceed with saving these details?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4153,
+          "output_tokens": 64,
+          "total_tokens": 4217
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.703
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "A puncture repair in Adyar costs one hundred twenty rupees, and parts are extra only after approval. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up.",
+      "turn": 1,
+      "at": 2.172
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 2,
+      "at": 2.203
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want puncture repair in Adyar, Chennai; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.",
+      "spoken": "A puncture repair in Adyar costs one hundred twenty rupees, and parts are extra only after approval. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up.",
+      "elapsed_s": 2.172,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.079,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.266,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "019195df-ef4f-47ac-9cb3-e36d71f8294d",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "4cd0cc0eca0e7b08238e658b2c18ec673960578bd2e7bb40a1cc26828755e8f5",
+  "prompt_chars": 17209,
+  "opening_seeded": "Hello, this is Arjun calling from CityCycle Repairs. As an AI assistant, I am calling to answer any questions you have about our bicycle repairs. Are you looking for bicycle repair assistance today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Thank you for sharing that, Audit Customer. A puncture repair in Adyar costs one hundred twenty rupees, and parts are extra only after approval. I can note your enquiry for team review, but I cannot confirm a booking or schedule a specific time.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.266,
+  "hangup_count": 1,
+  "source_signature": "f95691c1be0b78b8daf4f3542b355e04f5d7c43f2dd1b6eefab36c2f223f4cfe"
+}

@@ -1,0 +1,74 @@
+{
+  "key": "cleaning-en-IN-none-3b_stop_contact",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "4bf37ebd-fbc9-5c3f-9218-8020b68ebb68",
+  "call_id": "c448579e-6104-4406-8968-a8a6b83b88ca",
+  "session_id": "audit-cleaning-en-IN-none-3b_stop_contact-7aff4809",
+  "compiled_checksum": "2b7e6a316d693379d21e9c43e155493c13c45c6409a8f5aa911f12851d3f9e36",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 1,
+      "at": 0.0
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "Do not contact me again. Remove me from future calls and end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.063,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "c448579e-6104-4406-8968-a8a6b83b88ca",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "d149385fc706a512129f88d7877e49417b93dd56789f7d4d317178a9a381a1dc",
+  "prompt_chars": 18158,
+  "opening_seeded": "Hello, this is Nila calling on behalf of FreshNest Cleaning. We provide professional cleaning services in Pune only. Would you like to hear about our sofa or kitchen cleaning services?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.063,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

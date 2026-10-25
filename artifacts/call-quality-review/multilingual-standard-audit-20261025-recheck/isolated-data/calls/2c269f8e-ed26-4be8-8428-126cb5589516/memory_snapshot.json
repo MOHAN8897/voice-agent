@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "ger, please contact local emergency services right away. Is there a home appliance issue I can help you with instead?.\nuser: Fine, leave that topic. Please answer the original business question about price and conditions.\nassistant: For AC basic servicing, the fee is six hundred ninety nine rupees, and fridge inspection is three hundred ninety nine rupees. For repairs, parts are extra only after your approval, and we do not give a fixed quote before inspection.\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

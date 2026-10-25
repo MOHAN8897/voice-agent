@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T18:32:24.195267Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T18:32:26.405480Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nlatest_caller_correction: Before that, who will win the next cricket match? Also, what is your business actually offering?"}
+{"turn_seq": 5, "ts": "2026-10-25T18:32:28.581789Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nlatest_caller_correction: Before that, who will win the next cricket match? Also, what is your business actually offering?"}
+{"turn_seq": 7, "ts": "2026-10-25T18:32:30.748242Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nlatest_caller_correction: Before that, who will win the next cricket match? Also, what is your business actually offering?"}
+{"turn_seq": 9, "ts": "2026-10-25T18:32:30.792431Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nlatest_caller_correction: Before that, who will win the next cricket match? Also, what is your business actually offering?"}

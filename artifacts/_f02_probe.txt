@@ -1,0 +1,4 @@
+1|'Yes, the course is 4999 rupees.'
+2|None
+3|'విజిటింగ్ కార్డ్స్ ఒక్కోటి twenty five rupees అండి. ఇవి post ద్వారా delivery అవుతాయి. ప్రస్తుతానికి మీకు interest లేదనుకుంటా, సరేనండి.'
+4|'Your order is confirmed.'

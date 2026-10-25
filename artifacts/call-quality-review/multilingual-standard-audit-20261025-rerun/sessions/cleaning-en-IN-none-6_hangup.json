@@ -1,0 +1,300 @@
+{
+  "key": "cleaning-en-IN-none-6_hangup",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "4bf37ebd-fbc9-5c3f-9218-8020b68ebb68",
+  "call_id": "6f403594-7f98-4e40-8d42-f2210da652bd",
+  "session_id": "audit-cleaning-en-IN-none-6_hangup-9605f04a",
+  "compiled_checksum": "2b7e6a316d693379d21e9c43e155493c13c45c6409a8f5aa911f12851d3f9e36",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 195,
+      "sse_content_preview": "Our sofa cleaning is 349 rupees per seat, with a minimum of 3 seats. Kitchen cleaning is 1599 rupees total. We work Monday to Saturday, from 9 AM to 6 PM. Which service sounds more useful to you?",
+      "sse_content_tail": "Our sofa cleaning is 349 rupees per seat, with a minimum of 3 seats. Kitchen cleaning is 1599 rupees total. We work Monday to Saturday, from 9 AM to 6 PM. Which service sounds more useful to you?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 4232,
+        "total_tokens": 4287,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our sofa cleaning is 349 rupees per seat, with a minimum of 3 seats. Kitchen cleaning is 1599 rupees total. We work Monday to Saturday, from 9 AM to 6 PM. Which service sounds more useful to you?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4232,
+          "output_tokens": 55,
+          "total_tokens": 4287
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.516
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 345,
+      "sse_content_preview": "Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No visit is confirmed yet, and I cannot save anything externally without an integrated CRM. Would you like to share your preferred name and locality for an enquiry we can note within this call?",
+      "sse_content_tail": "Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No visit is confirmed yet, and I cannot save anything externally without an integrated CRM. Would you like to share your preferred name and locality for an enquiry we can note within this call?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 66,
+        "prompt_tokens": 4305,
+        "total_tokens": 4371,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No visit is confirmed yet, and I cannot save anything externally without an integrated CRM. Would you like to share your preferred name and locality for an enquiry we can note within this call?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4305,
+          "output_tokens": 66,
+          "total_tokens": 4371
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 98,
+      "sse_content_preview": "You're welcome. Would you like to hear about our working hours, or shall we leave it here for now?",
+      "sse_content_tail": "You're welcome. Would you like to hear about our working hours, or shall we leave it here for now?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 4344,
+        "total_tokens": 4369,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "You're welcome. Would you like to hear about our working hours, or shall we leave it here for now?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4344,
+          "output_tokens": 25,
+          "total_tokens": 4369
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.484
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Our sofa cleaning is three hundred forty nine rupees per seat, with a minimum of 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. We work Monday to Saturday, from 9 AM to 6 PM. Which service sounds more useful to you?",
+      "turn": 1,
+      "at": 1.984
+    },
+    {
+      "text": "Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No visit is confirmed yet, and I cannot save anything externally without an integrated CRM.",
+      "turn": 2,
+      "at": 4.281
+    },
+    {
+      "text": "You're welcome. Would you like to hear about our working hours, or shall we leave it here for now?",
+      "turn": 3,
+      "at": 6.39
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 4,
+      "at": 6.437
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "Our sofa cleaning is three hundred forty nine rupees per seat, with a minimum of 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. We work Monday to Saturday, from 9 AM to 6 PM. Which service sounds more useful to you?",
+      "elapsed_s": 1.984,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Answer this first: What are the sofa and kitchen cleaning prices, minimum seats, and is a visit already confirmed?",
+      "spoken": "Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No visit is confirmed yet, and I cannot save anything externally without an integrated CRM.",
+      "elapsed_s": 2.25,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "Okay, thanks.",
+      "spoken": "You're welcome. Would you like to hear about our working hours, or shall we leave it here for now?",
+      "elapsed_s": 2.062,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.079,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 6.484,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "6f403594-7f98-4e40-8d42-f2210da652bd",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "d149385fc706a512129f88d7877e49417b93dd56789f7d4d317178a9a381a1dc",
+  "prompt_chars": 18158,
+  "opening_seeded": "Hello, this is Nila calling on behalf of FreshNest Cleaning. We provide professional cleaning services in Pune only. Would you like to hear about our sofa or kitchen cleaning services?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Our sofa cleaning is three hundred forty nine rupees per seat, with a minimum of 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. We work Monday to Saturday, from 9 AM to 6 PM. Which service sounds more useful to you?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No visit is confirmed yet, and I cannot save anything externally without an integrated CRM.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "You're welcome. Would you like to hear about our working hours, or shall we leave it here for now?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.5,
+  "hangup_count": 1,
+  "source_signature": "f22325fa3f608c0524c8afc9a14908696812152c9af5311fda442ff7a042a834"
+}

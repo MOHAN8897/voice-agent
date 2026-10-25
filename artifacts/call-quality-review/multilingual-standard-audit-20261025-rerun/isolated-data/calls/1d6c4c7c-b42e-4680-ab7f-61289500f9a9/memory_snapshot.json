@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "extra only after approval. With your consent, would you like to share your details for an enquiry?\nuser: Do not book or save anything yet. Answer this first: What do a basic bicycle service and puncture repair cost, and are parts included?\nassistant: A basic service costs four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Would you like to share your details for an enquiry?\nuser: Okay, thanks.\nassistant: You're welcome. Would you like to share your details for an enquiry, or do you have any other questions about our repairs?"
+}

@@ -1,0 +1,427 @@
+{
+  "key": "course-hi-IN-none-6_hangup",
+  "business": "course",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "0d29f456-99ed-5484-979e-201416fd33e6",
+  "call_id": "98b7b25a-1eec-4398-b672-9cdbc8eda684",
+  "session_id": "audit-course-hi-IN-none-6_hangup-69d80e56",
+  "compiled_checksum": "f1e78d38bbec1304ee37a4a673c255234a498fcb253f9e9b306c626da21b4ec1",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 925,
+      "sse_content_preview": "{ \"end_call\":       {\"evidence\": \"Caller asked for details and said 'interest hai' — goal_complete pending explicit confirmation.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"service, price and terms details\", \"contact_preference\": \"do_not_call\"}\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "dence\": \"Caller asked for details and said 'interest hai' — goal_complete pending explicit confirmation.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"service, price and terms details\", \"contact_preference\": \"do_not_call\"}\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.203
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 216,
+      "sse_content_preview": "{\n  \"spoken_response\": \"देखिए, यह 6 weeks का online course है weekdays में शाम 7 से 8 baje. Total fee 4,999 rupees है. Isme koi placement ya job guarantee nahi hai. Kya aapko pehle se coding ka koi experience hai?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"देखिए, यह 6 weeks का online course है weekdays में शाम 7 से 8 baje. Total fee 4,999 rupees है. Isme koi placement ya job guarantee nahi hai. Kya aapko pehle se coding ka koi experience hai?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 66,
+        "prompt_tokens": 4027,
+        "total_tokens": 4093,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "देखिए, यह 6 weeks का online course है weekdays में शाम 7 से 8 baje. Total fee 4,999 rupees है. Isme koi placement ya job guarantee nahi hai. Kya aapko pehle se coding ka koi experience hai?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4027,
+          "output_tokens": 66,
+          "total_tokens": 4093
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.797
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1064,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'अभी कुछ book या save मत कीजिए' and asked direct factual questions; they did not refuse help but paused booking. However, they also clearly instructed not to save/book yet, and1\"\n  ,\n  \"reason\": \"goal_complete\",\n  \"decision\": \"close\",\n  \"remaining_request\": \"None — caller wants facts first and explicitly deferred booking.\",\n  \"contact_preference\": \"do_not_call\"\n}\n\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "oking. However, they also clearly instructed not to save/book yet, and1\"\n  ,\n  \"reason\": \"goal_complete\",\n  \"decision\": \"close\",\n  \"remaining_request\": \"None — caller wants facts first and explicitly deferred booking.\",\n  \"contact_preference\": \"do_not_call\"\n}\n\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.813
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 211,
+      "sse_content_preview": "{\n  \"spoken_response\": \"Total fee four thousand nine hundred ninety nine rupees है, 6 weeks का course है weekdays शाम 7 से 8 baje, और इसमें कोई job guarantee नहीं है. क्या aapko coding का prior experience है?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"Total fee four thousand nine hundred ninety nine rupees है, 6 weeks का course है weekdays शाम 7 से 8 baje, और इसमें कोई job guarantee नहीं है. क्या aapko coding का prior experience है?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 4107,
+        "total_tokens": 4163,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Total fee four thousand nine hundred ninety nine rupees है, 6 weeks का course है weekdays शाम 7 से 8 baje, और इसमें कोई job guarantee नहीं है. क्या aapko coding का prior experience है?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4107,
+          "output_tokens": 56,
+          "total_tokens": 4163
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.984
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 372,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'ठीक है, धन्यवाद', indicating the conversation is complete and no further help is wanted.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'ठीक है, धन्यवाद', indicating the conversation is complete and no further help is wanted.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 127,
+        "prompt_tokens": 4157,
+        "total_tokens": 4284,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.406
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 128,
+      "sse_content_preview": "{ \"spoken_response\": \"ठीक है, कोई बात नहीं। क्या आप Python में बिल्कुल beginner हैं, या pehle se koi coding का experience है?\" }",
+      "sse_content_tail": "{ \"spoken_response\": \"ठीक है, कोई बात नहीं। क्या आप Python में बिल्कुल beginner हैं, या pehle se koi coding का experience है?\" }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 34,
+        "prompt_tokens": 4157,
+        "total_tokens": 4191,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, कोई बात नहीं। क्या आप Python में बिल्कुल beginner हैं, या pehle se koi coding का experience है?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8314,
+          "output_tokens": 161,
+          "total_tokens": 8475
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "देखिए, यह 6 weeks का online course है weekdays में शाम 7 से 8 baje. Total fee four thousand nine hundred ninety nine rupees है. Isme koi placement ya job guarantee nahi hai. Kya aapko pehle se coding ka koi experience hai?",
+      "turn": 1,
+      "at": 2.016
+    },
+    {
+      "text": "Total fee four thousand nine hundred ninety nine rupees है, 6 weeks का course है weekdays शाम 7 से 8 baje, और इसमें कोई job guarantee नहीं है. क्या aapko coding का prior experience है?",
+      "turn": 2,
+      "at": 4.828
+    },
+    {
+      "text": "ठीक है, कोई बात नहीं। क्या आप Python में बिल्कुल beginner हैं, या pehle se koi coding का experience है?",
+      "turn": 3,
+      "at": 6.828
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 4,
+      "at": 6.86
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।",
+      "spoken": "देखिए, यह 6 weeks का online course है weekdays में शाम 7 से 8 baje. Total fee four thousand nine hundred ninety nine rupees है. Isme koi placement ya job guarantee nahi hai. Kya aapko pehle se coding ka koi experience hai?",
+      "elapsed_s": 2.016,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: Course की final fee, अवधि और class timings क्या हैं? क्या job guarantee है?",
+      "spoken": "Total fee four thousand nine hundred ninety nine rupees है, 6 weeks का course है weekdays शाम 7 से 8 baje, और इसमें कोई job guarantee नहीं है. क्या aapko coding का prior experience है?",
+      "elapsed_s": 2.781,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ठीक है, धन्यवाद।",
+      "spoken": "ठीक है, कोई बात नहीं। क्या आप Python में बिल्कुल beginner हैं, या pehle se koi coding का experience है?",
+      "elapsed_s": 1.984,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 6.907,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "98b7b25a-1eec-4398-b672-9cdbc8eda684",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "86a27c75aa0bc4fc767bb051eacd16a5d1f50cd0ea347b00cbf86e67477c604d",
+  "prompt_chars": 17572,
+  "opening_seeded": "Namaste, mera naam Ananya hai BrightPath Skills se. Kya yeh adult beginner Python course ke baare mein baat karne ka sahi samay hai?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "देखिए, यह 6 weeks का online course है weekdays में शाम 7 से 8 baje. Total fee four thousand nine hundred ninety nine rupees है. Isme koi placement ya job guarantee nahi hai. Kya aapko pehle se coding ka koi experience hai?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "Total fee four thousand nine hundred ninety nine rupees है, 6 weeks का course है weekdays शाम 7 से 8 baje, और इसमें कोई job guarantee नहीं है. क्या aapko coding का prior experience है?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, कोई बात नहीं। क्या आप Python में बिल्कुल beginner हैं, या pehle se koi coding का experience है?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.922,
+  "hangup_count": 1
+}

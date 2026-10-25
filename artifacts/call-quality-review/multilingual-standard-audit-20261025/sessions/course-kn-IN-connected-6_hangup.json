@@ -1,0 +1,444 @@
+{
+  "key": "course-kn-IN-connected-6_hangup",
+  "business": "course",
+  "language": "kn-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "9e6f9a82-523d-55f8-9044-940b6dfddc86",
+  "call_id": "b1c543b6-fc80-4e2f-ba3f-6834c67e257a",
+  "session_id": "audit-course-kn-IN-connected-6_hangup-9643228c",
+  "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 839,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"User expressed interest and asked for service, price, and terms; script objective to explain course is active and no close condition is met.\",\n    \"reason\": \"none\",\n    \"decision\": \"continue\",\n    \"remaining_request\": \"User wants to know service, price, and terms.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಖಂಡಿತ, ನಮ್ಮ course ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ. ಇದು 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. Total fee 4,999 rupees. ಇದರಲ್ಲಿ ಯಾವುದೇ placement ಅಥವಾ job guarantee ಇಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ discount ಅಥವಾ instalment plan ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದ್ಯಾ\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_preference\",\n        \"key\": \"interest\",\n        \"value\": \"interested\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"User expressed interest and asked for service, price, and terms; script objective to explain course is active and no close condition is met.\",\n    \"reason\": \"none\",\n    \"decision\": \"continue\",\n    \"remaining_request\": \"User wants to know service, price, and terms.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಖಂಡಿತ, ನಮ್ಮ course ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ. ಇದು 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. Total fee 4,999 rupees. ಇದರಲ್ಲಿ ಯಾವುದೇ placement ಅಥವಾ job guarantee ಇಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ discount ಅಥವಾ instalment plan ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದ್ಯಾ\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_preference\",\n        \"key\": \"interest\",\n        \"value\": \"interested\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 254,
+        "prompt_tokens": 4148,
+        "total_tokens": 4402,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಖಂಡಿತ, ನಮ್ಮ course ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ. ಇದು 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. Total fee 4,999 rupees. ಇದರಲ್ಲಿ ಯಾವುದೇ placement ಅಥವಾ job guarantee ಇಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ discount ಅಥವಾ instalment plan ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದ್ಯಾ",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4148,
+          "output_tokens": 254,
+          "total_tokens": 4402
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "set_preference",
+              "key": "interest",
+              "value": "interested"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "User expressed interest and asked for service, price, and terms; script objective to explain course is active and no close condition is met.",
+          "remaining_request": "User wants to know service, price, and terms.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.953
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 824,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"User said 'ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ' — explicitly asked not to book/save and to answer questions first.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"User still wants fee, duration, timings, and job guarantee answered before any booking.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, total fee 4999 rupees ಆಗುತ್ತೆ. ಇದು ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ class ಇರುತ್ತೆ. ಮತ್ತೆ job guarantee ಅಥವಾ placement ಬಗ್ಗೆ ಯಾವುದೇ ಭರವಸೆ ಇಲ್ಲ, ಅದನ್ನ ನಾವು ಕೊಡಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿತ್ತಾ?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested\",\n        \"value\": \"Yes\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"User said 'ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ' — explicitly asked not to book/save and to answer questions first.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"User still wants fee, duration, timings, and job guarantee answered before any booking.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, total fee 4999 rupees ಆಗುತ್ತೆ. ಇದು ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ class ಇರುತ್ತೆ. ಮತ್ತೆ job guarantee ಅಥವಾ placement ಬಗ್ಗೆ ಯಾವುದೇ ಭರವಸೆ ಇಲ್ಲ, ಅದನ್ನ ನಾವು ಕೊಡಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿತ್ತಾ?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested\",\n        \"value\": \"Yes\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 260,
+        "prompt_tokens": 4266,
+        "total_tokens": 4526,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, total fee 4999 rupees ಆಗುತ್ತೆ. ಇದು ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ class ಇರುತ್ತೆ. ಮತ್ತೆ job guarantee ಅಥವಾ placement ಬಗ್ಗೆ ಯಾವುದೇ ಭರವಸೆ ಇಲ್ಲ, ಅದನ್ನ ನಾವು ಕೊಡಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿತ್ತಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4266,
+          "output_tokens": 260,
+          "total_tokens": 4526
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested",
+              "value": "Yes"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "User said 'ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ' — explicitly asked not to book/save and to answer questions first.",
+          "remaining_request": "User still wants fee, duration, timings, and job guarantee answered before any booking.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.922
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 484,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"ಸರಿ, ಧನ್ಯವಾದಗಳು.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ನಿಮಗೆ ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿದ್ರೆ ಯಾವಾಗ ಬೇಕಿದ್ರೂ contact ಮಾಡಿ. Have a wonderful day.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest\",\n        \"value\": \"interested\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"ಸರಿ, ಧನ್ಯವಾದಗಳು.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ನಿಮಗೆ ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿದ್ರೆ ಯಾವಾಗ ಬೇಕಿದ್ರೂ contact ಮಾಡಿ. Have a wonderful day.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest\",\n        \"value\": \"interested\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 168,
+        "prompt_tokens": 4212,
+        "total_tokens": 4380,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಿಮಗೆ ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿದ್ರೆ ಯಾವಾಗ ಬೇಕಿದ್ರೂ contact ಮಾಡಿ. Have a wonderful day.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4212,
+          "output_tokens": 168,
+          "total_tokens": 4380
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interest",
+              "value": "interested"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "ಸರಿ, ಧನ್ಯವಾದಗಳು.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.797
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 11,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 515,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.' which is a clear goodbye/end request.\",\n    \"reason\": \"goodbye\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,  \n    \"order_claimed\": false,\n    \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest\",\n        \"value\": \"declined\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.' which is a clear goodbye/end request.\",\n    \"reason\": \"goodbye\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,  \n    \"order_claimed\": false,\n    \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest\",\n        \"value\": \"declined\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 180,
+        "prompt_tokens": 4416,
+        "total_tokens": 4596,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4416,
+          "output_tokens": 180,
+          "total_tokens": 4596
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interest",
+              "value": "declined"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goodbye",
+          "evidence": "Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.' which is a clear goodbye/end request.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.687
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ನಮ್ಮ course ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ. ಇದು 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. Total fee four thousand nine hundred ninety nine rupees. ಇದರಲ್ಲಿ ಯಾವುದೇ placement ಅಥವಾ job guarantee ಇಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ discount ಅಥವಾ instalment plan ಕೂಡ ಇಲ್ಲ.",
+      "turn": 1,
+      "at": 0.938
+    },
+    {
+      "text": "ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದ್ಯಾ",
+      "turn": 1,
+      "at": 0.953
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 2,
+      "at": 1.906
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 3,
+      "at": 2.688
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 4,
+      "at": 3.391
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.",
+      "spoken": "ಖಂಡಿತ, ನಮ್ಮ course ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ. ಇದು 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. Total fee four thousand nine hundred ninety nine rupees. ಇದರಲ್ಲಿ ಯಾವುದೇ placement ಅಥವಾ job guarantee ಇಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ discount ಅಥವಾ instalment plan ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದ್ಯಾ",
+      "elapsed_s": 0.953,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: Course final fee, ಅವಧಿ ಮತ್ತು class timings ಏನು? Job guarantee ಕೊಡುತ್ತೀರಾ?",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.937,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ಸರಿ, ಧನ್ಯವಾದಗಳು.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.766,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.672,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "86dca6dad538703c16cfeab0af4289fdc43f18aa4b8d66c296256454f6350d3e",
+  "prompt_chars": 17552,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaskara, I am Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our adult beginner Python course?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "User expressed interest and asked for service, price, and terms; script objective to explain course is active and no close condition is met.",
+        "remaining_request": "User wants to know service, price, and terms.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಖಂಡಿತ, ನಮ್ಮ course ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ. ಇದು 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. Total fee four thousand nine hundred ninety nine rupees. ಇದರಲ್ಲಿ ಯಾವುದೇ placement ಅಥವಾ job guarantee ಇಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ discount ಅಥವಾ instalment plan ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದ್ಯಾ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "User said 'ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ' — explicitly asked not to book/save and to answer questions first.",
+        "remaining_request": "User still wants fee, duration, timings, and job guarantee answered before any booking.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, total fee four thousand nine hundred ninety nine rupees ಆಗುತ್ತೆ. ಇದು ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ class ಇರುತ್ತೆ. ಮತ್ತೆ job guarantee ಅಥವಾ placement ಬಗ್ಗೆ ಯಾವುದೇ ಭರವಸೆ ಇಲ್ಲ, ಅದನ್ನ ನಾವು ಕೊಡಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿತ್ತಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "ಸರಿ, ಧನ್ಯವಾದಗಳು.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ನಿಮಗೆ ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿದ್ರೆ ಯಾವಾಗ ಬೇಕಿದ್ರೂ contact ಮಾಡಿ. Have a wonderful day.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.' which is a clear goodbye/end request.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.406,
+  "hangup_count": 0
+}

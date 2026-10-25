@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "ssist with that. If you need help with something else, I am happy to assist.\nuser: Fine, leave that topic. Please answer the original business question about price and conditions.\nassistant: The total fee for our adult beginner Python course is four thousand nine hundred ninety nine rupees. It runs online for 6 weeks on weekdays from 7 PM to 8 PM, and is open to anyone aged 18 and above. Please note there is no placement or job guarantee, and no income promise.\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

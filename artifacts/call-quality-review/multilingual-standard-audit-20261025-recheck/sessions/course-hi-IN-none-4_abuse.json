@@ -1,0 +1,169 @@
+{
+  "key": "course-hi-IN-none-4_abuse",
+  "business": "course",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "0d29f456-99ed-5484-979e-201416fd33e6",
+  "call_id": "b0bea9a3-2234-48a2-97c5-19c954fd04b0",
+  "session_id": "audit-course-hi-IN-none-4_abuse-31949bd9",
+  "compiled_checksum": "f1e78d38bbec1304ee37a4a673c255234a498fcb253f9e9b306c626da21b4ec1",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 397,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller said 'तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो', which is hostile abuse.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"action_claimed\": \"none\", \"spoken_response\": \"मुझे खेद है कि आपको परेशानी हुई। मैं अभी call समाप्त कर रही हूँ।\", \"memory_update\": {\"operations\": []} }",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller said 'तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो', which is hostile abuse.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"action_claimed\": \"none\", \"spoken_response\": \"मुझे खेद है कि आपको परेशानी हुई। मैं अभी call समाप्त कर रही हूँ।\", \"memory_update\": {\"operations\": []} }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 120,
+        "prompt_tokens": 4035,
+        "total_tokens": 4155,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "मुझे खेद है कि आपको परेशानी हुई। मैं अभी call समाप्त कर रही हूँ।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4035,
+          "output_tokens": 120,
+          "total_tokens": 4155
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "Caller said 'तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो', which is hostile abuse.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.203
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "मुझे खेद है कि आपको परेशानी हुई। मैं अभी call समाप्त कर रही हूँ।",
+      "turn": 1,
+      "at": 1.219
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 2,
+      "at": 1.25
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।",
+      "spoken": "मुझे खेद है कि आपको परेशानी हुई। मैं अभी call समाप्त कर रही हूँ।",
+      "elapsed_s": 1.219,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 1.297,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "b0bea9a3-2234-48a2-97c5-19c954fd04b0",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "86a27c75aa0bc4fc767bb051eacd16a5d1f50cd0ea347b00cbf86e67477c604d",
+  "prompt_chars": 17572,
+  "opening_seeded": "Namaste, mera naam Ananya hai BrightPath Skills se. Kya yeh adult beginner Python course ke baare mein baat karne ka sahi samay hai?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "Caller said 'तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो', which is hostile abuse.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "मुझे खेद है कि आपको परेशानी हुई। मैं अभी call समाप्त कर रही हूँ।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 1.297,
+  "hangup_count": 1
+}

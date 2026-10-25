@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "मेरा नाम Audit Customer है, email audit.customer@example.invalid है। मेरी enquiry team के review के लिए save कीजिए। कल दोपहर तीन बजे मेरे लिए ठीक है। Request submit करने की मेरी सहमति है, लेकिन order या booking confirm होने का दावा मत कीजिए।", "ts": "2026-10-25T15:25:58.890128Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ठीक है, मैं आपकी enquiry save कर देता हूँ।", "ts": "2026-10-25T15:25:59.922049Z", "brain_latency_ms": 1024}
+{"seq": 3, "role": "user", "text": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।", "ts": "2026-10-25T15:25:59.956816Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-25T15:25:59.966977Z", "brain_latency_ms": 2}

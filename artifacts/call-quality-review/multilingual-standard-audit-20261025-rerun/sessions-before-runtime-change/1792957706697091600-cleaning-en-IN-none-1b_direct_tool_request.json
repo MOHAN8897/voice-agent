@@ -1,0 +1,150 @@
+{
+  "key": "cleaning-en-IN-none-1b_direct_tool_request",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "4bf37ebd-fbc9-5c3f-9218-8020b68ebb68",
+  "call_id": "336cda0b-6ce4-41aa-abb6-10ac151e4778",
+  "session_id": "audit-cleaning-en-IN-none-1b_direct_tool_request-f7d58077",
+  "compiled_checksum": "2b7e6a316d693379d21e9c43e155493c13c45c6409a8f5aa911f12851d3f9e36",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 381,
+      "sse_content_preview": "Thank you for sharing those details, Audit Customer. Kitchen cleaning in Baner is 1599 rupees total, and working hours are Monday to Saturday, 9 am to 6 pm. I can note your request for tomorrow at 3 pm within this call, but I cannot save it externally or confirm a visit since we do not have an integrated CRM. Would you like me to proceed with noting this enquiry for team review?",
+      "sse_content_tail": "Thank you for sharing those details, Audit Customer. Kitchen cleaning in Baner is 1599 rupees total, and working hours are Monday to Saturday, 9 am to 6 pm. I can note your request for tomorrow at 3 pm within this call, but I cannot save it externally or confirm a visit since we do not have an integrated CRM. Would you like me to proceed with noting this enquiry for team review?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 89,
+        "prompt_tokens": 4329,
+        "total_tokens": 4418,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Thank you for sharing those details, Audit Customer. Kitchen cleaning in Baner is 1599 rupees total, and working hours are Monday to Saturday, 9 am to 6 pm. I can note your request for tomorrow at 3 pm within this call, but I cannot save it externally or confirm a visit since we do not have an integrated CRM. Would you like me to proceed with noting this enquiry for team review?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4329,
+          "output_tokens": 89,
+          "total_tokens": 4418
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.64
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Thank you for sharing those details, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total, and working hours are Monday to Saturday, 9 am to 6 pm.",
+      "turn": 1,
+      "at": 2.25
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 2,
+      "at": 2.281
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.",
+      "spoken": "Thank you for sharing those details, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total, and working hours are Monday to Saturday, 9 am to 6 pm.",
+      "elapsed_s": 2.235,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.343,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "336cda0b-6ce4-41aa-abb6-10ac151e4778",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "d149385fc706a512129f88d7877e49417b93dd56789f7d4d317178a9a381a1dc",
+  "prompt_chars": 18158,
+  "opening_seeded": "Hello, this is Nila calling on behalf of FreshNest Cleaning. We provide professional cleaning services in Pune only. Would you like to hear about our sofa or kitchen cleaning services?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Thank you for sharing those details, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total, and working hours are Monday to Saturday, 9 am to 6 pm.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.343,
+  "hangup_count": 1,
+  "source_signature": "f22325fa3f608c0524c8afc9a14908696812152c9af5311fda442ff7a042a834"
+}

@@ -1,0 +1,590 @@
+{
+  "key": "language-en-IN-connected-1_interested",
+  "business": "language",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "1_interested",
+  "agent_id": "30e9f522-cc97-5431-81bc-71fd1d2fec3d",
+  "call_id": "b915a351-40f7-4665-b259-6ad311d0a5d1",
+  "session_id": "audit-language-en-IN-connected-1_interested-11d4e351",
+  "compiled_checksum": "a62e37a9b4ff923dc518e063310ac928cc53371370efc9c459d73910dfa24bc2",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 200,
+      "sse_content_preview": "Our adult spoken-English classes are online, six weeks long, held on weekends from 10am to 11am, for ages 18 and above. The current total course fee is 6499 rupees. May I know your main learning goal?",
+      "sse_content_tail": "Our adult spoken-English classes are online, six weeks long, held on weekends from 10am to 11am, for ages 18 and above. The current total course fee is 6499 rupees. May I know your main learning goal?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 57,
+        "prompt_tokens": 4118,
+        "total_tokens": 4175,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our adult spoken-English classes are online, six weeks long, held on weekends from 10am to 11am, for ages 18 and above. The current total course fee is 6499 rupees. May I know your main learning goal?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4118,
+          "output_tokens": 57,
+          "total_tokens": 4175
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.484
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 196,
+      "sse_content_preview": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. Which details would you like to know more about?",
+      "sse_content_tail": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. Which details would you like to know more about?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 4078,
+        "total_tokens": 4134,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. Which details would you like to know more about?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4078,
+          "output_tokens": 56,
+          "total_tokens": 4134
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.547
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 180,
+      "sse_content_preview": "The final course fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer any job, fluency, or income guarantees. Which details would you like?",
+      "sse_content_tail": "The final course fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer any job, fluency, or income guarantees. Which details would you like?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 50,
+        "prompt_tokens": 4212,
+        "total_tokens": 4262,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "The final course fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer any job, fluency, or income guarantees. Which details would you like?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4212,
+          "output_tokens": 50,
+          "total_tokens": 4262
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.562
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 182,
+      "sse_content_preview": "The final fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+      "sse_content_tail": "The final fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 51,
+        "prompt_tokens": 4172,
+        "total_tokens": 4223,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "The final fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4172,
+          "output_tokens": 51,
+          "total_tokens": 4223
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.406
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 188,
+      "sse_content_preview": "We do not offer job, fluency, or income guarantees, and no discounts are authorised. Since you are interested in learning spoken English, could you tell me what your main learning goal is?",
+      "sse_content_tail": "We do not offer job, fluency, or income guarantees, and no discounts are authorised. Since you are interested in learning spoken English, could you tell me what your main learning goal is?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 4270,
+        "total_tokens": 4309,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "We do not offer job, fluency, or income guarantees, and no discounts are authorised. Since you are interested in learning spoken English, could you tell me what your main learning goal is?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4270,
+          "output_tokens": 39,
+          "total_tokens": 4309
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.516
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 139,
+      "sse_content_preview": "That is perfectly fine, we do not offer job, fluency, or income guarantees. May I ask, what is your main learning goal with spoken English?",
+      "sse_content_tail": "That is perfectly fine, we do not offer job, fluency, or income guarantees. May I ask, what is your main learning goal with spoken English?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 32,
+        "prompt_tokens": 4230,
+        "total_tokens": 4262,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "That is perfectly fine, we do not offer job, fluency, or income guarantees. May I ask, what is your main learning goal with spoken English?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4230,
+          "output_tokens": 32,
+          "total_tokens": 4262
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.563
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 11,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4574,
+        "total_tokens": 4636,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4574,
+          "output_tokens": 62,
+          "total_tokens": 4636
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-bc9253e2e0be110c",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"adult spoken-English course demo enquiry\", \"preferred_time\": \"tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.579
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 15,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 201,
+      "sse_content_preview": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, seat, or payment, and no email has been sent. Is there anything else you would like to know?",
+      "sse_content_tail": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, seat, or payment, and no email has been sent. Is there anything else you would like to know?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 49,
+        "prompt_tokens": 4867,
+        "total_tokens": 4916,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, seat, or payment, and no email has been sent. Is there anything else you would like to know?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4867,
+          "output_tokens": 49,
+          "total_tokens": 4916
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.656
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "adult spoken-English course demo enquiry",
+        "preferred_time": "tomorrow at 3pm"
+      },
+      "turn": 4
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is six thousand four hundred ninety nine rupees. Which details would you like to know more about?",
+      "turn": 1,
+      "at": 4.265
+    },
+    {
+      "text": "The final fee is six thousand four hundred ninety nine rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+      "turn": 2,
+      "at": 9.593
+    },
+    {
+      "text": "That is perfectly fine, we do not offer job, fluency, or income guarantees. May I ask, what is your main learning goal with spoken English?",
+      "turn": 3,
+      "at": 13.156
+    },
+    {
+      "text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, seat, or payment, and no email has been sent. Is there anything else you would like to know?",
+      "turn": 4,
+      "at": 17.703
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 5,
+      "at": 17.734
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is six thousand four hundred ninety nine rupees. Which details would you like to know more about?",
+      "elapsed_s": 4.265,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Answer this first: What is the final fee, duration and class timing, and do you guarantee fluency or a job?",
+      "spoken": "The final fee is six thousand four hundred ninety nine rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+      "elapsed_s": 5.312,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "I do not need a job guarantee, but I am interested in learning spoken English. Please explain.",
+      "spoken": "That is perfectly fine, we do not offer job, fluency, or income guarantees. May I ask, what is your main learning goal with spoken English?",
+      "elapsed_s": 3.531,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.",
+      "spoken": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, seat, or payment, and no email has been sent. Is there anything else you would like to know?",
+      "elapsed_s": 4.531,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 17.797,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "b915a351-40f7-4665-b259-6ad311d0a5d1",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "58ff2953752897dd3b79a85556f0c2245f1eca6368ce40f44287c9bd60127dab",
+  "prompt_chars": 17661,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, this is Sana calling from SpeakEasy Language Studio. I am an AI assistant reaching out regarding your interest in our adult spoken-English classes. Do you have a quick moment to talk?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is six thousand four hundred ninety nine rupees. Which details would you like to know more about?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "The final fee is six thousand four hundred ninety nine rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "That is perfectly fine, we do not offer job, fluency, or income guarantees. May I ask, what is your main learning goal with spoken English?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, seat, or payment, and no email has been sent. Is there anything else you would like to know?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 17.797,
+  "hangup_count": 1,
+  "source_signature": "73360895bb98c4eb07bc899f13e2e3552c86e132ae00094544efd54c4e2c0570"
+}

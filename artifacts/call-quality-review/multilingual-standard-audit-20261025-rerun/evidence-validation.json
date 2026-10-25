@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "unique_live_cases": 300,
+  "caller_turns": 840,
+  "final_source_live_cases": 60,
+  "impact_retained_cases": 240,
+  "regression_tests": 404,
+  "audio_smokes": 5,
+  "close_handshakes": 20,
+  "report_links_checked": 47,
+  "source_drift": 0
+}

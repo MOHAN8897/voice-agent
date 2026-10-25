@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.", "ts": "2026-10-25T17:33:47.142028Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಸರಿ, visiting cards ಬಂದು per card twenty five rupees ಆಗುತ್ತೆ, minimum one hundred cards ತಗೋಬೇಕಾಗುತ್ತೆ. Wedding invitations ಕೂಡ ಇದೆ, ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ. Delivery Pune-ಗೆ five working days-ಅಲ್ಲಿ ಆಗುತ್ತೆ, artwork approval ಆದ್ಮೇಲೆ.", "ts": "2026-10-25T17:33:49.361595Z", "brain_latency_ms": 1592}
+{"seq": 3, "role": "user", "text": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: ನೀವು ಮದುವೆಯ ಆಮಂತ್ರಣಗಳನ್ನೂ print ಮಾಡುತ್ತೀರಾ? ಬೆಲೆ ಮತ್ತು delivery time ಎಷ್ಟು?", "ts": "2026-10-25T17:33:49.390571Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, ನಮಗೆ ಒಂದು ತಾಂತ್ರಿಕ ಸಮಸ್ಯೆ ಎದುರಾಗಿದೆ. ದಯವಿಟ್ಟು ನಮಗೆ ಮತ್ತೆ ಕರೆ ಮಾಡಿ. ಧನ್ಯವಾದಗಳು.", "ts": "2026-10-25T17:33:53.897663Z"}

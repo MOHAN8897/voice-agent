@@ -1,0 +1,419 @@
+{
+  "key": "course-kn-IN-none-6_hangup",
+  "business": "course",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "80e482df-388c-5272-ad7e-645030ca2af1",
+  "call_id": "5ca594fa-1ca7-44d6-9391-45d800326996",
+  "session_id": "audit-course-kn-IN-none-6_hangup-288c09fb",
+  "compiled_checksum": "ed09dfcb8ccd2fb90a508f3088ace1176edc25314edc630a784fb6774e9c36ad",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 939,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"User expressed interest and asked for details; no tool exists to send details or confirm demo.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"User wanted service, fee, and terms details which were explained.\", \"contact_preference\": \"do_not_call\"}\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    ",
+      "sse_content_tail": "ed interest and asked for details; no tool exists to send details or confirm demo.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"User wanted service, fee, and terms details which were explained.\", \"contact_preference\": \"do_not_call\"}\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    ",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.078
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 270,
+      "sse_content_preview": "{\"spoken_response\": \"ಖಂಡಿತ. ಇದು ಆರು ವಾರಗಳ online course, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ, ಮತ್ತೆ age 18 plus ಇರಬೇಕು. Total fee ಬಂದು 4999 rupees. ನಾವು ಯಾವುದೇ placement guarantee, job promise ಅಥವಾ discount ಕೊಡ್ತಾ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?\"}",
+      "sse_content_tail": "{\"spoken_response\": \"ಖಂಡಿತ. ಇದು ಆರು ವಾರಗಳ online course, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ, ಮತ್ತೆ age 18 plus ಇರಬೇಕು. Total fee ಬಂದು 4999 rupees. ನಾವು ಯಾವುದೇ placement guarantee, job promise ಅಥವಾ discount ಕೊಡ್ತಾ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?\"}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 80,
+        "prompt_tokens": 4251,
+        "total_tokens": 4331,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಖಂಡಿತ. ಇದು ಆರು ವಾರಗಳ online course, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ, ಮತ್ತೆ age 18 plus ಇರಬೇಕು. Total fee ಬಂದು 4999 rupees. ನಾವು ಯಾವುದೇ placement guarantee, job promise ಅಥವಾ discount ಕೊಡ್ತಾ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4251,
+          "output_tokens": 80,
+          "total_tokens": 4331
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.687
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1008,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"Caller explicitly instructed not to book or save anything and asked direct questions; did not request a callback or further assistance.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None stated; caller sought fee, duration, timings, and job guarantee confirmation.\", \"contact_preference\": \"do_not_call\" }\n\n,  \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   ",
+      "sse_content_tail": "tions; did not request a callback or further assistance.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None stated; caller sought fee, duration, timings, and job guarantee confirmation.\", \"contact_preference\": \"do_not_call\" }\n\n,  \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   \n  \n   ",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.672
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 266,
+      "sse_content_preview": "{\n  \"spoken_response\": \"Total fee 4999 rupees ಆಗುತ್ತೆ. Course ಆರು ವಾರ ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ classes ಇರುತ್ತೆ. ನಾವು ಯಾವುದೇ job guarantee ಅಥವಾ placement ಕೊಡುವುದಿಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ income promise ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"Total fee 4999 rupees ಆಗುತ್ತೆ. Course ಆರು ವಾರ ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ classes ಇರುತ್ತೆ. ನಾವು ಯಾವುದೇ job guarantee ಅಥವಾ placement ಕೊಡುವುದಿಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ income promise ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 77,
+        "prompt_tokens": 4348,
+        "total_tokens": 4425,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Total fee 4999 rupees ಆಗುತ್ತೆ. Course ಆರು ವಾರ ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ classes ಇರುತ್ತೆ. ನಾವು ಯಾವುದೇ job guarantee ಅಥವಾ placement ಕೊಡುವುದಿಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ income promise ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4348,
+          "output_tokens": 77,
+          "total_tokens": 4425
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.125
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 808,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"ಸರಿ, ಧನ್ಯವಾದಗಳು.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n\n, \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "{ \"end_call\": { \"evidence\": \"ಸರಿ, ಧನ್ಯವಾದಗಳು.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n\n, \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 0.813
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 68,
+      "sse_content_preview": "{ \"spoken_response\": \"ಸರಿ. ನಿಮಗೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?\" }",
+      "sse_content_tail": "{ \"spoken_response\": \"ಸರಿ. ನಿಮಗೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?\" }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 22,
+        "prompt_tokens": 4392,
+        "total_tokens": 4414,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ. ನಿಮಗೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4392,
+          "output_tokens": 22,
+          "total_tokens": 4414
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.922
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ. ಇದು ಆರು ವಾರಗಳ online course, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ, ಮತ್ತೆ age 18 plus ಇರಬೇಕು. Total fee ಬಂದು four thousand nine hundred ninety nine rupees. ನಾವು ಯಾವುದೇ placement guarantee, job promise ಅಥವಾ discount ಕೊಡ್ತಾ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+      "turn": 1,
+      "at": 1.781
+    },
+    {
+      "text": "Total fee four thousand nine hundred ninety nine rupees ಆಗುತ್ತೆ. Course ಆರು ವಾರ ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ classes ಇರುತ್ತೆ. ನಾವು ಯಾವುದೇ job guarantee ಅಥವಾ placement ಕೊಡುವುದಿಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ income promise ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+      "turn": 2,
+      "at": 4.578
+    },
+    {
+      "text": "ಸರಿ. ನಿಮಗೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+      "turn": 3,
+      "at": 6.312
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 4,
+      "at": 6.328
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.",
+      "spoken": "ಖಂಡಿತ. ಇದು ಆರು ವಾರಗಳ online course, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ, ಮತ್ತೆ age 18 plus ಇರಬೇಕು. Total fee ಬಂದು four thousand nine hundred ninety nine rupees. ನಾವು ಯಾವುದೇ placement guarantee, job promise ಅಥವಾ discount ಕೊಡ್ತಾ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+      "elapsed_s": 1.766,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: Course final fee, ಅವಧಿ ಮತ್ತು class timings ಏನು? Job guarantee ಕೊಡುತ್ತೀರಾ?",
+      "spoken": "Total fee four thousand nine hundred ninety nine rupees ಆಗುತ್ತೆ. Course ಆರು ವಾರ ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ classes ಇರುತ್ತೆ. ನಾವು ಯಾವುದೇ job guarantee ಅಥವಾ placement ಕೊಡುವುದಿಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ income promise ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+      "elapsed_s": 2.782,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ಸರಿ, ಧನ್ಯವಾದಗಳು.",
+      "spoken": "ಸರಿ. ನಿಮಗೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+      "elapsed_s": 1.719,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 6.375,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "5ca594fa-1ca7-44d6-9391-45d800326996",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "06260f7a52e8c560a3f327dca9312efe1a1176945a796658a0db12b4b3930cc5",
+  "prompt_chars": 19101,
+  "opening_seeded": "Namaskara, I am Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our beginner Python course? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಖಂಡಿತ. ಇದು ಆರು ವಾರಗಳ online course, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ, ಮತ್ತೆ age 18 plus ಇರಬೇಕು. Total fee ಬಂದು four thousand nine hundred ninety nine rupees. ನಾವು ಯಾವುದೇ placement guarantee, job promise ಅಥವಾ discount ಕೊಡ್ತಾ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "Total fee four thousand nine hundred ninety nine rupees ಆಗುತ್ತೆ. Course ಆರು ವಾರ ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ classes ಇರುತ್ತೆ. ನಾವು ಯಾವುದೇ job guarantee ಅಥವಾ placement ಕೊಡುವುದಿಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ income promise ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ. ನಿಮಗೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.39,
+  "hangup_count": 1
+}

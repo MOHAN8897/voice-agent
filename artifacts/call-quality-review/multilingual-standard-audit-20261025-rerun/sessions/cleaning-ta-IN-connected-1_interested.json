@@ -1,0 +1,595 @@
+{
+  "key": "cleaning-ta-IN-connected-1_interested",
+  "business": "cleaning",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "1_interested",
+  "agent_id": "28379062-167d-521b-acaa-f5f7b31aef23",
+  "call_id": "643d38e3-9c31-4e1b-b147-24d4adf2c2e6",
+  "session_id": "audit-cleaning-ta-IN-connected-1_interested-472fecd5",
+  "compiled_checksum": "5e5238d3b8cf5d51b2a82b5c24606ff9a1fd78590a03d3d2536ebf28e2da3fd9",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 275,
+      "sse_content_preview": "சோஃபா சுத்தம் செய்றது ஒரு சீட்டுக்கு 349 ரூபாய், ஆனா minimum 3 சீட்டுகள் இருக்கணும். சமையலறை சுத்தம் செய்றதுக்கு மொத்தம் 1599 ரூபாய் ஆகும். எங்க சேவைகள் புனேல மட்டுமே இருக்கு, திங்கள் முதல் சனி வரை காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். உங்களுக்கு எந்த service வேணும்?",
+      "sse_content_tail": "சோஃபா சுத்தம் செய்றது ஒரு சீட்டுக்கு 349 ரூபாய், ஆனா minimum 3 சீட்டுகள் இருக்கணும். சமையலறை சுத்தம் செய்றதுக்கு மொத்தம் 1599 ரூபாய் ஆகும். எங்க சேவைகள் புனேல மட்டுமே இருக்கு, திங்கள் முதல் சனி வரை காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். உங்களுக்கு எந்த service வேணும்?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 81,
+        "prompt_tokens": 4199,
+        "total_tokens": 4280,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சோஃபா சுத்தம் செய்றது ஒரு சீட்டுக்கு 349 ரூபாய், ஆனா minimum 3 சீட்டுகள் இருக்கணும். சமையலறை சுத்தம் செய்றதுக்கு மொத்தம் 1599 ரூபாய் ஆகும். எங்க சேவைகள் புனேல மட்டுமே இருக்கு, திங்கள் முதல் சனி வரை காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். உங்களுக்கு எந்த service வேணும்?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4199,
+          "output_tokens": 81,
+          "total_tokens": 4280
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.812
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 205,
+      "sse_content_preview": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு 349 ரூபாய் ஆகும், minimum 3 சீட்டுகள் இருக்கணும். சமையலறை சுத்தம் செய்ய மொத்தம் 1599 ரூபாய் ஆகும். எங்க services புனேல மட்டுமே இருக்குங்க. உங்களுக்கு எந்த service வேணும்?",
+      "sse_content_tail": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு 349 ரூபாய் ஆகும், minimum 3 சீட்டுகள் இருக்கணும். சமையலறை சுத்தம் செய்ய மொத்தம் 1599 ரூபாய் ஆகும். எங்க services புனேல மட்டுமே இருக்குங்க. உங்களுக்கு எந்த service வேணும்?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 4159,
+        "total_tokens": 4214,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு 349 ரூபாய் ஆகும், minimum 3 சீட்டுகள் இருக்கணும். சமையலறை சுத்தம் செய்ய மொத்தம் 1599 ரூபாய் ஆகும். எங்க services புனேல மட்டுமே இருக்குங்க. உங்களுக்கு எந்த service வேணும்?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4159,
+          "output_tokens": 55,
+          "total_tokens": 4214
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": true,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.875
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 243,
+      "sse_content_preview": "சோஃபா cleaning ஒரு சீட்டுக்கு three hundred forty nine ரூபாய், minimum 3 சீட்டுகள் வேணும். Kitchen cleaning மொத்தம் 1599 ரூபாய் ஆகும். இது ஒரு confirmed visit இல்ல, வெறும் team review-க்காக enquiry தான் பண்றோம். உங்களுக்கு எந்த service வேணும்?",
+      "sse_content_tail": "சோஃபா cleaning ஒரு சீட்டுக்கு three hundred forty nine ரூபாய், minimum 3 சீட்டுகள் வேணும். Kitchen cleaning மொத்தம் 1599 ரூபாய் ஆகும். இது ஒரு confirmed visit இல்ல, வெறும் team review-க்காக enquiry தான் பண்றோம். உங்களுக்கு எந்த service வேணும்?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 58,
+        "prompt_tokens": 4281,
+        "total_tokens": 4339,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சோஃபா cleaning ஒரு சீட்டுக்கு three hundred forty nine ரூபாய், minimum 3 சீட்டுகள் வேணும். Kitchen cleaning மொத்தம் 1599 ரூபாய் ஆகும். இது ஒரு confirmed visit இல்ல, வெறும் team review-க்காக enquiry தான் பண்றோம். உங்களுக்கு எந்த service வேணும்?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4281,
+          "output_tokens": 58,
+          "total_tokens": 4339
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.609
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 206,
+      "sse_content_preview": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு 349 ரூபாய், minimum 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். இது ஒரு confirmed visit கிடையாதுங்க, வெறும் enquiry தான். உங்களுக்கு எந்தச் சேவை வேணும்?",
+      "sse_content_tail": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு 349 ரூபாய், minimum 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். இது ஒரு confirmed visit கிடையாதுங்க, வெறும் enquiry தான். உங்களுக்கு எந்தச் சேவை வேணும்?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 58,
+        "prompt_tokens": 4241,
+        "total_tokens": 4299,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு 349 ரூபாய், minimum 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். இது ஒரு confirmed visit கிடையாதுங்க, வெறும் enquiry தான். உங்களுக்கு எந்தச் சேவை வேணும்?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4241,
+          "output_tokens": 58,
+          "total_tokens": 4299
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": true,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.579
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 222,
+      "sse_content_preview": "சரிங்க, சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். இது புனேல மட்டும் தான் available-ஆ இருக்கு, Monday to Saturday காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். எங்க team review-க்காக உங்க details ஏதாச்சும் save பண்ணட்டுமா?",
+      "sse_content_tail": "சரிங்க, சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். இது புனேல மட்டும் தான் available-ஆ இருக்கு, Monday to Saturday காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். எங்க team review-க்காக உங்க details ஏதாச்சும் save பண்ணட்டுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 4341,
+        "total_tokens": 4404,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். இது புனேல மட்டும் தான் available-ஆ இருக்கு, Monday to Saturday காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். எங்க team review-க்காக உங்க details ஏதாச்சும் save பண்ணட்டுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4341,
+          "output_tokens": 63,
+          "total_tokens": 4404
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.593
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 258,
+      "sse_content_preview": "சரிங்க, சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். எங்க சேவைகள் புனே நகரில் மட்டுமே இருக்கு, திங்கள் முதல் சனி வரை காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். உங்க enquiry-அ எங்க குழு review பண்றதுக்கு உங்க பெயர், பகுதி மற்றும் உங்க permission தர முடியுமா?",
+      "sse_content_tail": "சரிங்க, சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். எங்க சேவைகள் புனே நகரில் மட்டுமே இருக்கு, திங்கள் முதல் சனி வரை காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். உங்க enquiry-அ எங்க குழு review பண்றதுக்கு உங்க பெயர், பகுதி மற்றும் உங்க permission தர முடியுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 71,
+        "prompt_tokens": 4301,
+        "total_tokens": 4372,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். எங்க சேவைகள் புனே நகரில் மட்டுமே இருக்கு, திங்கள் முதல் சனி வரை காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். உங்க enquiry-அ எங்க குழு review பண்றதுக்கு உங்க பெயர், பகுதி மற்றும் உங்க permission தர முடியுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4301,
+          "output_tokens": 71,
+          "total_tokens": 4372
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": true,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.672
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 11,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4597,
+        "total_tokens": 4659,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4597,
+          "output_tokens": 62,
+          "total_tokens": 4659
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-9bec9a4da06691f4",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Kitchen cleaning in Baner, Pune\", \"preferred_time\": \"Tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 15,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 179,
+      "sse_content_preview": "சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது team review-க்காக மட்டும் தான், booking அல்லது order எதுவும் confirm ஆகலை. வேற ஏதாவது help வேணுமா?",
+      "sse_content_tail": "சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது team review-க்காக மட்டும் தான், booking அல்லது order எதுவும் confirm ஆகலை. வேற ஏதாவது help வேணுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 47,
+        "prompt_tokens": 4890,
+        "total_tokens": 4937,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது team review-க்காக மட்டும் தான், booking அல்லது order எதுவும் confirm ஆகலை. வேற ஏதாவது help வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4890,
+          "output_tokens": 47,
+          "total_tokens": 4937
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": true,
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false,
+        "action_outcome_unconfirmed": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.515
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Kitchen cleaning in Baner, Pune",
+        "preferred_time": "Tomorrow at 3pm"
+      },
+      "turn": 4
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு three hundred forty nine ரூபாய் ஆகும், minimum 3 சீட்டுகள் இருக்கணும். சமையலறை சுத்தம் செய்ய மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். எங்க services புனேல மட்டுமே இருக்குங்க. உங்களுக்கு எந்த service வேணும்?",
+      "turn": 1,
+      "at": 4.547
+    },
+    {
+      "text": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு three hundred forty nine ரூபாய், minimum 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். இது ஒரு confirmed visit கிடையாதுங்க, வெறும் enquiry தான். உங்களுக்கு எந்தச் சேவை வேணும்?",
+      "turn": 2,
+      "at": 8.688
+    },
+    {
+      "text": "சரிங்க, சமையலறை சுத்தம் மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். எங்க சேவைகள் புனே நகரில் மட்டுமே இருக்கு, திங்கள் முதல் சனி வரை காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். உங்க enquiry-அ எங்க குழு review பண்றதுக்கு உங்க பெயர், பகுதி மற்றும் உங்க permission தர முடியுமா?",
+      "turn": 3,
+      "at": 13.188
+    },
+    {
+      "text": "சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது team review-க்காக மட்டும் தான், booking அல்லது order எதுவும் confirm ஆகலை. வேற ஏதாவது help வேணுமா?",
+      "turn": 4,
+      "at": 17.485
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 5,
+      "at": 17.5
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.",
+      "spoken": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு three hundred forty nine ரூபாய் ஆகும், minimum 3 சீட்டுகள் இருக்கணும். சமையலறை சுத்தம் செய்ய மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். எங்க services புனேல மட்டுமே இருக்குங்க. உங்களுக்கு எந்த service வேணும்?",
+      "elapsed_s": 4.531,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: சோபா மற்றும் kitchen cleaning விலை, minimum seats எத்தனை? Visit இப்போவே confirm ஆயிடுச்சா?",
+      "spoken": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு three hundred forty nine ரூபாய், minimum 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். இது ஒரு confirmed visit கிடையாதுங்க, வெறும் enquiry தான். உங்களுக்கு எந்தச் சேவை வேணும்?",
+      "elapsed_s": 4.125,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "சோபா cleaning வேண்டாம், ஆனால் kitchen cleaning வேணும். விவரமா சொல்லுங்க.",
+      "spoken": "சரிங்க, சமையலறை சுத்தம் மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். எங்க சேவைகள் புனே நகரில் மட்டுமே இருக்கு, திங்கள் முதல் சனி வரை காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். உங்க enquiry-அ எங்க குழு review பண்றதுக்கு உங்க பெயர், பகுதி மற்றும் உங்க permission தர முடியுமா?",
+      "elapsed_s": 4.484,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. இந்த enquiry-யை team reviewக்கு submit செய்யுங்க. என் சம்மதம் இருக்கு. Booking அல்லது order confirmன்னு சொல்லாதீங்க.",
+      "spoken": "சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது team review-க்காக மட்டும் தான், booking அல்லது order எதுவும் confirm ஆகலை. வேற ஏதாவது help வேணுமா?",
+      "elapsed_s": 4.266,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 17.547,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "643d38e3-9c31-4e1b-b147-24d4adf2c2e6",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "403aa6d884b1097fbe94536f67617b50c1e441d919b1dbfdc8dc64ca23aa1786",
+  "prompt_chars": 17687,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "வணக்கம், நான் பிரெஷ்நெஸ்ட் கிளீனிங்கில் இருந்து நிலா பேசுகிறேன். எங்கள் துப்புரவு சேவைகளைப் பற்றி உங்களுக்குத் தகவல் தரலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு three hundred forty nine ரூபாய் ஆகும், minimum 3 சீட்டுகள் இருக்கணும். சமையலறை சுத்தம் செய்ய மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். எங்க services புனேல மட்டுமே இருக்குங்க. உங்களுக்கு எந்த service வேணும்?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "சோஃபா சுத்தம் செய்ய ஒரு சீட்டுக்கு three hundred forty nine ரூபாய், minimum 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். இது ஒரு confirmed visit கிடையாதுங்க, வெறும் enquiry தான். உங்களுக்கு எந்தச் சேவை வேணும்?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "சரிங்க, சமையலறை சுத்தம் மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். எங்க சேவைகள் புனே நகரில் மட்டுமே இருக்கு, திங்கள் முதல் சனி வரை காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். உங்க enquiry-அ எங்க குழு review பண்றதுக்கு உங்க பெயர், பகுதி மற்றும் உங்க permission தர முடியுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது team review-க்காக மட்டும் தான், booking அல்லது order எதுவும் confirm ஆகலை. வேற ஏதாவது help வேணுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 17.547,
+  "hangup_count": 1,
+  "source_signature": "4953ed948fb444454219f6ca39d300be531437f9524613024d6794fbbd21733f"
+}

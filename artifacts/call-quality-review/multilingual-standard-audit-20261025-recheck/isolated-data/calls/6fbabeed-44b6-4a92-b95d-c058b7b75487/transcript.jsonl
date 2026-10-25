@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T16:54:05.063060Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:54:07.218639Z", "brain_latency_ms": 1947}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Please answer my question first: What is the final course fee, duration and class timing, and do you guarantee a job?", "ts": "2026-10-25T16:54:07.236553Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:54:09.766666Z", "brain_latency_ms": 1940}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-25T16:54:09.776882Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "The course is 6 weeks online, weekdays from 7 PM to 8 PM, for age 18 and above. The total fee is four thousand nine hundred ninety nine rupees. There is no placement or job guarantee, and no income promise. Which details would you like to know next?", "ts": "2026-10-25T16:54:12.575559Z", "brain_latency_ms": 2655}
+{"seq": 7, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T16:54:12.604483Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T16:54:12.616478Z", "brain_latency_ms": 2}

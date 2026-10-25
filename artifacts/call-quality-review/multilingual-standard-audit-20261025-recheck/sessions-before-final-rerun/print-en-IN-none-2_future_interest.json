@@ -1,0 +1,290 @@
+{
+  "key": "print-en-IN-none-2_future_interest",
+  "business": "print",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "462931fd-5723-5ca3-9185-4c211c89b3c2",
+  "call_id": "e0e348c4-3626-41f7-8576-63fc06661dbc",
+  "session_id": "audit-print-en-IN-none-2_future_interest-3ac7f8dc",
+  "compiled_checksum": "469e25fa9016f54e25a6de5b1468eb7e210876abafd5df4545b0c0dcdd5ff9dc",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1000,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"wants price information for next month\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "ase tell me the current price; do not book anything or call this a permanent rejection.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"wants price information for next month\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.578
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 347,
+      "sse_content_preview": "{\n  \"spoken_response\": \"Understood. Visiting cards are twenty five rupees per card with a minimum of one hundred cards. Wedding invitations depend on design and quantity, so there is no fixed price for those. Since you are interested next month, would you like me to note your preferred name and locality for a quote request when you are ready?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"Understood. Visiting cards are twenty five rupees per card with a minimum of one hundred cards. Wedding invitations depend on design and quantity, so there is no fixed price for those. Since you are interested next month, would you like me to note your preferred name and locality for a quote request when you are ready?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 75,
+        "prompt_tokens": 3960,
+        "total_tokens": 4035,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Understood. Visiting cards are twenty five rupees per card with a minimum of one hundred cards. Wedding invitations depend on design and quantity, so there is no fixed price for those. Since you are interested next month, would you like me to note your preferred name and locality for a quote request when you are ready?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3960,
+          "output_tokens": 75,
+          "total_tokens": 4035
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.938
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 861,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said they are interested in future but explicitly not asking to be called later right now, and asked what they should know.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Information about the service\",\n    \"contact_preference\": \"end_call\"\n  }\n,\n\n   \n  \"action_claimed\": \"none\",\n  \"spoken_response\": \"For delivery to Pune, it takes five working days after artwork approval. We accept cards and cash on delivery. Our office is open from ten AM to six PM, Monday to Saturday. If you would like, you can share your preferred name and locality whenever you are ready, and I will note down a quote request for you.\"\n,\n\n   \n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_next_month\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said they are interested in future but explicitly not asking to be called later right now, and asked what they should know.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Information about the service\",\n    \"contact_preference\": \"end_call\"\n  }\n,\n\n   \n  \"action_claimed\": \"none\",\n  \"spoken_response\": \"For delivery to Pune, it takes five working days after artwork approval. We accept cards and cash on delivery. Our office is open from ten AM to six PM, Monday to Saturday. If you would like, you can share your preferred name and locality whenever you are ready, and I will note down a quote request for you.\"\n,\n\n   \n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_next_month\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 241,
+        "prompt_tokens": 4027,
+        "total_tokens": 4268,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "For delivery to Pune, it takes five working days after artwork approval. We accept cards and cash on delivery. Our office is open from ten AM to six PM, Monday to Saturday. If you would like, you can share your preferred name and locality whenever you are ready, and I will note down a quote request for you.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4027,
+          "output_tokens": 241,
+          "total_tokens": 4268
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested_next_month",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller said they are interested in future but explicitly not asking to be called later right now, and asked what they should know.",
+          "remaining_request": "Information about the service",
+          "contact_preference": "end_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 2.469
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Understood. Visiting cards are twenty five rupees per card with a minimum of one hundred cards. Wedding invitations depend on design and quantity, so there is no fixed price for those.",
+      "turn": 1,
+      "at": 2.828
+    },
+    {
+      "text": "For delivery to Pune, it takes five working days after artwork approval. We accept cards and cash on delivery. Our office is open from ten AM to six PM, Monday to Saturday.",
+      "turn": 2,
+      "at": 5.297
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 3,
+      "at": 5.313
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.",
+      "spoken": "Understood. Visiting cards are twenty five rupees per card with a minimum of one hundred cards. Wedding invitations depend on design and quantity, so there is no fixed price for those.",
+      "elapsed_s": 2.828,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?",
+      "spoken": "For delivery to Pune, it takes five working days after artwork approval. We accept cards and cash on delivery. Our office is open from ten AM to six PM, Monday to Saturday.",
+      "elapsed_s": 2.453,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 5.375,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "e0e348c4-3626-41f7-8576-63fc06661dbc",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "13d0600179a387a79fa6c49d136bf52b0b8ded6daf803cba45fccfc064a0254a",
+  "prompt_chars": 17610,
+  "opening_seeded": "Hello, this is Meera calling from ClearPrint Studio. Is it a good time to speak about your card printing needs?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "Understood. Visiting cards are twenty five rupees per card with a minimum of one hundred cards. Wedding invitations depend on design and quantity, so there is no fixed price for those.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller said they are interested in future but explicitly not asking to be called later right now, and asked what they should know.",
+        "remaining_request": "Information about the service",
+        "contact_preference": "end_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "For delivery to Pune, it takes five working days after artwork approval. We accept cards and cash on delivery. Our office is open from ten AM to six PM, Monday to Saturday.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 5.375,
+  "hangup_count": 1
+}

@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T17:12:03.786337Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T17:12:05.674066Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-25T17:12:07.139420Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-25T17:12:08.815225Z", "include_summary": false, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-25T17:12:08.835323Z", "include_summary": false, "projection": "[Context]\npricing_and_terms"}

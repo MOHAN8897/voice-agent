@@ -1,0 +1,24 @@
+{
+  "call_id": "d7d9c955-b17e-47b3-b291-3d603c775a5a",
+  "combination_id": null,
+  "compiled_brain_version": null,
+  "turns": [
+    {
+      "turn": 2,
+      "stt_final_ms": null,
+      "llm_ttft_ms": 679,
+      "tts_first_audio_ms": null,
+      "e2e_ms": 679,
+      "memory_ops_applied": 0,
+      "memory_merge_ms": 7,
+      "errors": [],
+      "input_tokens": 4327,
+      "output_tokens": 49,
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "memory_ops_proposed": 0,
+      "memory_ops_rejected": 0,
+      "finish_reason": "stop"
+    }
+  ]
+}

@@ -1,0 +1,379 @@
+[
+  {
+    "language": "en-IN",
+    "mode": "normal_drain",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.203,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "en-IN",
+    "mode": "new_question_during_farewell",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "caller_question",
+        "t": 0.047
+      }
+    ],
+    "provider_attempts": 0,
+    "phase": "listening"
+  },
+  {
+    "language": "en-IN",
+    "mode": "duplicate_close",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.172,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "en-IN",
+    "mode": "provider_timeout_then_retry",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.172,
+        "playback_active": false
+      },
+      {
+        "kind": "timeout",
+        "hangup_started": false,
+        "phase": "closing"
+      },
+      {
+        "kind": "provider_attempt",
+        "t": 0.172,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 2,
+    "phase": "ended"
+  },
+  {
+    "language": "te-IN",
+    "mode": "normal_drain",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.187,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "te-IN",
+    "mode": "new_question_during_farewell",
+    "pass": false,
+    "failures": [
+      "caller resumption failed to veto disconnect",
+      "not listening after revocation"
+    ],
+    "trace": [
+      {
+        "kind": "caller_question",
+        "t": 0.063
+      },
+      {
+        "kind": "provider_attempt",
+        "t": 0.172,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "te-IN",
+    "mode": "duplicate_close",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.125,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "te-IN",
+    "mode": "provider_timeout_then_retry",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.172,
+        "playback_active": false
+      },
+      {
+        "kind": "timeout",
+        "hangup_started": false,
+        "phase": "closing"
+      },
+      {
+        "kind": "provider_attempt",
+        "t": 0.172,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 2,
+    "phase": "ended"
+  },
+  {
+    "language": "hi-IN",
+    "mode": "normal_drain",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.171,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "hi-IN",
+    "mode": "new_question_during_farewell",
+    "pass": false,
+    "failures": [
+      "caller resumption failed to veto disconnect",
+      "not listening after revocation"
+    ],
+    "trace": [
+      {
+        "kind": "caller_question",
+        "t": 0.047
+      },
+      {
+        "kind": "provider_attempt",
+        "t": 0.157,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "hi-IN",
+    "mode": "duplicate_close",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.187,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "hi-IN",
+    "mode": "provider_timeout_then_retry",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.188,
+        "playback_active": false
+      },
+      {
+        "kind": "timeout",
+        "hangup_started": false,
+        "phase": "closing"
+      },
+      {
+        "kind": "provider_attempt",
+        "t": 0.188,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 2,
+    "phase": "ended"
+  },
+  {
+    "language": "ta-IN",
+    "mode": "normal_drain",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.125,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "ta-IN",
+    "mode": "new_question_during_farewell",
+    "pass": false,
+    "failures": [
+      "caller resumption failed to veto disconnect",
+      "not listening after revocation"
+    ],
+    "trace": [
+      {
+        "kind": "caller_question",
+        "t": 0.047
+      },
+      {
+        "kind": "provider_attempt",
+        "t": 0.156,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "ta-IN",
+    "mode": "duplicate_close",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.172,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "ta-IN",
+    "mode": "provider_timeout_then_retry",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.172,
+        "playback_active": false
+      },
+      {
+        "kind": "timeout",
+        "hangup_started": false,
+        "phase": "closing"
+      },
+      {
+        "kind": "provider_attempt",
+        "t": 0.172,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 2,
+    "phase": "ended"
+  },
+  {
+    "language": "kn-IN",
+    "mode": "normal_drain",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.14,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "kn-IN",
+    "mode": "new_question_during_farewell",
+    "pass": false,
+    "failures": [
+      "caller resumption failed to veto disconnect",
+      "not listening after revocation"
+    ],
+    "trace": [
+      {
+        "kind": "caller_question",
+        "t": 0.047
+      },
+      {
+        "kind": "provider_attempt",
+        "t": 0.157,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "kn-IN",
+    "mode": "duplicate_close",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.125,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 1,
+    "phase": "ended"
+  },
+  {
+    "language": "kn-IN",
+    "mode": "provider_timeout_then_retry",
+    "pass": true,
+    "failures": [],
+    "trace": [
+      {
+        "kind": "provider_attempt",
+        "t": 0.172,
+        "playback_active": false
+      },
+      {
+        "kind": "timeout",
+        "hangup_started": false,
+        "phase": "closing"
+      },
+      {
+        "kind": "provider_attempt",
+        "t": 0.172,
+        "playback_active": false
+      }
+    ],
+    "provider_attempts": 2,
+    "phase": "ended"
+  }
+]

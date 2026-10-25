@@ -1,0 +1,41 @@
+{
+  "call_id": "53eba35a-54fa-4a1c-b35e-31ecf4740037",
+  "combination_id": null,
+  "compiled_brain_version": "cb_v20261025_597f9779143e",
+  "turns": [
+    {
+      "turn": 2,
+      "stt_final_ms": null,
+      "llm_ttft_ms": 799,
+      "tts_first_audio_ms": null,
+      "e2e_ms": 799,
+      "memory_ops_applied": 2,
+      "memory_merge_ms": 19,
+      "errors": [],
+      "input_tokens": 4331,
+      "output_tokens": 287,
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "memory_ops_proposed": 3,
+      "memory_ops_rejected": 3,
+      "finish_reason": "stop"
+    },
+    {
+      "turn": 4,
+      "stt_final_ms": null,
+      "llm_ttft_ms": 725,
+      "tts_first_audio_ms": null,
+      "e2e_ms": 725,
+      "memory_ops_applied": 0,
+      "memory_merge_ms": 4,
+      "errors": [],
+      "input_tokens": 4396,
+      "output_tokens": 185,
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "memory_ops_proposed": 1,
+      "memory_ops_rejected": 1,
+      "finish_reason": "stop"
+    }
+  ]
+}

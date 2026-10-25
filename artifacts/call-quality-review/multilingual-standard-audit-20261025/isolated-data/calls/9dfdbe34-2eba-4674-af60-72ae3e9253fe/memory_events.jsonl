@@ -1,0 +1,1 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:26:23.285179Z", "source": "model", "operations": [{"op": "set_preference", "key": "interest_timeline", "value": "next_month"}, {"op": "set_preference", "key": "booking_intent", "value": "none_now"}], "applied": true, "validation_errors": []}

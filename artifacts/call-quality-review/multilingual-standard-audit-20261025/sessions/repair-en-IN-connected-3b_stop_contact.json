@@ -1,0 +1,74 @@
+{
+  "key": "repair-en-IN-connected-3b_stop_contact",
+  "business": "repair",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "3b_stop_contact",
+  "agent_id": "fef33d3c-637a-5f4a-9e56-a8af72d9f342",
+  "call_id": "18672a93-0c6d-429b-a137-03840c7ba6d4",
+  "session_id": "audit-repair-en-IN-connected-3b_stop_contact-7bbb3b46",
+  "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 1,
+      "at": 0.015
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "Do not contact me again. Remove me from future calls and end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.062,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "18672a93-0c6d-429b-a137-03840c7ba6d4",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "44f1771ea7b78229fe0b03a80d617bf6cb7773521f2f8157a4337dbf978b0520",
+  "prompt_chars": 17361,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, my name is Ravi calling from SafeFix Home Service. I am reaching out regarding our home appliance service in Pune. Do you have a moment to talk?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.062,
+  "hangup_count": 1
+}

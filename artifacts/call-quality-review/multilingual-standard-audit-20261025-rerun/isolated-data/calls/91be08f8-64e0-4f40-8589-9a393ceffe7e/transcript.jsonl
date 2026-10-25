@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "What is the total course fee and the class timing?", "ts": "2026-10-25T19:51:08.810126Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "The total course fee is six thousand four hundred ninety nine rupees, and classes are held online on weekends from 10am to 11am. Which details would you like to know?", "ts": "2026-10-25T19:51:09.403470Z", "brain_latency_ms": 577}

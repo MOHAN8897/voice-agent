@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "కిల్ basic service, puncture repair ధరలు ఎంత? Parts కూడా ఆ ధరలో ఉన్నాయా?\nassistant: బేసిక్ సర్వీస్ four hundred ninety nine rupees, పంక్చర్ రిపేర్ one hundred twenty rupees అండి. Parts ఖర్చులు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ రిపేర్ కావాలో చెప్తారా?\nuser: Basic service వద్దు, కానీ puncture repair కావాలి. చేయగలరా?\nassistant: తప్పకుండా అండి, పంక్చర్ రిపేర్ one hundred twenty rupees కే చేస్తాము. మీకు ఆ repair కావాలంటే, మీ పేరు మరియు area వివరాలు చెప్తారా? ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీకు ఓకేనా?"
+}

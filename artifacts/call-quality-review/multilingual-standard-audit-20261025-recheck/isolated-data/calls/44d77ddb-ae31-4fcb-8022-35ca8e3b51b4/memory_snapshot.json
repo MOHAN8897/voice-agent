@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ा जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?\nassistant: AC basic servicing six hundred ninety nine rupees है और fridge inspection three hundred ninety nine rupees. Replacement parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed quote nahi milta. Kya aapko visit book karni hai?\nuser: मुझे AC servicing नहीं चाहिए, लेकिन fridge की जाँच चाहिए। क्या मदद कर सकते हैं?\nassistant: ठीक है, fridge inspection three hundred ninety nine rupees की है. Aapki locality kaunsi hai aur kab visit arrange karun?"
+}

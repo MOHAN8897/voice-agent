@@ -1,0 +1,130 @@
+{
+  "key": "print-kn-IN-none-3_complete_rejection",
+  "business": "print",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "123e1591-085d-566e-aeb7-d09ce9eaacb6",
+  "call_id": "ae5189b0-4aa5-412c-917c-56c0245663d7",
+  "session_id": "audit-print-kn-IN-none-3_complete_rejection-15ed9908",
+  "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 692,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n    \"order_claimed\": false,\n    \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ತೊಂದರೆ ಇಲ್ಲ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Outbound call from ClearPrint Studio (Meera). Caller explicitly refused service and requested to end the call. Marked as firm refusal; do-not-call.\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n    \"order_claimed\": false,\n    \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ತೊಂದರೆ ಇಲ್ಲ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Outbound call from ClearPrint Studio (Meera). Caller explicitly refused service and requested to end the call. Marked as firm refusal; do-not-call.\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 227,
+        "prompt_tokens": 4020,
+        "total_tokens": 4247,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ತೊಂದರೆ ಇಲ್ಲ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4020,
+          "output_tokens": 227,
+          "total_tokens": 4247
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Outbound call from ClearPrint Studio (Meera). Caller explicitly refused service and requested to end the call. Marked as firm refusal; do-not-call."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "firm_refusal",
+          "evidence": "Caller explicitly said 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.844
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 1,
+      "at": 0.828
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.812,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "3ba84f31e544aeb14c538247ec47e72cd1ec21f54671e7379e2dcd85dbb78a9f",
+  "prompt_chars": 17765,
+  "opening_seeded": "Namaskara, this is Meera from ClearPrint Studio. I am calling to assist you with our printing services. Would you like to know more about our visiting cards or wedding invitations?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "Caller explicitly said 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ತೊಂದರೆ ಇಲ್ಲ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.86,
+  "hangup_count": 0
+}

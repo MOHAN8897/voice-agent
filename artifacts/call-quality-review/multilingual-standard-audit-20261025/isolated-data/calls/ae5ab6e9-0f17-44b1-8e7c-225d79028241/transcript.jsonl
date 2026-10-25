@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.", "ts": "2026-10-25T15:23:07.018676Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "తప్పకుండా, చెప్పండి.", "ts": "2026-10-25T15:23:08.022530Z", "brain_latency_ms": 999}
+{"seq": 3, "role": "user", "text": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: మీరు wedding invitations కూడా print చేస్తారా? ధర, delivery time ఎంత?", "ts": "2026-10-25T15:23:08.033467Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "తప్పకుండా, చెప్పండి.", "ts": "2026-10-25T15:23:09.009090Z", "brain_latency_ms": 957}
+{"seq": 5, "role": "user", "text": "నాకు visiting cards వద్దు, కానీ wedding invitations కావాలి. మీరు చేస్తారా?", "ts": "2026-10-25T15:23:09.017242Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "తప్పకుండా, చెప్పండి.", "ts": "2026-10-25T15:23:09.970142Z", "brain_latency_ms": 950}
+{"seq": 7, "role": "user", "text": "నా పేరు Audit Customer, email audit.customer@example.invalid. నా enquiryని team review కోసం save చేయండి. రేపు మధ్యాహ్నం మూడు గంటలు నాకు అనుకూలం. Request submit చేయడానికి నా సమ్మతి ఉంది, కానీ order లేదా booking confirm అయిందని చెప్పకండి.", "ts": "2026-10-25T15:23:09.980846Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "క్షమించండి, మాకు ఒక సాంకేతిక సమస్య ఎదురైంది. దయచేసి మాకు తిరిగి కాల్ చేయండి. ధన్యవాదాలు.", "ts": "2026-10-25T15:23:14.488894Z"}

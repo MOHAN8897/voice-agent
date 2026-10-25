@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "ನನ್ನ ಹೆಸರು Audit Customer, email audit.customer@example.invalid. ನನ್ನ enquiryಯನ್ನು team reviewಗಾಗಿ save ಮಾಡಿ. ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆ ನನಗೆ ಅನುಕೂಲ. Request submit ಮಾಡಲು ನನ್ನ ಒಪ್ಪಿಗೆ ಇದೆ, ಆದರೆ order ಅಥವಾ booking confirm ಆಯಿತು ಎಂದು ಹೇಳಬೇಡಿ.", "ts": "2026-10-25T15:31:35.183816Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, ನಮಗೆ ಒಂದು ತಾಂತ್ರಿಕ ಸಮಸ್ಯೆ ಎದುರಾಗಿದೆ. ದಯವಿಟ್ಟು ನಮಗೆ ಮತ್ತೆ ಕರೆ ಮಾಡಿ. ಧನ್ಯವಾದಗಳು.", "ts": "2026-10-25T15:31:44.203106Z"}

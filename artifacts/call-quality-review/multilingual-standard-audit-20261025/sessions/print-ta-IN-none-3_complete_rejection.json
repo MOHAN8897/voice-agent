@@ -1,0 +1,73 @@
+{
+  "key": "print-ta-IN-none-3_complete_rejection",
+  "business": "print",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "41fc8f2a-2149-5df8-9318-c72ad4477003",
+  "call_id": "6bef0c8e-8f78-47d1-9b22-4494298717bb",
+  "session_id": "audit-print-ta-IN-none-3_complete_rejection-b8ff516f",
+  "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 1,
+      "at": 0.0
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "வேண்டாம், நன்றி. உங்கள் service அல்லது product எனக்கு தேவையில்லை. தயவுசெய்து call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.062,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "6bef0c8e-8f78-47d1-9b22-4494298717bb",
+      "reason": "not_interested"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "c2e45cbef961076ecdd15c4c8fce2190a7dc344171ea5abe24a207b999318204",
+  "prompt_chars": 18067,
+  "opening_seeded": "வணக்கம், நான் ClearPrint Studio-வில் இருந்து மீரா பேசுகிறேன். நாங்கள் அச்சிடும் சேவைகளை வழங்குகிறோம். உங்களுடைய கார்டு தேவைகள் குறித்து விவாதிக்கலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.062,
+  "hangup_count": 1
+}

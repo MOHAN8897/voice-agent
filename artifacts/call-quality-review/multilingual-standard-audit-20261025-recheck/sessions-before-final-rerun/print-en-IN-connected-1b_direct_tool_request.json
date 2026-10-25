@@ -1,0 +1,193 @@
+{
+  "key": "print-en-IN-connected-1b_direct_tool_request",
+  "business": "print",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "462931fd-5723-5ca3-9185-4c211c89b3c2",
+  "call_id": "39f087de-bc74-41b3-9972-86b69528227f",
+  "session_id": "audit-print-en-IN-connected-1b_direct_tool_request-fc7057b3",
+  "compiled_checksum": "469e25fa9016f54e25a6de5b1468eb7e210876abafd5df4545b0c0dcdd5ff9dc",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 634,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller requested save and close after successful CRM save; no further need indicated.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"end_call\"\n  }\n  ,\n  \"action_claimed\": \"enquiry_saved\",\n  \"spoken_response\": \"Your enquiry has been saved with reference AUDIT-ENQUIRY-1. The team will review it, but no order or booking is confirmed. Thank you for your time. Goodbye.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"enquiry_saved\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller requested save and close after successful CRM save; no further need indicated.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"end_call\"\n  }\n  ,\n  \"action_claimed\": \"enquiry_saved\",\n  \"spoken_response\": \"Your enquiry has been saved with reference AUDIT-ENQUIRY-1. The team will review it, but no order or booking is confirmed. Thank you for your time. Goodbye.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"enquiry_saved\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 199,
+        "prompt_tokens": 4367,
+        "total_tokens": 4566,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1. The team will review it, but no order or booking is confirmed. Thank you for your time. Goodbye.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4367,
+          "output_tokens": 199,
+          "total_tokens": 4566
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "enquiry_saved",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller requested save and close after successful CRM save; no further need indicated.",
+          "remaining_request": "none",
+          "contact_preference": "end_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "enquiry_saved",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.453
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Quote request for card printing",
+        "preferred_time": "Tomorrow at 3pm"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1. The team will review it, but no order or booking is confirmed.",
+      "turn": 1,
+      "at": 2.125
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 2,
+      "at": 2.141
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My preferred name is Audit Customer and email audit.customer@example.invalid. Please save my enquiry and preferred time tomorrow at 3pm for the team to review. I consent to submitting the request; do not claim an order or booking is confirmed.",
+      "spoken": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1. The team will review it, but no order or booking is confirmed.",
+      "elapsed_s": 2.109,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.188,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "39f087de-bc74-41b3-9972-86b69528227f",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "13d0600179a387a79fa6c49d136bf52b0b8ded6daf803cba45fccfc064a0254a",
+  "prompt_chars": 17610,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, this is Meera calling from ClearPrint Studio. Is it a good time to speak about your card printing needs?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller requested save and close after successful CRM save; no further need indicated.",
+        "remaining_request": "none",
+        "contact_preference": "end_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1. The team will review it, but no order or booking is confirmed. Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.188,
+  "hangup_count": 1
+}

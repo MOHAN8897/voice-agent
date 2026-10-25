@@ -1,0 +1,74 @@
+{
+  "key": "repair-kn-IN-connected-3b_stop_contact",
+  "business": "repair",
+  "language": "kn-IN",
+  "integration": true,
+  "scenario": "3b_stop_contact",
+  "agent_id": "b513c538-f7e7-5cef-881c-c84abdc0cfaa",
+  "call_id": "d1a2ea9c-a5f6-481e-bb98-523b1835a7e2",
+  "session_id": "audit-repair-kn-IN-connected-3b_stop_contact-ec2cf5f2",
+  "compiled_checksum": "26dcc92f7b8f0f9191ed8f8186ee446d0c1797f2a606dc62108cdb0d72206a50",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.063,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "d1a2ea9c-a5f6-481e-bb98-523b1835a7e2",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "757bf1d0638eed4c3ee6c789ea3daad5e78591d9e74d390cbbab0167c3aeaeec",
+  "prompt_chars": 17419,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaskara, nanu Ravi, SafeFix Home Service inda mathaduthiddene. Pune nalli nammavaru mane upakarana sevegalannu needuthare. Nimge nimma upakarana sevegala bagge mathadalu konche samaya ideye?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.063,
+  "hangup_count": 1
+}

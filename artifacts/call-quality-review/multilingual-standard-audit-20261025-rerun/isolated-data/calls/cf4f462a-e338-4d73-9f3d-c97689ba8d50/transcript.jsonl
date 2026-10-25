@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।", "ts": "2026-10-25T19:38:31.176706Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ठीक है। Basic bicycle service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees का है। Parts का खर्चा approval के बाद ही लगेगा। क्या आपको अभी किसी specific repair की जानकारी चाहिए?", "ts": "2026-10-25T19:38:33.265205Z", "brain_latency_ms": 2073}
+{"seq": 3, "role": "user", "text": "हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?", "ts": "2026-10-25T19:38:33.278547Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Parts का खर्चा approval के बाद ही लगेगा। मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन टीम को अनुरोध भेजने या follow-up का वादा नहीं कर सकता।", "ts": "2026-10-25T19:38:35.441031Z", "brain_latency_ms": 2153}
+{"seq": 5, "role": "user", "text": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।", "ts": "2026-10-25T19:38:35.453942Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-25T19:38:35.465391Z", "brain_latency_ms": 2}

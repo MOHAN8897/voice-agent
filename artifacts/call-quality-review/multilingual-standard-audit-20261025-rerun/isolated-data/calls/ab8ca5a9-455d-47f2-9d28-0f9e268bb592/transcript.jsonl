@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T18:34:47.847608Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "We offer sofa cleaning at three hundred forty nine rupees per seat, minimum three seats, and kitchen cleaning at one thousand five hundred ninety nine rupees total. Our hours are Monday to Saturday, 9am to 6pm. Which service would you like to know more about?", "ts": "2026-10-25T18:34:52.146805Z", "brain_latency_ms": 4288}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Answer this first: What are the sofa and kitchen cleaning prices, minimum seats, and is a visit already confirmed?", "ts": "2026-10-25T18:34:52.166295Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Sorry, we are facing a technical problem. Please call us back. Thank you.", "ts": "2026-10-25T18:34:56.690819Z"}

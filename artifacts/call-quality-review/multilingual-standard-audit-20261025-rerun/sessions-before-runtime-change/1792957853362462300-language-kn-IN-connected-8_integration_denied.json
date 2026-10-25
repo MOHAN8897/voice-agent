@@ -1,0 +1,222 @@
+{
+  "key": "language-kn-IN-connected-8_integration_denied",
+  "business": "language",
+  "language": "kn-IN",
+  "integration": true,
+  "scenario": "8_integration_denied",
+  "agent_id": "05174072-a137-5a28-9c66-fc9e009205fe",
+  "call_id": "a0501ea0-2b34-425d-b9b5-2ea5efe159a9",
+  "session_id": "audit-language-kn-IN-connected-8_integration_denied-ee5b32a4",
+  "compiled_checksum": "4c57835bf8efc0fdcc0a23de05364e196eb61290cb2c09c1768b9d37c5eed0be",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 71,
+        "prompt_tokens": 4184,
+        "total_tokens": 4255,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4184,
+          "output_tokens": 71,
+          "total_tokens": 4255
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-9873c88e630cc433",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm\", \"preferred_time\": \"tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.578
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 98,
+      "sse_content_preview": "ಕ್ಷಮಿಸಿ, ನಮ್ಮ team review-ಗೆ ಈ enquiry-ನ save ಮಾಡೋಕೆ ಆಗ್ಲಿಲ್ಲ. ಈ ವಿಷಯದಲ್ಲಿ ಬೇರೆ ಏನಾದ್ರೂ ಸಹಾಯ ಬೇಕಾ?",
+      "sse_content_tail": "ಕ್ಷಮಿಸಿ, ನಮ್ಮ team review-ಗೆ ಈ enquiry-ನ save ಮಾಡೋಕೆ ಆಗ್ಲಿಲ್ಲ. ಈ ವಿಷಯದಲ್ಲಿ ಬೇರೆ ಏನಾದ್ರೂ ಸಹಾಯ ಬೇಕಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 32,
+        "prompt_tokens": 4457,
+        "total_tokens": 4489,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ನಮ್ಮ team review-ಗೆ ಈ enquiry-ನ save ಮಾಡೋಕೆ ಆಗ್ಲಿಲ್ಲ. ಈ ವಿಷಯದಲ್ಲಿ ಬೇರೆ ಏನಾದ್ರೂ ಸಹಾಯ ಬೇಕಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4457,
+          "output_tokens": 32,
+          "total_tokens": 4489
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": true,
+        "action_proofs": [],
+        "order_proof": false,
+        "action_outcome_unconfirmed": true
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.609
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm",
+        "preferred_time": "tomorrow at 3pm"
+      },
+      "turn": 1,
+      "mode": "8_integration_denied"
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "ನಿಮ್ಮ ವಿನಂತಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ ಎಂದು ನನಗೆ ದೃಢೀಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಅದನ್ನು ಮುಗಿದಿದೆ ಎಂದು ಪರಿಗಣಿಸಬೇಡಿ.",
+      "turn": 1,
+      "at": 4.266
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 2,
+      "at": 4.297
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. ಈ enquiry team reviewಗೆ submit ಮಾಡಿ. ನನ್ನ ಒಪ್ಪಿಗೆ ಇದೆ. Booking ಅಥವಾ order confirm ಅಂತ ಹೇಳಬೇಡಿ.",
+      "spoken": "ನಿಮ್ಮ ವಿನಂತಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ ಎಂದು ನನಗೆ ದೃಢೀಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಅದನ್ನು ಮುಗಿದಿದೆ ಎಂದು ಪರಿಗಣಿಸಬೇಡಿ.",
+      "elapsed_s": 4.266,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 4.344,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "a0501ea0-2b34-425d-b9b5-2ea5efe159a9",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "6de06da4d46992ad074d9efe50e7716714827f8df7bea0694b3c56aeb67ab9fb",
+  "prompt_chars": 17745,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaskara, I am Sana from SpeakEasy Language Studio. Am I speaking with the right person regarding your interest in our spoken-English classes?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ಕ್ಷಮಿಸಿ, ನಮ್ಮ team review-ಗೆ ಈ enquiry-ನ save ಮಾಡೋಕೆ ಆಗ್ಲಿಲ್ಲ. ಈ ವಿಷಯದಲ್ಲಿ ಬೇರೆ ಏನಾದ್ರೂ ಸಹಾಯ ಬೇಕಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.36,
+  "hangup_count": 1,
+  "source_signature": "c44a3cd03c5d4a109180507df9ffef4b6b3d77909fa527eb1a8094caae494afe"
+}

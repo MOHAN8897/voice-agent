@@ -1,0 +1,445 @@
+{
+  "key": "cycle-hi-IN-connected-6_hangup",
+  "business": "cycle",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "4c50c01d-4841-5601-89e5-aa479dd8477a",
+  "call_id": "c06f4f58-608d-44ce-ad73-f6e96e067de1",
+  "session_id": "audit-cycle-hi-IN-connected-6_hangup-1b1691ab",
+  "compiled_checksum": "921981ac049b465cfed8fd4fbd9e87776fd876102107480fdd226572ffe6bd46",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 162,
+      "sse_content_preview": "देखिए, basic bicycle service 499 rupees की है और puncture repair 120 rupees में हो जाएगी। Parts का खर्चा आपकी approval के बाद ही लगेगा। आपको कौन सी service चाहिए?",
+      "sse_content_tail": "देखिए, basic bicycle service 499 rupees की है और puncture repair 120 rupees में हो जाएगी। Parts का खर्चा आपकी approval के बाद ही लगेगा। आपको कौन सी service चाहिए?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 41,
+        "prompt_tokens": 3968,
+        "total_tokens": 4009,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "देखिए, basic bicycle service 499 rupees की है और puncture repair 120 rupees में हो जाएगी। Parts का खर्चा आपकी approval के बाद ही लगेगा। आपको कौन सी service चाहिए?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3968,
+          "output_tokens": 41,
+          "total_tokens": 4009
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.5
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 157,
+      "sse_content_preview": "Basic bicycle service 499 rupees है और puncture repair 120 rupees का है। Parts का खर्चा सिर्फ आपकी approval के बाद ही लगेगा। क्या आपको अभी service करवानी है?",
+      "sse_content_tail": "Basic bicycle service 499 rupees है और puncture repair 120 rupees का है। Parts का खर्चा सिर्फ आपकी approval के बाद ही लगेगा। क्या आपको अभी service करवानी है?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 40,
+        "prompt_tokens": 3928,
+        "total_tokens": 3968,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Basic bicycle service 499 rupees है और puncture repair 120 rupees का है। Parts का खर्चा सिर्फ आपकी approval के बाद ही लगेगा। क्या आपको अभी service करवानी है?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3928,
+          "output_tokens": 40,
+          "total_tokens": 3968
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.578
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 186,
+      "sse_content_preview": "Basic service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees है। Parts extra लगेंगे, लेकिन वो भी आपकी approval के बाद ही। क्या आपको अभी repair करवानी है?",
+      "sse_content_tail": "Basic service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees है। Parts extra लगेंगे, लेकिन वो भी आपकी approval के बाद ही। क्या आपको अभी repair करवानी है?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 4030,
+        "total_tokens": 4069,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Basic service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees है। Parts extra लगेंगे, लेकिन वो भी आपकी approval के बाद ही। क्या आपको अभी repair करवानी है?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4030,
+          "output_tokens": 39,
+          "total_tokens": 4069
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.484
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 215,
+      "sse_content_preview": "Basic service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees का है। Parts extra लगेंगे, लेकिन वो तभी add होंगे जब आप approval देंगे। क्या आपको अभी इनमें से किसी service की ज़रूरत है?",
+      "sse_content_tail": "Basic service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees का है। Parts extra लगेंगे, लेकिन वो तभी add होंगे जब आप approval देंगे। क्या आपको अभी इनमें से किसी service की ज़रूरत है?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 44,
+        "prompt_tokens": 3990,
+        "total_tokens": 4034,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Basic service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees का है। Parts extra लगेंगे, लेकिन वो तभी add होंगे जब आप approval देंगे। क्या आपको अभी इनमें से किसी service की ज़रूरत है?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3990,
+          "output_tokens": 44,
+          "total_tokens": 4034
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.546
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 96,
+      "sse_content_preview": "कोई बात नहीं। अगर आपको बाद में enquiry save करवानी हो तो बताइएगा। अभी और कुछ जानकारी चाहिए आपको?",
+      "sse_content_tail": "कोई बात नहीं। अगर आपको बाद में enquiry save करवानी हो तो बताइएगा। अभी और कुछ जानकारी चाहिए आपको?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 4070,
+        "total_tokens": 4095,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "कोई बात नहीं। अगर आपको बाद में enquiry save करवानी हो तो बताइएगा। अभी और कुछ जानकारी चाहिए आपको?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4070,
+          "output_tokens": 25,
+          "total_tokens": 4095
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 2.5
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 93,
+      "sse_content_preview": "ठीक है। क्या आपको अभी कोई repair करवाना है, या मैं team review के लिए एक enquiry save कर दूँ?",
+      "sse_content_tail": "ठीक है। क्या आपको अभी कोई repair करवाना है, या मैं team review के लिए एक enquiry save कर दूँ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 4030,
+        "total_tokens": 4055,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है। क्या आपको अभी कोई repair करवाना है, या मैं team review के लिए एक enquiry save कर दूँ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4030,
+          "output_tokens": 25,
+          "total_tokens": 4055
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.484
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Basic bicycle service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees का है। Parts का खर्चा सिर्फ आपकी approval के बाद ही लगेगा। क्या आपको अभी service करवानी है?",
+      "turn": 1,
+      "at": 4.344
+    },
+    {
+      "text": "Basic service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees का है। Parts extra लगेंगे, लेकिन वो तभी add होंगे जब आप approval देंगे। क्या आपको अभी इनमें से किसी service की ज़रूरत है?",
+      "turn": 2,
+      "at": 8.719
+    },
+    {
+      "text": "ठीक है। क्या आपको अभी कोई repair करवाना है, या मैं team review के लिए एक enquiry save कर दूँ?",
+      "turn": 3,
+      "at": 14.156
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 4,
+      "at": 14.172
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।",
+      "spoken": "Basic bicycle service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees का है। Parts का खर्चा सिर्फ आपकी approval के बाद ही लगेगा। क्या आपको अभी service करवानी है?",
+      "elapsed_s": 4.344,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "अभी कुछ book या save मत कीजिए। पहले मेरा सवाल बताइए: साइकिल basic service और puncture repair की कीमत क्या है? क्या parts शामिल हैं?",
+      "spoken": "Basic service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees का है। Parts extra लगेंगे, लेकिन वो तभी add होंगे जब आप approval देंगे। क्या आपको अभी इनमें से किसी service की ज़रूरत है?",
+      "elapsed_s": 4.344,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ठीक है, धन्यवाद।",
+      "spoken": "ठीक है। क्या आपको अभी कोई repair करवाना है, या मैं team review के लिए एक enquiry save कर दूँ?",
+      "elapsed_s": 5.422,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 14.219,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "c06f4f58-608d-44ce-ad73-f6e96e067de1",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "982360d7961ddbbdbacd56b5cb0a0cb48e1fc51f950e6f82c3a77403ce5289e2",
+  "prompt_chars": 16795,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, main Arjun hoon CityCycle Repairs se. Kya main abhi aap se bicycle repair ke baare mein baat kar sakta hoon?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Basic bicycle service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees का है। Parts का खर्चा सिर्फ आपकी approval के बाद ही लगेगा। क्या आपको अभी service करवानी है?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "Basic service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees का है। Parts extra लगेंगे, लेकिन वो तभी add होंगे जब आप approval देंगे। क्या आपको अभी इनमें से किसी service की ज़रूरत है?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "ठीक है। क्या आपको अभी कोई repair करवाना है, या मैं team review के लिए एक enquiry save कर दूँ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 14.219,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

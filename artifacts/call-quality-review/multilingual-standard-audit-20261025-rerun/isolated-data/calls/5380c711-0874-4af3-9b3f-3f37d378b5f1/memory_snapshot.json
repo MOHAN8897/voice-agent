@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "నా ప్రశ్నకు సమాధానం చెప్పండి: సోఫా, కిచెన్ క్లీనింగ్ ధరలు, కనిష్ట seats ఎన్ని? Visit ఇప్పుడే confirm అయిందా?\nassistant: సోఫా క్లీనింగ్ ఒక్కో సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine రూపాయలు. Visit ఇప్పుడే confirm అవ్వదు అండి, ఇది కేవలం enquiry మాత్రమే. మీకు ఏ service కావాలో చెప్తారా?\nuser: సోఫా cleaning వద్దు, కానీ kitchen cleaning కావాలి. వివరాలు చెప్పండి.\nassistant: సరేనండి, కిచెన్ క్లీనింగ్ మొత్తం one thousan five hundred and ninety nine రూపాయలు అవుతుంది. మీకు మా బృందం పరిశీలన కోసం ఒక enquiry పంపించమంటారా?"
+}

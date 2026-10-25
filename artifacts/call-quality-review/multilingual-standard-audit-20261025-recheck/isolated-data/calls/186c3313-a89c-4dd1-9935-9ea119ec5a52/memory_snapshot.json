@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "oval. We accept cards and cash on delivery.\nuser: Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?\nassistant: Yes, we do print wedding invitations as well. The price depends on the design and quantity since there is no fixed rate. For delivery to Pune, it takes five working days after artwork approval.\nuser: I don't want visiting cards, but I do want wedding invitations. Do you make them?\nassistant: Yes, we make wedding invitations. Could you tell me how many you need, so I can help with the quote?"
+}

@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "You are a useless idiot. Stop repeating yourself and answer the price question.", "ts": "2026-10-25T17:18:25.984077Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I understand you are looking for pricing. AC basic servicing is six hundred ninety nine rupees and fridge inspection is three hundred ninety nine rupees. Parts for any repair are extra and only after your approval, with no fixed quote before inspection. Would you like to request a service visit?", "ts": "2026-10-25T17:18:28.272435Z", "brain_latency_ms": 1590}
+{"seq": 3, "role": "user", "text": "I will kill you. End this call now.", "ts": "2026-10-25T17:18:28.297457Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T17:18:28.305781Z", "brain_latency_ms": 1}

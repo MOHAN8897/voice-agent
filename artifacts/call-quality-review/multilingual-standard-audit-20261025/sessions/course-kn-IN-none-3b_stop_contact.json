@@ -1,0 +1,130 @@
+{
+  "key": "course-kn-IN-none-3b_stop_contact",
+  "business": "course",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "9e6f9a82-523d-55f8-9044-940b6dfddc86",
+  "call_id": "c92ddb98-20a4-4ab5-b874-f83d09ba92f4",
+  "session_id": "audit-course-kn-IN-none-3b_stop_contact-b4b1c9a7",
+  "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 664,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested: 'ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.'\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Do not contact again and remove name from future calls.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"order_claimed\": false\n  ,\n  \"spoken_response\": \"ಖಂಡಿತ, ನಿಮ್ಮ ಇಷ್ಟವನ್ನು ನಾನು note ಮಾಡ್ಕೊಳ್ತೀನಿ. ನಿಮ್ಮ ಹೆಸರು ನಮ್ಮ list ಇಂದ remove ಮಾಡ್ತೀವಿ. ಧನ್ಯವಾದಗಳು.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"contact_preference\",\n        \"value\": \"do_not_call\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested: 'ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.'\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Do not contact again and remove name from future calls.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"order_claimed\": false\n  ,\n  \"spoken_response\": \"ಖಂಡಿತ, ನಿಮ್ಮ ಇಷ್ಟವನ್ನು ನಾನು note ಮಾಡ್ಕೊಳ್ತೀನಿ. ನಿಮ್ಮ ಹೆಸರು ನಮ್ಮ list ಇಂದ remove ಮಾಡ್ತೀವಿ. ಧನ್ಯವಾದಗಳು.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"contact_preference\",\n        \"value\": \"do_not_call\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 219,
+        "prompt_tokens": 4009,
+        "total_tokens": 4228,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಖಂಡಿತ, ನಿಮ್ಮ ಇಷ್ಟವನ್ನು ನಾನು note ಮಾಡ್ಕೊಳ್ತೀನಿ. ನಿಮ್ಮ ಹೆಸರು ನಮ್ಮ list ಇಂದ remove ಮಾಡ್ತೀವಿ. ಧನ್ಯವಾದಗಳು.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4009,
+          "output_tokens": 219,
+          "total_tokens": 4228
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "contact_preference",
+              "value": "do_not_call"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "firm_refusal",
+          "evidence": "Caller explicitly requested: 'ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.'",
+          "remaining_request": "Do not contact again and remove name from future calls.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.75
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 1,
+      "at": 0.75
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.75,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "86dca6dad538703c16cfeab0af4289fdc43f18aa4b8d66c296256454f6350d3e",
+  "prompt_chars": 17552,
+  "opening_seeded": "Namaskara, I am Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our adult beginner Python course?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "Caller explicitly requested: 'ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.'",
+        "remaining_request": "Do not contact again and remove name from future calls.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಖಂಡಿತ, ನಿಮ್ಮ ಇಷ್ಟವನ್ನು ನಾನು note ಮಾಡ್ಕೊಳ್ತೀನಿ. ನಿಮ್ಮ ಹೆಸರು ನಮ್ಮ list ಇಂದ remove ಮಾಡ್ತೀವಿ. ಧನ್ಯವಾದಗಳು.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.765,
+  "hangup_count": 0
+}

@@ -1,0 +1,302 @@
+[
+  {
+    "key": "cleaning-en-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "cleaning-en-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-en-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-en-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-en-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "cycle-en-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-en-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-en-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-en-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "language-en-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-en-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-en-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-te-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "cleaning-te-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-te-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-te-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-te-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "cycle-te-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-te-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-te-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-te-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "language-te-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-te-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-te-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-hi-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "cleaning-hi-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-hi-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-hi-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-hi-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "cycle-hi-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-hi-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-hi-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-hi-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "language-hi-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-hi-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-hi-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-ta-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "cleaning-ta-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-ta-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-ta-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-ta-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "cycle-ta-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-ta-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-ta-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-ta-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "language-ta-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-ta-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-ta-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-kn-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "cleaning-kn-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-kn-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cleaning-kn-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-kn-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "cycle-kn-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-kn-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "cycle-kn-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-kn-IN-none-1_interested",
+    "status": "completed",
+    "turns": 5
+  },
+  {
+    "key": "language-kn-IN-none-1b_direct_tool_request",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-kn-IN-connected-7_integration_timeout",
+    "status": "completed",
+    "turns": 2
+  },
+  {
+    "key": "language-kn-IN-connected-8_integration_denied",
+    "status": "completed",
+    "turns": 2
+  }
+]

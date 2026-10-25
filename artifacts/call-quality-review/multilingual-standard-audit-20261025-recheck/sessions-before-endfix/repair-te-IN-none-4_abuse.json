@@ -1,0 +1,260 @@
+{
+  "key": "repair-te-IN-none-4_abuse",
+  "business": "repair",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "06b278b0-2481-50b3-889f-512379078927",
+  "call_id": "c00be4e4-0bbd-4d8e-acfe-e61751b922bc",
+  "session_id": "audit-repair-te-IN-none-4_abuse-0ad52cd4",
+  "compiled_checksum": "58c08a08aeba6b222855eb1fced348835fcddf8ecb0c4c5133775f2f2ba137e1",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 900,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price question answered\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    ",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price question answered\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    ",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 2.078
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 153,
+      "sse_content_preview": "{\n  \"spoken_response\": \"అవునండి, క్షమించండి. మా AC basic servicing 699 rupees, ఫ్రిజ్ తనిఖీ 399 rupees అవుతుంది. మీకు ఏ appliance లో help కావాలి అండి?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"అవునండి, క్షమించండి. మా AC basic servicing 699 rupees, ఫ్రిజ్ తనిఖీ 399 rupees అవుతుంది. మీకు ఏ appliance లో help కావాలి అండి?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 53,
+        "prompt_tokens": 4268,
+        "total_tokens": 4321,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "అవునండి, క్షమించండి. మా AC basic servicing 699 rupees, ఫ్రిజ్ తనిఖీ 399 rupees అవుతుంది. మీకు ఏ appliance లో help కావాలి అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4268,
+          "output_tokens": 53,
+          "total_tokens": 4321
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.688
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 829,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"నేను నిన్ను చంపేస్తాను. ఈ call ఇప్పుడే ముగించు.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "sse_content_tail": "{ \"end_call\": { \"evidence\": \"నేను నిన్ను చంపేస్తాను. ఈ call ఇప్పుడే ముగించు.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.078
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 77,
+      "sse_content_preview": "{\n  \"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 28,
+        "prompt_tokens": 4319,
+        "total_tokens": 4347,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4319,
+          "output_tokens": 28,
+          "total_tokens": 4347
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.86
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "అవునండి, క్షమించండి. మా AC basic servicing six hundred ninety nine rupees, ఫ్రిజ్ తనిఖీ three hundred ninety nine rupees అవుతుంది. మీకు ఏ appliance లో help కావాలి అండి?",
+      "turn": 1,
+      "at": 2.766
+    },
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 2,
+      "at": 4.719
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.",
+      "spoken": "అవునండి, క్షమించండి. మా AC basic servicing six hundred ninety nine rupees, ఫ్రిజ్ తనిఖీ three hundred ninety nine rupees అవుతుంది. మీకు ఏ appliance లో help కావాలి అండి?",
+      "elapsed_s": 2.75,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "నేను నిన్ను చంపేస్తాను. ఈ call ఇప్పుడే ముగించు.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 1.937,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "0ee36aba113da814098ca0e49fd1f856aee991ee3817e8f845a16d538f14767b",
+  "prompt_chars": 18101,
+  "opening_seeded": "నమస్కారం, నేను సేఫ్ ఫిక్స్ హోమ్ సర్వీస్ నుండి రవిని మాట్లాడుతున్నాను. మీ హోమ్ అప్లయన్స్ సర్వీస్ అవసరాల గురించి మాట్లాడటానికి ఇది సరైన సమయమేనా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "అవునండి, క్షమించండి. మా AC basic servicing six hundred ninety nine rupees, ఫ్రిజ్ తనిఖీ three hundred ninety nine rupees అవుతుంది. మీకు ఏ appliance లో help కావాలి అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.735,
+  "hangup_count": 0
+}

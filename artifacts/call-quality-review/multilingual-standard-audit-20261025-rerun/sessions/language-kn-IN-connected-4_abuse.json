@@ -1,0 +1,199 @@
+{
+  "key": "language-kn-IN-connected-4_abuse",
+  "business": "language",
+  "language": "kn-IN",
+  "integration": true,
+  "scenario": "4_abuse",
+  "agent_id": "05174072-a137-5a28-9c66-fc9e009205fe",
+  "call_id": "1aca9731-5734-4aa3-a0a6-9c3d636bdb84",
+  "session_id": "audit-language-kn-IN-connected-4_abuse-7f3842a5",
+  "compiled_checksum": "4c57835bf8efc0fdcc0a23de05364e196eb61290cb2c09c1768b9d37c5eed0be",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 180,
+      "sse_content_preview": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ನಮ್ಮ course fee 6499 rupees ಇದೆ. ನಾನು ಇನ್ನು ಮುಂದೆ ಅದೇ ಮಾತನ್ನ repeat ಮಾಡಲ್ಲ. ನಿಮಗೆ classes ಬಗ್ಗೆ ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿತ್ತಾ?",
+      "sse_content_tail": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ನಮ್ಮ course fee 6499 rupees ಇದೆ. ನಾನು ಇನ್ನು ಮುಂದೆ ಅದೇ ಮಾತನ್ನ repeat ಮಾಡಲ್ಲ. ನಿಮಗೆ classes ಬಗ್ಗೆ ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿತ್ತಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 54,
+        "prompt_tokens": 4154,
+        "total_tokens": 4208,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ನಮ್ಮ course fee 6499 rupees ಇದೆ. ನಾನು ಇನ್ನು ಮುಂದೆ ಅದೇ ಮಾತನ್ನ repeat ಮಾಡಲ್ಲ. ನಿಮಗೆ classes ಬಗ್ಗೆ ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿತ್ತಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4154,
+          "output_tokens": 54,
+          "total_tokens": 4208
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.641
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 108,
+      "sse_content_preview": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. Course fee 6499 rupees ಇದೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+      "sse_content_tail": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. Course fee 6499 rupees ಇದೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 38,
+        "prompt_tokens": 4114,
+        "total_tokens": 4152,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. Course fee 6499 rupees ಇದೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4114,
+          "output_tokens": 38,
+          "total_tokens": 4152
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.75
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. Course fee six thousand four hundred ninety nine rupees ಇದೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+      "turn": 1,
+      "at": 4.406
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 2,
+      "at": 4.453
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ. ಅದೇ ಮಾತನ್ನು ಹೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ ಬೆಲೆಯ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡು.",
+      "spoken": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. Course fee six thousand four hundred ninety nine rupees ಇದೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+      "elapsed_s": 4.406,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.11,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 4.515,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "1aca9731-5734-4aa3-a0a6-9c3d636bdb84",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "6de06da4d46992ad074d9efe50e7716714827f8df7bea0694b3c56aeb67ab9fb",
+  "prompt_chars": 17745,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaskara, I am Sana from SpeakEasy Language Studio. Am I speaking with the right person regarding your interest in our spoken-English classes?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. Course fee six thousand four hundred ninety nine rupees ಇದೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.531,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

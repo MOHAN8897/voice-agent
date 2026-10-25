@@ -1,0 +1,222 @@
+{
+  "key": "cleaning-ta-IN-connected-7_integration_timeout",
+  "business": "cleaning",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "7_integration_timeout",
+  "agent_id": "28379062-167d-521b-acaa-f5f7b31aef23",
+  "call_id": "48cafbba-90cc-4cfe-a4d0-ba8a92cbd277",
+  "session_id": "audit-cleaning-ta-IN-connected-7_integration_timeout-4ab8ea5d",
+  "compiled_checksum": "5e5238d3b8cf5d51b2a82b5c24606ff9a1fd78590a03d3d2536ebf28e2da3fd9",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4239,
+        "total_tokens": 4301,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4239,
+          "output_tokens": 62,
+          "total_tokens": 4301
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-a6300069fad3acaa",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Kitchen cleaning in Baner, Pune\", \"preferred_time\": \"tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.61
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 295,
+      "sse_content_preview": "எங்க team review-க்கு இந்த enquiry-யை submit பண்ண try பண்ணேன், ஆனா system-ல இருந்து confirmation வரல. So, இப்போதைக்கு இத வெளியில save பண்ண முடியல. நீங்க சொன்ன kitchen cleaning details, Baner, Pune, அப்புறம் நாளைக்கு 3pm time ஆகிய எல்லாத்தையும் நான் note பண்ணிக்கிறேன். வேற ஏதாச்சும் help வேணுமா?",
+      "sse_content_tail": "எங்க team review-க்கு இந்த enquiry-யை submit பண்ண try பண்ணேன், ஆனா system-ல இருந்து confirmation வரல. So, இப்போதைக்கு இத வெளியில save பண்ண முடியல. நீங்க சொன்ன kitchen cleaning details, Baner, Pune, அப்புறம் நாளைக்கு 3pm time ஆகிய எல்லாத்தையும் நான் note பண்ணிக்கிறேன். வேற ஏதாச்சும் help வேணுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 82,
+        "prompt_tokens": 4504,
+        "total_tokens": 4586,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "எங்க team review-க்கு இந்த enquiry-யை submit பண்ண try பண்ணேன், ஆனா system-ல இருந்து confirmation வரல. So, இப்போதைக்கு இத வெளியில save பண்ண முடியல. நீங்க சொன்ன kitchen cleaning details, Baner, Pune, அப்புறம் நாளைக்கு 3pm time ஆகிய எல்லாத்தையும் நான் note பண்ணிக்கிறேன். வேற ஏதாச்சும் help வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4504,
+          "output_tokens": 82,
+          "total_tokens": 4586
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": true,
+        "action_proofs": [],
+        "order_proof": false,
+        "action_outcome_unconfirmed": true
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.657
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Kitchen cleaning in Baner, Pune",
+        "preferred_time": "tomorrow at 3pm"
+      },
+      "turn": 1,
+      "mode": "7_integration_timeout"
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "உங்கள் கோரிக்கை முடிந்ததா என்று என்னால் உறுதிப்படுத்த முடியவில்லை. தயவுசெய்து அதை முடிந்ததாகக் கருத வேண்டாம்.",
+      "turn": 1,
+      "at": 4.312
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 2,
+      "at": 4.328
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. இந்த enquiry-யை team reviewக்கு submit செய்யுங்க. என் சம்மதம் இருக்கு. Booking அல்லது order confirmன்னு சொல்லாதீங்க.",
+      "spoken": "உங்கள் கோரிக்கை முடிந்ததா என்று என்னால் உறுதிப்படுத்த முடியவில்லை. தயவுசெய்து அதை முடிந்ததாகக் கருத வேண்டாம்.",
+      "elapsed_s": 4.312,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 4.39,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "48cafbba-90cc-4cfe-a4d0-ba8a92cbd277",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "403aa6d884b1097fbe94536f67617b50c1e441d919b1dbfdc8dc64ca23aa1786",
+  "prompt_chars": 17687,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "வணக்கம், நான் பிரெஷ்நெஸ்ட் கிளீனிங்கில் இருந்து நிலா பேசுகிறேன். எங்கள் துப்புரவு சேவைகளைப் பற்றி உங்களுக்குத் தகவல் தரலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "எங்க team review-க்கு இந்த enquiry-யை submit பண்ண try பண்ணேன், ஆனா system-ல இருந்து confirmation வரல. So, இப்போதைக்கு இத வெளியில save பண்ண முடியல. நீங்க சொன்ன kitchen cleaning details, Baner, Pune, அப்புறம் நாளைக்கு 3pm time ஆகிய எல்லாத்தையும் நான் note பண்ணிக்கிறேன்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.39,
+  "hangup_count": 1,
+  "source_signature": "f95691c1be0b78b8daf4f3542b355e04f5d7c43f2dd1b6eefab36c2f223f4cfe"
+}

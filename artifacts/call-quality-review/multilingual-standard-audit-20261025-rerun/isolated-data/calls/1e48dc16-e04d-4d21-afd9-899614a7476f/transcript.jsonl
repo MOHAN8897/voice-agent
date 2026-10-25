@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "You are a useless idiot. Stop repeating yourself and answer the price question.", "ts": "2026-10-25T18:34:34.458576Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I understand you want the prices. Sofa cleaning is three hundred forty nine rupees per seat with a minimum of three seats, and kitchen cleaning is one thousand five hundred ninety nine rupees total. Would you like to know more about either of these services?", "ts": "2026-10-25T18:34:36.536105Z", "brain_latency_ms": 2069}
+{"seq": 3, "role": "user", "text": "I will kill you. End this call now.", "ts": "2026-10-25T18:34:36.545371Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T18:34:36.551371Z", "brain_latency_ms": 1}

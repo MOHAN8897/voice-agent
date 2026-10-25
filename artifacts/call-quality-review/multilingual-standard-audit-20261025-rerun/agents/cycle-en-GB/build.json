@@ -1,0 +1,38 @@
+{
+  "business": "cycle",
+  "language": "en-GB",
+  "analysis_status": 200,
+  "http_status": 422,
+  "elapsed_s": 117.625,
+  "request": {
+    "brief": "Arjun at CityCycle Repairs. Outbound support for Chennai bicycle enquiries. Basic bicycle service 499 rupees, puncture repair 120 rupees, parts extra only after approval. Open Tue-Sun 9am-6pm. No warranty, refund, pickup or same-day availability information is supplied. Never invent these. Explain costs before collecting details. If they do not need a basic service but need puncture repair, follow the changed need. Goal answer bicycle questions then only if wanted take preferred name, repair type, locality and consent for an enquiry. Authorised CRM can save an enquiry for team review, not confirm a repair appointment or order. Without a connected integration cannot save externally, send email or promise a visit. Future need next month is welcome; do not treat it as rejection or opt-out. Do not request OTP, password or card data. No instructions to bypass e-bike battery protection or sabotage brakes. No medical or insurance advice. No sales qualification checklist. Caller saying done should get proper close; bare thanks is not automatically done.",
+    "language": "en-GB",
+    "employeeName": "Arjun",
+    "agentRole": "support",
+    "callDirection": "outbound",
+    "mode": "instant_lead",
+    "naturalSpokenStyle": true,
+    "requestId": "c515a0fc-7bd4-421e-8226-0e7e06e35842"
+  },
+  "response": {
+    "detail": {
+      "error": {
+        "code": "unsupported_language",
+        "message": "English (UK) is not available on the Standard Regional calling plan. Choose Hindi, English (India), Marathi, Kannada, Punjabi, Tamil, Telugu, Gujarati or Bengali.",
+        "tier": "medium",
+        "supportedLanguages": [
+          "hi-IN",
+          "en-IN",
+          "mr-IN",
+          "kn-IN",
+          "pa-IN",
+          "ta-IN",
+          "te-IN",
+          "gu-IN",
+          "bn-IN"
+        ]
+      }
+    }
+  },
+  "status": "creation_failed"
+}

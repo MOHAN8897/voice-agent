@@ -1,0 +1,1030 @@
+[
+  {
+    "language": "en-IN",
+    "synthetic_caller": "What is the total course fee and the class timing?",
+    "stt_model": "saaras:v3-realtime",
+    "tts_model": "bulbul:v4-flash",
+    "caller_pcm_bytes": 62080,
+    "stt_events": [
+      {
+        "event": "session.begin",
+        "text": null
+      },
+      {
+        "event": "vad.speech_start",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total cour"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total cour"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee and"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee and the"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee and the class"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee and the class"
+      },
+      {
+        "event": "vad.speech_end",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee and"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee and the"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee and the class"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee and the class timing"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "What is the total course fee and the class timing?"
+      },
+      {
+        "event": "transcript.final",
+        "text": "What is the total course fee and the class timing?"
+      }
+    ],
+    "transcripts": [
+      "What is the total course fee and the class timing?"
+    ],
+    "server_reply": "The total course fee is six thousand four hundred ninety nine rupees, and classes are held online on weekends from 10am to 11am. Which details would you like to know?",
+    "end_call": {
+      "should_end": false,
+      "reason": "none",
+      "farewell": "",
+      "contact_preference": "none",
+      "reject_code": null
+    },
+    "reply_pcm_bytes": 240000,
+    "status": "passed",
+    "elapsed_s": 9.297
+  },
+  {
+    "language": "te-IN",
+    "synthetic_caller": "కోర్సు మొత్తం ఫీజు ఎంత? క్లాస్ టైమింగ్ ఏంటి?",
+    "stt_model": "saaras:v3-realtime",
+    "tts_model": "bulbul:v4-flash",
+    "caller_pcm_bytes": 82560,
+    "stt_events": [
+      {
+        "event": "session.begin",
+        "text": null
+      },
+      {
+        "event": "vad.speech_start",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు మొత్తం"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు మొత్తం"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు మొత్తం ఫీ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు మొత్తం ఫీజు"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు మొత్తం ఫీజు"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు మొత్తం ఫీజు ఎంత"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు మొత్తం ఫీజు ఎంత"
+      },
+      {
+        "event": "vad.speech_end",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "కోర్సు మొత్తం ఫీజు ఎంత"
+      },
+      {
+        "event": "transcript.final",
+        "text": "కోర్సు మొత్తం ఫీజు ఎంత?"
+      },
+      {
+        "event": "vad.speech_start",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లా"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టై"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టై"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లా"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టై"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టైమి"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టైమింగ్"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టైమింగ్"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టైమింగ్ ఏంటి"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టైమింగ్ ఏంటి"
+      },
+      {
+        "event": "vad.speech_end",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టైమి"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టైమింగ్"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టైమింగ్"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "క్లాస్ టైమింగ్ ఏంటి"
+      },
+      {
+        "event": "transcript.final",
+        "text": "క్లాస్ టైమింగ్ అండి."
+      }
+    ],
+    "transcripts": [
+      "కోర్సు మొత్తం ఫీజు ఎంత?",
+      "క్లాస్ టైమింగ్ అండి."
+    ],
+    "server_reply": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి. క్లాస్ టైమింగ్ వీకెండ్స్‌లో ఉదయం పది గంటల నుండి పదకొండు గంటల వరకు ఉంటుంది. మీకు ఈ details స్పష్టంగా ఉన్నాయా?",
+    "end_call": {
+      "should_end": false,
+      "reason": "none",
+      "farewell": "",
+      "contact_preference": "none",
+      "reject_code": null
+    },
+    "reply_pcm_bytes": 294400,
+    "status": "passed",
+    "elapsed_s": 11.297
+  },
+  {
+    "language": "hi-IN",
+    "synthetic_caller": "कोर्स की कुल फीस कितनी है और क्लास का समय क्या है?",
+    "stt_model": "saaras:v3-realtime",
+    "tts_model": "bulbul:v4-flash",
+    "caller_pcm_bytes": 78720,
+    "stt_events": [
+      {
+        "event": "session.begin",
+        "text": null
+      },
+      {
+        "event": "vad.speech_start",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फी"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फी"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का समय"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का समय"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का समय क्या"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का समय क्या"
+      },
+      {
+        "event": "vad.speech_end",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का समय"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का समय"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का समय क्या"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का समय क्या"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "कोर्स की कुल फीस कितनी है और क्लास का समय क्या है"
+      },
+      {
+        "event": "transcript.final",
+        "text": "कोर्स की कुल फ़ीस कितनी है और क्लास का समय क्या है?"
+      }
+    ],
+    "transcripts": [
+      "कोर्स की कुल फ़ीस कितनी है और क्लास का समय क्या है?"
+    ],
+    "server_reply": "Course की total fee six thousand four hundred ninety nine rupees है और classes weekends पर सुबह 10 से 11 baje tak चलती हैं. क्या आपको iske baare mein aur kuch puchna hai?",
+    "end_call": {
+      "should_end": false,
+      "reason": "none",
+      "farewell": "",
+      "contact_preference": "none",
+      "reject_code": null
+    },
+    "reply_pcm_bytes": 289280,
+    "status": "passed",
+    "elapsed_s": 10.094
+  },
+  {
+    "language": "ta-IN",
+    "synthetic_caller": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு? கிளாஸ் நேரம் என்ன?",
+    "stt_model": "saaras:v3-realtime",
+    "tts_model": "bulbul:v4-flash",
+    "caller_pcm_bytes": 85120,
+    "stt_events": [
+      {
+        "event": "session.begin",
+        "text": null
+      },
+      {
+        "event": "vad.speech_start",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்ட"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்ட"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளா"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ் நேரம்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ் நேரம்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளா"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ் நேரம்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ் நேரம்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ் நேரம் என்ன"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ் நேரம் என்ன"
+      },
+      {
+        "event": "vad.speech_end",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ் நேரம்"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ் நேரம் என்ன"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ் நேரம் என்ன"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு கிளாஸ் நேரம் என்ன"
+      },
+      {
+        "event": "transcript.final",
+        "text": "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு? கிளாஸ் நேரம் என்ன?"
+      }
+    ],
+    "transcripts": [
+      "கோர்ஸ் மொத்த கட்டணம் எவ்வளவு? கிளாஸ் நேரம் என்ன?"
+    ],
+    "server_reply": "மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய். Classes வந்து online-ல ஆறு வாரங்கள், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை நடக்கும். உங்களுக்கு டெமோ அல்லது counseling ஏதும் வேணுமா?",
+    "end_call": {
+      "should_end": false,
+      "reason": "none",
+      "farewell": "",
+      "contact_preference": "none",
+      "reject_code": null
+    },
+    "reply_pcm_bytes": 347520,
+    "status": "passed",
+    "elapsed_s": 15.328
+  },
+  {
+    "language": "kn-IN",
+    "synthetic_caller": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು? ಕ್ಲಾಸ್ ಸಮಯ ಏನು?",
+    "stt_model": "saaras:v3-realtime",
+    "tts_model": "bulbul:v4-flash",
+    "caller_pcm_bytes": 85120,
+    "stt_events": [
+      {
+        "event": "session.begin",
+        "text": null
+      },
+      {
+        "event": "vad.speech_start",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್ ಸಮಯ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್ ಸಮಯ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್ ಸಮಯ ಏನು"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್ ಸಮಯ ಏನು"
+      },
+      {
+        "event": "vad.speech_end",
+        "text": null
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್ ಸಮಯ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್ ಸಮಯ"
+      },
+      {
+        "event": "transcript.partial",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು ಕ್ಲಾಸ್ ಸಮಯ ಏನು"
+      },
+      {
+        "event": "transcript.final",
+        "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು? ಕ್ಲಾಸ್ ಸಮಯ ಏನು?"
+      }
+    ],
+    "transcripts": [
+      "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು? ಕ್ಲಾಸ್ ಸಮಯ ಏನು?"
+    ],
+    "server_reply": "ನಮ್ಮ adult spoken-English classes online ಇರುತ್ತೆ, weekends 10am ಇಂದ 11am ವರೆಗೆ ನಡೆಯುತ್ತೆ. Total course fee six thousand four hundred ninety nine rupees ಇದೆ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ?",
+    "end_call": {
+      "should_end": false,
+      "reason": "none",
+      "farewell": "",
+      "contact_preference": "none",
+      "reject_code": null
+    },
+    "reply_pcm_bytes": 357760,
+    "status": "passed",
+    "elapsed_s": 10.703
+  }
+]

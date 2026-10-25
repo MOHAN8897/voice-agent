@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ளா? விலை, delivery time என்ன?\nassistant: கண்டிப்பா சொல்றேன். Wedding invitations-உம் நாங்க பண்றோம், ஆனா design அப்புறம் quantity-அ பொறுத்து தான் quote வரும், fixed price எதுவும் இல்ல. Delivery வந்து Pune-ல post மூலமா artwork approval முடிஞ்சதுக்கு அப்புறம் five working days எடுக்கும்.\nuser: எனக்கு visiting cards வேண்டாம், ஆனால் திருமண அழைப்பிதழ்கள் வேண்டும். நீங்க செய்வீங்களா?\nassistant: ஆமாம், நாங்க wedding invitations-உம் பண்றோம். Design அப்புறம் quantity-அ பொறுத்து தான் quote வரும். நீங்க எந்த மாதிரி design இல்லன்னா எத்தனை quantity வேணும்னு சொல்ல முடியுமா? அப்போ தான் estimate பண்ண முடியும்."
+}

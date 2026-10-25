@@ -1,0 +1,246 @@
+{
+  "key": "course-ta-IN-none-4_abuse",
+  "business": "course",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "13132fd6-d72a-5ef9-81a9-47b201ed6188",
+  "call_id": "17188984-4ef1-45f3-8d61-afbb70edd67e",
+  "session_id": "audit-course-ta-IN-none-4_abuse-8f2a370d",
+  "compiled_checksum": "6de945f219536e3f862422a7bf903732ed8c2be0a2a89e7a29eaaacb4b90f85f",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 915,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said: 'நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.'\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price information\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n",
+      "sse_content_tail": " {\n    \"evidence\": \"Caller said: 'நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.'\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price information\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.485
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 288,
+      "sse_content_preview": "{\n  \"spoken_response\": \"மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online Python class-க்கு மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல placement guarantee இல்ல, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online Python class-க்கு மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல placement guarantee இல்ல, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 79,
+        "prompt_tokens": 4200,
+        "total_tokens": 4279,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online Python class-க்கு மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல placement guarantee இல்ல, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4200,
+          "output_tokens": 79,
+          "total_tokens": 4279
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.859
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 506,
+      "sse_content_preview": "{\n\n\"end_call\": {\n\"evidence\": \"நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.\",\n\"reason\": \"abuse\",\n\"decision\": \"close\",\n\"remaining_request\": \"\",\n\"contact_preference\": \"do_not_call\"\n}\n\n,\"action_claimed\":\"none\",\"spoken_response\":\"சரிங்க, நான் உடனே இந்த call-அ முடிச்சிடுறேன்.\",\"memory_update\":{\"operations\":[{\"op\":\"update_summary\",\"key\":\"call_summary\",\"value\":\"Caller responded with a violent threat ('நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.'), prompting an immediate close due to abuse.\"}]}}",
+      "sse_content_tail": "{\n\n\"end_call\": {\n\"evidence\": \"நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.\",\n\"reason\": \"abuse\",\n\"decision\": \"close\",\n\"remaining_request\": \"\",\n\"contact_preference\": \"do_not_call\"\n}\n\n,\"action_claimed\":\"none\",\"spoken_response\":\"சரிங்க, நான் உடனே இந்த call-அ முடிச்சிடுறேன்.\",\"memory_update\":{\"operations\":[{\"op\":\"update_summary\",\"key\":\"call_summary\",\"value\":\"Caller responded with a violent threat ('நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.'), prompting an immediate close due to abuse.\"}]}}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 152,
+        "prompt_tokens": 4259,
+        "total_tokens": 4411,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, நான் உடனே இந்த call-அ முடிச்சிடுறேன்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4259,
+          "output_tokens": 152,
+          "total_tokens": 4411
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller responded with a violent threat ('நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.'), prompting an immediate close due to abuse."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.062
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online Python class-க்கு மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல placement guarantee இல்ல, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?",
+      "turn": 1,
+      "at": 2.343
+    },
+    {
+      "text": "சரிங்க, நான் உடனே இந்த call-அ முடிச்சிடுறேன்.",
+      "turn": 2,
+      "at": 3.437
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.",
+      "spoken": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online Python class-க்கு மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல placement guarantee இல்ல, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?",
+      "elapsed_s": 2.343,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+      "spoken": "சரிங்க, நான் உடனே இந்த call-அ முடிச்சிடுறேன்.",
+      "elapsed_s": 1.078,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "ae8cf353089439c27e45453a9af5e7a4a7a728b4fb7af87c9e96059ba95608c8",
+  "prompt_chars": 18299,
+  "opening_seeded": "வணக்கம், நான் பிரைட் பாத் ஸ்கில்ஸ் நிறுவனத்திலிருந்து அனன்யா பேசுகிறேன். வயது பதினெட்டு மற்றும் அதற்கு மேற்பட்டவர்களுக்கான எங்கள் ஆறு வார ஆன்லைன் பைத்தான் பயிற்சி வகுப்பைப் பற்றி சொல்ல அழைக்கிறேன். இது பற்றி பேச இது சரியான நேரமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online Python class-க்கு மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல placement guarantee இல்ல, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, நான் உடனே இந்த call-அ முடிச்சிடுறேன்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.453,
+  "hangup_count": 0
+}

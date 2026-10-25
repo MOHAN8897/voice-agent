@@ -1,0 +1,63 @@
+[
+  {
+    "file": "server/call/live_turn_orchestrator.py",
+    "before": 15,
+    "after": 13,
+    "introduced": [],
+    "resolved": [
+      [
+        "F401",
+        "`server.call.turn_coordinator.drain` imported but unused",
+        "from server.call.turn_coordinator import drain, lock_for"
+      ],
+      [
+        "F821",
+        "Undefined name `server_farewell_for`",
+        "or server_farewell_for("
+      ]
+    ]
+  },
+  {
+    "file": "server/providers/sarvam_llm.py",
+    "before": 0,
+    "after": 0,
+    "introduced": [],
+    "resolved": []
+  },
+  {
+    "file": "server/brain/employee_script_pipeline.py",
+    "before": 4,
+    "after": 4,
+    "introduced": [],
+    "resolved": []
+  },
+  {
+    "file": "server/tests/test_composed_action_protocol.py",
+    "before": 0,
+    "after": 0,
+    "introduced": [],
+    "resolved": [],
+    "baseline_note": "Pre-existing untracked file; initial content not snapshotted, final lint clean"
+  },
+  {
+    "file": "server/tests/test_sarvam_composed_transport.py",
+    "before": 0,
+    "after": 0,
+    "introduced": [],
+    "resolved": []
+  },
+  {
+    "file": "server/tests/test_close_speech_gate.py",
+    "before": 1,
+    "after": 1,
+    "introduced": [],
+    "resolved": []
+  },
+  {
+    "file": "server/tests/test_employee_script_pipeline.py",
+    "before": 2,
+    "after": 2,
+    "introduced": [],
+    "resolved": []
+  }
+]

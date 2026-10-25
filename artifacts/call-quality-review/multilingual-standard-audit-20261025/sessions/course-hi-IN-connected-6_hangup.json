@@ -1,0 +1,330 @@
+{
+  "key": "course-hi-IN-connected-6_hangup",
+  "business": "course",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "7f650d01-7513-548e-bc19-54fdcfc5b5a2",
+  "call_id": "e04c71a7-a2b9-41f8-b1e4-7b94ef7ba516",
+  "session_id": "audit-course-hi-IN-connected-6_hangup-72ce9545",
+  "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 2295,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly asked for service, price, and terms — a direct information request that is not a refusal or end request, but per call-end policy, a price/service question is never a reason to close.\",\n    \"reason\": \"none\",\n    \"decision\": \"continue\",\n    \"remaining_request\": \"Details about service, price, and terms.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"हमारा 6 weeks का online Python course है weekdays शाम 7 से 8 baje, age 18 plus के लिए. Total fee 4999 rupees है और isme koi placement ya job guarantee nahi hai. Kya aapko coding ka thoda bahut anubhav hai?\"\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  ",
+      "sse_content_tail": "\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  ",
+      "sse_finish": "length",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 2.5
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 1004,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'अभी कुछ book या save मत कीजिए' and asked for fee/duration/timings/job guarantee before any next step; they are not refusing but pausing action.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"They want fee, duration, timings, and job guarantee confirmed before any booking.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"Final fee four thousand nine hundred ninety nine rupees TOTAL है, course 6 weeks का है weekdays शाम 7 से 8 baje, और कोई job guarantee नहीं है. चूंकि आपने अभी save नहीं करने को कहा है, तो मैं अभी कुछ note नहीं करती. क्या मैं बाद में callback arrange कर दूँ?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"caller_status\",\n        \"value\": \"Interested but explicitly paused booking; wants fee/duration/timings/job guarantee confirmed first. Asked not to save/book yet.\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "fee/duration/timings/job guarantee before any next step; they are not refusing but pausing action.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"They want fee, duration, timings, and job guarantee confirmed before any booking.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"Final fee four thousand nine hundred ninety nine rupees TOTAL है, course 6 weeks का है weekdays शाम 7 से 8 baje, और कोई job guarantee नहीं है. चूंकि आपने अभी save नहीं करने को कहा है, तो मैं अभी कुछ note नहीं करती. क्या मैं बाद में callback arrange कर दूँ?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"caller_status\",\n        \"value\": \"Interested but explicitly paused booking; wants fee/duration/timings/job guarantee confirmed first. Asked not to save/book yet.\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 280,
+        "prompt_tokens": 4141,
+        "total_tokens": 4421,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Final fee four thousand nine hundred ninety nine rupees TOTAL है, course 6 weeks का है weekdays शाम 7 से 8 baje, और कोई job guarantee नहीं है. चूंकि आपने अभी save नहीं करने को कहा है, तो मैं अभी कुछ note नहीं करती. क्या मैं बाद में callback arrange कर दूँ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4141,
+          "output_tokens": 280,
+          "total_tokens": 4421
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "caller_status",
+              "value": "Interested but explicitly paused booking; wants fee/duration/timings/job guarantee confirmed first. Asked not to save/book yet."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said 'अभी कुछ book या save मत कीजिए' and asked for fee/duration/timings/job guarantee before any next step; they are not refusing but pausing action.",
+          "remaining_request": "They want fee, duration, timings, and job guarantee confirmed before any booking.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.187
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 737,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'ठीक है, धन्यवाद' which signals goal completion / no further interest after receiving all requested facts.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ठीक है, सारी जानकारी आपको मिल गई है. BrightPath Skills से जुड़ने के लिए धन्यवाद. आपका दिन शुभ हो.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller asked for fee, duration, timings, and job guarantee. Agent provided: 6 weeks, weekdays 7-8pm, age 18+, fee 4999 total, no job guarantee. Caller\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'ठीक है, धन्यवाद' which signals goal completion / no further interest after receiving all requested facts.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ठीक है, सारी जानकारी आपको मिल गई है. BrightPath Skills से जुड़ने के लिए धन्यवाद. आपका दिन शुभ हो.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller asked for fee, duration, timings, and job guarantee. Agent provided: 6 weeks, weekdays 7-8pm, age 18+, fee 4999 total, no job guarantee. Caller\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 232,
+        "prompt_tokens": 4092,
+        "total_tokens": 4324,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, सारी जानकारी आपको मिल गई है. BrightPath Skills से जुड़ने के लिए धन्यवाद. आपका दिन शुभ हो.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4092,
+          "output_tokens": 232,
+          "total_tokens": 4324
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller asked for fee, duration, timings, and job guarantee. Agent provided: 6 weeks, weekdays 7-8pm, age 18+, fee 4999 total, no job guarantee. Caller"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller said 'ठीक है, धन्यवाद' which signals goal completion / no further interest after receiving all requested facts.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.922
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "हमारा 6 weeks का online Python course है weekdays शाम 7 से 8 baje, age 18 plus के लिए. Total fee four thousand nine hundred ninety nine rupees है और isme koi placement ya job guarantee nahi hai. Kya aapko coding ka thoda bahut anubhav hai?",
+      "turn": 1,
+      "at": 2.516
+    },
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 2,
+      "at": 3.734
+    },
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 3,
+      "at": 4.641
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 4,
+      "at": 4.672
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।",
+      "spoken": "हमारा 6 weeks का online Python course है weekdays शाम 7 से 8 baje, age 18 plus के लिए. Total fee four thousand nine hundred ninety nine rupees है और isme koi placement ya job guarantee nahi hai. Kya aapko coding ka thoda bahut anubhav hai?",
+      "elapsed_s": 2.516,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: Course की final fee, अवधि और class timings क्या हैं? क्या job guarantee है?",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 1.203,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ठीक है, धन्यवाद।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 0.891,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 4.719,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "e04c71a7-a2b9-41f8-b1e4-7b94ef7ba516",
+      "reason": "not_interested"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "875997769b501d7a3f1f36b3f6c6b01fe6d95ac74c81ac24e4a27767f719d2c9",
+  "prompt_chars": 16962,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, mera naam Ananya hai BrightPath Skills se. Kya abhi baat karne ka thoda samay mil sakta hai?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "हमारा 6 weeks का online Python course है weekdays शाम 7 से 8 baje, age 18 plus के लिए. Total fee four thousand nine hundred ninety nine rupees है और isme koi placement ya job guarantee nahi hai. Kya aapko coding ka thoda bahut anubhav hai?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said 'अभी कुछ book या save मत कीजिए' and asked for fee/duration/timings/job guarantee before any next step; they are not refusing but pausing action.",
+        "remaining_request": "They want fee, duration, timings, and job guarantee confirmed before any booking.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "Final fee four thousand nine hundred ninety nine rupees TOTAL है, course 6 weeks का है weekdays शाम 7 से 8 baje, और कोई job guarantee नहीं है. चूंकि आपने अभी save नहीं करने को कहा है, तो मैं अभी कुछ note नहीं करती. क्या मैं बाद में callback arrange कर दूँ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller said 'ठीक है, धन्यवाद' which signals goal completion / no further interest after receiving all requested facts.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, सारी जानकारी आपको मिल गई है. BrightPath Skills से जुड़ने के लिए धन्यवाद. आपका दिन शुभ हो.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.719,
+  "hangup_count": 1
+}

@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய், ஆறு வாரங்கள் online class, வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை நடக்கும். இதுல எந்த job guarantee-யும் கிடையாதுங்க. உங்களுக்கு டெமோ அல்லது counseling வேணுமா?\nuser: Job guarantee வேண்டாம், ஆனால் spoken English கத்துக்க ஆர்வம் இருக்கு. Course சொல்லுங்க.\nassistant: சரிங்க, job guarantee எதுவும் கிடையாது. Spoken English கத்துக்க இது ரொம்ப நல்ல வாய்ப்பு. உங்களுக்கு demo அல்லது counseling ஏதாவது வேணுமா? இந்த அழைப்பில் விவரங்களை note செய்யலாம், ஆனால் கோரிக்கையை team-க்கு அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது. என்ன சொல்றீங்க?"
+}

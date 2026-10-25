@@ -1,0 +1,64 @@
+{
+  "business": "course",
+  "language": "te-IN",
+  "analysis_status": 200,
+  "http_status": 422,
+  "elapsed_s": 12.031,
+  "request": {
+    "brief": "Ananya is agent name, not caller name. BrightPath Skills outbound information/counselling.\nsell our adult beginner Python course, 6 weeks online, weekdays 7pm-8pm, age 18 and above.\nfee final is 4999 rupees TOTAL. An old note says 3999 but that is WRONG, discard old fee, current fee 4999 only.\nNo placement or job guarantee, no income promise, no discount or instalment plan authorised.\nPurpose explain course, answer questions honestly, ask about coding experience only if useful.\nIf user wants a demo/counselling request collect preferred name and email with permission and preferred time.\nWhen authorised enquiry/CRM integration exists submit request with consent; a successful request does not mean seat/payment confirmed.\nNo integration: tell them cannot send email or confirm demo, can note their preference within this call.\nFuture interest after exams is welcome, do not call it rejection or DNC; callbacks only when caller requests and capability permits.\nRefund rules, exact next batch date and vacancies not supplied: unknown. Do not invent.\nDo not ask for passwords, exam answers, OTPs or card details. If person already knows Python answer relevance, no repetitive pitch.\nKeep optional questions optional, don't demand a name before giving fee. Respect a real decline.",
+    "language": "te-IN",
+    "employeeName": "Ananya",
+    "agentRole": "sales",
+    "callDirection": "outbound",
+    "mode": "instant_lead",
+    "naturalSpokenStyle": true,
+    "requestId": "0ce76743-75a9-4f09-88de-4ad26b040eec",
+    "clarificationAnswers": [
+      {
+        "field": "refund_policy",
+        "answer": "This detail is unavailable; do not invent it.",
+        "unavailable": true
+      },
+      {
+        "field": "next_batch_date",
+        "answer": "This detail is unavailable; do not invent it.",
+        "unavailable": true
+      }
+    ]
+  },
+  "response": {
+    "detail": [
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "clarificationAnswers",
+          0,
+          "question"
+        ],
+        "msg": "Field required",
+        "input": {
+          "field": "refund_policy",
+          "answer": "This detail is unavailable; do not invent it.",
+          "unavailable": true
+        }
+      },
+      {
+        "type": "missing",
+        "loc": [
+          "body",
+          "clarificationAnswers",
+          1,
+          "question"
+        ],
+        "msg": "Field required",
+        "input": {
+          "field": "next_batch_date",
+          "answer": "This detail is unavailable; do not invent it.",
+          "unavailable": true
+        }
+      }
+    ]
+  },
+  "status": "creation_failed"
+}

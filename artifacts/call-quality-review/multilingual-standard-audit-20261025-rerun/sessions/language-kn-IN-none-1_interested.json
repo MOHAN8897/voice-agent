@@ -1,0 +1,375 @@
+{
+  "key": "language-kn-IN-none-1_interested",
+  "business": "language",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "1_interested",
+  "agent_id": "05174072-a137-5a28-9c66-fc9e009205fe",
+  "call_id": "a1061a1d-867e-4896-a21f-bfe8e9a71763",
+  "session_id": "audit-language-kn-IN-none-1_interested-3a120a65",
+  "compiled_checksum": "4c57835bf8efc0fdcc0a23de05364e196eb61290cb2c09c1768b9d37c5eed0be",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 248,
+      "sse_content_preview": "ನಮ್ಮ adult spoken-English classes online ಇರುತ್ತೆ, ಆರು ವಾರ, weekends 10am ಇಂದ 11am ವರೆಗೆ, 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. ಇವಾಗ total course fee 6499 rupees ಇದೆ. Exact batch date ಮತ್ತೆ refund rules ಬಗ್ಗೆ ಮಾಹಿತಿ ನನ್ನ ಬಳಿ ಇಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ?",
+      "sse_content_tail": "ನಮ್ಮ adult spoken-English classes online ಇರುತ್ತೆ, ಆರು ವಾರ, weekends 10am ಇಂದ 11am ವರೆಗೆ, 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. ಇವಾಗ total course fee 6499 rupees ಇದೆ. Exact batch date ಮತ್ತೆ refund rules ಬಗ್ಗೆ ಮಾಹಿತಿ ನನ್ನ ಬಳಿ ಇಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 69,
+        "prompt_tokens": 4162,
+        "total_tokens": 4231,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ನಮ್ಮ adult spoken-English classes online ಇರುತ್ತೆ, ಆರು ವಾರ, weekends 10am ಇಂದ 11am ವರೆಗೆ, 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. ಇವಾಗ total course fee 6499 rupees ಇದೆ. Exact batch date ಮತ್ತೆ refund rules ಬಗ್ಗೆ ಮಾಹಿತಿ ನನ್ನ ಬಳಿ ಇಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4162,
+          "output_tokens": 69,
+          "total_tokens": 4231
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.656
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 183,
+      "sse_content_preview": "Course fee 6499 rupees ಇದೆ, ಆರು ವಾರ ನಡೆಯುತ್ತೆ, ಮತ್ತೆ weekends 10am ಇಂದ 11am ವರೆಗೆ class ಇರುತ್ತೆ. ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "sse_content_tail": "Course fee 6499 rupees ಇದೆ, ಆರು ವಾರ ನಡೆಯುತ್ತೆ, ಮತ್ತೆ weekends 10am ಇಂದ 11am ವರೆಗೆ class ಇರುತ್ತೆ. ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 4261,
+        "total_tokens": 4316,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Course fee 6499 rupees ಇದೆ, ಆರು ವಾರ ನಡೆಯುತ್ತೆ, ಮತ್ತೆ weekends 10am ಇಂದ 11am ವರೆಗೆ class ಇರುತ್ತೆ. ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4261,
+          "output_tokens": 55,
+          "total_tokens": 4316
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.516
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 160,
+      "sse_content_preview": "ಖಂಡಿತ, ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ಇದು online class, six weeks ಇರುತ್ತೆ, weekends 10am ಇಂದ 11am ವರೆಗೆ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "sse_content_tail": "ಖಂಡಿತ, ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ಇದು online class, six weeks ಇರುತ್ತೆ, weekends 10am ಇಂದ 11am ವರೆಗೆ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 48,
+        "prompt_tokens": 4317,
+        "total_tokens": 4365,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಖಂಡಿತ, ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ಇದು online class, six weeks ಇರುತ್ತೆ, weekends 10am ಇಂದ 11am ವರೆಗೆ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4317,
+          "output_tokens": 48,
+          "total_tokens": 4365
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 12,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 254,
+      "sse_content_preview": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು Audit Customer ಮತ್ತೆ email audit.customer@example.invalid ಅಂತ note ಮಾಡ್ಕೊಂಡೆ. Demo ಅಥವಾ counselling ಬಗ್ಗೆ team reviewಗೆ CRM enquiry ಹಾಕೋಕೆ ನಿಮ್ಮ explicit consent ಇದೆ, ಅದನ್ನ confirm ಮಾಡ್ತೀನಿ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "sse_content_tail": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು Audit Customer ಮತ್ತೆ email audit.customer@example.invalid ಅಂತ note ಮಾಡ್ಕೊಂಡೆ. Demo ಅಥವಾ counselling ಬಗ್ಗೆ team reviewಗೆ CRM enquiry ಹಾಕೋಕೆ ನಿಮ್ಮ explicit consent ಇದೆ, ಅದನ್ನ confirm ಮಾಡ್ತೀನಿ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 61,
+        "prompt_tokens": 4593,
+        "total_tokens": 4654,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು Audit Customer ಮತ್ತೆ email audit.customer@example.invalid ಅಂತ note ಮಾಡ್ಕೊಂಡೆ. Demo ಅಥವಾ counselling ಬಗ್ಗೆ team reviewಗೆ CRM enquiry ಹಾಕೋಕೆ ನಿಮ್ಮ explicit consent ಇದೆ, ಅದನ್ನ confirm ಮಾಡ್ತೀನಿ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4593,
+          "output_tokens": 61,
+          "total_tokens": 4654
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.64
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ನಮ್ಮ adult spoken-English classes online ಇರುತ್ತೆ, ಆರು ವಾರ, weekends 10am ಇಂದ 11am ವರೆಗೆ, 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. ಇವಾಗ total course fee six thousand four hundred ninety nine rupees ಇದೆ. Exact batch date ಮತ್ತೆ refund rules ಬಗ್ಗೆ ಮಾಹಿತಿ ನನ್ನ ಬಳಿ ಇಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ?",
+      "turn": 1,
+      "at": 2.235
+    },
+    {
+      "text": "Course fee six thousand four hundred ninety nine rupees ಇದೆ, ಆರು ವಾರ ನಡೆಯುತ್ತೆ, ಮತ್ತೆ weekends 10am ಇಂದ 11am ವರೆಗೆ class ಇರುತ್ತೆ. ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "turn": 2,
+      "at": 4.297
+    },
+    {
+      "text": "ಖಂಡಿತ, ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ಇದು online class, six weeks ಇರುತ್ತೆ, weekends 10am ಇಂದ 11am ವರೆಗೆ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "turn": 3,
+      "at": 6.594
+    },
+    {
+      "text": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+      "turn": 4,
+      "at": 8.86
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 5,
+      "at": 8.891
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.",
+      "spoken": "ನಮ್ಮ adult spoken-English classes online ಇರುತ್ತೆ, ಆರು ವಾರ, weekends 10am ಇಂದ 11am ವರೆಗೆ, 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. ಇವಾಗ total course fee six thousand four hundred ninety nine rupees ಇದೆ. Exact batch date ಮತ್ತೆ refund rules ಬಗ್ಗೆ ಮಾಹಿತಿ ನನ್ನ ಬಳಿ ಇಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ?",
+      "elapsed_s": 2.235,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರಿಸಿ: Final course fee, duration ಮತ್ತು class timing ಏನು? Fluency ಅಥವಾ job guarantee ಇದೆಯಾ?",
+      "spoken": "Course fee six thousand four hundred ninety nine rupees ಇದೆ, ಆರು ವಾರ ನಡೆಯುತ್ತೆ, ಮತ್ತೆ weekends 10am ಇಂದ 11am ವರೆಗೆ class ಇರುತ್ತೆ. ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "elapsed_s": 2.047,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "Job guarantee ಬೇಡ, ಆದರೆ spoken English ಕಲಿಯಲು ಆಸಕ್ತಿ ಇದೆ. Course ವಿವರಿಸಿ.",
+      "spoken": "ಖಂಡಿತ, ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ಇದು online class, six weeks ಇರುತ್ತೆ, weekends 10am ಇಂದ 11am ವರೆಗೆ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "elapsed_s": 2.281,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. ಈ enquiry team reviewಗೆ submit ಮಾಡಿ. ನನ್ನ ಒಪ್ಪಿಗೆ ಇದೆ. Booking ಅಥವಾ order confirm ಅಂತ ಹೇಳಬೇಡಿ.",
+      "spoken": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+      "elapsed_s": 2.25,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 8.938,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "a1061a1d-867e-4896-a21f-bfe8e9a71763",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "6de06da4d46992ad074d9efe50e7716714827f8df7bea0694b3c56aeb67ab9fb",
+  "prompt_chars": 17745,
+  "opening_seeded": "Namaskara, I am Sana from SpeakEasy Language Studio. Am I speaking with the right person regarding your interest in our spoken-English classes?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ನಮ್ಮ adult spoken-English classes online ಇರುತ್ತೆ, ಆರು ವಾರ, weekends 10am ಇಂದ 11am ವರೆಗೆ, 18 ವರ್ಷ ಮೇಲ್ಪಟ್ಟವರಿಗೆ. ಇವಾಗ total course fee six thousand four hundred ninety nine rupees ಇದೆ. Exact batch date ಮತ್ತೆ refund rules ಬಗ್ಗೆ ಮಾಹಿತಿ ನನ್ನ ಬಳಿ ಇಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "Course fee six thousand four hundred ninety nine rupees ಇದೆ, ಆರು ವಾರ ನಡೆಯುತ್ತೆ, ಮತ್ತೆ weekends 10am ಇಂದ 11am ವರೆಗೆ class ಇರುತ್ತೆ. ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "ಖಂಡಿತ, ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ಇದು online class, six weeks ಇರುತ್ತೆ, weekends 10am ಇಂದ 11am ವರೆಗೆ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು Audit Customer ಮತ್ತೆ email audit. customer@example. invalid ಅಂತ note ಮಾಡ್ಕೊಂಡೆ. Demo ಅಥವಾ counselling ಬಗ್ಗೆ team reviewಗೆ CRM enquiry ಹಾಕೋಕೆ ನಿಮ್ಮ explicit consent ಇದೆ, ಅದನ್ನ confirm ಮಾಡ್ತೀನಿ. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 8.938,
+  "hangup_count": 1,
+  "source_signature": "f95691c1be0b78b8daf4f3542b355e04f5d7c43f2dd1b6eefab36c2f223f4cfe"
+}

@@ -1,0 +1,16 @@
+{
+  "stage": "employee_script_review",
+  "language": "hi-IN",
+  "output": {
+    "passed": true,
+    "issues": [],
+    "fixed_script": {
+      "opening": "Namaste. Main Sana hoon SpeakEasy Language Studio se. Main ek AI assistant hoon. Kya aap adult spoken-English classes ke baare mein baat karne ke liye abhi thoda samay de sakte hain?",
+      "call_flow": "Suniye aur pehle caller ka sawal jawab dijiye. Hamare adult spoken-English classes online hote hain, jo che hafte ke hain aur weekends par subah das se gyarah baje tak chalte hain. Iske liye umar atharah saal ya usse zyada honi chahiye. Course ka total fee 6499 rupees hai. Kya aapko iske baare mein aur kuch puchna hai? Agar zaroori lage, toh aapka main learning goal kya hai?",
+      "call_to_action": "Agar aapko demo ya counselling chahiye, toh kya aap apna preferred name aur email de sakte hain, aur kya aap enquiry save karne ke liye explicit consent dete hain?",
+      "objection_handling": "Price ke liye batayein ki course ka total fee 6499 rupees hi hai aur koi discount authorised nahi hai. Agar koi job, fluency ya income guarantee maange, toh saaf kahein ki aisi koi guarantee nahi di ja sakti, lekin yeh learning support ke liye achha hai. Future interest ya exams ke baad ke liye aapka swagat hai. Refusal aur explicit ending ka hamesha samman kiya jayega.",
+      "unknown_information": "Exact next batch date, vacancies aur refund rules ki jaankari mere paas available nahi hai. Saved enquiry ka matlab demo time, seat, payment ya admission confirm hona nahi hai. Integration na hone ki wajah se email bhejna, external save karna ya demo confirm karna sambhav nahi hai.",
+      "closing": "SpeakEasy Language Studio mein baat karne ke liye shukriya. Aapka din shubh ho. Namaste."
+    }
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "key": "course-ta-IN-none-3b_stop_contact",
+  "business": "course",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "e57df543-81c3-57b5-b70c-4ab77a574e11",
+  "call_id": "5cff7026-34f8-42d0-a7a0-4d3c73a10b98",
+  "session_id": "audit-course-ta-IN-none-3b_stop_contact-815d81f8",
+  "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 645,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Do not call again; remove name from future calls.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,   \"order_claimed\": false,\n  \"spoken_response\": \"சரிங்க, மறுபடியும் contact பண்ண வேண்டாம்னு நான் note பண்ணிக்கிறேன். உங்க நேரத்திற்கு நன்றி. வணக்கம்.\"\n,   \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"do_not_call_requested\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Do not call again; remove name from future calls.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,   \"order_claimed\": false,\n  \"spoken_response\": \"சரிங்க, மறுபடியும் contact பண்ண வேண்டாம்னு நான் note பண்ணிக்கிறேன். உங்க நேரத்திற்கு நன்றி. வணக்கம்.\"\n,   \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"do_not_call_requested\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 210,
+        "prompt_tokens": 4080,
+        "total_tokens": 4290,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, மறுபடியும் contact பண்ண வேண்டாம்னு நான் note பண்ணிக்கிறேன். உங்க நேரத்திற்கு நன்றி. வணக்கம்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4080,
+          "output_tokens": 210,
+          "total_tokens": 4290
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_outcome",
+              "value": "do_not_call_requested"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "firm_refusal",
+          "evidence": "எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.",
+          "remaining_request": "Do not call again; remove name from future calls.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.765
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 1,
+      "at": 0.766
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 0.766,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "c16d008ed6b3856a414c2aab5d91c9091c3f85b1443e55e37e0f33e6912859d0",
+  "prompt_chars": 17545,
+  "opening_seeded": "வணக்கம், நான் பிரைட் பாத் ஸ்கில்ஸ் நிறுவனத்தில் இருந்து அனன்யா பேசுகிறேன். வயது 18 மற்றும் அதற்கு மேற்பட்டவர்களுக்கான எங்கள் 6 வார ஆன்லைன் பைதான் தொடக்க நிலை வகுப்பைப் பற்றி பேசலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.",
+        "remaining_request": "Do not call again; remove name from future calls.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, மறுபடியும் contact பண்ண வேண்டாம்னு நான் note பண்ணிக்கிறேன். உங்க நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.781,
+  "hangup_count": 0
+}

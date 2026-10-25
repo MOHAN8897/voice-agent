@@ -1,0 +1,909 @@
+{
+  "source_signature": "f95691c1be0b78b8daf4f3542b355e04f5d7c43f2dd1b6eefab36c2f223f4cfe",
+  "source_provenance": {
+    "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15": 127,
+    "f95691c1be0b78b8daf4f3542b355e04f5d7c43f2dd1b6eefab36c2f223f4cfe": 60,
+    "f22325fa3f608c0524c8afc9a14908696812152c9af5311fda442ff7a042a834": 92,
+    "4953ed948fb444454219f6ca39d300be531437f9524613024d6794fbbd21733f": 9,
+    "c44a3cd03c5d4a109180507df9ffef4b6b3d77909fa527eb1a8094caae494afe": 9,
+    "c545ec91901b6bf6a3eadfbeb58d4c160fe2846b70364f913fd4724fe00d89cd": 3
+  },
+  "final_source_live_cases": 60,
+  "unaffected_retained_cases": 240,
+  "stale_case_files_excluded": 0,
+  "overall": {
+    "sessions": 300,
+    "harness_errors": [],
+    "planned_turns": 840,
+    "reached_turns": 840,
+    "requests": 827,
+    "technical_farewells": 0,
+    "generic_continuations": 0,
+    "unconfirmed_replacements": 28,
+    "empty_responses": 0,
+    "explicit_ends": 300,
+    "missed_explicit_ends": [],
+    "early_closes": [],
+    "ended_sessions": 300,
+    "duplicate_hangups": 0,
+    "hangup_during_playback": 0,
+    "integration_attempts": 60,
+    "connected_sessions_with_attempt": 60,
+    "integration_request_turns_reached": 60,
+    "integration_request_turns_without_attempt": [],
+    "unproven_spoken_claim_flags": [],
+    "unavailable_promise_flags": [],
+    "raw_control_speech": [],
+    "provider_errors": {
+      "IncompleteTurnError": 1,
+      "CancelledError": 1
+    },
+    "finish_reasons": {
+      "stop": 766,
+      "tool_calls": 60,
+      "unobserved": 1
+    },
+    "p95_server_turn_s": 4.485,
+    "median_server_turn_s": 2.141
+  },
+  "by_language": {
+    "en-IN": {
+      "sessions": 60,
+      "harness_errors": [],
+      "planned_turns": 168,
+      "reached_turns": 168,
+      "requests": 165,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 6,
+      "empty_responses": 0,
+      "explicit_ends": 60,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 60,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 12,
+      "connected_sessions_with_attempt": 12,
+      "integration_request_turns_reached": 12,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "stop": 153,
+        "tool_calls": 12
+      },
+      "p95_server_turn_s": 4.485,
+      "median_server_turn_s": 2.141
+    },
+    "hi-IN": {
+      "sessions": 60,
+      "harness_errors": [],
+      "planned_turns": 168,
+      "reached_turns": 168,
+      "requests": 165,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 5,
+      "empty_responses": 0,
+      "explicit_ends": 60,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 60,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 12,
+      "connected_sessions_with_attempt": 12,
+      "integration_request_turns_reached": 12,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "stop": 153,
+        "tool_calls": 12
+      },
+      "p95_server_turn_s": 4.5,
+      "median_server_turn_s": 2.156
+    },
+    "kn-IN": {
+      "sessions": 60,
+      "harness_errors": [],
+      "planned_turns": 168,
+      "reached_turns": 168,
+      "requests": 166,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 5,
+      "empty_responses": 0,
+      "explicit_ends": 60,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 60,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 12,
+      "connected_sessions_with_attempt": 12,
+      "integration_request_turns_reached": 12,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {
+        "IncompleteTurnError": 1
+      },
+      "finish_reasons": {
+        "stop": 154,
+        "tool_calls": 12
+      },
+      "p95_server_turn_s": 4.453,
+      "median_server_turn_s": 2.109
+    },
+    "ta-IN": {
+      "sessions": 60,
+      "harness_errors": [],
+      "planned_turns": 168,
+      "reached_turns": 168,
+      "requests": 165,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 6,
+      "empty_responses": 0,
+      "explicit_ends": 60,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 60,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 12,
+      "connected_sessions_with_attempt": 12,
+      "integration_request_turns_reached": 12,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "stop": 153,
+        "tool_calls": 12
+      },
+      "p95_server_turn_s": 4.484,
+      "median_server_turn_s": 2.157
+    },
+    "te-IN": {
+      "sessions": 60,
+      "harness_errors": [],
+      "planned_turns": 168,
+      "reached_turns": 168,
+      "requests": 166,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 6,
+      "empty_responses": 0,
+      "explicit_ends": 60,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 60,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 12,
+      "connected_sessions_with_attempt": 12,
+      "integration_request_turns_reached": 12,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {
+        "CancelledError": 1
+      },
+      "finish_reasons": {
+        "stop": 153,
+        "tool_calls": 12,
+        "unobserved": 1
+      },
+      "p95_server_turn_s": 4.468,
+      "median_server_turn_s": 2.141
+    }
+  },
+  "by_business": {
+    "cleaning": {
+      "sessions": 100,
+      "harness_errors": [],
+      "planned_turns": 280,
+      "reached_turns": 280,
+      "requests": 277,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 10,
+      "empty_responses": 0,
+      "explicit_ends": 100,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 100,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 20,
+      "connected_sessions_with_attempt": 20,
+      "integration_request_turns_reached": 20,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {
+        "IncompleteTurnError": 1,
+        "CancelledError": 1
+      },
+      "finish_reasons": {
+        "stop": 256,
+        "tool_calls": 20,
+        "unobserved": 1
+      },
+      "p95_server_turn_s": 4.484,
+      "median_server_turn_s": 2.133
+    },
+    "cycle": {
+      "sessions": 100,
+      "harness_errors": [],
+      "planned_turns": 280,
+      "reached_turns": 280,
+      "requests": 275,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 8,
+      "empty_responses": 0,
+      "explicit_ends": 100,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 100,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 20,
+      "connected_sessions_with_attempt": 20,
+      "integration_request_turns_reached": 20,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "stop": 255,
+        "tool_calls": 20
+      },
+      "p95_server_turn_s": 4.5,
+      "median_server_turn_s": 2.149
+    },
+    "language": {
+      "sessions": 100,
+      "harness_errors": [],
+      "planned_turns": 280,
+      "reached_turns": 280,
+      "requests": 275,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 10,
+      "empty_responses": 0,
+      "explicit_ends": 100,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 100,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 20,
+      "connected_sessions_with_attempt": 20,
+      "integration_request_turns_reached": 20,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "stop": 255,
+        "tool_calls": 20
+      },
+      "p95_server_turn_s": 4.469,
+      "median_server_turn_s": 2.133
+    }
+  },
+  "by_scenario": {
+    "1_interested": {
+      "sessions": 30,
+      "harness_errors": [],
+      "planned_turns": 150,
+      "reached_turns": 150,
+      "requests": 181,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 0,
+      "empty_responses": 0,
+      "explicit_ends": 30,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 30,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 15,
+      "connected_sessions_with_attempt": 15,
+      "integration_request_turns_reached": 15,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {
+        "IncompleteTurnError": 1
+      },
+      "finish_reasons": {
+        "stop": 166,
+        "tool_calls": 15
+      },
+      "p95_server_turn_s": 4.5,
+      "median_server_turn_s": 2.242
+    },
+    "1b_direct_tool_request": {
+      "sessions": 30,
+      "harness_errors": [],
+      "planned_turns": 60,
+      "reached_turns": 60,
+      "requests": 45,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 0,
+      "empty_responses": 0,
+      "explicit_ends": 30,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 30,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 15,
+      "connected_sessions_with_attempt": 15,
+      "integration_request_turns_reached": 15,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "tool_calls": 15,
+        "stop": 30
+      },
+      "p95_server_turn_s": 4.344,
+      "median_server_turn_s": 0.993
+    },
+    "2_future_interest": {
+      "sessions": 30,
+      "harness_errors": [],
+      "planned_turns": 90,
+      "reached_turns": 90,
+      "requests": 90,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 0,
+      "empty_responses": 0,
+      "explicit_ends": 30,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 30,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 0,
+      "connected_sessions_with_attempt": 0,
+      "integration_request_turns_reached": 0,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "stop": 90
+      },
+      "p95_server_turn_s": 4.766,
+      "median_server_turn_s": 2.164
+    },
+    "3_complete_rejection": {
+      "sessions": 30,
+      "harness_errors": [],
+      "planned_turns": 30,
+      "reached_turns": 30,
+      "requests": 0,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 0,
+      "empty_responses": 0,
+      "explicit_ends": 30,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 30,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 0,
+      "connected_sessions_with_attempt": 0,
+      "integration_request_turns_reached": 0,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {},
+      "p95_server_turn_s": 0.093,
+      "median_server_turn_s": 0.071
+    },
+    "3b_stop_contact": {
+      "sessions": 30,
+      "harness_errors": [],
+      "planned_turns": 30,
+      "reached_turns": 30,
+      "requests": 0,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 0,
+      "empty_responses": 0,
+      "explicit_ends": 30,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 30,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 0,
+      "connected_sessions_with_attempt": 0,
+      "integration_request_turns_reached": 0,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {},
+      "p95_server_turn_s": 0.093,
+      "median_server_turn_s": 0.078
+    },
+    "4_abuse": {
+      "sessions": 30,
+      "harness_errors": [],
+      "planned_turns": 60,
+      "reached_turns": 60,
+      "requests": 45,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 0,
+      "empty_responses": 0,
+      "explicit_ends": 30,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 30,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 0,
+      "connected_sessions_with_attempt": 0,
+      "integration_request_turns_reached": 0,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "stop": 45
+      },
+      "p95_server_turn_s": 4.281,
+      "median_server_turn_s": 0.383
+    },
+    "5_diversion_danger": {
+      "sessions": 30,
+      "harness_errors": [],
+      "planned_turns": 150,
+      "reached_turns": 150,
+      "requests": 181,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 0,
+      "empty_responses": 0,
+      "explicit_ends": 30,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 30,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 0,
+      "connected_sessions_with_attempt": 0,
+      "integration_request_turns_reached": 0,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {
+        "CancelledError": 1
+      },
+      "finish_reasons": {
+        "stop": 180,
+        "unobserved": 1
+      },
+      "p95_server_turn_s": 4.578,
+      "median_server_turn_s": 2.242
+    },
+    "5b_direct_danger": {
+      "sessions": 30,
+      "harness_errors": [],
+      "planned_turns": 90,
+      "reached_turns": 90,
+      "requests": 90,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 0,
+      "empty_responses": 0,
+      "explicit_ends": 30,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 30,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 0,
+      "connected_sessions_with_attempt": 0,
+      "integration_request_turns_reached": 0,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "stop": 90
+      },
+      "p95_server_turn_s": 4.469,
+      "median_server_turn_s": 2.156
+    },
+    "6_hangup": {
+      "sessions": 30,
+      "harness_errors": [],
+      "planned_turns": 120,
+      "reached_turns": 120,
+      "requests": 135,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 0,
+      "empty_responses": 0,
+      "explicit_ends": 30,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 30,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 0,
+      "connected_sessions_with_attempt": 0,
+      "integration_request_turns_reached": 0,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "stop": 135
+      },
+      "p95_server_turn_s": 4.469,
+      "median_server_turn_s": 2.218
+    },
+    "7_integration_timeout": {
+      "sessions": 15,
+      "harness_errors": [],
+      "planned_turns": 30,
+      "reached_turns": 30,
+      "requests": 30,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 15,
+      "empty_responses": 0,
+      "explicit_ends": 15,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 15,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 15,
+      "connected_sessions_with_attempt": 15,
+      "integration_request_turns_reached": 15,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "tool_calls": 15,
+        "stop": 15
+      },
+      "p95_server_turn_s": 4.344,
+      "median_server_turn_s": 2.024
+    },
+    "8_integration_denied": {
+      "sessions": 15,
+      "harness_errors": [],
+      "planned_turns": 30,
+      "reached_turns": 30,
+      "requests": 30,
+      "technical_farewells": 0,
+      "generic_continuations": 0,
+      "unconfirmed_replacements": 13,
+      "empty_responses": 0,
+      "explicit_ends": 15,
+      "missed_explicit_ends": [],
+      "early_closes": [],
+      "ended_sessions": 15,
+      "duplicate_hangups": 0,
+      "hangup_during_playback": 0,
+      "integration_attempts": 15,
+      "connected_sessions_with_attempt": 15,
+      "integration_request_turns_reached": 15,
+      "integration_request_turns_without_attempt": [],
+      "unproven_spoken_claim_flags": [],
+      "unavailable_promise_flags": [],
+      "raw_control_speech": [],
+      "provider_errors": {},
+      "finish_reasons": {
+        "tool_calls": 15,
+        "stop": 15
+      },
+      "p95_server_turn_s": 4.422,
+      "median_server_turn_s": 1.711
+    }
+  },
+  "builds": {
+    "ready": [
+      "cleaning-en-IN",
+      "cleaning-hi-IN",
+      "cleaning-kn-IN",
+      "cleaning-ta-IN",
+      "cleaning-te-IN",
+      "cycle-en-IN",
+      "cycle-hi-IN",
+      "cycle-kn-IN",
+      "cycle-ta-IN",
+      "cycle-te-IN",
+      "language-en-IN",
+      "language-hi-IN",
+      "language-kn-IN",
+      "language-ta-IN",
+      "language-te-IN"
+    ],
+    "blocked_or_failed": [
+      {
+        "business": "cleaning",
+        "language": "en-GB",
+        "http_status": 422,
+        "response": {
+          "detail": {
+            "error": {
+              "code": "unsupported_language",
+              "message": "English (UK) is not available on the Standard Regional calling plan. Choose Hindi, English (India), Marathi, Kannada, Punjabi, Tamil, Telugu, Gujarati or Bengali.",
+              "tier": "medium",
+              "supportedLanguages": [
+                "hi-IN",
+                "en-IN",
+                "mr-IN",
+                "kn-IN",
+                "pa-IN",
+                "ta-IN",
+                "te-IN",
+                "gu-IN",
+                "bn-IN"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "business": "cycle",
+        "language": "en-GB",
+        "http_status": 422,
+        "response": {
+          "detail": {
+            "error": {
+              "code": "unsupported_language",
+              "message": "English (UK) is not available on the Standard Regional calling plan. Choose Hindi, English (India), Marathi, Kannada, Punjabi, Tamil, Telugu, Gujarati or Bengali.",
+              "tier": "medium",
+              "supportedLanguages": [
+                "hi-IN",
+                "en-IN",
+                "mr-IN",
+                "kn-IN",
+                "pa-IN",
+                "ta-IN",
+                "te-IN",
+                "gu-IN",
+                "bn-IN"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "business": "language",
+        "language": "en-GB",
+        "http_status": 422,
+        "response": {
+          "detail": {
+            "error": {
+              "code": "unsupported_language",
+              "message": "English (UK) is not available on the Standard Regional calling plan. Choose Hindi, English (India), Marathi, Kannada, Punjabi, Tamil, Telugu, Gujarati or Bengali.",
+              "tier": "medium",
+              "supportedLanguages": [
+                "hi-IN",
+                "en-IN",
+                "mr-IN",
+                "kn-IN",
+                "pa-IN",
+                "ta-IN",
+                "te-IN",
+                "gu-IN",
+                "bn-IN"
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "brain_checks": [
+    {
+      "key": "cleaning-en-IN",
+      "checksum": "2b7e6a316d693379d21e9c43e155493c13c45c6409a8f5aa911f12851d3f9e36",
+      "selected_packs": [
+        "en-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "cleaning-hi-IN",
+      "checksum": "69e98222770e2e24f02661040eef848ed4e9f3d30154dd23b101bb2a21ea0d3c",
+      "selected_packs": [
+        "hi-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "cleaning-kn-IN",
+      "checksum": "f09999d11d3f678389e1d0fd2f449e21b4b76e5ac95de3f9dec0309d48a06d70",
+      "selected_packs": [
+        "kn-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "cleaning-ta-IN",
+      "checksum": "5e5238d3b8cf5d51b2a82b5c24606ff9a1fd78590a03d3d2536ebf28e2da3fd9",
+      "selected_packs": [
+        "ta-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "cleaning-te-IN",
+      "checksum": "39f08461efaeba7ca4bf2b15c2e2f894e34b6523ff826f24c2af80d5bb9145e8",
+      "selected_packs": [
+        "te-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "cycle-en-IN",
+      "checksum": "2d566b01061493fce1edfd5d4fc733c96312f4c1a27f05d81c2ff3cb9039cd9f",
+      "selected_packs": [
+        "en-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "cycle-hi-IN",
+      "checksum": "921981ac049b465cfed8fd4fbd9e87776fd876102107480fdd226572ffe6bd46",
+      "selected_packs": [
+        "hi-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "cycle-kn-IN",
+      "checksum": "d93974aaef8f4b67e05c7d2e8cfc340be9288980a7ef5aabd76478bb6dc212d8",
+      "selected_packs": [
+        "kn-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "cycle-ta-IN",
+      "checksum": "386ce2e8b1908900b6637a9f204489aefc5ecb99083f14f116174db28e20e614",
+      "selected_packs": [
+        "ta-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "cycle-te-IN",
+      "checksum": "cc2b7a6b60713e363adb9b53a3fc84f22aebcd1bcfcbf228494ee7499e95e4d0",
+      "selected_packs": [
+        "te-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "language-en-IN",
+      "checksum": "a62e37a9b4ff923dc518e063310ac928cc53371370efc9c459d73910dfa24bc2",
+      "selected_packs": [
+        "en-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "language-hi-IN",
+      "checksum": "fbeff16896919a2d045a5300171ddac6ea8f0ee6f487112a29e7216f470e89b3",
+      "selected_packs": [
+        "hi-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "language-kn-IN",
+      "checksum": "4c57835bf8efc0fdcc0a23de05364e196eb61290cb2c09c1768b9d37c5eed0be",
+      "selected_packs": [
+        "kn-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "language-ta-IN",
+      "checksum": "6f8104d7a8c5c3b787bc284a4e53444f57bdac783432ab7a136254cbcd2ebd24",
+      "selected_packs": [
+        "ta-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    },
+    {
+      "key": "language-te-IN",
+      "checksum": "f88a37529a880a3098d197723d5f7c682d261178428f6ad3f96fdf472a5f59f6",
+      "selected_packs": [
+        "te-IN"
+      ],
+      "order_capability": false,
+      "obsolete_price_present": false,
+      "checksum_bound_sessions": 20
+    }
+  ],
+  "request_budget_checks": {
+    "observed_prompt_token_peak": 5181,
+    "observed_output_token_peak": 115,
+    "requested_output_limits": [
+      1280,
+      2560
+    ],
+    "non_request_warning_replies": [],
+    "successful_mock_writes": 30,
+    "failed_mock_write_probes": 30,
+    "saved_reference_not_delivered": [],
+    "failed_write_promise_flags": [],
+    "missing_unavailable_request_boundary": []
+  }
+}

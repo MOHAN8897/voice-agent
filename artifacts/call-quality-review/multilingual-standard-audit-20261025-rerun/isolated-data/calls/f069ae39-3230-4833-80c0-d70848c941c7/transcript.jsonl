@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T18:38:13.883519Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "For sofa cleaning, it is three hundred forty nine rupees per seat with a minimum of three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. Would you like to hear more about either of these?", "ts": "2026-10-25T18:38:16.092211Z", "brain_latency_ms": 2198}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Answer this first: What are the sofa and kitchen cleaning prices, minimum seats, and is a visit already confirmed?", "ts": "2026-10-25T18:38:16.143660Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No visit is confirmed yet, since this is just an enquiry for our team to review.", "ts": "2026-10-25T18:38:18.200380Z", "brain_latency_ms": 2048}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-25T18:38:18.249893Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "You're welcome. An enquiry is not a confirmed slot or paid order. Would you like to share your preferred name and locality for team review?", "ts": "2026-10-25T18:38:20.356068Z", "brain_latency_ms": 2104}
+{"seq": 7, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T18:38:20.383081Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T18:38:20.390024Z", "brain_latency_ms": 1}

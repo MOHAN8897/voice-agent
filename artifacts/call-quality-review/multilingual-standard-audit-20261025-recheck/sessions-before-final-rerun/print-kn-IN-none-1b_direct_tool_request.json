@@ -1,0 +1,189 @@
+{
+  "key": "print-kn-IN-none-1b_direct_tool_request",
+  "business": "print",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "ffeba09d-28b1-582c-a920-77041b45cb0d",
+  "call_id": "9586a0a4-f286-4ef7-a2a3-06d895493ddc",
+  "session_id": "audit-print-kn-IN-none-1b_direct_tool_request-6e963c08",
+  "compiled_checksum": "0766dd5a0844b9f086e671d6a886612dd21888b82dc082be19f46bd0548b6f2a",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1022,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested to save enquiry for team review and gave callback preference for tomorrow 3 PM, while explicitly stating not to confirm order or booking.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Team review of enquiry and callback tomorrow at 3 PM.\",\n    \"contact_preference\": \"callback\"\n  }\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n",
+      "sse_content_tail": "e for tomorrow 3 PM, while explicitly stating not to confirm order or booking.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Team review of enquiry and callback tomorrow at 3 PM.\",\n    \"contact_preference\": \"callback\"\n  }\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n  \n  \n\n\n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.687
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 315,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಹೆಸರು Audit Customer ಅಂತ note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆಗೆ team review ಮಾಡೋಕೆ callback request ಕೂಡ ತಗೊಳ್ತೀನಿ. ಆದ್ರೆ ಈ call ಅಲ್ಲಿ ನಾನು order ಅಥವಾ booking confirm ಆಗಿದೆ ಅಂತ ಹೇಳೋಕೆ ಆಗಲ್ಲ. ನಿಮಗೆ visiting cards ಬೇಕಾ ಅಥವಾ wedding invitations ಬಗ್ಗೆ ಏನಾದ್ರೂ details ಬೇಕಾ?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಹೆಸರು Audit Customer ಅಂತ note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆಗೆ team review ಮಾಡೋಕೆ callback request ಕೂಡ ತಗೊಳ್ತೀನಿ. ಆದ್ರೆ ಈ call ಅಲ್ಲಿ ನಾನು order ಅಥವಾ booking confirm ಆಗಿದೆ ಅಂತ ಹೇಳೋಕೆ ಆಗಲ್ಲ. ನಿಮಗೆ visiting cards ಬೇಕಾ ಅಥವಾ wedding invitations ಬಗ್ಗೆ ಏನಾದ್ರೂ details ಬೇಕಾ?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 87,
+        "prompt_tokens": 4167,
+        "total_tokens": 4254,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು Audit Customer ಅಂತ note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆಗೆ team review ಮಾಡೋಕೆ callback request ಕೂಡ ತಗೊಳ್ತೀನಿ. ಆದ್ರೆ ಈ call ಅಲ್ಲಿ ನಾನು order ಅಥವಾ booking confirm ಆಗಿದೆ ಅಂತ ಹೇಳೋಕೆ ಆಗಲ್ಲ. ನಿಮಗೆ visiting cards ಬೇಕಾ ಅಥವಾ wedding invitations ಬಗ್ಗೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4167,
+          "output_tokens": 87,
+          "total_tokens": 4254
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.938
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು Audit Customer ಅಂತ note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆಗೆ team review ಮಾಡೋಕೆ callback request ಕೂಡ ತಗೊಳ್ತೀನಿ. ಆದ್ರೆ ಈ call ಅಲ್ಲಿ ನಾನು order ಅಥವಾ booking confirm ಆಗಿದೆ ಅಂತ ಹೇಳೋಕೆ ಆಗಲ್ಲ.",
+      "turn": 1,
+      "at": 2.625
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 2,
+      "at": 2.656
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "ನನ್ನ ಹೆಸರು Audit Customer, email audit.customer@example.invalid. ನನ್ನ enquiryಯನ್ನು team reviewಗಾಗಿ save ಮಾಡಿ. ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆ ನನಗೆ ಅನುಕೂಲ. Request submit ಮಾಡಲು ನನ್ನ ಒಪ್ಪಿಗೆ ಇದೆ, ಆದರೆ order ಅಥವಾ booking confirm ಆಯಿತು ಎಂದು ಹೇಳಬೇಡಿ.",
+      "spoken": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು Audit Customer ಅಂತ note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆಗೆ team review ಮಾಡೋಕೆ callback request ಕೂಡ ತಗೊಳ್ತೀನಿ. ಆದ್ರೆ ಈ call ಅಲ್ಲಿ ನಾನು order ಅಥವಾ booking confirm ಆಗಿದೆ ಅಂತ ಹೇಳೋಕೆ ಆಗಲ್ಲ.",
+      "elapsed_s": 2.625,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.719,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "9586a0a4-f286-4ef7-a2a3-06d895493ddc",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "a1b3114e81541dda54b7964ad8b0ad3137932f5f9d29bfd13f429a91e0d8c4ba",
+  "prompt_chars": 18434,
+  "opening_seeded": "Namaskara, this is Meera calling from ClearPrint Studio. I am reaching out to share information about our cards and answer any questions you might have. Would you like to discuss our card options today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು Audit Customer ಅಂತ note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆಗೆ team review ಮಾಡೋಕೆ callback request ಕೂಡ ತಗೊಳ್ತೀನಿ. ಆದ್ರೆ ಈ call ಅಲ್ಲಿ ನಾನು order ಅಥವಾ booking confirm ಆಗಿದೆ ಅಂತ ಹೇಳೋಕೆ ಆಗಲ್ಲ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.719,
+  "hangup_count": 1
+}

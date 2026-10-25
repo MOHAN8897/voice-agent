@@ -1,0 +1,73 @@
+{
+  "key": "print-hi-IN-none-3_complete_rejection",
+  "business": "print",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "8e2752e3-b52b-52f5-bdf1-af80ab9a4d0a",
+  "call_id": "7926cc2e-7014-41c6-b784-26e80ab22351",
+  "session_id": "audit-print-hi-IN-none-3_complete_rejection-7fc91f69",
+  "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "नहीं, धन्यवाद। मुझे आपकी service या product नहीं चाहिए। कृपया call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.079,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "7926cc2e-7014-41c6-b784-26e80ab22351",
+      "reason": "not_interested"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "753b5412f23cef470f498a55190675947caed1c4ac52687e8e73f1ebfbc26a86",
+  "prompt_chars": 18082,
+  "opening_seeded": "Namaste, main Meera hoon ClearPrint Studio se. Kya main sahi vyakti se baat kar rahi hoon card printing ki zarooraton par baat karne ke liye?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.079,
+  "hangup_count": 1
+}

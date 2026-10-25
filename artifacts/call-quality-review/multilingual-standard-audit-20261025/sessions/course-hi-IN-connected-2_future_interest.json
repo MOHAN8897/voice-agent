@@ -1,0 +1,189 @@
+{
+  "key": "course-hi-IN-connected-2_future_interest",
+  "business": "course",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "2_future_interest",
+  "agent_id": "7f650d01-7513-548e-bc19-54fdcfc5b5a2",
+  "call_id": "9dfdbe34-2eba-4674-af60-72ae3e9253fe",
+  "session_id": "audit-course-hi-IN-connected-2_future_interest-65b63b44",
+  "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 822,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'अभी जरूरत नहीं है' (not interested now) and 'अगले महीने मुझे दिलचस्पी है' (interested next month), with explicit instruction not to book and not to mark as permanent refusal.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Callback next month for course details\",\n    \"contact_preference\": \"callback\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ठीक है, समझ गई। Course की total fee 4,999 rupees है। अगले महीने के लिए मैं callback arrange करवा दूंगी।\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_preference\",\n        \"key\": \"interest_timeline\",\n        \"value\": \"next_month\"\n      },\n      {\n        \"op\": \"set_preference\",\n        \"key\": \"booking_intent\",\n        \"value\": \"none_now\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'अभी जरूरत नहीं है' (not interested now) and 'अगले महीने मुझे दिलचस्पी है' (interested next month), with explicit instruction not to book and not to mark as permanent refusal.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Callback next month for course details\",\n    \"contact_preference\": \"callback\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ठीक है, समझ गई। Course की total fee 4,999 rupees है। अगले महीने के लिए मैं callback arrange करवा दूंगी।\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_preference\",\n        \"key\": \"interest_timeline\",\n        \"value\": \"next_month\"\n      },\n      {\n        \"op\": \"set_preference\",\n        \"key\": \"booking_intent\",\n        \"value\": \"none_now\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 251,
+        "prompt_tokens": 4068,
+        "total_tokens": 4319,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, समझ गई। Course की total fee 4,999 rupees है। अगले महीने के लिए मैं callback arrange करवा दूंगी।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4068,
+          "output_tokens": 251,
+          "total_tokens": 4319
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "set_preference",
+              "key": "interest_timeline",
+              "value": "next_month"
+            },
+            {
+              "op": "set_preference",
+              "key": "booking_intent",
+              "value": "none_now"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "Caller said 'अभी जरूरत नहीं है' (not interested now) and 'अगले महीने मुझे दिलचस्पी है' (interested next month), with explicit instruction not to book and not to mark as permanent refusal.",
+          "remaining_request": "Callback next month for course details",
+          "contact_preference": "callback",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.875
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 725,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'अभी जरूरत नहीं है' and confirmed future interest without requesting a callback, which maps to not_interested with goal_complete as the script objective (explaining the course)+\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'अभी जरूरत नहीं है' and confirmed future interest without requesting a callback, which maps to not_interested with goal_complete as the script objective (explaining the course)+\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "CancelledError",
+      "finish_reason": null,
+      "elapsed_s": 4.484
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 1,
+      "at": 0.875
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 2,
+      "at": 5.391
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 0.875,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 4.547,
+      "requests": 1,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 5.438,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "9dfdbe34-2eba-4674-af60-72ae3e9253fe",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "875997769b501d7a3f1f36b3f6c6b01fe6d95ac74c81ac24e4a27767f719d2c9",
+  "prompt_chars": 16962,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, mera naam Ananya hai BrightPath Skills se. Kya abhi baat karne ka thoda samay mil sakta hai?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Caller said 'अभी जरूरत नहीं है' (not interested now) and 'अगले महीने मुझे दिलचस्पी है' (interested next month), with explicit instruction not to book and not to mark as permanent refusal.",
+        "remaining_request": "Callback next month for course details",
+        "contact_preference": "callback",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, समझ गई। Course की total fee four thousand nine hundred ninety nine rupees है। अगले महीने के लिए मैं callback arrange करवा दूंगी।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 5.438,
+  "hangup_count": 1
+}

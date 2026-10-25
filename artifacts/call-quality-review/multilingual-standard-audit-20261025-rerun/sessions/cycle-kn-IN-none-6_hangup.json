@@ -1,0 +1,300 @@
+{
+  "key": "cycle-kn-IN-none-6_hangup",
+  "business": "cycle",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "f5a79515-a0d2-5b65-906d-0dad26c62217",
+  "call_id": "7b4c04a3-bbce-43c0-8370-353e9c8a138a",
+  "session_id": "audit-cycle-kn-IN-none-6_hangup-4df4c45b",
+  "compiled_checksum": "d93974aaef8f4b67e05c7d2e8cfc340be9288980a7ef5aabd76478bb6dc212d8",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 172,
+      "sse_content_preview": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ 120 ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_content_tail": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ 120 ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 4052,
+        "total_tokens": 4097,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ 120 ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4052,
+          "output_tokens": 45,
+          "total_tokens": 4097
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.562
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 206,
+      "sse_content_preview": "Basic service ನಾಲ್ಕು ನೂರ ತೊಂಬತ್ತೊಂಬತ್ತು ರೂಪಾಯಿ ಮತ್ತು puncture repair ನೂರ ಇಪ್ಪತ್ತು ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ, ಅದು ಇದರಲ್ಲಿ ಸೇರಿಲ್ಲ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_content_tail": "Basic service ನಾಲ್ಕು ನೂರ ತೊಂಬತ್ತೊಂಬತ್ತು ರೂಪಾಯಿ ಮತ್ತು puncture repair ನೂರ ಇಪ್ಪತ್ತು ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ, ಅದು ಇದರಲ್ಲಿ ಸೇರಿಲ್ಲ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 51,
+        "prompt_tokens": 4108,
+        "total_tokens": 4159,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Basic service ನಾಲ್ಕು ನೂರ ತೊಂಬತ್ತೊಂಬತ್ತು ರೂಪಾಯಿ ಮತ್ತು puncture repair ನೂರ ಇಪ್ಪತ್ತು ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ, ಅದು ಇದರಲ್ಲಿ ಸೇರಿಲ್ಲ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4108,
+          "output_tokens": 51,
+          "total_tokens": 4159
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.546
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 87,
+      "sse_content_preview": "ಸರಿ, ನಿಮಗೆ ಯಾವ service ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ, basic service ಬೇಕಾ ಅಥವಾ puncture repair ಬೇಕಾ?",
+      "sse_content_tail": "ಸರಿ, ನಿಮಗೆ ಯಾವ service ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ, basic service ಬೇಕಾ ಅಥವಾ puncture repair ಬೇಕಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 23,
+        "prompt_tokens": 4163,
+        "total_tokens": 4186,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಿಮಗೆ ಯಾವ service ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ, basic service ಬೇಕಾ ಅಥವಾ puncture repair ಬೇಕಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4163,
+          "output_tokens": 23,
+          "total_tokens": 4186
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.485
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "turn": 1,
+      "at": 2.063
+    },
+    {
+      "text": "Basic service ನಾಲ್ಕು ನೂರ ತೊಂಬತ್ತೊಂಬತ್ತು ರೂಪಾಯಿ ಮತ್ತು puncture repair ನೂರ ಇಪ್ಪತ್ತು ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ, ಅದು ಇದರಲ್ಲಿ ಸೇರಿಲ್ಲ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "turn": 2,
+      "at": 4.281
+    },
+    {
+      "text": "ಸರಿ, ನಿಮಗೆ ಯಾವ service ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ, basic service ಬೇಕಾ ಅಥವಾ puncture repair ಬೇಕಾ?",
+      "turn": 3,
+      "at": 6.438
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 4,
+      "at": 6.5
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.",
+      "spoken": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "elapsed_s": 2.063,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರಿಸಿ: ಸೈಕಲ್ basic service ಮತ್ತು puncture repair ಬೆಲೆ ಎಷ್ಟು? Parts ಕೂಡ ಇದರಲ್ಲಿ ಸೇರಿವೆಯಾ?",
+      "spoken": "Basic service ನಾಲ್ಕು ನೂರ ತೊಂಬತ್ತೊಂಬತ್ತು ರೂಪಾಯಿ ಮತ್ತು puncture repair ನೂರ ಇಪ್ಪತ್ತು ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ, ಅದು ಇದರಲ್ಲಿ ಸೇರಿಲ್ಲ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "elapsed_s": 2.203,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ಸರಿ, ಧನ್ಯವಾದಗಳು.",
+      "spoken": "ಸರಿ, ನಿಮಗೆ ಯಾವ service ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ, basic service ಬೇಕಾ ಅಥವಾ puncture repair ಬೇಕಾ?",
+      "elapsed_s": 2.141,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 6.547,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "7b4c04a3-bbce-43c0-8370-353e9c8a138a",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "e790ebeb19697467032eeb0092349c7a61e88a40ed26e7d52c70d9da8469ef9b",
+  "prompt_chars": 16746,
+  "opening_seeded": "ನಮಸ್ಕಾರ, ನಾನು ಸಿಟಿ ಸೈಕಲ್ ರಿಪೇರ್ಸ್ ನಿಂದ ಅರ್ಜುನ್ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ನಾವು ಸೈಕಲ್ ರಿಪೇರ್ ಮತ್ತು ಸೇವೆಗಳ ಬಗ್ಗೆ ಮಾಹಿತಿ ನೀಡುತ್ತಿದ್ದೇವೆ. ಈಗ ಮಾತನಾಡಲು ನಿಮಗೆ ಸಮಯವಿದೆಯೇ?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "Basic service ನಾಲ್ಕು ನೂರ ತೊಂಬತ್ತೊಂಬತ್ತು ರೂಪಾಯಿ ಮತ್ತು puncture repair ನೂರ ಇಪ್ಪತ್ತು ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ, ಅದು ಇದರಲ್ಲಿ ಸೇರಿಲ್ಲ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "ಸರಿ, ನಿಮಗೆ ಯಾವ service ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ, basic service ಬೇಕಾ ಅಥವಾ puncture repair ಬೇಕಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.563,
+  "hangup_count": 1,
+  "source_signature": "f22325fa3f608c0524c8afc9a14908696812152c9af5311fda442ff7a042a834"
+}

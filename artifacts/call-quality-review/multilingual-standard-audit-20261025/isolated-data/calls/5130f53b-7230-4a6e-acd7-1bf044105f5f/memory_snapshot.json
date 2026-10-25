@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "caller_interest": "interested",
+    "caller_name": "Audit Customer",
+    "caller_email": "audit.customer@example.invalid",
+    "preferred_time": "tomorrow 3 PM"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "user: ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.\nassistant: ಖಂಡಿತ, ಹೇಳಿ.\nuser: ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: Course final fee, ಅವಧಿ ಮತ್ತು class timings ಏನು? Job guarantee ಕೊಡುತ್ತೀರಾ?\nassistant: ಖಂಡಿತ, ಹೇಳಿ.\nuser: ನನಗೆ job guarantee ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ Python ಕಲಿಯಲು ಆಸಕ್ತಿ ಇದೆ. Course ವಿವರಿಸುತ್ತೀರಾ?\nassistant: ಖಂಡಿತ, ಹೇಳಿ."
+}

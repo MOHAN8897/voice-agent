@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit",
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ng prices, minimum seats, and is a visit already confirmed?\nassistant: Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No visit is confirmed yet, and I cannot save anything externally right now.\nuser: I do not need sofa cleaning, but I want kitchen cleaning. Can you explain it?\nassistant: Kitchen cleaning is one thousand five hundred ninety nine rupees total. We work Monday to Saturday, 9 AM to 6 PM. Would you like me to submit an enquiry for team review with your name, locality and consent?"
+}

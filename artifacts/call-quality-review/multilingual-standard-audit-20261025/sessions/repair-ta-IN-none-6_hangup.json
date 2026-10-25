@@ -1,0 +1,418 @@
+{
+  "key": "repair-ta-IN-none-6_hangup",
+  "business": "repair",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "9d3b6dc1-199d-599a-a011-e6e0e5358e51",
+  "call_id": "efdee6b4-b21e-41da-8a3d-f3470fee6542",
+  "session_id": "audit-repair-ta-IN-none-6_hangup-7e372768",
+  "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 738,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"goal_complete\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"புனேவில் எங்க SafeFix Home Service செயல்படுது. AC basic servicing 699 ரூபாய் மற்றும் fridge inspection 399 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டா உங்க ஒப்புதலுக்குப் பிறகே extra கட்டணம் வரும். இன்ஸ்பெக்‌ஷனுக்கு முன்னாடி exact repair quote சொல்ல முடியாது. திங்கள் முதல் சனி வரை, 9\" \n\n, \n\n\"memory_update\": \n\n{\"operations\": \n\n[\n\n{\"op\": \"append_context\", \n\n\"key\": \"oутбук\", \n\n\"value\": \"புனேவில் எங்க SafeFix Home Service செயல்படுது. AC basic servicing 699 ரூபாய் மற்றும் fridge inspection 399 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டாங்கற\"}]}\n\n}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"goal_complete\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"புனேவில் எங்க SafeFix Home Service செயல்படுது. AC basic servicing 699 ரூபாய் மற்றும் fridge inspection 399 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டா உங்க ஒப்புதலுக்குப் பிறகே extra கட்டணம் வரும். இன்ஸ்பெக்‌ஷனுக்கு முன்னாடி exact repair quote சொல்ல முடியாது. திங்கள் முதல் சனி வரை, 9\" \n\n, \n\n\"memory_update\": \n\n{\"operations\": \n\n[\n\n{\"op\": \"append_context\", \n\n\"key\": \"oутбук\", \n\n\"value\": \"புனேவில் எங்க SafeFix Home Service செயல்படுது. AC basic servicing 699 ரூபாய் மற்றும் fridge inspection 399 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டாங்கற\"}]}\n\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 252,
+        "prompt_tokens": 4014,
+        "total_tokens": 4266,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "புனேவில் எங்க SafeFix Home Service செயல்படுது. AC basic servicing 699 ரூபாய் மற்றும் fridge inspection 399 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டா உங்க ஒப்புதலுக்குப் பிறகே extra கட்டணம் வரும். இன்ஸ்பெக்‌ஷனுக்கு முன்னாடி exact repair quote சொல்ல முடியாது. திங்கள் முதல் சனி வரை, 9",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4014,
+          "output_tokens": 252,
+          "total_tokens": 4266
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "append_context",
+              "key": "oутбук",
+              "value": "புனேவில் எங்க SafeFix Home Service செயல்படுது. AC basic servicing 699 ரூபாய் மற்றும் fridge inspection 399 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டாங்கற"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "goal_complete",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.406
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 674,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller explicitly said 'இப்போ எதையும் book அல்லது save செய்யாதீங்க' and only asked for pricing info, indicating goal is information-only and no next step should be forced.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"}\n\n, \n\"order_claimed\": false,\n\"spoken_response\": \"AC basic servicing 699 ரூபாய் மற்றும் fridge inspection 399 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டால் வாடிக்கையாளரின் ஒப்புதலுக்குப் பிறகுதான் கூடுதல் கட்டணம் வரும். இன்ஸ்பெக்ஷனுக்கு முன்னாடி உறுதியான ரிப்பேர் செலவு சொல்ல முடியாது. உங்களுக்கு வேறு ஏதாவது சந்தேகம் உள்ளதா?\",\n\"memory_update\": {\"operations\": []}\n}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller explicitly said 'இப்போ எதையும் book அல்லது save செய்யாதீங்க' and only asked for pricing info, indicating goal is information-only and no next step should be forced.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"}\n\n, \n\"order_claimed\": false,\n\"spoken_response\": \"AC basic servicing 699 ரூபாய் மற்றும் fridge inspection 399 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டால் வாடிக்கையாளரின் ஒப்புதலுக்குப் பிறகுதான் கூடுதல் கட்டணம் வரும். இன்ஸ்பெக்ஷனுக்கு முன்னாடி உறுதியான ரிப்பேர் செலவு சொல்ல முடியாது. உங்களுக்கு வேறு ஏதாவது சந்தேகம் உள்ளதா?\",\n\"memory_update\": {\"operations\": []}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 193,
+        "prompt_tokens": 4103,
+        "total_tokens": 4296,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "AC basic servicing 699 ரூபாய் மற்றும் fridge inspection 399 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டால் வாடிக்கையாளரின் ஒப்புதலுக்குப் பிறகுதான் கூடுதல் கட்டணம் வரும். இன்ஸ்பெக்ஷனுக்கு முன்னாடி உறுதியான ரிப்பேர் செலவு சொல்ல முடியாது. உங்களுக்கு வேறு ஏதாவது சந்தேகம் உள்ளதா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4103,
+          "output_tokens": 193,
+          "total_tokens": 4296
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said 'இப்போ எதையும் book அல்லது save செய்யாதீங்க' and only asked for pricing info, indicating goal is information-only and no next step should be forced.",
+          "remaining_request": "None",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.968
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 399,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"சரி, நன்றி.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"சரிங்க. SafeFix Home Service-ஐ தொடர்பு கொண்டமைக்கு நன்றி. உங்க நேரத்திற்கு நன்றி. வணக்கம்.\"\n\n, \"memory_update\": {\"operations\": [{\"op\": \"set_preference\", \"key\": \"no_booking_or_saving\", \"value\": \"true\"}]}}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"சரி, நன்றி.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"சரிங்க. SafeFix Home Service-ஐ தொடர்பு கொண்டமைக்கு நன்றி. உங்க நேரத்திற்கு நன்றி. வணக்கம்.\"\n\n, \"memory_update\": {\"operations\": [{\"op\": \"set_preference\", \"key\": \"no_booking_or_saving\", \"value\": \"true\"}]}}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 140,
+        "prompt_tokens": 4128,
+        "total_tokens": 4268,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. SafeFix Home Service-ஐ தொடர்பு கொண்டமைக்கு நன்றி. உங்க நேரத்திற்கு நன்றி. வணக்கம்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4128,
+          "output_tokens": 140,
+          "total_tokens": 4268
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "set_preference",
+              "key": "no_booking_or_saving",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "சரி, நன்றி.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.859
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 12,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 421,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.'\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false\n,\n  \"spoken_response\": \"சரிங்க, புரிஞ்சுகிட்டேன். SafeFix Home Service-ஐ தொடர்பு கொண்டமைக்கு நன்றி.\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.'\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false\n,\n  \"spoken_response\": \"சரிங்க, புரிஞ்சுகிட்டேன். SafeFix Home Service-ஐ தொடர்பு கொண்டமைக்கு நன்றி.\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 152,
+        "prompt_tokens": 4292,
+        "total_tokens": 4444,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, புரிஞ்சுகிட்டேன். SafeFix Home Service-ஐ தொடர்பு கொண்டமைக்கு நன்றி.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4292,
+          "output_tokens": 152,
+          "total_tokens": 4444
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said 'வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.'",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.719
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 1,
+      "at": 1.406
+    },
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 2,
+      "at": 2.39
+    },
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 3,
+      "at": 3.25
+    },
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 4,
+      "at": 3.984
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 1.406,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: AC servicing, fridge inspection விலை என்ன? Replacement parts அதில் சேருமா?",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 0.968,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "சரி, நன்றி.",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 0.844,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 0.719,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "9acd91cf0e1465eb66c4dec64fa2f01c3bdfdf10674492cc7b0cb35de5382043",
+  "prompt_chars": 17410,
+  "opening_seeded": "வணக்கம். நான் SafeFix Home Service நிறுவனத்தின் ரவி பேசுகிறேன். உங்களுக்கு வீட்டு உபகரண சேவைகள் மற்றும் விலை விவரங்கள் பற்றி தகவல் தரலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "goal_complete",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "புனேவில் எங்க SafeFix Home Service செயல்படுது. AC basic servicing six hundred ninety nine ரூபாய் மற்றும் fridge inspection three hundred ninety nine ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டா உங்க ஒப்புதலுக்குப் பிறகே extra கட்டணம் வரும். இன்ஸ்பெக்‌ஷனுக்கு முன்னாடி exact repair quote சொல்ல முடியாது. திங்கள் முதல் சனி வரை, 9.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said 'இப்போ எதையும் book அல்லது save செய்யாதீங்க' and only asked for pricing info, indicating goal is information-only and no next step should be forced.",
+        "remaining_request": "None",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "AC basic servicing six hundred ninety nine ரூபாய் மற்றும் fridge inspection three hundred ninety nine ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டால் வாடிக்கையாளரின் ஒப்புதலுக்குப் பிறகுதான் கூடுதல் கட்டணம் வரும். இன்ஸ்பெக்ஷனுக்கு முன்னாடி உறுதியான ரிப்பேர் செலவு சொல்ல முடியாது. உங்களுக்கு வேறு ஏதாவது சந்தேகம் உள்ளதா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "சரி, நன்றி.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க. SafeFix Home Service-ஐ தொடர்பு கொண்டமைக்கு நன்றி. உங்க நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said 'வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.'",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, புரிஞ்சுகிட்டேன். SafeFix Home Service-ஐ தொடர்பு கொண்டமைக்கு நன்றி.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.0,
+  "hangup_count": 0
+}

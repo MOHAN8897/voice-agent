@@ -1,0 +1,289 @@
+{
+  "key": "course-ta-IN-none-2_future_interest",
+  "business": "course",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "e57df543-81c3-57b5-b70c-4ab77a574e11",
+  "call_id": "f4a2f70c-c970-437f-afef-6cb217ac7842",
+  "session_id": "audit-course-ta-IN-none-2_future_interest-9a90900e",
+  "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 788,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller said 'இப்போ தேவையில்லை' and explicitly instructed 'எதையும் book செய்யாதீங்க', indicating a clear not_interested with no immediate next step.\", \"reason\": \"not_interested\", \"decision\": \"close\", \"remaining_request\": \"Interested next month; wants current fee.\", \"contact_preference\": \"do_not_call\"},\n\n\"order_claimed\": false, \"spoken_response\": \"சரிங்க, புரியுது. மொத்த கட்டணம் 4999 ரூபாய் மட்டுமே. அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப thanks. உங்களுக்கு வேற ஏதாவது தகவல் வேணும்னா சொல்லுங்க.\"\n\n, \"memory_update\": {\"operations\": [{\"op\": \"set_preference\", \"key\": \"interested_next_month\", \"value\": \"true\"} , {\"op\": \"set_preference\", \"key\": \"current_fee\", \"value\": \"4999\"} , {\"op\": \"set_preference\", \"key\": \"booking_status\", \"value\": \"declined\"} ]} }",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller said 'இப்போ தேவையில்லை' and explicitly instructed 'எதையும் book செய்யாதீங்க', indicating a clear not_interested with no immediate next step.\", \"reason\": \"not_interested\", \"decision\": \"close\", \"remaining_request\": \"Interested next month; wants current fee.\", \"contact_preference\": \"do_not_call\"},\n\n\"order_claimed\": false, \"spoken_response\": \"சரிங்க, புரியுது. மொத்த கட்டணம் 4999 ரூபாய் மட்டுமே. அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப thanks. உங்களுக்கு வேற ஏதாவது தகவல் வேணும்னா சொல்லுங்க.\"\n\n, \"memory_update\": {\"operations\": [{\"op\": \"set_preference\", \"key\": \"interested_next_month\", \"value\": \"true\"} , {\"op\": \"set_preference\", \"key\": \"current_fee\", \"value\": \"4999\"} , {\"op\": \"set_preference\", \"key\": \"booking_status\", \"value\": \"declined\"} ]} }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 271,
+        "prompt_tokens": 4099,
+        "total_tokens": 4370,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, புரியுது. மொத்த கட்டணம் 4999 ரூபாய் மட்டுமே. அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப thanks. உங்களுக்கு வேற ஏதாவது தகவல் வேணும்னா சொல்லுங்க.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4099,
+          "output_tokens": 271,
+          "total_tokens": 4370
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "set_preference",
+              "key": "interested_next_month",
+              "value": "true"
+            },
+            {
+              "op": "set_preference",
+              "key": "current_fee",
+              "value": "4999"
+            },
+            {
+              "op": "set_preference",
+              "key": "booking_status",
+              "value": "declined"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "Caller said 'இப்போ தேவையில்லை' and explicitly instructed 'எதையும் book செய்யாதீங்க', indicating a clear not_interested with no immediate next step.",
+          "remaining_request": "Interested next month; wants current fee.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.313
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 759,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'இப்போ நான் பிறகு call செய்யச் சொல்லவில்லை' and asked what else to know, indicating not_interested with future interest but no immediate next step.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None; caller declined further contact now.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"order_claimed\": false,\n\"spoken_response\": \"சரிங்க, புரியுது. அடுத்த மாதம் உங்களுக்கு interest இருக்குன்னு சொன்னீங்க. இந்த course பத்தின details எல்லாம் share பண்ணிட்டேன். BrightPath Skills-ஐ தொடர்பு கொண்டதற்கு நன்றி. வணக்கம்.\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"interested_next_month\",\n      \"value\": \"true\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'இப்போ நான் பிறகு call செய்யச் சொல்லவில்லை' and asked what else to know, indicating not_interested with future interest but no immediate next step.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None; caller declined further contact now.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"order_claimed\": false,\n\"spoken_response\": \"சரிங்க, புரியுது. அடுத்த மாதம் உங்களுக்கு interest இருக்குன்னு சொன்னீங்க. இந்த course பத்தின details எல்லாம் share பண்ணிட்டேன். BrightPath Skills-ஐ தொடர்பு கொண்டதற்கு நன்றி. வணக்கம்.\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"interested_next_month\",\n      \"value\": \"true\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 225,
+        "prompt_tokens": 4154,
+        "total_tokens": 4379,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, புரியுது. அடுத்த மாதம் உங்களுக்கு interest இருக்குன்னு சொன்னீங்க. இந்த course பத்தின details எல்லாம் share பண்ணிட்டேன். BrightPath Skills-ஐ தொடர்பு கொண்டதற்கு நன்றி. வணக்கம்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4154,
+          "output_tokens": 225,
+          "total_tokens": 4379
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested_next_month",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "Caller explicitly said 'இப்போ நான் பிறகு call செய்யச் சொல்லவில்லை' and asked what else to know, indicating not_interested with future interest but no immediate next step.",
+          "remaining_request": "None; caller declined further contact now.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.093
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1297,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"வணக்கம், call முடிச்சிடுங்க.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r",
+      "sse_content_tail": "\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r",
+      "error_type": "CancelledError",
+      "finish_reason": null,
+      "elapsed_s": 4.485
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 1,
+      "at": 1.312
+    },
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 2,
+      "at": 2.437
+    },
+    {
+      "text": "மன்னிக்கவும், எங்களுக்கு ஒரு தொழில்நுட்பச் சிக்கல் உள்ளது. தயவுசெய்து எங்களை மீண்டும் அழைக்கவும். நன்றி.",
+      "turn": 3,
+      "at": 6.969
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "இப்போ தேவையில்லை, ஆனால் அடுத்த மாதம் எனக்கு ஆர்வம் இருக்கு. தற்போதைய விலையைச் சொல்லுங்க. எதையும் book செய்யாதீங்க; நான் நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க.",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 1.312,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "ஆமாம், எதிர்காலத்தில் எனக்கு ஆர்வம் இருக்கு. இப்போ நான் பிறகு call செய்யச் சொல்லவில்லை. இந்த service பற்றி இன்னும் என்ன தெரிஞ்சுக்கணும்?",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 1.109,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "மன்னிக்கவும், எங்களுக்கு ஒரு தொழில்நுட்பச் சிக்கல் உள்ளது. தயவுசெய்து எங்களை மீண்டும் அழைக்கவும். நன்றி.",
+      "elapsed_s": 4.546,
+      "requests": 1,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 7.015,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "f4a2f70c-c970-437f-afef-6cb217ac7842",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "c16d008ed6b3856a414c2aab5d91c9091c3f85b1443e55e37e0f33e6912859d0",
+  "prompt_chars": 17545,
+  "opening_seeded": "வணக்கம், நான் பிரைட் பாத் ஸ்கில்ஸ் நிறுவனத்தில் இருந்து அனன்யா பேசுகிறேன். வயது 18 மற்றும் அதற்கு மேற்பட்டவர்களுக்கான எங்கள் 6 வார ஆன்லைன் பைதான் தொடக்க நிலை வகுப்பைப் பற்றி பேசலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Caller said 'இப்போ தேவையில்லை' and explicitly instructed 'எதையும் book செய்யாதீங்க', indicating a clear not_interested with no immediate next step.",
+        "remaining_request": "Interested next month; wants current fee.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, புரியுது. மொத்த கட்டணம் four thousand nine hundred ninety nine ரூபாய் மட்டுமே. அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப thanks. உங்களுக்கு வேற ஏதாவது தகவல் வேணும்னா சொல்லுங்க.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Caller explicitly said 'இப்போ நான் பிறகு call செய்யச் சொல்லவில்லை' and asked what else to know, indicating not_interested with future interest but no immediate next step.",
+        "remaining_request": "None; caller declined further contact now.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, புரியுது. அடுத்த மாதம் உங்களுக்கு interest இருக்குன்னு சொன்னீங்க. இந்த course பத்தின details எல்லாம் share பண்ணிட்டேன். BrightPath Skills-ஐ தொடர்பு கொண்டதற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 7.015,
+  "hangup_count": 1
+}

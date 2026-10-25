@@ -1,0 +1,150 @@
+{
+  "key": "cleaning-en-IN-none-1b_direct_tool_request",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "4bf37ebd-fbc9-5c3f-9218-8020b68ebb68",
+  "call_id": "6b86040a-6717-4e25-bc8e-0418cf3705e1",
+  "session_id": "audit-cleaning-en-IN-none-1b_direct_tool_request-d1e92de2",
+  "compiled_checksum": "2b7e6a316d693379d21e9c43e155493c13c45c6409a8f5aa911f12851d3f9e36",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 284,
+      "sse_content_preview": "Thank you for sharing that, Audit Customer. I’ve noted your kitchen cleaning request in Baner for tomorrow at 3 PM. I cannot save this externally or confirm a visit, but I can note the request within this call. Would you like me to proceed with submitting the enquiry for team review?",
+      "sse_content_tail": "Thank you for sharing that, Audit Customer. I’ve noted your kitchen cleaning request in Baner for tomorrow at 3 PM. I cannot save this externally or confirm a visit, but I can note the request within this call. Would you like me to proceed with submitting the enquiry for team review?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4329,
+        "total_tokens": 4391,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Thank you for sharing that, Audit Customer. I’ve noted your kitchen cleaning request in Baner for tomorrow at 3 PM. I cannot save this externally or confirm a visit, but I can note the request within this call. Would you like me to proceed with submitting the enquiry for team review?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4329,
+          "output_tokens": 62,
+          "total_tokens": 4391
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.765
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "I can keep a note during this call, but I cannot send this request to the team or promise a follow-up.",
+      "turn": 1,
+      "at": 1.891
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 2,
+      "at": 1.906
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.",
+      "spoken": "I can keep a note during this call, but I cannot send this request to the team or promise a follow-up.",
+      "elapsed_s": 1.891,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.079,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 1.985,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "6b86040a-6717-4e25-bc8e-0418cf3705e1",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "d149385fc706a512129f88d7877e49417b93dd56789f7d4d317178a9a381a1dc",
+  "prompt_chars": 18158,
+  "opening_seeded": "Hello, this is Nila calling on behalf of FreshNest Cleaning. We provide professional cleaning services in Pune only. Would you like to hear about our sofa or kitchen cleaning services?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Thank you for sharing that, Audit Customer. I’ve noted your kitchen cleaning request in Baner for tomorrow at 3 PM. I cannot save this externally or confirm a visit, but I can note the request within this call.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 1.985,
+  "hangup_count": 1,
+  "source_signature": "f95691c1be0b78b8daf4f3542b355e04f5d7c43f2dd1b6eefab36c2f223f4cfe"
+}

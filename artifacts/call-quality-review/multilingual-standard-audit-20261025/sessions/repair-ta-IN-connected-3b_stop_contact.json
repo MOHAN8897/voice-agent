@@ -1,0 +1,145 @@
+{
+  "key": "repair-ta-IN-connected-3b_stop_contact",
+  "business": "repair",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "3b_stop_contact",
+  "agent_id": "9d3b6dc1-199d-599a-a011-e6e0e5358e51",
+  "call_id": "4c41e55e-c404-4d32-97bb-79d92b1e6997",
+  "session_id": "audit-repair-ta-IN-connected-3b_stop_contact-fe8e7c1d",
+  "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 643,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"order_claimed\": false,\n  \"spoken_response\": \"சரிங்க, இனிமேல் உங்களை contact பண்ண மாட்டோம். உங்க நேரத்திற்கு நன்றி. வணக்கம்.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"do_not_call\",\n        \"value\": \"Caller explicitly requested to stop further calls and remove name from calling list.\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"order_claimed\": false,\n  \"spoken_response\": \"சரிங்க, இனிமேல் உங்களை contact பண்ண மாட்டோம். உங்க நேரத்திற்கு நன்றி. வணக்கம்.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"do_not_call\",\n        \"value\": \"Caller explicitly requested to stop further calls and remove name from calling list.\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 215,
+        "prompt_tokens": 4155,
+        "total_tokens": 4370,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, இனிமேல் உங்களை contact பண்ண மாட்டோம். உங்க நேரத்திற்கு நன்றி. வணக்கம்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4155,
+          "output_tokens": 215,
+          "total_tokens": 4370
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "do_not_call",
+              "value": "Caller explicitly requested to stop further calls and remove name from calling list."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "firm_refusal",
+          "evidence": "எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.797
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 1,
+      "at": 0.781
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.828,
+      "requests": 1,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.828,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "4c41e55e-c404-4d32-97bb-79d92b1e6997",
+      "reason": "not_interested"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "9acd91cf0e1465eb66c4dec64fa2f01c3bdfdf10674492cc7b0cb35de5382043",
+  "prompt_chars": 17410,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "வணக்கம். நான் SafeFix Home Service நிறுவனத்தின் ரவி பேசுகிறேன். உங்களுக்கு வீட்டு உபகரண சேவைகள் மற்றும் விலை விவரங்கள் பற்றி தகவல் தரலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, இனிமேல் உங்களை contact பண்ண மாட்டோம். உங்க நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.843,
+  "hangup_count": 1
+}

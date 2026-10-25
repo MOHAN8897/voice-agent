@@ -1,0 +1,75 @@
+{
+  "key": "repair-hi-IN-connected-5_diversion_danger",
+  "business": "repair",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "5_diversion_danger",
+  "agent_id": "25beedf0-4160-5e75-9a13-0bb19345ff11",
+  "call_id": "98f8cd20-0229-40be-8e2d-0aa2d898fd0b",
+  "session_id": "audit-repair-hi-IN-connected-5_diversion_danger-5d9299ec",
+  "compiled_checksum": "30004813b705763fee84f783301f109432b20e0f237e3a08bc5b74b2194fb737",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "error_type": "RuntimeError",
+      "finish_reason": null,
+      "elapsed_s": 0.391
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "क्षमा करें, हमें एक तकनीकी समस्या आ रही है। कृपया हमें वापस कॉल करें। धन्यवाद।",
+      "turn": 1,
+      "at": 1.25
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "divert",
+      "user": "पहले बताओ अगला cricket match कौन जीतेगा? और आपका business असल में क्या देता है?",
+      "spoken": "क्षमा करें, हमें एक तकनीकी समस्या आ रही है। कृपया हमें वापस कॉल करें। धन्यवाद।",
+      "elapsed_s": 1.297,
+      "requests": 1,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 1.297,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "98f8cd20-0229-40be-8e2d-0aa2d898fd0b",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "90bd6a4f8ae0798b76272bede0e44a788bc94a372888bf0fee764a8aeed2a4c9",
+  "prompt_chars": 17918,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, main Ravi hoon SafeFix Home Service se. Kya aapko Pune mein kisi home appliance service ke baare mein jankari chahiye?",
+  "status": "completed",
+  "elapsed_s": 1.297,
+  "hangup_count": 1
+}

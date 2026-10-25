@@ -1,0 +1,149 @@
+{
+  "key": "cycle-hi-IN-none-1b_direct_tool_request",
+  "business": "cycle",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "4c50c01d-4841-5601-89e5-aa479dd8477a",
+  "call_id": "ea25b5c1-f9c1-43f3-99df-f226dec81f0f",
+  "session_id": "audit-cycle-hi-IN-none-1b_direct_tool_request-844a8b37",
+  "compiled_checksum": "921981ac049b465cfed8fd4fbd9e87776fd876102107480fdd226572ffe6bd46",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 159,
+      "sse_content_preview": "ठीक है, puncture repair का charge 120 rupees है। Parts extra लगेंगे, वो भी आपकी approval के बाद। Enquiry save करने से पहले, क्या आप अपना पूरा नाम बता सकते हैं?",
+      "sse_content_tail": "ठीक है, puncture repair का charge 120 rupees है। Parts extra लगेंगे, वो भी आपकी approval के बाद। Enquiry save करने से पहले, क्या आप अपना पूरा नाम बता सकते हैं?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 41,
+        "prompt_tokens": 4021,
+        "total_tokens": 4062,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, puncture repair का charge 120 rupees है। Parts extra लगेंगे, वो भी आपकी approval के बाद। Enquiry save करने से पहले, क्या आप अपना पूरा नाम बता सकते हैं?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4021,
+          "output_tokens": 41,
+          "total_tokens": 4062
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.86
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ठीक है, puncture repair का charge one hundred twenty rupees है। Parts extra लगेंगे, वो भी आपकी approval के बाद। Enquiry save करने से पहले, क्या आप अपना पूरा नाम बता सकते हैं?",
+      "turn": 1,
+      "at": 2.39
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 2,
+      "at": 2.406
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want puncture repair in Adyar, Chennai; preferred review time tomorrow at 3pm. यह enquiry team review के लिए submit कीजिए। मेरी सहमति है। Booking या order confirm मत बताइए।",
+      "spoken": "ठीक है, puncture repair का charge one hundred twenty rupees है। Parts extra लगेंगे, वो भी आपकी approval के बाद। Enquiry save करने से पहले, क्या आप अपना पूरा नाम बता सकते हैं?",
+      "elapsed_s": 2.375,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.453,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "ea25b5c1-f9c1-43f3-99df-f226dec81f0f",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "982360d7961ddbbdbacd56b5cb0a0cb48e1fc51f950e6f82c3a77403ce5289e2",
+  "prompt_chars": 16795,
+  "opening_seeded": "Namaste, main Arjun hoon CityCycle Repairs se. Kya main abhi aap se bicycle repair ke baare mein baat kar sakta hoon?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ठीक है, puncture repair का charge one hundred twenty rupees है। Parts extra लगेंगे, वो भी आपकी approval के बाद। Enquiry save करने से पहले, क्या आप अपना पूरा नाम बता सकते हैं?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "lead_details_missing"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.453,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

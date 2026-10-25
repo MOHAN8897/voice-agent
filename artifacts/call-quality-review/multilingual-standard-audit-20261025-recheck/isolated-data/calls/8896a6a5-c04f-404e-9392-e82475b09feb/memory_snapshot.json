@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: Course final fee, duration, class timings ఏమిటి? Job guarantee ఇస్తారా?\nassistant: సరేనండి, మా కోర్సు ఆరు వారాల పాటు ఉంటుంది, సోమవారం నుండి శుక్రవారం వరకు రాత్రి ఏడు నుండి ఎనిమిది గంటల మధ్య ఆన్‌లైన్‌లో జరుగుతుంది. మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. ఇందులో ఎలాంటి ప్లేస్‌మెంట్ లేదా ఉద్యోగ హామీ ఉండదు.\nuser: నాకు job guarantee అవసరం లేదు, కానీ Python నేర్చుకోవాలని ఆసక్తి ఉంది. Course వివరించగలరా?\nassistant: సరేనండి, మీకు ఆసక్తి ఉన్నందుకు సంతోషం. మా కోర్సు గురించి మీకు కావాల్సినవన్నీ చెప్పాను."
+}

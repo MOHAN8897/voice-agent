@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।", "ts": "2026-10-25T17:09:24.211917Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ठीक है, कोई बात नहीं। Total fee four thousand nine hundred ninety nine rupees है। Exact next batch date और vacancies की जानकारी मेरे पास abhi uplabdh नहीं है। क्या मैं आपके लिए demo ya counselling session note कर लूँ जब आप तैयार हों?", "ts": "2026-10-25T17:09:27.743872Z", "brain_latency_ms": 3081}
+{"seq": 3, "role": "user", "text": "हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?", "ts": "2026-10-25T17:09:27.772049Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "यह course 6 weeks का online program है, weekdays में शाम 7 से 8 baje तक चलता है, और यह 18 saal ya usse adhik umr ke liye hai. Kya aapko pehle se coding ka koi anubhav hai?", "ts": "2026-10-25T17:09:30.760280Z", "brain_latency_ms": 2796}
+{"seq": 5, "role": "user", "text": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।", "ts": "2026-10-25T17:09:31.151124Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-25T17:09:31.163570Z", "brain_latency_ms": 2}

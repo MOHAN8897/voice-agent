@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:23:04.787610Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:23:05.778655Z", "source": "model", "operations": [{"op": "set_fact", "key": "pricing_discussed", "value": "Visiting cards Rs 25/pc, min 100; wedding invitations custom quote; delivery Pune in 5 working days post artwork approval; COD accepted."}], "applied": true, "validation_errors": []}

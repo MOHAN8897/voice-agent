@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "sistant: I cannot help with that. I am here to assist with printed cards and invitations from ClearPrint Studio. Is there something else I can help you with today?\nuser: Fine, leave that topic. Please answer the original business question about price and conditions.\nassistant: Our visiting cards are twenty five rupees per card with a minimum order of one hundred cards. For wedding invitations, the price depends on design and quantity, so there is no fixed rate.\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

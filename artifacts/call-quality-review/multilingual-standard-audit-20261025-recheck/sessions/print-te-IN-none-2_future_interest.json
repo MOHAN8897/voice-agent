@@ -1,0 +1,308 @@
+{
+  "key": "print-te-IN-none-2_future_interest",
+  "business": "print",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "f3af70e9-b056-5d3b-8e97-da7174791478",
+  "call_id": "42ef9ec2-eb61-473e-a8b4-7e43132fab39",
+  "session_id": "audit-print-te-IN-none-2_future_interest-ad14c8c6",
+  "compiled_checksum": "793858a9dada51bec19ca20371c431417f12615af0fb1f99849b6cde6ad39249",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 905,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Current not needed, interested next month, do not book anything, do not treat as permanent decline.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Interested next month, do not book\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"సరేనండి, అర్థమైంది. మీకు ఎప్పుడు కావాలన్నా మమ్మల్ని సంప్రదించవచ్చు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest_timeline\",\n        \"value\": \"Interested next month, not now\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"booking_consent\",\n        \"value\": \"Declined booking\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"decline_type\",\n        \"value\": \"Soft decline / not now\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "end_call\": {\n    \"evidence\": \"Current not needed, interested next month, do not book anything, do not treat as permanent decline.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Interested next month, do not book\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"సరేనండి, అర్థమైంది. మీకు ఎప్పుడు కావాలన్నా మమ్మల్ని సంప్రదించవచ్చు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest_timeline\",\n        \"value\": \"Interested next month, not now\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"booking_consent\",\n        \"value\": \"Declined booking\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"decline_type\",\n        \"value\": \"Soft decline / not now\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 288,
+        "prompt_tokens": 4331,
+        "total_tokens": 4619,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, అర్థమైంది. మీకు ఎప్పుడు కావాలన్నా మమ్మల్ని సంప్రదించవచ్చు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4331,
+          "output_tokens": 288,
+          "total_tokens": 4619
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interest_timeline",
+              "value": "Interested next month, not now"
+            },
+            {
+              "op": "update_summary",
+              "key": "booking_consent",
+              "value": "Declined booking"
+            },
+            {
+              "op": "update_summary",
+              "key": "decline_type",
+              "value": "Soft decline / not now"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "Current not needed, interested next month, do not book anything, do not treat as permanent decline.",
+          "remaining_request": "Interested next month, do not book",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.203
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 581,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"caller explicitly said not to call back now and is only asking for more information, with no immediate next step\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"wants to know what else to know about the service\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\",\n  \"spoken_response\": \"\"\n,\n\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest_status\",\n        \"value\": \"interested_future_enquiry_no_callback_now\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"caller explicitly said not to call back now and is only asking for more information, with no immediate next step\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"wants to know what else to know about the service\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\",\n  \"spoken_response\": \"\"\n,\n\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest_status\",\n        \"value\": \"interested_future_enquiry_no_callback_now\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 187,
+        "prompt_tokens": 4378,
+        "total_tokens": 4565,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.61
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 254,
+      "sse_content_preview": "{ \"spoken_response\": \"విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు అండి, కనీసం వంద కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ బట్టి ధర మారుతుంది. మీకు ఏ రకమైన కార్డ్స్ కావాలో చెప్తే, కోట్ రిక్వెస్ట్ కోసం మీ పేరు, డెలివరీ లొకేషన్ నోట్ చేసుకుంటాను.\" }",
+      "sse_content_tail": "{ \"spoken_response\": \"విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు అండి, కనీసం వంద కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ బట్టి ధర మారుతుంది. మీకు ఏ రకమైన కార్డ్స్ కావాలో చెప్తే, కోట్ రిక్వెస్ట్ కోసం మీ పేరు, డెలివరీ లొకేషన్ నోట్ చేసుకుంటాను.\" }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 82,
+        "prompt_tokens": 4378,
+        "total_tokens": 4460,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు అండి, కనీసం వంద కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ బట్టి ధర మారుతుంది. మీకు ఏ రకమైన కార్డ్స్ కావాలో చెప్తే, కోట్ రిక్వెస్ట్ కోసం మీ పేరు, డెలివరీ లొకేషన్ నోట్ చేసుకుంటాను.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8756,
+          "output_tokens": 269,
+          "total_tokens": 9025
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.781
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, అర్థమైంది. మీకు ఎప్పుడు కావాలన్నా మమ్మల్ని సంప్రదించవచ్చు.",
+      "turn": 1,
+      "at": 1.235
+    },
+    {
+      "text": "విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు అండి, కనీసం వంద కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ బట్టి ధర మారుతుంది. మీకు ఏ రకమైన కార్డ్స్ కావాలో చెప్తే, కోట్ రిక్వెస్ట్ కోసం మీ పేరు, డెలివరీ లొకేషన్ నోట్ చేసుకుంటాను.",
+      "turn": 2,
+      "at": 3.625
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 3,
+      "at": 3.656
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "ఇప్పుడైతే అవసరం లేదు, కానీ వచ్చే నెల నాకు ఆసక్తి ఉంది. ప్రస్తుత ధర చెప్పండి. ఏదీ book చేయకండి, దీన్ని శాశ్వతంగా వద్దన్నట్టు అనుకోకండి.",
+      "spoken": "సరేనండి, అర్థమైంది. మీకు ఎప్పుడు కావాలన్నా మమ్మల్ని సంప్రదించవచ్చు.",
+      "elapsed_s": 1.204,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "అవును, భవిష్యత్తులో నాకు ఆసక్తి ఉంది. ఇప్పుడే తర్వాత call చేయమని నేను అడగడం లేదు. ఈ service గురించి ఇంకా ఏం తెలుసుకోవాలి?",
+      "spoken": "విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు అండి, కనీసం వంద కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ బట్టి ధర మారుతుంది. మీకు ఏ రకమైన కార్డ్స్ కావాలో చెప్తే, కోట్ రిక్వెస్ట్ కోసం మీ పేరు, డెలివరీ లొకేషన్ నోట్ చేసుకుంటాను.",
+      "elapsed_s": 2.375,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 3.719,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "42ef9ec2-eb61-473e-a8b4-7e43132fab39",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "43f890af79674ccea3f40754552912551aafbf813a2d8afaace49ff8171cacc5",
+  "prompt_chars": 18359,
+  "opening_seeded": "నమస్కారం, నా పేరు మీరా, క్లియర్ ప్రింట్ స్టూడియో నుండి మాట్లాడుతున్నాను. ఇది సేల్స్ కాల్ కాదండి, మా కార్డ్స్ గురించి మీ సందేహాలు తీర్చడానికి కాల్ చేస్తున్నాను. మీకు విజిటింగ్ కార్డ్స్ లేదా వెడ్డింగ్ ఇన్విటేషన్ల గురించి వివరాలు కావాలా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Current not needed, interested next month, do not book anything, do not treat as permanent decline.",
+        "remaining_request": "Interested next month, do not book",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, అర్థమైంది. మీకు ఎప్పుడు కావాలన్నా మమ్మల్ని సంప్రదించవచ్చు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు అండి, కనీసం వంద కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ బట్టి ధర మారుతుంది. మీకు ఏ రకమైన కార్డ్స్ కావాలో చెప్తే, కోట్ రిక్వెస్ట్ కోసం మీ పేరు, డెలివరీ లొకేషన్ నోట్ చేసుకుంటాను.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.719,
+  "hangup_count": 1
+}

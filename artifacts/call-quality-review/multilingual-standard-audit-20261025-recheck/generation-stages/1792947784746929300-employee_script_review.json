@@ -1,0 +1,16 @@
+{
+  "stage": "employee_script_review",
+  "language": "ta-IN",
+  "output": {
+    "passed": true,
+    "issues": [],
+    "fixed_script": {
+      "opening": "Vanakkam, naan Ravi pesuren SafeFix Home Serviceilirundhu. Ungalukku engaloda appliance service mattum pricing pathi therinjika mudiyuma?",
+      "call_flow": "Appliance service pathi kekkurangala? AC basic servicing 699 rupees, fridge inspection 399 rupees. Parts extra aagum, customer approvalku aprom dhan. Fixed repair quote inspectionku aprom dhan solla mudiyum. Namadhu timing Mon-Sat 9am to 6pm. Ungalukku visit thevaya?",
+      "call_to_action": "Ungalukku visit venumna, ungaloda preferred name, appliance type, locality, apparam preferred date sollavum. Visithukku ungal consent irukka?",
+      "objection_handling": "Price pathi kettal, AC basic servicing 699 rupees, fridge inspection 399 rupees nu sollavum. Parts extra aagum. Later nu sonna, no problem, ungalukku thevai irukkumbodhu kooppidalam. Live electrical wiring open panna venam, unsafe equipment use pannadhunga, qualified technician kitta kudunga.",
+      "unknown_information": "Indha detail engalukku theriyadhu, naan invent panna mudiyadhu. Payment-o booking-o callla seyyathu.",
+      "closing": "Nanri SafeFix Home Service kitta pesiyadharku. Ungalukku vera edhavathu help thevaya?"
+    }
+  }
+}

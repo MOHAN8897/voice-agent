@@ -1,0 +1,223 @@
+{
+  "key": "cleaning-te-IN-none-2_future_interest",
+  "business": "cleaning",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "0a7c86b5-3a05-56fc-8abc-e9a6e4819001",
+  "call_id": "461d7949-58bc-4b82-a7a9-6580c8fb7aa4",
+  "session_id": "audit-cleaning-te-IN-none-2_future_interest-3089a037",
+  "compiled_checksum": "39f08461efaeba7ca4bf2b15c2e2f894e34b6523ff826f24c2af80d5bb9145e8",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 155,
+      "sse_content_preview": "తప్పకుండా అండి, సోఫా క్లీనింగ్ ఒక్కో సీటుకు 349 rupees మరియు కిచెన్ క్లీనింగ్ మొత్తం 1599 rupees అవుతుంది. మీకు ఏ service గురించి ఇంకా వివరాలు కావాలి అండి?",
+      "sse_content_tail": "తప్పకుండా అండి, సోఫా క్లీనింగ్ ఒక్కో సీటుకు 349 rupees మరియు కిచెన్ క్లీనింగ్ మొత్తం 1599 rupees అవుతుంది. మీకు ఏ service గురించి ఇంకా వివరాలు కావాలి అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 49,
+        "prompt_tokens": 4489,
+        "total_tokens": 4538,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి, సోఫా క్లీనింగ్ ఒక్కో సీటుకు 349 rupees మరియు కిచెన్ క్లీనింగ్ మొత్తం 1599 rupees అవుతుంది. మీకు ఏ service గురించి ఇంకా వివరాలు కావాలి అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4489,
+          "output_tokens": 49,
+          "total_tokens": 4538
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.656
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 129,
+      "sse_content_preview": "మా పనివేళలు సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు ఉంటాయి అండి. మీకు ఏ service గురించి ఇంకా details కావాలి?",
+      "sse_content_tail": "మా పనివేళలు సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు ఉంటాయి అండి. మీకు ఏ service గురించి ఇంకా details కావాలి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 36,
+        "prompt_tokens": 4563,
+        "total_tokens": 4599,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "మా పనివేళలు సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు ఉంటాయి అండి. మీకు ఏ service గురించి ఇంకా details కావాలి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4563,
+          "output_tokens": 36,
+          "total_tokens": 4599
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.86
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా అండి, సోఫా క్లీనింగ్ ఒక్కో సీటుకు three hundred forty nine rupees మరియు కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine rupees అవుతుంది. మీకు ఏ service గురించి ఇంకా వివరాలు కావాలి అండి?",
+      "turn": 1,
+      "at": 2.218
+    },
+    {
+      "text": "మా పనివేళలు సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు ఉంటాయి అండి. మీకు ఏ service గురించి ఇంకా details కావాలి?",
+      "turn": 2,
+      "at": 4.656
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 3,
+      "at": 4.703
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "ఇప్పుడైతే అవసరం లేదు, కానీ వచ్చే నెల నాకు ఆసక్తి ఉంది. ప్రస్తుత ధర చెప్పండి. ఏదీ book చేయకండి, దీన్ని శాశ్వతంగా వద్దన్నట్టు అనుకోకండి.",
+      "spoken": "తప్పకుండా అండి, సోఫా క్లీనింగ్ ఒక్కో సీటుకు three hundred forty nine rupees మరియు కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine rupees అవుతుంది. మీకు ఏ service గురించి ఇంకా వివరాలు కావాలి అండి?",
+      "elapsed_s": 2.203,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "అవును, భవిష్యత్తులో నాకు ఆసక్తి ఉంది. ఇప్పుడే తర్వాత call చేయమని నేను అడగడం లేదు. ఈ service గురించి ఇంకా ఏం తెలుసుకోవాలి?",
+      "spoken": "మా పనివేళలు సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు ఉంటాయి అండి. మీకు ఏ service గురించి ఇంకా details కావాలి?",
+      "elapsed_s": 2.422,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 4.75,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "461d7949-58bc-4b82-a7a9-6580c8fb7aa4",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "fb376f36eadfa5161e61c150ceb7481ceec9dd1e090f5d518b64a7df08682394",
+  "prompt_chars": 18346,
+  "opening_seeded": "నమస్కారం, నా పేరు నీలా, ఫ్రెష్‌నెస్ట్ క్లీనింగ్ నుండి మాట్లాడుతున్నాను. మేము పూణేలో మాత్రమే సేవలు అందిస్తున్నాము. దీని గురించి మాట్లాడటానికి మీకు కొద్దిగా సమయం దొరుకుతుందా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "తప్పకుండా అండి, సోఫా క్లీనింగ్ ఒక్కో సీటుకు three hundred forty nine rupees మరియు కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine rupees అవుతుంది. మీకు ఏ service గురించి ఇంకా వివరాలు కావాలి అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "మా పనివేళలు సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు ఉంటాయి అండి. మీకు ఏ service గురించి ఇంకా details కావాలి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.75,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

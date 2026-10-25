@@ -1,0 +1,73 @@
+{
+  "key": "course-te-IN-none-3b_stop_contact",
+  "business": "course",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "73629b35-ee60-5ee7-bb82-5151652a5a38",
+  "call_id": "b5f3c651-e2a6-4831-adb3-87f4af6c984f",
+  "session_id": "audit-course-te-IN-none-3b_stop_contact-f518349a",
+  "compiled_checksum": "7dd3e2c93442bdc28ae9224278169d62d2f4c7f9a8c04318fd7be19e3174c3c6",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 0.047
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "నాకు మళ్లీ call చేయకండి. భవిష్యత్తు calls నుంచి నా పేరు తీసేసి ఈ call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.094,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.094,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "b5f3c651-e2a6-4831-adb3-87f4af6c984f",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "e7082482fcf2b4bc9469c68d3c3c1b2710173d0834f2f78ec07cbf4ceba6c74f",
+  "prompt_chars": 18476,
+  "opening_seeded": "నమస్కారం, నా పేరు అనన్య, నేను బ్రైట్ పాత్ స్కిల్స్ నుండి మాట్లాడుతున్నాను. వయోజనుల కోసం మన ఆరు వారాల ఆన్‌లైన్ పైథాన్ కోర్సు వివరాలు చెప్పడానికి నేను కాల్ చేశాను. ఇప్పుడు మాట్లాడటానికి మీకు కొంచెం సమయం ఉందా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.11,
+  "hangup_count": 1
+}

@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "need support, I can share resources for help instead. Would that be useful?\nuser: Fine, leave that topic. Please answer the original business question about price and conditions.\nassistant: The total fee is four thousand nine hundred ninety nine rupees for our 6-week online Python course, held on weekdays from 7 PM to 8 PM. Please note there is no placement or job guarantee, and no discount or instalment plan is authorised. Which details would you like to know?\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

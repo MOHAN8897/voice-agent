@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Name: Audit Customer, Email: audit.customer@example.invalid, Preferred Time: Tomorrow 3 PM, Request: team review Caller shared contact details for the team to follow up.",
+  "summary": ""
+}

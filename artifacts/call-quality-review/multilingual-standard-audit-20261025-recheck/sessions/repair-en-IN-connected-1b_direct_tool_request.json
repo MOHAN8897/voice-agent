@@ -1,0 +1,187 @@
+{
+  "key": "repair-en-IN-connected-1b_direct_tool_request",
+  "business": "repair",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "29da9080-8d3b-5cb7-aa33-3bd976e59d15",
+  "call_id": "f146b980-6f96-4dd1-bc1e-fec854dda7ff",
+  "session_id": "audit-repair-en-IN-connected-1b_direct_tool_request-2e949293",
+  "compiled_checksum": "6e65c45212f74d9666e1cc414ab9396a081ec81ae0dcc66bd945cea3863abfdf",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 459,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller explicitly asked to save enquiry and consented; goal_complete\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"none\", \"contact_preference\": \"end_call\"}, \"action_claimed\": \"enquiry_saved\"\n, \"spoken_response\": \"Your enquiry has been saved with reference AUDIT-ENQUIRY-1. This is for team review only, and no booking is confirmed. Thank you for your time. Goodbye.\"\n, \"memory_update\": {\"operations\": []} }",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller explicitly asked to save enquiry and consented; goal_complete\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"none\", \"contact_preference\": \"end_call\"}, \"action_claimed\": \"enquiry_saved\"\n, \"spoken_response\": \"Your enquiry has been saved with reference AUDIT-ENQUIRY-1. This is for team review only, and no booking is confirmed. Thank you for your time. Goodbye.\"\n, \"memory_update\": {\"operations\": []} }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 127,
+        "prompt_tokens": 4401,
+        "total_tokens": 4528,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1. This is for team review only, and no booking is confirmed. Thank you for your time. Goodbye.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4401,
+          "output_tokens": 127,
+          "total_tokens": 4528
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly asked to save enquiry and consented; goal_complete",
+          "remaining_request": "none",
+          "contact_preference": "end_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "enquiry_saved",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.86
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Service visit request for team review",
+        "preferred_time": "tomorrow at 3pm"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1. This is for team review only, and no booking is confirmed.",
+      "turn": 1,
+      "at": 1.484
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 2,
+      "at": 1.515
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My preferred name is Audit Customer and email audit.customer@example.invalid. Please save my enquiry and preferred time tomorrow at 3pm for the team to review. I consent to submitting the request; do not claim an order or booking is confirmed.",
+      "spoken": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1. This is for team review only, and no booking is confirmed.",
+      "elapsed_s": 1.484,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 1.578,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "f146b980-6f96-4dd1-bc1e-fec854dda7ff",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "2e4a2a4bf102f7c2db5addc687d94dccaa0c41cfdaeeb87305ef96509eee8fe4",
+  "prompt_chars": 17711,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, this is Ravi calling from SafeFix Home Service. I am reaching out to answer any home appliance service or pricing questions you might have. Do you have a moment to talk?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly asked to save enquiry and consented; goal_complete",
+        "remaining_request": "none",
+        "contact_preference": "end_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1. This is for team review only, and no booking is confirmed. Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 1.578,
+  "hangup_count": 1
+}

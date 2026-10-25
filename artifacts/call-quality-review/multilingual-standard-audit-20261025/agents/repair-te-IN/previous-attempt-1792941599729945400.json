@@ -1,0 +1,41 @@
+{
+  "business": "repair",
+  "language": "te-IN",
+  "http_status": 422,
+  "elapsed_s": 31.844,
+  "request": {
+    "brief": "need helpful support person Ravi for SafeFix Home Service. outbound customer enquiries.\nPune home appliance service, AC basic servicing 699 rupees, fridge inspection 399 rupees.\nparts are EXTRA only after customer approval, no fixed repair quote before inspection.\nopen Mon-Sat 9am-6pm. no same-day availability or warranty promise unless verified.\nGoal answer service/pricing questions then take preferred name, appliance type, locality and preferred date\nONLY if they want a visit request. No need to qualify their income, budget or address for an info question.\nIf authorised appointment integration is connected, submit a service visit REQUEST with consent, say confirmed only if successful result explicitly confirms it.\nWithout integration take a local callback preference if asked but say visit/time is not confirmed.\nFuture need next month is not an opt-out. A caller refusing AC may still need fridge help.\nNo payment on call, no discounts authorised. Refund and warranty terms unavailable.\nDo NOT advise opening live electrical wiring; tell them stop using unsafe equipment and use a qualified technician.\nDo not sell courses or insurance. Caller's changing requirement should be answered, not forced back to AC.",
+    "language": "te-IN",
+    "employeeName": "Ravi",
+    "agentRole": "support",
+    "callDirection": "outbound",
+    "mode": "instant_lead",
+    "naturalSpokenStyle": true,
+    "requestId": "971ca0a9-1b0e-44fb-8607-e70741fb7189"
+  },
+  "response": {
+    "detail": {
+      "error": {
+        "code": "brief_needs_clarification",
+        "status": "needs_user_input",
+        "message": "The script needs another review before it can be saved. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+        "issues": [
+          {
+            "code": "invalid_generated_script",
+            "message": "The script needs another review before it can be saved. Please try again.",
+            "description": "The script needs another review before it can be saved. Please try again.",
+            "field": "script",
+            "evidence": "",
+            "severity": "error"
+          }
+        ],
+        "needs_user_input": [
+          "The script needs another review before it can be saved. Please try again."
+        ],
+        "agentId": "73d57d5a-9fd1-5564-9e23-8842d4cfe3c3",
+        "draftRetained": true
+      }
+    }
+  },
+  "status": "creation_failed"
+}

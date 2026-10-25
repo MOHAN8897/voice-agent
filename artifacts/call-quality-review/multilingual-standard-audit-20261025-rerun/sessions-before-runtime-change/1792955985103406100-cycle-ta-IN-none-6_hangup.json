@@ -1,0 +1,297 @@
+{
+  "key": "cycle-ta-IN-none-6_hangup",
+  "business": "cycle",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "a8a625e5-7e5f-5320-8624-1a990a8d6419",
+  "call_id": "fe3c81db-7597-4b2a-8ad4-38d7ca1971f4",
+  "session_id": "audit-cycle-ta-IN-none-6_hangup-b80f5db0",
+  "compiled_checksum": "386ce2e8b1908900b6637a9f204489aefc5ecb99083f14f116174db28e20e614",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 224,
+      "sse_content_preview": "சரிங்க. அடிப்படை சைக்கிள் சேவை 499 ரூபாய், பஞ்சர் பழுதுபார்ப்பு 120 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டா கூடுதல் கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். இப்போ உங்களுக்கு எந்த வகையான service வேணும்?",
+      "sse_content_tail": "சரிங்க. அடிப்படை சைக்கிள் சேவை 499 ரூபாய், பஞ்சர் பழுதுபார்ப்பு 120 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டா கூடுதல் கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். இப்போ உங்களுக்கு எந்த வகையான service வேணும்?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4008,
+        "total_tokens": 4070,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. அடிப்படை சைக்கிள் சேவை 499 ரூபாய், பஞ்சர் பழுதுபார்ப்பு 120 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டா கூடுதல் கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். இப்போ உங்களுக்கு எந்த வகையான service வேணும்?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4008,
+          "output_tokens": 62,
+          "total_tokens": 4070
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.859
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 266,
+      "sse_content_preview": "கண்டிப்பா, அடிப்படை சேவை four hundred ninety nine ரூபாய், பஞ்சர் repair one hundred twenty ரூபாய். Parts விலை அதுல வராதுங்க, approval கொடுத்த பிறகு தான் extra கட்டணம் வரும். உங்களுக்கு இப்போ service தேவையா? அப்படியென்றால் உங்க பெயர், locality மட்டும் சொல்ல முடியுமா?",
+      "sse_content_tail": "கண்டிப்பா, அடிப்படை சேவை four hundred ninety nine ரூபாய், பஞ்சர் repair one hundred twenty ரூபாய். Parts விலை அதுல வராதுங்க, approval கொடுத்த பிறகு தான் extra கட்டணம் வரும். உங்களுக்கு இப்போ service தேவையா? அப்படியென்றால் உங்க பெயர், locality மட்டும் சொல்ல முடியுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 59,
+        "prompt_tokens": 4085,
+        "total_tokens": 4144,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "கண்டிப்பா, அடிப்படை சேவை four hundred ninety nine ரூபாய், பஞ்சர் repair one hundred twenty ரூபாய். Parts விலை அதுல வராதுங்க, approval கொடுத்த பிறகு தான் extra கட்டணம் வரும். உங்களுக்கு இப்போ service தேவையா? அப்படியென்றால் உங்க பெயர், locality மட்டும் சொல்ல முடியுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4085,
+          "output_tokens": 59,
+          "total_tokens": 4144
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.672
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 153,
+      "sse_content_preview": "சரிங்க. இப்போ உங்களுக்கு service தேவையா? அப்படியென்றால், எங்க team-ஓட enquiry-க்காக உங்க பெயர், பழுதுபார்ப்பு வகை, பகுதி மற்றும் சம்மதம் தெரிஞ்சுக்கலாமா?",
+      "sse_content_tail": "சரிங்க. இப்போ உங்களுக்கு service தேவையா? அப்படியென்றால், எங்க team-ஓட enquiry-க்காக உங்க பெயர், பழுதுபார்ப்பு வகை, பகுதி மற்றும் சம்மதம் தெரிஞ்சுக்கலாமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 44,
+        "prompt_tokens": 4131,
+        "total_tokens": 4175,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. இப்போ உங்களுக்கு service தேவையா? அப்படியென்றால், எங்க team-ஓட enquiry-க்காக உங்க பெயர், பழுதுபார்ப்பு வகை, பகுதி மற்றும் சம்மதம் தெரிஞ்சுக்கலாமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4131,
+          "output_tokens": 44,
+          "total_tokens": 4175
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.61
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "சரிங்க. அடிப்படை சைக்கிள் சேவை four hundred ninety nine ரூபாய், பஞ்சர் பழுதுபார்ப்பு one hundred twenty ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டா கூடுதல் கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். இப்போ உங்களுக்கு எந்த வகையான service வேணும்?",
+      "turn": 1,
+      "at": 2.141
+    },
+    {
+      "text": "கண்டிப்பா, அடிப்படை சேவை four hundred ninety nine ரூபாய், பஞ்சர் repair one hundred twenty ரூபாய். Parts விலை அதுல வராதுங்க, approval கொடுத்த பிறகு தான் extra கட்டணம் வரும். உங்களுக்கு இப்போ service தேவையா? அப்படியென்றால் உங்க பெயர், locality மட்டும் சொல்ல முடியுமா?",
+      "turn": 2,
+      "at": 4.188
+    },
+    {
+      "text": "சரிங்க. இப்போ உங்களுக்கு service தேவையா? அப்படியென்றால், எங்க team-ஓட enquiry-க்காக உங்க பெயர், பழுதுபார்ப்பு வகை, பகுதி மற்றும் சம்மதம் தெரிஞ்சுக்கலாமா?",
+      "turn": 3,
+      "at": 6.344
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 4,
+      "at": 6.375
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.",
+      "spoken": "சரிங்க. அடிப்படை சைக்கிள் சேவை four hundred ninety nine ரூபாய், பஞ்சர் பழுதுபார்ப்பு one hundred twenty ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டா கூடுதல் கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். இப்போ உங்களுக்கு எந்த வகையான service வேணும்?",
+      "elapsed_s": 2.141,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: சைக்கிள் basic service மற்றும் puncture repair விலை என்ன? Parts அந்த விலையில் இருக்கா?",
+      "spoken": "கண்டிப்பா, அடிப்படை சேவை four hundred ninety nine ரூபாய், பஞ்சர் repair one hundred twenty ரூபாய். Parts விலை அதுல வராதுங்க, approval கொடுத்த பிறகு தான் extra கட்டணம் வரும். உங்களுக்கு இப்போ service தேவையா? அப்படியென்றால் உங்க பெயர், locality மட்டும் சொல்ல முடியுமா?",
+      "elapsed_s": 2.016,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "சரி, நன்றி.",
+      "spoken": "சரிங்க. இப்போ உங்களுக்கு service தேவையா? அப்படியென்றால், எங்க team-ஓட enquiry-க்காக உங்க பெயர், பழுதுபார்ப்பு வகை, பகுதி மற்றும் சம்மதம் தெரிஞ்சுக்கலாமா?",
+      "elapsed_s": 2.109,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 6.422,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "fe3c81db-7597-4b2a-8ad4-38d7ca1971f4",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "45f4750d5bdc872d08ff26870e3bbcd367e77fd20ed325e5433dc1d87338cf81",
+  "prompt_chars": 16716,
+  "opening_seeded": "வணக்கம், நான் CityCycle Repairs-இல் இருந்து அர்ஜுன் பேசுகிறேன். நான் ஒரு AI உதவியாளர். உங்களுக்கு பேச இப்போது நேரம் இருக்கிறதா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "சரிங்க. அடிப்படை சைக்கிள் சேவை four hundred ninety nine ரூபாய், பஞ்சர் பழுதுபார்ப்பு one hundred twenty ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டா கூடுதல் கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். இப்போ உங்களுக்கு எந்த வகையான service வேணும்?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "கண்டிப்பா, அடிப்படை சேவை four hundred ninety nine ரூபாய், பஞ்சர் repair one hundred twenty ரூபாய். Parts விலை அதுல வராதுங்க, approval கொடுத்த பிறகு தான் extra கட்டணம் வரும். உங்களுக்கு இப்போ service தேவையா? அப்படியென்றால் உங்க பெயர், locality மட்டும் சொல்ல முடியுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "சரிங்க. இப்போ உங்களுக்கு service தேவையா? அப்படியென்றால், எங்க team-ஓட enquiry-க்காக உங்க பெயர், பழுதுபார்ப்பு வகை, பகுதி மற்றும் சம்மதம் தெரிஞ்சுக்கலாமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.422,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

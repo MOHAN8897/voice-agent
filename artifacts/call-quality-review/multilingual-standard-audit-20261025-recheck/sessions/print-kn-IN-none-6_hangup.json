@@ -1,0 +1,405 @@
+{
+  "key": "print-kn-IN-none-6_hangup",
+  "business": "print",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "ffeba09d-28b1-582c-a920-77041b45cb0d",
+  "call_id": "a4a29a4f-4431-4f7d-9eaf-1f2db2c0c0be",
+  "session_id": "audit-print-kn-IN-none-6_hangup-5a42d1fa",
+  "compiled_checksum": "0766dd5a0844b9f086e671d6a886612dd21888b82dc082be19f46bd0548b6f2a",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 966,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller expressed interest and asked for service, price, and terms.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None stated; caller asked for information which was provided.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"order_confirmed\",\n\"spoken_response\": \"Visiting cards ಬಂದು ಒಂದು card-ಗೆ 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ತಗೋಬೇಕಾಗುತ್ತೆ. Wedding invitations ಕೂಡ ಇದೆ, ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ. Delivery Pune-ಗೆ five working days-ಅಲ್ಲಿ ಆಗುತ್ತೆ, artwork approval ಆದ್ಮೇಲೆ. ನಾವು cards ಮತ್ತೆ cash on delivery accept ಮಾಡ್ತೀವಿ. ನಮ್ಮ office hours ಬಂದ್ಬಿಟ್ಟು Monday ಇಂದ Saturday, ಬೆಳಿಗ್ಗೆ 10 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ ಯಾವ details ಬೇಕು? Quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ delivery locality ಹೇಳ್ತೀರಾ?.\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"interested\",\n      \"value\": \"yes\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "sked for service, price, and terms.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None stated; caller asked for information which was provided.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"order_confirmed\",\n\"spoken_response\": \"Visiting cards ಬಂದು ಒಂದು card-ಗೆ 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ತಗೋಬೇಕಾಗುತ್ತೆ. Wedding invitations ಕೂಡ ಇದೆ, ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ. Delivery Pune-ಗೆ five working days-ಅಲ್ಲಿ ಆಗುತ್ತೆ, artwork approval ಆದ್ಮೇಲೆ. ನಾವು cards ಮತ್ತೆ cash on delivery accept ಮಾಡ್ತೀವಿ. ನಮ್ಮ office hours ಬಂದ್ಬಿಟ್ಟು Monday ಇಂದ Saturday, ಬೆಳಿಗ್ಗೆ 10 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ ಯಾವ details ಬೇಕು? Quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ delivery locality ಹೇಳ್ತೀರಾ?.\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"interested\",\n      \"value\": \"yes\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 288,
+        "prompt_tokens": 4130,
+        "total_tokens": 4418,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Visiting cards ಬಂದು ಒಂದು card-ಗೆ 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ತಗೋಬೇಕಾಗುತ್ತೆ. Wedding invitations ಕೂಡ ಇದೆ, ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ. Delivery Pune-ಗೆ five working days-ಅಲ್ಲಿ ಆಗುತ್ತೆ, artwork approval ಆದ್ಮೇಲೆ. ನಾವು cards ಮತ್ತೆ cash on delivery accept ಮಾಡ್ತೀವಿ. ನಮ್ಮ office hours ಬಂದ್ಬಿಟ್ಟು Monday ಇಂದ Saturday, ಬೆಳಿಗ್ಗೆ 10 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ ಯಾವ details ಬೇಕು? Quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ delivery locality ಹೇಳ್ತೀರಾ?.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4130,
+          "output_tokens": 288,
+          "total_tokens": 4418
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested",
+              "value": "yes"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller expressed interest and asked for service, price, and terms.",
+          "remaining_request": "None stated; caller asked for information which was provided.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "order_confirmed",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.484
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1023,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller explicitly said 'ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ', indicating they want information first and no action yet.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"Information on wedding invitations pricing and delivery time.\", \"contact_preference\": \"do_not_call\"},\n\n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    ",
+      "sse_content_tail": "cating they want information first and no action yet.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"Information on wedding invitations pricing and delivery time.\", \"contact_preference\": \"do_not_call\"},\n\n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    \n                    ",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.453
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 309,
+      "sse_content_preview": "{\"spoken_response\":\"ಹೌದು, ನಾವು wedding invitations ಕೂಡ print ಮಾಡ್ತೀವಿ. ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಅಂತ ಇಲ್ಲ. Artwork approval ಆದ್ಮೇಲೆ Pune-ಗೆ post ಮೂಲಕ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ ತರಹದ card ಬೇಕು, ಮತ್ತೆ ಎಷ್ಟು quantity-ಯಲ್ಲಿ ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?\"}",
+      "sse_content_tail": "{\"spoken_response\":\"ಹೌದು, ನಾವು wedding invitations ಕೂಡ print ಮಾಡ್ತೀವಿ. ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಅಂತ ಇಲ್ಲ. Artwork approval ಆದ್ಮೇಲೆ Pune-ಗೆ post ಮೂಲಕ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ ತರಹದ card ಬೇಕು, ಮತ್ತೆ ಎಷ್ಟು quantity-ಯಲ್ಲಿ ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?\"}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 76,
+        "prompt_tokens": 4207,
+        "total_tokens": 4283,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಹೌದು, ನಾವು wedding invitations ಕೂಡ print ಮಾಡ್ತೀವಿ. ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಅಂತ ಇಲ್ಲ. Artwork approval ಆದ್ಮೇಲೆ Pune-ಗೆ post ಮೂಲಕ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ ತರಹದ card ಬೇಕು, ಮತ್ತೆ ಎಷ್ಟು quantity-ಯಲ್ಲಿ ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4207,
+          "output_tokens": 76,
+          "total_tokens": 4283
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.953
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 805,
+      "sse_content_preview": "{ \"end_call\": {\"evidence\": \"ಸರಿ, ಧನ್ಯವಾದಗಳು.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"end_call\"}\n\n,\n            \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "{ \"end_call\": {\"evidence\": \"ಸರಿ, ಧನ್ಯವಾದಗಳು.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"end_call\"}\n\n,\n            \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.328
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 218,
+      "sse_content_preview": "{ \"spoken_response\": \"ಸರಿ, ನಿಮಗೆ ಯಾವ details ಬೇಕು ಅಂತ ಹೇಳಿದ್ರೆ, ನಾನು quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ delivery locality ತಗೋತೀನಿ. Pune-ಗೆ post ಮೂಲಕ artwork approval ಆದ್ಮೇಲೆ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ.\" }",
+      "sse_content_tail": "{ \"spoken_response\": \"ಸರಿ, ನಿಮಗೆ ಯಾವ details ಬೇಕು ಅಂತ ಹೇಳಿದ್ರೆ, ನಾನು quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ delivery locality ತಗೋತೀನಿ. Pune-ಗೆ post ಮೂಲಕ artwork approval ಆದ್ಮೇಲೆ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ.\" }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 4252,
+        "total_tokens": 4308,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಿಮಗೆ ಯಾವ details ಬೇಕು ಅಂತ ಹೇಳಿದ್ರೆ, ನಾನು quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ delivery locality ತಗೋತೀನಿ. Pune-ಗೆ post ಮೂಲಕ artwork approval ಆದ್ಮೇಲೆ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4252,
+          "output_tokens": 56,
+          "total_tokens": 4308
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.437
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Visiting cards ಬಂದು ಒಂದು card-ಗೆ twenty five rupees ಆಗುತ್ತೆ, minimum one hundred cards ತಗೋಬೇಕಾಗುತ್ತೆ. Wedding invitations ಕೂಡ ಇದೆ, ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ. Delivery Pune-ಗೆ five working days-ಅಲ್ಲಿ ಆಗುತ್ತೆ, artwork approval ಆದ್ಮೇಲೆ.",
+      "turn": 1,
+      "at": 1.469
+    },
+    {
+      "text": "ಹೌದು, ನಾವು wedding invitations ಕೂಡ print ಮಾಡ್ತೀವಿ. ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಅಂತ ಇಲ್ಲ. Artwork approval ಆದ್ಮೇಲೆ Pune-ಗೆ post ಮೂಲಕ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ.",
+      "turn": 2,
+      "at": 3.906
+    },
+    {
+      "text": "ಸರಿ, ನಿಮಗೆ ಯಾವ details ಬೇಕು ಅಂತ ಹೇಳಿದ್ರೆ, ನಾನು quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ delivery locality ತಗೋತೀನಿ. Pune-ಗೆ post ಮೂಲಕ artwork approval ಆದ್ಮೇಲೆ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ.",
+      "turn": 3,
+      "at": 6.656
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 4,
+      "at": 6.687
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.",
+      "spoken": "Visiting cards ಬಂದು ಒಂದು card-ಗೆ twenty five rupees ಆಗುತ್ತೆ, minimum one hundred cards ತಗೋಬೇಕಾಗುತ್ತೆ. Wedding invitations ಕೂಡ ಇದೆ, ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ. Delivery Pune-ಗೆ five working days-ಅಲ್ಲಿ ಆಗುತ್ತೆ, artwork approval ಆದ್ಮೇಲೆ.",
+      "elapsed_s": 1.469,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: ನೀವು ಮದುವೆಯ ಆಮಂತ್ರಣಗಳನ್ನೂ print ಮಾಡುತ್ತೀರಾ? ಬೆಲೆ ಮತ್ತು delivery time ಎಷ್ಟು?",
+      "spoken": "ಹೌದು, ನಾವು wedding invitations ಕೂಡ print ಮಾಡ್ತೀವಿ. ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಅಂತ ಇಲ್ಲ. Artwork approval ಆದ್ಮೇಲೆ Pune-ಗೆ post ಮೂಲಕ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ.",
+      "elapsed_s": 2.406,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ಸರಿ, ಧನ್ಯವಾದಗಳು.",
+      "spoken": "ಸರಿ, ನಿಮಗೆ ಯಾವ details ಬೇಕು ಅಂತ ಹೇಳಿದ್ರೆ, ನಾನು quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ delivery locality ತಗೋತೀನಿ. Pune-ಗೆ post ಮೂಲಕ artwork approval ಆದ್ಮೇಲೆ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ.",
+      "elapsed_s": 2.734,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 6.734,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "a4a29a4f-4431-4f7d-9eaf-1f2db2c0c0be",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "a1b3114e81541dda54b7964ad8b0ad3137932f5f9d29bfd13f429a91e0d8c4ba",
+  "prompt_chars": 18434,
+  "opening_seeded": "Namaskara, this is Meera calling from ClearPrint Studio. I am reaching out to share information about our cards and answer any questions you might have. Would you like to discuss our card options today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller expressed interest and asked for service, price, and terms.",
+        "remaining_request": "None stated; caller asked for information which was provided.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "Visiting cards ಬಂದು ಒಂದು card-ಗೆ twenty five rupees ಆಗುತ್ತೆ, minimum one hundred cards ತಗೋಬೇಕಾಗುತ್ತೆ. Wedding invitations ಕೂಡ ಇದೆ, ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ. Delivery Pune-ಗೆ five working days-ಅಲ್ಲಿ ಆಗುತ್ತೆ, artwork approval ಆದ್ಮೇಲೆ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಹೌದು, ನಾವು wedding invitations ಕೂಡ print ಮಾಡ್ತೀವಿ. ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಅಂತ ಇಲ್ಲ. Artwork approval ಆದ್ಮೇಲೆ Pune-ಗೆ post ಮೂಲಕ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ನಿಮಗೆ ಯಾವ details ಬೇಕು ಅಂತ ಹೇಳಿದ್ರೆ, ನಾನು quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ delivery locality ತಗೋತೀನಿ. Pune-ಗೆ post ಮೂಲಕ artwork approval ಆದ್ಮೇಲೆ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.734,
+  "hangup_count": 1
+}

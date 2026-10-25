@@ -1,0 +1,197 @@
+{
+  "key": "course-ta-IN-none-4_abuse",
+  "business": "course",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "13132fd6-d72a-5ef9-81a9-47b201ed6188",
+  "call_id": "8851bb35-ef36-4639-be58-1ed7ef82e0d6",
+  "session_id": "audit-course-ta-IN-none-4_abuse-3db55f0e",
+  "compiled_checksum": "6de945f219536e3f862422a7bf903732ed8c2be0a2a89e7a29eaaacb4b90f85f",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 468,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Hostile abuse ('workless idiot'),\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\",\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller responded with hostility and abuse ('workless idiot'), leading to immediate close.\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Hostile abuse ('workless idiot'),\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\",\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller responded with hostility and abuse ('workless idiot'), leading to immediate close.\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 160,
+        "prompt_tokens": 4335,
+        "total_tokens": 4495,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.234
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 235,
+      "sse_content_preview": "{\n  \"spoken_response\": \"மன்னிக்கவும், நீங்க கோபப்படுறது புரியுது. இந்த ஆறு வார online Python class-ஓட மொத்த கட்டணம் 4999 rupees தான். இதுல discount அல்லது instalment plan எதுவும் கிடையாது. இந்த வகுப்பு உங்களுக்குச் சரிப்பட்டு வருமா?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"மன்னிக்கவும், நீங்க கோபப்படுறது புரியுது. இந்த ஆறு வார online Python class-ஓட மொத்த கட்டணம் 4999 rupees தான். இதுல discount அல்லது instalment plan எதுவும் கிடையாது. இந்த வகுப்பு உங்களுக்குச் சரிப்பட்டு வருமா?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 68,
+        "prompt_tokens": 4335,
+        "total_tokens": 4403,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "மன்னிக்கவும், நீங்க கோபப்படுறது புரியுது. இந்த ஆறு வார online Python class-ஓட மொத்த கட்டணம் 4999 rupees தான். இதுல discount அல்லது instalment plan எதுவும் கிடையாது. இந்த வகுப்பு உங்களுக்குச் சரிப்பட்டு வருமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8670,
+          "output_tokens": 228,
+          "total_tokens": 8898
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.688
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "மன்னிக்கவும், நீங்க கோபப்படுறது புரியுது. இந்த ஆறு வார online Python class-ஓட மொத்த கட்டணம் four thousand nine hundred ninety nine rupees தான். இதுல discount அல்லது instalment plan எதுவும் கிடையாது. இந்த வகுப்பு உங்களுக்குச் சரிப்பட்டு வருமா?",
+      "turn": 1,
+      "at": 1.921
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 2,
+      "at": 1.953
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.",
+      "spoken": "மன்னிக்கவும், நீங்க கோபப்படுறது புரியுது. இந்த ஆறு வார online Python class-ஓட மொத்த கட்டணம் four thousand nine hundred ninety nine rupees தான். இதுல discount அல்லது instalment plan எதுவும் கிடையாது. இந்த வகுப்பு உங்களுக்குச் சரிப்பட்டு வருமா?",
+      "elapsed_s": 1.906,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.015,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "8851bb35-ef36-4639-be58-1ed7ef82e0d6",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "9c507a47457da560070f48934087e1d6242a614453d74d03fdeb73c197cf054e",
+  "prompt_chars": 19307,
+  "opening_seeded": "வணக்கம், நான் பிரைட் பாத் ஸ்கில்ஸ் நிறுவனத்திலிருந்து அனன்யா பேசுகிறேன். வயது பதினெட்டு மற்றும் அதற்கு மேற்பட்டவர்களுக்கான எங்கள் ஆறு வார ஆன்லைன் பைத்தான் பயிற்சி வகுப்பைப் பற்றி சொல்ல அழைக்கிறேன். இது பற்றி பேச இது சரியான நேரமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "மன்னிக்கவும், நீங்க கோபப்படுறது புரியுது. இந்த ஆறு வார online Python class-ஓட மொத்த கட்டணம் four thousand nine hundred ninety nine rupees தான். இதுல discount அல்லது instalment plan எதுவும் கிடையாது. இந்த வகுப்பு உங்களுக்குச் சரிப்பட்டு வருமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.015,
+  "hangup_count": 1
+}

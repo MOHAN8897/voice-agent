@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.", "ts": "2026-10-25T17:34:14.160842Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಖಂಡಿತ. AC basic servicing six hundred ninety nine rupees ಮತ್ತೆ fridge inspection three hundred ninety nine rupees irutte. Parts extra irutte, customer approval nanthara mathra haakuvevu. Inspection madade fixed repair quote kodalla. Namu Mon-Sat 9am inda 6pm varge open irutte.", "ts": "2026-10-25T17:34:16.571265Z", "brain_latency_ms": 2098}
+{"seq": 3, "role": "user", "text": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: AC servicing ಮತ್ತು fridge inspection ಬೆಲೆ ಎಷ್ಟು? Replacement parts ಅದರಲ್ಲಿ ಸೇರಿವೆಯಾ?", "ts": "2026-10-25T17:34:16.588569Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "AC servicing six hundred ninety nine rupees ಮತ್ತೆ fridge inspection three hundred ninety nine rupees irutte. Replacement parts extra irutte, customer approval nanthara mathra haakuvevu. Inspection madade fixed repair quote neduvarilla.", "ts": "2026-10-25T17:34:18.829273Z", "brain_latency_ms": 1797}
+{"seq": 5, "role": "user", "text": "ಸರಿ, ಧನ್ಯವಾದಗಳು.", "ts": "2026-10-25T17:34:18.848904Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ಸರಿ. ನಿಮಗೊಂದು service visit request ಮಾಡೋಕೆ ಇಷ್ಟ ಇದೆಯಾ?", "ts": "2026-10-25T17:34:20.773151Z", "brain_latency_ms": 1838}
+{"seq": 7, "role": "user", "text": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.", "ts": "2026-10-25T17:34:20.790679Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.", "ts": "2026-10-25T17:34:20.801713Z", "brain_latency_ms": 2}

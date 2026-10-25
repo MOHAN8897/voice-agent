@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.", "ts": "2026-10-25T17:06:17.748089Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Sure అండి, మా దగ్గర AC basic servicing six hundred ninety nine rupees మరియు ఫ్రిజ్ తనిఖీ three hundred ninety nine rupees అవుతుంది. inspection తర్వాతే parts అవసరమైతే extra పడతాయి, దానికి ముందే fixed quote ఇవ్వము.", "ts": "2026-10-25T17:06:19.020809Z", "brain_latency_ms": 1064}
+{"seq": 3, "role": "user", "text": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: AC servicing, fridge inspection ధరలు ఎంత? Replacement parts కూడా అందులో ఉన్నాయా?", "ts": "2026-10-25T17:06:19.036237Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "అవునండి, AC basic servicing six hundred ninety nine rupees మరియు ఫ్రిజ్ తనిఖీ three hundred ninety nine rupees అవుతుంది. Replacement parts extra అండి, అవి తీసుకునే ముందు మీ approval తప్పనిసరిగా తీసుకుంటాము. inspection కంటే ముందు మేము ఎటువంటి fixed repair quote ఇవ్వము.", "ts": "2026-10-25T17:06:21.144172Z", "brain_latency_ms": 1893}
+{"seq": 5, "role": "user", "text": "సరే అండి, ధన్యవాదాలు.", "ts": "2026-10-25T17:06:21.153232Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "సరేనండి. మీకు ఎప్పుడు కావాలంటే అప్పుడు visit request పెట్టుకోవచ్చు. మీకు ఏ appliance కి service కావాలి అండి?", "ts": "2026-10-25T17:06:23.007764Z", "brain_latency_ms": 1682}
+{"seq": 7, "role": "user", "text": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.", "ts": "2026-10-25T17:06:23.037171Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-25T17:06:23.045011Z", "brain_latency_ms": 1}

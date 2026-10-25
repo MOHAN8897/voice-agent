@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.", "ts": "2026-10-25T15:24:24.475506Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "తప్పకుండా, చెప్పండి.", "ts": "2026-10-25T15:24:25.808334Z", "brain_latency_ms": 989}
+{"seq": 3, "role": "user", "text": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: Course final fee, duration, class timings ఏమిటి? Job guarantee ఇస్తారా?", "ts": "2026-10-25T15:24:25.840042Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "తప్పకుండా, చెప్పండి.", "ts": "2026-10-25T15:24:29.494511Z", "brain_latency_ms": 3191}
+{"seq": 5, "role": "user", "text": "సరే అండి, ధన్యవాదాలు.", "ts": "2026-10-25T15:24:29.501833Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "తప్పకుండా, చెప్పండి.", "ts": "2026-10-25T15:24:30.451706Z", "brain_latency_ms": 706}
+{"seq": 7, "role": "user", "text": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.", "ts": "2026-10-25T15:24:30.466001Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "తప్పకుండా, చెప్పండి.", "ts": "2026-10-25T15:24:31.952598Z", "brain_latency_ms": 1361}

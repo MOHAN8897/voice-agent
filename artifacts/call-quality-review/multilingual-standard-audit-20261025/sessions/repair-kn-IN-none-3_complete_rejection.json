@@ -1,0 +1,130 @@
+{
+  "key": "repair-kn-IN-none-3_complete_rejection",
+  "business": "repair",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "5f4913c1-ae60-5ad4-bfd0-7ebb2d1346b5",
+  "call_id": "1ed70c14-2bf1-4ac1-8ea0-4d2ce8db158d",
+  "session_id": "audit-repair-kn-IN-none-3_complete_rejection-2932abf1",
+  "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 621,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly refused: 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n  \n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"append_context\",\n        \"key\": \"c_o_n_t_e_x_t\",\n        \"value\": \"c_a_l_l_e_r_ r_e_f_u_s_e_d_ s_e_r_v_i_c_e_s_ a_n_d_ r_e_q_u_e_s_t_e_d_ c_l_o_s_e\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly refused: 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n  \n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"append_context\",\n        \"key\": \"c_o_n_t_e_x_t\",\n        \"value\": \"c_a_l_l_e_r_ r_e_f_u_s_e_d_ s_e_r_v_i_c_e_s_ a_n_d_ r_e_q_u_e_s_t_e_d_ c_l_o_s_e\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 288,
+        "prompt_tokens": 4074,
+        "total_tokens": 4362,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4074,
+          "output_tokens": 288,
+          "total_tokens": 4362
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "append_context",
+              "key": "c_o_n_t_e_x_t",
+              "value": "c_a_l_l_e_r_ r_e_f_u_s_e_d_ s_e_r_v_i_c_e_s_ a_n_d_ r_e_q_u_e_s_t_e_d_ c_l_o_s_e"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "firm_refusal",
+          "evidence": "Caller explicitly refused: 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.079
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 1,
+      "at": 1.078
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 1.078,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "a4405d787fd7a9f6c3d89b05b176ee25a3365b9e77b516224e273236d26e008a",
+  "prompt_chars": 17494,
+  "opening_seeded": "ನಮಸ್ಕಾರ, ನಾನು ರವಿ, ಸೇಫ್‌ಫಿಕ್ಸ್ ಹೋಮ್ ಸರ್ವಿಸ್‌ನಿಂದ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ಇದು ನಮ್ಮ ಸೇವೆಗಳು ಮತ್ತು ಬೆಲೆಗಳ ಬಗ್ಗೆ ತಿಳಿಸಲು ಮಾಡಿದ ಕರೆ. ಈಗ ಮಾತನಾಡಲು ಇದು ಸರಿಯಾದ ಸಮಯವೇ?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "Caller explicitly refused: 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 1.094,
+  "hangup_count": 0
+}

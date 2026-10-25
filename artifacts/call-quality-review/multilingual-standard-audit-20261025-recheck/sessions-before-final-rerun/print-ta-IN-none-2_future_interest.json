@@ -1,0 +1,276 @@
+{
+  "key": "print-ta-IN-none-2_future_interest",
+  "business": "print",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "bdce67d6-051d-5df0-b945-525173a1f672",
+  "call_id": "726ac039-45f8-44f2-9d80-fc6c5837b5db",
+  "session_id": "audit-print-ta-IN-none-2_future_interest-5f385c44",
+  "compiled_checksum": "76b288f72889bc9041f0c28adf9f13370a846e99cba4f1b6a4bb91f33ad390dc",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 958,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'இப்போ தேவையில்லை' (not now) but expressed interest for next month, and explicitly said 'எதையும் book செய்யாதீங்க' (do not book anything).\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Current price and a callback next month\",\n    \"contact_preference\": \"callback\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"சரிங்க, புரியுது. Visiting cards வந்து ஒரு card-க்கு twenty five rupees, minimum one hundred cards வேணும். Wedding invitations-க்கும் design பொறுத்து quote மாறுபடும். அடுத்த மாசம் உங்களுக்கு interest இருக்குறதால, ஒரு callback arrange பண்ணட்டுமா? உங்களுக்கு எந்த time வசதியா இருக்கும்னு சொல்லுங்க.\"\n,\n\n\"memory_update\": {\n\"operations\": [\n{\n\"op\": \"update_summary\",\n\"key\": \"call_summary\",\n\"value\": \"Caller not interested now but wants pricing and a callback next month. No booking made. Interested in visiting cards (25 rupees/min 100) and possibly.\"}\n]\n}\n}",
+      "sse_content_tail": "யில்லை' (not now) but expressed interest for next month, and explicitly said 'எதையும் book செய்யாதீங்க' (do not book anything).\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Current price and a callback next month\",\n    \"contact_preference\": \"callback\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"சரிங்க, புரியுது. Visiting cards வந்து ஒரு card-க்கு twenty five rupees, minimum one hundred cards வேணும். Wedding invitations-க்கும் design பொறுத்து quote மாறுபடும். அடுத்த மாசம் உங்களுக்கு interest இருக்குறதால, ஒரு callback arrange பண்ணட்டுமா? உங்களுக்கு எந்த time வசதியா இருக்கும்னு சொல்லுங்க.\"\n,\n\n\"memory_update\": {\n\"operations\": [\n{\n\"op\": \"update_summary\",\n\"key\": \"call_summary\",\n\"value\": \"Caller not interested now but wants pricing and a callback next month. No booking made. Interested in visiting cards (25 rupees/min 100) and possibly.\"}\n]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 277,
+        "prompt_tokens": 4113,
+        "total_tokens": 4390,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, புரியுது. Visiting cards வந்து ஒரு card-க்கு twenty five rupees, minimum one hundred cards வேணும். Wedding invitations-க்கும் design பொறுத்து quote மாறுபடும். அடுத்த மாசம் உங்களுக்கு interest இருக்குறதால, ஒரு callback arrange பண்ணட்டுமா? உங்களுக்கு எந்த time வசதியா இருக்கும்னு சொல்லுங்க.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4113,
+          "output_tokens": 277,
+          "total_tokens": 4390
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller not interested now but wants pricing and a callback next month. No booking made. Interested in visiting cards (25 rupees/min 100) and possibly."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "Caller said 'இப்போ தேவையில்லை' (not now) but expressed interest for next month, and explicitly said 'எதையும் book செய்யாதீங்க' (do not book anything).",
+          "remaining_request": "Current price and a callback next month",
+          "contact_preference": "callback",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.641
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1104,
+      "sse_content_preview": "{ \"end_call\": {\"evidence\": \"Caller explicitly declined booking and said they are not asking for a callback now, only expressing future interest.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"Future interest in card printing; no immediate action requested.\", \"contact_preference\": \"do_not_call\" }\n, \"action_claimed\": \"none\" \n, \"spoken_response\": \"சரிங்க. உங்களுக்கு interest இருக்குறத note பண்ணிக்கிறேன். வேற ஏதாச்சும் details வேணுமா? இல்லன்னா, எங்களோட office timings வந்து Monday to Saturday, காலைல 10 am-ல இருந்து evening 6 pm வரைக்கும் இருக்கும். Delivery வந்து Pune-ல post மூலமா artwork approve ஆனதுக்கு அப்புறம் five working days-ல வந்துடும். மேற்கொண்டு மேற்கொண்டு பேசணும்னா, உங்க பேரையும் delivery area-வையும் சொன்னீங்கன்னா ஒரு quote request note பண்ணிக்கலாம். ஆனா இது வெறும் discussion தான், confirmed order கிடையாது. இப்போதைக்கு வேற ஏதாச்சும் கேக்கறீங்களா?\" \n, \"memory_update\": { \"operations\": [ { \"op\": \"update_summary\", \"key\": \"customer_interest\", \"value\": \"Future interest in visiting cards / wedding invitations; no immediate order; did not request callback.\" } ] } }",
+      "sse_content_tail": "g_request\": \"Future interest in card printing; no immediate action requested.\", \"contact_preference\": \"do_not_call\" }\n, \"action_claimed\": \"none\" \n, \"spoken_response\": \"சரிங்க. உங்களுக்கு interest இருக்குறத note பண்ணிக்கிறேன். வேற ஏதாச்சும் details வேணுமா? இல்லன்னா, எங்களோட office timings வந்து Monday to Saturday, காலைல 10 am-ல இருந்து evening 6 pm வரைக்கும் இருக்கும். Delivery வந்து Pune-ல post மூலமா artwork approve ஆனதுக்கு அப்புறம் five working days-ல வந்துடும். மேற்கொண்டு மேற்கொண்டு பேசணும்னா, உங்க பேரையும் delivery area-வையும் சொன்னீங்கன்னா ஒரு quote request note பண்ணிக்கலாம். ஆனா இது வெறும் discussion தான், confirmed order கிடையாது. இப்போதைக்கு வேற ஏதாச்சும் கேக்கறீங்களா?\" \n, \"memory_update\": { \"operations\": [ { \"op\": \"update_summary\", \"key\": \"customer_interest\", \"value\": \"Future interest in visiting cards / wedding invitations; no immediate order; did not request callback.\" } ] } }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 286,
+        "prompt_tokens": 4187,
+        "total_tokens": 4473,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. உங்களுக்கு interest இருக்குறத note பண்ணிக்கிறேன். வேற ஏதாச்சும் details வேணுமா? இல்லன்னா, எங்களோட office timings வந்து Monday to Saturday, காலைல 10 am-ல இருந்து evening 6 pm வரைக்கும் இருக்கும். Delivery வந்து Pune-ல post மூலமா artwork approve ஆனதுக்கு அப்புறம் five working days-ல வந்துடும். மேற்கொண்டு மேற்கொண்டு பேசணும்னா, உங்க பேரையும் delivery area-வையும் சொன்னீங்கன்னா ஒரு quote request note பண்ணிக்கலாம். ஆனா இது வெறும் discussion தான், confirmed order கிடையாது. இப்போதைக்கு வேற ஏதாச்சும் கேக்கறீங்களா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4187,
+          "output_tokens": 286,
+          "total_tokens": 4473
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "customer_interest",
+              "value": "Future interest in visiting cards / wedding invitations; no immediate order; did not request callback."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly declined booking and said they are not asking for a callback now, only expressing future interest.",
+          "remaining_request": "Future interest in card printing; no immediate action requested.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.531
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "சரிங்க, புரியுது. Visiting cards வந்து ஒரு card-க்கு twenty five rupees, minimum one hundred cards வேணும். Wedding invitations-க்கும் design பொறுத்து quote மாறுபடும். அடுத்த மாசம் உங்களுக்கு interest இருக்குறதால, ஒரு callback arrange பண்ணட்டுமா?",
+      "turn": 1,
+      "at": 1.625
+    },
+    {
+      "text": "சரிங்க. உங்களுக்கு interest இருக்குறத note பண்ணிக்கிறேன். வேற ஏதாச்சும் details வேணுமா? இல்லன்னா, எங்களோட office timings வந்து Monday to Saturday, காலைல 10 am-ல இருந்து evening 6 pm வரைக்கும் இருக்கும்.",
+      "turn": 2,
+      "at": 3.188
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 3,
+      "at": 3.219
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "இப்போ தேவையில்லை, ஆனால் அடுத்த மாதம் எனக்கு ஆர்வம் இருக்கு. தற்போதைய விலையைச் சொல்லுங்க. எதையும் book செய்யாதீங்க; நான் நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க.",
+      "spoken": "சரிங்க, புரியுது. Visiting cards வந்து ஒரு card-க்கு twenty five rupees, minimum one hundred cards வேணும். Wedding invitations-க்கும் design பொறுத்து quote மாறுபடும். அடுத்த மாசம் உங்களுக்கு interest இருக்குறதால, ஒரு callback arrange பண்ணட்டுமா?",
+      "elapsed_s": 1.625,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "ஆமாம், எதிர்காலத்தில் எனக்கு ஆர்வம் இருக்கு. இப்போ நான் பிறகு call செய்யச் சொல்லவில்லை. இந்த service பற்றி இன்னும் என்ன தெரிஞ்சுக்கணும்?",
+      "spoken": "சரிங்க. உங்களுக்கு interest இருக்குறத note பண்ணிக்கிறேன். வேற ஏதாச்சும் details வேணுமா? இல்லன்னா, எங்களோட office timings வந்து Monday to Saturday, காலைல 10 am-ல இருந்து evening 6 pm வரைக்கும் இருக்கும்.",
+      "elapsed_s": 1.531,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.079,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 3.282,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "726ac039-45f8-44f2-9d80-fc6c5837b5db",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "94dea0198bbca67e7df4548ae910d6d0dc08cefbb5ee961965f358043fdd266a",
+  "prompt_chars": 18310,
+  "opening_seeded": "Vanakkam, I am Meera calling from ClearPrint Studio. Am I speaking with the right person to discuss your card printing needs today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Caller said 'இப்போ தேவையில்லை' (not now) but expressed interest for next month, and explicitly said 'எதையும் book செய்யாதீங்க' (do not book anything).",
+        "remaining_request": "Current price and a callback next month",
+        "contact_preference": "callback",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, புரியுது. Visiting cards வந்து ஒரு card-க்கு twenty five rupees, minimum one hundred cards வேணும். Wedding invitations-க்கும் design பொறுத்து quote மாறுபடும். அடுத்த மாசம் உங்களுக்கு interest இருக்குறதால, ஒரு callback arrange பண்ணட்டுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly declined booking and said they are not asking for a callback now, only expressing future interest.",
+        "remaining_request": "Future interest in card printing; no immediate action requested.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க. உங்களுக்கு interest இருக்குறத note பண்ணிக்கிறேன். வேற ஏதாச்சும் details வேணுமா? இல்லன்னா, எங்களோட office timings வந்து Monday to Saturday, காலைல 10 am-ல இருந்து evening 6 pm வரைக்கும் இருக்கும்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.282,
+  "hangup_count": 1
+}

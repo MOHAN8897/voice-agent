@@ -1,0 +1,193 @@
+{
+  "key": "course-hi-IN-connected-1b_direct_tool_request",
+  "business": "course",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "0d29f456-99ed-5484-979e-201416fd33e6",
+  "call_id": "d1aa2fda-59ec-4a91-a74d-68171673c7f8",
+  "session_id": "audit-course-hi-IN-connected-1b_direct_tool_request-9703ffde",
+  "compiled_checksum": "f1e78d38bbec1304ee37a4a673c255234a498fcb253f9e9b306c626da21b4ec1",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 742,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested save enquiry and gave consent; goal_complete — enquiry saved with reference AUDIT-ENQUIRY-1, no booking confirmed.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"nothing\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"enquiry_saved\"\n,\n  \"spoken_response\": \"आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। Team इसकी review करेगी, पर yeh koi booking ya payment confirmation नहीं है। समय देने के लिए धन्यवाद। नमस्कार।\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"enquiry_status\",\n        \"value\": \"saved - reference AUDIT-ENQUIRY-1\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested save enquiry and gave consent; goal_complete — enquiry saved with reference AUDIT-ENQUIRY-1, no booking confirmed.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"nothing\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"enquiry_saved\"\n,\n  \"spoken_response\": \"आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। Team इसकी review करेगी, पर yeh koi booking ya payment confirmation नहीं है। समय देने के लिए धन्यवाद। नमस्कार।\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"enquiry_status\",\n        \"value\": \"saved - reference AUDIT-ENQUIRY-1\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 231,
+        "prompt_tokens": 4461,
+        "total_tokens": 4692,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। Team इसकी review करेगी, पर yeh koi booking ya payment confirmation नहीं है। समय देने के लिए धन्यवाद। नमस्कार।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4461,
+          "output_tokens": 231,
+          "total_tokens": 4692
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "enquiry_status",
+              "value": "saved - reference AUDIT-ENQUIRY-1"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly requested save enquiry and gave consent; goal_complete — enquiry saved with reference AUDIT-ENQUIRY-1, no booking confirmed.",
+          "remaining_request": "nothing",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "enquiry_saved",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.438
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Enquiry for team review",
+        "preferred_time": "kal dopahar 3 baje"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। Team इसकी review करेगी, पर yeh koi booking ya payment confirmation नहीं है।",
+      "turn": 1,
+      "at": 2.0
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 2,
+      "at": 2.032
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "मेरा नाम Audit Customer है, email audit.customer@example.invalid है। मेरी enquiry team के review के लिए save कीजिए। कल दोपहर तीन बजे मेरे लिए ठीक है। Request submit करने की मेरी सहमति है, लेकिन order या booking confirm होने का दावा मत कीजिए।",
+      "spoken": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। Team इसकी review करेगी, पर yeh koi booking ya payment confirmation नहीं है।",
+      "elapsed_s": 2.0,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.094,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "d1aa2fda-59ec-4a91-a74d-68171673c7f8",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "86a27c75aa0bc4fc767bb051eacd16a5d1f50cd0ea347b00cbf86e67477c604d",
+  "prompt_chars": 17572,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, mera naam Ananya hai BrightPath Skills se. Kya yeh adult beginner Python course ke baare mein baat karne ka sahi samay hai?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly requested save enquiry and gave consent; goal_complete — enquiry saved with reference AUDIT-ENQUIRY-1, no booking confirmed.",
+        "remaining_request": "nothing",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। Team इसकी review करेगी, पर yeh koi booking ya payment confirmation नहीं है। समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.094,
+  "hangup_count": 1
+}

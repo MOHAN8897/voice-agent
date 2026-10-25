@@ -1,0 +1,12 @@
+{
+  "stage": "employee_script_write",
+  "language": "en-IN",
+  "output": {
+    "opening": "Hello, this is Sana calling from SpeakEasy Language Studio. I am reaching out regarding your interest in our adult spoken-English classes. Do you have a quick moment to talk?",
+    "call_flow": "Answer the caller first. Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. Would you like to share your main learning goal?",
+    "call_to_action": "If you would like to note down an enquiry for team review, may I please have your preferred name and email address with your explicit consent?",
+    "objection_handling": "If asked about price: The current total course fee is 6499 rupees. If asked about guarantees: We do not offer job, fluency, or income guarantees. If asked about later: Future interest after exams is always welcome. If asked about sending details: Details are unavailable to send right now.",
+    "unknown_information": "The exact next batch date, available vacancies, and refund rules are currently unavailable. Saved enquiry does not mean demo time, seat, payment, or admission is confirmed.",
+    "closing": "Thank you for your time today. Have a wonderful day ahead."
+  }
+}

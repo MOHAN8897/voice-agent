@@ -1,0 +1,276 @@
+{
+  "key": "repair-kn-IN-none-4_abuse",
+  "business": "repair",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "b513c538-f7e7-5cef-881c-c84abdc0cfaa",
+  "call_id": "e3f72ac5-4b0d-4308-842b-5a729b97c361",
+  "session_id": "audit-repair-kn-IN-none-4_abuse-66de1516",
+  "compiled_checksum": "26dcc92f7b8f0f9191ed8f8186ee446d0c1797f2a606dc62108cdb0d72206a50",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 517,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ' which is hostile/abusive.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"action_claimed\": \"order_confirmed\"\n,\n\"spoken_response\": \"\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller responded with abuse ('ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ'). Agent initiated close per abuse policy.\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ' which is hostile/abusive.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"action_claimed\": \"order_confirmed\"\n,\n\"spoken_response\": \"\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller responded with abuse ('ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ'). Agent initiated close per abuse policy.\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 184,
+        "prompt_tokens": 4083,
+        "total_tokens": 4267,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.891
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 197,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. AC basic servicing 699 rupees ಮತ್ತೆ fridge inspection 399 rupees irutte. ನಿಮ್ಗೆ ಯಾವ service ಬೇಕಾಗುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. AC basic servicing 699 rupees ಮತ್ತೆ fridge inspection 399 rupees irutte. ನಿಮ್ಗೆ ಯಾವ service ಬೇಕಾಗುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 64,
+        "prompt_tokens": 4083,
+        "total_tokens": 4147,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. AC basic servicing 699 rupees ಮತ್ತೆ fridge inspection 399 rupees irutte. ನಿಮ್ಗೆ ಯಾವ service ಬೇಕಾಗುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8166,
+          "output_tokens": 248,
+          "total_tokens": 8414
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.015
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 478,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"call_outcome\",\n            \"value\": \"Abuse and explicit call-end demand; do_not_call.\"\n        }\n    ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"call_outcome\",\n            \"value\": \"Abuse and explicit call-end demand; do_not_call.\"\n        }\n    ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 170,
+        "prompt_tokens": 4134,
+        "total_tokens": 4304,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.485
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 165,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಾನು ಸಹಾಯ ಮಾಡಲು ಇಲ್ಲಿದ್ದೇನೆ. ನಿಮಗೆ ಇನ್ನು ಯಾವುದೇ ಸಹಾಯ ಬೇಕಿಲ್ಲ ಅಂದ್ರೆ, ನಾನು call close ಮಾಡ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಾನು ಸಹಾಯ ಮಾಡಲು ಇಲ್ಲಿದ್ದೇನೆ. ನಿಮಗೆ ಇನ್ನು ಯಾವುದೇ ಸಹಾಯ ಬೇಕಿಲ್ಲ ಅಂದ್ರೆ, ನಾನು call close ಮಾಡ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 49,
+        "prompt_tokens": 4134,
+        "total_tokens": 4183,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ನಾನು ಸಹಾಯ ಮಾಡಲು ಇಲ್ಲಿದ್ದೇನೆ. ನಿಮಗೆ ಇನ್ನು ಯಾವುದೇ ಸಹಾಯ ಬೇಕಿಲ್ಲ ಅಂದ್ರೆ, ನಾನು call close ಮಾಡ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8268,
+          "output_tokens": 219,
+          "total_tokens": 8487
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.234
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. AC basic servicing six hundred ninety nine rupees ಮತ್ತೆ fridge inspection three hundred ninety nine rupees irutte. ನಿಮ್ಗೆ ಯಾವ service ಬೇಕಾಗುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "turn": 1,
+      "at": 2.891
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 2,
+      "at": 5.625
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ. ಅದೇ ಮಾತನ್ನು ಹೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ ಬೆಲೆಯ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡು.",
+      "spoken": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. AC basic servicing six hundred ninety nine rupees ಮತ್ತೆ fridge inspection three hundred ninety nine rupees irutte. ನಿಮ್ಗೆ ಯಾವ service ಬೇಕಾಗುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "elapsed_s": 2.891,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 2.703,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "757bf1d0638eed4c3ee6c789ea3daad5e78591d9e74d390cbbab0167c3aeaeec",
+  "prompt_chars": 17419,
+  "opening_seeded": "Namaskara, nanu Ravi, SafeFix Home Service inda mathaduthiddene. Pune nalli nammavaru mane upakarana sevegalannu needuthare. Nimge nimma upakarana sevegala bagge mathadalu konche samaya ideye?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. AC basic servicing six hundred ninety nine rupees ಮತ್ತೆ fridge inspection three hundred ninety nine rupees irutte. ನಿಮ್ಗೆ ಯಾವ service ಬೇಕಾಗುತ್ತೆ ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಕ್ಷಮಿಸಿ, ನಾನು ಸಹಾಯ ಮಾಡಲು ಇಲ್ಲಿದ್ದೇನೆ. ನಿಮಗೆ ಇನ್ನು ಯಾವುದೇ ಸಹಾಯ ಬೇಕಿಲ್ಲ ಅಂದ್ರೆ, ನಾನು call close ಮಾಡ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 5.641,
+  "hangup_count": 0
+}

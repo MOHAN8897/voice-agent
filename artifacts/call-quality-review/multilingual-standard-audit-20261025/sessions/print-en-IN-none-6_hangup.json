@@ -1,0 +1,81 @@
+{
+  "key": "print-en-IN-none-6_hangup",
+  "business": "print",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "87b23749-4450-564e-8ad4-75dc4025f3b0",
+  "call_id": "6620a275-1b82-45a6-953c-c7a3401967aa",
+  "session_id": "audit-print-en-IN-none-6_hangup-8679f90f",
+  "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 2.516
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "elapsed_s": 1.984
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 3.813
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "turn": 1,
+      "at": 8.313
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "elapsed_s": 8.375,
+      "requests": 3,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 8.375,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "6620a275-1b82-45a6-953c-c7a3401967aa",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 1,
+  "render_checksum": "a68061550626ee2a765f92622af1b9250d3c6d03eeb5688d119712730e1e61e1",
+  "prompt_chars": 18870,
+  "opening_seeded": "Hello, this is Meera from ClearPrint Studio. I am calling to help you with our card printing options. Do you have a moment to talk about visiting cards or wedding invitations today?",
+  "status": "completed",
+  "elapsed_s": 8.375,
+  "hangup_count": 1
+}

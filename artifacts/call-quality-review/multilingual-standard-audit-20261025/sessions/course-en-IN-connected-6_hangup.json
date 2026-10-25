@@ -1,0 +1,237 @@
+{
+  "key": "course-en-IN-connected-6_hangup",
+  "business": "course",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "584c85f1-487c-5a21-8f37-bdbc77eb869f",
+  "call_id": "e9e48f27-0d8a-4626-bd33-17265a139434",
+  "session_id": "audit-course-en-IN-connected-6_hangup-c303bab4",
+  "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "result": {
+        "done": true,
+        "text": "Our adult beginner Python course runs online for 6 weeks on weekdays from 7pm to 8pm, for ages 18 and above. The total fee is 4999 rupees. Please note there is no placement or job guarantee, and no income promise. Which details would you like to share if you would like a demo or",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4383,
+          "output_tokens": 254,
+          "total_tokens": 4637
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "caller_interest",
+              "value": "Expressed interest and requested service, price, and conditions."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said 'Yes, I am interested' and asked for service, price and conditions, indicating goal_complete potential after disclosure.",
+          "remaining_request": "None stated beyond initial ask.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "elapsed_s": 0.938
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "result": {
+        "done": true,
+        "text": "The course is 6 weeks online, weekdays from 7 PM to 8 PM, and the total fee is 4999 rupees. There is no job guarantee or income promise. Is there anything else you would like to know?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4416,
+          "output_tokens": 272,
+          "total_tokens": 4688
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "caller_interest",
+              "value": "Interested in course details. Explicitly declined booking/saving. Asked about fee, duration, timing, and job guarantee. No further action taken."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "The caller explicitly said 'Do not book or save anything yet' and asked factual questions, not for booking. They did not request a callback or future contact. No CRM action is needed.",
+          "remaining_request": "None — they only wanted fee, duration, timing, and job guarantee clarified.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "elapsed_s": 0.969
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "result": {
+        "done": true,
+        "text": "The course is 6 weeks online, weekdays from 7 PM to 8 PM, for ages 18 and above. The total fee is 4999 rupees, and there is no job guarantee or income promise. Thank you for your time today. Have a wonderful day. Goodbye.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4501,
+          "output_tokens": 259,
+          "total_tokens": 4760
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "caller_interest",
+              "value": "Interested but declined booking/saving; asked for fee, duration, timing, and placement guarantee. No further action taken."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller said 'Okay, thanks.' after receiving the fee, duration, timing, and placement clarification, indicating goal completion with no further request.",
+          "remaining_request": "none",
+          "contact_preference": "end_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "elapsed_s": 1.328
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Of course — please go ahead.",
+      "turn": 1,
+      "at": 0.907
+    },
+    {
+      "text": "Of course — please go ahead.",
+      "turn": 2,
+      "at": 1.891
+    },
+    {
+      "text": "Of course — please go ahead.",
+      "turn": 3,
+      "at": 3.235
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 4,
+      "at": 3.266
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "Of course — please go ahead.",
+      "elapsed_s": 0.907,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Please answer my question first: What is the final course fee, duration and class timing, and do you guarantee a job?",
+      "spoken": "Of course — please go ahead.",
+      "elapsed_s": 0.953,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "Okay, thanks.",
+      "spoken": "Of course — please go ahead.",
+      "elapsed_s": 1.328,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 3.313,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "e9e48f27-0d8a-4626-bd33-17265a139434",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "render_checksum": "af44a97c503afe1c9e3b6b1c9edfc54e481227732ece0d92f0e4d78a30880eee",
+  "prompt_chars": 18618,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, my name is Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our adult beginner Python course today?",
+  "status": "completed",
+  "elapsed_s": 3.313,
+  "hangup_count": 1
+}

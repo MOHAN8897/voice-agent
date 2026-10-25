@@ -1,0 +1,297 @@
+{
+  "key": "language-en-IN-none-6_hangup",
+  "business": "language",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "30e9f522-cc97-5431-81bc-71fd1d2fec3d",
+  "call_id": "1c43209f-1511-45ca-82eb-a9fe7045490f",
+  "session_id": "audit-language-en-IN-none-6_hangup-60caa52d",
+  "compiled_checksum": "a62e37a9b4ff923dc518e063310ac928cc53371370efc9c459d73910dfa24bc2",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 217,
+      "sse_content_preview": "Our adult spoken-English classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. Which details would you like to know more about?",
+      "sse_content_tail": "Our adult spoken-English classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. Which details would you like to know more about?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 60,
+        "prompt_tokens": 4078,
+        "total_tokens": 4138,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our adult spoken-English classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. Which details would you like to know more about?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4078,
+          "output_tokens": 60,
+          "total_tokens": 4138
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.625
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 192,
+      "sse_content_preview": "The final course fee is 6499 rupees, it runs for six weeks on weekends from 10am to 11am, and we do not offer any job, fluency, or income guarantees. Which details would you like to know next?",
+      "sse_content_tail": "The final course fee is 6499 rupees, it runs for six weeks on weekends from 10am to 11am, and we do not offer any job, fluency, or income guarantees. Which details would you like to know next?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 54,
+        "prompt_tokens": 4172,
+        "total_tokens": 4226,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "The final course fee is 6499 rupees, it runs for six weeks on weekends from 10am to 11am, and we do not offer any job, fluency, or income guarantees. Which details would you like to know next?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4172,
+          "output_tokens": 54,
+          "total_tokens": 4226
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.563
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 110,
+      "sse_content_preview": "You're welcome. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+      "sse_content_tail": "You're welcome. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 27,
+        "prompt_tokens": 4216,
+        "total_tokens": 4243,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "You're welcome. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4216,
+          "output_tokens": 27,
+          "total_tokens": 4243
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.516
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Our adult spoken-English classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is six thousand four hundred ninety nine rupees. Which details would you like to know more about?",
+      "turn": 1,
+      "at": 2.234
+    },
+    {
+      "text": "The final course fee is six thousand four hundred ninety nine rupees, it runs for six weeks on weekends from 10am to 11am, and we do not offer any job, fluency, or income guarantees. Which details would you like to know next?",
+      "turn": 2,
+      "at": 4.39
+    },
+    {
+      "text": "You're welcome. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+      "turn": 3,
+      "at": 6.562
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 4,
+      "at": 6.578
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "Our adult spoken-English classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is six thousand four hundred ninety nine rupees. Which details would you like to know more about?",
+      "elapsed_s": 2.234,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Answer this first: What is the final fee, duration and class timing, and do you guarantee fluency or a job?",
+      "spoken": "The final course fee is six thousand four hundred ninety nine rupees, it runs for six weeks on weekends from 10am to 11am, and we do not offer any job, fluency, or income guarantees. Which details would you like to know next?",
+      "elapsed_s": 2.14,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "Okay, thanks.",
+      "spoken": "You're welcome. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+      "elapsed_s": 2.156,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 6.64,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "1c43209f-1511-45ca-82eb-a9fe7045490f",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "58ff2953752897dd3b79a85556f0c2245f1eca6368ce40f44287c9bd60127dab",
+  "prompt_chars": 17661,
+  "opening_seeded": "Hello, this is Sana calling from SpeakEasy Language Studio. I am an AI assistant reaching out regarding your interest in our adult spoken-English classes. Do you have a quick moment to talk?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Our adult spoken-English classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is six thousand four hundred ninety nine rupees. Which details would you like to know more about?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "The final course fee is six thousand four hundred ninety nine rupees, it runs for six weeks on weekends from 10am to 11am, and we do not offer any job, fluency, or income guarantees. Which details would you like to know next?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "You're welcome. We do not offer job, fluency, or income guarantees. Which details would you like to know next?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.64,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

@@ -1,0 +1,16 @@
+{
+  "stage": "employee_script_review",
+  "language": "hi-IN",
+  "output": {
+    "passed": true,
+    "issues": [],
+    "fixed_script": {
+      "opening": "Namaste. Main Nila hoon FreshNest Cleaning se. Kya hum abhi safai sevaon ke bare mein baat kar sakte hain?",
+      "call_flow": "Sofa cleaning 349 rupees per seat hai, aur minimum 3 seats hone chahiye. Kitchen cleaning 1599 rupees total hai. Hum sirf Pune mein kaam karte hain aur hamara samay Monday se Saturday subah 9 baje se shaam 6 baje tak hai. Kya aapko sofa cleaning ya kitchen cleaning mein se kiski jankari chahiye?",
+      "call_to_action": "Team review ke liye enquiry submit karne ke liye hume aapka preferred name, service type, locality aur consent chahiye. Kya aapka locality Pune mein hai aur kya aap apna preferred naam bata sakte hain?",
+      "objection_handling": "Agar aapko sofa cleaning nahi chahiye toh kya aapko kitchen cleaning mein ruchi hai? Yeh enquiry sirf team review ke liye hai aur yeh koi confirmed slot ya paid order nahi hai. Agar aapko koi aur jankari chahiye toh hum bata sakte hain.",
+      "unknown_information": "Yeh jankari hamare paas uplabdh nahi hai. Hum iske bare mein koi anuman nahi laga sakte.",
+      "closing": "FreshNest Cleaning se baat karne ke liye dhanyavad. Aapka din shubh ho."
+    }
+  }
+}

@@ -1,0 +1,375 @@
+{
+  "key": "cycle-kn-IN-none-1_interested",
+  "business": "cycle",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "1_interested",
+  "agent_id": "f5a79515-a0d2-5b65-906d-0dad26c62217",
+  "call_id": "adb0442f-d409-40e1-bd2a-97848dadb3b0",
+  "session_id": "audit-cycle-kn-IN-none-1_interested-cc270386",
+  "compiled_checksum": "d93974aaef8f4b67e05c7d2e8cfc340be9288980a7ef5aabd76478bb6dc212d8",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 182,
+      "sse_content_preview": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ 120 ರೂಪಾಯಿ ಇದೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕಾಗಿತ್ತು?",
+      "sse_content_tail": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ 120 ರೂಪಾಯಿ ಇದೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕಾಗಿತ್ತು?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 48,
+        "prompt_tokens": 4052,
+        "total_tokens": 4100,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ 120 ರೂಪಾಯಿ ಇದೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕಾಗಿತ್ತು?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4052,
+          "output_tokens": 48,
+          "total_tokens": 4100
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.516
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 178,
+      "sse_content_preview": "basic service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಬೇಕಾದರೆ ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_content_tail": "basic service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಬೇಕಾದರೆ ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 34,
+        "prompt_tokens": 4108,
+        "total_tokens": 4142,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "basic service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಬೇಕಾದರೆ ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4108,
+          "output_tokens": 34,
+          "total_tokens": 4142
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.531
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 97,
+      "sse_content_preview": "ಸರಿ, puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ನಿಮಗೆ ಈ repair ಎಲ್ಲಿ ಮಾಡಿಸಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "sse_content_tail": "ಸರಿ, puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ನಿಮಗೆ ಈ repair ಎಲ್ಲಿ ಮಾಡಿಸಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 22,
+        "prompt_tokens": 4155,
+        "total_tokens": 4177,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ನಿಮಗೆ ಈ repair ಎಲ್ಲಿ ಮಾಡಿಸಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4155,
+          "output_tokens": 22,
+          "total_tokens": 4177
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.578
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 12,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 167,
+      "sse_content_preview": "ಸರಿ, Audit Customer ಅಂತ ಹೆಸರು ಮತ್ತು Adyar, Chennai ಅಂತ locality note ಮಾಡ್ಕೊಂಡೆ. ನಿಮ್ಮ puncture repair enquiry ನಮ್ಮ ತಂಡದ ಪರಿಶೀಲನೆಗೆ ಕಳಿಸ್ತೀನಿ … ನಿಮ್ಮ ಒಪ್ಪಿಗೆ ಇದೆ ಅಲ್ವಾ?",
+      "sse_content_tail": "ಸರಿ, Audit Customer ಅಂತ ಹೆಸರು ಮತ್ತು Adyar, Chennai ಅಂತ locality note ಮಾಡ್ಕೊಂಡೆ. ನಿಮ್ಮ puncture repair enquiry ನಮ್ಮ ತಂಡದ ಪರಿಶೀಲನೆಗೆ ಕಳಿಸ್ತೀನಿ … ನಿಮ್ಮ ಒಪ್ಪಿಗೆ ಇದೆ ಅಲ್ವಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 40,
+        "prompt_tokens": 4386,
+        "total_tokens": 4426,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, Audit Customer ಅಂತ ಹೆಸರು ಮತ್ತು Adyar, Chennai ಅಂತ locality note ಮಾಡ್ಕೊಂಡೆ. ನಿಮ್ಮ puncture repair enquiry ನಮ್ಮ ತಂಡದ ಪರಿಶೀಲನೆಗೆ ಕಳಿಸ್ತೀನಿ … ನಿಮ್ಮ ಒಪ್ಪಿಗೆ ಇದೆ ಅಲ್ವಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4386,
+          "output_tokens": 40,
+          "total_tokens": 4426
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.547
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ ಇದೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕಾಗಿತ್ತು?",
+      "turn": 1,
+      "at": 2.0
+    },
+    {
+      "text": "basic service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಬೇಕಾದರೆ ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "turn": 2,
+      "at": 4.235
+    },
+    {
+      "text": "ಸರಿ, puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ನಿಮಗೆ ಈ repair ಎಲ್ಲಿ ಮಾಡಿಸಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "turn": 3,
+      "at": 6.438
+    },
+    {
+      "text": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+      "turn": 4,
+      "at": 8.641
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 5,
+      "at": 8.704
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.",
+      "spoken": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ ಇದೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕಾಗಿತ್ತು?",
+      "elapsed_s": 2.0,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರಿಸಿ: ಸೈಕಲ್ basic service ಮತ್ತು puncture repair ಬೆಲೆ ಎಷ್ಟು? Parts ಕೂಡ ಇದರಲ್ಲಿ ಸೇರಿವೆಯಾ?",
+      "spoken": "basic service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಬೇಕಾದರೆ ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "elapsed_s": 2.219,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "Basic service ಬೇಡ, ಆದರೆ puncture repair ಬೇಕು. ಸಹಾಯ ಮಾಡುತ್ತೀರಾ?",
+      "spoken": "ಸರಿ, puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ನಿಮಗೆ ಈ repair ಎಲ್ಲಿ ಮಾಡಿಸಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "elapsed_s": 2.172,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want puncture repair in Adyar, Chennai; preferred review time tomorrow at 3pm. ಈ enquiry team reviewಗೆ submit ಮಾಡಿ. ನನ್ನ ಒಪ್ಪಿಗೆ ಇದೆ. Booking ಅಥವಾ order confirm ಅಂತ ಹೇಳಬೇಡಿ.",
+      "spoken": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+      "elapsed_s": 2.172,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.094,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 8.766,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "adb0442f-d409-40e1-bd2a-97848dadb3b0",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "e790ebeb19697467032eeb0092349c7a61e88a40ed26e7d52c70d9da8469ef9b",
+  "prompt_chars": 16746,
+  "opening_seeded": "ನಮಸ್ಕಾರ, ನಾನು ಸಿಟಿ ಸೈಕಲ್ ರಿಪೇರ್ಸ್ ನಿಂದ ಅರ್ಜುನ್ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ನಾವು ಸೈಕಲ್ ರಿಪೇರ್ ಮತ್ತು ಸೇವೆಗಳ ಬಗ್ಗೆ ಮಾಹಿತಿ ನೀಡುತ್ತಿದ್ದೇವೆ. ಈಗ ಮಾತನಾಡಲು ನಿಮಗೆ ಸಮಯವಿದೆಯೇ?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ ಇದೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕಾಗಿತ್ತು?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "basic service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಬೇಕಾದರೆ ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "ಸರಿ, puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ನಿಮಗೆ ಈ repair ಎಲ್ಲಿ ಮಾಡಿಸಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "ಸರಿ, Audit Customer ಅಂತ ಹೆಸರು ಮತ್ತು Adyar, Chennai ಅಂತ locality note ಮಾಡ್ಕೊಂಡೆ. ನಿಮ್ಮ puncture repair enquiry ನಮ್ಮ ತಂಡದ ಪರಿಶೀಲನೆಗೆ ಕಳಿಸ್ತೀನಿ … ನಿಮ್ಮ ಒಪ್ಪಿಗೆ ಇದೆ ಅಲ್ವಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 8.766,
+  "hangup_count": 1,
+  "source_signature": "f95691c1be0b78b8daf4f3542b355e04f5d7c43f2dd1b6eefab36c2f223f4cfe"
+}

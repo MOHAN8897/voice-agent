@@ -1,0 +1,1 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:30:35.302849Z", "source": "model", "operations": [{"op": "append_context", "value": "c_a_l_l_e_r_ r_e_f_u_s_e_d_ s_e_r_v_i_c_e_s_ a_n_d_ r_e_q_u_e_s_t_e_d_ c_l_o_s_e"}], "applied": true, "validation_errors": []}

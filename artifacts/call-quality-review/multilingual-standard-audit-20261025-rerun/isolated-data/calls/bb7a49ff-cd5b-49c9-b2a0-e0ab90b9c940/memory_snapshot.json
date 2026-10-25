@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "repair விலை என்ன? Parts அந்த விலையில் இருக்கா?\nassistant: கண்டிப்பா, அடிப்படை சேவை four hundred ninety nine ரூபாய், பஞ்சர் repair one hundred twenty ரூபாய். Parts கட்டணம் extra தான், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். இப்போ உங்களுக்கு service தேவையா? அப்போ உங்க பெயர், repair type, area மட்டும் சொன்னா போதும்.\nuser: Basic service வேண்டாம், ஆனால் puncture repair வேணும். உதவ முடியுமா?\nassistant: சரிங்க, puncture repair one hundred twenty ரூபாய் தான். இப்போ உங்களுக்கு சேவை தேவைப்படுதா? அப்படியென்றால், எங்க team-ஓட enquiry-க்காக உங்க பெயர், பகுதி மற்றும் சம்மதம் மட்டும் சொல்ல முடியுமா?"
+}

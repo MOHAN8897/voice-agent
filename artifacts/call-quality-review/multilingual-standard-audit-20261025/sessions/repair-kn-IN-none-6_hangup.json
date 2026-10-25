@@ -1,0 +1,434 @@
+{
+  "key": "repair-kn-IN-none-6_hangup",
+  "business": "repair",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "5f4913c1-ae60-5ad4-bfd0-7ebb2d1346b5",
+  "call_id": "3830bffb-70c2-4417-b4e9-70149cd4de88",
+  "session_id": "audit-repair-kn-IN-none-6_hangup-06501f92",
+  "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 866,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller expressed interest and asked for service, price, and terms.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"},\n\"order_claimed\": false,\n\"spoken_response\": \"AC basic servicing 699 rupees ಆಗುತ್ತೆ, ಮತ್ತೆ fridge inspection 399 rupees. Parts extra ಇರುತ್ತೆ, ಆದ್ರೆ inspection ಆದ್ಮೇಲೆ ಮಾತ್ರ ನಿಮ್ಮ approval ತಗೊಳ್ತೀವಿ. ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ visit request ಏನಾದ್ರೂ ಮಾಡ್ಬೇಕಾ?\"\n\n,\n\"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"caller_interest\", \"value\": \"interested\"}, {\"op\": \"update_summary\", \"key\": \"service_discussed\", \"value\": \"AC basic servicing 699, fridge inspection 399\"}, {\"op\": \"update_summary\", \"key\": \"parts_policy\", \"value\": \"extra after customer approval only, no fixed quote before inspection\"}]}\n\n}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller expressed interest and asked for service, price, and terms.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"},\n\"order_claimed\": false,\n\"spoken_response\": \"AC basic servicing 699 rupees ಆಗುತ್ತೆ, ಮತ್ತೆ fridge inspection 399 rupees. Parts extra ಇರುತ್ತೆ, ಆದ್ರೆ inspection ಆದ್ಮೇಲೆ ಮಾತ್ರ ನಿಮ್ಮ approval ತಗೊಳ್ತೀವಿ. ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ visit request ಏನಾದ್ರೂ ಮಾಡ್ಬೇಕಾ?\"\n\n,\n\"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"caller_interest\", \"value\": \"interested\"}, {\"op\": \"update_summary\", \"key\": \"service_discussed\", \"value\": \"AC basic servicing 699, fridge inspection 399\"}, {\"op\": \"update_summary\", \"key\": \"parts_policy\", \"value\": \"extra after customer approval only, no fixed quote before inspection\"}]}\n\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 270,
+        "prompt_tokens": 4076,
+        "total_tokens": 4346,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "AC basic servicing 699 rupees ಆಗುತ್ತೆ, ಮತ್ತೆ fridge inspection 399 rupees. Parts extra ಇರುತ್ತೆ, ಆದ್ರೆ inspection ಆದ್ಮೇಲೆ ಮಾತ್ರ ನಿಮ್ಮ approval ತಗೊಳ್ತೀವಿ. ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ visit request ಏನಾದ್ರೂ ಮಾಡ್ಬೇಕಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4076,
+          "output_tokens": 270,
+          "total_tokens": 4346
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "caller_interest",
+              "value": "interested"
+            },
+            {
+              "op": "update_summary",
+              "key": "service_discussed",
+              "value": "AC basic servicing 699, fridge inspection 399"
+            },
+            {
+              "op": "update_summary",
+              "key": "parts_policy",
+              "value": "extra after customer approval only, no fixed quote before inspection"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller expressed interest and asked for service, price, and terms.",
+          "remaining_request": "None",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.047
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 610,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller explicitly said 'ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ', indicating goal is information-only and not proceeding to booking.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"AC basic servicing 699 ರೂಪಾಯಿ ಮತ್ತು fridge inspection 399 ರೂಪಾಯಿ ಆಗುತ್ತೆ. Parts extra ಇರುತ್ತೆ, ಆದ್ರೆ ಅದನ್ನ ನೀವು ಒಪ್ಪಿದ ಮೇಲೆ ಮಾತ್ರ ಹಾಕ್ತೀವಿ. Inspection ಗಿಂತ ಮುಂಚೆ ಯಾವುದೇ fixed repair quote ಇರಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?\"\n\n, \"memory_update\": {\"operations\": []} }",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller explicitly said 'ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ', indicating goal is information-only and not proceeding to booking.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"AC basic servicing 699 ರೂಪಾಯಿ ಮತ್ತು fridge inspection 399 ರೂಪಾಯಿ ಆಗುತ್ತೆ. Parts extra ಇರುತ್ತೆ, ಆದ್ರೆ ಅದನ್ನ ನೀವು ಒಪ್ಪಿದ ಮೇಲೆ ಮಾತ್ರ ಹಾಕ್ತೀವಿ. Inspection ಗಿಂತ ಮುಂಚೆ ಯಾವುದೇ fixed repair quote ಇರಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?\"\n\n, \"memory_update\": {\"operations\": []} }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 172,
+        "prompt_tokens": 4052,
+        "total_tokens": 4224,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "AC basic servicing 699 ರೂಪಾಯಿ ಮತ್ತು fridge inspection 399 ರೂಪಾಯಿ ಆಗುತ್ತೆ. Parts extra ಇರುತ್ತೆ, ಆದ್ರೆ ಅದನ್ನ ನೀವು ಒಪ್ಪಿದ ಮೇಲೆ ಮಾತ್ರ ಹಾಕ್ತೀವಿ. Inspection ಗಿಂತ ಮುಂಚೆ ಯಾವುದೇ fixed repair quote ಇರಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4052,
+          "output_tokens": 172,
+          "total_tokens": 4224
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said 'ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ', indicating goal is information-only and not proceeding to booking.",
+          "remaining_request": "None",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.797
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 525,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"ಸರಿ, ಧನ್ಯವಾದಗಳು.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"ಸೇಫ್‌ಫಿಕ್ಸ್ ಹೋಮ್ ಸರ್ವಿಸ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು. ಶುಭ ದಿನ.\"\n  , \"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"call_summary\", \"value\": \"Customer inquired about AC servicing (Rs 699) and fridge inspection (Rs 399) pricing, and whether replacement parts are included. Agent explained that\"}]}\n\n}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"ಸರಿ, ಧನ್ಯವಾದಗಳು.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"ಸೇಫ್‌ಫಿಕ್ಸ್ ಹೋಮ್ ಸರ್ವಿಸ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು. ಶುಭ ದಿನ.\"\n  , \"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"call_summary\", \"value\": \"Customer inquired about AC servicing (Rs 699) and fridge inspection (Rs 399) pricing, and whether replacement parts are included. Agent explained that\"}]}\n\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 155,
+        "prompt_tokens": 4077,
+        "total_tokens": 4232,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸೇಫ್‌ಫಿಕ್ಸ್ ಹೋಮ್ ಸರ್ವಿಸ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು. ಶುಭ ದಿನ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4077,
+          "output_tokens": 155,
+          "total_tokens": 4232
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Customer inquired about AC servicing (Rs 699) and fridge inspection (Rs 399) pricing, and whether replacement parts are included. Agent explained that"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "ಸರಿ, ಧನ್ಯವಾದಗಳು.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.0
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 10,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 620,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ' — a clear goodbye/goal_complete close.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false\n  ,\n  \"spoken_response\": \"ಸರಿ, ಸಮಯ ಕೊಟ್ಟಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ದಿನ ಶುಭವಾಗಿರಲಿ.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"Caller received pricing info, declined further assistance, and requested to end call.\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ' — a clear goodbye/goal_complete close.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false\n  ,\n  \"spoken_response\": \"ಸರಿ, ಸಮಯ ಕೊಟ್ಟಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ದಿನ ಶುಭವಾಗಿರಲಿ.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"Caller received pricing info, declined further assistance, and requested to end call.\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 221,
+        "prompt_tokens": 4217,
+        "total_tokens": 4438,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ಸಮಯ ಕೊಟ್ಟಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ದಿನ ಶುಭವಾಗಿರಲಿ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4217,
+          "output_tokens": 221,
+          "total_tokens": 4438
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_outcome",
+              "value": "Caller received pricing info, declined further assistance, and requested to end call."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ' — a clear goodbye/goal_complete close.",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.938
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 1,
+      "at": 1.032
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 2,
+      "at": 1.828
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 3,
+      "at": 2.813
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 4,
+      "at": 3.766
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 1.032,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: AC servicing ಮತ್ತು fridge inspection ಬೆಲೆ ಎಷ್ಟು? Replacement parts ಅದರಲ್ಲಿ ಸೇರಿವೆಯಾ?",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.781,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ಸರಿ, ಧನ್ಯವಾದಗಳು.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.969,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.922,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "a4405d787fd7a9f6c3d89b05b176ee25a3365b9e77b516224e273236d26e008a",
+  "prompt_chars": 17494,
+  "opening_seeded": "ನಮಸ್ಕಾರ, ನಾನು ರವಿ, ಸೇಫ್‌ಫಿಕ್ಸ್ ಹೋಮ್ ಸರ್ವಿಸ್‌ನಿಂದ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ಇದು ನಮ್ಮ ಸೇವೆಗಳು ಮತ್ತು ಬೆಲೆಗಳ ಬಗ್ಗೆ ತಿಳಿಸಲು ಮಾಡಿದ ಕರೆ. ಈಗ ಮಾತನಾಡಲು ಇದು ಸರಿಯಾದ ಸಮಯವೇ?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller expressed interest and asked for service, price, and terms.",
+        "remaining_request": "None",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "AC basic servicing six hundred ninety nine rupees ಆಗುತ್ತೆ, ಮತ್ತೆ fridge inspection three hundred ninety nine rupees. Parts extra ಇರುತ್ತೆ, ಆದ್ರೆ inspection ಆದ್ಮೇಲೆ ಮಾತ್ರ ನಿಮ್ಮ approval ತಗೊಳ್ತೀವಿ. ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ visit request ಏನಾದ್ರೂ ಮಾಡ್ಬೇಕಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "open_question"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said 'ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ', indicating goal is information-only and not proceeding to booking.",
+        "remaining_request": "None",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "AC basic servicing six hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು fridge inspection three hundred ninety nine ರೂಪಾಯಿ ಆಗುತ್ತೆ. Parts extra ಇರುತ್ತೆ, ಆದ್ರೆ ಅದನ್ನ ನೀವು ಒಪ್ಪಿದ ಮೇಲೆ ಮಾತ್ರ ಹಾಕ್ತೀವಿ. Inspection ಗಿಂತ ಮುಂಚೆ ಯಾವುದೇ fixed repair quote ಇರಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "ಸರಿ, ಧನ್ಯವಾದಗಳು.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸೇಫ್‌ಫಿಕ್ಸ್ ಹೋಮ್ ಸರ್ವಿಸ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು. ಶುಭ ದಿನ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ' — a clear goodbye/goal_complete close.",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ಸಮಯ ಕೊಟ್ಟಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ದಿನ ಶುಭವಾಗಿರಲಿ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.782,
+  "hangup_count": 0
+}

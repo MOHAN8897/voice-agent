@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "rts are extra only after approval. We are open Tuesday to Sunday from 9 am to 6 pm. Would you like to share your details for an enquiry?\nuser: Do not book or save anything yet. Answer this first: What do a basic bicycle service and puncture repair cost, and are parts included?\nassistant: A basic service costs four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Which repair are you looking at?\nuser: Okay, thanks.\nassistant: You're welcome. Would you like to share your details for an enquiry, or do you have any other questions?"
+}

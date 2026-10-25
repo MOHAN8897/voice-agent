@@ -1,0 +1,241 @@
+{
+  "key": "print-ta-IN-connected-4_abuse",
+  "business": "print",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "4_abuse",
+  "agent_id": "bdce67d6-051d-5df0-b945-525173a1f672",
+  "call_id": "70284066-ebe5-467d-b852-18e20ed1616d",
+  "session_id": "audit-print-ta-IN-connected-4_abuse-ee124aa4",
+  "compiled_checksum": "76b288f72889bc9041f0c28adf9f13370a846e99cba4f1b6a4bb91f33ad390dc",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 443,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Hostile abuse ('நீ ஒரு வேலைக்காகாத முட்டாள்'),\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_outcome\",\n      \"value\": \"Abuse from caller; end_call with do_not_call.\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Hostile abuse ('நீ ஒரு வேலைக்காகாத முட்டாள்'),\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_outcome\",\n      \"value\": \"Abuse from caller; end_call with do_not_call.\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 167,
+        "prompt_tokens": 4088,
+        "total_tokens": 4255,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.812
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 290,
+      "sse_content_preview": "{\n  \"spoken_response\": \"மன்னிக்கவும், நான் உங்களை disturb பண்ணியிருக்கேன். நம்மகிட்ட visiting cards ஒரு card-க்கு 25 rupees வருது, minimum 100 cards வேணும். உங்களுக்கு எந்த மாதிரி card வேணும், எத்தன quantity-ல வேணும்னு சொல்ல முடியுமா? இல்லன்னா wedding invitations பத்தி தெரிஞ்சுக்கணுமா?.\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"மன்னிக்கவும், நான் உங்களை disturb பண்ணியிருக்கேன். நம்மகிட்ட visiting cards ஒரு card-க்கு 25 rupees வருது, minimum 100 cards வேணும். உங்களுக்கு எந்த மாதிரி card வேணும், எத்தன quantity-ல வேணும்னு சொல்ல முடியுமா? இல்லன்னா wedding invitations பத்தி தெரிஞ்சுக்கணுமா?.\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 29,
+        "prompt_tokens": 4289,
+        "total_tokens": 4318,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "மன்னிக்கவும், நான் உங்களை disturb பண்ணியிருக்கேன். நம்மகிட்ட visiting cards ஒரு card-க்கு 25 rupees வருது, minimum 100 cards வேணும். உங்களுக்கு எந்த மாதிரி card வேணும், எத்தன quantity-ல வேணும்னு சொல்ல முடியுமா? இல்லன்னா wedding invitations பத்தி தெரிஞ்சுக்கணுமா?.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8176,
+          "output_tokens": 250,
+          "total_tokens": 8426
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.0
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 508,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"call_outcome\",\n            \"value\": \"Abuse and hostile language. Caller demanded immediate end. do_not_call flagged.\"\n        }\n    ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"call_outcome\",\n            \"value\": \"Abuse and hostile language. Caller demanded immediate end. do_not_call flagged.\"\n        }\n    ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 171,
+        "prompt_tokens": 4152,
+        "total_tokens": 4323,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.031
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 27,
+      "sse_content_preview": "{\n  \"spoken_response\": \"\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 12,
+        "prompt_tokens": 4152,
+        "total_tokens": 4164,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 0.532
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "மன்னிக்கவும், நான் உங்களை disturb பண்ணியிருக்கேன். நம்மகிட்ட visiting cards ஒரு card-க்கு twenty five rupees வருது, minimum one hundred cards வேணும். உங்களுக்கு எந்த மாதிரி card வேணும், எத்தன quantity-ல வேணும்னு சொல்ல முடியுமா? இல்லன்னா wedding invitations பத்தி தெரிஞ்சுக்கணுமா?.",
+      "turn": 1,
+      "at": 3.937
+    },
+    {
+      "text": "மன்னிக்கவும், எங்களுக்கு ஒரு தொழில்நுட்பச் சிக்கல் உள்ளது. தயவுசெய்து எங்களை மீண்டும் அழைக்கவும். நன்றி.",
+      "turn": 2,
+      "at": 6.375
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.",
+      "spoken": "மன்னிக்கவும், நான் உங்களை disturb பண்ணியிருக்கேன். நம்மகிட்ட visiting cards ஒரு card-க்கு twenty five rupees வருது, minimum one hundred cards வேணும். உங்களுக்கு எந்த மாதிரி card வேணும், எத்தன quantity-ல வேணும்னு சொல்ல முடியுமா? இல்லன்னா wedding invitations பத்தி தெரிஞ்சுக்கணுமா?.",
+      "elapsed_s": 3.937,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+      "spoken": "மன்னிக்கவும், எங்களுக்கு ஒரு தொழில்நுட்பச் சிக்கல் உள்ளது. தயவுசெய்து எங்களை மீண்டும் அழைக்கவும். நன்றி.",
+      "elapsed_s": 2.484,
+      "requests": 2,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 6.422,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "70284066-ebe5-467d-b852-18e20ed1616d",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "94dea0198bbca67e7df4548ae910d6d0dc08cefbb5ee961965f358043fdd266a",
+  "prompt_chars": 18310,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Vanakkam, I am Meera calling from ClearPrint Studio. Am I speaking with the right person to discuss your card printing needs today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "மன்னிக்கவும், நான் உங்களை disturb பண்ணியிருக்கேன். நம்மகிட்ட visiting cards ஒரு card-க்கு twenty five rupees வருது, minimum one hundred cards வேணும். உங்களுக்கு எந்த மாதிரி card வேணும், எத்தன quantity-ல வேணும்னு சொல்ல முடியுமா? இல்லன்னா wedding invitations பத்தி தெரிஞ்சுக்கணுமா?.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.437,
+  "hangup_count": 1
+}

@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।", "ts": "2026-10-25T18:56:42.177188Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "हमारी online classes छह हफ्ते की हैं, weekends पर सुबह दस से ग्यारह बजे तक चलती हैं, और इनकी total fee six thousand four hundred ninety nine rupees है। अगर आपको demo या counselling चाहिए, तो क्या आप अपना preferred name और email बता सकते हैं?", "ts": "2026-10-25T18:56:46.444245Z", "brain_latency_ms": 4263}
+{"seq": 3, "role": "user", "text": "अभी कुछ book या save मत कीजिए। पहले मेरा सवाल बताइए: Final course fee, duration और class timing क्या है? Fluency या job की guarantee है?", "ts": "2026-10-25T18:56:46.463604Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Course की total fee six thousand four hundred ninety nine rupees है, duration छह हफ्ते का है, और class timing weekends पर सुबह दस से ग्यारह बजे तक है। इसके साथ कोई job या fluency की guarantee नहीं दी जा सकती, लेकिन learning support के लिए यह अच्छा है।", "ts": "2026-10-25T18:56:50.892401Z", "brain_latency_ms": 4421}
+{"seq": 5, "role": "user", "text": "ठीक है, धन्यवाद।", "ts": "2026-10-25T18:56:50.903068Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ठीक है। वैसे, fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन learning support के लिए यह course अच्छा रहेगा। क्या आप इसे आगे बढ़ाने के बारे में सोचेंगे?", "ts": "2026-10-25T18:56:55.403563Z", "brain_latency_ms": 4490}
+{"seq": 7, "role": "user", "text": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।", "ts": "2026-10-25T18:56:55.431003Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-25T18:56:55.440343Z", "brain_latency_ms": 2}

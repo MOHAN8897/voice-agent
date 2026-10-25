@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.", "ts": "2026-10-25T17:10:50.005940Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "சரிங்க. AC basic servicing six hundred ninety nine rupees வரும், fridge inspection three hundred ninety nine rupees வரும். Parts extra aagum, inspection panna aprom dhan fixed quote solla mudiyum. Timing வந்து Monday to Saturday, 9am to 6pm. Ungalukku visit arrange பண்ணணுமா?", "ts": "2026-10-25T17:10:51.758354Z", "brain_latency_ms": 1417}
+{"seq": 3, "role": "user", "text": "இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: AC servicing, fridge inspection விலை என்ன? Replacement parts அதில் சேருமா?", "ts": "2026-10-25T17:10:51.775495Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "கண்டிப்பா. Parts எல்லாம் extra தான், customer approval வந்த பிறகு தான் add பண்ணுவோம். Inspection முடிஞ்ச பிறகு தான் fixed repair quote சொல்ல முடியும். வேற ஏதாச்சும் details வேணுமா?", "ts": "2026-10-25T17:10:53.327617Z", "brain_latency_ms": 1504}
+{"seq": 5, "role": "user", "text": "சரி, நன்றி.", "ts": "2026-10-25T17:10:53.339998Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "சரிங்க. உங்களுக்கு visit ஏதாச்சும் arrange பண்ணணுமா? அப்போ உங்க பெயர், எந்த appliance, locality, அப்புறம் எந்த date வேணும்னு மட்டும் சொல்லுங்க.", "ts": "2026-10-25T17:10:55.338334Z", "brain_latency_ms": 1889}
+{"seq": 7, "role": "user", "text": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.", "ts": "2026-10-25T17:10:55.352836Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.", "ts": "2026-10-25T17:10:55.367580Z", "brain_latency_ms": 3}

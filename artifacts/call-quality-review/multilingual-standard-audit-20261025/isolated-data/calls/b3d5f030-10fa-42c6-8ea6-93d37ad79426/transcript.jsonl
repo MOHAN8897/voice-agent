@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.", "ts": "2026-10-25T15:23:16.187068Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "తప్పకుండా, చెప్పండి.", "ts": "2026-10-25T15:23:17.092165Z", "brain_latency_ms": 900}
+{"seq": 3, "role": "user", "text": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: మీరు wedding invitations కూడా print చేస్తారా? ధర, delivery time ఎంత?", "ts": "2026-10-25T15:23:17.116445Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "తప్పకుండా అండి. Wedding invitations అందుబాటులో ఉన్నాయి, కానీ design మరియు quantity బట్టి price మారుతుంది, సో fixed rate ఉండదు. ఆర్ట్‌వర్క్ అప్రూవల్ అయ్యాక ఐదు working days లో Pune కి delivery అవుతుంది. మీకు విజిటింగ్ కార్డ్స్ కావాలా లేక wedding invitations గురించే తెలుసుకోవాలా అ?", "ts": "2026-10-25T15:23:18.945408Z"}
+{"seq": 5, "role": "user", "text": "సరే అండి, ధన్యవాదాలు.", "ts": "2026-10-25T15:23:18.954054Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "తప్పకుండా, చెప్పండి.", "ts": "2026-10-25T15:23:19.728292Z", "brain_latency_ms": 771}
+{"seq": 7, "role": "user", "text": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.", "ts": "2026-10-25T15:23:19.742006Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "తప్పకుండా, చెప్పండి.", "ts": "2026-10-25T15:23:20.312146Z", "brain_latency_ms": 568}

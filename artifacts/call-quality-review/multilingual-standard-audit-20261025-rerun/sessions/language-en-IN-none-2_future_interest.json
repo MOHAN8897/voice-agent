@@ -1,0 +1,225 @@
+{
+  "key": "language-en-IN-none-2_future_interest",
+  "business": "language",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "30e9f522-cc97-5431-81bc-71fd1d2fec3d",
+  "call_id": "4d1287e1-877b-441a-bfbb-0702a6cdc868",
+  "session_id": "audit-language-en-IN-none-2_future_interest-76fd1a23",
+  "compiled_checksum": "a62e37a9b4ff923dc518e063310ac928cc53371370efc9c459d73910dfa24bc2",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 189,
+      "sse_content_preview": "That is absolutely fine, future interest after exams is always welcome. The current total course fee is 6499 rupees. Would you like to share what you are hoping to achieve with the classes?",
+      "sse_content_tail": "That is absolutely fine, future interest after exams is always welcome. The current total course fee is 6499 rupees. Would you like to share what you are hoping to achieve with the classes?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 42,
+        "prompt_tokens": 4148,
+        "total_tokens": 4190,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "That is absolutely fine, future interest after exams is always welcome. The current total course fee is 6499 rupees. Would you like to share what you are hoping to achieve with the classes?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4148,
+          "output_tokens": 42,
+          "total_tokens": 4190
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.656
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 151,
+      "sse_content_preview": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. Would you like to share your main learning goal?",
+      "sse_content_tail": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. Would you like to share your main learning goal?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 43,
+        "prompt_tokens": 4213,
+        "total_tokens": 4256,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. Would you like to share your main learning goal?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4213,
+          "output_tokens": 43,
+          "total_tokens": 4256
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.609
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "That is absolutely fine, future interest after exams is always welcome. The current total course fee is six thousand four hundred ninety nine rupees. Would you like to share what you are hoping to achieve with the classes?",
+      "turn": 1,
+      "at": 2.093
+    },
+    {
+      "text": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. Would you like to share your main learning goal?",
+      "turn": 2,
+      "at": 4.25
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 3,
+      "at": 4.265
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.",
+      "spoken": "That is absolutely fine, future interest after exams is always welcome. The current total course fee is six thousand four hundred ninety nine rupees. Would you like to share what you are hoping to achieve with the classes?",
+      "elapsed_s": 2.093,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?",
+      "spoken": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. Would you like to share your main learning goal?",
+      "elapsed_s": 2.141,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 4.312,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "4d1287e1-877b-441a-bfbb-0702a6cdc868",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "58ff2953752897dd3b79a85556f0c2245f1eca6368ce40f44287c9bd60127dab",
+  "prompt_chars": 17661,
+  "opening_seeded": "Hello, this is Sana calling from SpeakEasy Language Studio. I am an AI assistant reaching out regarding your interest in our adult spoken-English classes. Do you have a quick moment to talk?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "That is absolutely fine, future interest after exams is always welcome. The current total course fee is six thousand four hundred ninety nine rupees. Would you like to share what you are hoping to achieve with the classes?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. Would you like to share your main learning goal?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.312,
+  "hangup_count": 1,
+  "source_signature": "c545ec91901b6bf6a3eadfbeb58d4c160fe2846b70364f913fd4724fe00d89cd"
+}

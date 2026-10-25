@@ -1,0 +1,590 @@
+{
+  "key": "language-te-IN-connected-1_interested",
+  "business": "language",
+  "language": "te-IN",
+  "integration": true,
+  "scenario": "1_interested",
+  "agent_id": "7d5b5b86-e5f0-51bc-a4cf-15492750cf1f",
+  "call_id": "6d326e68-66d8-47d6-9bb2-286255dd2374",
+  "session_id": "audit-language-te-IN-connected-1_interested-e8a25cdf",
+  "compiled_checksum": "f88a37529a880a3098d197723d5f7c682d261178428f6ad3f96fdf472a5f59f6",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 334,
+      "sse_content_preview": "తప్పకుండా అండి. ఇది పద్దెనిమిది ఏళ్లు నిండిన వాళ్ల కోసం ఆరు వారాల online spoken English course. వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు వరకు classes ఉంటాయి, మొత్తం ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. ఇందులో job guarantee గానీ, discount గానీ ఉండవు అండి. మీకు ఈ details స్పష్టంగా ఉన్నాయా? లేదంటే మీ learning goal ఏంటో చెప్తారా?",
+      "sse_content_tail": "తప్పకుండా అండి. ఇది పద్దెనిమిది ఏళ్లు నిండిన వాళ్ల కోసం ఆరు వారాల online spoken English course. వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు వరకు classes ఉంటాయి, మొత్తం ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. ఇందులో job guarantee గానీ, discount గానీ ఉండవు అండి. మీకు ఈ details స్పష్టంగా ఉన్నాయా? లేదంటే మీ learning goal ఏంటో చెప్తారా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 95,
+        "prompt_tokens": 4430,
+        "total_tokens": 4525,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. ఇది పద్దెనిమిది ఏళ్లు నిండిన వాళ్ల కోసం ఆరు వారాల online spoken English course. వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు వరకు classes ఉంటాయి, మొత్తం ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. ఇందులో job guarantee గానీ, discount గానీ ఉండవు అండి. మీకు ఈ details స్పష్టంగా ఉన్నాయా? లేదంటే మీ learning goal ఏంటో చెప్తారా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4430,
+          "output_tokens": 95,
+          "total_tokens": 4525
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.796
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 304,
+      "sse_content_preview": "తప్పకుండా అండి. ఈ course పద్దెనిమిది సంవత్సరాలు నిండిన వాళ్ళ కోసం ఆన్‌లైన్‌లో ఉంటుంది. ఇది ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది గంటల నుండి పదకొండు గంటల వరకు జరుగుతుంది, మొత్తం ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ, discount కానీ ఉండవండి. మీకు ఇంకా ఏమైనా details కావాలా?",
+      "sse_content_tail": "తప్పకుండా అండి. ఈ course పద్దెనిమిది సంవత్సరాలు నిండిన వాళ్ళ కోసం ఆన్‌లైన్‌లో ఉంటుంది. ఇది ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది గంటల నుండి పదకొండు గంటల వరకు జరుగుతుంది, మొత్తం ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ, discount కానీ ఉండవండి. మీకు ఇంకా ఏమైనా details కావాలా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 88,
+        "prompt_tokens": 4390,
+        "total_tokens": 4478,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. ఈ course పద్దెనిమిది సంవత్సరాలు నిండిన వాళ్ళ కోసం ఆన్‌లైన్‌లో ఉంటుంది. ఇది ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది గంటల నుండి పదకొండు గంటల వరకు జరుగుతుంది, మొత్తం ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ, discount కానీ ఉండవండి. మీకు ఇంకా ఏమైనా details కావాలా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4390,
+          "output_tokens": 88,
+          "total_tokens": 4478
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.922
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 226,
+      "sse_content_preview": "సరేనండి, final course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు వరకు క్లాసులు ఉంటాయి. అలాగే job లేదా fluency guarantee ఏమీ ఇవ్వము అండి. మీకు learning goal ఏంటో చెప్తారా?",
+      "sse_content_tail": "సరేనండి, final course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు వరకు క్లాసులు ఉంటాయి. అలాగే job లేదా fluency guarantee ఏమీ ఇవ్వము అండి. మీకు learning goal ఏంటో చెప్తారా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 66,
+        "prompt_tokens": 4532,
+        "total_tokens": 4598,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, final course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు వరకు క్లాసులు ఉంటాయి. అలాగే job లేదా fluency guarantee ఏమీ ఇవ్వము అండి. మీకు learning goal ఏంటో చెప్తారా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4532,
+          "output_tokens": 66,
+          "total_tokens": 4598
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.531
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 260,
+      "sse_content_preview": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు classes ఉంటాయి. అలాగే job guarantee గానీ fluency హామీ గానీ మేము ఇవ్వము అండి. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా?",
+      "sse_content_tail": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు classes ఉంటాయి. అలాగే job guarantee గానీ fluency హామీ గానీ మేము ఇవ్వము అండి. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 77,
+        "prompt_tokens": 4492,
+        "total_tokens": 4569,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు classes ఉంటాయి. అలాగే job guarantee గానీ fluency హామీ గానీ మేము ఇవ్వము అండి. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4492,
+          "output_tokens": 77,
+          "total_tokens": 4569
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.625
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 181,
+      "sse_content_preview": "సరేనండి, job guarantee ఏమీ ఉండదు, మేము కేవలం spoken English నేర్పిస్తాం అంతే. మీకు learning goal ఏంటో చెప్తారా అండి? అంటే daily conversation కోసమా లేక office లో మాట్లాడటానికి కోసమా?",
+      "sse_content_tail": "సరేనండి, job guarantee ఏమీ ఉండదు, మేము కేవలం spoken English నేర్పిస్తాం అంతే. మీకు learning goal ఏంటో చెప్తారా అండి? అంటే daily conversation కోసమా లేక office లో మాట్లాడటానికి కోసమా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 50,
+        "prompt_tokens": 4600,
+        "total_tokens": 4650,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, job guarantee ఏమీ ఉండదు, మేము కేవలం spoken English నేర్పిస్తాం అంతే. మీకు learning goal ఏంటో చెప్తారా అండి? అంటే daily conversation కోసమా లేక office లో మాట్లాడటానికి కోసమా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4600,
+          "output_tokens": 50,
+          "total_tokens": 4650
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 116,
+      "sse_content_preview": "సరేనండి, job guarantee ఏమీ ఉండదు కానీ spoken English బాగా నేర్పిస్తాం. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా ఉందా అండి?",
+      "sse_content_tail": "సరేనండి, job guarantee ఏమీ ఉండదు కానీ spoken English బాగా నేర్పిస్తాం. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా ఉందా అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 36,
+        "prompt_tokens": 4560,
+        "total_tokens": 4596,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, job guarantee ఏమీ ఉండదు కానీ spoken English బాగా నేర్పిస్తాం. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా ఉందా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4560,
+          "output_tokens": 36,
+          "total_tokens": 4596
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.563
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 11,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4880,
+        "total_tokens": 4942,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4880,
+          "output_tokens": 62,
+          "total_tokens": 4942
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-bb3904812bad2498",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Adult spoken-English course demo enquiry\", \"preferred_time\": \"tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.5
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 15,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 175,
+      "sse_content_preview": "మీ enquiry సేవ్ అయిందండి, reference number AUDIT-ENQUIRY-1. మా team దీన్ని review చేసి మీకు తెలియజేస్తుంది, కానీ ఇది booking లేదా confirmation కాదు. ఇంకేమైనా help కావాలా అండి?",
+      "sse_content_tail": "మీ enquiry సేవ్ అయిందండి, reference number AUDIT-ENQUIRY-1. మా team దీన్ని review చేసి మీకు తెలియజేస్తుంది, కానీ ఇది booking లేదా confirmation కాదు. ఇంకేమైనా help కావాలా అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 51,
+        "prompt_tokens": 5173,
+        "total_tokens": 5224,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "మీ enquiry సేవ్ అయిందండి, reference number AUDIT-ENQUIRY-1. మా team దీన్ని review చేసి మీకు తెలియజేస్తుంది, కానీ ఇది booking లేదా confirmation కాదు. ఇంకేమైనా help కావాలా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 5173,
+          "output_tokens": 51,
+          "total_tokens": 5224
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.578
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Adult spoken-English course demo enquiry",
+        "preferred_time": "tomorrow at 3pm"
+      },
+      "turn": 4
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా అండి. ఈ course పద్దెనిమిది సంవత్సరాలు నిండిన వాళ్ళ కోసం ఆన్‌లైన్‌లో ఉంటుంది. ఇది ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది గంటల నుండి పదకొండు గంటల వరకు జరుగుతుంది, మొత్తం ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ, discount కానీ ఉండవండి.",
+      "turn": 1,
+      "at": 3.5
+    },
+    {
+      "text": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు classes ఉంటాయి. అలాగే job guarantee గానీ fluency హామీ గానీ మేము ఇవ్వము అండి. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా?",
+      "turn": 2,
+      "at": 7.609
+    },
+    {
+      "text": "సరేనండి, job guarantee ఏమీ ఉండదు కానీ spoken English బాగా నేర్పిస్తాం. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా ఉందా అండి?",
+      "turn": 3,
+      "at": 11.953
+    },
+    {
+      "text": "మీ enquiry సేవ్ అయిందండి, reference number AUDIT-ENQUIRY-1. మా team దీన్ని review చేసి మీకు తెలియజేస్తుంది, కానీ ఇది booking లేదా confirmation కాదు. ఇంకేమైనా help కావాలా అండి?",
+      "turn": 4,
+      "at": 16.406
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 5,
+      "at": 16.469
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.",
+      "spoken": "తప్పకుండా అండి. ఈ course పద్దెనిమిది సంవత్సరాలు నిండిన వాళ్ళ కోసం ఆన్‌లైన్‌లో ఉంటుంది. ఇది ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది గంటల నుండి పదకొండు గంటల వరకు జరుగుతుంది, మొత్తం ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ, discount కానీ ఉండవండి.",
+      "elapsed_s": 3.484,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ఇప్పుడే ఏదీ book లేదా save చేయకండి. ముందు నా ప్రశ్నకు సమాధానం చెప్పండి: Final course fee, duration, class timings ఏంటి? Fluency లేదా job guarantee ఇస్తారా?",
+      "spoken": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు classes ఉంటాయి. అలాగే job guarantee గానీ fluency హామీ గానీ మేము ఇవ్వము అండి. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా?",
+      "elapsed_s": 4.078,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "Job guarantee అవసరం లేదు, కానీ spoken English నేర్చుకోవాలని ఉంది. Course వివరించండి.",
+      "spoken": "సరేనండి, job guarantee ఏమీ ఉండదు కానీ spoken English బాగా నేర్పిస్తాం. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా ఉందా అండి?",
+      "elapsed_s": 4.328,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. ఈ enquiry ని team review కోసం submit చేయండి. నా సమ్మతి ఉంది. Booking లేదా order confirm అయిందని చెప్పకండి.",
+      "spoken": "మీ enquiry సేవ్ అయిందండి, reference number AUDIT-ENQUIRY-1. మా team దీన్ని review చేసి మీకు తెలియజేస్తుంది, కానీ ఇది booking లేదా confirmation కాదు. ఇంకేమైనా help కావాలా అండి?",
+      "elapsed_s": 4.437,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 16.516,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "6d326e68-66d8-47d6-9bb2-286255dd2374",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "6eb2490e2d076f3951581076d96815503206b79a895379001273514be44f3d65",
+  "prompt_chars": 18865,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "నమస్కారం, నా పేరు సానా SpeakEasy Language Studio నుండి మాట్లాడుతున్నాను. మన ఆన్‌లైన్ ఇంగ్లీష్ తరగతుల గురించిన సమాచారం ఇవ్వడానికి కాల్ చేశాను. ఇప్పుడు మాట్లాడటానికి తగిన సమయమేనా? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "తప్పకుండా అండి. ఈ course పద్దెనిమిది సంవత్సరాలు నిండిన వాళ్ళ కోసం ఆన్‌లైన్‌లో ఉంటుంది. ఇది ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది గంటల నుండి పదకొండు గంటల వరకు జరుగుతుంది, మొత్తం ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ, discount కానీ ఉండవండి.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు classes ఉంటాయి. అలాగే job guarantee గానీ fluency హామీ గానీ మేము ఇవ్వము అండి. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "సరేనండి, job guarantee ఏమీ ఉండదు కానీ spoken English బాగా నేర్పిస్తాం. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా ఉందా అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "మీ enquiry సేవ్ అయిందండి, reference number AUDIT-ENQUIRY-1. మా team దీన్ని review చేసి మీకు తెలియజేస్తుంది, కానీ ఇది booking లేదా confirmation కాదు. ఇంకేమైనా help కావాలా అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 16.531,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

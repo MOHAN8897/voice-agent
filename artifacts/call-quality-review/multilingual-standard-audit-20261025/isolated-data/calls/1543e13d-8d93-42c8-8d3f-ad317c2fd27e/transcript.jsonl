@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.", "ts": "2026-10-25T15:28:58.799073Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "கண்டிப்பாக, சொல்லுங்கள்.", "ts": "2026-10-25T15:28:59.852160Z", "brain_latency_ms": 530}
+{"seq": 3, "role": "user", "text": "இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: Course final fee, கால அளவு, class timings என்ன? Job guarantee கொடுப்பீங்களா?", "ts": "2026-10-25T15:28:59.874083Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "கண்டிப்பாக, சொல்லுங்கள்.", "ts": "2026-10-25T15:29:00.979853Z", "brain_latency_ms": 530}
+{"seq": 5, "role": "user", "text": "எனக்கு job guarantee தேவையில்லை, ஆனால் Python கற்றுக்கொள்ள ஆர்வம் இருக்கு. Course விளக்க முடியுமா?", "ts": "2026-10-25T15:29:00.996833Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "கண்டிப்பாக, சொல்லுங்கள்.", "ts": "2026-10-25T15:29:02.261267Z", "brain_latency_ms": 698}
+{"seq": 7, "role": "user", "text": "என் பெயர் Audit Customer, email audit.customer@example.invalid. என் enquiryயை team reviewக்காக save செய்யுங்க. நாளை பிற்பகல் மூன்று மணி எனக்கு வசதி. Request submit செய்ய சம்மதிக்கிறேன்; order அல்லது booking confirm ஆனதாகச் சொல்லாதீங்க.", "ts": "2026-10-25T15:29:02.282931Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "கண்டிப்பாக, சொல்லுங்கள்.", "ts": "2026-10-25T15:29:05.458395Z", "brain_latency_ms": 568}
+{"seq": 9, "role": "user", "text": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.", "ts": "2026-10-25T15:29:05.481803Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "மன்னிக்கவும், எங்களுக்கு ஒரு தொழில்நுட்பச் சிக்கல் உள்ளது. தயவுசெய்து எங்களை மீண்டும் அழைக்கவும். நன்றி.", "ts": "2026-10-25T15:29:09.976011Z"}

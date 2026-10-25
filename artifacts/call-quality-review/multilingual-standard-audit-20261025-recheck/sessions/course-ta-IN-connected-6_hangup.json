@@ -1,0 +1,420 @@
+{
+  "key": "course-ta-IN-connected-6_hangup",
+  "business": "course",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "13132fd6-d72a-5ef9-81a9-47b201ed6188",
+  "call_id": "de83f01a-9246-46ed-b8c4-eddb92895d0a",
+  "session_id": "audit-course-ta-IN-connected-6_hangup-a7301eb0",
+  "compiled_checksum": "6de945f219536e3f862422a7bf903732ed8c2be0a2a89e7a29eaaacb4b90f85f",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 1260,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"caller expressed interest and asked for details; no further qualification needed as script objective (explain course, fee, terms) is complete and no integration exists to submit demo/counselling\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\",\n\"spoken_response\": \"சரிங்க, இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் நடக்கும். இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல வேலை வாய்ப்பு உத்தரவாதமோ, வருமான வாக்குறுதியோ கிடையாது, தள்ளுபடியும் தவணை முறையும் இல்லை. இது சம்பந்தமா வேற ஏதாச்சும் விவரம் வேணுமா?\"\n,\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"call_summary\",\n            \"value\": \"Caller expressed interest and asked for service, fee, and terms. Explained 6-week online Python course, weekdays 7pm-8pm, total fee 4999 INR, no job/c\"\n        }\n    ]\n}\n}இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். ஆறு வாரங்கள் வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் class இருக்கும். இதுல job guarantee எதுவும் கிடையாது. உங்களுக்கு ஏற்கனவே பைத்தான் தெரிஞ்சிருக்கா?",
+      "sse_content_tail": "\n  }\n,\n\n\"action_claimed\": \"none\",\n\"spoken_response\": \"சரிங்க, இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் நடக்கும். இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல வேலை வாய்ப்பு உத்தரவாதமோ, வருமான வாக்குறுதியோ கிடையாது, தள்ளுபடியும் தவணை முறையும் இல்லை. இது சம்பந்தமா வேற ஏதாச்சும் விவரம் வேணுமா?\"\n,\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"call_summary\",\n            \"value\": \"Caller expressed interest and asked for service, fee, and terms. Explained 6-week online Python course, weekdays 7pm-8pm, total fee 4999 INR, no job/c\"\n        }\n    ]\n}\n}இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். ஆறு வாரங்கள் வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் class இருக்கும். இதுல job guarantee எதுவும் கிடையாது. உங்களுக்கு ஏற்கனவே பைத்தான் தெரிஞ்சிருக்கா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 57,
+        "prompt_tokens": 4554,
+        "total_tokens": 4611,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் நடக்கும். இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல வேலை வாய்ப்பு உத்தரவாதமோ, வருமான வாக்குறுதியோ கிடையாது, தள்ளுபடியும் தவணை முறையும் இல்லை. இது சம்பந்தமா வேற ஏதாச்சும் விவரம் வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4337,
+          "output_tokens": 314,
+          "total_tokens": 4651
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller expressed interest and asked for service, fee, and terms. Explained 6-week online Python course, weekdays 7pm-8pm, total fee 4999 INR, no job/c"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "caller expressed interest and asked for details; no further qualification needed as script objective (explain course, fee, terms) is complete and no integration exists to submit demo/counselling",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.75
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 879,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly instructed not to book or save and demanded answers first; after receiving them, they have not indicated further interest or next step, and the script objective (explaining course +0\"\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly instructed not to book or save and demanded answers first; after receiving them, they have not indicated further interest or next step, and the script objective (explaining course +0\"\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.843
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 464,
+      "sse_content_preview": "{ \"spoken_response\": \"இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் ஆகும். ஆறு வாரங்கள் வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் வகுப்பு நடக்கும். இதுல job guarantee எதுவும் கிடையாதுங்க.\" }சரிங்க. இதுல வேலை வாய்ப்பு உத்தரவாதமோ, வருமான வாக்குறுதியோ கிடையாது. உங்களுக்கு டெமோ அல்லது கவுன்சிலிங் தேவைப்பட்டா சொல்லுங்க, உங்க விருப்பமான நேரம், பெயர் மற்றும் email முகவரியை மட்டும் share பண்ண முடியுமா? இது சீட் உறுதியானதுன்னு அர்த்தம் இல்லைங்க.",
+      "sse_content_tail": "{ \"spoken_response\": \"இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் ஆகும். ஆறு வாரங்கள் வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் வகுப்பு நடக்கும். இதுல job guarantee எதுவும் கிடையாதுங்க.\" }சரிங்க. இதுல வேலை வாய்ப்பு உத்தரவாதமோ, வருமான வாக்குறுதியோ கிடையாது. உங்களுக்கு டெமோ அல்லது கவுன்சிலிங் தேவைப்பட்டா சொல்லுங்க, உங்க விருப்பமான நேரம், பெயர் மற்றும் email முகவரியை மட்டும் share பண்ண முடியுமா? இது சீட் உறுதியானதுன்னு அர்த்தம் இல்லைங்க.",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 69,
+        "prompt_tokens": 4612,
+        "total_tokens": 4681,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் ஆகும். ஆறு வாரங்கள் வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் வகுப்பு நடக்கும். இதுல job guarantee எதுவும் கிடையாதுங்க.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4417,
+          "output_tokens": 59,
+          "total_tokens": 4476
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.625
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 347,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"சரி, நன்றி.\", \"reason\": \"not_interested\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n\n, \n\n\"action_claimed\": \"none\",\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"interested\",\n      \"value\": \"False\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{ \"end_call\": { \"evidence\": \"சரி, நன்றி.\", \"reason\": \"not_interested\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n\n, \n\n\"action_claimed\": \"none\",\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"interested\",\n      \"value\": \"False\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 127,
+        "prompt_tokens": 4475,
+        "total_tokens": 4602,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 0.828
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 170,
+      "sse_content_preview": "{\n  \"spoken_response\": \"சரிங்க. உங்களுக்கு டெமோ அல்லது கவுன்சிலிங் தேவைப்பட்டா சொல்லுங்க, உங்க விருப்பமான நேரம், பெயர் மற்றும் மின்னஞ்சல் முகவரியை share பண்ண முடியுமா?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"சரிங்க. உங்களுக்கு டெமோ அல்லது கவுன்சிலிங் தேவைப்பட்டா சொல்லுங்க, உங்க விருப்பமான நேரம், பெயர் மற்றும் மின்னஞ்சல் முகவரியை share பண்ண முடியுமா?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 50,
+        "prompt_tokens": 4475,
+        "total_tokens": 4525,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. உங்களுக்கு டெமோ அல்லது கவுன்சிலிங் தேவைப்பட்டா சொல்லுங்க, உங்க விருப்பமான நேரம், பெயர் மற்றும் மின்னஞ்சல் முகவரியை share பண்ண முடியுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8950,
+          "output_tokens": 177,
+          "total_tokens": 9127
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.719
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "சரிங்க, இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் நடக்கும். இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல வேலை வாய்ப்பு உத்தரவாதமோ, வருமான வாக்குறுதியோ கிடையாது, தள்ளுபடியும் தவணை முறையும் இல்லை.",
+      "turn": 1,
+      "at": 2.609
+    },
+    {
+      "text": "இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் ஆகும். ஆறு வாரங்கள் வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் வகுப்பு நடக்கும். இதுல job guarantee எதுவும் கிடையாதுங்க.",
+      "turn": 2,
+      "at": 5.844
+    },
+    {
+      "text": "சரிங்க. உங்களுக்கு டெமோ அல்லது கவுன்சிலிங் தேவைப்பட்டா சொல்லுங்க, உங்க விருப்பமான நேரம், பெயர் மற்றும் மின்னஞ்சல் முகவரியை share பண்ண முடியுமா?",
+      "turn": 3,
+      "at": 8.359
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 4,
+      "at": 8.406
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.",
+      "spoken": "சரிங்க, இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் நடக்கும். இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல வேலை வாய்ப்பு உத்தரவாதமோ, வருமான வாக்குறுதியோ கிடையாது, தள்ளுபடியும் தவணை முறையும் இல்லை.",
+      "elapsed_s": 2.593,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: Course final fee, கால அளவு, class timings என்ன? Job guarantee கொடுப்பீங்களா?",
+      "spoken": "இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் ஆகும். ஆறு வாரங்கள் வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் வகுப்பு நடக்கும். இதுல job guarantee எதுவும் கிடையாதுங்க.",
+      "elapsed_s": 3.203,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "சரி, நன்றி.",
+      "spoken": "சரிங்க. உங்களுக்கு டெமோ அல்லது கவுன்சிலிங் தேவைப்பட்டா சொல்லுங்க, உங்க விருப்பமான நேரம், பெயர் மற்றும் மின்னஞ்சல் முகவரியை share பண்ண முடியுமா?",
+      "elapsed_s": 2.5,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 8.453,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "de83f01a-9246-46ed-b8c4-eddb92895d0a",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "9c507a47457da560070f48934087e1d6242a614453d74d03fdeb73c197cf054e",
+  "prompt_chars": 19307,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "வணக்கம், நான் பிரைட் பாத் ஸ்கில்ஸ் நிறுவனத்திலிருந்து அனன்யா பேசுகிறேன். வயது பதினெட்டு மற்றும் அதற்கு மேற்பட்டவர்களுக்கான எங்கள் ஆறு வார ஆன்லைன் பைத்தான் பயிற்சி வகுப்பைப் பற்றி சொல்ல அழைக்கிறேன். இது பற்றி பேச இது சரியான நேரமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "caller expressed interest and asked for details; no further qualification needed as script objective (explain course, fee, terms) is complete and no integration exists to submit demo/counselling",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் நடக்கும். இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். இதுல வேலை வாய்ப்பு உத்தரவாதமோ, வருமான வாக்குறுதியோ கிடையாது, தள்ளுபடியும் தவணை முறையும் இல்லை.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் ஆகும். ஆறு வாரங்கள் வார நாட்கள்ல மாலை ஏழுல இருந்து எட்டு மணி வரைக்கும் வகுப்பு நடக்கும். இதுல job guarantee எதுவும் கிடையாதுங்க.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க. உங்களுக்கு டெமோ அல்லது கவுன்சிலிங் தேவைப்பட்டா சொல்லுங்க, உங்க விருப்பமான நேரம், பெயர் மற்றும் மின்னஞ்சல் முகவரியை share பண்ண முடியுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 8.453,
+  "hangup_count": 1
+}

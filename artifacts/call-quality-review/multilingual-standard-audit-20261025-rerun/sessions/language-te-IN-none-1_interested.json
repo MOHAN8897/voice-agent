@@ -1,0 +1,375 @@
+{
+  "key": "language-te-IN-none-1_interested",
+  "business": "language",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "1_interested",
+  "agent_id": "7d5b5b86-e5f0-51bc-a4cf-15492750cf1f",
+  "call_id": "34db9408-cbcc-4266-a0d4-cd24a50a2b60",
+  "session_id": "audit-language-te-IN-none-1_interested-f2c08ef7",
+  "compiled_checksum": "f88a37529a880a3098d197723d5f7c682d261178428f6ad3f96fdf472a5f59f6",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 270,
+      "sse_content_preview": "తప్పకుండా అండి. ఇది ఆన్‌లైన్ spoken English class, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు జరుగుతుంది. మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ discount కానీ ఉండవండి. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+      "sse_content_tail": "తప్పకుండా అండి. ఇది ఆన్‌లైన్ spoken English class, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు జరుగుతుంది. మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ discount కానీ ఉండవండి. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 73,
+        "prompt_tokens": 4443,
+        "total_tokens": 4516,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. ఇది ఆన్‌లైన్ spoken English class, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు జరుగుతుంది. మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ discount కానీ ఉండవండి. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4443,
+          "output_tokens": 73,
+          "total_tokens": 4516
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.718
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 230,
+      "sse_content_preview": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. కానీ fluency లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు స్పష్టంగా ఉన్నాయా?",
+      "sse_content_tail": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. కానీ fluency లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు స్పష్టంగా ఉన్నాయా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 4533,
+        "total_tokens": 4596,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. కానీ fluency లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు స్పష్టంగా ఉన్నాయా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4533,
+          "output_tokens": 63,
+          "total_tokens": 4596
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.578
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 158,
+      "sse_content_preview": "సరేనండి, ఇది పద్దెనిమిది సంవత్సరాలు నిండిన పెద్దవాళ్ళ కోసం ఆన్‌లైన్‌లో జరిగే spoken English class. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా అండి?",
+      "sse_content_tail": "సరేనండి, ఇది పద్దెనిమిది సంవత్సరాలు నిండిన పెద్దవాళ్ళ కోసం ఆన్‌లైన్‌లో జరిగే spoken English class. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 54,
+        "prompt_tokens": 4607,
+        "total_tokens": 4661,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, ఇది పద్దెనిమిది సంవత్సరాలు నిండిన పెద్దవాళ్ళ కోసం ఆన్‌లైన్‌లో జరిగే spoken English class. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4607,
+          "output_tokens": 54,
+          "total_tokens": 4661
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 12,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 161,
+      "sse_content_preview": "సరేనండి, మీ పేరు, email వివరాలు నేను note చేసుకున్నాను. కానీ మా దగ్గర ప్రస్తుతం enquiry ని externally submit చేసే option లేదు అండి. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "sse_content_tail": "సరేనండి, మీ పేరు, email వివరాలు నేను note చేసుకున్నాను. కానీ మా దగ్గర ప్రస్తుతం enquiry ని externally submit చేసే option లేదు అండి. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 4901,
+        "total_tokens": 4940,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ పేరు, email వివరాలు నేను note చేసుకున్నాను. కానీ మా దగ్గర ప్రస్తుతం enquiry ని externally submit చేసే option లేదు అండి. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4901,
+          "output_tokens": 39,
+          "total_tokens": 4940
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.563
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా అండి. ఇది ఆన్‌లైన్ spoken English class, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు జరుగుతుంది. మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ discount కానీ ఉండవండి. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+      "turn": 1,
+      "at": 2.157
+    },
+    {
+      "text": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. కానీ fluency లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు స్పష్టంగా ఉన్నాయా?",
+      "turn": 2,
+      "at": 4.25
+    },
+    {
+      "text": "సరేనండి, ఇది పద్దెనిమిది సంవత్సరాలు నిండిన పెద్దవాళ్ళ కోసం ఆన్‌లైన్‌లో జరిగే spoken English class. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా అండి?",
+      "turn": 3,
+      "at": 6.469
+    },
+    {
+      "text": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+      "turn": 4,
+      "at": 7.547
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 5,
+      "at": 7.563
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.",
+      "spoken": "తప్పకుండా అండి. ఇది ఆన్‌లైన్ spoken English class, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు జరుగుతుంది. మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ discount కానీ ఉండవండి. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+      "elapsed_s": 2.141,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ఇప్పుడే ఏదీ book లేదా save చేయకండి. ముందు నా ప్రశ్నకు సమాధానం చెప్పండి: Final course fee, duration, class timings ఏంటి? Fluency లేదా job guarantee ఇస్తారా?",
+      "spoken": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. కానీ fluency లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు స్పష్టంగా ఉన్నాయా?",
+      "elapsed_s": 2.078,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "Job guarantee అవసరం లేదు, కానీ spoken English నేర్చుకోవాలని ఉంది. Course వివరించండి.",
+      "spoken": "సరేనండి, ఇది పద్దెనిమిది సంవత్సరాలు నిండిన పెద్దవాళ్ళ కోసం ఆన్‌లైన్‌లో జరిగే spoken English class. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా అండి?",
+      "elapsed_s": 2.172,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. ఈ enquiry ని team review కోసం submit చేయండి. నా సమ్మతి ఉంది. Booking లేదా order confirm అయిందని చెప్పకండి.",
+      "spoken": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+      "elapsed_s": 1.062,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 7.61,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "34db9408-cbcc-4266-a0d4-cd24a50a2b60",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "6eb2490e2d076f3951581076d96815503206b79a895379001273514be44f3d65",
+  "prompt_chars": 18865,
+  "opening_seeded": "నమస్కారం, నా పేరు సానా SpeakEasy Language Studio నుండి మాట్లాడుతున్నాను. మన ఆన్‌లైన్ ఇంగ్లీష్ తరగతుల గురించిన సమాచారం ఇవ్వడానికి కాల్ చేశాను. ఇప్పుడు మాట్లాడటానికి తగిన సమయమేనా? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "తప్పకుండా అండి. ఇది ఆన్‌లైన్ spoken English class, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు జరుగుతుంది. మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. మీకు job guarantee కానీ discount కానీ ఉండవండి. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అండి, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. కానీ fluency లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు స్పష్టంగా ఉన్నాయా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "సరేనండి, ఇది పద్దెనిమిది సంవత్సరాలు నిండిన పెద్దవాళ్ళ కోసం ఆన్‌లైన్‌లో జరిగే spoken English class. మీకు అభ్యాస లక్ష్యాల గురించి ఏమైనా తెలుసుకోవాలని ఉందా అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "సరేనండి, మీ పేరు, email వివరాలు నేను note చేసుకున్నాను. కానీ మా దగ్గర ప్రస్తుతం enquiry ని externally submit చేసే option లేదు అండి. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 7.61,
+  "hangup_count": 1,
+  "source_signature": "f95691c1be0b78b8daf4f3542b355e04f5d7c43f2dd1b6eefab36c2f223f4cfe"
+}

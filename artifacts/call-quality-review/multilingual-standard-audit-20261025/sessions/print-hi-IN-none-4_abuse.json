@@ -1,0 +1,224 @@
+{
+  "key": "print-hi-IN-none-4_abuse",
+  "business": "print",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "8e2752e3-b52b-52f5-bdf1-af80ab9a4d0a",
+  "call_id": "b0a89efa-1aff-4fec-bdd3-b78c0d427685",
+  "session_id": "audit-print-hi-IN-none-4_abuse-13f37b10",
+  "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 687,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller said: तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\":\n\"माफ़ कीजिए, मैं आपकी नाराज़गी समझ सकती हूँ। Visiting cards का rate 25 rupees per card है, minimum 100 cards के साथ. क्या आप wedding invitations के बारे में जानना चाहेंगे?\"\n\n, \n\n\"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"call_sentiment\", \"value\": \"abusive - user called agent useless and demanded price answer; agent apologised and offered wedding invitation info; call closed per abuse policy\"}]} }",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller said: तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\":\n\"माफ़ कीजिए, मैं आपकी नाराज़गी समझ सकती हूँ। Visiting cards का rate 25 rupees per card है, minimum 100 cards के साथ. क्या आप wedding invitations के बारे में जानना चाहेंगे?\"\n\n, \n\n\"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"call_sentiment\", \"value\": \"abusive - user called agent useless and demanded price answer; agent apologised and offered wedding invitation info; call closed per abuse policy\"}]} }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 197,
+        "prompt_tokens": 4142,
+        "total_tokens": 4339,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "माफ़ कीजिए, मैं आपकी नाराज़गी समझ सकती हूँ। Visiting cards का rate 25 rupees per card है, minimum 100 cards के साथ. क्या आप wedding invitations के बारे में जानना चाहेंगे?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4142,
+          "output_tokens": 197,
+          "total_tokens": 4339
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_sentiment",
+              "value": "abusive - user called agent useless and demanded price answer; agent apologised and offered wedding invitation info; call closed per abuse policy"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "Caller said: तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.984
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 367,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller threatened: 'मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।'\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"ठीक है, मैं अभी call disconnect कर रही हूँ।\"\n,\n\"memory_update\": {\n  \"operations\": []\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller threatened: 'मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।'\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"ठीक है, मैं अभी call disconnect कर रही हूँ।\"\n,\n\"memory_update\": {\n  \"operations\": []\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 138,
+        "prompt_tokens": 4106,
+        "total_tokens": 4244,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, मैं अभी call disconnect कर रही हूँ।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4106,
+          "output_tokens": 138,
+          "total_tokens": 4244
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "Caller threatened: 'मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।'",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.313
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 1,
+      "at": 0.953
+    },
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 2,
+      "at": 2.297
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 0.953,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 1.313,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "753b5412f23cef470f498a55190675947caed1c4ac52687e8e73f1ebfbc26a86",
+  "prompt_chars": 18082,
+  "opening_seeded": "Namaste, main Meera hoon ClearPrint Studio se. Kya main sahi vyakti se baat kar rahi hoon card printing ki zarooraton par baat karne ke liye?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "Caller said: तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "माफ़ कीजिए, मैं आपकी नाराज़गी समझ सकती हूँ। Visiting cards का rate twenty five rupees per card है, minimum one hundred cards के साथ. क्या आप wedding invitations के बारे में जानना चाहेंगे?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "Caller threatened: 'मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।'",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, मैं अभी call disconnect कर रही हूँ।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.312,
+  "hangup_count": 0
+}

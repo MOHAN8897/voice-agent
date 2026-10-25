@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T16:52:09.740307Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:52:11.417433Z", "brain_latency_ms": 1200}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?", "ts": "2026-10-25T16:52:11.437611Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:52:12.691937Z", "brain_latency_ms": 985}
+{"seq": 5, "role": "user", "text": "I don't want visiting cards, but I do want wedding invitations. Do you make them?", "ts": "2026-10-25T16:52:12.707229Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Yes, we do wedding invitations. The quote depends on the design and quantity, as there is no fixed price. Which design are you looking at, and how many invitations do you need?", "ts": "2026-10-25T16:52:16.208849Z", "brain_latency_ms": 1034}
+{"seq": 7, "role": "user", "text": "My preferred name is Audit Customer and email audit.customer@example.invalid. Please save my enquiry and preferred time tomorrow at 3pm for the team to review. I consent to submitting the request; do not claim an order or booking is confirmed.", "ts": "2026-10-25T16:52:16.241945Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:52:18.731321Z", "brain_latency_ms": 2458}
+{"seq": 9, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T16:52:18.753210Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T16:52:18.764278Z", "brain_latency_ms": 2}

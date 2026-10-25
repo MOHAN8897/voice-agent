@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ందు నా ప్రశ్నకి సమాధానం చెప్పండి: AC servicing, fridge inspection ధరలు ఎంత? Replacement parts కూడా అందులో ఉన్నాయా?\nassistant: సరేనండి, AC basic servicing six hundred ninety nine rupees మరియు ఫ్రిజ్ తనిఖీ three hundred ninety nine rupees అవుతుంది. Replacement parts extra ఉంటాయి, కానీ మీ approval తర్వాతే చేస్తాము. Inspection కి ముందు మేము ఎటువంటి fixed repair quote ఇవ్వము అండి. మీకు ఏ అప్లయన్స్ కి service కావాలి?\nuser: నాకు AC servicing అవసరం లేదు, కానీ fridge inspection కావాలి. Help చేస్తారా?\nassistant: తప్పకుండా అండి, ఫ్రిజ్ తనిఖీ కోసం నేను help చేస్తాను.… మీకు ఏ time లో visit కావాలో చెప్తారా?"
+}

@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ండి: Final course fee, duration, class timings ఏంటి? Fluency లేదా job guarantee ఇస్తారా?\nassistant: సరేనండి. మొత్తం కోర్సు ఫీజు ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు. క్లాసులు ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది గంటల నుండి పదకొండు గంటల వరకు జరుగుతాయి. కానీ job లేదా fluency guarantee ఇవ్వమని చెప్పలేము అండి. మీకు ఇంకా ఏమైనా details కావాలా?\nuser: Job guarantee అవసరం లేదు, కానీ spoken English నేర్చుకోవాలని ఉంది. Course వివరించండి.\nassistant: సరేనండి, job guarantee ఏమీ ఉండదు కానీ spoken English బాగా నేర్పిస్తాము. మీకు ఏదైనా specific లక్ష్యం ఉందా అండి, అంటే office కోసం అవసరమా లేక travel కోసమా?"
+}

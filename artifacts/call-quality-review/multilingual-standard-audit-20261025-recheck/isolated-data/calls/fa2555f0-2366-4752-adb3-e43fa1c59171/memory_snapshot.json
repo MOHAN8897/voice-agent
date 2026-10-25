@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ैं?\nassistant: AC basic servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Replacement parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed repair quote nahi milta hai.\nuser: मुझे AC servicing नहीं चाहिए, लेकिन fridge की जाँच चाहिए। क्या मदद कर सकते हैं?\nassistant: ठीक है, fridge inspection three hundred ninety nine rupees mein ho jayega. Agar aap visit book karna chahte hain toh apna naam, locality aur preferred date bata dijiye. Warna baad mein call back bhi arrange kar sakte hain."
+}

@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": ": சோபா மற்றும் kitchen cleaning விலை, minimum seats எத்தனை? Visit இப்போவே confirm ஆயிடுச்சா?\nassistant: உங்கள் கோரிக்கை முடிந்ததா என்று என்னால் உறுதிப்படுத்த முடியவில்லை. தயவுசெய்து அதை முடிந்ததாகக் கருத வேண்டாம்.\nuser: சோபா cleaning வேண்டாம், ஆனால் kitchen cleaning வேணும். விவரமா சொல்லுங்க.\nassistant: சரிங்க, kitchen cleaning-க்கு மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். எங்க சேவைகள் புனே நகரில் மட்டுமே இருக்கு, திங்கள் முதல் சனி வரை காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம். உங்களுக்கு enquiry submit பண்ண விருப்பம் இருக்கா? அப்போ உங்க பெயர், பகுதி விவரம் சொல்ல முடியுமா?"
+}

@@ -1,0 +1,55 @@
+{
+  "verdict": "PASS for the recorded scope",
+  "complete_matrix": true,
+  "base_sessions": 270,
+  "failure_sessions": 30,
+  "source_drift": [],
+  "changed_files": [
+    "server/brain/capabilities.py",
+    "server/brain/employee_script_pipeline.py",
+    "server/brain/fact_canon.py",
+    "server/call/action_proof.py",
+    "server/call/live_turn_orchestrator.py",
+    "server/providers/sarvam_llm.py",
+    "server/tests/test_action_capabilities.py",
+    "server/tests/test_close_speech_gate.py",
+    "server/tests/test_composed_action_protocol.py",
+    "server/tests/test_employee_script_pipeline.py",
+    "server/tests/test_sarvam_composed_transport.py"
+  ],
+  "metrics": {
+    "sessions": 300,
+    "harness_errors": [],
+    "planned_turns": 840,
+    "reached_turns": 840,
+    "requests": 827,
+    "technical_farewells": 0,
+    "generic_continuations": 0,
+    "unconfirmed_replacements": 28,
+    "empty_responses": 0,
+    "explicit_ends": 300,
+    "missed_explicit_ends": [],
+    "early_closes": [],
+    "ended_sessions": 300,
+    "duplicate_hangups": 0,
+    "hangup_during_playback": 0,
+    "integration_attempts": 60,
+    "connected_sessions_with_attempt": 60,
+    "integration_request_turns_reached": 60,
+    "integration_request_turns_without_attempt": [],
+    "unproven_spoken_claim_flags": [],
+    "unavailable_promise_flags": [],
+    "raw_control_speech": [],
+    "provider_errors": {
+      "IncompleteTurnError": 1,
+      "CancelledError": 1
+    },
+    "finish_reasons": {
+      "stop": 766,
+      "tool_calls": 60,
+      "unobserved": 1
+    },
+    "p95_server_turn_s": 4.485,
+    "median_server_turn_s": 2.141
+  }
+}

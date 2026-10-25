@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ೆ ಉತ್ತರಿಸಿ: ಸೋಫಾ ಮತ್ತು kitchen cleaning ಬೆಲೆ, minimum seats ಎಷ್ಟು? Visit ಈಗಲೇ confirm ಆಗಿದೆಯಾ?\nassistant: ಸೋಫಾ cleaning ಪ್ರತಿ ಸೀಟಿಗೆ three hundred forty nine ರೂಪಾಯಿ, ಕನಿಷ್ಠ 3 ಸೀಟುಗಳು ಇರಬೇಕು. ಕಿಚನ್ cleaning ಒಟ್ಟು one thousand five hundred ninety nine ರೂಪಾಯಿ. ಇದು ದೃಢಪಡಿಸಿದ visit ಅಥವಾ paid order ಅಲ್ಲ. ನಿಮ್ಮ ಅನುಕೂಲಕ್ಕಾಗಿ ಈ enquiry-ನ ನಮ್ಮ team-ಗೆ ಕಳಿಸಲಾ? ಹಾಗಿದ್ದರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality details ಹೇಳಿ.\nuser: ಸೋಫಾ cleaning ಬೇಡ, ಆದರೆ kitchen cleaning ಬೇಕು. ವಿವರಿಸಿ.\nassistant: ನಿಮ್ಮ ವಿನಂತಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ ಎಂದು ನನಗೆ ದೃಢೀಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಅದನ್ನು ಮುಗಿದಿದೆ ಎಂದು ಪರಿಗಣಿಸಬೇಡಿ."
+}

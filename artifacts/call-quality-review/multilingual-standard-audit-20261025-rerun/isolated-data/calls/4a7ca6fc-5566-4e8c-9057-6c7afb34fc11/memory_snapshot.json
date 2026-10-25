@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "்கு பதில் சொல்லுங்க: சைக்கிள் basic service மற்றும் puncture repair விலை என்ன? Parts அந்த விலையில் இருக்கா?\nassistant: Basic service four hundred ninety nine ரூபாய், பஞ்சர் repair one hundred twenty ரூபாய். Parts அந்த விலையில் கிடையாது, approval வாங்கினா மட்டும் extra கட்டணம் வரும். இப்போ உங்களுக்கு சேவை தேவையா?\nuser: Basic service வேண்டாம், ஆனால் puncture repair வேணும். உதவ முடியுமா?\nassistant: கண்டிப்பா, பஞ்சர் பழுதுபார்ப்பு one hundred twenty ரூபாய் தான் ஆகும். உங்களுக்கு இப்பவே அந்த service வேணுமா? அப்படியென்றால், எங்க team-ஓட enquiry-க்காக உங்க பெயர், area, மற்றும் சம்மதம் சொல்ல முடியுமா?"
+}

@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. ఈ enquiry ని team review కోసం submit చేయండి. నా సమ్మతి ఉంది. Booking లేదా order confirm అయిందని చెప్పకండి.", "ts": "2026-10-25T18:41:11.279376Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "సరేనండి, మీ పేరు, కిచెన్ క్లీనింగ్ వివరాలు, మరియు Baner ప్రాంతం note చేసుకున్నాను. మా team review కోసం ఈ enquiry ని submit చేస్తున్నాను. ఒక్క నిమిషం అండి.", "ts": "2026-10-25T18:41:15.397282Z", "brain_latency_ms": 3870}
+{"seq": 3, "role": "user", "text": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.", "ts": "2026-10-25T18:41:15.403270Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-25T18:41:15.413182Z", "brain_latency_ms": 1}

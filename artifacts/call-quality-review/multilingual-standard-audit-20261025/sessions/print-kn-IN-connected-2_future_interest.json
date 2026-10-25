@@ -1,0 +1,360 @@
+{
+  "key": "print-kn-IN-connected-2_future_interest",
+  "business": "print",
+  "language": "kn-IN",
+  "integration": true,
+  "scenario": "2_future_interest",
+  "agent_id": "123e1591-085d-566e-aeb7-d09ce9eaacb6",
+  "call_id": "e6655e4f-5eef-4c5a-918e-4e5b12f4514f",
+  "session_id": "audit-print-kn-IN-connected-2_future_interest-8fe7a688",
+  "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 873,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'ಈಗ ಅಗತ್ಯವಿಲ್ಲ' (not needed now) and 'book ಮಾಡಬೇಡಿ' (do not book), indicating not_interested for immediate action but not a permanent stop.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Caller wants price information for next month and said do not book.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Printed visiting cards ಬಂದು 25 rupees per card, minimum 100 cards ಇರಬೇಕು. Wedding invitations-ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote ಬರುತ್ತೆ, fixed price ಇಲ್ಲ. ಮುಂದಿನ ತಿಂಗಳು ಬೇಕಂದ್ರೆ, quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ Pune delivery locality ಹೇಳ್ತೀರಾ? ಮತ್ತೆ future-ನ\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_fact\",\n        \"key\": \"interested_future\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'ಈಗ ಅಗತ್ಯವಿಲ್ಲ' (not needed now) and 'book ಮಾಡಬೇಡಿ' (do not book), indicating not_interested for immediate action but not a permanent stop.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Caller wants price information for next month and said do not book.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Printed visiting cards ಬಂದು 25 rupees per card, minimum 100 cards ಇರಬೇಕು. Wedding invitations-ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote ಬರುತ್ತೆ, fixed price ಇಲ್ಲ. ಮುಂದಿನ ತಿಂಗಳು ಬೇಕಂದ್ರೆ, quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ Pune delivery locality ಹೇಳ್ತೀರಾ? ಮತ್ತೆ future-ನ\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_fact\",\n        \"key\": \"interested_future\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 252,
+        "prompt_tokens": 4172,
+        "total_tokens": 4424,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Printed visiting cards ಬಂದು 25 rupees per card, minimum 100 cards ಇರಬೇಕು. Wedding invitations-ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote ಬರುತ್ತೆ, fixed price ಇಲ್ಲ. ಮುಂದಿನ ತಿಂಗಳು ಬೇಕಂದ್ರೆ, quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ Pune delivery locality ಹೇಳ್ತೀರಾ? ಮತ್ತೆ future-ನ",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4172,
+          "output_tokens": 252,
+          "total_tokens": 4424
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "set_fact",
+              "key": "interested_future",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "Caller said 'ಈಗ ಅಗತ್ಯವಿಲ್ಲ' (not needed now) and 'book ಮಾಡಬೇಡಿ' (do not book), indicating not_interested for immediate action but not a permanent stop.",
+          "remaining_request": "Caller wants price information for next month and said do not book.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.953
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 5545,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ' (I am not asking to call back later) and asked what else to know, indicating goal_complete for this call with no remaining request.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ನಿಮಗೆ visiting cards ಬೇಕಿದ್ರೆ per card 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ಇರಬೇಕು. Wedding invitations ಬಗ್ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ. Pune-ಗೆ post ಮೂಲಕ ಐದು working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಿತ್ತಾ? ಇಲ್ಲ ಅಂದ್ರೆ, ಇ\"\n        \n    \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n       ",
+      "sse_content_tail": "\n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        ",
+      "sse_finish": "length",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 2.0
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 688,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"The caller explicitly said 'ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ' and indicated future interest without requesting an immediate quote or callback, satisfying goal_complete.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ನಿಮಗೆ ಯಾವಾಗ ಬೇಕೋ ಅವಾಗ contact ಮಾಡಬಹುದು. ClearPrint Studio ಗೆ call ಮಾಡಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ದಿನ ಚೆನ್ನಾಗಿರಲಿ. ನಮಸ್ಕಾರ.\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_future\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"The caller explicitly said 'ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ' and indicated future interest without requesting an immediate quote or callback, satisfying goal_complete.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ನಿಮಗೆ ಯಾವಾಗ ಬೇಕೋ ಅವಾಗ contact ಮಾಡಬಹುದು. ClearPrint Studio ಗೆ call ಮಾಡಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ದಿನ ಚೆನ್ನಾಗಿರಲಿ. ನಮಸ್ಕಾರ.\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_future\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 207,
+        "prompt_tokens": 4178,
+        "total_tokens": 4385,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ನಿಮಗೆ ಯಾವಾಗ ಬೇಕೋ ಅವಾಗ contact ಮಾಡಬಹುದು. ClearPrint Studio ಗೆ call ಮಾಡಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ದಿನ ಚೆನ್ನಾಗಿರಲಿ. ನಮಸ್ಕಾರ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4178,
+          "output_tokens": 207,
+          "total_tokens": 4385
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested_future",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "The caller explicitly said 'ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ' and indicated future interest without requesting an immediate quote or callback, satisfying goal_complete.",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.734
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 519,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.' which is a clear goodbye/end request.\",\n    \"reason\": \"goodbye\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_future\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.' which is a clear goodbye/end request.\",\n    \"reason\": \"goodbye\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_future\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 184,
+        "prompt_tokens": 4218,
+        "total_tokens": 4402,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4218,
+          "output_tokens": 184,
+          "total_tokens": 4402
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested_future",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goodbye",
+          "evidence": "Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.' which is a clear goodbye/end request.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.844
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 1,
+      "at": 0.954
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 2,
+      "at": 3.719
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 3,
+      "at": 4.579
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ಈಗಿನ ಬೆಲೆ ಹೇಳಿ. ಏನನ್ನೂ book ಮಾಡಬೇಡಿ; ಇದನ್ನು ಶಾಶ್ವತ ನಿರಾಕರಣೆ ಎಂದು ಭಾವಿಸಬೇಡಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.954,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "ಹೌದು, ಭವಿಷ್ಯದಲ್ಲಿ ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಾನು ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ. ಈ service ಬಗ್ಗೆ ಇನ್ನೇನು ತಿಳಿಯಬೇಕು?",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 2.75,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.844,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "3ba84f31e544aeb14c538247ec47e72cd1ec21f54671e7379e2dcd85dbb78a9f",
+  "prompt_chars": 17765,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaskara, this is Meera from ClearPrint Studio. I am calling to assist you with our printing services. Would you like to know more about our visiting cards or wedding invitations?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Caller said 'ಈಗ ಅಗತ್ಯವಿಲ್ಲ' (not needed now) and 'book ಮಾಡಬೇಡಿ' (do not book), indicating not_interested for immediate action but not a permanent stop.",
+        "remaining_request": "Caller wants price information for next month and said do not book.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Printed visiting cards ಬಂದು twenty five rupees per card, minimum one hundred cards ಇರಬೇಕು. Wedding invitations-ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote ಬರುತ್ತೆ, fixed price ಇಲ್ಲ. ಮುಂದಿನ ತಿಂಗಳು ಬೇಕಂದ್ರೆ, quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ Pune delivery locality ಹೇಳ್ತೀರಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "The caller explicitly said 'ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ' and indicated future interest without requesting an immediate quote or callback, satisfying goal_complete.",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. ನಿಮಗೆ ಯಾವಾಗ ಬೇಕೋ ಅವಾಗ contact ಮಾಡಬಹುದು. ClearPrint Studio ಗೆ call ಮಾಡಿದ್ದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ ದಿನ ಚೆನ್ನಾಗಿರಲಿ. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.' which is a clear goodbye/end request.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.594,
+  "hangup_count": 0
+}

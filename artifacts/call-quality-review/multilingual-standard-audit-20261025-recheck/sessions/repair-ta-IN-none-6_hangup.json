@@ -1,0 +1,413 @@
+{
+  "key": "repair-ta-IN-none-6_hangup",
+  "business": "repair",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "1282a9a2-f811-5ecc-bd00-99104492e625",
+  "call_id": "05ea42ab-2807-47ad-bb30-7fb45167c5b9",
+  "session_id": "audit-repair-ta-IN-none-6_hangup-a9367ffd",
+  "compiled_checksum": "b94a67ef0f87a659a7f534bc6b51612637b1d339cd81987c110d1bd3ae7c7766",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 646,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"goal_complete\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"none\", \"contact_preference\": \"do_not_call\"}, \"action_claimed\": \"order_confirmed\", \"spoken_response\": \"சரிங்க. AC basic servicing 699 rupees, fridge inspection 399 rupees வரும். Parts extra aagum, customer approvalku aprom dhan. Inspectionku aprom dhan fixed repair quote solla mudiyum. Ungalukku visit thevaya?\"\n,\n\n\"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"pricing_disclosed\", \"value\": \"AC basic servicing 699 rupees, fridge inspection 399 rupees. Parts extra post-approval. Fixed quote post-inspection.\"}]}\n}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"goal_complete\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"none\", \"contact_preference\": \"do_not_call\"}, \"action_claimed\": \"order_confirmed\", \"spoken_response\": \"சரிங்க. AC basic servicing 699 rupees, fridge inspection 399 rupees வரும். Parts extra aagum, customer approvalku aprom dhan. Inspectionku aprom dhan fixed repair quote solla mudiyum. Ungalukku visit thevaya?\"\n,\n\n\"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"pricing_disclosed\", \"value\": \"AC basic servicing 699 rupees, fridge inspection 399 rupees. Parts extra post-approval. Fixed quote post-inspection.\"}]}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 193,
+        "prompt_tokens": 3984,
+        "total_tokens": 4177,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. AC basic servicing 699 rupees, fridge inspection 399 rupees வரும். Parts extra aagum, customer approvalku aprom dhan. Inspectionku aprom dhan fixed repair quote solla mudiyum. Ungalukku visit thevaya?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3984,
+          "output_tokens": 193,
+          "total_tokens": 4177
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "pricing_disclosed",
+              "value": "AC basic servicing 699 rupees, fridge inspection 399 rupees. Parts extra post-approval. Fixed quote post-inspection."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "goal_complete",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "order_confirmed",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.063
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1031,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly instructed not to book or save anything and only asked for pricing/parts info before ending the substantive part of the call.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None; caller only wanted pricing clarification and explicitly declined booking.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "before ending the substantive part of the call.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None; caller only wanted pricing clarification and explicitly declined booking.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.344
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 240,
+      "sse_content_preview": "{\n  \"spoken_response\": \"AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees வரும். Replacement parts எல்லாம் extra தான், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். Visit arrange பண்ணனுமா?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees வரும். Replacement parts எல்லாம் extra தான், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். Visit arrange பண்ணனுமா?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 52,
+        "prompt_tokens": 4049,
+        "total_tokens": 4101,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees வரும். Replacement parts எல்லாம் extra தான், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். Visit arrange பண்ணனுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4049,
+          "output_tokens": 52,
+          "total_tokens": 4101
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.766
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 452,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'சரி, நன்றி' which is a clear closing signal with no remaining request.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"interested_in_service\",\n      \"value\": \"true\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'சரி, நன்றி' which is a clear closing signal with no remaining request.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"interested_in_service\",\n      \"value\": \"true\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 161,
+        "prompt_tokens": 4084,
+        "total_tokens": 4245,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.093
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 181,
+      "sse_content_preview": "{\n  \"spoken_response\": \"சரிங்க. உங்களுக்கு visit arrange பண்ணனும்னா, உங்க பேர, appliance type, locality, அப்புறம் preferred date மட்டும் சொல்லுங்க. அதுக்கு உங்க consent இருக்கா?.\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"சரிங்க. உங்களுக்கு visit arrange பண்ணனும்னா, உங்க பேர, appliance type, locality, அப்புறம் preferred date மட்டும் சொல்லுங்க. அதுக்கு உங்க consent இருக்கா?.\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 48,
+        "prompt_tokens": 4084,
+        "total_tokens": 4132,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. உங்களுக்கு visit arrange பண்ணனும்னா, உங்க பேர, appliance type, locality, அப்புறம் preferred date மட்டும் சொல்லுங்க. அதுக்கு உங்க consent இருக்கா?.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8168,
+          "output_tokens": 209,
+          "total_tokens": 8377
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.563
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "சரிங்க. AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees வரும். Parts extra aagum, customer approvalku aprom dhan. Inspectionku aprom dhan fixed repair quote solla mudiyum. Ungalukku visit thevaya?",
+      "turn": 1,
+      "at": 1.062
+    },
+    {
+      "text": "AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees வரும். Replacement parts எல்லாம் extra தான், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். Visit arrange பண்ணனுமா?",
+      "turn": 2,
+      "at": 3.187
+    },
+    {
+      "text": "சரிங்க. உங்களுக்கு visit arrange பண்ணனும்னா, உங்க பேர, appliance type, locality, அப்புறம் preferred date மட்டும் சொல்லுங்க. அதுக்கு உங்க consent இருக்கா?.",
+      "turn": 3,
+      "at": 4.843
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 4,
+      "at": 4.875
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.",
+      "spoken": "சரிங்க. AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees வரும். Parts extra aagum, customer approvalku aprom dhan. Inspectionku aprom dhan fixed repair quote solla mudiyum. Ungalukku visit thevaya?",
+      "elapsed_s": 1.047,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: AC servicing, fridge inspection விலை என்ன? Replacement parts அதில் சேருமா?",
+      "spoken": "AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees வரும். Replacement parts எல்லாம் extra தான், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். Visit arrange பண்ணனுமா?",
+      "elapsed_s": 2.109,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "சரி, நன்றி.",
+      "spoken": "சரிங்க. உங்களுக்கு visit arrange பண்ணனும்னா, உங்க பேர, appliance type, locality, அப்புறம் preferred date மட்டும் சொல்லுங்க. அதுக்கு உங்க consent இருக்கா?.",
+      "elapsed_s": 1.64,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 4.921,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "05ea42ab-2807-47ad-bb30-7fb45167c5b9",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "0016676bd505a7f0e5781127962353681320bed078bba7d94af25bea214053ef",
+  "prompt_chars": 17257,
+  "opening_seeded": "Vanakkam, naan Ravi pesuren SafeFix Home Serviceilirundhu. Ungalukku engaloda appliance service mattum pricing pathi therinjika mudiyuma?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "goal_complete",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க. AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees வரும். Parts extra aagum, customer approvalku aprom dhan. Inspectionku aprom dhan fixed repair quote solla mudiyum. Ungalukku visit thevaya?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees வரும். Replacement parts எல்லாம் extra தான், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். Visit arrange பண்ணனுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க. உங்களுக்கு visit arrange பண்ணனும்னா, உங்க பேர, appliance type, locality, அப்புறம் preferred date மட்டும் சொல்லுங்க. அதுக்கு உங்க consent இருக்கா?.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.921,
+  "hangup_count": 1
+}

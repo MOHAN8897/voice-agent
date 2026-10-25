@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ನನ್ನ ಹೆಸರು Audit Customer, email audit.customer@example.invalid. ನನ್ನ enquiryಯನ್ನು team reviewಗಾಗಿ save ಮಾಡಿ. ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆ ನನಗೆ ಅನುಕೂಲ. Request submit ಮಾಡಲು ನನ್ನ ಒಪ್ಪಿಗೆ ಇದೆ, ಆದರೆ order ಅಥವಾ booking confirm ಆಯಿತು ಎಂದು ಹೇಳಬೇಡಿ.", "ts": "2026-10-25T15:31:58.571559Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಖಂಡಿತ, ಹೇಳಿ.", "ts": "2026-10-25T15:31:59.444408Z", "brain_latency_ms": 867}
+{"seq": 3, "role": "user", "text": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.", "ts": "2026-10-25T15:31:59.468567Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಖಂಡಿತ, ಹೇಳಿ.", "ts": "2026-10-25T15:32:01.970862Z"}

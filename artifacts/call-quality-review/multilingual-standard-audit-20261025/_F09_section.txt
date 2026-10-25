@@ -1,0 +1,12 @@
+### F09 — P1: generation failures under burst load are generic and require awkward draft recovery
+
+**Confidence:** Confirmed HTTP failures and retained drafts; provider throttling is a likely transient trigger observed during the original batch, not a proven cause of every generation failure.
+
+The initial expansion returned nine HTTP 502 `script_compile_failed` responses and one Telugu repair HTTP 422 review/validation failure. Failed attempts are archived beside each eventual build. After reducing concurrency and pacing actual generation stages to at least five seconds between starts, all 18 final variants became ready. This establishes a reproducible recovery strategy for this audit, not a production quota guarantee.
+
+Source: generic compiler exception mapping [server/routes/app_agents.py:203](<D:/voice agent/server/routes/app_agents.py:203>), lines 203–211. Request identity/failure retention is already implemented at lines 161–195; the same failed request returns its recorded failure rather than re-running. This is useful duplicate protection, so do not remove it or claim that draft retention itself is an accidental duplicate bug. A deliberate resumable failure state is missing from the recovery experience being tested.
+
+**Required change:** classify extraction/write/review provider failures internally; record stage, transient/permanent status and safe correlation ID. Respect provider retry guidance, bound retry/backoff and concurrency per generation account, and resume the same retained draft under an explicit retry operation. Keep success publication atomic and preserve idempotency. Do not turn missing factual information into invented answers merely to get a build through review.
+
+**Acceptance:** a transient throttle resumes one draft without duplicate agents; exhausted retries expose an actionable safe status; permanent validation failures request precise missing information; only reviewed complete scripts become callable.
+

@@ -1,0 +1,223 @@
+{
+  "key": "cycle-en-IN-none-2_future_interest",
+  "business": "cycle",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "aa28347a-5d38-5476-b3a1-3bd540c1fb68",
+  "call_id": "bf0a7bdf-59d5-4291-923a-d0712b3fcee5",
+  "session_id": "audit-cycle-en-IN-none-2_future_interest-b4aa8bbe",
+  "compiled_checksum": "2d566b01061493fce1edfd5d4fc733c96312f4c1a27f05d81c2ff3cb9039cd9f",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 211,
+      "sse_content_preview": "A basic service costs 499 rupees and a puncture repair is 120 rupees. Parts are extra only after approval. We are open Tuesday to Sunday from 9 am to 6 pm. Would you like me to note this interest for next month?",
+      "sse_content_tail": "A basic service costs 499 rupees and a puncture repair is 120 rupees. Parts are extra only after approval. We are open Tuesday to Sunday from 9 am to 6 pm. Would you like me to note this interest for next month?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 3993,
+        "total_tokens": 4048,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "A basic service costs 499 rupees and a puncture repair is 120 rupees. Parts are extra only after approval. We are open Tuesday to Sunday from 9 am to 6 pm. Would you like me to note this interest for next month?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3993,
+          "output_tokens": 55,
+          "total_tokens": 4048
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.593
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 87,
+      "sse_content_preview": "Our timings are Tuesday to Sunday, from 9 AM to 6 PM. Which repair are you considering?",
+      "sse_content_tail": "Our timings are Tuesday to Sunday, from 9 AM to 6 PM. Which repair are you considering?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 23,
+        "prompt_tokens": 4055,
+        "total_tokens": 4078,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our timings are Tuesday to Sunday, from 9 AM to 6 PM. Which repair are you considering?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4055,
+          "output_tokens": 23,
+          "total_tokens": 4078
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.484
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "A basic service costs four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. We are open Tuesday to Sunday from 9 am to 6 pm. Would you like me to note this interest for next month?",
+      "turn": 1,
+      "at": 2.156
+    },
+    {
+      "text": "Our timings are Tuesday to Sunday, from 9 AM to 6 PM. Which repair are you considering?",
+      "turn": 2,
+      "at": 4.296
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 3,
+      "at": 4.343
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.",
+      "spoken": "A basic service costs four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. We are open Tuesday to Sunday from 9 am to 6 pm. Would you like me to note this interest for next month?",
+      "elapsed_s": 2.156,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?",
+      "spoken": "Our timings are Tuesday to Sunday, from 9 AM to 6 PM. Which repair are you considering?",
+      "elapsed_s": 2.125,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 4.39,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "bf0a7bdf-59d5-4291-923a-d0712b3fcee5",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "4cd0cc0eca0e7b08238e658b2c18ec673960578bd2e7bb40a1cc26828755e8f5",
+  "prompt_chars": 17209,
+  "opening_seeded": "Hello, this is Arjun calling from CityCycle Repairs. As an AI assistant, I am calling to answer any questions you have about our bicycle repairs. Are you looking for bicycle repair assistance today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "A basic service costs four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. We are open Tuesday to Sunday from 9 am to 6 pm. Would you like me to note this interest for next month?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "Our timings are Tuesday to Sunday, from 9 AM to 6 PM. Which repair are you considering?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.39,
+  "hangup_count": 1,
+  "source_signature": "00b9e42dcca6c1a17a9c97073faea0d8bd0c70cea6df1df91b5bda50b8604b4c"
+}

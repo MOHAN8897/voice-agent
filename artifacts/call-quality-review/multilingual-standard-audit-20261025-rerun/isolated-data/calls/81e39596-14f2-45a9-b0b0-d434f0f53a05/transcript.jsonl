@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.", "ts": "2026-10-25T19:20:58.318116Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.", "ts": "2026-10-25T19:20:58.330481Z", "brain_latency_ms": 2}

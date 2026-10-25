@@ -1,0 +1,198 @@
+{
+  "key": "repair-ta-IN-connected-1b_direct_tool_request",
+  "business": "repair",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "1282a9a2-f811-5ecc-bd00-99104492e625",
+  "call_id": "47db79f7-d134-4e12-a43b-e82ae66369d6",
+  "session_id": "audit-repair-ta-IN-connected-1b_direct_tool_request-ab6974ff",
+  "compiled_checksum": "b94a67ef0f87a659a7f534bc6b51612637b1d339cd81987c110d1bd3ae7c7766",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 731,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested to save enquiry and consented; no further help requested.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"enquiry_saved\",\n\"spoken_response\": \"சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team reviewக்காக மட்டும் தான், booking confirm ஆகல. வேற ஏதாவது help வேணுமா?\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"enquiry_reference\",\n      \"value\": \"AUDIT-ENQUIRY-1\"\n    },\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"enquiry_status\",\n      \"value\": \"saved_for_review\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested to save enquiry and consented; no further help requested.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"enquiry_saved\",\n\"spoken_response\": \"சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team reviewக்காக மட்டும் தான், booking confirm ஆகல. வேற ஏதாவது help வேணுமா?\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"enquiry_reference\",\n      \"value\": \"AUDIT-ENQUIRY-1\"\n    },\n    {\n      \"op\": \"set_fact\",\n      \"key\": \"enquiry_status\",\n      \"value\": \"saved_for_review\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 243,
+        "prompt_tokens": 4347,
+        "total_tokens": 4590,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team reviewக்காக மட்டும் தான், booking confirm ஆகல. வேற ஏதாவது help வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4347,
+          "output_tokens": 243,
+          "total_tokens": 4590
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "set_fact",
+              "key": "enquiry_reference",
+              "value": "AUDIT-ENQUIRY-1"
+            },
+            {
+              "op": "set_fact",
+              "key": "enquiry_status",
+              "value": "saved_for_review"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly requested to save enquiry and consented; no further help requested.",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "enquiry_saved",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.75
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "AC basic servicing enquiry",
+        "preferred_time": "tomorrow afternoon 3 PM"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team reviewக்காக மட்டும் தான், booking confirm ஆகல. வேற ஏதாவது help வேணுமா?",
+      "turn": 1,
+      "at": 2.344
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 2,
+      "at": 2.406
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "என் பெயர் Audit Customer, email audit.customer@example.invalid. என் enquiryயை team reviewக்காக save செய்யுங்க. நாளை பிற்பகல் மூன்று மணி எனக்கு வசதி. Request submit செய்ய சம்மதிக்கிறேன்; order அல்லது booking confirm ஆனதாகச் சொல்லாதீங்க.",
+      "spoken": "சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team reviewக்காக மட்டும் தான், booking confirm ஆகல. வேற ஏதாவது help வேணுமா?",
+      "elapsed_s": 2.344,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.453,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "47db79f7-d134-4e12-a43b-e82ae66369d6",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "0016676bd505a7f0e5781127962353681320bed078bba7d94af25bea214053ef",
+  "prompt_chars": 17257,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Vanakkam, naan Ravi pesuren SafeFix Home Serviceilirundhu. Ungalukku engaloda appliance service mattum pricing pathi therinjika mudiyuma?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly requested to save enquiry and consented; no further help requested.",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, உங்க enquiry save ஆயிடுச்சு. Reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team reviewக்காக மட்டும் தான், booking confirm ஆகல. வேற ஏதாவது help வேணுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "open_question"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.469,
+  "hangup_count": 1
+}

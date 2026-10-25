@@ -1,0 +1,322 @@
+{
+  "key": "cycle-hi-IN-connected-2_future_interest",
+  "business": "cycle",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "2_future_interest",
+  "agent_id": "4c50c01d-4841-5601-89e5-aa479dd8477a",
+  "call_id": "31d0392d-616a-4223-8bc2-254b3a6a9f10",
+  "session_id": "audit-cycle-hi-IN-connected-2_future_interest-5f7d5b24",
+  "compiled_checksum": "921981ac049b465cfed8fd4fbd9e87776fd876102107480fdd226572ffe6bd46",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 226,
+      "sse_content_preview": "ठीक है, अभी कोई booking नहीं कर रहे हैं। हमारी basic bicycle service 499 rupees की है और puncture repair 120 rupees में हो जाती है। Parts का खर्चा approval के बाद ही लगेगा। क्या मैं आपकी enquiry save कर दूँ team review के लिए?",
+      "sse_content_tail": "ठीक है, अभी कोई booking नहीं कर रहे हैं। हमारी basic bicycle service 499 rupees की है और puncture repair 120 rupees में हो जाती है। Parts का खर्चा approval के बाद ही लगेगा। क्या मैं आपकी enquiry save कर दूँ team review के लिए?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 58,
+        "prompt_tokens": 3985,
+        "total_tokens": 4043,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, अभी कोई booking नहीं कर रहे हैं। हमारी basic bicycle service 499 rupees की है और puncture repair 120 rupees में हो जाती है। Parts का खर्चा approval के बाद ही लगेगा। क्या मैं आपकी enquiry save कर दूँ team review के लिए?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3985,
+          "output_tokens": 58,
+          "total_tokens": 4043
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.593
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 162,
+      "sse_content_preview": "Basic bicycle service 499 rupees है और puncture repair 120 rupees है, parts extra only after approval. क्या आप अभी enquiry save करवाना चाहेंगे team review के लिए?",
+      "sse_content_tail": "Basic bicycle service 499 rupees है और puncture repair 120 rupees है, parts extra only after approval. क्या आप अभी enquiry save करवाना चाहेंगे team review के लिए?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 38,
+        "prompt_tokens": 3945,
+        "total_tokens": 3983,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Basic bicycle service 499 rupees है और puncture repair 120 rupees है, parts extra only after approval. क्या आप अभी enquiry save करवाना चाहेंगे team review के लिए?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3945,
+          "output_tokens": 38,
+          "total_tokens": 3983
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.547
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 140,
+      "sse_content_preview": "हमारी दुकान Tuesday से Sunday, सुबह 9am से शाम 6pm तक खुली रहती है। क्या मैं team के लिए एक enquiry save कर दूँ, ताकि बाद में आपको आसानी हो?",
+      "sse_content_tail": "हमारी दुकान Tuesday से Sunday, सुबह 9am से शाम 6pm तक खुली रहती है। क्या मैं team के लिए एक enquiry save कर दूँ, ताकि बाद में आपको आसानी हो?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 40,
+        "prompt_tokens": 4047,
+        "total_tokens": 4087,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "हमारी दुकान Tuesday से Sunday, सुबह 9am से शाम 6pm तक खुली रहती है। क्या मैं team के लिए एक enquiry save कर दूँ, ताकि बाद में आपको आसानी हो?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4047,
+          "output_tokens": 40,
+          "total_tokens": 4087
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.547
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 149,
+      "sse_content_preview": "हमारी दुकान Tuesday से Sunday, सुबह 9 बजे से शाम 6 बजे तक खुली रहती है। क्या आप future में enquiry save करवाना चाहेंगे ताकि हमारी team review कर सके?",
+      "sse_content_tail": "हमारी दुकान Tuesday से Sunday, सुबह 9 बजे से शाम 6 बजे तक खुली रहती है। क्या आप future में enquiry save करवाना चाहेंगे ताकि हमारी team review कर सके?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 36,
+        "prompt_tokens": 4007,
+        "total_tokens": 4043,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "हमारी दुकान Tuesday से Sunday, सुबह 9 बजे से शाम 6 बजे तक खुली रहती है। क्या आप future में enquiry save करवाना चाहेंगे ताकि हमारी team review कर सके?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4007,
+          "output_tokens": 36,
+          "total_tokens": 4043
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.516
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Basic bicycle service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees है, parts extra only after approval. क्या आप अभी enquiry save करवाना चाहेंगे team review के लिए?",
+      "turn": 1,
+      "at": 3.484
+    },
+    {
+      "text": "हमारी दुकान Tuesday से Sunday, सुबह 9 बजे से शाम 6 बजे तक खुली रहती है। क्या आप future में enquiry save करवाना चाहेंगे ताकि हमारी team review कर सके?",
+      "turn": 2,
+      "at": 7.89
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 3,
+      "at": 7.906
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।",
+      "spoken": "Basic bicycle service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees है, parts extra only after approval. क्या आप अभी enquiry save करवाना चाहेंगे team review के लिए?",
+      "elapsed_s": 3.469,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?",
+      "spoken": "हमारी दुकान Tuesday से Sunday, सुबह 9 बजे से शाम 6 बजे तक खुली रहती है। क्या आप future में enquiry save करवाना चाहेंगे ताकि हमारी team review कर सके?",
+      "elapsed_s": 4.39,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 7.968,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "31d0392d-616a-4223-8bc2-254b3a6a9f10",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "982360d7961ddbbdbacd56b5cb0a0cb48e1fc51f950e6f82c3a77403ce5289e2",
+  "prompt_chars": 16795,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, main Arjun hoon CityCycle Repairs se. Kya main abhi aap se bicycle repair ke baare mein baat kar sakta hoon?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Basic bicycle service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees है, parts extra only after approval. क्या आप अभी enquiry save करवाना चाहेंगे team review के लिए?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "हमारी दुकान Tuesday से Sunday, सुबह 9 बजे से शाम 6 बजे तक खुली रहती है। क्या आप future में enquiry save करवाना चाहेंगे ताकि हमारी team review कर सके?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 7.968,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

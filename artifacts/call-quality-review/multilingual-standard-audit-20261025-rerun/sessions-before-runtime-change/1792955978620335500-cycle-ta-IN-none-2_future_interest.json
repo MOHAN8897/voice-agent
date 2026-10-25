@@ -1,0 +1,223 @@
+{
+  "key": "cycle-ta-IN-none-2_future_interest",
+  "business": "cycle",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "a8a625e5-7e5f-5320-8624-1a990a8d6419",
+  "call_id": "9d3211ee-15e7-4ae1-8c1a-2170db278226",
+  "session_id": "audit-cycle-ta-IN-none-2_future_interest-0a37e991",
+  "compiled_checksum": "386ce2e8b1908900b6637a9f204489aefc5ecb99083f14f116174db28e20e614",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 171,
+      "sse_content_preview": "சரிங்க. அடிப்படை சைக்கிள் சேவை 499 ரூபாய், பஞ்சர் பழுதுபார்ப்பு 120 ரூபாய் ஆகும். அடுத்த மாதம் தேவைப்பட்டால் எங்களை மறுபடியும் தொடர்பு கொள்ளலாம். வேற ஏதாவது விவரம் வேணுமா?",
+      "sse_content_tail": "சரிங்க. அடிப்படை சைக்கிள் சேவை 499 ரூபாய், பஞ்சர் பழுதுபார்ப்பு 120 ரூபாய் ஆகும். அடுத்த மாதம் தேவைப்பட்டால் எங்களை மறுபடியும் தொடர்பு கொள்ளலாம். வேற ஏதாவது விவரம் வேணுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 50,
+        "prompt_tokens": 4031,
+        "total_tokens": 4081,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. அடிப்படை சைக்கிள் சேவை 499 ரூபாய், பஞ்சர் பழுதுபார்ப்பு 120 ரூபாய் ஆகும். அடுத்த மாதம் தேவைப்பட்டால் எங்களை மறுபடியும் தொடர்பு கொள்ளலாம். வேற ஏதாவது விவரம் வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4031,
+          "output_tokens": 50,
+          "total_tokens": 4081
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.782
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 209,
+      "sse_content_preview": "சரிங்க. உதிரிபாகங்கள் தேவைப்பட்டா மட்டும் extra கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். அடுத்த மாசம் தேவைப்படும்போது நீங்க எங்களை மறுபடியும் contact பண்ணலாம். வேற ஏதாவது details வேணுமா?",
+      "sse_content_tail": "சரிங்க. உதிரிபாகங்கள் தேவைப்பட்டா மட்டும் extra கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். அடுத்த மாசம் தேவைப்படும்போது நீங்க எங்களை மறுபடியும் contact பண்ணலாம். வேற ஏதாவது details வேணுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 4100,
+        "total_tokens": 4155,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. உதிரிபாகங்கள் தேவைப்பட்டா மட்டும் extra கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். அடுத்த மாசம் தேவைப்படும்போது நீங்க எங்களை மறுபடியும் contact பண்ணலாம். வேற ஏதாவது details வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4100,
+          "output_tokens": 55,
+          "total_tokens": 4155
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.766
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "சரிங்க. அடிப்படை சைக்கிள் சேவை four hundred ninety nine ரூபாய், பஞ்சர் பழுதுபார்ப்பு one hundred twenty ரூபாய் ஆகும். அடுத்த மாதம் தேவைப்பட்டால் எங்களை மறுபடியும் தொடர்பு கொள்ளலாம். வேற ஏதாவது விவரம் வேணுமா?",
+      "turn": 1,
+      "at": 2.312
+    },
+    {
+      "text": "சரிங்க. உதிரிபாகங்கள் தேவைப்பட்டா மட்டும் extra கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். அடுத்த மாசம் தேவைப்படும்போது நீங்க எங்களை மறுபடியும் contact பண்ணலாம். வேற ஏதாவது details வேணுமா?",
+      "turn": 2,
+      "at": 4.531
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 3,
+      "at": 4.593
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "இப்போ தேவையில்லை, ஆனால் அடுத்த மாதம் எனக்கு ஆர்வம் இருக்கு. தற்போதைய விலையைச் சொல்லுங்க. எதையும் book செய்யாதீங்க; நான் நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க.",
+      "spoken": "சரிங்க. அடிப்படை சைக்கிள் சேவை four hundred ninety nine ரூபாய், பஞ்சர் பழுதுபார்ப்பு one hundred twenty ரூபாய் ஆகும். அடுத்த மாதம் தேவைப்பட்டால் எங்களை மறுபடியும் தொடர்பு கொள்ளலாம். வேற ஏதாவது விவரம் வேணுமா?",
+      "elapsed_s": 2.312,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "ஆமாம், எதிர்காலத்தில் எனக்கு ஆர்வம் இருக்கு. இப்போ நான் பிறகு call செய்யச் சொல்லவில்லை. இந்த service பற்றி இன்னும் என்ன தெரிஞ்சுக்கணும்?",
+      "spoken": "சரிங்க. உதிரிபாகங்கள் தேவைப்பட்டா மட்டும் extra கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். அடுத்த மாசம் தேவைப்படும்போது நீங்க எங்களை மறுபடியும் contact பண்ணலாம். வேற ஏதாவது details வேணுமா?",
+      "elapsed_s": 2.203,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 4.656,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "9d3211ee-15e7-4ae1-8c1a-2170db278226",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "45f4750d5bdc872d08ff26870e3bbcd367e77fd20ed325e5433dc1d87338cf81",
+  "prompt_chars": 16716,
+  "opening_seeded": "வணக்கம், நான் CityCycle Repairs-இல் இருந்து அர்ஜுன் பேசுகிறேன். நான் ஒரு AI உதவியாளர். உங்களுக்கு பேச இப்போது நேரம் இருக்கிறதா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "சரிங்க. அடிப்படை சைக்கிள் சேவை four hundred ninety nine ரூபாய், பஞ்சர் பழுதுபார்ப்பு one hundred twenty ரூபாய் ஆகும். அடுத்த மாதம் தேவைப்பட்டால் எங்களை மறுபடியும் தொடர்பு கொள்ளலாம். வேற ஏதாவது விவரம் வேணுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "சரிங்க. உதிரிபாகங்கள் தேவைப்பட்டா மட்டும் extra கட்டணம் வரும், அதுக்கு முன்னாடி உங்க approval கண்டிப்பா வேணும். அடுத்த மாசம் தேவைப்படும்போது நீங்க எங்களை மறுபடியும் contact பண்ணலாம். வேற ஏதாவது details வேணுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.656,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

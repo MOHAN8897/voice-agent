@@ -1,0 +1,445 @@
+{
+  "key": "cycle-en-IN-connected-6_hangup",
+  "business": "cycle",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "aa28347a-5d38-5476-b3a1-3bd540c1fb68",
+  "call_id": "d068fe0d-a5a2-4942-b4dd-134aff52670c",
+  "session_id": "audit-cycle-en-IN-connected-6_hangup-d1685f65",
+  "compiled_checksum": "2d566b01061493fce1edfd5d4fc733c96312f4c1a27f05d81c2ff3cb9039cd9f",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 209,
+      "sse_content_preview": "A basic bicycle service costs 499 rupees, and a puncture repair is 120 rupees. Parts are extra only after your approval. We are open Tuesday to Sunday from 9 AM to 6 PM. Which repair are you looking for today?",
+      "sse_content_tail": "A basic bicycle service costs 499 rupees, and a puncture repair is 120 rupees. Parts are extra only after your approval. We are open Tuesday to Sunday from 9 AM to 6 PM. Which repair are you looking for today?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 54,
+        "prompt_tokens": 4043,
+        "total_tokens": 4097,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "A basic bicycle service costs 499 rupees, and a puncture repair is 120 rupees. Parts are extra only after your approval. We are open Tuesday to Sunday from 9 AM to 6 PM. Which repair are you looking for today?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4043,
+          "output_tokens": 54,
+          "total_tokens": 4097
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.672
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 236,
+      "sse_content_preview": "A basic bicycle service costs 499 rupees, and a puncture repair is 120 rupees. Parts are extra only after approval. With your consent, I can save an enquiry with your preferred name, repair type, and locality. Would you like to proceed?",
+      "sse_content_tail": "A basic bicycle service costs 499 rupees, and a puncture repair is 120 rupees. Parts are extra only after approval. With your consent, I can save an enquiry with your preferred name, repair type, and locality. Would you like to proceed?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 3976,
+        "total_tokens": 4032,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "A basic bicycle service costs 499 rupees, and a puncture repair is 120 rupees. Parts are extra only after approval. With your consent, I can save an enquiry with your preferred name, repair type, and locality. Would you like to proceed?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3976,
+          "output_tokens": 56,
+          "total_tokens": 4032
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.516
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 189,
+      "sse_content_preview": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra, but only after your approval. Which repair are you looking at today?",
+      "sse_content_tail": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra, but only after your approval. Which repair are you looking at today?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 4104,
+        "total_tokens": 4143,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra, but only after your approval. Which repair are you looking at today?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4104,
+          "output_tokens": 39,
+          "total_tokens": 4143
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.484
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 193,
+      "sse_content_preview": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Would you like to share your details for an enquiry?",
+      "sse_content_tail": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Would you like to share your details for an enquiry?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 4037,
+        "total_tokens": 4076,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Would you like to share your details for an enquiry?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4037,
+          "output_tokens": 39,
+          "total_tokens": 4076
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.453
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 70,
+      "sse_content_preview": "You are welcome. Would you like any help with a specific repair today?",
+      "sse_content_tail": "You are welcome. Would you like any help with a specific repair today?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4147,
+        "total_tokens": 4163,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "You are welcome. Would you like any help with a specific repair today?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4147,
+          "output_tokens": 16,
+          "total_tokens": 4163
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.422
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 122,
+      "sse_content_preview": "You're welcome. Would you like to share your details for an enquiry, or do you have any other questions about the repairs?",
+      "sse_content_tail": "You're welcome. Would you like to share your details for an enquiry, or do you have any other questions about the repairs?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 28,
+        "prompt_tokens": 4080,
+        "total_tokens": 4108,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "You're welcome. Would you like to share your details for an enquiry, or do you have any other questions about the repairs?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4080,
+          "output_tokens": 28,
+          "total_tokens": 4108
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.469
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "A basic bicycle service costs four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. With your consent, I can save an enquiry with your preferred name, repair type, and locality. Would you like to proceed?",
+      "turn": 1,
+      "at": 4.25
+    },
+    {
+      "text": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Would you like to share your details for an enquiry?",
+      "turn": 2,
+      "at": 8.625
+    },
+    {
+      "text": "You're welcome. Would you like to share your details for an enquiry, or do you have any other questions about the repairs?",
+      "turn": 3,
+      "at": 13.125
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 4,
+      "at": 13.172
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "A basic bicycle service costs four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. With your consent, I can save an enquiry with your preferred name, repair type, and locality. Would you like to proceed?",
+      "elapsed_s": 4.25,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Answer this first: What do a basic bicycle service and puncture repair cost, and are parts included?",
+      "spoken": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Would you like to share your details for an enquiry?",
+      "elapsed_s": 4.359,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "Okay, thanks.",
+      "spoken": "You're welcome. Would you like to share your details for an enquiry, or do you have any other questions about the repairs?",
+      "elapsed_s": 4.484,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 13.219,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "d068fe0d-a5a2-4942-b4dd-134aff52670c",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "4cd0cc0eca0e7b08238e658b2c18ec673960578bd2e7bb40a1cc26828755e8f5",
+  "prompt_chars": 17209,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, this is Arjun calling from CityCycle Repairs. As an AI assistant, I am calling to answer any questions you have about our bicycle repairs. Are you looking for bicycle repair assistance today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "A basic bicycle service costs four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. With your consent, I can save an enquiry with your preferred name, repair type, and locality. Would you like to proceed?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Would you like to share your details for an enquiry?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "You're welcome. Would you like to share your details for an enquiry, or do you have any other questions about the repairs?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 13.219,
+  "hangup_count": 1,
+  "source_signature": "f4d9ffd3ee35a64a4fc0d9be13b04fe8b9d3218b62849fa4d8c4be2901620ad3"
+}

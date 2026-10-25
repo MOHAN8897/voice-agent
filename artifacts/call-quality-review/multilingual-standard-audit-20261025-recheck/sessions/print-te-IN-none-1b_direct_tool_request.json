@@ -1,0 +1,189 @@
+{
+  "key": "print-te-IN-none-1b_direct_tool_request",
+  "business": "print",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "f3af70e9-b056-5d3b-8e97-da7174791478",
+  "call_id": "5d2f7870-8534-4f7d-a012-35652078b235",
+  "session_id": "audit-print-te-IN-none-1b_direct_tool_request-282b0c5f",
+  "compiled_checksum": "793858a9dada51bec19ca20371c431417f12615af0fb1f99849b6cde6ad39249",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1013,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly consented to submit request and provided callback preference (tomorrow 3 PM), but instructed not to confirm order/booking.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Submit enquiry for team review with callback preference tomorrow 3 PM.\",\n    \"contact_preference\": \"callback\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": " (tomorrow 3 PM), but instructed not to confirm order/booking.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Submit enquiry for team review with callback preference tomorrow 3 PM.\",\n    \"contact_preference\": \"callback\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.328
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 299,
+      "sse_content_preview": "{\n  \"spoken_response\": \"సరేనండి, మీ పేరు Audit Customer అని, అలాగే మీ email కూడా నోట్ చేసుకున్నాను. నేను ఈ call లోనే మీ request ని note చేసుకుంటాను, కానీ ఇది confirmed order కాదండి. రేపు మధ్యాహ్నం మూడు గంటలకి callback కావాలని రాసుకున్నాను. కోట్ రిక్వెస్ట్ కోసం మీ delivery location ఏంటో చెప్తారా?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"సరేనండి, మీ పేరు Audit Customer అని, అలాగే మీ email కూడా నోట్ చేసుకున్నాను. నేను ఈ call లోనే మీ request ని note చేసుకుంటాను, కానీ ఇది confirmed order కాదండి. రేపు మధ్యాహ్నం మూడు గంటలకి callback కావాలని రాసుకున్నాను. కోట్ రిక్వెస్ట్ కోసం మీ delivery location ఏంటో చెప్తారా?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 89,
+        "prompt_tokens": 4349,
+        "total_tokens": 4438,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ పేరు Audit Customer అని, అలాగే మీ email కూడా నోట్ చేసుకున్నాను. నేను ఈ call లోనే మీ request ని note చేసుకుంటాను, కానీ ఇది confirmed order కాదండి. రేపు మధ్యాహ్నం మూడు గంటలకి callback కావాలని రాసుకున్నాను. కోట్ రిక్వెస్ట్ కోసం మీ delivery location ఏంటో చెప్తారా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4349,
+          "output_tokens": 89,
+          "total_tokens": 4438
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.812
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.",
+      "turn": 1,
+      "at": 2.157
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 2,
+      "at": 2.188
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "నా పేరు Audit Customer, email audit.customer@example.invalid. నా enquiryని team review కోసం save చేయండి. రేపు మధ్యాహ్నం మూడు గంటలు నాకు అనుకూలం. Request submit చేయడానికి నా సమ్మతి ఉంది, కానీ order లేదా booking confirm అయిందని చెప్పకండి.",
+      "spoken": "మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.",
+      "elapsed_s": 2.141,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.313,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.469,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "5d2f7870-8534-4f7d-a012-35652078b235",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "43f890af79674ccea3f40754552912551aafbf813a2d8afaace49ff8171cacc5",
+  "prompt_chars": 18359,
+  "opening_seeded": "నమస్కారం, నా పేరు మీరా, క్లియర్ ప్రింట్ స్టూడియో నుండి మాట్లాడుతున్నాను. ఇది సేల్స్ కాల్ కాదండి, మా కార్డ్స్ గురించి మీ సందేహాలు తీర్చడానికి కాల్ చేస్తున్నాను. మీకు విజిటింగ్ కార్డ్స్ లేదా వెడ్డింగ్ ఇన్విటేషన్ల గురించి వివరాలు కావాలా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, మీ పేరు Audit Customer అని, అలాగే మీ email కూడా నోట్ చేసుకున్నాను. నేను ఈ call లోనే మీ request ని note చేసుకుంటాను, కానీ ఇది confirmed order కాదండి. రేపు మధ్యాహ్నం మూడు గంటలకి callback కావాలని రాసుకున్నాను. కోట్ రిక్వెస్ట్ కోసం మీ delivery location ఏంటో చెప్తారా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.485,
+  "hangup_count": 1
+}

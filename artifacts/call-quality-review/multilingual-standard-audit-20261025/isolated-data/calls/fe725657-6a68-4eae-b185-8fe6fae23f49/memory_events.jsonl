@@ -1,0 +1,2 @@
+{"turn_seq": 2, "ts": "2026-10-25T15:28:21.523326Z", "source": "model", "operations": [{"op": "append_context", "value": "future_next_month"}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:28:24.292971Z", "source": "model", "operations": [{"op": "set_fact", "key": "future_next_month", "value": "true"}], "applied": true, "validation_errors": []}

@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit",
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "you looking for today?\nuser: Do not book or save anything yet. Answer this first: What do a basic bicycle service and puncture repair cost, and are parts included?\nassistant: A basic service is four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Would you like an enquiry, or do you have any other questions?\nuser: I do not want a basic service, but I need a puncture repair. Can you help?\nassistant: Of course, a puncture repair is one hundred twenty rupees. Could you tell me your locality so I can note this down for our team?"
+}

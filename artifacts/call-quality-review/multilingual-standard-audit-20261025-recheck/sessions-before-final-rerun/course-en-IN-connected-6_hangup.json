@@ -1,0 +1,434 @@
+{
+  "key": "course-en-IN-connected-6_hangup",
+  "business": "course",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "90001681-13f9-5246-bdef-b439d4b70aea",
+  "call_id": "c703c414-5009-485e-bf5f-8d9a488c9427",
+  "session_id": "audit-course-en-IN-connected-6_hangup-bc05b3f6",
+  "compiled_checksum": "1fee4197dc7fe762fb77cc128a308aac13dd9c52fd6aab9af2d3ad626709460a",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 870,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller said: Yes, I am interested. Please explain the service, price and any conditions.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"end_call\"}\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller said: Yes, I am interested. Please explain the service, price and any conditions.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"end_call\"}\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.25
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 585,
+      "sse_content_preview": "{\n  \"spoken_response\": \"Our adult beginner Python course runs online for 6 weeks, on weekdays from 7pm to 8pm, for age 18 and above. The total fee is 4999 rupees. Please note there is no placement or job guarantee, no income promise, and no discount or instalment plan authorised. Do you have any coding experience, or would you like to request a demo or counselling?\"\n}The total fee is 4999 rupees. It is a 6 week online course on weekdays from 7pm to 8pm, for age 18 and above. There is no placement or job guarantee, and no income promise. Do you have any coding experience already?",
+      "sse_content_tail": "{\n  \"spoken_response\": \"Our adult beginner Python course runs online for 6 weeks, on weekdays from 7pm to 8pm, for age 18 and above. The total fee is 4999 rupees. Please note there is no placement or job guarantee, no income promise, and no discount or instalment plan authorised. Do you have any coding experience, or would you like to request a demo or counselling?\"\n}The total fee is 4999 rupees. It is a 6 week online course on weekdays from 7pm to 8pm, for age 18 and above. There is no placement or job guarantee, and no income promise. Do you have any coding experience already?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 60,
+        "prompt_tokens": 4351,
+        "total_tokens": 4411,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our adult beginner Python course runs online for 6 weeks, on weekdays from 7pm to 8pm, for age 18 and above. The total fee is 4999 rupees. Please note there is no placement or job guarantee, no income promise, and no discount or instalment plan authorised. Do you have any coding experience, or would you like to request a demo or counselling?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4122,
+          "output_tokens": 94,
+          "total_tokens": 4216
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.969
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 763,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'Do not book or save anything yet. Please answer my question first' and asked for fee, duration, timing, and job guarantee.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None; caller only requested information and explicitly declined booking/saving.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n    \"action_claimed\": \"order_confirmed\",\n    \"spoken_response\": \"\"\n  ,\n\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"summary\",\n        \"value\": \"Caller asked for course fee, duration, timing, and job guarantee. Did not want booking or saving. Ananya provided: 6 weeks online, weekdays 7pm-8pm, 4\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'Do not book or save anything yet. Please answer my question first' and asked for fee, duration, timing, and job guarantee.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None; caller only requested information and explicitly declined booking/saving.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n    \"action_claimed\": \"order_confirmed\",\n    \"spoken_response\": \"\"\n  ,\n\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"summary\",\n        \"value\": \"Caller asked for course fee, duration, timing, and job guarantee. Did not want booking or saving. Ananya provided: 6 weeks online, weekdays 7pm-8pm, 4\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 232,
+        "prompt_tokens": 4214,
+        "total_tokens": 4446,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.281
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 294,
+      "sse_content_preview": "{\"spoken_response\": \"The total fee is 4999 rupees for the 6-week course, classes are on weekdays from 7pm to 8pm, and there is no job guarantee or income promise. Would you like to request a demo or counselling session?\"}You are welcome. Would you like to request a demo or counselling session?",
+      "sse_content_tail": "{\"spoken_response\": \"The total fee is 4999 rupees for the 6-week course, classes are on weekdays from 7pm to 8pm, and there is no job guarantee or income promise. Would you like to request a demo or counselling session?\"}You are welcome. Would you like to request a demo or counselling session?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 16,
+        "prompt_tokens": 4452,
+        "total_tokens": 4468,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "The total fee is 4999 rupees for the 6-week course, classes are on weekdays from 7pm to 8pm, and there is no job guarantee or income promise. Would you like to request a demo or counselling session?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8428,
+          "output_tokens": 292,
+          "total_tokens": 8720
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.953
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 923,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'Okay, thanks.' which is a bare acknowledgement with no interest, question, or next step.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None expressed.\",\n    \"contact_preference\": \"end_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "evidence\": \"Caller said 'Okay, thanks.' which is a bare acknowledgement with no interest, question, or next step.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None expressed.\",\n    \"contact_preference\": \"end_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.5
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 171,
+      "sse_content_preview": "{\n  \"spoken_response\": \"You're welcome. Would you like to request a demo or counselling session? If so, I can collect your preferred name, email, and a convenient time.\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"You're welcome. Would you like to request a demo or counselling session? If so, I can collect your preferred name, email, and a convenient time.\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 4315,
+        "total_tokens": 4360,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "You're welcome. Would you like to request a demo or counselling session? If so, I can collect your preferred name, email, and a convenient time.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4315,
+          "output_tokens": 45,
+          "total_tokens": 4360
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.657
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Our adult beginner Python course runs online for 6 weeks, on weekdays from 7pm to 8pm, for age 18 and above. The total fee is four thousand nine hundred ninety nine rupees. Please note there is no placement or job guarantee, no income promise, and no discount or instalment plan authorised.",
+      "turn": 1,
+      "at": 3.109
+    },
+    {
+      "text": "The total fee is four thousand nine hundred ninety nine rupees for the 6-week course, classes are on weekdays from 7pm to 8pm, and there is no job guarantee or income promise. Would you like to request a demo or counselling session?",
+      "turn": 2,
+      "at": 6.281
+    },
+    {
+      "text": "You're welcome. Would you like to request a demo or counselling session? If so, I can collect your preferred name, email, and a convenient time.",
+      "turn": 3,
+      "at": 9.063
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 4,
+      "at": 9.078
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "Our adult beginner Python course runs online for 6 weeks, on weekdays from 7pm to 8pm, for age 18 and above. The total fee is four thousand nine hundred ninety nine rupees. Please note there is no placement or job guarantee, no income promise, and no discount or instalment plan authorised.",
+      "elapsed_s": 3.109,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Please answer my question first: What is the final course fee, duration and class timing, and do you guarantee a job?",
+      "spoken": "The total fee is four thousand nine hundred ninety nine rupees for the 6-week course, classes are on weekdays from 7pm to 8pm, and there is no job guarantee or income promise. Would you like to request a demo or counselling session?",
+      "elapsed_s": 3.156,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "Okay, thanks.",
+      "spoken": "You're welcome. Would you like to request a demo or counselling session? If so, I can collect your preferred name, email, and a convenient time.",
+      "elapsed_s": 2.766,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 9.125,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "c703c414-5009-485e-bf5f-8d9a488c9427",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "8473485dc54e607cf5edbcf56ce28b323d30385e02f6ee22d50230b4bb835f57",
+  "prompt_chars": 18225,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, this is Ananya calling from BrightPath Skills. I am reaching out to share details about our adult beginner Python course. Is now a good time to talk?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "Our adult beginner Python course runs online for 6 weeks, on weekdays from 7pm to 8pm, for age 18 and above. The total fee is four thousand nine hundred ninety nine rupees. Please note there is no placement or job guarantee, no income promise, and no discount or instalment plan authorised.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "The total fee is four thousand nine hundred ninety nine rupees for the 6-week course, classes are on weekdays from 7pm to 8pm, and there is no job guarantee or income promise. Would you like to request a demo or counselling session?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "You're welcome. Would you like to request a demo or counselling session? If so, I can collect your preferred name, email, and a convenient time.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 9.141,
+  "hangup_count": 1
+}

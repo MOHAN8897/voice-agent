@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "on first: What is the final course fee, duration and class timing, and do you guarantee a job?\nassistant: The total fee is four thousand nine hundred ninety nine rupees. It is a 6 week course, weekdays from 7 PM to 8 PM, for age 18 and above. There is no placement or job guarantee, and no income promise.\nuser: I don't need a job guarantee, but I am interested in learning Python. Can you explain the course?\nassistant: Since you already know Python, this course is designed to build from the basics with hands-on practice over those 6 weeks. Would you like to request a demo or counselling session?"
+}

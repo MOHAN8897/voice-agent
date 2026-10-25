@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:29:36.893485Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T15:29:38.155677Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-25T15:29:39.091932Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_asked_fee_duration_timings_job_guarantee: confirmed"}
+{"turn_seq": 7, "ts": "2026-10-25T15:29:40.490918Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_asked_fee_duration_timings_job_guarantee: confirmed"}

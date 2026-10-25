@@ -1,0 +1,2280 @@
+{
+  "created_at": "2026-10-25T15:47:32.695434+00:00",
+  "head": "3aed4ccf8bcd702c5880aadb78000b7c135fa377",
+  "source_snapshot": "baseline.json",
+  "application_code_changed_by_audit": false,
+  "builds": [
+    {
+      "key": "course-en-GB",
+      "status": "ready",
+      "path": "agents/course-en-GB/build.json",
+      "checksum": "b64669f2111700335bbbb39cfbdb8fe0f53019b4fd024b2ac2445731c0dd7836"
+    },
+    {
+      "key": "course-en-IN",
+      "status": "ready",
+      "path": "agents/course-en-IN/build.json",
+      "checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-hi-IN",
+      "status": "ready",
+      "path": "agents/course-hi-IN/build.json",
+      "checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-kn-IN",
+      "status": "ready",
+      "path": "agents/course-kn-IN/build.json",
+      "checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-ta-IN",
+      "status": "ready",
+      "path": "agents/course-ta-IN/build.json",
+      "checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-te-IN",
+      "status": "ready",
+      "path": "agents/course-te-IN/build.json",
+      "checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "print-en-GB",
+      "status": "ready",
+      "path": "agents/print-en-GB/build.json",
+      "checksum": "f86f0b8eb5cc489797637be36494ad96729deb7bf68a893a15456d917542c4c3"
+    },
+    {
+      "key": "print-en-IN",
+      "status": "ready",
+      "path": "agents/print-en-IN/build.json",
+      "checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-hi-IN",
+      "status": "ready",
+      "path": "agents/print-hi-IN/build.json",
+      "checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-kn-IN",
+      "status": "ready",
+      "path": "agents/print-kn-IN/build.json",
+      "checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-ta-IN",
+      "status": "ready",
+      "path": "agents/print-ta-IN/build.json",
+      "checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-te-IN",
+      "status": "ready",
+      "path": "agents/print-te-IN/build.json",
+      "checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "repair-en-GB",
+      "status": "ready",
+      "path": "agents/repair-en-GB/build.json",
+      "checksum": "fea07a928e39d780c41e91b04c2a2120468c74defb1f3c91f063d875ed38e8e9"
+    },
+    {
+      "key": "repair-en-IN",
+      "status": "ready",
+      "path": "agents/repair-en-IN/build.json",
+      "checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-hi-IN",
+      "status": "ready",
+      "path": "agents/repair-hi-IN/build.json",
+      "checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-kn-IN",
+      "status": "ready",
+      "path": "agents/repair-kn-IN/build.json",
+      "checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-ta-IN",
+      "status": "ready",
+      "path": "agents/repair-ta-IN/build.json",
+      "checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-te-IN",
+      "status": "ready",
+      "path": "agents/repair-te-IN/build.json",
+      "checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    }
+  ],
+  "sessions": [
+    {
+      "key": "course-en-IN-connected-1_interested",
+      "path": "sessions/course-en-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-connected-1b_direct_tool_request",
+      "path": "sessions/course-en-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-connected-2_future_interest",
+      "path": "sessions/course-en-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-connected-3_complete_rejection",
+      "path": "sessions/course-en-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-connected-3b_stop_contact",
+      "path": "sessions/course-en-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-connected-4_abuse",
+      "path": "sessions/course-en-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-connected-5_diversion_danger",
+      "path": "sessions/course-en-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-connected-5b_direct_danger",
+      "path": "sessions/course-en-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-connected-6_hangup",
+      "path": "sessions/course-en-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-none-1_interested",
+      "path": "sessions/course-en-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-none-1b_direct_tool_request",
+      "path": "sessions/course-en-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-none-2_future_interest",
+      "path": "sessions/course-en-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-none-3_complete_rejection",
+      "path": "sessions/course-en-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-none-3b_stop_contact",
+      "path": "sessions/course-en-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-none-4_abuse",
+      "path": "sessions/course-en-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-none-5_diversion_danger",
+      "path": "sessions/course-en-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-none-5b_direct_danger",
+      "path": "sessions/course-en-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-en-IN-none-6_hangup",
+      "path": "sessions/course-en-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9"
+    },
+    {
+      "key": "course-hi-IN-connected-1_interested",
+      "path": "sessions/course-hi-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-connected-1b_direct_tool_request",
+      "path": "sessions/course-hi-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-connected-2_future_interest",
+      "path": "sessions/course-hi-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-connected-3_complete_rejection",
+      "path": "sessions/course-hi-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-connected-3b_stop_contact",
+      "path": "sessions/course-hi-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-connected-4_abuse",
+      "path": "sessions/course-hi-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-connected-5_diversion_danger",
+      "path": "sessions/course-hi-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-connected-5b_direct_danger",
+      "path": "sessions/course-hi-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-connected-6_hangup",
+      "path": "sessions/course-hi-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-none-1_interested",
+      "path": "sessions/course-hi-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-none-1b_direct_tool_request",
+      "path": "sessions/course-hi-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-none-2_future_interest",
+      "path": "sessions/course-hi-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-none-3_complete_rejection",
+      "path": "sessions/course-hi-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-none-3b_stop_contact",
+      "path": "sessions/course-hi-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-none-4_abuse",
+      "path": "sessions/course-hi-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-none-5_diversion_danger",
+      "path": "sessions/course-hi-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-none-5b_direct_danger",
+      "path": "sessions/course-hi-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-hi-IN-none-6_hangup",
+      "path": "sessions/course-hi-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3"
+    },
+    {
+      "key": "course-kn-IN-connected-1_interested",
+      "path": "sessions/course-kn-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-connected-1b_direct_tool_request",
+      "path": "sessions/course-kn-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-connected-2_future_interest",
+      "path": "sessions/course-kn-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-connected-3_complete_rejection",
+      "path": "sessions/course-kn-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-connected-3b_stop_contact",
+      "path": "sessions/course-kn-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-connected-4_abuse",
+      "path": "sessions/course-kn-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-connected-5_diversion_danger",
+      "path": "sessions/course-kn-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-connected-5b_direct_danger",
+      "path": "sessions/course-kn-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-connected-6_hangup",
+      "path": "sessions/course-kn-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-none-1_interested",
+      "path": "sessions/course-kn-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-none-1b_direct_tool_request",
+      "path": "sessions/course-kn-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-none-2_future_interest",
+      "path": "sessions/course-kn-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-none-3_complete_rejection",
+      "path": "sessions/course-kn-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-none-3b_stop_contact",
+      "path": "sessions/course-kn-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-none-4_abuse",
+      "path": "sessions/course-kn-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-none-5_diversion_danger",
+      "path": "sessions/course-kn-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-none-5b_direct_danger",
+      "path": "sessions/course-kn-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-kn-IN-none-6_hangup",
+      "path": "sessions/course-kn-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20"
+    },
+    {
+      "key": "course-ta-IN-connected-1_interested",
+      "path": "sessions/course-ta-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-connected-1b_direct_tool_request",
+      "path": "sessions/course-ta-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-connected-2_future_interest",
+      "path": "sessions/course-ta-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-connected-3_complete_rejection",
+      "path": "sessions/course-ta-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-connected-3b_stop_contact",
+      "path": "sessions/course-ta-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-connected-4_abuse",
+      "path": "sessions/course-ta-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-connected-5_diversion_danger",
+      "path": "sessions/course-ta-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-connected-5b_direct_danger",
+      "path": "sessions/course-ta-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-connected-6_hangup",
+      "path": "sessions/course-ta-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-none-1_interested",
+      "path": "sessions/course-ta-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-none-1b_direct_tool_request",
+      "path": "sessions/course-ta-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-none-2_future_interest",
+      "path": "sessions/course-ta-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-none-3_complete_rejection",
+      "path": "sessions/course-ta-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-none-3b_stop_contact",
+      "path": "sessions/course-ta-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-none-4_abuse",
+      "path": "sessions/course-ta-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-none-5_diversion_danger",
+      "path": "sessions/course-ta-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-none-5b_direct_danger",
+      "path": "sessions/course-ta-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-ta-IN-none-6_hangup",
+      "path": "sessions/course-ta-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6"
+    },
+    {
+      "key": "course-te-IN-connected-1_interested",
+      "path": "sessions/course-te-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-connected-1b_direct_tool_request",
+      "path": "sessions/course-te-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-connected-2_future_interest",
+      "path": "sessions/course-te-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-connected-3_complete_rejection",
+      "path": "sessions/course-te-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-connected-3b_stop_contact",
+      "path": "sessions/course-te-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-connected-4_abuse",
+      "path": "sessions/course-te-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-connected-5_diversion_danger",
+      "path": "sessions/course-te-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-connected-5b_direct_danger",
+      "path": "sessions/course-te-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-connected-6_hangup",
+      "path": "sessions/course-te-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-none-1_interested",
+      "path": "sessions/course-te-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-none-1b_direct_tool_request",
+      "path": "sessions/course-te-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-none-2_future_interest",
+      "path": "sessions/course-te-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-none-3_complete_rejection",
+      "path": "sessions/course-te-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-none-3b_stop_contact",
+      "path": "sessions/course-te-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-none-4_abuse",
+      "path": "sessions/course-te-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-none-5_diversion_danger",
+      "path": "sessions/course-te-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-none-5b_direct_danger",
+      "path": "sessions/course-te-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "course-te-IN-none-6_hangup",
+      "path": "sessions/course-te-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922"
+    },
+    {
+      "key": "print-en-IN-connected-1_interested",
+      "path": "sessions/print-en-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-connected-1b_direct_tool_request",
+      "path": "sessions/print-en-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-connected-2_future_interest",
+      "path": "sessions/print-en-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-connected-3_complete_rejection",
+      "path": "sessions/print-en-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-connected-3b_stop_contact",
+      "path": "sessions/print-en-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-connected-4_abuse",
+      "path": "sessions/print-en-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-connected-5_diversion_danger",
+      "path": "sessions/print-en-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-connected-5b_direct_danger",
+      "path": "sessions/print-en-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-connected-6_hangup",
+      "path": "sessions/print-en-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-none-1_interested",
+      "path": "sessions/print-en-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-none-1b_direct_tool_request",
+      "path": "sessions/print-en-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-none-2_future_interest",
+      "path": "sessions/print-en-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-none-3_complete_rejection",
+      "path": "sessions/print-en-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-none-3b_stop_contact",
+      "path": "sessions/print-en-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-none-4_abuse",
+      "path": "sessions/print-en-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-none-5_diversion_danger",
+      "path": "sessions/print-en-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-none-5b_direct_danger",
+      "path": "sessions/print-en-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-en-IN-none-6_hangup",
+      "path": "sessions/print-en-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "8a9bea08afabb7f9a0cc7d1c04ecd7288334b58f0c82fce8bd3fa1c71bae160b"
+    },
+    {
+      "key": "print-hi-IN-connected-1_interested",
+      "path": "sessions/print-hi-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-connected-1b_direct_tool_request",
+      "path": "sessions/print-hi-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-connected-2_future_interest",
+      "path": "sessions/print-hi-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-connected-3_complete_rejection",
+      "path": "sessions/print-hi-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-connected-3b_stop_contact",
+      "path": "sessions/print-hi-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-connected-4_abuse",
+      "path": "sessions/print-hi-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-connected-5_diversion_danger",
+      "path": "sessions/print-hi-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-connected-5b_direct_danger",
+      "path": "sessions/print-hi-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-connected-6_hangup",
+      "path": "sessions/print-hi-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-none-1_interested",
+      "path": "sessions/print-hi-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-none-1b_direct_tool_request",
+      "path": "sessions/print-hi-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-none-2_future_interest",
+      "path": "sessions/print-hi-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-none-3_complete_rejection",
+      "path": "sessions/print-hi-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-none-3b_stop_contact",
+      "path": "sessions/print-hi-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-none-4_abuse",
+      "path": "sessions/print-hi-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-none-5_diversion_danger",
+      "path": "sessions/print-hi-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-none-5b_direct_danger",
+      "path": "sessions/print-hi-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-hi-IN-none-6_hangup",
+      "path": "sessions/print-hi-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37"
+    },
+    {
+      "key": "print-kn-IN-connected-1_interested",
+      "path": "sessions/print-kn-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-connected-1b_direct_tool_request",
+      "path": "sessions/print-kn-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-connected-2_future_interest",
+      "path": "sessions/print-kn-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-connected-3_complete_rejection",
+      "path": "sessions/print-kn-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-connected-3b_stop_contact",
+      "path": "sessions/print-kn-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-connected-4_abuse",
+      "path": "sessions/print-kn-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-connected-5_diversion_danger",
+      "path": "sessions/print-kn-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-connected-5b_direct_danger",
+      "path": "sessions/print-kn-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-connected-6_hangup",
+      "path": "sessions/print-kn-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-none-1_interested",
+      "path": "sessions/print-kn-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-none-1b_direct_tool_request",
+      "path": "sessions/print-kn-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-none-2_future_interest",
+      "path": "sessions/print-kn-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-none-3_complete_rejection",
+      "path": "sessions/print-kn-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-none-3b_stop_contact",
+      "path": "sessions/print-kn-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-none-4_abuse",
+      "path": "sessions/print-kn-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-none-5_diversion_danger",
+      "path": "sessions/print-kn-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-none-5b_direct_danger",
+      "path": "sessions/print-kn-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-kn-IN-none-6_hangup",
+      "path": "sessions/print-kn-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef"
+    },
+    {
+      "key": "print-ta-IN-connected-1_interested",
+      "path": "sessions/print-ta-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-connected-1b_direct_tool_request",
+      "path": "sessions/print-ta-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-connected-2_future_interest",
+      "path": "sessions/print-ta-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-connected-3_complete_rejection",
+      "path": "sessions/print-ta-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-connected-3b_stop_contact",
+      "path": "sessions/print-ta-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-connected-4_abuse",
+      "path": "sessions/print-ta-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-connected-5_diversion_danger",
+      "path": "sessions/print-ta-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-connected-5b_direct_danger",
+      "path": "sessions/print-ta-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-connected-6_hangup",
+      "path": "sessions/print-ta-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-none-1_interested",
+      "path": "sessions/print-ta-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-none-1b_direct_tool_request",
+      "path": "sessions/print-ta-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-none-2_future_interest",
+      "path": "sessions/print-ta-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-none-3_complete_rejection",
+      "path": "sessions/print-ta-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-none-3b_stop_contact",
+      "path": "sessions/print-ta-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-none-4_abuse",
+      "path": "sessions/print-ta-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-none-5_diversion_danger",
+      "path": "sessions/print-ta-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-none-5b_direct_danger",
+      "path": "sessions/print-ta-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-ta-IN-none-6_hangup",
+      "path": "sessions/print-ta-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f"
+    },
+    {
+      "key": "print-te-IN-connected-1_interested",
+      "path": "sessions/print-te-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-connected-1b_direct_tool_request",
+      "path": "sessions/print-te-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-connected-2_future_interest",
+      "path": "sessions/print-te-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-connected-3_complete_rejection",
+      "path": "sessions/print-te-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-connected-3b_stop_contact",
+      "path": "sessions/print-te-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-connected-4_abuse",
+      "path": "sessions/print-te-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-connected-5_diversion_danger",
+      "path": "sessions/print-te-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-connected-5b_direct_danger",
+      "path": "sessions/print-te-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-connected-6_hangup",
+      "path": "sessions/print-te-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-none-1_interested",
+      "path": "sessions/print-te-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-none-1b_direct_tool_request",
+      "path": "sessions/print-te-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-none-2_future_interest",
+      "path": "sessions/print-te-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-none-3_complete_rejection",
+      "path": "sessions/print-te-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-none-3b_stop_contact",
+      "path": "sessions/print-te-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-none-4_abuse",
+      "path": "sessions/print-te-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-none-5_diversion_danger",
+      "path": "sessions/print-te-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-none-5b_direct_danger",
+      "path": "sessions/print-te-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "print-te-IN-none-6_hangup",
+      "path": "sessions/print-te-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa"
+    },
+    {
+      "key": "repair-en-IN-connected-1_interested",
+      "path": "sessions/repair-en-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-connected-1b_direct_tool_request",
+      "path": "sessions/repair-en-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-connected-2_future_interest",
+      "path": "sessions/repair-en-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-connected-3_complete_rejection",
+      "path": "sessions/repair-en-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-connected-3b_stop_contact",
+      "path": "sessions/repair-en-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-connected-4_abuse",
+      "path": "sessions/repair-en-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-connected-5_diversion_danger",
+      "path": "sessions/repair-en-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-connected-5b_direct_danger",
+      "path": "sessions/repair-en-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-connected-6_hangup",
+      "path": "sessions/repair-en-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-none-1_interested",
+      "path": "sessions/repair-en-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-none-1b_direct_tool_request",
+      "path": "sessions/repair-en-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-none-2_future_interest",
+      "path": "sessions/repair-en-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-none-3_complete_rejection",
+      "path": "sessions/repair-en-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-none-3b_stop_contact",
+      "path": "sessions/repair-en-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-none-4_abuse",
+      "path": "sessions/repair-en-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-none-5_diversion_danger",
+      "path": "sessions/repair-en-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-none-5b_direct_danger",
+      "path": "sessions/repair-en-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-en-IN-none-6_hangup",
+      "path": "sessions/repair-en-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39"
+    },
+    {
+      "key": "repair-hi-IN-connected-1_interested",
+      "path": "sessions/repair-hi-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-connected-1b_direct_tool_request",
+      "path": "sessions/repair-hi-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-connected-2_future_interest",
+      "path": "sessions/repair-hi-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-connected-3_complete_rejection",
+      "path": "sessions/repair-hi-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-connected-3b_stop_contact",
+      "path": "sessions/repair-hi-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-connected-4_abuse",
+      "path": "sessions/repair-hi-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-connected-5_diversion_danger",
+      "path": "sessions/repair-hi-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-connected-5b_direct_danger",
+      "path": "sessions/repair-hi-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-connected-6_hangup",
+      "path": "sessions/repair-hi-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-none-1_interested",
+      "path": "sessions/repair-hi-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-none-1b_direct_tool_request",
+      "path": "sessions/repair-hi-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-none-2_future_interest",
+      "path": "sessions/repair-hi-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-none-3_complete_rejection",
+      "path": "sessions/repair-hi-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-none-3b_stop_contact",
+      "path": "sessions/repair-hi-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-none-4_abuse",
+      "path": "sessions/repair-hi-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-none-5_diversion_danger",
+      "path": "sessions/repair-hi-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-none-5b_direct_danger",
+      "path": "sessions/repair-hi-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-hi-IN-none-6_hangup",
+      "path": "sessions/repair-hi-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2"
+    },
+    {
+      "key": "repair-kn-IN-connected-1_interested",
+      "path": "sessions/repair-kn-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-connected-1b_direct_tool_request",
+      "path": "sessions/repair-kn-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-connected-2_future_interest",
+      "path": "sessions/repair-kn-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-connected-3_complete_rejection",
+      "path": "sessions/repair-kn-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-connected-3b_stop_contact",
+      "path": "sessions/repair-kn-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-connected-4_abuse",
+      "path": "sessions/repair-kn-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-connected-5_diversion_danger",
+      "path": "sessions/repair-kn-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-connected-5b_direct_danger",
+      "path": "sessions/repair-kn-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-connected-6_hangup",
+      "path": "sessions/repair-kn-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-none-1_interested",
+      "path": "sessions/repair-kn-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-none-1b_direct_tool_request",
+      "path": "sessions/repair-kn-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-none-2_future_interest",
+      "path": "sessions/repair-kn-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-none-3_complete_rejection",
+      "path": "sessions/repair-kn-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-none-3b_stop_contact",
+      "path": "sessions/repair-kn-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-none-4_abuse",
+      "path": "sessions/repair-kn-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-none-5_diversion_danger",
+      "path": "sessions/repair-kn-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-none-5b_direct_danger",
+      "path": "sessions/repair-kn-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-kn-IN-none-6_hangup",
+      "path": "sessions/repair-kn-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465"
+    },
+    {
+      "key": "repair-ta-IN-connected-1_interested",
+      "path": "sessions/repair-ta-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-connected-1b_direct_tool_request",
+      "path": "sessions/repair-ta-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-connected-2_future_interest",
+      "path": "sessions/repair-ta-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-connected-3_complete_rejection",
+      "path": "sessions/repair-ta-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-connected-3b_stop_contact",
+      "path": "sessions/repair-ta-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-connected-4_abuse",
+      "path": "sessions/repair-ta-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-connected-5_diversion_danger",
+      "path": "sessions/repair-ta-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-connected-5b_direct_danger",
+      "path": "sessions/repair-ta-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-connected-6_hangup",
+      "path": "sessions/repair-ta-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-none-1_interested",
+      "path": "sessions/repair-ta-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-none-1b_direct_tool_request",
+      "path": "sessions/repair-ta-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-none-2_future_interest",
+      "path": "sessions/repair-ta-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-none-3_complete_rejection",
+      "path": "sessions/repair-ta-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-none-3b_stop_contact",
+      "path": "sessions/repair-ta-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-none-4_abuse",
+      "path": "sessions/repair-ta-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-none-5_diversion_danger",
+      "path": "sessions/repair-ta-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-none-5b_direct_danger",
+      "path": "sessions/repair-ta-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-ta-IN-none-6_hangup",
+      "path": "sessions/repair-ta-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "900487b200c0bfc312f9a0135e64f6d03a39fe4ba21056014be643ee2ef07f8b"
+    },
+    {
+      "key": "repair-te-IN-connected-1_interested",
+      "path": "sessions/repair-te-IN-connected-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-connected-1b_direct_tool_request",
+      "path": "sessions/repair-te-IN-connected-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-connected-2_future_interest",
+      "path": "sessions/repair-te-IN-connected-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-connected-3_complete_rejection",
+      "path": "sessions/repair-te-IN-connected-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-connected-3b_stop_contact",
+      "path": "sessions/repair-te-IN-connected-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-connected-4_abuse",
+      "path": "sessions/repair-te-IN-connected-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-connected-5_diversion_danger",
+      "path": "sessions/repair-te-IN-connected-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-connected-5b_direct_danger",
+      "path": "sessions/repair-te-IN-connected-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-connected-6_hangup",
+      "path": "sessions/repair-te-IN-connected-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-none-1_interested",
+      "path": "sessions/repair-te-IN-none-1_interested.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-none-1b_direct_tool_request",
+      "path": "sessions/repair-te-IN-none-1b_direct_tool_request.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-none-2_future_interest",
+      "path": "sessions/repair-te-IN-none-2_future_interest.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-none-3_complete_rejection",
+      "path": "sessions/repair-te-IN-none-3_complete_rejection.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-none-3b_stop_contact",
+      "path": "sessions/repair-te-IN-none-3b_stop_contact.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-none-4_abuse",
+      "path": "sessions/repair-te-IN-none-4_abuse.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-none-5_diversion_danger",
+      "path": "sessions/repair-te-IN-none-5_diversion_danger.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-none-5b_direct_danger",
+      "path": "sessions/repair-te-IN-none-5b_direct_danger.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    },
+    {
+      "key": "repair-te-IN-none-6_hangup",
+      "path": "sessions/repair-te-IN-none-6_hangup.json",
+      "status": "completed",
+      "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114"
+    }
+  ],
+  "blocked": [
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "1_interested",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "1b_direct_tool_request",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "2_future_interest",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "3_complete_rejection",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "3b_stop_contact",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "4_abuse",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "5_diversion_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "5b_direct_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "6_hangup",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "1_interested",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "1b_direct_tool_request",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "2_future_interest",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "3_complete_rejection",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "3b_stop_contact",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "4_abuse",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "5_diversion_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "5b_direct_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "print",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "6_hangup",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "1_interested",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "1b_direct_tool_request",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "2_future_interest",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "3_complete_rejection",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "3b_stop_contact",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "4_abuse",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "5_diversion_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "5b_direct_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "6_hangup",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "1_interested",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "1b_direct_tool_request",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "2_future_interest",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "3_complete_rejection",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "3b_stop_contact",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "4_abuse",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "5_diversion_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "5b_direct_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "repair",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "6_hangup",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "1_interested",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "1b_direct_tool_request",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "2_future_interest",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "3_complete_rejection",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "3b_stop_contact",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "4_abuse",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "5_diversion_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "5b_direct_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": false,
+      "scenario": "6_hangup",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "1_interested",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "1b_direct_tool_request",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "2_future_interest",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "3_complete_rejection",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "3b_stop_contact",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "4_abuse",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "5_diversion_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "5b_direct_danger",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    },
+    {
+      "business": "course",
+      "language": "en-GB",
+      "integration": true,
+      "scenario": "6_hangup",
+      "reason": {
+        "code": "unsupported_language",
+        "message": "This profile does not support the agent language."
+      }
+    }
+  ]
+}

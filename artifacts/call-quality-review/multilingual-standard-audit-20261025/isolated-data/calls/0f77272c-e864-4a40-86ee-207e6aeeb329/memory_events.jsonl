@@ -1,0 +1,2 @@
+{"turn_seq": 2, "ts": "2026-10-25T15:30:40.708409Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:30:41.485241Z", "source": "model", "operations": [{"op": "append_context", "value": "abuse_detected_and_closed"}], "applied": true, "validation_errors": []}

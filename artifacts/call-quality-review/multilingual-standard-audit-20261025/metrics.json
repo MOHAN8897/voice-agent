@@ -1,0 +1,5423 @@
+{
+  "overall": {
+    "sessions": 270,
+    "harness_completed": 270,
+    "planned_caller_turns": 780,
+    "reached_caller_turns": 633,
+    "live_llm_requests": 729,
+    "raw_completed_model_outputs": 431,
+    "model_close_proposals": 411,
+    "model_do_not_call_proposals": 393,
+    "generic_continuation_turns": 406,
+    "technical_farewell_turns": 91,
+    "ended_sessions": 193,
+    "sessions_left_open": 77,
+    "closed_on_nonterminal_test_turn": 74,
+    "ordinary_enquiry_turns": 382,
+    "ordinary_enquiry_generic_turns": 280,
+    "ordinary_enquiry_technical_turns": 59,
+    "explicit_end_turns_reached": 196,
+    "explicit_end_not_closed": 77,
+    "model_native_tool_call_chunks": 0,
+    "mock_integration_executions": 0,
+    "provider_hangup_attempts": 193,
+    "hangup_while_mock_playback_active": 0,
+    "duplicate_hangup_sessions": 0,
+    "finish_reasons": {
+      "stop": 437,
+      "length": 172,
+      "null": 120
+    },
+    "length_errors": 178,
+    "stream_cancelled_requests": 103,
+    "observed_long_whitespace_tail_requests": 227,
+    "close_gate_results_instrumented_subset": {
+      "remaining_request": 130,
+      "accepted": 78,
+      "continue": 31,
+      "evidence_not_quoted": 142,
+      "lead_details_missing": 2,
+      "user_asked_question": 63,
+      "no_evidence": 26,
+      "open_question": 4
+    },
+    "caller_turn_latency_median_s": 1.0,
+    "caller_turn_latency_p95_s": 6.422,
+    "technical_case_keys": [
+      "course-en-IN-connected-2_future_interest",
+      "course-en-IN-connected-5b_direct_danger",
+      "course-en-IN-none-1_interested",
+      "course-en-IN-none-1b_direct_tool_request",
+      "course-en-IN-none-5_diversion_danger",
+      "course-en-IN-none-5b_direct_danger",
+      "course-hi-IN-connected-1_interested",
+      "course-hi-IN-none-1_interested",
+      "course-hi-IN-none-4_abuse",
+      "course-hi-IN-none-5_diversion_danger",
+      "course-kn-IN-connected-2_future_interest",
+      "course-kn-IN-connected-3b_stop_contact",
+      "course-kn-IN-none-1_interested",
+      "course-kn-IN-none-1b_direct_tool_request",
+      "course-kn-IN-none-2_future_interest",
+      "course-kn-IN-none-4_abuse",
+      "course-kn-IN-none-5_diversion_danger",
+      "course-kn-IN-none-6_hangup",
+      "course-ta-IN-connected-2_future_interest",
+      "course-ta-IN-connected-4_abuse",
+      "course-ta-IN-connected-5_diversion_danger",
+      "course-ta-IN-connected-5b_direct_danger",
+      "course-ta-IN-connected-6_hangup",
+      "course-ta-IN-none-1_interested",
+      "course-ta-IN-none-1b_direct_tool_request",
+      "course-ta-IN-none-2_future_interest",
+      "course-ta-IN-none-5_diversion_danger",
+      "course-ta-IN-none-6_hangup",
+      "course-te-IN-connected-1_interested",
+      "course-te-IN-connected-2_future_interest",
+      "course-te-IN-connected-4_abuse",
+      "course-te-IN-connected-6_hangup",
+      "course-te-IN-none-1_interested",
+      "course-te-IN-none-1b_direct_tool_request",
+      "course-te-IN-none-2_future_interest",
+      "course-te-IN-none-5b_direct_danger",
+      "print-en-IN-connected-1_interested",
+      "print-en-IN-connected-5_diversion_danger",
+      "print-en-IN-none-1_interested",
+      "print-en-IN-none-5_diversion_danger",
+      "print-en-IN-none-6_hangup",
+      "print-hi-IN-connected-5_diversion_danger",
+      "print-hi-IN-none-6_hangup",
+      "print-kn-IN-none-1_interested",
+      "print-kn-IN-none-1b_direct_tool_request",
+      "print-kn-IN-none-5b_direct_danger",
+      "print-ta-IN-connected-2_future_interest",
+      "print-ta-IN-connected-4_abuse",
+      "print-ta-IN-none-1_interested",
+      "print-ta-IN-none-4_abuse",
+      "print-ta-IN-none-6_hangup",
+      "print-te-IN-connected-1_interested",
+      "print-te-IN-connected-4_abuse",
+      "print-te-IN-connected-5_diversion_danger",
+      "print-te-IN-none-1_interested",
+      "print-te-IN-none-4_abuse",
+      "print-te-IN-none-5b_direct_danger",
+      "repair-en-IN-connected-1_interested",
+      "repair-en-IN-connected-5_diversion_danger",
+      "repair-en-IN-connected-6_hangup",
+      "repair-en-IN-none-1_interested",
+      "repair-en-IN-none-4_abuse",
+      "repair-hi-IN-connected-1_interested",
+      "repair-hi-IN-none-1_interested",
+      "repair-kn-IN-connected-1_interested",
+      "repair-kn-IN-connected-1b_direct_tool_request",
+      "repair-kn-IN-connected-2_future_interest",
+      "repair-kn-IN-connected-5_diversion_danger",
+      "repair-kn-IN-connected-5b_direct_danger",
+      "repair-kn-IN-connected-6_hangup",
+      "repair-kn-IN-none-1_interested",
+      "repair-kn-IN-none-2_future_interest",
+      "repair-kn-IN-none-5b_direct_danger",
+      "repair-ta-IN-connected-1_interested",
+      "repair-ta-IN-connected-2_future_interest",
+      "repair-ta-IN-connected-4_abuse",
+      "repair-ta-IN-connected-5_diversion_danger",
+      "repair-ta-IN-connected-5b_direct_danger",
+      "repair-ta-IN-connected-6_hangup",
+      "repair-ta-IN-none-1_interested",
+      "repair-ta-IN-none-1b_direct_tool_request",
+      "repair-ta-IN-none-2_future_interest",
+      "repair-ta-IN-none-4_abuse",
+      "repair-ta-IN-none-5_diversion_danger",
+      "repair-te-IN-connected-1_interested",
+      "repair-te-IN-connected-4_abuse",
+      "repair-te-IN-connected-5_diversion_danger",
+      "repair-te-IN-connected-5b_direct_danger",
+      "repair-te-IN-connected-6_hangup",
+      "repair-te-IN-none-1_interested",
+      "repair-te-IN-none-6_hangup"
+    ],
+    "missed_end_case_turns": [
+      [
+        "course-hi-IN-connected-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "course-kn-IN-connected-1_interested",
+        5,
+        "done"
+      ],
+      [
+        "course-kn-IN-connected-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "course-kn-IN-connected-3_complete_rejection",
+        1,
+        "reject"
+      ],
+      [
+        "course-kn-IN-connected-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "course-kn-IN-connected-5_diversion_danger",
+        5,
+        "done"
+      ],
+      [
+        "course-kn-IN-connected-5b_direct_danger",
+        3,
+        "done"
+      ],
+      [
+        "course-kn-IN-connected-6_hangup",
+        4,
+        "done"
+      ],
+      [
+        "course-kn-IN-none-3_complete_rejection",
+        1,
+        "reject"
+      ],
+      [
+        "course-kn-IN-none-3b_stop_contact",
+        1,
+        "optout"
+      ],
+      [
+        "course-ta-IN-connected-1_interested",
+        5,
+        "done"
+      ],
+      [
+        "course-ta-IN-connected-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "course-ta-IN-none-3b_stop_contact",
+        1,
+        "optout"
+      ],
+      [
+        "course-ta-IN-none-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "course-ta-IN-none-5b_direct_danger",
+        3,
+        "done"
+      ],
+      [
+        "course-te-IN-connected-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "course-te-IN-connected-5_diversion_danger",
+        5,
+        "done"
+      ],
+      [
+        "course-te-IN-connected-5b_direct_danger",
+        3,
+        "done"
+      ],
+      [
+        "course-te-IN-none-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "course-te-IN-none-5_diversion_danger",
+        5,
+        "done"
+      ],
+      [
+        "course-te-IN-none-6_hangup",
+        4,
+        "done"
+      ],
+      [
+        "print-hi-IN-connected-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "print-hi-IN-none-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "print-kn-IN-connected-1_interested",
+        5,
+        "done"
+      ],
+      [
+        "print-kn-IN-connected-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "print-kn-IN-connected-2_future_interest",
+        3,
+        "done"
+      ],
+      [
+        "print-kn-IN-connected-3_complete_rejection",
+        1,
+        "reject"
+      ],
+      [
+        "print-kn-IN-connected-3b_stop_contact",
+        1,
+        "optout"
+      ],
+      [
+        "print-kn-IN-connected-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "print-kn-IN-connected-5_diversion_danger",
+        5,
+        "done"
+      ],
+      [
+        "print-kn-IN-connected-5b_direct_danger",
+        3,
+        "done"
+      ],
+      [
+        "print-kn-IN-connected-6_hangup",
+        4,
+        "done"
+      ],
+      [
+        "print-kn-IN-none-2_future_interest",
+        3,
+        "done"
+      ],
+      [
+        "print-kn-IN-none-3_complete_rejection",
+        1,
+        "reject"
+      ],
+      [
+        "print-kn-IN-none-3b_stop_contact",
+        1,
+        "optout"
+      ],
+      [
+        "print-kn-IN-none-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "print-kn-IN-none-5_diversion_danger",
+        5,
+        "done"
+      ],
+      [
+        "print-kn-IN-none-6_hangup",
+        4,
+        "done"
+      ],
+      [
+        "print-ta-IN-connected-1_interested",
+        5,
+        "done"
+      ],
+      [
+        "print-ta-IN-connected-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "print-ta-IN-connected-3b_stop_contact",
+        1,
+        "optout"
+      ],
+      [
+        "print-ta-IN-connected-5_diversion_danger",
+        5,
+        "done"
+      ],
+      [
+        "print-ta-IN-connected-5b_direct_danger",
+        3,
+        "done"
+      ],
+      [
+        "print-ta-IN-connected-6_hangup",
+        4,
+        "done"
+      ],
+      [
+        "print-ta-IN-none-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "print-ta-IN-none-2_future_interest",
+        3,
+        "done"
+      ],
+      [
+        "print-ta-IN-none-3b_stop_contact",
+        1,
+        "optout"
+      ],
+      [
+        "print-ta-IN-none-5_diversion_danger",
+        5,
+        "done"
+      ],
+      [
+        "print-ta-IN-none-5b_direct_danger",
+        3,
+        "done"
+      ],
+      [
+        "print-te-IN-connected-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "print-te-IN-connected-3_complete_rejection",
+        1,
+        "reject"
+      ],
+      [
+        "print-te-IN-connected-5b_direct_danger",
+        3,
+        "done"
+      ],
+      [
+        "print-te-IN-connected-6_hangup",
+        4,
+        "done"
+      ],
+      [
+        "print-te-IN-none-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "print-te-IN-none-3_complete_rejection",
+        1,
+        "reject"
+      ],
+      [
+        "print-te-IN-none-5_diversion_danger",
+        5,
+        "done"
+      ],
+      [
+        "print-te-IN-none-6_hangup",
+        4,
+        "done"
+      ],
+      [
+        "repair-hi-IN-connected-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "repair-hi-IN-none-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "repair-kn-IN-connected-3_complete_rejection",
+        1,
+        "reject"
+      ],
+      [
+        "repair-kn-IN-connected-3b_stop_contact",
+        1,
+        "optout"
+      ],
+      [
+        "repair-kn-IN-connected-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "repair-kn-IN-none-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "repair-kn-IN-none-3_complete_rejection",
+        1,
+        "reject"
+      ],
+      [
+        "repair-kn-IN-none-3b_stop_contact",
+        1,
+        "optout"
+      ],
+      [
+        "repair-kn-IN-none-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "repair-kn-IN-none-5_diversion_danger",
+        5,
+        "done"
+      ],
+      [
+        "repair-kn-IN-none-6_hangup",
+        4,
+        "done"
+      ],
+      [
+        "repair-ta-IN-connected-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "repair-ta-IN-none-3b_stop_contact",
+        1,
+        "optout"
+      ],
+      [
+        "repair-ta-IN-none-5b_direct_danger",
+        3,
+        "done"
+      ],
+      [
+        "repair-ta-IN-none-6_hangup",
+        4,
+        "done"
+      ],
+      [
+        "repair-te-IN-connected-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "repair-te-IN-none-1b_direct_tool_request",
+        2,
+        "done"
+      ],
+      [
+        "repair-te-IN-none-4_abuse",
+        2,
+        "abuse_threat"
+      ],
+      [
+        "repair-te-IN-none-5_diversion_danger",
+        5,
+        "done"
+      ],
+      [
+        "repair-te-IN-none-5b_direct_danger",
+        3,
+        "done"
+      ]
+    ],
+    "nonterminal_close_case_turns": [
+      [
+        "course-en-IN-connected-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "course-en-IN-connected-5b_direct_danger",
+        1,
+        "danger"
+      ],
+      [
+        "course-en-IN-none-1_interested",
+        1,
+        "interested"
+      ],
+      [
+        "course-en-IN-none-1b_direct_tool_request",
+        1,
+        "request"
+      ],
+      [
+        "course-en-IN-none-2_future_interest",
+        2,
+        "future_more"
+      ],
+      [
+        "course-en-IN-none-5_diversion_danger",
+        2,
+        "details"
+      ],
+      [
+        "course-en-IN-none-5b_direct_danger",
+        1,
+        "danger"
+      ],
+      [
+        "course-hi-IN-connected-1_interested",
+        3,
+        "alternate"
+      ],
+      [
+        "course-hi-IN-connected-2_future_interest",
+        2,
+        "future_more"
+      ],
+      [
+        "course-hi-IN-none-1_interested",
+        4,
+        "request"
+      ],
+      [
+        "course-hi-IN-none-5_diversion_danger",
+        3,
+        "danger"
+      ],
+      [
+        "course-kn-IN-connected-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "course-kn-IN-none-1b_direct_tool_request",
+        1,
+        "request"
+      ],
+      [
+        "course-kn-IN-none-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "course-kn-IN-none-5_diversion_danger",
+        4,
+        "return"
+      ],
+      [
+        "course-ta-IN-connected-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "course-ta-IN-connected-6_hangup",
+        2,
+        "details"
+      ],
+      [
+        "course-ta-IN-none-5_diversion_danger",
+        4,
+        "return"
+      ],
+      [
+        "course-te-IN-connected-1_interested",
+        1,
+        "interested"
+      ],
+      [
+        "course-te-IN-connected-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "course-te-IN-connected-4_abuse",
+        1,
+        "abuse_mild"
+      ],
+      [
+        "course-te-IN-connected-6_hangup",
+        1,
+        "interested"
+      ],
+      [
+        "course-te-IN-none-1_interested",
+        1,
+        "interested"
+      ],
+      [
+        "course-te-IN-none-1b_direct_tool_request",
+        1,
+        "request"
+      ],
+      [
+        "course-te-IN-none-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "print-en-IN-connected-1_interested",
+        3,
+        "alternate"
+      ],
+      [
+        "print-en-IN-connected-2_future_interest",
+        2,
+        "future_more"
+      ],
+      [
+        "print-en-IN-connected-5_diversion_danger",
+        2,
+        "details"
+      ],
+      [
+        "print-en-IN-none-1_interested",
+        2,
+        "details"
+      ],
+      [
+        "print-en-IN-none-2_future_interest",
+        2,
+        "future_more"
+      ],
+      [
+        "print-en-IN-none-5_diversion_danger",
+        1,
+        "divert"
+      ],
+      [
+        "print-en-IN-none-6_hangup",
+        1,
+        "interested"
+      ],
+      [
+        "print-hi-IN-connected-5_diversion_danger",
+        3,
+        "danger"
+      ],
+      [
+        "print-hi-IN-none-6_hangup",
+        2,
+        "details"
+      ],
+      [
+        "print-kn-IN-none-1_interested",
+        4,
+        "request"
+      ],
+      [
+        "print-ta-IN-connected-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "print-ta-IN-none-1_interested",
+        4,
+        "request"
+      ],
+      [
+        "print-te-IN-connected-1_interested",
+        4,
+        "request"
+      ],
+      [
+        "print-te-IN-connected-2_future_interest",
+        2,
+        "future_more"
+      ],
+      [
+        "print-te-IN-connected-4_abuse",
+        1,
+        "abuse_mild"
+      ],
+      [
+        "print-te-IN-connected-5_diversion_danger",
+        2,
+        "details"
+      ],
+      [
+        "print-te-IN-none-1_interested",
+        1,
+        "interested"
+      ],
+      [
+        "print-te-IN-none-2_future_interest",
+        2,
+        "future_more"
+      ],
+      [
+        "print-te-IN-none-4_abuse",
+        1,
+        "abuse_mild"
+      ],
+      [
+        "repair-en-IN-connected-1_interested",
+        1,
+        "interested"
+      ],
+      [
+        "repair-en-IN-connected-2_future_interest",
+        2,
+        "future_more"
+      ],
+      [
+        "repair-en-IN-connected-5_diversion_danger",
+        4,
+        "return"
+      ],
+      [
+        "repair-en-IN-connected-6_hangup",
+        1,
+        "interested"
+      ],
+      [
+        "repair-en-IN-none-1_interested",
+        1,
+        "interested"
+      ],
+      [
+        "repair-en-IN-none-2_future_interest",
+        2,
+        "future_more"
+      ],
+      [
+        "repair-en-IN-none-4_abuse",
+        1,
+        "abuse_mild"
+      ],
+      [
+        "repair-hi-IN-connected-1_interested",
+        4,
+        "request"
+      ],
+      [
+        "repair-hi-IN-none-1_interested",
+        4,
+        "request"
+      ],
+      [
+        "repair-kn-IN-connected-1_interested",
+        2,
+        "details"
+      ],
+      [
+        "repair-kn-IN-connected-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "repair-kn-IN-connected-5_diversion_danger",
+        4,
+        "return"
+      ],
+      [
+        "repair-kn-IN-connected-5b_direct_danger",
+        2,
+        "return"
+      ],
+      [
+        "repair-kn-IN-connected-6_hangup",
+        2,
+        "details"
+      ],
+      [
+        "repair-kn-IN-none-1_interested",
+        3,
+        "alternate"
+      ],
+      [
+        "repair-kn-IN-none-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "repair-kn-IN-none-5b_direct_danger",
+        2,
+        "return"
+      ],
+      [
+        "repair-ta-IN-connected-1_interested",
+        1,
+        "interested"
+      ],
+      [
+        "repair-ta-IN-connected-5_diversion_danger",
+        4,
+        "return"
+      ],
+      [
+        "repair-ta-IN-connected-6_hangup",
+        1,
+        "interested"
+      ],
+      [
+        "repair-ta-IN-none-5_diversion_danger",
+        4,
+        "return"
+      ],
+      [
+        "repair-te-IN-connected-1_interested",
+        2,
+        "details"
+      ],
+      [
+        "repair-te-IN-connected-2_future_interest",
+        2,
+        "future_more"
+      ],
+      [
+        "repair-te-IN-connected-4_abuse",
+        1,
+        "abuse_mild"
+      ],
+      [
+        "repair-te-IN-connected-5_diversion_danger",
+        2,
+        "details"
+      ],
+      [
+        "repair-te-IN-connected-5b_direct_danger",
+        1,
+        "danger"
+      ],
+      [
+        "repair-te-IN-connected-6_hangup",
+        1,
+        "interested"
+      ],
+      [
+        "repair-te-IN-none-1_interested",
+        1,
+        "interested"
+      ],
+      [
+        "repair-te-IN-none-2_future_interest",
+        2,
+        "future_more"
+      ],
+      [
+        "repair-te-IN-none-6_hangup",
+        1,
+        "interested"
+      ]
+    ]
+  },
+  "by_language": {
+    "en-IN": {
+      "sessions": 54,
+      "harness_completed": 54,
+      "planned_caller_turns": 156,
+      "reached_caller_turns": 109,
+      "live_llm_requests": 117,
+      "raw_completed_model_outputs": 48,
+      "model_close_proposals": 48,
+      "model_do_not_call_proposals": 27,
+      "generic_continuation_turns": 49,
+      "technical_farewell_turns": 16,
+      "ended_sessions": 54,
+      "sessions_left_open": 0,
+      "closed_on_nonterminal_test_turn": 21,
+      "ordinary_enquiry_turns": 67,
+      "ordinary_enquiry_generic_turns": 43,
+      "ordinary_enquiry_technical_turns": 14,
+      "explicit_end_turns_reached": 33,
+      "explicit_end_not_closed": 0,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 54,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "stop": 48,
+        "length": 45,
+        "null": 24
+      },
+      "length_errors": 45,
+      "stream_cancelled_requests": 7,
+      "observed_long_whitespace_tail_requests": 17,
+      "close_gate_results_instrumented_subset": {
+        "remaining_request": 8,
+        "accepted": 15,
+        "evidence_not_quoted": 3,
+        "continue": 2
+      },
+      "caller_turn_latency_median_s": 0.89,
+      "caller_turn_latency_p95_s": 6.782,
+      "technical_case_keys": [
+        "course-en-IN-connected-2_future_interest",
+        "course-en-IN-connected-5b_direct_danger",
+        "course-en-IN-none-1_interested",
+        "course-en-IN-none-1b_direct_tool_request",
+        "course-en-IN-none-5_diversion_danger",
+        "course-en-IN-none-5b_direct_danger",
+        "print-en-IN-connected-1_interested",
+        "print-en-IN-connected-5_diversion_danger",
+        "print-en-IN-none-1_interested",
+        "print-en-IN-none-5_diversion_danger",
+        "print-en-IN-none-6_hangup",
+        "repair-en-IN-connected-1_interested",
+        "repair-en-IN-connected-5_diversion_danger",
+        "repair-en-IN-connected-6_hangup",
+        "repair-en-IN-none-1_interested",
+        "repair-en-IN-none-4_abuse"
+      ],
+      "missed_end_case_turns": [],
+      "nonterminal_close_case_turns": [
+        [
+          "course-en-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-en-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "course-en-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "course-en-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "course-en-IN-none-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "course-en-IN-none-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "print-en-IN-connected-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "print-en-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-en-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "print-en-IN-none-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "print-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-en-IN-none-5_diversion_danger",
+          1,
+          "divert"
+        ],
+        [
+          "print-en-IN-none-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-en-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-en-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-en-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-en-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-en-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-en-IN-none-4_abuse",
+          1,
+          "abuse_mild"
+        ]
+      ]
+    },
+    "hi-IN": {
+      "sessions": 54,
+      "harness_completed": 54,
+      "planned_caller_turns": 156,
+      "reached_caller_turns": 144,
+      "live_llm_requests": 124,
+      "raw_completed_model_outputs": 94,
+      "model_close_proposals": 85,
+      "model_do_not_call_proposals": 89,
+      "generic_continuation_turns": 85,
+      "technical_farewell_turns": 8,
+      "ended_sessions": 49,
+      "sessions_left_open": 5,
+      "closed_on_nonterminal_test_turn": 8,
+      "ordinary_enquiry_turns": 86,
+      "ordinary_enquiry_generic_turns": 70,
+      "ordinary_enquiry_technical_turns": 5,
+      "explicit_end_turns_reached": 46,
+      "explicit_end_not_closed": 5,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 49,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "stop": 95,
+        "length": 18,
+        "null": 11
+      },
+      "length_errors": 19,
+      "stream_cancelled_requests": 11,
+      "observed_long_whitespace_tail_requests": 25,
+      "close_gate_results_instrumented_subset": {
+        "continue": 10,
+        "remaining_request": 36,
+        "accepted": 40,
+        "evidence_not_quoted": 24,
+        "lead_details_missing": 2,
+        "user_asked_question": 19,
+        "no_evidence": 4
+      },
+      "caller_turn_latency_median_s": 0.953,
+      "caller_turn_latency_p95_s": 4.547,
+      "technical_case_keys": [
+        "course-hi-IN-connected-1_interested",
+        "course-hi-IN-none-1_interested",
+        "course-hi-IN-none-4_abuse",
+        "course-hi-IN-none-5_diversion_danger",
+        "print-hi-IN-connected-5_diversion_danger",
+        "print-hi-IN-none-6_hangup",
+        "repair-hi-IN-connected-1_interested",
+        "repair-hi-IN-none-1_interested"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-hi-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-hi-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-hi-IN-connected-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "course-hi-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "course-hi-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "course-hi-IN-none-5_diversion_danger",
+          3,
+          "danger"
+        ],
+        [
+          "print-hi-IN-connected-5_diversion_danger",
+          3,
+          "danger"
+        ],
+        [
+          "print-hi-IN-none-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "repair-hi-IN-connected-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "repair-hi-IN-none-1_interested",
+          4,
+          "request"
+        ]
+      ]
+    },
+    "kn-IN": {
+      "sessions": 54,
+      "harness_completed": 54,
+      "planned_caller_turns": 156,
+      "reached_caller_turns": 135,
+      "live_llm_requests": 174,
+      "raw_completed_model_outputs": 111,
+      "model_close_proposals": 106,
+      "model_do_not_call_proposals": 107,
+      "generic_continuation_turns": 105,
+      "technical_farewell_turns": 20,
+      "ended_sessions": 21,
+      "sessions_left_open": 33,
+      "closed_on_nonterminal_test_turn": 13,
+      "ordinary_enquiry_turns": 82,
+      "ordinary_enquiry_generic_turns": 60,
+      "ordinary_enquiry_technical_turns": 13,
+      "explicit_end_turns_reached": 41,
+      "explicit_end_not_closed": 33,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 21,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "stop": 114,
+        "length": 35,
+        "null": 25
+      },
+      "length_errors": 38,
+      "stream_cancelled_requests": 25,
+      "observed_long_whitespace_tail_requests": 56,
+      "close_gate_results_instrumented_subset": {
+        "remaining_request": 30,
+        "user_asked_question": 9,
+        "evidence_not_quoted": 53,
+        "continue": 9,
+        "no_evidence": 9,
+        "open_question": 4,
+        "accepted": 1
+      },
+      "caller_turn_latency_median_s": 0.984,
+      "caller_turn_latency_p95_s": 5.891,
+      "technical_case_keys": [
+        "course-kn-IN-connected-2_future_interest",
+        "course-kn-IN-connected-3b_stop_contact",
+        "course-kn-IN-none-1_interested",
+        "course-kn-IN-none-1b_direct_tool_request",
+        "course-kn-IN-none-2_future_interest",
+        "course-kn-IN-none-4_abuse",
+        "course-kn-IN-none-5_diversion_danger",
+        "course-kn-IN-none-6_hangup",
+        "print-kn-IN-none-1_interested",
+        "print-kn-IN-none-1b_direct_tool_request",
+        "print-kn-IN-none-5b_direct_danger",
+        "repair-kn-IN-connected-1_interested",
+        "repair-kn-IN-connected-1b_direct_tool_request",
+        "repair-kn-IN-connected-2_future_interest",
+        "repair-kn-IN-connected-5_diversion_danger",
+        "repair-kn-IN-connected-5b_direct_danger",
+        "repair-kn-IN-connected-6_hangup",
+        "repair-kn-IN-none-1_interested",
+        "repair-kn-IN-none-2_future_interest",
+        "repair-kn-IN-none-5b_direct_danger"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-kn-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "course-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-kn-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "course-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "course-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-kn-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-2_future_interest",
+          3,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-kn-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-kn-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-kn-IN-none-2_future_interest",
+          3,
+          "done"
+        ],
+        [
+          "print-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-kn-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-kn-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "repair-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "repair-kn-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-kn-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "repair-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-kn-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-kn-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "repair-kn-IN-none-6_hangup",
+          4,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-kn-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-kn-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-kn-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "print-kn-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "repair-kn-IN-connected-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "repair-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-kn-IN-connected-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-kn-IN-connected-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "repair-kn-IN-none-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "repair-kn-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-none-5b_direct_danger",
+          2,
+          "return"
+        ]
+      ]
+    },
+    "ta-IN": {
+      "sessions": 54,
+      "harness_completed": 54,
+      "planned_caller_turns": 156,
+      "reached_caller_turns": 139,
+      "live_llm_requests": 160,
+      "raw_completed_model_outputs": 105,
+      "model_close_proposals": 102,
+      "model_do_not_call_proposals": 102,
+      "generic_continuation_turns": 100,
+      "technical_farewell_turns": 26,
+      "ended_sessions": 34,
+      "sessions_left_open": 20,
+      "closed_on_nonterminal_test_turn": 9,
+      "ordinary_enquiry_turns": 82,
+      "ordinary_enquiry_generic_turns": 68,
+      "ordinary_enquiry_technical_turns": 9,
+      "explicit_end_turns_reached": 45,
+      "explicit_end_not_closed": 20,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 34,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "stop": 105,
+        "length": 24,
+        "null": 31
+      },
+      "length_errors": 24,
+      "stream_cancelled_requests": 31,
+      "observed_long_whitespace_tail_requests": 51,
+      "close_gate_results_instrumented_subset": {
+        "user_asked_question": 24,
+        "remaining_request": 34,
+        "continue": 5,
+        "evidence_not_quoted": 34,
+        "accepted": 8,
+        "no_evidence": 8
+      },
+      "caller_turn_latency_median_s": 1.047,
+      "caller_turn_latency_p95_s": 5.61,
+      "technical_case_keys": [
+        "course-ta-IN-connected-2_future_interest",
+        "course-ta-IN-connected-4_abuse",
+        "course-ta-IN-connected-5_diversion_danger",
+        "course-ta-IN-connected-5b_direct_danger",
+        "course-ta-IN-connected-6_hangup",
+        "course-ta-IN-none-1_interested",
+        "course-ta-IN-none-1b_direct_tool_request",
+        "course-ta-IN-none-2_future_interest",
+        "course-ta-IN-none-5_diversion_danger",
+        "course-ta-IN-none-6_hangup",
+        "print-ta-IN-connected-2_future_interest",
+        "print-ta-IN-connected-4_abuse",
+        "print-ta-IN-none-1_interested",
+        "print-ta-IN-none-4_abuse",
+        "print-ta-IN-none-6_hangup",
+        "repair-ta-IN-connected-1_interested",
+        "repair-ta-IN-connected-2_future_interest",
+        "repair-ta-IN-connected-4_abuse",
+        "repair-ta-IN-connected-5_diversion_danger",
+        "repair-ta-IN-connected-5b_direct_danger",
+        "repair-ta-IN-connected-6_hangup",
+        "repair-ta-IN-none-1_interested",
+        "repair-ta-IN-none-1b_direct_tool_request",
+        "repair-ta-IN-none-2_future_interest",
+        "repair-ta-IN-none-4_abuse",
+        "repair-ta-IN-none-5_diversion_danger"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-ta-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "course-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "course-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "course-ta-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-ta-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-2_future_interest",
+          3,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-ta-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "repair-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "repair-ta-IN-none-6_hangup",
+          4,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-ta-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-ta-IN-connected-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "course-ta-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "print-ta-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "print-ta-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "repair-ta-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-ta-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-ta-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-ta-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ]
+      ]
+    },
+    "te-IN": {
+      "sessions": 54,
+      "harness_completed": 54,
+      "planned_caller_turns": 156,
+      "reached_caller_turns": 106,
+      "live_llm_requests": 154,
+      "raw_completed_model_outputs": 73,
+      "model_close_proposals": 70,
+      "model_do_not_call_proposals": 68,
+      "generic_continuation_turns": 67,
+      "technical_farewell_turns": 21,
+      "ended_sessions": 35,
+      "sessions_left_open": 19,
+      "closed_on_nonterminal_test_turn": 23,
+      "ordinary_enquiry_turns": 65,
+      "ordinary_enquiry_generic_turns": 39,
+      "ordinary_enquiry_technical_turns": 18,
+      "explicit_end_turns_reached": 31,
+      "explicit_end_not_closed": 19,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 35,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "length": 50,
+        "null": 29,
+        "stop": 75
+      },
+      "length_errors": 52,
+      "stream_cancelled_requests": 29,
+      "observed_long_whitespace_tail_requests": 78,
+      "close_gate_results_instrumented_subset": {
+        "evidence_not_quoted": 28,
+        "accepted": 14,
+        "continue": 5,
+        "remaining_request": 22,
+        "no_evidence": 5,
+        "user_asked_question": 11
+      },
+      "caller_turn_latency_median_s": 1.195,
+      "caller_turn_latency_p95_s": 6.734,
+      "technical_case_keys": [
+        "course-te-IN-connected-1_interested",
+        "course-te-IN-connected-2_future_interest",
+        "course-te-IN-connected-4_abuse",
+        "course-te-IN-connected-6_hangup",
+        "course-te-IN-none-1_interested",
+        "course-te-IN-none-1b_direct_tool_request",
+        "course-te-IN-none-2_future_interest",
+        "course-te-IN-none-5b_direct_danger",
+        "print-te-IN-connected-1_interested",
+        "print-te-IN-connected-4_abuse",
+        "print-te-IN-connected-5_diversion_danger",
+        "print-te-IN-none-1_interested",
+        "print-te-IN-none-4_abuse",
+        "print-te-IN-none-5b_direct_danger",
+        "repair-te-IN-connected-1_interested",
+        "repair-te-IN-connected-4_abuse",
+        "repair-te-IN-connected-5_diversion_danger",
+        "repair-te-IN-connected-5b_direct_danger",
+        "repair-te-IN-connected-6_hangup",
+        "repair-te-IN-none-1_interested",
+        "repair-te-IN-none-6_hangup"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "course-te-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "course-te-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "course-te-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "course-te-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-te-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-te-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-te-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-te-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "repair-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-te-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "course-te-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "course-te-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "course-te-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "course-te-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-te-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "print-te-IN-connected-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "print-te-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "print-te-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "print-te-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "print-te-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-te-IN-none-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-te-IN-connected-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "repair-te-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-te-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-te-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "repair-te-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-te-IN-none-6_hangup",
+          1,
+          "interested"
+        ]
+      ]
+    }
+  },
+  "by_scenario": {
+    "1_interested": {
+      "sessions": 30,
+      "harness_completed": 30,
+      "planned_caller_turns": 150,
+      "reached_caller_turns": 97,
+      "live_llm_requests": 134,
+      "raw_completed_model_outputs": 66,
+      "model_close_proposals": 62,
+      "model_do_not_call_proposals": 61,
+      "generic_continuation_turns": 62,
+      "technical_farewell_turns": 23,
+      "ended_sessions": 26,
+      "sessions_left_open": 4,
+      "closed_on_nonterminal_test_turn": 20,
+      "ordinary_enquiry_turns": 87,
+      "ordinary_enquiry_generic_turns": 58,
+      "ordinary_enquiry_technical_turns": 20,
+      "explicit_end_turns_reached": 10,
+      "explicit_end_not_closed": 4,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 26,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "stop": 66,
+        "length": 41,
+        "null": 27
+      },
+      "length_errors": 41,
+      "stream_cancelled_requests": 21,
+      "observed_long_whitespace_tail_requests": 45,
+      "close_gate_results_instrumented_subset": {
+        "continue": 8,
+        "lead_details_missing": 2,
+        "remaining_request": 32,
+        "user_asked_question": 12,
+        "evidence_not_quoted": 7,
+        "open_question": 3,
+        "accepted": 2
+      },
+      "caller_turn_latency_median_s": 1.203,
+      "caller_turn_latency_p95_s": 6.578,
+      "technical_case_keys": [
+        "course-en-IN-none-1_interested",
+        "course-hi-IN-connected-1_interested",
+        "course-hi-IN-none-1_interested",
+        "course-kn-IN-none-1_interested",
+        "course-ta-IN-none-1_interested",
+        "course-te-IN-connected-1_interested",
+        "course-te-IN-none-1_interested",
+        "print-en-IN-connected-1_interested",
+        "print-en-IN-none-1_interested",
+        "print-kn-IN-none-1_interested",
+        "print-ta-IN-none-1_interested",
+        "print-te-IN-connected-1_interested",
+        "print-te-IN-none-1_interested",
+        "repair-en-IN-connected-1_interested",
+        "repair-en-IN-none-1_interested",
+        "repair-hi-IN-connected-1_interested",
+        "repair-hi-IN-none-1_interested",
+        "repair-kn-IN-connected-1_interested",
+        "repair-kn-IN-none-1_interested",
+        "repair-ta-IN-connected-1_interested",
+        "repair-ta-IN-none-1_interested",
+        "repair-te-IN-connected-1_interested",
+        "repair-te-IN-none-1_interested"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-kn-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "course-ta-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-1_interested",
+          5,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-en-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "course-hi-IN-connected-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "course-hi-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "course-te-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "course-te-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "print-en-IN-connected-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "print-en-IN-none-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "print-kn-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "print-ta-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "print-te-IN-connected-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "print-te-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-en-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-en-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-hi-IN-connected-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "repair-hi-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "repair-kn-IN-connected-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "repair-kn-IN-none-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "repair-ta-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-connected-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "repair-te-IN-none-1_interested",
+          1,
+          "interested"
+        ]
+      ]
+    },
+    "1b_direct_tool_request": {
+      "sessions": 30,
+      "harness_completed": 30,
+      "planned_caller_turns": 60,
+      "reached_caller_turns": 57,
+      "live_llm_requests": 70,
+      "raw_completed_model_outputs": 38,
+      "model_close_proposals": 37,
+      "model_do_not_call_proposals": 28,
+      "generic_continuation_turns": 37,
+      "technical_farewell_turns": 7,
+      "ended_sessions": 18,
+      "sessions_left_open": 12,
+      "closed_on_nonterminal_test_turn": 3,
+      "ordinary_enquiry_turns": 30,
+      "ordinary_enquiry_generic_turns": 25,
+      "ordinary_enquiry_technical_turns": 3,
+      "explicit_end_turns_reached": 27,
+      "explicit_end_not_closed": 12,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 18,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "length": 16,
+        "null": 14,
+        "stop": 40
+      },
+      "length_errors": 18,
+      "stream_cancelled_requests": 14,
+      "observed_long_whitespace_tail_requests": 28,
+      "close_gate_results_instrumented_subset": {
+        "remaining_request": 18,
+        "accepted": 11,
+        "evidence_not_quoted": 16,
+        "continue": 2,
+        "no_evidence": 3
+      },
+      "caller_turn_latency_median_s": 1.031,
+      "caller_turn_latency_p95_s": 6.547,
+      "technical_case_keys": [
+        "course-en-IN-none-1b_direct_tool_request",
+        "course-kn-IN-none-1b_direct_tool_request",
+        "course-ta-IN-none-1b_direct_tool_request",
+        "course-te-IN-none-1b_direct_tool_request",
+        "print-kn-IN-none-1b_direct_tool_request",
+        "repair-kn-IN-connected-1b_direct_tool_request",
+        "repair-ta-IN-none-1b_direct_tool_request"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-kn-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "course-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "course-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-te-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-kn-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-en-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-kn-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-te-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ]
+      ]
+    },
+    "2_future_interest": {
+      "sessions": 30,
+      "harness_completed": 30,
+      "planned_caller_turns": 90,
+      "reached_caller_turns": 62,
+      "live_llm_requests": 75,
+      "raw_completed_model_outputs": 34,
+      "model_close_proposals": 34,
+      "model_do_not_call_proposals": 28,
+      "generic_continuation_turns": 35,
+      "technical_farewell_turns": 12,
+      "ended_sessions": 27,
+      "sessions_left_open": 3,
+      "closed_on_nonterminal_test_turn": 19,
+      "ordinary_enquiry_turns": 51,
+      "ordinary_enquiry_generic_turns": 32,
+      "ordinary_enquiry_technical_turns": 9,
+      "explicit_end_turns_reached": 11,
+      "explicit_end_not_closed": 3,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 27,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "null": 18,
+        "length": 23,
+        "stop": 34
+      },
+      "length_errors": 23,
+      "stream_cancelled_requests": 16,
+      "observed_long_whitespace_tail_requests": 35,
+      "close_gate_results_instrumented_subset": {
+        "remaining_request": 21,
+        "user_asked_question": 6,
+        "accepted": 9,
+        "evidence_not_quoted": 2,
+        "no_evidence": 1
+      },
+      "caller_turn_latency_median_s": 1.172,
+      "caller_turn_latency_p95_s": 6.875,
+      "technical_case_keys": [
+        "course-en-IN-connected-2_future_interest",
+        "course-kn-IN-connected-2_future_interest",
+        "course-kn-IN-none-2_future_interest",
+        "course-ta-IN-connected-2_future_interest",
+        "course-ta-IN-none-2_future_interest",
+        "course-te-IN-connected-2_future_interest",
+        "course-te-IN-none-2_future_interest",
+        "print-ta-IN-connected-2_future_interest",
+        "repair-kn-IN-connected-2_future_interest",
+        "repair-kn-IN-none-2_future_interest",
+        "repair-ta-IN-connected-2_future_interest",
+        "repair-ta-IN-none-2_future_interest"
+      ],
+      "missed_end_case_turns": [
+        [
+          "print-kn-IN-connected-2_future_interest",
+          3,
+          "done"
+        ],
+        [
+          "print-kn-IN-none-2_future_interest",
+          3,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-2_future_interest",
+          3,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-en-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "course-hi-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "course-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-kn-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-ta-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-te-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-te-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "print-en-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-ta-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "print-te-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-te-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-en-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-te-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-te-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ]
+      ]
+    },
+    "3_complete_rejection": {
+      "sessions": 30,
+      "harness_completed": 30,
+      "planned_caller_turns": 30,
+      "reached_caller_turns": 30,
+      "live_llm_requests": 15,
+      "raw_completed_model_outputs": 12,
+      "model_close_proposals": 12,
+      "model_do_not_call_proposals": 12,
+      "generic_continuation_turns": 8,
+      "technical_farewell_turns": 0,
+      "ended_sessions": 22,
+      "sessions_left_open": 8,
+      "closed_on_nonterminal_test_turn": 0,
+      "ordinary_enquiry_turns": 0,
+      "ordinary_enquiry_generic_turns": 0,
+      "ordinary_enquiry_technical_turns": 0,
+      "explicit_end_turns_reached": 30,
+      "explicit_end_not_closed": 8,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 22,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "stop": 12,
+        "length": 2,
+        "null": 1
+      },
+      "length_errors": 2,
+      "stream_cancelled_requests": 1,
+      "observed_long_whitespace_tail_requests": 3,
+      "close_gate_results_instrumented_subset": {
+        "accepted": 16,
+        "evidence_not_quoted": 8
+      },
+      "caller_turn_latency_median_s": 0.063,
+      "caller_turn_latency_p95_s": 1.078,
+      "technical_case_keys": [],
+      "missed_end_case_turns": [
+        [
+          "course-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "course-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-te-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-te-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "repair-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "repair-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ]
+      ],
+      "nonterminal_close_case_turns": []
+    },
+    "3b_stop_contact": {
+      "sessions": 30,
+      "harness_completed": 30,
+      "planned_caller_turns": 30,
+      "reached_caller_turns": 30,
+      "live_llm_requests": 17,
+      "raw_completed_model_outputs": 11,
+      "model_close_proposals": 11,
+      "model_do_not_call_proposals": 11,
+      "generic_continuation_turns": 9,
+      "technical_farewell_turns": 1,
+      "ended_sessions": 21,
+      "sessions_left_open": 9,
+      "closed_on_nonterminal_test_turn": 0,
+      "ordinary_enquiry_turns": 0,
+      "ordinary_enquiry_generic_turns": 0,
+      "ordinary_enquiry_technical_turns": 0,
+      "explicit_end_turns_reached": 30,
+      "explicit_end_not_closed": 9,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 21,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "null": 3,
+        "stop": 11,
+        "length": 3
+      },
+      "length_errors": 3,
+      "stream_cancelled_requests": 3,
+      "observed_long_whitespace_tail_requests": 6,
+      "close_gate_results_instrumented_subset": {
+        "accepted": 20,
+        "remaining_request": 8,
+        "evidence_not_quoted": 1
+      },
+      "caller_turn_latency_median_s": 0.078,
+      "caller_turn_latency_p95_s": 2.75,
+      "technical_case_keys": [
+        "course-kn-IN-connected-3b_stop_contact"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "course-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-kn-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-ta-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-kn-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ]
+      ],
+      "nonterminal_close_case_turns": []
+    },
+    "4_abuse": {
+      "sessions": 30,
+      "harness_completed": 30,
+      "planned_caller_turns": 60,
+      "reached_caller_turns": 55,
+      "live_llm_requests": 72,
+      "raw_completed_model_outputs": 37,
+      "model_close_proposals": 37,
+      "model_do_not_call_proposals": 37,
+      "generic_continuation_turns": 37,
+      "technical_farewell_turns": 12,
+      "ended_sessions": 17,
+      "sessions_left_open": 13,
+      "closed_on_nonterminal_test_turn": 5,
+      "ordinary_enquiry_turns": 30,
+      "ordinary_enquiry_generic_turns": 24,
+      "ordinary_enquiry_technical_turns": 5,
+      "explicit_end_turns_reached": 25,
+      "explicit_end_not_closed": 13,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 17,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "length": 20,
+        "stop": 38,
+        "null": 14
+      },
+      "length_errors": 21,
+      "stream_cancelled_requests": 12,
+      "observed_long_whitespace_tail_requests": 24,
+      "close_gate_results_instrumented_subset": {
+        "evidence_not_quoted": 25,
+        "no_evidence": 8
+      },
+      "caller_turn_latency_median_s": 0.937,
+      "caller_turn_latency_p95_s": 6.688,
+      "technical_case_keys": [
+        "course-hi-IN-none-4_abuse",
+        "course-kn-IN-none-4_abuse",
+        "course-ta-IN-connected-4_abuse",
+        "course-te-IN-connected-4_abuse",
+        "print-ta-IN-connected-4_abuse",
+        "print-ta-IN-none-4_abuse",
+        "print-te-IN-connected-4_abuse",
+        "print-te-IN-none-4_abuse",
+        "repair-en-IN-none-4_abuse",
+        "repair-ta-IN-connected-4_abuse",
+        "repair-ta-IN-none-4_abuse",
+        "repair-te-IN-connected-4_abuse"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-ta-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-te-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-hi-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-kn-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-hi-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-kn-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-te-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "print-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "print-te-IN-none-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-en-IN-none-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ]
+      ]
+    },
+    "5_diversion_danger": {
+      "sessions": 30,
+      "harness_completed": 30,
+      "planned_caller_turns": 150,
+      "reached_caller_turns": 124,
+      "live_llm_requests": 143,
+      "raw_completed_model_outputs": 100,
+      "model_close_proposals": 92,
+      "model_do_not_call_proposals": 97,
+      "generic_continuation_turns": 93,
+      "technical_farewell_turns": 14,
+      "ended_sessions": 20,
+      "sessions_left_open": 10,
+      "closed_on_nonterminal_test_turn": 13,
+      "ordinary_enquiry_turns": 82,
+      "ordinary_enquiry_generic_turns": 60,
+      "ordinary_enquiry_technical_turns": 11,
+      "explicit_end_turns_reached": 17,
+      "explicit_end_not_closed": 10,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 20,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "length": 29,
+        "stop": 100,
+        "null": 14
+      },
+      "length_errors": 29,
+      "stream_cancelled_requests": 10,
+      "observed_long_whitespace_tail_requests": 29,
+      "close_gate_results_instrumented_subset": {
+        "continue": 10,
+        "remaining_request": 21,
+        "evidence_not_quoted": 30,
+        "accepted": 4,
+        "user_asked_question": 27,
+        "no_evidence": 3
+      },
+      "caller_turn_latency_median_s": 1.078,
+      "caller_turn_latency_p95_s": 4.547,
+      "technical_case_keys": [
+        "course-en-IN-none-5_diversion_danger",
+        "course-hi-IN-none-5_diversion_danger",
+        "course-kn-IN-none-5_diversion_danger",
+        "course-ta-IN-connected-5_diversion_danger",
+        "course-ta-IN-none-5_diversion_danger",
+        "print-en-IN-connected-5_diversion_danger",
+        "print-en-IN-none-5_diversion_danger",
+        "print-hi-IN-connected-5_diversion_danger",
+        "print-te-IN-connected-5_diversion_danger",
+        "repair-en-IN-connected-5_diversion_danger",
+        "repair-kn-IN-connected-5_diversion_danger",
+        "repair-ta-IN-connected-5_diversion_danger",
+        "repair-ta-IN-none-5_diversion_danger",
+        "repair-te-IN-connected-5_diversion_danger"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-kn-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "course-te-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "course-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "repair-kn-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-en-IN-none-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "course-hi-IN-none-5_diversion_danger",
+          3,
+          "danger"
+        ],
+        [
+          "course-kn-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "course-ta-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "print-en-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "print-en-IN-none-5_diversion_danger",
+          1,
+          "divert"
+        ],
+        [
+          "print-hi-IN-connected-5_diversion_danger",
+          3,
+          "danger"
+        ],
+        [
+          "print-te-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-en-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-kn-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-ta-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-ta-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-te-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ]
+      ]
+    },
+    "5b_direct_danger": {
+      "sessions": 30,
+      "harness_completed": 30,
+      "planned_caller_turns": 90,
+      "reached_caller_turns": 82,
+      "live_llm_requests": 96,
+      "raw_completed_model_outputs": 61,
+      "model_close_proposals": 59,
+      "model_do_not_call_proposals": 55,
+      "generic_continuation_turns": 58,
+      "technical_farewell_turns": 10,
+      "ended_sessions": 21,
+      "sessions_left_open": 9,
+      "closed_on_nonterminal_test_turn": 5,
+      "ordinary_enquiry_turns": 27,
+      "ordinary_enquiry_generic_turns": 23,
+      "ordinary_enquiry_technical_turns": 2,
+      "explicit_end_turns_reached": 25,
+      "explicit_end_not_closed": 9,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 21,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "null": 13,
+        "length": 19,
+        "stop": 64
+      },
+      "length_errors": 22,
+      "stream_cancelled_requests": 13,
+      "observed_long_whitespace_tail_requests": 31,
+      "close_gate_results_instrumented_subset": {
+        "evidence_not_quoted": 34,
+        "accepted": 11,
+        "remaining_request": 19,
+        "no_evidence": 2,
+        "user_asked_question": 3,
+        "continue": 3
+      },
+      "caller_turn_latency_median_s": 0.915,
+      "caller_turn_latency_p95_s": 5.375,
+      "technical_case_keys": [
+        "course-en-IN-connected-5b_direct_danger",
+        "course-en-IN-none-5b_direct_danger",
+        "course-ta-IN-connected-5b_direct_danger",
+        "course-te-IN-none-5b_direct_danger",
+        "print-kn-IN-none-5b_direct_danger",
+        "print-te-IN-none-5b_direct_danger",
+        "repair-kn-IN-connected-5b_direct_danger",
+        "repair-kn-IN-none-5b_direct_danger",
+        "repair-ta-IN-connected-5b_direct_danger",
+        "repair-te-IN-connected-5b_direct_danger"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-kn-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "course-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "course-te-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "repair-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-en-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "course-en-IN-none-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "repair-kn-IN-connected-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-kn-IN-none-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-te-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ]
+      ]
+    },
+    "6_hangup": {
+      "sessions": 30,
+      "harness_completed": 30,
+      "planned_caller_turns": 120,
+      "reached_caller_turns": 96,
+      "live_llm_requests": 107,
+      "raw_completed_model_outputs": 72,
+      "model_close_proposals": 67,
+      "model_do_not_call_proposals": 64,
+      "generic_continuation_turns": 67,
+      "technical_farewell_turns": 12,
+      "ended_sessions": 21,
+      "sessions_left_open": 9,
+      "closed_on_nonterminal_test_turn": 9,
+      "ordinary_enquiry_turns": 75,
+      "ordinary_enquiry_generic_turns": 58,
+      "ordinary_enquiry_technical_turns": 9,
+      "explicit_end_turns_reached": 21,
+      "explicit_end_not_closed": 9,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 21,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "stop": 72,
+        "length": 19,
+        "null": 16
+      },
+      "length_errors": 19,
+      "stream_cancelled_requests": 13,
+      "observed_long_whitespace_tail_requests": 26,
+      "close_gate_results_instrumented_subset": {
+        "continue": 8,
+        "remaining_request": 11,
+        "evidence_not_quoted": 19,
+        "accepted": 5,
+        "user_asked_question": 15,
+        "no_evidence": 9,
+        "open_question": 1
+      },
+      "caller_turn_latency_median_s": 0.953,
+      "caller_turn_latency_p95_s": 6.219,
+      "technical_case_keys": [
+        "course-kn-IN-none-6_hangup",
+        "course-ta-IN-connected-6_hangup",
+        "course-ta-IN-none-6_hangup",
+        "course-te-IN-connected-6_hangup",
+        "print-en-IN-none-6_hangup",
+        "print-hi-IN-none-6_hangup",
+        "print-ta-IN-none-6_hangup",
+        "repair-en-IN-connected-6_hangup",
+        "repair-kn-IN-connected-6_hangup",
+        "repair-ta-IN-connected-6_hangup",
+        "repair-te-IN-connected-6_hangup",
+        "repair-te-IN-none-6_hangup"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-kn-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "course-te-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-kn-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-te-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "repair-kn-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "repair-ta-IN-none-6_hangup",
+          4,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-ta-IN-connected-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "course-te-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "print-en-IN-none-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "print-hi-IN-none-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "repair-en-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-kn-IN-connected-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "repair-ta-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-none-6_hangup",
+          1,
+          "interested"
+        ]
+      ]
+    }
+  },
+  "by_business": {
+    "course": {
+      "sessions": 90,
+      "harness_completed": 90,
+      "planned_caller_turns": 260,
+      "reached_caller_turns": 211,
+      "live_llm_requests": 254,
+      "raw_completed_model_outputs": 142,
+      "model_close_proposals": 132,
+      "model_do_not_call_proposals": 134,
+      "generic_continuation_turns": 130,
+      "technical_farewell_turns": 36,
+      "ended_sessions": 69,
+      "sessions_left_open": 21,
+      "closed_on_nonterminal_test_turn": 25,
+      "ordinary_enquiry_turns": 127,
+      "ordinary_enquiry_generic_turns": 93,
+      "ordinary_enquiry_technical_turns": 20,
+      "explicit_end_turns_reached": 65,
+      "explicit_end_not_closed": 21,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 69,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "stop": 143,
+        "length": 67,
+        "null": 44
+      },
+      "length_errors": 68,
+      "stream_cancelled_requests": 40,
+      "observed_long_whitespace_tail_requests": 86,
+      "close_gate_results_instrumented_subset": {
+        "remaining_request": 35,
+        "accepted": 23,
+        "continue": 12,
+        "evidence_not_quoted": 48,
+        "lead_details_missing": 2,
+        "user_asked_question": 19,
+        "no_evidence": 7,
+        "open_question": 1
+      },
+      "caller_turn_latency_median_s": 1.031,
+      "caller_turn_latency_p95_s": 6.656,
+      "technical_case_keys": [
+        "course-en-IN-connected-2_future_interest",
+        "course-en-IN-connected-5b_direct_danger",
+        "course-en-IN-none-1_interested",
+        "course-en-IN-none-1b_direct_tool_request",
+        "course-en-IN-none-5_diversion_danger",
+        "course-en-IN-none-5b_direct_danger",
+        "course-hi-IN-connected-1_interested",
+        "course-hi-IN-none-1_interested",
+        "course-hi-IN-none-4_abuse",
+        "course-hi-IN-none-5_diversion_danger",
+        "course-kn-IN-connected-2_future_interest",
+        "course-kn-IN-connected-3b_stop_contact",
+        "course-kn-IN-none-1_interested",
+        "course-kn-IN-none-1b_direct_tool_request",
+        "course-kn-IN-none-2_future_interest",
+        "course-kn-IN-none-4_abuse",
+        "course-kn-IN-none-5_diversion_danger",
+        "course-kn-IN-none-6_hangup",
+        "course-ta-IN-connected-2_future_interest",
+        "course-ta-IN-connected-4_abuse",
+        "course-ta-IN-connected-5_diversion_danger",
+        "course-ta-IN-connected-5b_direct_danger",
+        "course-ta-IN-connected-6_hangup",
+        "course-ta-IN-none-1_interested",
+        "course-ta-IN-none-1b_direct_tool_request",
+        "course-ta-IN-none-2_future_interest",
+        "course-ta-IN-none-5_diversion_danger",
+        "course-ta-IN-none-6_hangup",
+        "course-te-IN-connected-1_interested",
+        "course-te-IN-connected-2_future_interest",
+        "course-te-IN-connected-4_abuse",
+        "course-te-IN-connected-6_hangup",
+        "course-te-IN-none-1_interested",
+        "course-te-IN-none-1b_direct_tool_request",
+        "course-te-IN-none-2_future_interest",
+        "course-te-IN-none-5b_direct_danger"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-kn-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "course-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-kn-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "course-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "course-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "course-ta-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "course-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "course-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "course-ta-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "course-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "course-te-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "course-te-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "course-te-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "course-te-IN-none-6_hangup",
+          4,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-en-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-en-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "course-en-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "course-en-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "course-en-IN-none-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "course-en-IN-none-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "course-hi-IN-connected-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "course-hi-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "course-hi-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "course-hi-IN-none-5_diversion_danger",
+          3,
+          "danger"
+        ],
+        [
+          "course-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-kn-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-kn-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-kn-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "course-ta-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-ta-IN-connected-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "course-ta-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "course-te-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "course-te-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "course-te-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "course-te-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "course-te-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-te-IN-none-2_future_interest",
+          1,
+          "future"
+        ]
+      ]
+    },
+    "print": {
+      "sessions": 90,
+      "harness_completed": 90,
+      "planned_caller_turns": 260,
+      "reached_caller_turns": 223,
+      "live_llm_requests": 245,
+      "raw_completed_model_outputs": 161,
+      "model_close_proposals": 154,
+      "model_do_not_call_proposals": 149,
+      "generic_continuation_turns": 154,
+      "technical_farewell_turns": 21,
+      "ended_sessions": 54,
+      "sessions_left_open": 36,
+      "closed_on_nonterminal_test_turn": 19,
+      "ordinary_enquiry_turns": 135,
+      "ordinary_enquiry_generic_turns": 103,
+      "ordinary_enquiry_technical_turns": 14,
+      "explicit_end_turns_reached": 71,
+      "explicit_end_not_closed": 36,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 54,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "length": 53,
+        "stop": 163,
+        "null": 29
+      },
+      "length_errors": 55,
+      "stream_cancelled_requests": 22,
+      "observed_long_whitespace_tail_requests": 60,
+      "close_gate_results_instrumented_subset": {
+        "remaining_request": 60,
+        "accepted": 26,
+        "evidence_not_quoted": 60,
+        "continue": 13,
+        "user_asked_question": 18,
+        "no_evidence": 7
+      },
+      "caller_turn_latency_median_s": 0.969,
+      "caller_turn_latency_p95_s": 5.516,
+      "technical_case_keys": [
+        "print-en-IN-connected-1_interested",
+        "print-en-IN-connected-5_diversion_danger",
+        "print-en-IN-none-1_interested",
+        "print-en-IN-none-5_diversion_danger",
+        "print-en-IN-none-6_hangup",
+        "print-hi-IN-connected-5_diversion_danger",
+        "print-hi-IN-none-6_hangup",
+        "print-kn-IN-none-1_interested",
+        "print-kn-IN-none-1b_direct_tool_request",
+        "print-kn-IN-none-5b_direct_danger",
+        "print-ta-IN-connected-2_future_interest",
+        "print-ta-IN-connected-4_abuse",
+        "print-ta-IN-none-1_interested",
+        "print-ta-IN-none-4_abuse",
+        "print-ta-IN-none-6_hangup",
+        "print-te-IN-connected-1_interested",
+        "print-te-IN-connected-4_abuse",
+        "print-te-IN-connected-5_diversion_danger",
+        "print-te-IN-none-1_interested",
+        "print-te-IN-none-4_abuse",
+        "print-te-IN-none-5b_direct_danger"
+      ],
+      "missed_end_case_turns": [
+        [
+          "print-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-hi-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-kn-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-2_future_interest",
+          3,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-kn-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-kn-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-kn-IN-none-2_future_interest",
+          3,
+          "done"
+        ],
+        [
+          "print-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-kn-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-kn-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-ta-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-2_future_interest",
+          3,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-ta-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-te-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-te-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-te-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-te-IN-none-6_hangup",
+          4,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "print-en-IN-connected-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "print-en-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-en-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "print-en-IN-none-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "print-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-en-IN-none-5_diversion_danger",
+          1,
+          "divert"
+        ],
+        [
+          "print-en-IN-none-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "print-hi-IN-connected-5_diversion_danger",
+          3,
+          "danger"
+        ],
+        [
+          "print-hi-IN-none-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "print-kn-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "print-ta-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "print-ta-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "print-te-IN-connected-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "print-te-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "print-te-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "print-te-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "print-te-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-te-IN-none-4_abuse",
+          1,
+          "abuse_mild"
+        ]
+      ]
+    },
+    "repair": {
+      "sessions": 90,
+      "harness_completed": 90,
+      "planned_caller_turns": 260,
+      "reached_caller_turns": 199,
+      "live_llm_requests": 230,
+      "raw_completed_model_outputs": 128,
+      "model_close_proposals": 125,
+      "model_do_not_call_proposals": 110,
+      "generic_continuation_turns": 122,
+      "technical_farewell_turns": 34,
+      "ended_sessions": 70,
+      "sessions_left_open": 20,
+      "closed_on_nonterminal_test_turn": 30,
+      "ordinary_enquiry_turns": 120,
+      "ordinary_enquiry_generic_turns": 84,
+      "ordinary_enquiry_technical_turns": 25,
+      "explicit_end_turns_reached": 60,
+      "explicit_end_not_closed": 20,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 70,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "length": 52,
+        "null": 47,
+        "stop": 131
+      },
+      "length_errors": 55,
+      "stream_cancelled_requests": 41,
+      "observed_long_whitespace_tail_requests": 81,
+      "close_gate_results_instrumented_subset": {
+        "remaining_request": 35,
+        "accepted": 29,
+        "evidence_not_quoted": 34,
+        "user_asked_question": 26,
+        "continue": 6,
+        "no_evidence": 12,
+        "open_question": 3
+      },
+      "caller_turn_latency_median_s": 1.0,
+      "caller_turn_latency_p95_s": 6.328,
+      "technical_case_keys": [
+        "repair-en-IN-connected-1_interested",
+        "repair-en-IN-connected-5_diversion_danger",
+        "repair-en-IN-connected-6_hangup",
+        "repair-en-IN-none-1_interested",
+        "repair-en-IN-none-4_abuse",
+        "repair-hi-IN-connected-1_interested",
+        "repair-hi-IN-none-1_interested",
+        "repair-kn-IN-connected-1_interested",
+        "repair-kn-IN-connected-1b_direct_tool_request",
+        "repair-kn-IN-connected-2_future_interest",
+        "repair-kn-IN-connected-5_diversion_danger",
+        "repair-kn-IN-connected-5b_direct_danger",
+        "repair-kn-IN-connected-6_hangup",
+        "repair-kn-IN-none-1_interested",
+        "repair-kn-IN-none-2_future_interest",
+        "repair-kn-IN-none-5b_direct_danger",
+        "repair-ta-IN-connected-1_interested",
+        "repair-ta-IN-connected-2_future_interest",
+        "repair-ta-IN-connected-4_abuse",
+        "repair-ta-IN-connected-5_diversion_danger",
+        "repair-ta-IN-connected-5b_direct_danger",
+        "repair-ta-IN-connected-6_hangup",
+        "repair-ta-IN-none-1_interested",
+        "repair-ta-IN-none-1b_direct_tool_request",
+        "repair-ta-IN-none-2_future_interest",
+        "repair-ta-IN-none-4_abuse",
+        "repair-ta-IN-none-5_diversion_danger",
+        "repair-te-IN-connected-1_interested",
+        "repair-te-IN-connected-4_abuse",
+        "repair-te-IN-connected-5_diversion_danger",
+        "repair-te-IN-connected-5b_direct_danger",
+        "repair-te-IN-connected-6_hangup",
+        "repair-te-IN-none-1_interested",
+        "repair-te-IN-none-6_hangup"
+      ],
+      "missed_end_case_turns": [
+        [
+          "repair-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-hi-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "repair-kn-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-kn-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "repair-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-kn-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-kn-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "repair-kn-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "repair-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "repair-ta-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "repair-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "repair-en-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-en-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-en-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-en-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-en-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-en-IN-none-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-hi-IN-connected-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "repair-hi-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "repair-kn-IN-connected-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "repair-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-kn-IN-connected-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-kn-IN-connected-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "repair-kn-IN-none-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "repair-kn-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-none-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-ta-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-ta-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-ta-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-ta-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-te-IN-connected-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "repair-te-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-te-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-te-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "repair-te-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-te-IN-none-6_hangup",
+          1,
+          "interested"
+        ]
+      ]
+    }
+  },
+  "by_integration": {
+    "False": {
+      "sessions": 135,
+      "harness_completed": 135,
+      "planned_caller_turns": 390,
+      "reached_caller_turns": 322,
+      "live_llm_requests": 384,
+      "raw_completed_model_outputs": 220,
+      "model_close_proposals": 217,
+      "model_do_not_call_proposals": 200,
+      "generic_continuation_turns": 215,
+      "technical_farewell_turns": 48,
+      "ended_sessions": 97,
+      "sessions_left_open": 38,
+      "closed_on_nonterminal_test_turn": 35,
+      "ordinary_enquiry_turns": 194,
+      "ordinary_enquiry_generic_turns": 152,
+      "ordinary_enquiry_technical_turns": 28,
+      "explicit_end_turns_reached": 100,
+      "explicit_end_not_closed": 38,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 97,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "length": 97,
+        "null": 64,
+        "stop": 223
+      },
+      "length_errors": 100,
+      "stream_cancelled_requests": 55,
+      "observed_long_whitespace_tail_requests": 123,
+      "close_gate_results_instrumented_subset": {
+        "accepted": 38,
+        "lead_details_missing": 2,
+        "remaining_request": 72,
+        "user_asked_question": 42,
+        "evidence_not_quoted": 62,
+        "continue": 9,
+        "open_question": 3,
+        "no_evidence": 18
+      },
+      "caller_turn_latency_median_s": 1.031,
+      "caller_turn_latency_p95_s": 6.39,
+      "technical_case_keys": [
+        "course-en-IN-none-1_interested",
+        "course-en-IN-none-1b_direct_tool_request",
+        "course-en-IN-none-5_diversion_danger",
+        "course-en-IN-none-5b_direct_danger",
+        "course-hi-IN-none-1_interested",
+        "course-hi-IN-none-4_abuse",
+        "course-hi-IN-none-5_diversion_danger",
+        "course-kn-IN-none-1_interested",
+        "course-kn-IN-none-1b_direct_tool_request",
+        "course-kn-IN-none-2_future_interest",
+        "course-kn-IN-none-4_abuse",
+        "course-kn-IN-none-5_diversion_danger",
+        "course-kn-IN-none-6_hangup",
+        "course-ta-IN-none-1_interested",
+        "course-ta-IN-none-1b_direct_tool_request",
+        "course-ta-IN-none-2_future_interest",
+        "course-ta-IN-none-5_diversion_danger",
+        "course-ta-IN-none-6_hangup",
+        "course-te-IN-none-1_interested",
+        "course-te-IN-none-1b_direct_tool_request",
+        "course-te-IN-none-2_future_interest",
+        "course-te-IN-none-5b_direct_danger",
+        "print-en-IN-none-1_interested",
+        "print-en-IN-none-5_diversion_danger",
+        "print-en-IN-none-6_hangup",
+        "print-hi-IN-none-6_hangup",
+        "print-kn-IN-none-1_interested",
+        "print-kn-IN-none-1b_direct_tool_request",
+        "print-kn-IN-none-5b_direct_danger",
+        "print-ta-IN-none-1_interested",
+        "print-ta-IN-none-4_abuse",
+        "print-ta-IN-none-6_hangup",
+        "print-te-IN-none-1_interested",
+        "print-te-IN-none-4_abuse",
+        "print-te-IN-none-5b_direct_danger",
+        "repair-en-IN-none-1_interested",
+        "repair-en-IN-none-4_abuse",
+        "repair-hi-IN-none-1_interested",
+        "repair-kn-IN-none-1_interested",
+        "repair-kn-IN-none-2_future_interest",
+        "repair-kn-IN-none-5b_direct_danger",
+        "repair-ta-IN-none-1_interested",
+        "repair-ta-IN-none-1b_direct_tool_request",
+        "repair-ta-IN-none-2_future_interest",
+        "repair-ta-IN-none-4_abuse",
+        "repair-ta-IN-none-5_diversion_danger",
+        "repair-te-IN-none-1_interested",
+        "repair-te-IN-none-6_hangup"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "course-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "course-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "course-ta-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "course-te-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "course-te-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-hi-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-kn-IN-none-2_future_interest",
+          3,
+          "done"
+        ],
+        [
+          "print-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-kn-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-kn-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-2_future_interest",
+          3,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-ta-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-te-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-te-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-te-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "repair-hi-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-kn-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-kn-IN-none-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "repair-kn-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-kn-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-kn-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "repair-kn-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "repair-ta-IN-none-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-ta-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "repair-ta-IN-none-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-te-IN-none-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "repair-te-IN-none-5b_direct_danger",
+          3,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-en-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "course-en-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "course-en-IN-none-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "course-en-IN-none-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "course-hi-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "course-hi-IN-none-5_diversion_danger",
+          3,
+          "danger"
+        ],
+        [
+          "course-kn-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-kn-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-kn-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "course-ta-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "course-te-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "course-te-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-te-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "print-en-IN-none-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "print-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-en-IN-none-5_diversion_danger",
+          1,
+          "divert"
+        ],
+        [
+          "print-en-IN-none-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "print-hi-IN-none-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "print-kn-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "print-ta-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "print-te-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "print-te-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-te-IN-none-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-en-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-en-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-en-IN-none-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-hi-IN-none-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "repair-kn-IN-none-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "repair-kn-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-none-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-ta-IN-none-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-te-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-none-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-te-IN-none-6_hangup",
+          1,
+          "interested"
+        ]
+      ]
+    },
+    "True": {
+      "sessions": 135,
+      "harness_completed": 135,
+      "planned_caller_turns": 390,
+      "reached_caller_turns": 311,
+      "live_llm_requests": 345,
+      "raw_completed_model_outputs": 211,
+      "model_close_proposals": 194,
+      "model_do_not_call_proposals": 193,
+      "generic_continuation_turns": 191,
+      "technical_farewell_turns": 43,
+      "ended_sessions": 96,
+      "sessions_left_open": 39,
+      "closed_on_nonterminal_test_turn": 39,
+      "ordinary_enquiry_turns": 188,
+      "ordinary_enquiry_generic_turns": 128,
+      "ordinary_enquiry_technical_turns": 31,
+      "explicit_end_turns_reached": 96,
+      "explicit_end_not_closed": 39,
+      "model_native_tool_call_chunks": 0,
+      "mock_integration_executions": 0,
+      "provider_hangup_attempts": 96,
+      "hangup_while_mock_playback_active": 0,
+      "duplicate_hangup_sessions": 0,
+      "finish_reasons": {
+        "stop": 214,
+        "length": 75,
+        "null": 56
+      },
+      "length_errors": 78,
+      "stream_cancelled_requests": 48,
+      "observed_long_whitespace_tail_requests": 104,
+      "close_gate_results_instrumented_subset": {
+        "remaining_request": 58,
+        "accepted": 40,
+        "continue": 22,
+        "evidence_not_quoted": 80,
+        "user_asked_question": 21,
+        "no_evidence": 8,
+        "open_question": 1
+      },
+      "caller_turn_latency_median_s": 0.969,
+      "caller_turn_latency_p95_s": 6.375,
+      "technical_case_keys": [
+        "course-en-IN-connected-2_future_interest",
+        "course-en-IN-connected-5b_direct_danger",
+        "course-hi-IN-connected-1_interested",
+        "course-kn-IN-connected-2_future_interest",
+        "course-kn-IN-connected-3b_stop_contact",
+        "course-ta-IN-connected-2_future_interest",
+        "course-ta-IN-connected-4_abuse",
+        "course-ta-IN-connected-5_diversion_danger",
+        "course-ta-IN-connected-5b_direct_danger",
+        "course-ta-IN-connected-6_hangup",
+        "course-te-IN-connected-1_interested",
+        "course-te-IN-connected-2_future_interest",
+        "course-te-IN-connected-4_abuse",
+        "course-te-IN-connected-6_hangup",
+        "print-en-IN-connected-1_interested",
+        "print-en-IN-connected-5_diversion_danger",
+        "print-hi-IN-connected-5_diversion_danger",
+        "print-ta-IN-connected-2_future_interest",
+        "print-ta-IN-connected-4_abuse",
+        "print-te-IN-connected-1_interested",
+        "print-te-IN-connected-4_abuse",
+        "print-te-IN-connected-5_diversion_danger",
+        "repair-en-IN-connected-1_interested",
+        "repair-en-IN-connected-5_diversion_danger",
+        "repair-en-IN-connected-6_hangup",
+        "repair-hi-IN-connected-1_interested",
+        "repair-kn-IN-connected-1_interested",
+        "repair-kn-IN-connected-1b_direct_tool_request",
+        "repair-kn-IN-connected-2_future_interest",
+        "repair-kn-IN-connected-5_diversion_danger",
+        "repair-kn-IN-connected-5b_direct_danger",
+        "repair-kn-IN-connected-6_hangup",
+        "repair-ta-IN-connected-1_interested",
+        "repair-ta-IN-connected-2_future_interest",
+        "repair-ta-IN-connected-4_abuse",
+        "repair-ta-IN-connected-5_diversion_danger",
+        "repair-ta-IN-connected-5b_direct_danger",
+        "repair-ta-IN-connected-6_hangup",
+        "repair-te-IN-connected-1_interested",
+        "repair-te-IN-connected-4_abuse",
+        "repair-te-IN-connected-5_diversion_danger",
+        "repair-te-IN-connected-5b_direct_danger",
+        "repair-te-IN-connected-6_hangup"
+      ],
+      "missed_end_case_turns": [
+        [
+          "course-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-kn-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "course-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "course-kn-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "course-kn-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "course-ta-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "course-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "course-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "course-te-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "course-te-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-kn-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-2_future_interest",
+          3,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-kn-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "print-kn-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-kn-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-1_interested",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "print-ta-IN-connected-5_diversion_danger",
+          5,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-ta-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "print-te-IN-connected-5b_direct_danger",
+          3,
+          "done"
+        ],
+        [
+          "print-te-IN-connected-6_hangup",
+          4,
+          "done"
+        ],
+        [
+          "repair-hi-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-kn-IN-connected-3_complete_rejection",
+          1,
+          "reject"
+        ],
+        [
+          "repair-kn-IN-connected-3b_stop_contact",
+          1,
+          "optout"
+        ],
+        [
+          "repair-kn-IN-connected-4_abuse",
+          2,
+          "abuse_threat"
+        ],
+        [
+          "repair-ta-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ],
+        [
+          "repair-te-IN-connected-1b_direct_tool_request",
+          2,
+          "done"
+        ]
+      ],
+      "nonterminal_close_case_turns": [
+        [
+          "course-en-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-en-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "course-hi-IN-connected-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "course-hi-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "course-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-ta-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-ta-IN-connected-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "course-te-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "course-te-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "course-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "course-te-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "print-en-IN-connected-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "print-en-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-en-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "print-hi-IN-connected-5_diversion_danger",
+          3,
+          "danger"
+        ],
+        [
+          "print-ta-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "print-te-IN-connected-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "print-te-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "print-te-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-en-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-en-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-en-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-en-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-hi-IN-connected-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "repair-kn-IN-connected-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "repair-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-kn-IN-connected-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-kn-IN-connected-6_hangup",
+          2,
+          "details"
+        ],
+        [
+          "repair-ta-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-ta-IN-connected-5_diversion_danger",
+          4,
+          "return"
+        ],
+        [
+          "repair-ta-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-connected-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "repair-te-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "repair-te-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-te-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-te-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "repair-te-IN-connected-6_hangup",
+          1,
+          "interested"
+        ]
+      ]
+    }
+  },
+  "request_budgets": {
+    "1280": 600,
+    "2560": 129
+  },
+  "serialized_requests": 640,
+  "serialized_reasoning_values": {
+    "None": 640
+  },
+  "model_error_note": "GeneratorExit after a done chunk is consumer closure, not a model failure. Cancelled requests can be the watchdog recovery; count final technical farewells separately.",
+  "builds": {
+    "count": 18,
+    "statuses": {
+      "ready": 18
+    },
+    "prompt_chars": {
+      "course-en-IN": 18618,
+      "course-hi-IN": 16962,
+      "course-kn-IN": 17552,
+      "course-ta-IN": 17545,
+      "course-te-IN": 17637,
+      "print-en-IN": 18870,
+      "print-hi-IN": 18082,
+      "print-kn-IN": 17765,
+      "print-ta-IN": 18067,
+      "print-te-IN": 18673,
+      "repair-en-IN": 17361,
+      "repair-hi-IN": 17354,
+      "repair-kn-IN": 17494,
+      "repair-ta-IN": 17410,
+      "repair-te-IN": 17818
+    },
+    "generation_failed_attempts": [
+      {
+        "file": "agents\\course-hi-IN\\previous-attempt-1792941599760593700.json",
+        "status": 502,
+        "business": "course",
+        "language": "hi-IN",
+        "response": {
+          "detail": {
+            "error": {
+              "code": "script_compile_failed",
+              "message": "Script generation failed. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+              "agentId": "eb834d67-4cec-505c-9bcc-48e3abef07c9",
+              "draftRetained": true
+            }
+          }
+        }
+      },
+      {
+        "file": "agents\\course-kn-IN\\previous-attempt-1792941599766356600.json",
+        "status": 502,
+        "business": "course",
+        "language": "kn-IN",
+        "response": {
+          "detail": {
+            "error": {
+              "code": "script_compile_failed",
+              "message": "Script generation failed. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+              "agentId": "228e6d86-452e-543f-86c5-4faa0fe5fcf1",
+              "draftRetained": true
+            }
+          }
+        }
+      },
+      {
+        "file": "agents\\course-ta-IN\\previous-attempt-1792941599764042700.json",
+        "status": 502,
+        "business": "course",
+        "language": "ta-IN",
+        "response": {
+          "detail": {
+            "error": {
+              "code": "script_compile_failed",
+              "message": "Script generation failed. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+              "agentId": "d66f3297-bf6d-51b5-ab64-1b321c233994",
+              "draftRetained": true
+            }
+          }
+        }
+      },
+      {
+        "file": "agents\\print-hi-IN\\previous-attempt-1792941599753956800.json",
+        "status": 502,
+        "business": "print",
+        "language": "hi-IN",
+        "response": {
+          "detail": {
+            "error": {
+              "code": "script_compile_failed",
+              "message": "Script generation failed. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+              "agentId": "7349c331-ab1c-5519-bc9b-a3fffeae61ee",
+              "draftRetained": true
+            }
+          }
+        }
+      },
+      {
+        "file": "agents\\print-kn-IN\\previous-attempt-1792941599766356600.json",
+        "status": 502,
+        "business": "print",
+        "language": "kn-IN",
+        "response": {
+          "detail": {
+            "error": {
+              "code": "script_compile_failed",
+              "message": "Script generation failed. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+              "agentId": "b1c4dd83-93e5-5d7e-be53-7ba3733a98e0",
+              "draftRetained": true
+            }
+          }
+        }
+      },
+      {
+        "file": "agents\\print-ta-IN\\previous-attempt-1792941599762100900.json",
+        "status": 502,
+        "business": "print",
+        "language": "ta-IN",
+        "response": {
+          "detail": {
+            "error": {
+              "code": "script_compile_failed",
+              "message": "Script generation failed. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+              "agentId": "7d7f958a-4471-5e8c-bebd-b227678ab254",
+              "draftRetained": true
+            }
+          }
+        }
+      },
+      {
+        "file": "agents\\repair-hi-IN\\previous-attempt-1792941599758046100.json",
+        "status": 502,
+        "business": "repair",
+        "language": "hi-IN",
+        "response": {
+          "detail": {
+            "error": {
+              "code": "script_compile_failed",
+              "message": "Script generation failed. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+              "agentId": "624d916c-d288-5ea2-a663-4093399d5cec",
+              "draftRetained": true
+            }
+          }
+        }
+      },
+      {
+        "file": "agents\\repair-kn-IN\\previous-attempt-1792941599766356600.json",
+        "status": 502,
+        "business": "repair",
+        "language": "kn-IN",
+        "response": {
+          "detail": {
+            "error": {
+              "code": "script_compile_failed",
+              "message": "Script generation failed. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+              "agentId": "a640068b-662d-5bcc-b983-1e571063bbeb",
+              "draftRetained": true
+            }
+          }
+        }
+      },
+      {
+        "file": "agents\\repair-ta-IN\\previous-attempt-1792941599762100900.json",
+        "status": 502,
+        "business": "repair",
+        "language": "ta-IN",
+        "response": {
+          "detail": {
+            "error": {
+              "code": "script_compile_failed",
+              "message": "Script generation failed. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+              "agentId": "d549a074-f795-5eff-9b09-e650c5325844",
+              "draftRetained": true
+            }
+          }
+        }
+      },
+      {
+        "file": "agents\\repair-te-IN\\previous-attempt-1792941599729945400.json",
+        "status": 422,
+        "business": "repair",
+        "language": "te-IN",
+        "response": {
+          "detail": {
+            "error": {
+              "code": "brief_needs_clarification",
+              "status": "needs_user_input",
+              "message": "The script needs another review before it can be saved. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+              "issues": [
+                {
+                  "code": "invalid_generated_script",
+                  "message": "The script needs another review before it can be saved. Please try again.",
+                  "description": "The script needs another review before it can be saved. Please try again.",
+                  "field": "script",
+                  "evidence": "",
+                  "severity": "error"
+                }
+              ],
+              "needs_user_input": [
+                "The script needs another review before it can be saved. Please try again."
+              ],
+              "agentId": "73d57d5a-9fd1-5564-9e23-8842d4cfe3c3",
+              "draftRetained": true
+            }
+          }
+        }
+      }
+    ]
+  },
+  "source_drift": {},
+  "source_drift_current": {}
+}

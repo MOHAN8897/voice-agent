@@ -1,0 +1,222 @@
+{
+  "key": "cleaning-hi-IN-connected-7_integration_timeout",
+  "business": "cleaning",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "7_integration_timeout",
+  "agent_id": "0af54b3b-2e52-5467-8d8d-282e03815984",
+  "call_id": "54ae2d21-2843-47e3-997b-4addc4dc9842",
+  "session_id": "audit-cleaning-hi-IN-connected-7_integration_timeout-43f7f1e7",
+  "compiled_checksum": "69e98222770e2e24f02661040eef848ed4e9f3d30154dd23b101bb2a21ea0d3c",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4109,
+        "total_tokens": 4171,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4109,
+          "output_tokens": 62,
+          "total_tokens": 4171
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-a67603381fae2bf1",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Kitchen cleaning in Baner, Pune\", \"preferred_time\": \"Tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.657
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 342,
+      "sse_content_preview": "माफ़ कीजिए, external system में enquiry save होने की confirmation नहीं मिल पा रही है। मैं आपकी request note कर लेती हूँ, लेकिन externally save या visit confirm नहीं कर सकती। Team review के लिए आपकी details Audit Customer, kitchen cleaning, Baner Pune और कल दोपहर 3 बजे का time मैंने note कर लिया है। क्या इसके अलावा और कुछ जानकारी चाहिए आपको?",
+      "sse_content_tail": "माफ़ कीजिए, external system में enquiry save होने की confirmation नहीं मिल पा रही है। मैं आपकी request note कर लेती हूँ, लेकिन externally save या visit confirm नहीं कर सकती। Team review के लिए आपकी details Audit Customer, kitchen cleaning, Baner Pune और कल दोपहर 3 बजे का time मैंने note कर लिया है। क्या इसके अलावा और कुछ जानकारी चाहिए आपको?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 75,
+        "prompt_tokens": 4374,
+        "total_tokens": 4449,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "माफ़ कीजिए, external system में enquiry save होने की confirmation नहीं मिल पा रही है। मैं आपकी request note कर लेती हूँ, लेकिन externally save या visit confirm नहीं कर सकती। Team review के लिए आपकी details Audit Customer, kitchen cleaning, Baner Pune और कल दोपहर 3 बजे का time मैंने note कर लिया है। क्या इसके अलावा और कुछ जानकारी चाहिए आपको?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4374,
+          "output_tokens": 75,
+          "total_tokens": 4449
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": true,
+        "action_proofs": [],
+        "order_proof": false,
+        "action_outcome_unconfirmed": true
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.719
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Kitchen cleaning in Baner, Pune",
+        "preferred_time": "Tomorrow at 3pm"
+      },
+      "turn": 1,
+      "mode": "7_integration_timeout"
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "माफ़ कीजिए, external system में enquiry save होने की confirmation नहीं मिल पा रही है। मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें।",
+      "turn": 1,
+      "at": 4.375
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 2,
+      "at": 4.422
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. यह enquiry team review के लिए submit कीजिए। मेरी सहमति है। Booking या order confirm मत बताइए।",
+      "spoken": "माफ़ कीजिए, external system में enquiry save होने की confirmation नहीं मिल पा रही है। मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें।",
+      "elapsed_s": 4.375,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 4.485,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "54ae2d21-2843-47e3-997b-4addc4dc9842",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "62eb3e5b361717422b79802ecb8768c3fa08608d615d0b4a7cca5ea6497eafc7",
+  "prompt_chars": 17121,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste. Main Nila hoon FreshNest Cleaning se. Kya hum abhi safai sevaon ke bare mein baat kar sakte hain?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "माफ़ कीजिए, external system में enquiry save होने की confirmation नहीं मिल पा रही है। मैं आपकी request note कर लेती हूँ, लेकिन externally save या visit confirm नहीं कर सकती।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.485,
+  "hangup_count": 1,
+  "source_signature": "4953ed948fb444454219f6ca39d300be531437f9524613024d6794fbbd21733f"
+}

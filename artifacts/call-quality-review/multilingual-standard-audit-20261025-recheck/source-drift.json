@@ -1,0 +1,122 @@
+{
+  "server/brain/agent_script_compiler.py": {
+    "before": "dfdb6cbc324da6027b4147bdceb7cc8724ff3aed21da1ff93179e31eb516e455",
+    "after": "4d1b471821a3b9bb59466a99c2854524d5c60f7a42d09716975fe8192f0df49d"
+  },
+  "server/brain/agent_service.py": {
+    "before": "26fd7b548e949bf9db253cda5850cb63e5ccf351509af89c96160897b2d73e82",
+    "after": "58bf05a551944b4664de95744a6ae311786552a4bbb4bc25bd03b09502670b79"
+  },
+  "server/brain/compiled_brain_artifact.py": {
+    "before": "d0b3bd99d4ce6ad660e4135bd2344c65d97256bf4cff64fdbf1125b98183824e",
+    "after": "37492c64759da0b7855b7aa7c71c8bb356a69069fc812f6f2c22a68127aa69f7"
+  },
+  "server/brain/employee_script_pipeline.py": {
+    "before": "15e1dfab74acb6c81757a0c9ae5e03c7648f50aaafb472b147e2e840aa7363d0",
+    "after": "170ccefd08786019d7d0a865549adc392841a767e5fec349e7168363911f0759"
+  },
+  "server/call/call_end_policy.py": {
+    "before": "af47fadf8a229bf74e0edfef3956165599571cd0e0a0f5c19a7e484c04263b0b",
+    "after": "d0be59f24fe1f6cda11a7cc836251648ff2514686661820e7589987a375cdf1a"
+  },
+  "server/call/callback_close.py": {
+    "before": "de1d99eeec68179561d00d7b44926d39a7704beb1c4f952a3693a44b9b4cb994",
+    "after": "fb98a98011c254a34a44b2836d0dc6255074e56d745e80b498687417bde9474f"
+  },
+  "server/call/close_decision.py": {
+    "before": "a03a8612028eebc11648dac0977e1383048eaf1ec3a524464e32b79d25e40106",
+    "after": "600b7235b295f0280b087627bb82803aa4833834adfd84247befb3faf8140187"
+  },
+  "server/call/end_call_validate.py": {
+    "before": "455ebc6b570e9683a19431a8b443837866213305698a1fa9685a63b939c98e4c",
+    "after": "0f81e381a7d41306adfaeb79d49535ccd8243eb102387ce9100a803b40928dbd"
+  },
+  "server/call/live_turn_orchestrator.py": {
+    "before": "b2873d37dec9a5c0a7458ec7cfc6b386ac9777d1df339c7fafc7c23563e250f5",
+    "after": "2fdfcf417624b9441a7f62fdf96d5cd0d3fd763ac31d5affce48f4e7e13fe14d"
+  },
+  "server/call/live_turn_schema.py": {
+    "before": "98d596cc098afe3cf21632d3bb9b7ec8b2f13cd3043afd66bb0aa6672fd74fc4",
+    "after": "66c041438d13a4b1efd40ddd312cd346a422829fa8b5f3c28e42a3af1eb54cf6"
+  },
+  "server/call/order_confirmation.py": {
+    "before": "fb09962b8c777bf702f1b98456a7df647999f3cfe9a49449ca1b1b31447d1156",
+    "after": "d0bfff609729a4174d7c9b2622c9da73be784102dd3c4605f806f3ad297a2f0f"
+  },
+  "server/providers/deepseek_llm.py": {
+    "before": "a0347139edea394cbea995a105b0683c1790105934469a146879027a71d9bd78",
+    "after": "0e597ef79cf5d9fb9462ef1992513356aa6bf9cde0ed16bb36db74d06c0ff4df"
+  },
+  "server/providers/gemini_llm.py": {
+    "before": "2f8af517c70a06f31edec199731d8226d2f31f19a78894183c4bd28b05d4591a",
+    "after": "acb5aea887d37840672634c42edac9374ff22255fa9bb40603cd44efe4db38ba"
+  },
+  "server/providers/sarvam_llm.py": {
+    "before": "c29f16470457b0572adc35069a9e640f93af563e434a0b5d110a1e55af96ef62",
+    "after": "475d69da507a97ec3c7b8dd7f667f740ca2127f9b8b1d4e4e6e6a7f4cfa210cb"
+  },
+  "server/routes/agents.py": {
+    "before": "f58293bac4c0538f5a113ba7c512c36655dc2eeb83f02bd27a140e7140f435b2",
+    "after": "199bb5b5c83342719dc9d924df64e802c8686cf43abb29edb4cb686e77970d51"
+  },
+  "server/routes/app_agents.py": {
+    "before": "20788e117e98c539a1e6f452a6611ddb8468815a53cc9eb1362b7499223a6cc3",
+    "after": "18cc6310513b76d3256015a585546f7312aff3f208f17e9b852c57f95130ef1d"
+  },
+  "server/services/openai_brain_service.py": {
+    "before": "97f322b86c1bfe443aa33d3a522378e4421f0fb90a5f6386de931271709e3f84",
+    "after": "8d5fd5323fb3bd30912caee6d025ecd20cb9b2fe772bbe76999deb88a979c280"
+  },
+  "server/services/pstn_voice_core.py": {
+    "before": "35144d677b0ac1ae6bb36bfbf07d0bee61e41b66aa95e241ed429e2a98b8d252",
+    "after": "89dfd4ef0ba3a55b5353c5864cefba12eeef6bd669f872c039538b21fa362ec3"
+  },
+  "server/services/saas/voice_stack_profiles.py": {
+    "before": "36894659decc7a2449f3198f3c8e5973c73ba2a733879c61c177c8536036d09b",
+    "after": "b75805e4115ea8e190472e2c53884a6c22f50b6fa68c4981bbc591f5dfe33c28"
+  },
+  "server/services/tool_router.py": {
+    "before": "806bdd11b4314bd4b71e8efc8a53b0b20fc38ad2943ce5ba89dd8efd7f44d5c1",
+    "after": "0ac53727ff76973503cf8b2c67e0dcd7122ef496d46bc00de0f11909c299d99b"
+  },
+  "server/services/voice_pipeline_limits.py": {
+    "before": "ec2b13c5eac8853c55e04b12e4296edba20e8f4787199eb2bf3bad446f795003",
+    "after": "09c18edf38ca9a661f4805e7687391f934696d8cb88fa3aeb199a7a3be64173f"
+  },
+  "server/tests/test_brain_prompt.py": {
+    "before": "fe075e3eb62fe31e7ad30095601092e42f588537b3cce7c9ad759975aa18b51e",
+    "after": "ecb365195d3120feac2f13782f8b6fdb347276e03e6bb62735409e072775144f"
+  },
+  "server/tests/test_close_speech_gate.py": {
+    "before": "6bf805400df207ab7360ae7053dbc3678b9c9f67fa516373d5b7aa0d756d7227",
+    "after": "81b8f9fc787eb96b0b73145be4f9f08a32eb300f3506f002858f016202f145a5"
+  },
+  "server/tests/test_employee_script_pipeline.py": {
+    "before": "df884e273910afad94e50c90fd80c78d58134bda6710c43f71128acd943e8ae4",
+    "after": "9de8b0ae4db10544f6a023facb46cbc85e75cbbe5c6ffcaf8166dde61e3a89a7"
+  },
+  "server/tests/test_gemini_integration_protocol.py": {
+    "before": "77766e0c798e0cfb42fafa9ad3b8e843afa38909626501380e1ff0c2f3ed059d",
+    "after": "45dc99a4075fd7fd75f8f077d3f99de8882105e313b996e41d9c729679c4e5b5"
+  },
+  "server/tests/test_integration_security_hardening.py": {
+    "before": "abae67d84f08dc7e5297bfb91bc2721c72ca17d80ae319eeb29502dcbe281abd",
+    "after": "d3dea46e31a1e0854501bf522275b9db9122043d17be5d377c087f61abb71e28"
+  },
+  "server/tests/test_live_turn_orchestrator.py": {
+    "before": "519440991383fc0fa36afc84f8d6271f228e3af937a81d9f45dae5e3473e8102",
+    "after": "994fb6dd5e8ac5aa999d889a2dfe7a161550d191b3f7a0533efae549c0819607"
+  },
+  "server/tests/test_llm_finish_reason_recovery.py": {
+    "before": "368d8ef461f506e5dc1bc441deabbca56408db0d2caaa8f4ec86515c2c162a82",
+    "after": "aa68ee63b6a1257c98e50aa22c1f67ddccf04deb7f3677b2bf75bb4d7ddefe1d"
+  },
+  "server/tests/test_order_confirmation.py": {
+    "before": "8011b7e9ec6d2a2a0e98f5f9886fd88052195889882211d7bb15778ca9f44bd1",
+    "after": "e3f087fef888f04c8242e7fdec695ffdef083358bdc48ea047f327c988e4799b"
+  },
+  "server/tests/test_pstn_technical_fallback.py": {
+    "before": "630c0e68b7a2e927d9a10eb4931f3b45d463c67a374bc767b13af509b3eb63af",
+    "after": "b2332780a750ba11790d616b79c598b88a6bc610ebdf312abe3cc2f0742ead78"
+  }
+}

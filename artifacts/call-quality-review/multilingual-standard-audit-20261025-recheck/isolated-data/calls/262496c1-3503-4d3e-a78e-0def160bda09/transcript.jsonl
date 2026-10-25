@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "Do not contact me again. Remove me from future calls and end the call.", "ts": "2026-10-25T17:19:16.654659Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T17:19:16.693080Z", "brain_latency_ms": 2}

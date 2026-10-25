@@ -1,0 +1,309 @@
+{
+  "key": "print-hi-IN-connected-2_future_interest",
+  "business": "print",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "2_future_interest",
+  "agent_id": "2fc12aaa-fef8-53c9-81db-07efa7f84427",
+  "call_id": "268f868f-f0b8-4ac5-855d-343f72c11015",
+  "session_id": "audit-print-hi-IN-connected-2_future_interest-7c1b058a",
+  "compiled_checksum": "e91bf22969093f6a27742c03010544073c3466fd7eebb112e2acaf08eed62852",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 709,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"अगले महीने के लिए callback preference\",\n    \"contact_preference\": \"callback\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \nठीक है, समझ गई। Visiting cards के लिए 25 rupees per card है, minimum 100 cards लगेंगे। Wedding invitations का कोई fixed price नहीं है, वो design और quantity पर depend करता है। क्या आप quote के लिए अपना नाम और delivery locality बता सकते हैं?",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"अगले महीने के लिए callback preference\",\n    \"contact_preference\": \"callback\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \nठीक है, समझ गई। Visiting cards के लिए 25 rupees per card है, minimum 100 cards लगेंगे। Wedding invitations का कोई fixed price नहीं है, वो design और quantity पर depend करता है। क्या आप quote के लिए अपना नाम और delivery locality बता सकते हैं?",
+      "error_type": "CancelledError",
+      "finish_reason": null,
+      "elapsed_s": 2.859,
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 59,
+        "prompt_tokens": 4169,
+        "total_tokens": 4228,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      }
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 1254,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said they are not interested now but may be interested next month, asked for current price, and explicitly said do not book and do not mark as permanent refusal.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"They want current price for next month and do not want to be marked as permanently declined.\",\n    \"contact_preference\": \"callback\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"ठीक है, कोई बात नहीं। visiting cards के लिए 25 rupees per card है, minimum 100 cards. wedding invitations का quote design और quantity पर depend करता है। जब आप ready हों, तो अपना नाम और delivery locality बता दीजिएगा। क्या मैं बाद में callback arrange कर दूँ?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller not interested now but open for next month. Asked for pricing. No booking. Requested callback preference.\"\n      }\n    ]\n  }\n}समझ गई। wedding invitations का कोई fixed price नहीं है, वो design और quantity पर depend करता है। delivery Pune में post के through artwork approval के पाँच working days बाद हो जाती है। तो क्या आप quote के लिए अपना नाम और delivery locality बता सकते हैं?",
+      "sse_content_tail": "ed as permanently declined.\",\n    \"contact_preference\": \"callback\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"ठीक है, कोई बात नहीं। visiting cards के लिए 25 rupees per card है, minimum 100 cards. wedding invitations का quote design और quantity पर depend करता है। जब आप ready हों, तो अपना नाम और delivery locality बता दीजिएगा। क्या मैं बाद में callback arrange कर दूँ?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller not interested now but open for next month. Asked for pricing. No booking. Requested callback preference.\"\n      }\n    ]\n  }\n}समझ गई। wedding invitations का कोई fixed price नहीं है, वो design और quantity पर depend करता है। delivery Pune में post के through artwork approval के पाँच working days बाद हो जाती है। तो क्या आप quote के लिए अपना नाम और delivery locality बता सकते हैं?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 54,
+        "prompt_tokens": 4243,
+        "total_tokens": 4297,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, कोई बात नहीं। visiting cards के लिए 25 rupees per card है, minimum 100 cards. wedding invitations का quote design और quantity पर depend करता है। जब आप ready हों, तो अपना नाम और delivery locality बता दीजिएगा। क्या मैं बाद में callback arrange कर दूँ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4032,
+          "output_tokens": 271,
+          "total_tokens": 4303
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller not interested now but open for next month. Asked for pricing. No booking. Requested callback preference."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "Caller said they are not interested now but may be interested next month, asked for current price, and explicitly said do not book and do not mark as permanent refusal.",
+          "remaining_request": "They want current price for next month and do not want to be marked as permanently declined.",
+          "contact_preference": "callback",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.75
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1006,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Future enquiries are welcome: take a requested callback preference, do not book or promise a date without confirmation\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"wants to know what else to know about the service\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"ठीक है, future enquiries के लिए आप कभी भी call कर सकते हैं। delivery Pune में five working days after artwork approval के बाद post से हो जाती है, और हम cards और cash on delivery दोनों accept करते हैं। office timing Monday to Saturday, 10am to 6pm है। क्या आप अभी अपनी preferred name और delivery locality बता सकते हैं, ताकि मैं quote request note कर लूँ?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_future_enquiry\",\n        \"value\": \"caller expressed future interest, explicitly declined callback preference, asked what else to know\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "not book or promise a date without confirmation\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"wants to know what else to know about the service\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"ठीक है, future enquiries के लिए आप कभी भी call कर सकते हैं। delivery Pune में five working days after artwork approval के बाद post से हो जाती है, और हम cards और cash on delivery दोनों accept करते हैं। office timing Monday to Saturday, 10am to 6pm है। क्या आप अभी अपनी preferred name और delivery locality बता सकते हैं, ताकि मैं quote request note कर लूँ?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_future_enquiry\",\n        \"value\": \"caller expressed future interest, explicitly declined callback preference, asked what else to know\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 276,
+        "prompt_tokens": 4106,
+        "total_tokens": 4382,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, future enquiries के लिए आप कभी भी call कर सकते हैं। delivery Pune में five working days after artwork approval के बाद post से हो जाती है, और हम cards और cash on delivery दोनों accept करते हैं। office timing Monday to Saturday, 10am to 6pm है। क्या आप अभी अपनी preferred name और delivery locality बता सकते हैं, ताकि मैं quote request note कर लूँ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4106,
+          "output_tokens": 276,
+          "total_tokens": 4382
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested_future_enquiry",
+              "value": "caller expressed future interest, explicitly declined callback preference, asked what else to know"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Future enquiries are welcome: take a requested callback preference, do not book or promise a date without confirmation",
+          "remaining_request": "wants to know what else to know about the service",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.594
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ठीक है, कोई बात नहीं। visiting cards के लिए twenty five rupees per card है, minimum one hundred cards. wedding invitations का quote design और quantity पर depend करता है। जब आप ready हों, तो अपना नाम और delivery locality बता दीजिएगा। क्या मैं बाद में callback arrange कर दूँ?",
+      "turn": 1,
+      "at": 7.609
+    },
+    {
+      "text": "ठीक है, future enquiries के लिए आप कभी भी call कर सकते हैं। delivery Pune में five working days after artwork approval के बाद post से हो जाती है, और हम cards और cash on delivery दोनों accept करते हैं। office timing Monday to Saturday, 10am to 6pm है।",
+      "turn": 2,
+      "at": 10.031
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 3,
+      "at": 10.047
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।",
+      "spoken": "ठीक है, कोई बात नहीं। visiting cards के लिए twenty five rupees per card है, minimum one hundred cards. wedding invitations का quote design और quantity पर depend करता है। जब आप ready हों, तो अपना नाम और delivery locality बता दीजिएगा। क्या मैं बाद में callback arrange कर दूँ?",
+      "elapsed_s": 7.625,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?",
+      "spoken": "ठीक है, future enquiries के लिए आप कभी भी call कर सकते हैं। delivery Pune में five working days after artwork approval के बाद post से हो जाती है, और हम cards और cash on delivery दोनों accept करते हैं। office timing Monday to Saturday, 10am to 6pm है।",
+      "elapsed_s": 2.391,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 10.094,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "268f868f-f0b8-4ac5-855d-343f72c11015",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "c24b80c3ea5863d92e17dda61428d03d0f154610dc6b3c0599e4a2bfb2a90dd1",
+  "prompt_chars": 18000,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, I am Meera, an AI assistant from ClearPrint Studio. Am I speaking with the right person regarding card printing needs?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Caller said they are not interested now but may be interested next month, asked for current price, and explicitly said do not book and do not mark as permanent refusal.",
+        "remaining_request": "They want current price for next month and do not want to be marked as permanently declined.",
+        "contact_preference": "callback",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, कोई बात नहीं। visiting cards के लिए twenty five rupees per card है, minimum one hundred cards. wedding invitations का quote design और quantity पर depend करता है। जब आप ready हों, तो अपना नाम और delivery locality बता दीजिएगा। क्या मैं बाद में callback arrange कर दूँ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Future enquiries are welcome: take a requested callback preference, do not book or promise a date without confirmation",
+        "remaining_request": "wants to know what else to know about the service",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, future enquiries के लिए आप कभी भी call कर सकते हैं। delivery Pune में five working days after artwork approval के बाद post से हो जाती है, और हम cards और cash on delivery दोनों accept करते हैं। office timing Monday to Saturday, 10am to 6pm है।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 10.094,
+  "hangup_count": 1
+}

@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.", "ts": "2026-10-25T19:20:41.717549Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಖಂಡಿತ, ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?", "ts": "2026-10-25T19:20:43.760488Z", "brain_latency_ms": 2033}
+{"seq": 3, "role": "user", "text": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರಿಸಿ: ಸೈಕಲ್ basic service ಮತ್ತು puncture repair ಬೆಲೆ ಎಷ್ಟು? Parts ಕೂಡ ಇದರಲ್ಲಿ ಸೇರಿವೆಯಾ?", "ts": "2026-10-25T19:20:43.788747Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Basic service ನಾಲ್ಕು ನೂರ ತೊಂಬತ್ತೊಂಬತ್ತು ರೂಪಾಯಿ ಮತ್ತು puncture repair ನೂರ ಇಪ್ಪತ್ತು ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ, ಅದು ಇದರಲ್ಲಿ ಸೇರಿಲ್ಲ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?", "ts": "2026-10-25T19:20:45.985205Z", "brain_latency_ms": 2187}
+{"seq": 5, "role": "user", "text": "ಸರಿ, ಧನ್ಯವಾದಗಳು.", "ts": "2026-10-25T19:20:45.996234Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ಸರಿ, ನಿಮಗೆ ಯಾವ service ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ, basic service ಬೇಕಾ ಅಥವಾ puncture repair ಬೇಕಾ?", "ts": "2026-10-25T19:20:48.136971Z", "brain_latency_ms": 2134}
+{"seq": 7, "role": "user", "text": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.", "ts": "2026-10-25T19:20:48.193853Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.", "ts": "2026-10-25T19:20:48.200972Z", "brain_latency_ms": 1}

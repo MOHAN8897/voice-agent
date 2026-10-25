@@ -1,0 +1,16 @@
+{
+  "stage": "employee_script_review",
+  "language": "hi-IN",
+  "output": {
+    "passed": true,
+    "issues": [],
+    "fixed_script": {
+      "opening": "Namaste, main Meera hoon ClearPrint Studio se. Kya main sahi vyakti se baat kar rahi hoon card printing ki zarooraton par baat karne ke liye?",
+      "call_flow": "Pehle grahak ke sawalon ke jawab dein visiting cards ya wedding invitations ke baare mein. Visiting cards ke liye, price pachaas rupaye nahi balki pachis rupaye pratipad card hai kam se kam ek sau cards ke saath. Wedding invitations ke liye, design aur quantity tay karti hai quote kyunki koi fix price uplabdh nahi hai. Samajhein ki grahak ko kaun sa card aur kitni quantity chahiye. Agar woh visiting cards ke liye mana karein, toh poochhein ki kya unhe wedding invitations chahiye. Delivery Pune mein post ke dwara hoti hai, jo artwork approval ke baad paanch working din leti hai. Cards aur cash on delivery swikaar kiye jaate hain. Office ka samay somvaar se shanivar subah das baje se shaam chhe baje tak hai.",
+      "call_to_action": "Agar grahak interested hai, toh quote request ke liye unka pasandeeda naam aur delivery locality lein. Yeh spasht karein ki hum is call par facts discuss kar sakte hain aur request note kar sakte hain, lekin CRM delivery ya confirmed order ka daawa nahi kar sakte.",
+      "objection_handling": "Price ke sawaal par, pachis rupaye pratipad card ki rate aur ek sau card minimum ki shart dobara batayein. Agar woh interested nahi hain, toh saaf inkaar ka sammaan karein ya baad ke liye callback preference lein. Refunds ke liye, batayein ki refund policy ki jankari uplabdh nahi hai. Agar unke paas pehle se koi card printer hai, toh poochhein ki kya unhe wedding invitations ki zaroorat hai.",
+      "unknown_information": "Agar kisi anjaan ya anuplabdh jankari ke baare mein poochha jaye, toh saaf taur par batayein ki woh jankari uplabdh nahi hai. Koi bhi callback, payment, booking ya message khud se invent na karein.",
+      "closing": "Aaj ke samay ke liye bahut shukriya. Aapka din shubh ho."
+    }
+  }
+}

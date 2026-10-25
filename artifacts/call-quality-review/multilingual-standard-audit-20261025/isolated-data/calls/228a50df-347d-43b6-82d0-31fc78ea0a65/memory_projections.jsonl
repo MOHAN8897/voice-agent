@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:25:28.584910Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T15:25:29.649792Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-25T15:25:30.412057Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ninterested_in_wedding_invitations: true | interested_in_visiting_cards: unknown | booking_consent: false"}
+{"turn_seq": 7, "ts": "2026-10-25T15:25:30.431886Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ninterested_in_wedding_invitations: true | interested_in_visiting_cards: unknown | booking_consent: false"}

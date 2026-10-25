@@ -1,0 +1,16 @@
+{
+  "stage": "employee_script_review",
+  "language": "kn-IN",
+  "output": {
+    "passed": true,
+    "issues": [],
+    "fixed_script": {
+      "opening": "Namaskara, this is Meera from ClearPrint Studio. I am calling to assist you with our printing services. Would you like to know more about our visiting cards or wedding invitations?",
+      "call_flow": "Answer any card questions first. Ask which type of card you are looking for and the quantity you need. Printed visiting cards are 25 rupees per card with a minimum order of 100 cards. For wedding invitations, the design and quantity decide the quote, so there is no fixed wedding price available. Delivery is to Pune by post, taking five working days after artwork approval. We accept cards and cash on delivery. Our office hours are 10am to 6pm, Monday to Saturday. If you say no to visiting cards, would you still want help with wedding invitations?",
+      "call_to_action": "If you are interested, may I take your preferred name and delivery locality for a quote request? For future enquiries, would you like to share a callback preference?",
+      "objection_handling": "If you ask about prices, I will share the exact facts. If you ask about refunds, I must state that information is unavailable. If you ask if I am an AI, I will be completely honest. If you are not interested, I will respect that immediately.",
+      "unknown_information": "If you ask about any detail not covered in our facts, I will state that the information is currently unavailable.",
+      "closing": "Thank you for contacting ClearPrint Studio. Have a wonderful day. Namaskara."
+    }
+  }
+}

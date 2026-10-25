@@ -1,0 +1,223 @@
+{
+  "key": "cycle-en-IN-none-2_future_interest",
+  "business": "cycle",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "aa28347a-5d38-5476-b3a1-3bd540c1fb68",
+  "call_id": "e949d09c-17f9-4b7f-8b35-c7bb3c106b74",
+  "session_id": "audit-cycle-en-IN-none-2_future_interest-3af29dc1",
+  "compiled_checksum": "2d566b01061493fce1edfd5d4fc733c96312f4c1a27f05d81c2ff3cb9039cd9f",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 243,
+      "sse_content_preview": "No problem at all, we can certainly help you next month. A basic service costs 499 rupees, and a puncture repair is 120 rupees, with any parts extra only after your approval. Would you like me to note down your interest for when you are ready?",
+      "sse_content_tail": "No problem at all, we can certainly help you next month. A basic service costs 499 rupees, and a puncture repair is 120 rupees, with any parts extra only after your approval. Would you like me to note down your interest for when you are ready?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 59,
+        "prompt_tokens": 3993,
+        "total_tokens": 4052,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "No problem at all, we can certainly help you next month. A basic service costs 499 rupees, and a puncture repair is 120 rupees, with any parts extra only after your approval. Would you like me to note down your interest for when you are ready?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3993,
+          "output_tokens": 59,
+          "total_tokens": 4052
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.016
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 193,
+      "sse_content_preview": "Parts are extra only after your approval, and we are open Tuesday to Sunday from 9 AM to 6 PM. Would you like to share your name and locality so we can note this enquiry for when you are ready?",
+      "sse_content_tail": "Parts are extra only after your approval, and we are open Tuesday to Sunday from 9 AM to 6 PM. Would you like to share your name and locality so we can note this enquiry for when you are ready?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 46,
+        "prompt_tokens": 4063,
+        "total_tokens": 4109,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Parts are extra only after your approval, and we are open Tuesday to Sunday from 9 AM to 6 PM. Would you like to share your name and locality so we can note this enquiry for when you are ready?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4063,
+          "output_tokens": 46,
+          "total_tokens": 4109
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.265
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "No problem at all, we can certainly help you next month. A basic service costs four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees, with any parts extra only after your approval. Would you like me to note down your interest for when you are ready?",
+      "turn": 1,
+      "at": 1.0
+    },
+    {
+      "text": "Parts are extra only after your approval, and we are open Tuesday to Sunday from 9 AM to 6 PM. Would you like to share your name and locality so we can note this enquiry for when you are ready?",
+      "turn": 2,
+      "at": 2.297
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 3,
+      "at": 2.313
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.",
+      "spoken": "No problem at all, we can certainly help you next month. A basic service costs four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees, with any parts extra only after your approval. Would you like me to note down your interest for when you are ready?",
+      "elapsed_s": 1.0,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?",
+      "spoken": "Parts are extra only after your approval, and we are open Tuesday to Sunday from 9 AM to 6 PM. Would you like to share your name and locality so we can note this enquiry for when you are ready?",
+      "elapsed_s": 1.265,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 2.375,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "e949d09c-17f9-4b7f-8b35-c7bb3c106b74",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "4cd0cc0eca0e7b08238e658b2c18ec673960578bd2e7bb40a1cc26828755e8f5",
+  "prompt_chars": 17209,
+  "opening_seeded": "Hello, this is Arjun calling from CityCycle Repairs. As an AI assistant, I am calling to answer any questions you have about our bicycle repairs. Are you looking for bicycle repair assistance today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "No problem at all, we can certainly help you next month. A basic service costs four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees, with any parts extra only after your approval. Would you like me to note down your interest for when you are ready?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "Parts are extra only after your approval, and we are open Tuesday to Sunday from 9 AM to 6 PM. Would you like to share your name and locality so we can note this enquiry for when you are ready?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.375,
+  "hangup_count": 1,
+  "source_signature": "b5a97b0be556d652c5115f22700db9020bcfd81aee17c1b71898a26694c896ca"
+}

@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.", "ts": "2026-10-25T19:30:26.427986Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I am sorry, but I could not confirm saving the enquiry right now because our system is not connected. I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T19:30:30.759629Z", "brain_latency_ms": 4308}
+{"seq": 3, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T19:30:30.771509Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T19:30:30.779408Z", "brain_latency_ms": 2}

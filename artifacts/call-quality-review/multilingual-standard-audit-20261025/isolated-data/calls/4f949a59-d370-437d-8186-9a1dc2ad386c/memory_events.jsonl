@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:30:19.043265Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:30:20.086447Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:30:20.799620Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:30:20.803143Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.\nassistant: ಖಂಡಿತ, ಹೇಳಿ.\nuser: ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: ನೀವು ಮದುವೆಯ ಆಮಂತ್ರಣಗಳನ್ನೂ print ಮಾಡುತ್ತೀರಾ? ಬೆಲೆ ಮತ್ತು delivery time ಎಷ್ಟು?\nassistant: ಖಂಡಿತ, ಹೇಳಿ.\nuser: ಸರಿ, ಧನ್ಯವಾದಗಳು.\nassistant: ಖಂಡಿತ, ಹೇಳಿ."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-25T15:30:21.846386Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

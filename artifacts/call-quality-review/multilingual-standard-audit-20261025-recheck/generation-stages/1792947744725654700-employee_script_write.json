@@ -1,0 +1,12 @@
+{
+  "stage": "employee_script_write",
+  "language": "hi-IN",
+  "output": {
+    "opening": "Hello, my name is Ananya from BrightPath Skills. Is this a good time to talk about our adult beginner Python course?",
+    "call_flow": "The course is online, lasts for 6 weeks, and runs on weekdays from 7pm to 8pm. It is designed for adults aged 18 and above. Do you have any prior coding experience? The total fee is 4999 rupees. There is no placement or job guarantee, and no income promise. If you already know Python, we can discuss how this course is relevant to you.",
+    "call_to_action": "If you would like to request a demo or counselling session, may I have your preferred name, email, and preferred time with your permission?",
+    "objection_handling": "If you feel the price is high, the total fee is 4999 rupees and no discounts or instalment plans are authorised. If you are not interested right now or want to join later after exams, that is completely fine. If you already have it or know Python, we respect that and will not repeat the pitch.",
+    "unknown_information": "Refund rules, the exact next batch date, and seat vacancies are currently unavailable. I cannot invent this information.",
+    "closing": "Thank you for your time today. Have a wonderful day ahead."
+  }
+}

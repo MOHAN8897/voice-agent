@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।", "ts": "2026-10-25T17:31:22.663828Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "माफ़ कीजिए, अगर मेरी वजह से झुंझलाहट हुई हो। Total fee four thousand nine hundred ninety nine rupees है और इस पर कोई discount या instalment plan authorised नहीं है। क्या आपको coding का कोई prior experience है?", "ts": "2026-10-25T17:31:25.062439Z", "brain_latency_ms": 2231}
+{"seq": 3, "role": "user", "text": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।", "ts": "2026-10-25T17:31:25.076869Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-25T17:31:25.084211Z", "brain_latency_ms": 2}

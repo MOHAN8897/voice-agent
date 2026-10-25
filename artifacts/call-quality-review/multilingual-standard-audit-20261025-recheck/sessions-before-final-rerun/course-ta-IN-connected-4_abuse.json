@@ -1,0 +1,200 @@
+{
+  "key": "course-ta-IN-connected-4_abuse",
+  "business": "course",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "4_abuse",
+  "agent_id": "13132fd6-d72a-5ef9-81a9-47b201ed6188",
+  "call_id": "55d20520-774e-45c6-b416-9ace045e5967",
+  "session_id": "audit-course-ta-IN-connected-4_abuse-ad0fd325",
+  "compiled_checksum": "6de945f219536e3f862422a7bf903732ed8c2be0a2a89e7a29eaaacb4b90f85f",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 601,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price answer\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"order_confirmed\",\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller responded with abuse ('நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.'). Ananya ended the call due to abuse\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price answer\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"order_confirmed\",\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller responded with abuse ('நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.'). Ananya ended the call due to abuse\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 200,
+        "prompt_tokens": 4200,
+        "total_tokens": 4400,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.0
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 288,
+      "sse_content_preview": "{\n  \"spoken_response\": \"மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online பைத்தான் training-க்கு மொத்த கட்டணம் 4,999 rupees தான். இதுல job guarantee-யோ income promise-யோ கிடையாது, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online பைத்தான் training-க்கு மொத்த கட்டணம் 4,999 rupees தான். இதுல job guarantee-யோ income promise-யோ கிடையாது, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 81,
+        "prompt_tokens": 4200,
+        "total_tokens": 4281,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online பைத்தான் training-க்கு மொத்த கட்டணம் 4,999 rupees தான். இதுல job guarantee-யோ income promise-யோ கிடையாது, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8400,
+          "output_tokens": 281,
+          "total_tokens": 8681
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.093
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online பைத்தான் training-க்கு மொத்த கட்டணம் four thousand nine hundred ninety nine rupees தான். இதுல job guarantee-யோ income promise-யோ கிடையாது, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?",
+      "turn": 1,
+      "at": 3.0
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 2,
+      "at": 3.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.",
+      "spoken": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online பைத்தான் training-க்கு மொத்த கட்டணம் four thousand nine hundred ninety nine rupees தான். இதுல job guarantee-யோ income promise-யோ கிடையாது, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?",
+      "elapsed_s": 3.0,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 3.063,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "55d20520-774e-45c6-b416-9ace045e5967",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "ae8cf353089439c27e45453a9af5e7a4a7a728b4fb7af87c9e96059ba95608c8",
+  "prompt_chars": 18299,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "வணக்கம், நான் பிரைட் பாத் ஸ்கில்ஸ் நிறுவனத்திலிருந்து அனன்யா பேசுகிறேன். வயது பதினெட்டு மற்றும் அதற்கு மேற்பட்டவர்களுக்கான எங்கள் ஆறு வார ஆன்லைன் பைத்தான் பயிற்சி வகுப்பைப் பற்றி சொல்ல அழைக்கிறேன். இது பற்றி பேச இது சரியான நேரமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online பைத்தான் training-க்கு மொத்த கட்டணம் four thousand nine hundred ninety nine rupees தான். இதுல job guarantee-யோ income promise-யோ கிடையாது, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.063,
+  "hangup_count": 1
+}

@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ी service की ज़रूरत है?\nuser: अभी कुछ book या save मत कीजिए। पहले मेरा सवाल बताइए: साइकिल basic service और puncture repair की कीमत क्या है? क्या parts शामिल हैं?\nassistant: Basic service four hundred ninety nine rupees है और puncture repair one hundred twenty rupees है। Parts का charge approval के बाद ही लगेगा, पहले उसमें कुछ शामिल नहीं है। क्या आपको अभी इनमें से किसी service की ज़रूरत है?\nuser: मुझे basic service नहीं चाहिए, लेकिन puncture repair चाहिए। क्या मदद करेंगे?\nassistant: ठीक है, puncture repair one hundred twenty rupees में हो जाएगी। क्या मैं आपकी locality note कर लूँ enquiry के लिए?"
+}

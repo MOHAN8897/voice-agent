@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "you like to know more about?\nuser: Do not book or save anything yet. Answer this first: What are the sofa and kitchen cleaning prices, minimum seats, and is a visit already confirmed?\nassistant: Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats, and kitchen cleaning is one thousand five hundred ninety nine rupees total. A visit is not confirmed yet, and this call is only to share details.\nuser: Okay, thanks.\nassistant: No visit is confirmed yet, as an enquiry is only for team review. Would you like to share your preferred name and locality so we can note this down?"
+}

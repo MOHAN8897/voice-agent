@@ -1,0 +1,225 @@
+{
+  "key": "cleaning-kn-IN-none-2_future_interest",
+  "business": "cleaning",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "620b91b3-28c1-51e3-a355-209b23866181",
+  "call_id": "ff4527b4-8119-4e36-9fb9-553eb0c3025d",
+  "session_id": "audit-cleaning-kn-IN-none-2_future_interest-11acb18f",
+  "compiled_checksum": "f09999d11d3f678389e1d0fd2f449e21b4b76e5ac95de3f9dec0309d48a06d70",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 226,
+      "sse_content_preview": "ಖಂಡಿತ, ಸೋಫಾ ಕ್ಲೀನಿಂಗ್ ಪ್ರತಿ ಸೀಟಿಗೆ 349 ರೂಪಾಯಿ, ಕನಿಷ್ಠ 3 ಸೀಟುಗಳು ಇರಬೇಕು. ಕಿಚನ್ ಕ್ಲೀನಿಂಗ್ ಒಟ್ಟು 1599 ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಮುಂದಿನ ತಿಂಗಳ ಬಗ್ಗೆ enquiry submit ಮಾಡ್ಬೇಕಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality details ಹೇಳಿ.",
+      "sse_content_tail": "ಖಂಡಿತ, ಸೋಫಾ ಕ್ಲೀನಿಂಗ್ ಪ್ರತಿ ಸೀಟಿಗೆ 349 ರೂಪಾಯಿ, ಕನಿಷ್ಠ 3 ಸೀಟುಗಳು ಇರಬೇಕು. ಕಿಚನ್ ಕ್ಲೀನಿಂಗ್ ಒಟ್ಟು 1599 ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಮುಂದಿನ ತಿಂಗಳ ಬಗ್ಗೆ enquiry submit ಮಾಡ್ಬೇಕಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality details ಹೇಳಿ.",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 73,
+        "prompt_tokens": 4315,
+        "total_tokens": 4388,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಖಂಡಿತ, ಸೋಫಾ ಕ್ಲೀನಿಂಗ್ ಪ್ರತಿ ಸೀಟಿಗೆ 349 ರೂಪಾಯಿ, ಕನಿಷ್ಠ 3 ಸೀಟುಗಳು ಇರಬೇಕು. ಕಿಚನ್ ಕ್ಲೀನಿಂಗ್ ಒಟ್ಟು 1599 ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಮುಂದಿನ ತಿಂಗಳ ಬಗ್ಗೆ enquiry submit ಮಾಡ್ಬೇಕಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality details ಹೇಳಿ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4315,
+          "output_tokens": 73,
+          "total_tokens": 4388
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.703
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 128,
+      "sse_content_preview": "ಸರಿ, ನಮ್ಮ ಕೆಲಸದ ಸಮಯ ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ ಯಾವ service ಬಗ್ಗೆ ಹೆಚ್ಚಿನ details ಬೇಕು?",
+      "sse_content_tail": "ಸರಿ, ನಮ್ಮ ಕೆಲಸದ ಸಮಯ ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ ಯಾವ service ಬಗ್ಗೆ ಹೆಚ್ಚಿನ details ಬೇಕು?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 4405,
+        "total_tokens": 4444,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಮ್ಮ ಕೆಲಸದ ಸಮಯ ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ ಯಾವ service ಬಗ್ಗೆ ಹೆಚ್ಚಿನ details ಬೇಕು?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4405,
+          "output_tokens": 39,
+          "total_tokens": 4444
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.609
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ಸೋಫಾ ಕ್ಲೀನಿಂಗ್ ಪ್ರತಿ ಸೀಟಿಗೆ three hundred forty nine ರೂಪಾಯಿ, ಕನಿಷ್ಠ 3 ಸೀಟುಗಳು ಇರಬೇಕು. ಕಿಚನ್ ಕ್ಲೀನಿಂಗ್ ಒಟ್ಟು one thousand five hundred ninety nine ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality details ಹೇಳಿ.",
+      "turn": 1,
+      "at": 2.093
+    },
+    {
+      "text": "ಸರಿ, ನಮ್ಮ ಕೆಲಸದ ಸಮಯ ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ ಯಾವ service ಬಗ್ಗೆ ಹೆಚ್ಚಿನ details ಬೇಕು?",
+      "turn": 2,
+      "at": 4.218
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 3,
+      "at": 4.25
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ಈಗಿನ ಬೆಲೆ ಹೇಳಿ. ಏನನ್ನೂ book ಮಾಡಬೇಡಿ; ಇದನ್ನು ಶಾಶ್ವತ ನಿರಾಕರಣೆ ಎಂದು ಭಾವಿಸಬೇಡಿ.",
+      "spoken": "ಖಂಡಿತ, ಸೋಫಾ ಕ್ಲೀನಿಂಗ್ ಪ್ರತಿ ಸೀಟಿಗೆ three hundred forty nine ರೂಪಾಯಿ, ಕನಿಷ್ಠ 3 ಸೀಟುಗಳು ಇರಬೇಕು. ಕಿಚನ್ ಕ್ಲೀನಿಂಗ್ ಒಟ್ಟು one thousand five hundred ninety nine ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality details ಹೇಳಿ.",
+      "elapsed_s": 2.093,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "ಹೌದು, ಭವಿಷ್ಯದಲ್ಲಿ ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಾನು ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ. ಈ service ಬಗ್ಗೆ ಇನ್ನೇನು ತಿಳಿಯಬೇಕು?",
+      "spoken": "ಸರಿ, ನಮ್ಮ ಕೆಲಸದ ಸಮಯ ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ ಯಾವ service ಬಗ್ಗೆ ಹೆಚ್ಚಿನ details ಬೇಕು?",
+      "elapsed_s": 2.109,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 4.312,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "ff4527b4-8119-4e36-9fb9-553eb0c3025d",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "aa8320f545d811a579620af0982e0b4836e9dea40088a2fd3faab9bed66eb7c7",
+  "prompt_chars": 17874,
+  "opening_seeded": "ನಮಸ್ಕಾರ, ನಾನು FreshNest Cleaning ನಿಂದ Nila ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ನಾವು ಪುಣೆಯಲ್ಲಿ ಮಾತ್ರ ಸೇವೆ ಒದಗಿಸುತ್ತೇವೆ. ನಮ್ಮ ಸೇವೆಗಳು ಮತ್ತು ಬೆಲೆಗಳ ಬಗ್ಗೆ ನಿಮಗೆ ಮಾಹಿತಿ ನೀಡಲು ಇದು ಸೂಕ್ತ ಸಮಯವೇ?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ಖಂಡಿತ, ಸೋಫಾ ಕ್ಲೀನಿಂಗ್ ಪ್ರತಿ ಸೀಟಿಗೆ three hundred forty nine ರೂಪಾಯಿ, ಕನಿಷ್ಠ 3 ಸೀಟುಗಳು ಇರಬೇಕು. ಕಿಚನ್ ಕ್ಲೀನಿಂಗ್ ಒಟ್ಟು one thousand five hundred ninety nine ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಮುಂದಿನ ತಿಂಗಳ ಬಗ್ಗೆ enquiry submit ಮಾಡ್ಬೇಕಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality details ಹೇಳಿ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "ಸರಿ, ನಮ್ಮ ಕೆಲಸದ ಸಮಯ ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಇರುತ್ತೆ. ನಿಮಗೆ ಯಾವ service ಬಗ್ಗೆ ಹೆಚ್ಚಿನ details ಬೇಕು?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.312,
+  "hangup_count": 1,
+  "source_signature": "c44a3cd03c5d4a109180507df9ffef4b6b3d77909fa527eb1a8094caae494afe"
+}

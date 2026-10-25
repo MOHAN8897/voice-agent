@@ -1,0 +1,1 @@
+{"turn_seq": 1, "ts": "2026-10-25T17:06:33.559913Z", "source": "model", "operations": [{"op": "set_fact", "key": "caller_name", "value": "తీసేసి"}, {"op": "append_context", "value": "Caller shared contact details for the team to follow up."}], "applied": true, "validation_errors": []}

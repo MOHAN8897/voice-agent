@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "user_interested": "true",
+    "user_asked_price_terms": "true"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।\nassistant: ज़रूर, बताइए।\nuser: अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: Course की final fee, अवधि और class timings क्या हैं? क्या job guarantee है?\nassistant: ज़रूर, बताइए।\nuser: मुझे job guarantee नहीं चाहिए, लेकिन Python सीखने में दिलचस्पी है। Course समझाइए।\nassistant: ज़रूर, बताइए।"
+}

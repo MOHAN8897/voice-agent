@@ -1,0 +1,75 @@
+{
+  "key": "cleaning-te-IN-connected-3b_stop_contact",
+  "business": "cleaning",
+  "language": "te-IN",
+  "integration": true,
+  "scenario": "3b_stop_contact",
+  "agent_id": "c493e3a7-baed-557d-a3c5-869e16993cb5",
+  "call_id": "995a807c-0692-4d5b-893d-605fa7ba8836",
+  "session_id": "audit-cleaning-te-IN-connected-3b_stop_contact-1909b133",
+  "compiled_checksum": "b7e0ea7cc6d37b07f10be23918097b732b4a30180276f9754a53308cd87c6676",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 0.015
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "నాకు మళ్లీ call చేయకండి. భవిష్యత్తు calls నుంచి నా పేరు తీసేసి ఈ call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.062,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "995a807c-0692-4d5b-893d-605fa7ba8836",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "f10ab62a74d7cad422fa4a84beda6e6c2d242c651407990080d2be7c27658ffc",
+  "prompt_chars": 17763,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "హలో, నా పేరు నీల, ఫ్రెష్‌నెస్ట్ క్లీనింగ్ నుండి. మేము పూణేలో మాత్రమే క్లీనింగ్ సర్వీసులు అందిస్తున్నాము. మాట్లాడటానికి ఇది సరైన సమయమేనా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.062,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

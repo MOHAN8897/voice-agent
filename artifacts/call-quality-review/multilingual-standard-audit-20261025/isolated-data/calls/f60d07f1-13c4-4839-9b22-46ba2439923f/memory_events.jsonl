@@ -1,0 +1,5 @@
+{"turn_seq": 2, "ts": "2026-10-25T15:23:02.526845Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:23:03.456009Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:23:04.245054Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:23:04.247667Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.\nassistant: తప్పకుండా, చెప్పండి.\nuser: ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: మీరు wedding invitations కూడా print చేస్తారా? ధర, delivery time ఎంత?\nassistant: తప్పకుండా, చెప్పండి.\nuser: సరే అండి, ధన్యవాదాలు.\nassistant: తప్పకుండా, చెప్పండి."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-25T15:23:07.404869Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

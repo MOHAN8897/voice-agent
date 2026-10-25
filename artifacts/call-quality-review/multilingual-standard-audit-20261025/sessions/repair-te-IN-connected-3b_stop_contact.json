@@ -1,0 +1,74 @@
+{
+  "key": "repair-te-IN-connected-3b_stop_contact",
+  "business": "repair",
+  "language": "te-IN",
+  "integration": true,
+  "scenario": "3b_stop_contact",
+  "agent_id": "8a13b76e-3b56-5229-9138-5d6ae489e1dd",
+  "call_id": "1f878605-6b1c-4f03-a451-7b01ce354330",
+  "session_id": "audit-repair-te-IN-connected-3b_stop_contact-caaf94f9",
+  "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 0.0
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "నాకు మళ్లీ call చేయకండి. భవిష్యత్తు calls నుంచి నా పేరు తీసేసి ఈ call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.047,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "1f878605-6b1c-4f03-a451-7b01ce354330",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "e243b1242b187bff41cde6be4096f79418a7d0db0799a29cde907723c54d0f76",
+  "prompt_chars": 17818,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "నమస్కారం, నేను సేఫ్ ఫిక్స్ హోమ్ సర్వీస్ నుండి రవిని మాట్లాడుతున్నాను. మేము పూణేలో హోమ్ అప్లయన్స్ సర్వీస్ అందిస్తాము. మీ గృహోపకరణాల గురించి మీకు ఏమైనా సమాచారం కావాలా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.047,
+  "hangup_count": 1
+}

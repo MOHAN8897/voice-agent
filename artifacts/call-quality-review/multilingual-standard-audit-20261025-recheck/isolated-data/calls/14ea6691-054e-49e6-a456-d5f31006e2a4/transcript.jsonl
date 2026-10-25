@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T17:04:39.623354Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Visiting cards are twenty five rupees per card with a minimum order of one hundred cards. Wedding invitations are also available, but the quote depends on the design and quantity. We deliver to Pune by post in five working days after artwork approval.", "ts": "2026-10-25T17:04:43.231792Z", "brain_latency_ms": 3404}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?", "ts": "2026-10-25T17:04:43.259863Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Yes, we do print wedding invitations. The price depends on the design and quantity, as there is no fixed rate. Delivery to Pune takes five working days after artwork approval. Which type of card were you looking at, and how many do you need?", "ts": "2026-10-25T17:04:46.584429Z", "brain_latency_ms": 3150}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-25T17:04:46.594008Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "You're welcome. Which type of card are you looking at, visiting cards or wedding invitations, and how many do you need?", "ts": "2026-10-25T17:04:48.552795Z", "brain_latency_ms": 1820}
+{"seq": 7, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T17:04:48.568570Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T17:04:48.578777Z", "brain_latency_ms": 1}

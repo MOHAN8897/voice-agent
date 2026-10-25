@@ -1,0 +1,238 @@
+{
+  "key": "repair-ta-IN-none-4_abuse",
+  "business": "repair",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "1282a9a2-f811-5ecc-bd00-99104492e625",
+  "call_id": "6b139e86-8667-4bbb-bf3d-579198b6582c",
+  "session_id": "audit-repair-ta-IN-none-4_abuse-0f07814a",
+  "compiled_checksum": "b94a67ef0f87a659a7f534bc6b51612637b1d339cd81987c110d1bd3ae7c7766",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 354,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"action_claimed\": \"none\"\n  ,\n  \"spoken_response\": \"\"\n  ,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"action_claimed\": \"none\"\n  ,\n  \"spoken_response\": \"\"\n  ,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 133,
+        "prompt_tokens": 3982,
+        "total_tokens": 4115,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 0.781
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 213,
+      "sse_content_preview": "{\n  \"spoken_response\": \"மன்னிக்கவும், கோபப்பட வேண்டாம். AC basic servicing 699 rupees, fridge inspection 399 rupees. Parts extra aagum, inspectionku aprom dhan fixed quote solla mudiyum. Ungalukku visit venuma?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"மன்னிக்கவும், கோபப்பட வேண்டாம். AC basic servicing 699 rupees, fridge inspection 399 rupees. Parts extra aagum, inspectionku aprom dhan fixed quote solla mudiyum. Ungalukku visit venuma?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 66,
+        "prompt_tokens": 3982,
+        "total_tokens": 4048,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "மன்னிக்கவும், கோபப்பட வேண்டாம். AC basic servicing 699 rupees, fridge inspection 399 rupees. Parts extra aagum, inspectionku aprom dhan fixed quote solla mudiyum. Ungalukku visit venuma?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 7964,
+          "output_tokens": 199,
+          "total_tokens": 8163
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.797
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 287,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n,   \"action_claimed\": \"none\"  , \n\"spoken_response\": \"\" \n,   \"memory_update\": { \"operations\": []  } \n}",
+      "sse_content_tail": "{ \"end_call\": { \"evidence\": \"நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n,   \"action_claimed\": \"none\"  , \n\"spoken_response\": \"\" \n,   \"memory_update\": { \"operations\": []  } \n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 105,
+        "prompt_tokens": 4032,
+        "total_tokens": 4137,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.0
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 25,
+      "sse_content_preview": "{ \"spoken_response\": \"\" }",
+      "sse_content_tail": "{ \"spoken_response\": \"\" }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 9,
+        "prompt_tokens": 4032,
+        "total_tokens": 4041,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 0.594
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "மன்னிக்கவும், கோபப்பட வேண்டாம். AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Parts extra aagum, inspectionku aprom dhan fixed quote solla mudiyum. Ungalukku visit venuma?",
+      "turn": 1,
+      "at": 1.578
+    },
+    {
+      "text": "மன்னிக்கவும், எங்களுக்கு ஒரு தொழில்நுட்பச் சிக்கல் உள்ளது. தயவுசெய்து எங்களை மீண்டும் அழைக்கவும். நன்றி.",
+      "turn": 2,
+      "at": 3.187
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.",
+      "spoken": "மன்னிக்கவும், கோபப்பட வேண்டாம். AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Parts extra aagum, inspectionku aprom dhan fixed quote solla mudiyum. Ungalukku visit venuma?",
+      "elapsed_s": 1.563,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+      "spoken": "மன்னிக்கவும், எங்களுக்கு ஒரு தொழில்நுட்பச் சிக்கல் உள்ளது. தயவுசெய்து எங்களை மீண்டும் அழைக்கவும். நன்றி.",
+      "elapsed_s": 1.672,
+      "requests": 2,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 3.25,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "6b139e86-8667-4bbb-bf3d-579198b6582c",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "0016676bd505a7f0e5781127962353681320bed078bba7d94af25bea214053ef",
+  "prompt_chars": 17257,
+  "opening_seeded": "Vanakkam, naan Ravi pesuren SafeFix Home Serviceilirundhu. Ungalukku engaloda appliance service mattum pricing pathi therinjika mudiyuma?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "மன்னிக்கவும், கோபப்பட வேண்டாம். AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Parts extra aagum, inspectionku aprom dhan fixed quote solla mudiyum. Ungalukku visit venuma?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.265,
+  "hangup_count": 1
+}

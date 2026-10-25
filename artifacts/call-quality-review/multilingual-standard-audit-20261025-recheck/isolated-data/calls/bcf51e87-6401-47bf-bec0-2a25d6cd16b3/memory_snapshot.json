@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_name": "still",
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "'t treat it as done.\nuser: Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?\nassistant: AC basic servicing is six hundred ninety nine rupees and fridge inspection is three hundred ninety nine rupees. For repairs, parts are extra only after your approval and we don't give a fixed quote before inspection. We are open Monday to Saturday from 9am to 6pm. Which appliance do you need help with?\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

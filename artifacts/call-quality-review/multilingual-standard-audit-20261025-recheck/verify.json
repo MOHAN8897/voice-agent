@@ -1,0 +1,2746 @@
+{
+  "overall": {
+    "sessions": 234,
+    "harness_completed": 234,
+    "reached_turns": 606,
+    "planned_turns": 676,
+    "question_turns": 235,
+    "question_turns_substantive": 209,
+    "question_turns_canned": 26,
+    "canned_breakdown": {
+      "technical_farewell": 34,
+      "unconfirmed_action": 5,
+      "generic_continuation": 3
+    },
+    "question_canned_cases": [
+      [
+        "course-en-IN-connected-2_future_interest",
+        2,
+        "future_more",
+        "technical_farewell"
+      ],
+      [
+        "course-ta-IN-connected-5_diversion_danger",
+        2,
+        "details",
+        "technical_farewell"
+      ],
+      [
+        "course-ta-IN-none-1_interested",
+        1,
+        "interested",
+        "technical_farewell"
+      ],
+      [
+        "course-te-IN-none-5_diversion_danger",
+        2,
+        "details",
+        "generic_continuation"
+      ],
+      [
+        "print-hi-IN-connected-1_interested",
+        2,
+        "details",
+        "technical_farewell"
+      ],
+      [
+        "print-kn-IN-connected-2_future_interest",
+        1,
+        "future",
+        "technical_farewell"
+      ],
+      [
+        "print-ta-IN-none-1_interested",
+        3,
+        "alternate",
+        "unconfirmed_action"
+      ],
+      [
+        "repair-hi-IN-connected-2_future_interest",
+        1,
+        "future",
+        "technical_farewell"
+      ],
+      [
+        "repair-hi-IN-connected-5_diversion_danger",
+        2,
+        "details",
+        "technical_farewell"
+      ],
+      [
+        "repair-hi-IN-connected-5b_direct_danger",
+        2,
+        "return",
+        "technical_farewell"
+      ],
+      [
+        "repair-hi-IN-none-2_future_interest",
+        1,
+        "future",
+        "technical_farewell"
+      ],
+      [
+        "repair-kn-IN-connected-2_future_interest",
+        1,
+        "future",
+        "technical_farewell"
+      ],
+      [
+        "repair-kn-IN-none-2_future_interest",
+        1,
+        "future",
+        "technical_farewell"
+      ],
+      [
+        "repair-kn-IN-none-5b_direct_danger",
+        2,
+        "return",
+        "technical_farewell"
+      ],
+      [
+        "repair-ta-IN-connected-1_interested",
+        3,
+        "alternate",
+        "technical_farewell"
+      ],
+      [
+        "repair-ta-IN-connected-2_future_interest",
+        1,
+        "future",
+        "technical_farewell"
+      ],
+      [
+        "repair-ta-IN-connected-5_diversion_danger",
+        2,
+        "details",
+        "technical_farewell"
+      ],
+      [
+        "repair-ta-IN-connected-5b_direct_danger",
+        2,
+        "return",
+        "technical_farewell"
+      ],
+      [
+        "repair-ta-IN-connected-6_hangup",
+        1,
+        "interested",
+        "technical_farewell"
+      ],
+      [
+        "repair-ta-IN-none-2_future_interest",
+        1,
+        "future",
+        "technical_farewell"
+      ],
+      [
+        "repair-te-IN-connected-1_interested",
+        1,
+        "interested",
+        "technical_farewell"
+      ],
+      [
+        "repair-te-IN-connected-2_future_interest",
+        1,
+        "future",
+        "technical_farewell"
+      ],
+      [
+        "repair-te-IN-connected-6_hangup",
+        1,
+        "interested",
+        "technical_farewell"
+      ],
+      [
+        "repair-te-IN-none-2_future_interest",
+        1,
+        "future",
+        "technical_farewell"
+      ],
+      [
+        "repair-te-IN-none-5_diversion_danger",
+        2,
+        "details",
+        "generic_continuation"
+      ],
+      [
+        "repair-te-IN-none-5b_direct_danger",
+        2,
+        "return",
+        "technical_farewell"
+      ]
+    ],
+    "generic_continuation_turns": 3,
+    "technical_farewell_turns": 34,
+    "unconfirmed_replacement_turns": 5,
+    "sessions_ended": 234,
+    "duplicate_hangup_sessions": 0,
+    "explicit_end_turns": 200,
+    "explicit_end_not_closed": [],
+    "nonterminal_close_turns": [
+      [
+        "course-en-IN-connected-1_interested",
+        4,
+        "request"
+      ],
+      [
+        "course-en-IN-connected-1b_direct_tool_request",
+        1,
+        "request"
+      ],
+      [
+        "course-en-IN-connected-2_future_interest",
+        2,
+        "future_more"
+      ],
+      [
+        "course-en-IN-connected-5_diversion_danger",
+        1,
+        "divert"
+      ],
+      [
+        "course-en-IN-connected-5b_direct_danger",
+        1,
+        "danger"
+      ],
+      [
+        "course-en-IN-none-1b_direct_tool_request",
+        1,
+        "request"
+      ],
+      [
+        "course-ta-IN-connected-5_diversion_danger",
+        2,
+        "details"
+      ],
+      [
+        "course-ta-IN-none-1_interested",
+        1,
+        "interested"
+      ],
+      [
+        "print-hi-IN-connected-1_interested",
+        2,
+        "details"
+      ],
+      [
+        "print-hi-IN-connected-4_abuse",
+        1,
+        "abuse_mild"
+      ],
+      [
+        "print-kn-IN-connected-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "print-kn-IN-connected-4_abuse",
+        1,
+        "abuse_mild"
+      ],
+      [
+        "print-kn-IN-connected-5b_direct_danger",
+        1,
+        "danger"
+      ],
+      [
+        "print-ta-IN-connected-4_abuse",
+        1,
+        "abuse_mild"
+      ],
+      [
+        "repair-hi-IN-connected-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "repair-hi-IN-connected-5_diversion_danger",
+        2,
+        "details"
+      ],
+      [
+        "repair-hi-IN-connected-5b_direct_danger",
+        2,
+        "return"
+      ],
+      [
+        "repair-hi-IN-none-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "repair-kn-IN-connected-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "repair-kn-IN-connected-6_hangup",
+        3,
+        "ack"
+      ],
+      [
+        "repair-kn-IN-none-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "repair-kn-IN-none-5b_direct_danger",
+        2,
+        "return"
+      ],
+      [
+        "repair-ta-IN-connected-1_interested",
+        3,
+        "alternate"
+      ],
+      [
+        "repair-ta-IN-connected-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "repair-ta-IN-connected-5_diversion_danger",
+        2,
+        "details"
+      ],
+      [
+        "repair-ta-IN-connected-5b_direct_danger",
+        2,
+        "return"
+      ],
+      [
+        "repair-ta-IN-connected-6_hangup",
+        1,
+        "interested"
+      ],
+      [
+        "repair-ta-IN-none-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "repair-te-IN-connected-1_interested",
+        1,
+        "interested"
+      ],
+      [
+        "repair-te-IN-connected-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "repair-te-IN-connected-5_diversion_danger",
+        1,
+        "divert"
+      ],
+      [
+        "repair-te-IN-connected-6_hangup",
+        1,
+        "interested"
+      ],
+      [
+        "repair-te-IN-none-2_future_interest",
+        1,
+        "future"
+      ],
+      [
+        "repair-te-IN-none-5b_direct_danger",
+        2,
+        "return"
+      ]
+    ],
+    "tool_executions": 22,
+    "connected_sessions_with_tool": 22,
+    "tool_calls_outside_request_scenario": [
+      [
+        "course-en-IN-connected-1_interested",
+        {
+          "name": "CRM_CREATE_ENQUIRY",
+          "arguments": {
+            "name": "Audit Customer",
+            "email": "audit.customer@example.invalid",
+            "request": "Interested in adult beginner Python course, 6 weeks online weekdays 7pm-8pm. Requested demo/counselling for tomorrow at 3pm.",
+            "preferred_time": "tomorrow at 3pm"
+          },
+          "turn": 4
+        }
+      ],
+      [
+        "course-hi-IN-connected-1_interested",
+        {
+          "name": "CRM_CREATE_ENQUIRY",
+          "arguments": {
+            "name": "Audit Customer",
+            "email": "audit.customer@example.invalid",
+            "request": "Enquiry for adult beginner Python course review",
+            "preferred_time": "kal dopahar 3 baje"
+          },
+          "turn": 4
+        }
+      ],
+      [
+        "course-ta-IN-connected-1_interested",
+        {
+          "name": "CRM_CREATE_ENQUIRY",
+          "arguments": {
+            "name": "Audit Customer",
+            "email": "audit.customer@example.invalid",
+            "request": "Interested in adult beginner Python course, 6 weeks online, weekdays 7pm-8pm.",
+            "preferred_time": "Tomorrow afternoon 3pm"
+          },
+          "turn": 4
+        }
+      ],
+      [
+        "course-te-IN-connected-1_interested",
+        {
+          "name": "CRM_CREATE_ENQUIRY",
+          "arguments": {
+            "name": "Audit Customer",
+            "email": "audit.customer@example.invalid",
+            "request": "Interested in adult beginner Python course. Preferred time: tomorrow 3 PM.",
+            "preferred_time": "tomorrow 3 PM"
+          },
+          "turn": 4
+        }
+      ],
+      [
+        "print-en-IN-connected-1_interested",
+        {
+          "name": "CRM_CREATE_ENQUIRY",
+          "arguments": {
+            "name": "Audit Customer",
+            "email": "audit.customer@example.invalid",
+            "request": "Wedding invitations quote request",
+            "preferred_time": "tomorrow at 3pm"
+          },
+          "turn": 4
+        }
+      ],
+      [
+        "print-kn-IN-connected-1_interested",
+        {
+          "name": "CRM_CREATE_ENQUIRY",
+          "arguments": {
+            "name": "Audit Customer",
+            "email": "audit.customer@example.invalid",
+            "request": "Wedding invitations - design and quantity to be decided, quote required",
+            "preferred_time": "Tomorrow afternoon 3 PM"
+          },
+          "turn": 4
+        }
+      ],
+      [
+        "print-ta-IN-connected-1_interested",
+        {
+          "name": "CRM_CREATE_ENQUIRY",
+          "arguments": {
+            "name": "Audit Customer",
+            "email": "audit.customer@example.invalid",
+            "request": "Wedding invitations enquiry",
+            "preferred_time": "Tomorrow afternoon 3 PM"
+          },
+          "turn": 4
+        }
+      ],
+      [
+        "repair-en-IN-connected-1_interested",
+        {
+          "name": "CRM_CREATE_ENQUIRY",
+          "arguments": {
+            "name": "Audit Customer",
+            "email": "audit.customer@example.invalid",
+            "request": "Fridge inspection",
+            "preferred_time": "Tomorrow at 3pm"
+          },
+          "turn": 4
+        }
+      ],
+      [
+        "repair-hi-IN-connected-1_interested",
+        {
+          "name": "CRM_CREATE_ENQUIRY",
+          "arguments": {
+            "name": "Audit Customer",
+            "email": "audit.customer@example.invalid",
+            "request": "Fridge inspection enquiry for team review",
+            "preferred_time": "kal dopahar 3 baje"
+          },
+          "turn": 4
+        }
+      ],
+      [
+        "repair-kn-IN-connected-1_interested",
+        {
+          "name": "CRM_CREATE_ENQUIRY",
+          "arguments": {
+            "name": "Audit Customer",
+            "email": "audit.customer@example.invalid",
+            "request": "Fridge inspection service request. Preferred time: tomorrow afternoon 3 PM.",
+            "preferred_time": "tomorrow afternoon 3 PM"
+          },
+          "turn": 4
+        }
+      ]
+    ],
+    "request_turns_without_tool_when_connected": [
+      "course-en-IN-connected-1b_direct_tool_request"
+    ],
+    "request_claims_without_integration": [],
+    "finish_reasons": {
+      "whitespace_stall": 155,
+      "stop": 468,
+      "tool_calls": 10,
+      "None": 17,
+      "length": 7,
+      "whitespace_tail": 1
+    },
+    "incomplete_turn_errors": 265,
+    "whitespace_tail_requests": 7,
+    "long_or_cut_replies": 0,
+    "close_gate_rejections": {
+      "continue": 244,
+      "accepted": 200,
+      "remaining_request": 64,
+      "evidence_not_quoted": 23,
+      "user_asked_question": 26,
+      "lead_details_missing": 4,
+      "open_question": 6,
+      "caller_engaged": 4,
+      "no_evidence": 1
+    },
+    "caller_turn_latency_median_s": 1.844,
+    "caller_turn_latency_p95_s": 4.203
+  },
+  "by_language": {
+    "en-IN": {
+      "sessions": 54,
+      "harness_completed": 54,
+      "reached_turns": 146,
+      "planned_turns": 156,
+      "question_turns": 57,
+      "question_turns_substantive": 56,
+      "question_turns_canned": 1,
+      "canned_breakdown": {
+        "technical_farewell": 6,
+        "generic_continuation": 1
+      },
+      "question_canned_cases": [
+        [
+          "course-en-IN-connected-2_future_interest",
+          2,
+          "future_more",
+          "technical_farewell"
+        ]
+      ],
+      "generic_continuation_turns": 1,
+      "technical_farewell_turns": 6,
+      "unconfirmed_replacement_turns": 0,
+      "sessions_ended": 54,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 48,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "course-en-IN-connected-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "course-en-IN-connected-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-en-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "course-en-IN-connected-5_diversion_danger",
+          1,
+          "divert"
+        ],
+        [
+          "course-en-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "course-en-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ]
+      ],
+      "tool_executions": 5,
+      "connected_sessions_with_tool": 5,
+      "tool_calls_outside_request_scenario": [
+        [
+          "course-en-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Interested in adult beginner Python course, 6 weeks online weekdays 7pm-8pm. Requested demo/counselling for tomorrow at 3pm.",
+              "preferred_time": "tomorrow at 3pm"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "print-en-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Wedding invitations quote request",
+              "preferred_time": "tomorrow at 3pm"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "repair-en-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Fridge inspection",
+              "preferred_time": "Tomorrow at 3pm"
+            },
+            "turn": 4
+          }
+        ]
+      ],
+      "request_turns_without_tool_when_connected": [
+        "course-en-IN-connected-1b_direct_tool_request"
+      ],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "whitespace_stall": 45,
+        "stop": 99,
+        "tool_calls": 3,
+        "None": 4,
+        "length": 2,
+        "whitespace_tail": 1
+      },
+      "incomplete_turn_errors": 60,
+      "whitespace_tail_requests": 2,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "continue": 70,
+        "accepted": 48,
+        "remaining_request": 12,
+        "caller_engaged": 4,
+        "evidence_not_quoted": 4,
+        "no_evidence": 1,
+        "user_asked_question": 1
+      },
+      "caller_turn_latency_median_s": 1.711,
+      "caller_turn_latency_p95_s": 3.609
+    },
+    "hi-IN": {
+      "sessions": 54,
+      "harness_completed": 54,
+      "reached_turns": 144,
+      "planned_turns": 156,
+      "question_turns": 56,
+      "question_turns_substantive": 51,
+      "question_turns_canned": 5,
+      "canned_breakdown": {
+        "unconfirmed_action": 3,
+        "technical_farewell": 6
+      },
+      "question_canned_cases": [
+        [
+          "print-hi-IN-connected-1_interested",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "repair-hi-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-hi-IN-connected-5_diversion_danger",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "repair-hi-IN-connected-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ],
+        [
+          "repair-hi-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ]
+      ],
+      "generic_continuation_turns": 0,
+      "technical_farewell_turns": 6,
+      "unconfirmed_replacement_turns": 3,
+      "sessions_ended": 54,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 48,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "print-hi-IN-connected-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "print-hi-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-hi-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-hi-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-hi-IN-connected-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-hi-IN-none-2_future_interest",
+          1,
+          "future"
+        ]
+      ],
+      "tool_executions": 5,
+      "connected_sessions_with_tool": 5,
+      "tool_calls_outside_request_scenario": [
+        [
+          "course-hi-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Enquiry for adult beginner Python course review",
+              "preferred_time": "kal dopahar 3 baje"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "repair-hi-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Fridge inspection enquiry for team review",
+              "preferred_time": "kal dopahar 3 baje"
+            },
+            "turn": 4
+          }
+        ]
+      ],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "whitespace_stall": 38,
+        "stop": 122,
+        "tool_calls": 2,
+        "None": 3,
+        "length": 1
+      },
+      "incomplete_turn_errors": 72,
+      "whitespace_tail_requests": 1,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "continue": 63,
+        "evidence_not_quoted": 9,
+        "accepted": 48,
+        "user_asked_question": 7,
+        "lead_details_missing": 4,
+        "remaining_request": 7
+      },
+      "caller_turn_latency_median_s": 2.156,
+      "caller_turn_latency_p95_s": 4.109
+    },
+    "kn-IN": {
+      "sessions": 36,
+      "harness_completed": 36,
+      "reached_turns": 93,
+      "planned_turns": 104,
+      "question_turns": 36,
+      "question_turns_substantive": 32,
+      "question_turns_canned": 4,
+      "canned_breakdown": {
+        "technical_farewell": 7
+      },
+      "question_canned_cases": [
+        [
+          "print-kn-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-kn-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-kn-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-kn-IN-none-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ]
+      ],
+      "generic_continuation_turns": 0,
+      "technical_farewell_turns": 7,
+      "unconfirmed_replacement_turns": 0,
+      "sessions_ended": 36,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 29,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "print-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "print-kn-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "print-kn-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "repair-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-connected-6_hangup",
+          3,
+          "ack"
+        ],
+        [
+          "repair-kn-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-none-5b_direct_danger",
+          2,
+          "return"
+        ]
+      ],
+      "tool_executions": 4,
+      "connected_sessions_with_tool": 4,
+      "tool_calls_outside_request_scenario": [
+        [
+          "print-kn-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Wedding invitations - design and quantity to be decided, quote required",
+              "preferred_time": "Tomorrow afternoon 3 PM"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "repair-kn-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Fridge inspection service request. Preferred time: tomorrow afternoon 3 PM.",
+              "preferred_time": "tomorrow afternoon 3 PM"
+            },
+            "turn": 4
+          }
+        ]
+      ],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "whitespace_stall": 25,
+        "stop": 78,
+        "tool_calls": 2,
+        "length": 1,
+        "None": 3
+      },
+      "incomplete_turn_errors": 45,
+      "whitespace_tail_requests": 1,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "evidence_not_quoted": 4,
+        "continue": 36,
+        "remaining_request": 12,
+        "accepted": 29,
+        "user_asked_question": 2,
+        "open_question": 3
+      },
+      "caller_turn_latency_median_s": 2.047,
+      "caller_turn_latency_p95_s": 5.031
+    },
+    "ta-IN": {
+      "sessions": 54,
+      "harness_completed": 54,
+      "reached_turns": 135,
+      "planned_turns": 156,
+      "question_turns": 53,
+      "question_turns_substantive": 44,
+      "question_turns_canned": 9,
+      "canned_breakdown": {
+        "technical_farewell": 9,
+        "unconfirmed_action": 2
+      },
+      "question_canned_cases": [
+        [
+          "course-ta-IN-connected-5_diversion_danger",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "course-ta-IN-none-1_interested",
+          1,
+          "interested",
+          "technical_farewell"
+        ],
+        [
+          "print-ta-IN-none-1_interested",
+          3,
+          "alternate",
+          "unconfirmed_action"
+        ],
+        [
+          "repair-ta-IN-connected-1_interested",
+          3,
+          "alternate",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-5_diversion_danger",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-6_hangup",
+          1,
+          "interested",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ]
+      ],
+      "generic_continuation_turns": 0,
+      "technical_farewell_turns": 9,
+      "unconfirmed_replacement_turns": 2,
+      "sessions_ended": 54,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 45,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "course-ta-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "course-ta-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "print-ta-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-ta-IN-connected-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "repair-ta-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-ta-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-ta-IN-connected-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-ta-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-ta-IN-none-2_future_interest",
+          1,
+          "future"
+        ]
+      ],
+      "tool_executions": 5,
+      "connected_sessions_with_tool": 5,
+      "tool_calls_outside_request_scenario": [
+        [
+          "course-ta-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Interested in adult beginner Python course, 6 weeks online, weekdays 7pm-8pm.",
+              "preferred_time": "Tomorrow afternoon 3pm"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "print-ta-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Wedding invitations enquiry",
+              "preferred_time": "Tomorrow afternoon 3 PM"
+            },
+            "turn": 4
+          }
+        ]
+      ],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "stop": 102,
+        "whitespace_stall": 30,
+        "tool_calls": 2,
+        "None": 4,
+        "length": 3
+      },
+      "incomplete_turn_errors": 56,
+      "whitespace_tail_requests": 3,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "continue": 50,
+        "user_asked_question": 8,
+        "accepted": 45,
+        "remaining_request": 18,
+        "evidence_not_quoted": 5
+      },
+      "caller_turn_latency_median_s": 1.719,
+      "caller_turn_latency_p95_s": 4.36
+    },
+    "te-IN": {
+      "sessions": 36,
+      "harness_completed": 36,
+      "reached_turns": 88,
+      "planned_turns": 104,
+      "question_turns": 33,
+      "question_turns_substantive": 26,
+      "question_turns_canned": 7,
+      "canned_breakdown": {
+        "generic_continuation": 2,
+        "technical_farewell": 6
+      },
+      "question_canned_cases": [
+        [
+          "course-te-IN-none-5_diversion_danger",
+          2,
+          "details",
+          "generic_continuation"
+        ],
+        [
+          "repair-te-IN-connected-1_interested",
+          1,
+          "interested",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-connected-6_hangup",
+          1,
+          "interested",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-none-5_diversion_danger",
+          2,
+          "details",
+          "generic_continuation"
+        ],
+        [
+          "repair-te-IN-none-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ]
+      ],
+      "generic_continuation_turns": 2,
+      "technical_farewell_turns": 6,
+      "unconfirmed_replacement_turns": 0,
+      "sessions_ended": 36,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 30,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "repair-te-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-te-IN-connected-5_diversion_danger",
+          1,
+          "divert"
+        ],
+        [
+          "repair-te-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-te-IN-none-5b_direct_danger",
+          2,
+          "return"
+        ]
+      ],
+      "tool_executions": 3,
+      "connected_sessions_with_tool": 3,
+      "tool_calls_outside_request_scenario": [
+        [
+          "course-te-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Interested in adult beginner Python course. Preferred time: tomorrow 3 PM.",
+              "preferred_time": "tomorrow 3 PM"
+            },
+            "turn": 4
+          }
+        ]
+      ],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "stop": 67,
+        "tool_calls": 1,
+        "whitespace_stall": 17,
+        "None": 3
+      },
+      "incomplete_turn_errors": 32,
+      "whitespace_tail_requests": 0,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "remaining_request": 15,
+        "user_asked_question": 8,
+        "open_question": 3,
+        "accepted": 30,
+        "continue": 25,
+        "evidence_not_quoted": 1
+      },
+      "caller_turn_latency_median_s": 1.696,
+      "caller_turn_latency_p95_s": 3.594
+    }
+  },
+  "by_scenario": {
+    "1_interested": {
+      "sessions": 26,
+      "harness_completed": 26,
+      "reached_turns": 116,
+      "planned_turns": 130,
+      "question_turns": 73,
+      "question_turns_substantive": 68,
+      "question_turns_canned": 5,
+      "canned_breakdown": {
+        "technical_farewell": 5,
+        "unconfirmed_action": 2
+      },
+      "question_canned_cases": [
+        [
+          "course-ta-IN-none-1_interested",
+          1,
+          "interested",
+          "technical_farewell"
+        ],
+        [
+          "print-hi-IN-connected-1_interested",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "print-ta-IN-none-1_interested",
+          3,
+          "alternate",
+          "unconfirmed_action"
+        ],
+        [
+          "repair-ta-IN-connected-1_interested",
+          3,
+          "alternate",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-connected-1_interested",
+          1,
+          "interested",
+          "technical_farewell"
+        ]
+      ],
+      "generic_continuation_turns": 0,
+      "technical_farewell_turns": 5,
+      "unconfirmed_replacement_turns": 2,
+      "sessions_ended": 26,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 21,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "course-en-IN-connected-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "course-ta-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "print-hi-IN-connected-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "repair-ta-IN-connected-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "repair-te-IN-connected-1_interested",
+          1,
+          "interested"
+        ]
+      ],
+      "tool_executions": 10,
+      "connected_sessions_with_tool": 10,
+      "tool_calls_outside_request_scenario": [
+        [
+          "course-en-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Interested in adult beginner Python course, 6 weeks online weekdays 7pm-8pm. Requested demo/counselling for tomorrow at 3pm.",
+              "preferred_time": "tomorrow at 3pm"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "course-hi-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Enquiry for adult beginner Python course review",
+              "preferred_time": "kal dopahar 3 baje"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "course-ta-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Interested in adult beginner Python course, 6 weeks online, weekdays 7pm-8pm.",
+              "preferred_time": "Tomorrow afternoon 3pm"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "course-te-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Interested in adult beginner Python course. Preferred time: tomorrow 3 PM.",
+              "preferred_time": "tomorrow 3 PM"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "print-en-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Wedding invitations quote request",
+              "preferred_time": "tomorrow at 3pm"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "print-kn-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Wedding invitations - design and quantity to be decided, quote required",
+              "preferred_time": "Tomorrow afternoon 3 PM"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "print-ta-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Wedding invitations enquiry",
+              "preferred_time": "Tomorrow afternoon 3 PM"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "repair-en-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Fridge inspection",
+              "preferred_time": "Tomorrow at 3pm"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "repair-hi-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Fridge inspection enquiry for team review",
+              "preferred_time": "kal dopahar 3 baje"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "repair-kn-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Fridge inspection service request. Preferred time: tomorrow afternoon 3 PM.",
+              "preferred_time": "tomorrow afternoon 3 PM"
+            },
+            "turn": 4
+          }
+        ]
+      ],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "whitespace_stall": 42,
+        "stop": 96,
+        "tool_calls": 10,
+        "None": 4
+      },
+      "incomplete_turn_errors": 58,
+      "whitespace_tail_requests": 0,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "continue": 55,
+        "remaining_request": 19,
+        "accepted": 21,
+        "evidence_not_quoted": 3,
+        "lead_details_missing": 2,
+        "user_asked_question": 7,
+        "open_question": 2,
+        "caller_engaged": 2
+      },
+      "caller_turn_latency_median_s": 2.289,
+      "caller_turn_latency_p95_s": 4.015
+    },
+    "1b_direct_tool_request": {
+      "sessions": 26,
+      "harness_completed": 26,
+      "reached_turns": 50,
+      "planned_turns": 52,
+      "question_turns": 0,
+      "question_turns_substantive": 0,
+      "question_turns_canned": 0,
+      "canned_breakdown": {
+        "technical_farewell": 2,
+        "unconfirmed_action": 3
+      },
+      "question_canned_cases": [],
+      "generic_continuation_turns": 0,
+      "technical_farewell_turns": 2,
+      "unconfirmed_replacement_turns": 3,
+      "sessions_ended": 26,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 24,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "course-en-IN-connected-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-en-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ]
+      ],
+      "tool_executions": 12,
+      "connected_sessions_with_tool": 12,
+      "tool_calls_outside_request_scenario": [],
+      "request_turns_without_tool_when_connected": [
+        "course-en-IN-connected-1b_direct_tool_request"
+      ],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "None": 1,
+        "stop": 27,
+        "whitespace_stall": 10
+      },
+      "incomplete_turn_errors": 13,
+      "whitespace_tail_requests": 0,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "evidence_not_quoted": 6,
+        "accepted": 24,
+        "remaining_request": 3,
+        "continue": 13,
+        "open_question": 2
+      },
+      "caller_turn_latency_median_s": 0.656,
+      "caller_turn_latency_p95_s": 2.921
+    },
+    "2_future_interest": {
+      "sessions": 26,
+      "harness_completed": 26,
+      "reached_turns": 59,
+      "planned_turns": 78,
+      "question_turns": 43,
+      "question_turns_substantive": 33,
+      "question_turns_canned": 10,
+      "canned_breakdown": {
+        "technical_farewell": 10
+      },
+      "question_canned_cases": [
+        [
+          "course-en-IN-connected-2_future_interest",
+          2,
+          "future_more",
+          "technical_farewell"
+        ],
+        [
+          "print-kn-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-hi-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-hi-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-kn-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-kn-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ]
+      ],
+      "generic_continuation_turns": 0,
+      "technical_farewell_turns": 10,
+      "unconfirmed_replacement_turns": 0,
+      "sessions_ended": 26,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 16,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "course-en-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "print-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-hi-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-hi-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-ta-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-ta-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-te-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-te-IN-none-2_future_interest",
+          1,
+          "future"
+        ]
+      ],
+      "tool_executions": 0,
+      "connected_sessions_with_tool": 0,
+      "tool_calls_outside_request_scenario": [],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "whitespace_stall": 29,
+        "stop": 40,
+        "None": 2
+      },
+      "incomplete_turn_errors": 34,
+      "whitespace_tail_requests": 0,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "continue": 17,
+        "accepted": 16,
+        "remaining_request": 15,
+        "lead_details_missing": 1
+      },
+      "caller_turn_latency_median_s": 2.063,
+      "caller_turn_latency_p95_s": 4.5
+    },
+    "3_complete_rejection": {
+      "sessions": 26,
+      "harness_completed": 26,
+      "reached_turns": 26,
+      "planned_turns": 26,
+      "question_turns": 0,
+      "question_turns_substantive": 0,
+      "question_turns_canned": 0,
+      "canned_breakdown": {},
+      "question_canned_cases": [],
+      "generic_continuation_turns": 0,
+      "technical_farewell_turns": 0,
+      "unconfirmed_replacement_turns": 0,
+      "sessions_ended": 26,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 26,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [],
+      "tool_executions": 0,
+      "connected_sessions_with_tool": 0,
+      "tool_calls_outside_request_scenario": [],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {},
+      "incomplete_turn_errors": 0,
+      "whitespace_tail_requests": 0,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "accepted": 26
+      },
+      "caller_turn_latency_median_s": 0.063,
+      "caller_turn_latency_p95_s": 0.406
+    },
+    "3b_stop_contact": {
+      "sessions": 26,
+      "harness_completed": 26,
+      "reached_turns": 26,
+      "planned_turns": 26,
+      "question_turns": 0,
+      "question_turns_substantive": 0,
+      "question_turns_canned": 0,
+      "canned_breakdown": {},
+      "question_canned_cases": [],
+      "generic_continuation_turns": 0,
+      "technical_farewell_turns": 0,
+      "unconfirmed_replacement_turns": 0,
+      "sessions_ended": 26,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 26,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [],
+      "tool_executions": 0,
+      "connected_sessions_with_tool": 0,
+      "tool_calls_outside_request_scenario": [],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {},
+      "incomplete_turn_errors": 0,
+      "whitespace_tail_requests": 0,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "accepted": 26
+      },
+      "caller_turn_latency_median_s": 0.109,
+      "caller_turn_latency_p95_s": 0.141
+    },
+    "4_abuse": {
+      "sessions": 26,
+      "harness_completed": 26,
+      "reached_turns": 49,
+      "planned_turns": 52,
+      "question_turns": 0,
+      "question_turns_substantive": 0,
+      "question_turns_canned": 0,
+      "canned_breakdown": {
+        "technical_farewell": 3
+      },
+      "question_canned_cases": [],
+      "generic_continuation_turns": 0,
+      "technical_farewell_turns": 3,
+      "unconfirmed_replacement_turns": 0,
+      "sessions_ended": 26,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 23,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "print-hi-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "print-kn-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "print-ta-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ]
+      ],
+      "tool_executions": 0,
+      "connected_sessions_with_tool": 0,
+      "tool_calls_outside_request_scenario": [],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "whitespace_stall": 8,
+        "stop": 44,
+        "length": 2
+      },
+      "incomplete_turn_errors": 27,
+      "whitespace_tail_requests": 2,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "continue": 20,
+        "accepted": 23,
+        "evidence_not_quoted": 2,
+        "no_evidence": 1
+      },
+      "caller_turn_latency_median_s": 1.953,
+      "caller_turn_latency_p95_s": 6.937
+    },
+    "5_diversion_danger": {
+      "sessions": 26,
+      "harness_completed": 26,
+      "reached_turns": 113,
+      "planned_turns": 130,
+      "question_turns": 45,
+      "question_turns_substantive": 40,
+      "question_turns_canned": 5,
+      "canned_breakdown": {
+        "technical_farewell": 5,
+        "generic_continuation": 2
+      },
+      "question_canned_cases": [
+        [
+          "course-ta-IN-connected-5_diversion_danger",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "course-te-IN-none-5_diversion_danger",
+          2,
+          "details",
+          "generic_continuation"
+        ],
+        [
+          "repair-hi-IN-connected-5_diversion_danger",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-5_diversion_danger",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-none-5_diversion_danger",
+          2,
+          "details",
+          "generic_continuation"
+        ]
+      ],
+      "generic_continuation_turns": 2,
+      "technical_farewell_turns": 5,
+      "unconfirmed_replacement_turns": 0,
+      "sessions_ended": 26,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 21,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "course-en-IN-connected-5_diversion_danger",
+          1,
+          "divert"
+        ],
+        [
+          "course-ta-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-hi-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-ta-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-te-IN-connected-5_diversion_danger",
+          1,
+          "divert"
+        ]
+      ],
+      "tool_executions": 0,
+      "connected_sessions_with_tool": 0,
+      "tool_calls_outside_request_scenario": [],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "stop": 107,
+        "whitespace_stall": 33,
+        "None": 3,
+        "length": 2,
+        "whitespace_tail": 1
+      },
+      "incomplete_turn_errors": 57,
+      "whitespace_tail_requests": 2,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "continue": 61,
+        "accepted": 21,
+        "evidence_not_quoted": 5,
+        "user_asked_question": 11,
+        "remaining_request": 9,
+        "open_question": 1
+      },
+      "caller_turn_latency_median_s": 2.016,
+      "caller_turn_latency_p95_s": 3.828
+    },
+    "5b_direct_danger": {
+      "sessions": 26,
+      "harness_completed": 26,
+      "reached_turns": 70,
+      "planned_turns": 78,
+      "question_turns": 24,
+      "question_turns_substantive": 20,
+      "question_turns_canned": 4,
+      "canned_breakdown": {
+        "technical_farewell": 6,
+        "generic_continuation": 1
+      },
+      "question_canned_cases": [
+        [
+          "repair-hi-IN-connected-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ],
+        [
+          "repair-kn-IN-none-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-none-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ]
+      ],
+      "generic_continuation_turns": 1,
+      "technical_farewell_turns": 6,
+      "unconfirmed_replacement_turns": 0,
+      "sessions_ended": 26,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 20,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "course-en-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "print-kn-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "repair-hi-IN-connected-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-kn-IN-none-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-ta-IN-connected-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-te-IN-none-5b_direct_danger",
+          2,
+          "return"
+        ]
+      ],
+      "tool_executions": 0,
+      "connected_sessions_with_tool": 0,
+      "tool_calls_outside_request_scenario": [],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "None": 4,
+        "length": 3,
+        "stop": 59,
+        "whitespace_stall": 10
+      },
+      "incomplete_turn_errors": 29,
+      "whitespace_tail_requests": 3,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "continue": 29,
+        "accepted": 20,
+        "evidence_not_quoted": 7,
+        "remaining_request": 6,
+        "user_asked_question": 2
+      },
+      "caller_turn_latency_median_s": 1.867,
+      "caller_turn_latency_p95_s": 4.688
+    },
+    "6_hangup": {
+      "sessions": 26,
+      "harness_completed": 26,
+      "reached_turns": 97,
+      "planned_turns": 104,
+      "question_turns": 50,
+      "question_turns_substantive": 48,
+      "question_turns_canned": 2,
+      "canned_breakdown": {
+        "technical_farewell": 3
+      },
+      "question_canned_cases": [
+        [
+          "repair-ta-IN-connected-6_hangup",
+          1,
+          "interested",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-connected-6_hangup",
+          1,
+          "interested",
+          "technical_farewell"
+        ]
+      ],
+      "generic_continuation_turns": 0,
+      "technical_farewell_turns": 3,
+      "unconfirmed_replacement_turns": 0,
+      "sessions_ended": 26,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 23,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "repair-kn-IN-connected-6_hangup",
+          3,
+          "ack"
+        ],
+        [
+          "repair-ta-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-connected-6_hangup",
+          1,
+          "interested"
+        ]
+      ],
+      "tool_executions": 0,
+      "connected_sessions_with_tool": 0,
+      "tool_calls_outside_request_scenario": [],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "whitespace_stall": 23,
+        "stop": 95,
+        "None": 3
+      },
+      "incomplete_turn_errors": 47,
+      "whitespace_tail_requests": 0,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "continue": 49,
+        "accepted": 23,
+        "remaining_request": 12,
+        "user_asked_question": 6,
+        "caller_engaged": 2,
+        "lead_details_missing": 1,
+        "open_question": 1
+      },
+      "caller_turn_latency_median_s": 2.0,
+      "caller_turn_latency_p95_s": 4.093
+    }
+  },
+  "by_integration": {
+    "False": {
+      "sessions": 117,
+      "harness_completed": 117,
+      "reached_turns": 323,
+      "planned_turns": 338,
+      "question_turns": 124,
+      "question_turns_substantive": 114,
+      "question_turns_canned": 10,
+      "canned_breakdown": {
+        "technical_farewell": 8,
+        "generic_continuation": 2,
+        "unconfirmed_action": 3
+      },
+      "question_canned_cases": [
+        [
+          "course-ta-IN-none-1_interested",
+          1,
+          "interested",
+          "technical_farewell"
+        ],
+        [
+          "course-te-IN-none-5_diversion_danger",
+          2,
+          "details",
+          "generic_continuation"
+        ],
+        [
+          "print-ta-IN-none-1_interested",
+          3,
+          "alternate",
+          "unconfirmed_action"
+        ],
+        [
+          "repair-hi-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-kn-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-kn-IN-none-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-none-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-none-5_diversion_danger",
+          2,
+          "details",
+          "generic_continuation"
+        ],
+        [
+          "repair-te-IN-none-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ]
+      ],
+      "generic_continuation_turns": 2,
+      "technical_farewell_turns": 8,
+      "unconfirmed_replacement_turns": 3,
+      "sessions_ended": 117,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 109,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "course-en-IN-none-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-ta-IN-none-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-hi-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-none-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-ta-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-te-IN-none-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-te-IN-none-5b_direct_danger",
+          2,
+          "return"
+        ]
+      ],
+      "tool_executions": 0,
+      "connected_sessions_with_tool": 0,
+      "tool_calls_outside_request_scenario": [],
+      "request_turns_without_tool_when_connected": [],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "whitespace_stall": 85,
+        "stop": 256,
+        "None": 5,
+        "length": 3,
+        "whitespace_tail": 1
+      },
+      "incomplete_turn_errors": 141,
+      "whitespace_tail_requests": 3,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "continue": 142,
+        "remaining_request": 36,
+        "accepted": 109,
+        "lead_details_missing": 4,
+        "evidence_not_quoted": 9,
+        "user_asked_question": 12,
+        "caller_engaged": 2,
+        "open_question": 1
+      },
+      "caller_turn_latency_median_s": 1.547,
+      "caller_turn_latency_p95_s": 3.375
+    },
+    "True": {
+      "sessions": 117,
+      "harness_completed": 117,
+      "reached_turns": 283,
+      "planned_turns": 338,
+      "question_turns": 111,
+      "question_turns_substantive": 95,
+      "question_turns_canned": 16,
+      "canned_breakdown": {
+        "technical_farewell": 26,
+        "unconfirmed_action": 2,
+        "generic_continuation": 1
+      },
+      "question_canned_cases": [
+        [
+          "course-en-IN-connected-2_future_interest",
+          2,
+          "future_more",
+          "technical_farewell"
+        ],
+        [
+          "course-ta-IN-connected-5_diversion_danger",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "print-hi-IN-connected-1_interested",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "print-kn-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-hi-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-hi-IN-connected-5_diversion_danger",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "repair-hi-IN-connected-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ],
+        [
+          "repair-kn-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-1_interested",
+          3,
+          "alternate",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-5_diversion_danger",
+          2,
+          "details",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-5b_direct_danger",
+          2,
+          "return",
+          "technical_farewell"
+        ],
+        [
+          "repair-ta-IN-connected-6_hangup",
+          1,
+          "interested",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-connected-1_interested",
+          1,
+          "interested",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-connected-2_future_interest",
+          1,
+          "future",
+          "technical_farewell"
+        ],
+        [
+          "repair-te-IN-connected-6_hangup",
+          1,
+          "interested",
+          "technical_farewell"
+        ]
+      ],
+      "generic_continuation_turns": 1,
+      "technical_farewell_turns": 26,
+      "unconfirmed_replacement_turns": 2,
+      "sessions_ended": 117,
+      "duplicate_hangup_sessions": 0,
+      "explicit_end_turns": 91,
+      "explicit_end_not_closed": [],
+      "nonterminal_close_turns": [
+        [
+          "course-en-IN-connected-1_interested",
+          4,
+          "request"
+        ],
+        [
+          "course-en-IN-connected-1b_direct_tool_request",
+          1,
+          "request"
+        ],
+        [
+          "course-en-IN-connected-2_future_interest",
+          2,
+          "future_more"
+        ],
+        [
+          "course-en-IN-connected-5_diversion_danger",
+          1,
+          "divert"
+        ],
+        [
+          "course-en-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "course-ta-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "print-hi-IN-connected-1_interested",
+          2,
+          "details"
+        ],
+        [
+          "print-hi-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "print-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "print-kn-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "print-kn-IN-connected-5b_direct_danger",
+          1,
+          "danger"
+        ],
+        [
+          "print-ta-IN-connected-4_abuse",
+          1,
+          "abuse_mild"
+        ],
+        [
+          "repair-hi-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-hi-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-hi-IN-connected-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-kn-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-kn-IN-connected-6_hangup",
+          3,
+          "ack"
+        ],
+        [
+          "repair-ta-IN-connected-1_interested",
+          3,
+          "alternate"
+        ],
+        [
+          "repair-ta-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-ta-IN-connected-5_diversion_danger",
+          2,
+          "details"
+        ],
+        [
+          "repair-ta-IN-connected-5b_direct_danger",
+          2,
+          "return"
+        ],
+        [
+          "repair-ta-IN-connected-6_hangup",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-connected-1_interested",
+          1,
+          "interested"
+        ],
+        [
+          "repair-te-IN-connected-2_future_interest",
+          1,
+          "future"
+        ],
+        [
+          "repair-te-IN-connected-5_diversion_danger",
+          1,
+          "divert"
+        ],
+        [
+          "repair-te-IN-connected-6_hangup",
+          1,
+          "interested"
+        ]
+      ],
+      "tool_executions": 22,
+      "connected_sessions_with_tool": 22,
+      "tool_calls_outside_request_scenario": [
+        [
+          "course-en-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Interested in adult beginner Python course, 6 weeks online weekdays 7pm-8pm. Requested demo/counselling for tomorrow at 3pm.",
+              "preferred_time": "tomorrow at 3pm"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "course-hi-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Enquiry for adult beginner Python course review",
+              "preferred_time": "kal dopahar 3 baje"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "course-ta-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Interested in adult beginner Python course, 6 weeks online, weekdays 7pm-8pm.",
+              "preferred_time": "Tomorrow afternoon 3pm"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "course-te-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Interested in adult beginner Python course. Preferred time: tomorrow 3 PM.",
+              "preferred_time": "tomorrow 3 PM"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "print-en-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Wedding invitations quote request",
+              "preferred_time": "tomorrow at 3pm"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "print-kn-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Wedding invitations - design and quantity to be decided, quote required",
+              "preferred_time": "Tomorrow afternoon 3 PM"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "print-ta-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Wedding invitations enquiry",
+              "preferred_time": "Tomorrow afternoon 3 PM"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "repair-en-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Fridge inspection",
+              "preferred_time": "Tomorrow at 3pm"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "repair-hi-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Fridge inspection enquiry for team review",
+              "preferred_time": "kal dopahar 3 baje"
+            },
+            "turn": 4
+          }
+        ],
+        [
+          "repair-kn-IN-connected-1_interested",
+          {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": {
+              "name": "Audit Customer",
+              "email": "audit.customer@example.invalid",
+              "request": "Fridge inspection service request. Preferred time: tomorrow afternoon 3 PM.",
+              "preferred_time": "tomorrow afternoon 3 PM"
+            },
+            "turn": 4
+          }
+        ]
+      ],
+      "request_turns_without_tool_when_connected": [
+        "course-en-IN-connected-1b_direct_tool_request"
+      ],
+      "request_claims_without_integration": [],
+      "finish_reasons": {
+        "whitespace_stall": 70,
+        "stop": 212,
+        "tool_calls": 10,
+        "None": 12,
+        "length": 4
+      },
+      "incomplete_turn_errors": 124,
+      "whitespace_tail_requests": 4,
+      "long_or_cut_replies": 0,
+      "close_gate_rejections": {
+        "continue": 102,
+        "accepted": 91,
+        "evidence_not_quoted": 14,
+        "user_asked_question": 14,
+        "remaining_request": 28,
+        "open_question": 5,
+        "caller_engaged": 2,
+        "no_evidence": 1
+      },
+      "caller_turn_latency_median_s": 2.422,
+      "caller_turn_latency_p95_s": 4.688
+    }
+  },
+  "original_overall": {
+    "sessions": 270,
+    "harness_completed": 270,
+    "reached_caller_turns": 633,
+    "generic_continuation_turns": 406,
+    "technical_farewell_turns": 91,
+    "ended_sessions": 193,
+    "closed_on_nonterminal_test_turn": 74,
+    "explicit_end_not_closed": 77,
+    "mock_integration_executions": 0,
+    "finish_reasons": {
+      "stop": 437,
+      "length": 172,
+      "null": 120
+    },
+    "length_errors": 178,
+    "observed_long_whitespace_tail_requests": 227,
+    "close_gate_results_instrumented_subset": {
+      "remaining_request": 130,
+      "accepted": 78,
+      "continue": 31,
+      "evidence_not_quoted": 142,
+      "lead_details_missing": 2,
+      "user_asked_question": 63,
+      "no_evidence": 26,
+      "open_question": 4
+    }
+  },
+  "builds": {
+    "total": 18,
+    "ready": [
+      "course-en-IN",
+      "course-hi-IN",
+      "course-ta-IN",
+      "course-te-IN",
+      "print-en-IN",
+      "print-hi-IN",
+      "print-kn-IN",
+      "print-ta-IN",
+      "repair-en-IN",
+      "repair-hi-IN",
+      "repair-kn-IN",
+      "repair-ta-IN",
+      "repair-te-IN"
+    ],
+    "failed": [
+      {
+        "key": "course-en-GB",
+        "http": 422,
+        "code": "unsupported_language",
+        "message": "English (UK) is not available on the Standard Regional calling plan. Choose Hindi, English (India), Marathi, Kannada, Punjabi, Tamil, Telugu, Gujarati or Bengali."
+      },
+      {
+        "key": "course-kn-IN",
+        "http": 422,
+        "code": "brief_needs_clarification",
+        "message": "The script needs another review before it can be saved. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request."
+      },
+      {
+        "key": "print-en-GB",
+        "http": 422,
+        "code": "unsupported_language",
+        "message": "English (UK) is not available on the Standard Regional calling plan. Choose Hindi, English (India), Marathi, Kannada, Punjabi, Tamil, Telugu, Gujarati or Bengali."
+      },
+      {
+        "key": "print-te-IN",
+        "http": 422,
+        "code": "brief_needs_clarification",
+        "message": "The script needs another review before it can be saved. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request."
+      },
+      {
+        "key": "repair-en-GB",
+        "http": 422,
+        "code": "unsupported_language",
+        "message": "English (UK) is not available on the Standard Regional calling plan. Choose Hindi, English (India), Marathi, Kannada, Punjabi, Tamil, Telugu, Gujarati or Bengali."
+      }
+    ]
+  },
+  "f10": {
+    "compiled_capability_values": {
+      "course-en-IN": true,
+      "course-hi-IN": true,
+      "course-ta-IN": true,
+      "course-te-IN": true,
+      "print-en-IN": true,
+      "print-hi-IN": true,
+      "print-kn-IN": true,
+      "print-ta-IN": true,
+      "repair-en-IN": true,
+      "repair-hi-IN": true,
+      "repair-kn-IN": true,
+      "repair-ta-IN": true,
+      "repair-te-IN": true
+    },
+    "sessions_offered_confirm_order": []
+  },
+  "f07": {
+    "course_compiled_with_3999": [],
+    "course_compiled_with_4999": [
+      "course-en-IN",
+      "course-hi-IN",
+      "course-ta-IN",
+      "course-te-IN"
+    ]
+  }
+}

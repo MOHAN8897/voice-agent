@@ -1,0 +1,312 @@
+{
+  "key": "print-hi-IN-none-2_future_interest",
+  "business": "print",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "2fc12aaa-fef8-53c9-81db-07efa7f84427",
+  "call_id": "6af0bf55-0446-4ae4-afb2-60196dc18205",
+  "session_id": "audit-print-hi-IN-none-2_future_interest-554d2b5d",
+  "compiled_checksum": "e91bf22969093f6a27742c03010544073c3466fd7eebb112e2acaf08eed62852",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 904,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है।\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"अगले महीने के लिए price जानना और future enquiry\",\n    \"contact_preference\": \"callback\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "\"end_call\": {\n    \"evidence\": \"अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है।\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"अगले महीने के लिए price जानना और future enquiry\",\n    \"contact_preference\": \"callback\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.578
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 279,
+      "sse_content_preview": "{\"spoken_response\": \"ठीक है, कोई बात नहीं। Visiting cards के लिए 25 rupees per card है, minimum 100 cards का order होता है। Wedding invitations का price design और quantity पर depend करता है, fixed rate available नहीं है। क्या मैं आपकी details note कर लूँ future enquiry के लिए?\"}",
+      "sse_content_tail": "{\"spoken_response\": \"ठीक है, कोई बात नहीं। Visiting cards के लिए 25 rupees per card है, minimum 100 cards का order होता है। Wedding invitations का price design और quantity पर depend करता है, fixed rate available नहीं है। क्या मैं आपकी details note कर लूँ future enquiry के लिए?\"}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 69,
+        "prompt_tokens": 4032,
+        "total_tokens": 4101,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, कोई बात नहीं। Visiting cards के लिए 25 rupees per card है, minimum 100 cards का order होता है। Wedding invitations का price design और quantity पर depend करता है, fixed rate available नहीं है। क्या मैं आपकी details note कर लूँ future enquiry के लिए?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4032,
+          "output_tokens": 69,
+          "total_tokens": 4101
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.672
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 799,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said they are interested in the future and asked what else they should know, but also clearly stated 'मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ' — no callback requested, and '\"\n    ,\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Information about the service\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  ,\n  \"action_claimed\": \"order_confirmed\"\n  ,\n  \"spoken_response\": \"\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\"\n        ,\n        \"key\": \"interested_future\"\n        ,\n        \"value\": \"Caller expressed future interest in visiting cards and wedding invitations, asked for service details, but declined a callback and did not provide a/b\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said they are interested in the future and asked what else they should know, but also clearly stated 'मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ' — no callback requested, and '\"\n    ,\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Information about the service\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  ,\n  \"action_claimed\": \"order_confirmed\"\n  ,\n  \"spoken_response\": \"\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\"\n        ,\n        \"key\": \"interested_future\"\n        ,\n        \"value\": \"Caller expressed future interest in visiting cards and wedding invitations, asked for service details, but declined a callback and did not provide a/b\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 233,
+        "prompt_tokens": 4106,
+        "total_tokens": 4339,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.593
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 297,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ठीक है। Wedding invitations भी हम बनाते हैं, पर उसकी price design और quantity पर depend करती है, fixed rate available नहीं है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है। क्या आप quote request के लिए अपना नाम और locality बता सकते हैं?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ठीक है। Wedding invitations भी हम बनाते हैं, पर उसकी price design और quantity पर depend करती है, fixed rate available नहीं है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है। क्या आप quote request के लिए अपना नाम और locality बता सकते हैं?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 69,
+        "prompt_tokens": 4106,
+        "total_tokens": 4175,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है। Wedding invitations भी हम बनाते हैं, पर उसकी price design और quantity पर depend करती है, fixed rate available नहीं है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है। क्या आप quote request के लिए अपना नाम और locality बता सकते हैं?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8212,
+          "output_tokens": 302,
+          "total_tokens": 8514
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.766
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ठीक है, कोई बात नहीं। Visiting cards के लिए twenty five rupees per card है, minimum one hundred cards का order होता है। Wedding invitations का price design और quantity पर depend करता है, fixed rate available नहीं है। क्या मैं आपकी details note कर लूँ future enquiry के लिए?",
+      "turn": 1,
+      "at": 2.25
+    },
+    {
+      "text": "ठीक है। Wedding invitations भी हम बनाते हैं, पर उसकी price design और quantity पर depend करती है, fixed rate available नहीं है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है। क्या आप quote request के लिए अपना नाम और locality बता सकते हैं?",
+      "turn": 2,
+      "at": 4.625
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 3,
+      "at": 4.657
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।",
+      "spoken": "ठीक है, कोई बात नहीं। Visiting cards के लिए twenty five rupees per card है, minimum one hundred cards का order होता है। Wedding invitations का price design और quantity पर depend करता है, fixed rate available नहीं है। क्या मैं आपकी details note कर लूँ future enquiry के लिए?",
+      "elapsed_s": 2.234,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?",
+      "spoken": "ठीक है। Wedding invitations भी हम बनाते हैं, पर उसकी price design और quantity पर depend करती है, fixed rate available नहीं है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है। क्या आप quote request के लिए अपना नाम और locality बता सकते हैं?",
+      "elapsed_s": 2.343,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 4.703,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "6af0bf55-0446-4ae4-afb2-60196dc18205",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "c24b80c3ea5863d92e17dda61428d03d0f154610dc6b3c0599e4a2bfb2a90dd1",
+  "prompt_chars": 18000,
+  "opening_seeded": "Namaste, I am Meera, an AI assistant from ClearPrint Studio. Am I speaking with the right person regarding card printing needs?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, कोई बात नहीं। Visiting cards के लिए twenty five rupees per card है, minimum one hundred cards का order होता है। Wedding invitations का price design और quantity पर depend करता है, fixed rate available नहीं है। क्या मैं आपकी details note कर लूँ future enquiry के लिए?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है। Wedding invitations भी हम बनाते हैं, पर उसकी price design और quantity पर depend करती है, fixed rate available नहीं है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है। क्या आप quote request के लिए अपना नाम और locality बता सकते हैं?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "lead_details_missing"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.703,
+  "hangup_count": 1
+}

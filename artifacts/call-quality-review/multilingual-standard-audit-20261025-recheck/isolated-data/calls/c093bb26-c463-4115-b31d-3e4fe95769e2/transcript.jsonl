@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।", "ts": "2026-10-25T17:07:49.133338Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "देखिये, हमारी printed visiting cards twenty five rupees per card हैं, minimum one hundred cards का order होता है. Wedding invitations के लिए design और quantity के हिसाब से quote बनता है. Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है.", "ts": "2026-10-25T17:07:52.012396Z", "brain_latency_ms": 2312}
+{"seq": 3, "role": "user", "text": "अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: क्या आप शादी के निमंत्रण भी print करते हैं? कीमत और delivery time क्या है?", "ts": "2026-10-25T17:07:52.033814Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "क्षमा करें, हमें एक तकनीकी समस्या आ रही है। कृपया हमें वापस कॉल करें। धन्यवाद।", "ts": "2026-10-25T17:07:56.560397Z"}

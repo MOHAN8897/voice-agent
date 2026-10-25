@@ -1,0 +1,276 @@
+{
+  "key": "course-te-IN-none-2_future_interest",
+  "business": "course",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "3fb67e11-427f-505d-9768-907a832cd354",
+  "call_id": "48c6157a-8b96-448b-8233-7112508b31b8",
+  "session_id": "audit-course-te-IN-none-2_future_interest-4c0d8c40",
+  "compiled_checksum": "a3beaeea4d8bbdd077219e70ebac805f1983c237a7a542e9ee534f19d4614bfb",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 645,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"వచ్చే నెల నాకు ఆసక్తి ఉంది\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"శాశ్వతంగా వద్దన్నట్టు అనుకోకండి\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\",\n  \"spoken_response\": \"సరేనండి, అర్థమైంది. ప్రస్తుత ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. మీరు వచ్చే నెల ఆసక్తి అంటున్నారు కాబట్టి, మా team మీకు మళ్లీ కాల్ చేసేలా note చేసుకుంటాను. సరేనా?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest_timeline\",\n        \"value\": \"Interested next month\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"వచ్చే నెల నాకు ఆసక్తి ఉంది\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"శాశ్వతంగా వద్దన్నట్టు అనుకోకండి\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\",\n  \"spoken_response\": \"సరేనండి, అర్థమైంది. ప్రస్తుత ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. మీరు వచ్చే నెల ఆసక్తి అంటున్నారు కాబట్టి, మా team మీకు మళ్లీ కాల్ చేసేలా note చేసుకుంటాను. సరేనా?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest_timeline\",\n        \"value\": \"Interested next month\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 219,
+        "prompt_tokens": 4498,
+        "total_tokens": 4717,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, అర్థమైంది. ప్రస్తుత ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. మీరు వచ్చే నెల ఆసక్తి అంటున్నారు కాబట్టి, మా team మీకు మళ్లీ కాల్ చేసేలా note చేసుకుంటాను. సరేనా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4498,
+          "output_tokens": 219,
+          "total_tokens": 4717
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interest_timeline",
+              "value": "Interested next month"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "వచ్చే నెల నాకు ఆసక్తి ఉంది",
+          "remaining_request": "శాశ్వతంగా వద్దన్నట్టు అనుకోకండి",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.141
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 926,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"Caller explicitly said not to call back later and asked what else to know about the service, indicating future interest without immediate next step.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"Information about the service\", \"contact_preference\": \"do_not_call\" }\n,\n\"action_claimed\": \"none\"\n,\n\"spoken_response\": \"సరేనండి, అర్థమైంది. మీకు భవిష్యత్తులో ఆసక్తి ఉందని నోట్ చేసుకున్నాను. మా కోర్సు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి ఏడు నుండి ఎనిమిది గంటల వరకు ఆన్‌లైన్‌లో ఉంటుంది. దీని మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు. ఇందులో ఎలాంటి ప్లేస్‌మెంట్ గ్యారెంటీ ఉండదు, అలాగే డిస్కౌంట్లు లేదా వాయిదాల పద్ధతి కూడా లేదు. ఇంకేమైనా వివరాలు కావాలా అండి?\"\n,\n\"memory_update\": { \"operations\": [ { \"op\": \"update_summary\", \"key\": \"future_interest\", \"value\": \"Caller has future interest after exams, explicitly said not to call back later.\" } ] }\n}",
+      "sse_content_tail": ": \"Caller explicitly said not to call back later and asked what else to know about the service, indicating future interest without immediate next step.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"Information about the service\", \"contact_preference\": \"do_not_call\" }\n,\n\"action_claimed\": \"none\"\n,\n\"spoken_response\": \"సరేనండి, అర్థమైంది. మీకు భవిష్యత్తులో ఆసక్తి ఉందని నోట్ చేసుకున్నాను. మా కోర్సు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి ఏడు నుండి ఎనిమిది గంటల వరకు ఆన్‌లైన్‌లో ఉంటుంది. దీని మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు. ఇందులో ఎలాంటి ప్లేస్‌మెంట్ గ్యారెంటీ ఉండదు, అలాగే డిస్కౌంట్లు లేదా వాయిదాల పద్ధతి కూడా లేదు. ఇంకేమైనా వివరాలు కావాలా అండి?\"\n,\n\"memory_update\": { \"operations\": [ { \"op\": \"update_summary\", \"key\": \"future_interest\", \"value\": \"Caller has future interest after exams, explicitly said not to call back later.\" } ] }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 256,
+        "prompt_tokens": 4579,
+        "total_tokens": 4835,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, అర్థమైంది. మీకు భవిష్యత్తులో ఆసక్తి ఉందని నోట్ చేసుకున్నాను. మా కోర్సు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి ఏడు నుండి ఎనిమిది గంటల వరకు ఆన్‌లైన్‌లో ఉంటుంది. దీని మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు. ఇందులో ఎలాంటి ప్లేస్‌మెంట్ గ్యారెంటీ ఉండదు, అలాగే డిస్కౌంట్లు లేదా వాయిదాల పద్ధతి కూడా లేదు. ఇంకేమైనా వివరాలు కావాలా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4579,
+          "output_tokens": 256,
+          "total_tokens": 4835
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "future_interest",
+              "value": "Caller has future interest after exams, explicitly said not to call back later."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said not to call back later and asked what else to know about the service, indicating future interest without immediate next step.",
+          "remaining_request": "Information about the service",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.828
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, అర్థమైంది. ప్రస్తుత ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. మీరు వచ్చే నెల ఆసక్తి అంటున్నారు కాబట్టి, మా team మీకు మళ్లీ కాల్ చేసేలా note చేసుకుంటాను. సరేనా?",
+      "turn": 1,
+      "at": 1.406
+    },
+    {
+      "text": "సరేనండి, అర్థమైంది. మీకు భవిష్యత్తులో ఆసక్తి ఉందని నోట్ చేసుకున్నాను. మా కోర్సు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి ఏడు నుండి ఎనిమిది గంటల వరకు ఆన్‌లైన్‌లో ఉంటుంది. దీని మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు.",
+      "turn": 2,
+      "at": 3.266
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 3,
+      "at": 3.297
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "ఇప్పుడైతే అవసరం లేదు, కానీ వచ్చే నెల నాకు ఆసక్తి ఉంది. ప్రస్తుత ధర చెప్పండి. ఏదీ book చేయకండి, దీన్ని శాశ్వతంగా వద్దన్నట్టు అనుకోకండి.",
+      "spoken": "సరేనండి, అర్థమైంది. ప్రస్తుత ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. మీరు వచ్చే నెల ఆసక్తి అంటున్నారు కాబట్టి, మా team మీకు మళ్లీ కాల్ చేసేలా note చేసుకుంటాను. సరేనా?",
+      "elapsed_s": 1.39,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "అవును, భవిష్యత్తులో నాకు ఆసక్తి ఉంది. ఇప్పుడే తర్వాత call చేయమని నేను అడగడం లేదు. ఈ service గురించి ఇంకా ఏం తెలుసుకోవాలి?",
+      "spoken": "సరేనండి, అర్థమైంది. మీకు భవిష్యత్తులో ఆసక్తి ఉందని నోట్ చేసుకున్నాను. మా కోర్సు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి ఏడు నుండి ఎనిమిది గంటల వరకు ఆన్‌లైన్‌లో ఉంటుంది. దీని మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు.",
+      "elapsed_s": 1.844,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 3.344,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "48c6157a-8b96-448b-8233-7112508b31b8",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "b8c8673bfd3b51f4b9f3acd639afaf2498d6e0b345be9df2a69de51870f2f775",
+  "prompt_chars": 19516,
+  "opening_seeded": "నమస్కారం, నా పేరు అనన్య, బ్రైట్‌పాత్ స్కిల్స్ నుండి మాట్లాడుతున్నాను. వయోజనుల కోసం మా ఆన్‌లైన్ బిగినర్ పైథాన్ కోర్సు గురించి చెప్పడానికి కాల్ చేశాను. ఇప్పుడు మాట్లాడానికి మీకు సమయం ఉందా? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "వచ్చే నెల నాకు ఆసక్తి ఉంది",
+        "remaining_request": "శాశ్వతంగా వద్దన్నట్టు అనుకోకండి",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, అర్థమైంది. ప్రస్తుత ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. మీరు వచ్చే నెల ఆసక్తి అంటున్నారు కాబట్టి, మా team మీకు మళ్లీ కాల్ చేసేలా note చేసుకుంటాను. సరేనా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said not to call back later and asked what else to know about the service, indicating future interest without immediate next step.",
+        "remaining_request": "Information about the service",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, అర్థమైంది. మీకు భవిష్యత్తులో ఆసక్తి ఉందని నోట్ చేసుకున్నాను. మా కోర్సు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి ఏడు నుండి ఎనిమిది గంటల వరకు ఆన్‌లైన్‌లో ఉంటుంది. దీని మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.344,
+  "hangup_count": 1
+}

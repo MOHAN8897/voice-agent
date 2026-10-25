@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-25T17:28:08.505944Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T17:28:11.158190Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-25T17:28:13.520982Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nlatest_caller_correction: Do not book or save anything yet. Please answer my question first: What is the final course fee, duration and class timing, and do you guarantee a job?"}
+{"turn_seq": 7, "ts": "2026-10-25T17:28:13.543586Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nlatest_caller_correction: Do not book or save anything yet. Please answer my question first: What is the final course fee, duration and class timing, and do you guarantee a job?"}

@@ -1,0 +1,81 @@
+{
+  "key": "repair-en-IN-none-4_abuse",
+  "business": "repair",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "fef33d3c-637a-5f4a-9e56-a8af72d9f342",
+  "call_id": "74cc831c-085f-4312-b0df-d7534a4970a5",
+  "session_id": "audit-repair-en-IN-none-4_abuse-a8dc2bf2",
+  "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 1.735
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "elapsed_s": 2.765
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 2.141
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "turn": 1,
+      "at": 6.656
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "You are a useless idiot. Stop repeating yourself and answer the price question.",
+      "spoken": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "elapsed_s": 6.688,
+      "requests": 3,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 6.703,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "74cc831c-085f-4312-b0df-d7534a4970a5",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 1,
+  "render_checksum": "44f1771ea7b78229fe0b03a80d617bf6cb7773521f2f8157a4337dbf978b0520",
+  "prompt_chars": 17361,
+  "opening_seeded": "Hello, my name is Ravi calling from SafeFix Home Service. I am reaching out regarding our home appliance service in Pune. Do you have a moment to talk?",
+  "status": "completed",
+  "elapsed_s": 6.703,
+  "hangup_count": 1
+}

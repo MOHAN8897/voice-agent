@@ -1,0 +1,300 @@
+{
+  "key": "language-te-IN-none-6_hangup",
+  "business": "language",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "7d5b5b86-e5f0-51bc-a4cf-15492750cf1f",
+  "call_id": "9b283528-2d4b-44ec-bb8b-5f617ff0fdd8",
+  "session_id": "audit-language-te-IN-none-6_hangup-1de53deb",
+  "compiled_checksum": "f88a37529a880a3098d197723d5f7c682d261178428f6ad3f96fdf472a5f59f6",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 254,
+      "sse_content_preview": "తప్పకుండా అండి. ఇది పద్దెనిమిది ఏళ్లు నిండిన వాళ్ల కోసం ఆరు వారాల online spoken English class. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అవుతుంది. మీకు job guarantee లేదా discount లాంటివి ఏవీ ఉండవు. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+      "sse_content_tail": "తప్పకుండా అండి. ఇది పద్దెనిమిది ఏళ్లు నిండిన వాళ్ల కోసం ఆరు వారాల online spoken English class. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అవుతుంది. మీకు job guarantee లేదా discount లాంటివి ఏవీ ఉండవు. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 70,
+        "prompt_tokens": 4443,
+        "total_tokens": 4513,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. ఇది పద్దెనిమిది ఏళ్లు నిండిన వాళ్ల కోసం ఆరు వారాల online spoken English class. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అవుతుంది. మీకు job guarantee లేదా discount లాంటివి ఏవీ ఉండవు. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4443,
+          "output_tokens": 70,
+          "total_tokens": 4513
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.734
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 228,
+      "sse_content_preview": "అలాగే అండి. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. ఫ్లూయెన్సీ లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు అర్థమయ్యాయా?",
+      "sse_content_tail": "అలాగే అండి. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. ఫ్లూయెన్సీ లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు అర్థమయ్యాయా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 70,
+        "prompt_tokens": 4531,
+        "total_tokens": 4601,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "అలాగే అండి. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. ఫ్లూయెన్సీ లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు అర్థమయ్యాయా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4531,
+          "output_tokens": 70,
+          "total_tokens": 4601
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.641
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 73,
+      "sse_content_preview": "సరేనండి. మీకు ఈ details అన్నీ clear గా అర్థమయ్యాయా, లేదా ఇంకేమైనా అడగాలా?",
+      "sse_content_tail": "సరేనండి. మీకు ఈ details అన్నీ clear గా అర్థమయ్యాయా, లేదా ఇంకేమైనా అడగాలా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 4598,
+        "total_tokens": 4623,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి. మీకు ఈ details అన్నీ clear గా అర్థమయ్యాయా, లేదా ఇంకేమైనా అడగాలా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4598,
+          "output_tokens": 25,
+          "total_tokens": 4623
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.531
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా అండి. ఇది పద్దెనిమిది ఏళ్లు నిండిన వాళ్ల కోసం ఆరు వారాల online spoken English class. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అవుతుంది. మీకు job guarantee లేదా discount లాంటివి ఏవీ ఉండవు. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+      "turn": 1,
+      "at": 2.312
+    },
+    {
+      "text": "అలాగే అండి. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. ఫ్లూయెన్సీ లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు అర్థమయ్యాయా?",
+      "turn": 2,
+      "at": 4.437
+    },
+    {
+      "text": "సరేనండి. మీకు ఈ details అన్నీ clear గా అర్థమయ్యాయా, లేదా ఇంకేమైనా అడగాలా?",
+      "turn": 3,
+      "at": 6.562
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 4,
+      "at": 6.594
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.",
+      "spoken": "తప్పకుండా అండి. ఇది పద్దెనిమిది ఏళ్లు నిండిన వాళ్ల కోసం ఆరు వారాల online spoken English class. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అవుతుంది. మీకు job guarantee లేదా discount లాంటివి ఏవీ ఉండవు. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+      "elapsed_s": 2.297,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ఇప్పుడే ఏదీ book లేదా save చేయకండి. ముందు నా ప్రశ్నకు సమాధానం చెప్పండి: Final course fee, duration, class timings ఏంటి? Fluency లేదా job guarantee ఇస్తారా?",
+      "spoken": "అలాగే అండి. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. ఫ్లూయెన్సీ లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు అర్థమయ్యాయా?",
+      "elapsed_s": 2.109,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "సరే అండి, ధన్యవాదాలు.",
+      "spoken": "సరేనండి. మీకు ఈ details అన్నీ clear గా అర్థమయ్యాయా, లేదా ఇంకేమైనా అడగాలా?",
+      "elapsed_s": 2.109,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 6.656,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "9b283528-2d4b-44ec-bb8b-5f617ff0fdd8",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "6eb2490e2d076f3951581076d96815503206b79a895379001273514be44f3d65",
+  "prompt_chars": 18865,
+  "opening_seeded": "నమస్కారం, నా పేరు సానా SpeakEasy Language Studio నుండి మాట్లాడుతున్నాను. మన ఆన్‌లైన్ ఇంగ్లీష్ తరగతుల గురించిన సమాచారం ఇవ్వడానికి కాల్ చేశాను. ఇప్పుడు మాట్లాడటానికి తగిన సమయమేనా? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "తప్పకుండా అండి. ఇది పద్దెనిమిది ఏళ్లు నిండిన వాళ్ల కోసం ఆరు వారాల online spoken English class. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు అవుతుంది. మీకు job guarantee లేదా discount లాంటివి ఏవీ ఉండవు. మీకు ఇంకా ఏమైనా details కావాలా అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "అలాగే అండి. మొత్తం course fee ఆరు వేల నాలుగు వందల తొంభై తొమ్మిది రూపాయలు, ఆరు వారాల పాటు వీకెండ్స్‌లో ఉదయం పది నుండి పదకొండు గంటల వరకు ఉంటుంది. ఫ్లూయెన్సీ లేదా job guarantee లాంటివి ఏవీ ఇవ్వబడవు అండి. మీకు ఈ వివరాలు అర్థమయ్యాయా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "సరేనండి. మీకు ఈ details అన్నీ clear గా అర్థమయ్యాయా, లేదా ఇంకేమైనా అడగాలా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.656,
+  "hangup_count": 1,
+  "source_signature": "f22325fa3f608c0524c8afc9a14908696812152c9af5311fda442ff7a042a834"
+}

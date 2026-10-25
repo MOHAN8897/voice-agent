@@ -1,0 +1,235 @@
+{
+  "key": "print-hi-IN-connected-4_abuse",
+  "business": "print",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "4_abuse",
+  "agent_id": "8e2752e3-b52b-52f5-bdf1-af80ab9a4d0a",
+  "call_id": "6df8a0cd-f14b-44ab-b939-0b3df0e7f5b4",
+  "session_id": "audit-print-hi-IN-connected-4_abuse-4f452c67",
+  "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 652,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller used abusive language ('तुम निकम्मे बेवकूफ हो') and demanded price information.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Price information for cards.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,  \n  \"order_claimed\": false,\n  \"spoken_response\": \"माफ़ कीजिए, मैं आपकी नाराज़गी समझ सकती हूँ। Visiting card की rate 25 rupees per card है, minimum order 100 cards का रहेगा।\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_fact\",\n        \"key\": \"price_objection_handled\",\n        \"value\": \"Visiting card 25 rupees per card, min 100\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller used abusive language ('तुम निकम्मे बेवकूफ हो') and demanded price information.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Price information for cards.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,  \n  \"order_claimed\": false,\n  \"spoken_response\": \"माफ़ कीजिए, मैं आपकी नाराज़गी समझ सकती हूँ। Visiting card की rate 25 rupees per card है, minimum order 100 cards का रहेगा।\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_fact\",\n        \"key\": \"price_objection_handled\",\n        \"value\": \"Visiting card 25 rupees per card, min 100\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 222,
+        "prompt_tokens": 4279,
+        "total_tokens": 4501,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "माफ़ कीजिए, मैं आपकी नाराज़गी समझ सकती हूँ। Visiting card की rate 25 rupees per card है, minimum order 100 cards का रहेगा।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4279,
+          "output_tokens": 222,
+          "total_tokens": 4501
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "set_fact",
+              "key": "price_objection_handled",
+              "value": "Visiting card 25 rupees per card, min 100"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "Caller used abusive language ('तुम निकम्मे बेवकूफ हो') and demanded price information.",
+          "remaining_request": "Price information for cards.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.062
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 558,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller threatened violence and explicitly demanded to end the call immediately.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ठीक है, मैं call अभी समाप्त कर रही हूँ।\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"Abuse / hostile; caller demanded immediate hangup. No further engagement.\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller threatened violence and explicitly demanded to end the call immediately.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ठीक है, मैं call अभी समाप्त कर रही हूँ।\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"Abuse / hostile; caller demanded immediate hangup. No further engagement.\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 179,
+        "prompt_tokens": 4285,
+        "total_tokens": 4464,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, मैं call अभी समाप्त कर रही हूँ।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4285,
+          "output_tokens": 179,
+          "total_tokens": 4464
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_outcome",
+              "value": "Abuse / hostile; caller demanded immediate hangup. No further engagement."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "Caller threatened violence and explicitly demanded to end the call immediately.",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.875
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 1,
+      "at": 1.063
+    },
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 2,
+      "at": 1.953
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 1.063,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 0.875,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "753b5412f23cef470f498a55190675947caed1c4ac52687e8e73f1ebfbc26a86",
+  "prompt_chars": 18082,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, main Meera hoon ClearPrint Studio se. Kya main sahi vyakti se baat kar rahi hoon card printing ki zarooraton par baat karne ke liye?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "Caller used abusive language ('तुम निकम्मे बेवकूफ हो') and demanded price information.",
+        "remaining_request": "Price information for cards.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "माफ़ कीजिए, मैं आपकी नाराज़गी समझ सकती हूँ। Visiting card की rate twenty five rupees per card है, minimum order one hundred cards का रहेगा।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "Caller threatened violence and explicitly demanded to end the call immediately.",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, मैं call अभी समाप्त कर रही हूँ।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 1.969,
+  "hangup_count": 0
+}
