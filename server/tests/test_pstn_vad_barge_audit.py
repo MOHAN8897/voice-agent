@@ -196,6 +196,7 @@ async def test_turn_completion_keeps_answers_and_purges_statement_nods(
     async def send(_session, text):
         loop._last_tts_text = text
         loop._pending_transcript = answer
+        return _session
 
     monkeypatch.setattr("server.call.live_turn_orchestrator.live_turn_orchestrator.handle_user_turn_stream", stream)
     monkeypatch.setattr(loop, "_get_call_tts_session", lambda: tts)

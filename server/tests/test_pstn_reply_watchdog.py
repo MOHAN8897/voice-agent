@@ -139,7 +139,7 @@ async def test_second_silent_attempt_falls_back_through_the_normal_goodbye(monke
 
     assert len(calls) == 2
     fallback.assert_not_awaited()
-    loop._finish_agent_hangup.assert_awaited_once_with(reason="agent_hangup")
+    loop._finish_agent_hangup.assert_awaited_once_with(reason="agent_hangup", revocable=False)
     assert any(phase == "turn.watchdog" and kw.get("event") == "gave_up" for phase, kw in events)
     assert failures and failures[0]["error_type"] == "TimeoutError"
     assert failures[0]["watchdog_retry"] is True

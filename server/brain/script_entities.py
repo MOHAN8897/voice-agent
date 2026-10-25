@@ -255,7 +255,15 @@ def patch_calling_script_language_markers(script: str, language: str) -> str:
     if not script.strip():
         return script
     res = _SPOKEN_LANG_HEADER.sub(f"--- SPOKEN LANGUAGE ({lang}) ---", script, count=1)
-    return re.sub(r"@language:\s*[a-z]{2}(?:-[a-z]{2})?", f"@language: {lang}", res, flags=re.I)
+    res = re.sub(r"@language:\s*[a-z]{2}(?:-[a-z]{2})?", f"@language: {lang}", res, flags=re.I)
+    # Platform-generated LANGUAGE section from an earlier compile must name the
+    # session pack, not the locale it was first generated under.
+    return re.sub(
+        r"^(use the selected )[a-z]{2}(?:-[a-z]{2})?( language pack\b)",
+        lambda match: f"{match.group(1)}{lang}{match.group(2)}",
+        res,
+        flags=re.M | re.I,
+    )
 
 
 def realign_calling_script_for_session(
@@ -377,10 +385,14 @@ def backfill_entity_tags_in_script(
     lang = (language or "te-IN").strip()
     dir_val = direction or infer_call_direction(f"{brief}\n{script}")
     d = "inbound" if str(dir_val).strip().lower() in ("inbound", "incoming") else "outbound"
-    from server.brain.agent_script_compiler import resolve_script_identity
+    from server.brain.agent_script_compiler import _strip_script_section, resolve_script_identity
 
+    source = (brief or script).strip()
+    if not brief:
+        # The platform LANGUAGE section names a locale, not the business scope.
+        source = _strip_script_section(source, "LANGUAGE")
     agent_name, company_name, work_scope, opening_line = resolve_script_identity(
-        (brief or script).strip(),
+        source,
         language=lang,
         direction=d,
     )

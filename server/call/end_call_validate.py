@@ -8,6 +8,12 @@ from typing import Any
 
 from server.call.call_end_policy import HANGUP_REASONS as POLICY_REASONS
 from server.call.call_end_policy import allowed_reasons_for
+from server.call.caller_intent import (
+    caller_revoked_callback,
+    has_future_interest,
+    is_negated_end,
+    is_wait_or_continue,
+)
 from server.call.close_decision import (
     contact_preference_for,
     evidence_matches,
@@ -34,9 +40,15 @@ END_CALL_REASONS = frozenset({"none", *POLICY_REASONS})
 HANGUP_REASONS = frozenset(POLICY_REASONS)
 
 _QUESTION_RE = re.compile(
-    r"(\?|^(what|why|how|when|where|who|can you|could you|please tell|will you)\b"
-    r"|ఏమిటి|ఎలా|ఎందుకు|కదా\s*\?|क्या|कैसे|क्यों"
-    r"|என்ன(?![\u0BBE-\u0BCD])|எப்படி|ஏன்|எப்போது|எங்கே|யார்|எவ்வளவு|வேண்டுமா|தெரியுமா)",
+    r"(\?|^(what|why|how|when|where|who|which|can you|could you|would you|"
+    r"please tell|tell me|will you|do you|does|did you|are you|is there|"
+    r"was there|were you|have you|has your|am i|may i|should i)\b"
+    r"|^(?:do|does|did|are|is|was|were|will|would|could|should|can|have|has|"
+    r"am|may|might)\s+(?:you|your|i|we|they|there|it|this|that|he|she|the|any)\b"
+    r"|ఏమిటి|ఎలా|ఎందుకు|కదా\s*\?|ఎంత|ధర|ప్రైసింగ్|ఉన్నాయా|ఉందా|"
+    r"చేస్తారా|ఇస్తారా|అవుతుందా|చెప్పగలరా|क्या|कैसे|क्यों|कितना|कीमत"
+    r"|என்ன(?![\u0BBE-\u0BCD])|எப்படி|ஏன்|எப்போது|எங்கே|யார்|எவ்வளவு|"
+    r"வேண்டுமா|தெரியுமா|விலை|செய்வீர்களா|உண்டா)",
     re.I,
 )
 _GOODBYE = re.compile(
@@ -44,7 +56,8 @@ _GOODBYE = re.compile(
     r"stop the calls|alvida|call cheyoddu|call cheyaku|call cheyakandi|"
     r"குட்\s*பை|விடைபெறுகிறேன்|போய்\s*வருகிறேன்|போகிறேன்)\b|"
     r"వద్దు\s*call|కాల్\s*చేయొద్దు|call\s*చేయక|(?:இனி|மீண்டும்).{0,12}(?:அழைக்க|தொடர்பு).{0,12}வேண்டாம்|"
-    r"மீண்டும்\s*அழைக்காதீர்கள்|இனி\s*அழைக்காதீர்கள்|இனிமேல்\s*அழைக்காதீர்கள்|இனி\s*call|చేయకండి",
+    r"மீண்டும்\s*அழைக்காதீர்கள்|இனி\s*அழைக்காதீர்கள்|இனிமேல்\s*அழைக்காதீர்கள்|இனி\s*call|చేయకండి|"
+    r"బై(?!క)|బాయ్",  # transliterated bye; never the "బైక్" (bike) prefix
     re.I,
 )
 # Do not match లేదు inside నచ్చలేదు / కాలేదు, or bare వద్దు in "ఇంకేమీ వద్దు".
@@ -52,6 +65,11 @@ _REFUSAL = re.compile(
     r"\b(not interested|no thanks|don't want|do not want|nahi chahiye|"
     r"mat karo|no interest|not for me|no need|remove me|"
     r"don'?t (?:want|need) (?:this|it|any)|stop (?:this|the) call)\b|"
+    # Negated identification ("this isn't something I want to pursue") reads as
+    # "I want" to the positive-request pattern, so name it as a refusal here.
+    r"\b(?:isn'?t|is not|wasn'?t|was not|'s not)\s+(?:really\s+|exactly\s+)?"
+    r"(?:something|anything|what)\s+(?:that\s+)?(?:i|we)(?:'m|'re)?\s+"
+    r"(?:want|need|like|pursue|interested)\b|"
     r"\b(vaddu|ledu)\b.{0,48}interest|interest.{0,24}\b(vaddu|ledu)\b|"
     r"interest\s*లేదు|ఇంట్రెస్ట్\s*లేదు|"
     r"ఇంట్రెస్ట్(?:\s+\S+){0,2}\s+లేద(?:ు|ండి)|interested\s*nahi|"
@@ -81,6 +99,45 @@ _STAY_ON_LINE = re.compile(
     r"தொடர்ந்து.{0,12}சொல்லு|இன்னும்\s*கேட்க|"
     r"और\s*बताइए|आगे\s*बताइए|थोड़ा\s*और\s*बताइए|"
     r"ఇంకా\s*చెప్పండి|మరింత\s*వివరించండి)\b",
+    re.I,
+)
+# Refusing one product while asking about another is a scoped preference, not
+# an overall refusal. The contrast marker or the later ask proves the scope.
+_CONTRAST = re.compile(
+    r"\b(?:but|however|though|although|instead|except)\b|"
+    r"(?:किंतु|लेकिन|परन्तु|పర్|కానీ|అయితే|ஆனால்|என்றாலும்)",
+    re.I,
+)
+# Positive asks that keep the conversation open: pricing, details, or wanting
+# a named product/service. A refusal next to one of these is not a refusal of
+# the call.
+_POSITIVE_REQUEST = re.compile(
+    r"\b(?:tell|show|send|share|explain|give|quote|provide)\s+(?:me\s+)?"
+    r"(?:the\s+)?(?:price|pricing|cost|rate|rates|details?|info|information|"
+    r"more|quote|sample|samples)\b|"
+    r"\b(?:what(?:'s| is)|how\s+much\s+is)\s+(?:the\s+)?(?:price|cost|rate)\b|"
+    r"\b(?:i|we)\s+(?:want|need|would\s+like|'d\s+like)\b|"
+    r"\bgo\s+ahead\b|"
+    r"(?:చెప్పండి|చెప్పు|వివరాలు|వివరం|ధర|ఎంత|కావాలి|ఇవ్వండి|పంపండి)|"
+    r"(?:बताइए|बताओ|विवरण|कीमत|कितना|चाहिए|भेजिए)|"
+    r"(?:சொல்லுங்கள்|சொல்லுங்க|விவரம்|விலை|எவ்வளவு|வேண்டும்|அனுப்புங்கள்)",
+    re.I,
+)
+_DONE_WORDS = re.compile(
+    r"\b(?:that'?s (?:all|it)|that(?:'s| is) enough|nothing (?:else|more)|"
+    r"no more questions|i(?:'m| am) done|we(?:'re| are) done|all good|all set)\b|"
+    r"(?:అంతే|ఇంకేమీ\s*లేదు|ఇక\s*చాలు|चाहिए\s*नहीं|और\s*कुछ\s*नहीं|बस\s*इतना|"
+    r"அவ்வளவுதான்|இதுவே\s*போதும்|போதும்)",
+    re.I,
+)
+_AFFIRMATIVE_TURN = re.compile(
+    r"^\s*(?:yes|yeah|yep|yup|correct|right|ok(?:ay)?|sure|fine|alright|"
+    r"అవును|అవునండి|సరే|ओके|हाँ|हां|ठीक|சரி|ஆம்|ஆமாம்)(?:\s*[,.!?]|\s|$)",
+    re.I,
+)
+_THANKS_ONLY = re.compile(
+    r"^\s*(?:(?:yeah|yes|ok|okay|sure|fine|alright)[,.]?\s+)?"
+    r"(?:thanks?|thank you)(?:\s+so much)?[.!]?\s*$",
     re.I,
 )
 _CALLER_DONE = re.compile(
@@ -141,12 +198,24 @@ _END_REQUEST = re.compile(
     r"(?:the |this |our )?(?:call|conversation|line)?\b|"
     r"\b(?:call|cut)\s+(?:the |this |our )?call\b|"
     r"\bcall\s+(?:cut|band|end)\s*(?:karo|kar do|chey|cheyyi|cheyandi)?\b|"
+    # Mixed speech is normal: Latin "call" with a native end verb, sometimes
+    # with an adverb between them ("this call, end it now" in the caller's
+    # language). The negation guard in caller_explicit_end_request keeps
+    # "don't end this call" out.
+    r"\bcall\b.{0,20}(?:ముగించండి|ముగించు|కట్\s*చేయండి|ఆపండి|ఆపేయండి)|"
+    r"\bcall\b.{0,20}(?:समाप्त\s*(?:कीजिए|करें|करो|कर\s*दीजिए)|बंद\s*(?:कीजिए|करें|करो)|"
+    r"काट\s*(?:दीजिए|दें|दो)|खत्म\s*(?:कीजिए|करें|करो))|"
+    r"\bcall\b.{0,20}(?:முடிச்சிடுங்க|முடிக்கவும்|முடியுங்க|நிறுத்துங்க|நிறுத்து|முடி)|"
+    r"\bcall\b.{0,20}(?:ಮುಗಿಸಿ|ಮುಗಿಸುವುದು|ನಿಲ್ಲಿಸಿ|ಕಡಿತ\s*ಮಾಡಿ|ಮುಗಿಸು)|"
     r"(?:కాల్\s*)?కట్\s*(?:చేయండి|చేసెయ్యండి|చేయి|చెయ్|చేస్తారా|చేస్తావా)(?:\s*కాల్)?|"
-    r"కాల్\s*(?:కట్|ఆపండి|ముగించండి|పెట్టేయండి)|"
+    r"(?:కాల్|ఫోన్)\s*.{0,16}(?:కట్|ఆపండి|ఆపేయండి|ముగించండి|ముగించు|పెట్టేయండి)|"
     r"ఫోన్\s*పెట్టేయండి|పెట్టేయండి|కాల్\s*ఆపేయండి|ఆపేయండి|"
-    r"कॉल\s*(?:काट|बंद)|"
-    r"அழைப்பை\s*(?:முடி|முடிக்கவும்|முடியுங்கள்|முடிங்க|நிறுத்து|நிறுத்தவும்|நிறுத்துங்கள்|நிறுத்துங்க|துண்டிக்கவும்)|"
-    r"காலை?\s*(?:கட்\s*பண்ணுங்க|முடி|முடிக்கவும்|நிறுத்து|நிறுத்துங்க)",
+    r"(?:कॉल|फोन)\s*.{0,16}(?:काट|बंद|समाप्त|खत्म\s*कर)|"
+    r"(?:कॉल|फोन)\s*.{0,12}(?:समाप्त|खत्म|बंद\s*कर)|"
+    r"அழைப்பை\s*.{0,16}(?:முடி|முடிக்கவும்|முடியுங்கள்|முடிங்க|நிறுத்து|நிறுத்தவும்|நிறுத்துங்கள்|நிறுத்துங்க|துண்டிக்கவும்)|"
+    r"காலை?\s*.{0,16}(?:கட்\s*பண்ணுங்க|முடி|முடிக்கவும்|நிறுத்து|நிறுத்துங்க)|"
+    r"(?:கால்|அழைப்பு).{0,16}(?:முடிச்சிடுங்க|முடிக்கவும்|நிறுத்துங்க)|"
+    r"(?:ಕರೆ|ಫೋನ್|ಕಾಲ್).{0,20}(?:ಮುಗಿಸಿ|ಮುಗಿಸುವುದು|ನಿಲ್ಲಿಸಿ|ಕಡಿತ\s*ಮಾಡಿ|ಮುಗಿಸು)",
     re.I,
 )
 # Caller cannot continue now — close politely (not a callback unless they also asked).
@@ -325,6 +394,8 @@ def callback_ready_to_close(
 def caller_requested_callback(user_text: str) -> bool:
     """A direct request to move this conversation to a later call, not a question about callbacks."""
     text = user_text or ""
+    if caller_revoked_callback(text) or is_negated_end(text):
+        return False
     if _NEGATED_CALLBACK.search(text) or opt_out_evidence(text):
         return False
     return bool(_CALLBACK_REQUEST.search(text) or _RECORD_DETAILS.search(text))
@@ -332,7 +403,7 @@ def caller_requested_callback(user_text: str) -> bool:
 
 def caller_explicit_end_request(user_text: str) -> bool:
     text = user_text or ""
-    return bool(_END_REQUEST.search(text) and not _NEGATED_END.search(text))
+    return bool(_END_REQUEST.search(text) and not is_negated_end(text))
 
 
 def caller_unavailable_now(user_text: str) -> bool:
@@ -516,6 +587,10 @@ def _trust_live_tool_evidence(
         if reason == "goal_complete" and agent_spoke_disqualification_close(spoken):
             return True
         return False
+    if reason in {"goodbye", "firm_refusal", "not_interested"} and caller_engaged_in_turn(text):
+        # A tool call is not consent. An affirmative answer, a question or a
+        # request for another product keeps the conversation open.
+        return False
     if reason in {"firm_refusal", "not_interested"}:
         return not (user_short_close_ack(text) and not caller_firm_refusal(text))
     if reason == "goodbye":
@@ -556,9 +631,21 @@ def caller_stop_contact(user_text: str) -> bool:
     text = user_text or ""
     if not text.strip():
         return False
+    if is_negated_end(text) or caller_revoked_callback(text):
+        # "Do not cut this call" and "I am not asking you to call me" both
+        # contain a call word plus a negative, and mean the opposite.
+        return False
     from server.call.close_decision import opt_out_evidence
 
     return bool(_OPT_OUT.search(text) or opt_out_evidence(text))
+
+
+def _scoped_refusal(text: str) -> bool:
+    """Refusing one thing while asking for another is not refusing the call."""
+    refusal = _REFUSAL.search(text)
+    if not refusal or not _POSITIVE_REQUEST.search(text):
+        return False
+    return bool(_CONTRAST.search(text) or _POSITIVE_REQUEST.search(text[refusal.end():]))
 
 
 def caller_not_interested(user_text: str) -> bool:
@@ -572,9 +659,40 @@ def caller_not_interested(user_text: str) -> bool:
         _STAY_ON_LINE.search(text)
         or caller_wants_to_continue(text)
         or caller_negated_refusal(text)
+        or caller_revoked_callback(text)
+        or has_future_interest(text)
+        or _scoped_refusal(text)
     ):
         return False
     return bool(_REFUSAL.search(text) or caller_backup_end_intent(text))
+
+
+def caller_engaged_in_turn(user_text: str) -> bool:
+    """True when the caller's own turn keeps the conversation open.
+
+    A tool call or a model quote is not consent: an affirmative answer, a
+    question, or a request for another product's details must not authorize a
+    close. Genuine close words, done phrases and polite thanks still do.
+    """
+    text = (user_text or "").strip()
+    if not text:
+        return False
+    if (
+        caller_stop_contact(text)
+        or caller_explicit_end_request(text)
+        or _user_wants_hangup(text)
+        or caller_not_interested(text)
+        or _OPT_OUT.search(text)
+        or _CALLER_DONE.search(text)
+        or _DONE_WORDS.search(text)
+        or _THANKS_ONLY.search(text)
+    ):
+        return False
+    if looks_like_question(text) or caller_wants_to_continue(text):
+        return True
+    if caller_negated_refusal(text):
+        return True
+    return bool(_POSITIVE_REQUEST.search(text) or _AFFIRMATIVE_TURN.match(text))
 
 
 def caller_firm_refusal(user_text: str) -> bool:
@@ -604,10 +722,11 @@ def caller_confirmed_goal_complete(user_text: str) -> bool:
 
 def _user_wants_hangup(user_text: str) -> bool:
     text = user_text or ""
+    # Holding the line open outranks every close phrase in the same turn.
+    if is_negated_end(text) or is_wait_or_continue(text) or caller_revoked_callback(text):
+        return False
     if caller_explicit_end_request(text):
         return True
-    if _NEGATED_END.search(text):
-        return False
     if _OPT_OUT.search(text) or _CALLER_DONE.search(text):
         return True
     if caller_complains_about_repeated_calls(text):
@@ -686,9 +805,11 @@ def validate_end_call(
     if (
         parsed["should_end"]
         and parsed.get("reason") != "abuse"
-        and not wants_hangup
+        and not (wants_hangup or stop_contact)
         and meaningful_remaining_request(parsed.get("remaining_request") or "")
     ):
+        # A model note does not outrank the caller's own stop/end request: a
+        # rejected close that keeps talking is worse than one leftover note.
         logger.info("[END_CALL] rejected code=remaining_request reason=%s", parsed.get("reason"))
         return EndCallDecision(
             False, False, "none", parsed.get("farewell") or "", "remaining_request", evidence_valid=quoted
@@ -849,6 +970,7 @@ def validate_end_call(
         and not caller_wants_to_continue(user)
         and not caller_negated_refusal(user)
         and not caller_polite_thanks_only(user)
+        and not caller_engaged_in_turn(user)
         and not meaningful_remaining_request(parsed.get("remaining_request") or "")
     )
     evidence_ok = agent_concluded or semantic_close or (
@@ -879,7 +1001,10 @@ def validate_end_call(
         reason=reason,
         user_text=user,
         evidence=parsed.get("evidence") or "",
-        opt_out_matched=bool(_OPT_OUT.search(user)),
+        # caller_stop_contact already applies the negation/scoped-refusal guards
+        # and reads the native opt-out phrases, so a server-forced close keeps
+        # the caller's real do-not-call request.
+        opt_out_matched=stop_contact,
         callback_requested=caller_requested_callback(user),
     )
     return EndCallDecision(True, True, reason, farewell, None, contact_preference)

@@ -143,7 +143,7 @@ async def test_older_gemini_uses_forced_schema_function_for_final_reply(monkeypa
             "decision": "continue", "reason": "none", "evidence": "",
             "remaining_request": "", "contact_preference": "none",
         },
-        "order_claimed": False,
+        "action_claimed": "none",
         "spoken_response": "Here are the times.",
         "memory_update": {"operations": []},
     }

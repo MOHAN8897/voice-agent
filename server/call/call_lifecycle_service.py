@@ -285,16 +285,23 @@ class CallLifecycleService:
                 else:
                     compiled_text = compiled_text + voicemail_block
 
-            from server.brain.brain_prompt_validate import assert_rendered_brain_valid
+            from server.brain.brain_prompt_validate import validate_rendered_brain
 
-            try:
-                assert_rendered_brain_valid(compiled_text, language)
-            except Exception as val_err:
-                logger.warning(
-                    "[CALL] Prompt language validation warning for agent %s (lang=%s): %s",
+            issues = validate_rendered_brain(compiled_text, language)
+            if issues:
+                logger.error(
+                    "[CALL] Prompt validation rejected agent %s (lang=%s): %s",
                     agent.get("agent_id"),
                     language,
-                    val_err,
+                    "; ".join(issues),
+                )
+                raise AppError(
+                    ErrorCode.VALIDATION_ERROR,
+                    message=(
+                        "The published agent instructions contain conflicting platform rules. "
+                        "Review and republish the agent, then start the call again."
+                    ),
+                    status_code=409,
                 )
 
         if compiled_text and not using_prepared_brain:

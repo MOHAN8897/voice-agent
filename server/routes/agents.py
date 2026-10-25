@@ -94,6 +94,22 @@ async def create_agent(
     tenant_id = _tenant_id(request, principal) or body.tenantId
     if principal and body.tenantId and body.tenantId != str(principal.tenant_id):
         raise HTTPException(status_code=400, detail={"error": {"code": "invalid_tenant", "message": "Invalid tenant"}})
+    if body.languages:
+        from server.prompts.agent_voice_rules import normalize_compile_language
+        from server.services.dev_runtime import effective_app_environment
+        from server.services.saas.voice_stack_profiles import VoiceProfileError, validate_agent_language_for_tier
+
+        try:
+            language = normalize_compile_language(str(body.languages[0]))
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail={"error": {"code": "unsupported_language", "message": "Choose a supported spoken language."}}) from exc
+        try:
+            await validate_agent_language_for_tier(effective_app_environment(), "medium", language)
+        except VoiceProfileError as exc:
+            raise HTTPException(
+                status_code=exc.status_code,
+                detail={"error": {"code": exc.code, "message": str(exc), **exc.details}},
+            ) from exc
     disclosure_enabled = bool(body.recordingDisclosureEnabled)
     agent = await agent_service.create_agent(
         name=body.name,

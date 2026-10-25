@@ -100,5 +100,46 @@ def format_call_end_section(language: str | None, policy: dict[str, Any] | None 
         f"{HANGUP_JUDGMENT_RULES}\n"
         f"Allowed close reasons for this agent: {reasons}. "
         f"On an approved close the platform speaks this farewell: `{farewell}`. "
-        "Never speak it yourself; generate no words on a close turn."
+        "There is one farewell owner: never speak a goodbye or this line yourself. "
+        "On a close turn the platform speaks, so leave spoken_response empty."
     )
+
+
+_CANONICAL_CLOSING: dict[str, str] = {
+    "en": (
+        "Make the close decision only when the caller is finished, clearly refuses all help, "
+        "or asks to end. Never speak a goodbye or farewell; the platform speaks it. "
+        "Keep the conversation open while the caller still has a question, interest for later, "
+        "or asks you not to disconnect."
+    ),
+    "te": (
+        "కాలర్ పని పూర్తయినప్పుడు, సహాయం పూర్తిగా తిరస్కరించినప్పుడు లేదా కాల్ ముగించమని "
+        "స్పష్టంగా అడిగినప్పుడు మాత్రమే close decision ఇవ్వండి. మీరు goodbye లేదా farewell "
+        "చెప్పకండి; platform చెబుతుంది. కాలర్‌కు ఇంకా ప్రశ్న ఉంటే, భవిష్యత్తులో ఆసక్తి ఉంటే, "
+        "లేదా కాల్ కట్ చేయవద్దని అడిగితే సంభాషణ కొనసాగించండి."
+    ),
+    "hi": (
+        "क्लोज़ का फैसला तभी करें जब कॉलर का काम पूरा हो, उसने सारी मदद साफ़ तौर पर मना कर दी हो, "
+        "या कॉल खत्म करने को कहा हो। आप खुद goodbye या farewell न कहें; platform कहता है। "
+        "जब तक कॉलर का सवाल बाकी है, भविष्य की दिलचस्पी है, या कॉल काटने से मना किया है, "
+        "बातचीत जारी रखें।"
+    ),
+    "ta": (
+        "அழைப்பாளரின் வேலை முடிந்தால், எல்லா உதவியையும் தெளிவாக மறுத்தால், அல்லது "
+        "அழைப்பை முடிக்கச் சொன்னால் மட்டுமே close decision எடுங்கள். நீங்கள் goodbye அல்லது "
+        "farewell சொல்ல வேண்டாம்; platform சொல்லும். அழைப்பாளருக்கு இன்னும் கேள்வி இருந்தால், "
+        "எதிர்கால ஆர்வம் இருந்தால், அல்லது call cut செய்ய வேண்டாம் என்றால் உரையாடலைத் தொடருங்கள்."
+    ),
+    "kn": (
+        "ಕರೆ ಮಾಡಿದವರ ಕೆಲಸ ಮುಗಿದಾಗ, ಎಲ್ಲ ಸಹಾಯವನ್ನೂ ಸ್ಪಷ್ಟವಾಗಿ ನಿರಾಕರಿಸಿದಾಗ, ಅಥವಾ ಕರೆ "
+        "ಮುಗಿಸಲು ಕೇಳಿದಾಗ ಮಾತ್ರ close decision ತೆಗೆದುಕೊಳ್ಳಿ. ನೀವು goodbye ಅಥವಾ farewell "
+        "ಹೇಳಬೇಡಿ; platform ಹೇಳುತ್ತದೆ. ಕರೆ ಮಾಡಿದವರಿಗೆ ಇನ್ನೂ ಪ್ರಶ್ನೆ ಇದ್ದರೆ, ಭವಿಷ್ಯದ ಆಸಕ್ತಿ "
+        "ಇದ್ದರೆ, ಅಥವಾ call cut ಮಾಡಬೇಡಿ ಎಂದರೆ ಸಂಭಾಷಣೆ ಮುಂದುವರಿಸಿ."
+    ),
+}
+
+
+def closing_policy_section(language: str | None) -> str:
+    """The one closing instruction compiled into every agent script."""
+    lang = normalize_compile_language(language)
+    return _CANONICAL_CLOSING.get(lang.split("-")[0], _CANONICAL_CLOSING["en"])

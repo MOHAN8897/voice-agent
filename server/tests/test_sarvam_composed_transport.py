@@ -68,6 +68,26 @@ def test_sarvam_tools_wrap_internal_flat_declarations_and_preserve_chat_declarat
 
 
 @pytest.mark.asyncio
+async def test_plain_phone_delivery_rejects_json_before_releasing_buffered_speech(monkeypatch):
+    from server.providers.llm_protocol import IncompleteTurnError
+
+    _mock_http(monkeypatch, [
+        {"choices": [{"delta": {"content": '{"spoken_response":"Hello","end_call":{"decision":"close"}}'}}]},
+    ])
+    spoken = []
+    with pytest.raises(IncompleteTurnError) as exc:
+        async for event in sarvam_llm.SarvamLLMAdapter(api_key="unit-key").stream_live_turn(
+            model="sarvam-105b-conversations", api_mode="chat_completions_v1",
+            input_messages=[{"role": "user", "content": "Tell me the price"}],
+            speech_only=True, buffer_response=True,
+        ):
+            if event.get("delta"):
+                spoken.append(event["delta"])
+    assert exc.value.finish_reason == "unexpected_speech_format"
+    assert spoken == []
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("mode, model, message", [
     ("unary_rest", "sarvam-105b-conversations", "approved chat completion"),
     ("chat_completions_v1", "glm5.3", "unavailable on Chat Completions V1"),

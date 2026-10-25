@@ -40,7 +40,7 @@ def _create_agent(client) -> str:
 
 def test_calling_script_round_trips(client):
     agent_id = _create_agent(client)
-    script = "Greet the caller. Ask budget. Book a site visit. Say goodbye."
+    script = "Greet the caller. Ask budget. Book a site visit. Confirm the next step."
 
     saved = client.put(
         f"/api/agents/{agent_id}/business-brain/calling-script",

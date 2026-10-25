@@ -31,6 +31,13 @@ _DANGLING_TAIL = re.compile(
     r"(?:[\s,]+|\b)(?:or|and|but|so|to|for|from|with|if|when|that|the|a|an)\.?$",
     re.I,
 )
+# "..., and we do" / "..., and it is" — a cut clause that reads as a sentence.
+_INCOMPLETE_TAIL = re.compile(
+    r"[\s,]+(?:and|but|or|so)\s+(?:\w+\s+){0,2}"
+    r"(?:we|i|they|it|you|he|she|there)\s+"
+    r"(?:do|does|did|have|has|had|is|are|was|were|will|would|can|could)[\s,;.]*$",
+    re.I,
+)
 _GLUED_SENTENCE = re.compile(r"([.!?।])(?=[A-Za-z\u0C00-\u0C7F\u0900-\u097F])")
 _GREETING_START = re.compile(
     r"^(?:hi|hello|hey|namaste|namaskar)\b.{0,80}?\b(?:this is|nenu|main)\b",
@@ -42,7 +49,8 @@ _VALID_SHORT_REPLY = re.compile(
     re.I,
 )
 _MIDWORD_STUMP = re.compile(
-    r"\b(?:lak|cro|rupee|from|with|and|or|the|we|i|to|for|a|an)\.$",
+    r"\b(?:lak|cro|rupee|from|with|and|or|the|we|i|to|for|a|an|"
+    r"have|has|had|do|does|did|is|are|was|were|will|would|can|could)\.$",
     re.I,
 )
 
@@ -228,14 +236,36 @@ def _strip_dangling_clause(text: str) -> str:
     cleaned = (text or "").strip()
     if not cleaned:
         return cleaned
-    stripped = _DANGLING_TAIL.sub("", cleaned).rstrip(" ,;")
+    stripped = _INCOMPLETE_TAIL.sub("", cleaned).rstrip(" ,;")
+    stripped = _DANGLING_TAIL.sub("", stripped).rstrip(" ,;")
     if not stripped:
         return cleaned
+    # A comma/semicolon ending is an unfinished clause. Keep the last complete
+    # sentence, or back up to the previous clause; never voice "and we do,".
+    if stripped[-1] in ",;:":
+        head = stripped[:-1].rstrip()
+        last_end = None
+        for match in _SENTENCE_END.finditer(head):
+            last_end = match
+        if last_end is not None:
+            head = head[: last_end.end()].strip()
+        else:
+            cut = max(head.rfind(", "), head.rfind("; "))
+            head = head[:cut].strip() if cut >= 24 else (
+                head.rsplit(" ", 1)[0].strip() if " " in head else ""
+            )
+        if not head:
+            return ""
+        return head if head[-1] in ".?!।" else head + "."
     last = None
     for match in _SENTENCE_END.finditer(stripped):
         last = match
     if last is not None:
         tail = stripped[last.end() :].strip()
+        # A one-to-three-word tail with no terminal punctuation is a cut
+        # fragment ("Have", "and we do"), not an answer.
+        if tail and len(tail.split()) < 4:
+            return stripped[: last.end()].strip()
         if tail and len(tail) < 18:
             return stripped[: last.end()].strip()
     if stripped[-1] not in ".?!।":

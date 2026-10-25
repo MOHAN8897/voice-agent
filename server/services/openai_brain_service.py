@@ -1058,8 +1058,8 @@ async def generate_response_stream(
                                 if extractor is not None
                                 else None
                             ),
-                            "order_preview": (
-                                extractor.preview_order_claim()
+                            "action_preview": (
+                                extractor.preview_action_claim()
                                 if extractor is not None
                                 else None
                             ),
@@ -1078,11 +1078,13 @@ async def generate_response_stream(
         memory_update = {"operations": []}
         memory_parse_failed = False
         end_call = {"should_end": False, "reason": "none", "farewell": ""}
+        action_claimed = None
         if extractor is not None:
             full_text = extractor.spoken_text.strip() or unclear_fallback_for(language_code)
             memory_update = extractor.parse_memory_update()
             memory_parse_failed = extractor.structured_parse_failed()
             end_call = extractor.parse_end_call()
+            action_claimed = extractor.parse_action_claim()
         else:
             full_text = raw_text or unclear_fallback_for(language_code)
         end_call = await _gate_end_call_for_brain(
@@ -1134,6 +1136,7 @@ async def generate_response_stream(
             "memory_update": memory_update,
             "memory_parse_failed": memory_parse_failed,
             "end_call": end_call,
+            "action_claimed": action_claimed,
         }
         log_brain("Stream completed", chars=len(full_text), usage=stream_usage)
     except AppError:

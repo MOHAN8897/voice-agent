@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,7 +12,12 @@ from pydantic import BaseModel, Field
 from server.auth.subscriber_dependencies import require_subscriber_jwt
 from server.brain.agent_service import AgentBuildRequestConflict, agent_service
 from server.brain.brief_contract import BriefValidationError, normalize_generation_config
-from server.brain.employee_script_pipeline import ClarificationAnswer, analyze_employee_brief, clarification_response
+from server.brain.employee_script_pipeline import (
+    ClarificationAnswer,
+    GenerationStageError,
+    analyze_employee_brief,
+    clarification_response,
+)
 from server.brain.script_entities import strip_entity_tags_section
 from server.routes.agents import _subscriber_agent
 from server.services.saas import platform_languages
@@ -25,6 +31,17 @@ from server.services.saas.tenant_guard import (
 from server.utils.errors import AppError, ErrorCode
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+# Matches Agent.default_tier and AgentService.create_agent; creation never
+# negotiates a tier, so readiness must be checked against this one.
+CREATED_AGENT_TIER = "medium"
+
+
+async def _profile_language(environment: str) -> dict:
+    from server.services.saas.voice_stack_profiles import profile_language_support
+
+    return await profile_language_support(environment, CREATED_AGENT_TIER)
 
 
 @router.get("/api/app/agents/languages")
@@ -32,10 +49,25 @@ async def available_languages():
     """Languages the creation UI may offer.
 
     Admin-configurable, so the picker is never a hardcoded list in the bundle.
+    Entries the default calling tier cannot serve are returned separately rather
+    than offered and rejected later.
     """
+    from server.services.dev_runtime import effective_app_environment
+
+    options = platform_languages.language_options()
+    support = await _profile_language(effective_app_environment())
+    supported = set(support["supportedLanguages"])
+    if support["configured"] and supported:
+        offered = [option for option in options if option["code"] in supported]
+        unavailable = [option for option in options if option["code"] not in supported]
+    else:
+        offered, unavailable = options, []
+    default = offered[0]["code"] if offered else ""
     return {
-        "languages": platform_languages.language_options(),
-        "default": platform_languages.enabled_languages()[0],
+        "languages": offered,
+        "default": default,
+        "tier": support["tier"] if support["configured"] else None,
+        "unavailableOnTier": unavailable,
     }
 
 
@@ -62,6 +94,7 @@ class BuildEmployeeBody(BaseModel):
     agentRole: str = Field("", max_length=120)
     callDirection: str = Field("", max_length=20)
     requestId: uuid.UUID | None = None
+    retryFailed: bool = False
     clarificationAnswers: list[ClarificationAnswer] = Field(default_factory=list, max_length=20)
 
 
@@ -90,6 +123,12 @@ async def analyze_brief(
         return clarification_response(extracted)
     except BriefValidationError as exc:
         raise HTTPException(status_code=422, detail={"error": exc.to_dict()}) from exc
+    except GenerationStageError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"error": exc.to_public_dict()},
+            headers={"Retry-After": "10"} if exc.transient else None,
+        ) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail={"error": {"code": "brief_analysis_unavailable",
             "message": "We could not check the brief right now. Your answers are kept; please try again."}}) from exc
@@ -138,6 +177,16 @@ async def build_employee(
                 }
             },
         )
+    from server.services.dev_runtime import effective_app_environment
+    from server.services.saas.voice_stack_profiles import VoiceProfileError, validate_agent_language_for_tier
+
+    try:
+        await validate_agent_language_for_tier(effective_app_environment(), CREATED_AGENT_TIER, lang)
+    except VoiceProfileError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"error": {"code": exc.code, "message": str(exc), **exc.details}},
+        ) from exc
     tenant_id = str(subscriber_workspace_tenant_id(principal))
 
     voice_config = {
@@ -164,13 +213,14 @@ async def build_employee(
             claim = await agent_service.claim_build_request(
                 request_id=str(body.requestId), fingerprint=fingerprint, tenant_id=tenant_id,
                 name=body.employeeName.strip() or "Unfinished agent", language=lang,
+                retry_failed=bool(body.retryFailed),
             )
         except BriefValidationError as exc:
             raise HTTPException(status_code=422, detail={"error": exc.to_dict()}) from exc
         except AgentBuildRequestConflict as exc:
             raise HTTPException(status_code=409, detail={"error": {"code": exc.code, "message": str(exc)}}) from exc
         claimed_agent = claim["agent"]
-        if not claim["created"]:
+        if not claim["created"] and not claim.get("resumed"):
             if claim.get("state") == "completed":
                 response = claim["response"]
                 return {**response, "agent": _subscriber_agent(response.get("agent") or {})}
@@ -203,6 +253,18 @@ async def build_employee(
         error = exc.to_dict()
         await record_failed_request(error, 422)
         raise HTTPException(status_code=422, detail={"error": error}) from exc
+    except GenerationStageError as exc:
+        error = exc.to_public_dict()
+        logger.warning(
+            "agent.generation_failed agent_id=%s stage=%s transient=%s correlation_id=%s code=%s",
+            (claimed_agent or {}).get("agent_id"), exc.stage, exc.transient, exc.correlation_id, error["code"],
+        )
+        await record_failed_request(error, exc.status_code)
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"error": error},
+            headers={"Retry-After": "10"} if exc.transient else None,
+        ) from exc
     except Exception as exc:
         error = {"code": "script_compile_failed", "message": "Script generation failed. Please try again."}
         await record_failed_request(error, 502)

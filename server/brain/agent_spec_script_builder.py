@@ -73,7 +73,7 @@ def generate_deterministic_script_from_spec(
         role_lines.append(f"When they have time, discover: {items_str} (one question at a time).")
     if objective:
         role_lines.append(f"Guide interested callers toward: {objective} — never pressure.")
-    role_lines.append("When they confirm they are done or confirm the next step: confirm, thank, farewell, and close — no extra pitch.")
+    role_lines.append("When they confirm they are done or confirm the next step: confirm, thank, and make the close decision — no extra pitch. Never speak the farewell; the platform owns it.")
     role_section = "--- YOUR ROLE ON THIS CALL ---\n" + "\n".join(role_lines)
 
     # Section 5: HOW THE CALL SHOULD GO & COMPLIANCE HOOKS

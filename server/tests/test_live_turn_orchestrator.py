@@ -11,6 +11,7 @@ from server.call.call_ledger import call_ledger
 from server.call.live_turn_orchestrator import (
     cap_reactive_response,
     correction_memory_operation,
+    finalize_live_spoken_text,
     live_turn_orchestrator,
 )
 from server.config.env import get_settings
@@ -33,6 +34,16 @@ def test_reactive_response_keeps_only_human_recovery_sentence():
         "Please send it on WhatsApp.",
         "I can't send it directly. The fee is eight thousand rupees.",
     ) == "I can't send it directly."
+
+
+def test_reactive_cap_does_not_drop_a_requested_answer():
+    caller = "You are a useless idiot. Stop repeating yourself and answer the price question."
+    reply = (
+        "I understand you're looking for pricing. Visiting cards are twenty-five rupees per card "
+        "with a minimum order of one hundred cards."
+    )
+    assert cap_reactive_response(caller, reply) == reply
+    assert "twenty-five" in finalize_live_spoken_text(caller, reply)
 
 
 def test_explicit_correction_uses_one_latest_wins_memory_key():

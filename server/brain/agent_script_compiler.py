@@ -1639,8 +1639,8 @@ def _role_on_call_section(
             "Ask only missing information expressly needed and permitted by the business workflow; "
             "never request fields the brief forbids or walk optional fields as a checklist.\n"
             f"Guide interested callers toward {next_step} — never pressure.\n"
-            "When they confirm they are done or confirm the next step: confirm, thank, farewell, and close — no extra pitch.\n"
-            "If busy, respect their time and use only a permitted next step. If not interested: thank them and close."
+            "When they confirm they are done or confirm the next step: make the close decision — no extra pitch, no spoken farewell; the platform owns it.\n"
+            "If they decline this offer, answer any other product or service they ask about. Make the close decision only when they clearly refuse all help or ask to end."
             f"{extra}"
         )
     extra = f"\nSpeak this way: {voice_line}." if voice_line else ""
@@ -1839,7 +1839,7 @@ def _platform_call_rules(
             "1. Answer promptly with CANONICAL OPENING — name, company, offer to help.\n"
             "2. Listen to their issue or request first.\n"
             "3. Resolve using COMPANY & OFFER. If you cannot: one boundary, then a next step.\n"
-            "4. When resolved or they are done: thank them and close.\n\n"
+            "4. When resolved or they are done: make the close decision; never speak the farewell.\n\n"
         )
         first_turn_guard = (
             "Follow inbound CANONICAL OPENING — do not ask if they have a moment on a call they placed.\n"
@@ -1851,7 +1851,7 @@ def _platform_call_rules(
             "Do not generate or replay it after the opening-delivered note.\n"
             "2. Wait for the caller's actual reply and address it before the next applicable script objective.\n"
             "3. Ask a discovery question or offer a next step only when the business workflow permits it.\n"
-            "4. If busy, acknowledge and use only a permitted next step. If not interested, thank them and close.\n\n"
+            "4. If busy, acknowledge and use only a permitted next step. If they decline this offer, answer any other product or service they ask about; make the close decision only when they clearly refuse all help or ask to end.\n\n"
         )
         first_turn_guard = "Never use help-desk language on the first turn.\n"
 
@@ -1882,9 +1882,9 @@ def _platform_call_rules(
         f"{lead_capture}"
         f"--- PROFESSIONAL CLOSE ---\n"
         f"Follow CALL END POLICY for refusal, confirmed endings and completed next steps. "
-        f"Bare okay/thanks is not a hangup. Confirm in one line and thank them, then make the close decision; "
-        f"never speak the farewell yourself. "
-        f"Then stop — the platform speaks the approved farewell and disconnects when playback finishes.\n\n"
+        f"Bare okay/thanks is not a hangup. Make the close decision only when the caller is finished, "
+        f"clearly refuses all help, or asks to end; on that turn leave spoken_response empty and never speak a farewell. "
+        f"The platform speaks the approved farewell and disconnects when playback finishes.\n\n"
         f"--- OBJECTION HANDLING ---\n"
         f"Acknowledge the concern in one sentence; do not restart the full pitch. "
         f"After handling the objection, continue only if the caller is still open to the next step.\n\n"
@@ -1975,10 +1975,10 @@ def _legacy_deterministic_script(
         "Never invent prices, availability, policies, salaries, or prior conversations.\n"
         "Never claim a message, ticket, booking, or other action happened unless an available tool performed it.\n"
         "If unsure, say you will confirm and offer a real next step.\n"
-        "Politely end the call when the user says goodbye or don't-call.\n\n"
+        "Make the close decision when the caller says goodbye, asks to end, or asks not to be contacted.\n\n"
         "--- CLOSING ---\n"
-        "One next step that fits this role, in one sentence. Thank them and close naturally.\n"
-        "Firm no: make the close decision; never speak the farewell yourself.\n\n"
+        "Make the close decision only when the caller is finished, clearly refuses all help, or asks to end. "
+        "Never speak a farewell; the platform speaks it. Keep the conversation open while the caller still has a question.\n\n"
         f"Source facts and duties:\n{work_scope}"
     )
     return ensure_script_identity_and_scope(

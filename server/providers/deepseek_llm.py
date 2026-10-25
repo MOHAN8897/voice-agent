@@ -105,7 +105,7 @@ class DeepSeekLLMAdapter:
                     "delta": spoken,
                     "language_context": {},
                     "close_preview": extractor.preview_decision(),
-                    "order_preview": extractor.preview_order_claim(),
+                    "action_preview": extractor.preview_action_claim(),
                 }
         from server.agent.conversation_manager import conversation_manager
         from server.services.openai_brain_service import _after_turn_memory
@@ -119,6 +119,7 @@ class DeepSeekLLMAdapter:
             "text": extractor.spoken_text,
             "memory_update": extractor.parse_memory_update(),
             "end_call": extractor.parse_end_call(),
+            "action_claimed": extractor.parse_action_claim(),
             "memory_parse_failed": extractor.structured_parse_failed(),
             "language_context": {},
         }

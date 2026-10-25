@@ -56,6 +56,9 @@ class CloseCallResult:
     trail_ms: int
     reason: str
     background_task: asyncio.Task | None = None
+    #: The caller took the turn back before the provider hangup; the line is
+    #: still connected and the close must be treated as never having happened.
+    cancelled: bool = False
 
 
 async def _maybe_await(fn: MaybeAsync | None) -> None:
@@ -117,7 +120,13 @@ async def execute_agent_close(
     # playback already finished. Recheck immediately before touching the PSTN.
     if can_disconnect is not None and not can_disconnect():
         log_pstn("hangup.cancelled_before_disconnect", call_id=call_id)
-        return CloseCallResult(heard, wait_ms, trail_ms, canonical)
+        return CloseCallResult(
+            heard_playback=heard,
+            playback_wait_ms=wait_ms,
+            trail_ms=trail_ms,
+            reason=canonical,
+            cancelled=True,
+        )
     # Provider errors propagate so the caller can retry; never mark failure ended.
     await _maybe_await(on_provider_hangup)
 

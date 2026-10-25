@@ -5,7 +5,6 @@ import re
 from typing import Any
 
 from server.call.close_decision import parse_close_proposal
-from server.services.voice_pipeline_limits import LIVE_REPLY_MAX_CHARS
 
 # end_call leads the object so the decision is readable before any spoken text,
 # and the proof order is evidence -> intent -> decision. The server owns the
@@ -14,7 +13,7 @@ from server.services.voice_pipeline_limits import LIVE_REPLY_MAX_CHARS
 LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["end_call", "order_claimed", "spoken_response", "memory_update"],
+    "required": ["end_call", "action_claimed", "spoken_response", "memory_update"],
     "properties": {
         "end_call": {
             "type": "object",
@@ -66,16 +65,33 @@ LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
                 },
             },
         },
-        # Readable before spoken_response, so an order claim can be held until
-        # the server has proof. True only after CONFIRM_ORDER returned status ok.
-        "order_claimed": {
-            "type": "boolean",
+        # Readable before spoken_response, so an action claim can be held until
+        # the server has the matching typed proof from a tool result.
+        "action_claimed": {
+            "type": "string",
+            "enum": [
+                "none",
+                "enquiry_saved",
+                "appointment_requested",
+                "appointment_confirmed",
+                "order_confirmed",
+            ],
             "description": (
-                "True only when this turn speaks an order/booking confirmation, "
-                "which requires CONFIRM_ORDER to have returned status ok."
+                "The strongest completed action this turn tells the caller about. "
+                "Use a non-none value only when the matching tool returned success "
+                "in this call; otherwise none. A requested or pending appointment "
+                "is not appointment_confirmed."
             ),
         },
-        "spoken_response": {"type": "string", "maxLength": LIVE_REPLY_MAX_CHARS},
+        "spoken_response": {
+            "type": "string",
+            "description": (
+                "The words the caller hears: a complete factual answer in natural "
+                "sentences, never clipped to a character count. On a close decision "
+                "this must be empty: the platform speaks the approved farewell, "
+                "never the model."
+            ),
+        },
         "memory_update": {
             "type": "object",
             "additionalProperties": False,
@@ -115,7 +131,17 @@ LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
 # inside the reply can never open the gate early. JSON-escaped copies of the
 # caller's words cannot match: their closing quote is preceded by a backslash.
 _PREVIEW_DECISION = re.compile(r'"decision"\s*:\s*"(continue|clarify|close|callback)"')
-_PREVIEW_ORDER_CLAIM = re.compile(r'"order_claimed"\s*:\s*true')
+ACTION_CLAIM_VALUES: tuple[str, ...] = (
+    "none",
+    "enquiry_saved",
+    "appointment_requested",
+    "appointment_confirmed",
+    "order_confirmed",
+)
+_PREVIEW_ACTION_CLAIM = re.compile(
+    r'"action_claimed"\s*:\s*"(none|enquiry_saved|appointment_requested|'
+    r'appointment_confirmed|order_confirmed)"'
+)
 
 TEXT_FORMAT_LIVE_TURN: dict[str, Any] = {
     "format": {
@@ -124,6 +150,26 @@ TEXT_FORMAT_LIVE_TURN: dict[str, Any] = {
         "strict": True,
         "schema": LIVE_TURN_JSON_SCHEMA,
     }
+}
+
+# One bounded recovery contract. The 2026-10-25 audit measured the full control
+# schema failing (whitespace tails / length) where a speech-only schema completed
+# 3/3, so a failed first attempt switches contract instead of re-asking the same
+# one. No close, order or memory claim is trusted from this reduced reply: the
+# server keeps the call open and the next structured turn resumes control state.
+LIVE_SPEECH_JSON_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["spoken_response"],
+    "properties": {
+        "spoken_response": {
+            "type": "string",
+            "description": (
+                "The complete answer the caller hears. Never speak a goodbye, and "
+                "never claim an action succeeded unless the prior tool result proved it."
+            ),
+        },
+    },
 }
 
 
@@ -152,6 +198,11 @@ class SpokenResponseExtractor:
         if self._mode == "plain":
             return self.raw_text
         return "".join(self._spoken)
+
+    @property
+    def spoken_complete(self) -> bool:
+        """True once the spoken_response string is closed and no more speech follows."""
+        return self._mode == "json" and self._seek == "done"
 
     def feed(self, chunk: str) -> str:
         if not chunk:
@@ -245,8 +296,8 @@ class SpokenResponseExtractor:
             self._preview_decision = match.group(1)
         return self._preview_decision
 
-    def preview_order_claim(self) -> bool | None:
-        """Whether the turn claims a confirmed order, read before speech.
+    def preview_action_claim(self) -> str | None:
+        """The claimed action as soon as the JSON head makes it readable.
 
         None means the flag is not readable yet; callers must treat unknown as
         'not allowed to claim' while the text is held, never as safe.
@@ -257,9 +308,15 @@ class SpokenResponseExtractor:
         spoken_at = head.find('"spoken_response"')
         if spoken_at >= 0:
             head = head[:spoken_at]
-        if '"order_claimed"' not in head:
+        if '"action_claimed"' not in head:
             return None
-        return bool(_PREVIEW_ORDER_CLAIM.search(head))
+        match = _PREVIEW_ACTION_CLAIM.search(head)
+        return match.group(1) if match else None
+
+    def parse_action_claim(self) -> str | None:
+        payload = self._parsed_object()
+        value = payload.get("action_claimed") if payload else None
+        return value if value in ACTION_CLAIM_VALUES else None
 
     def parse_end_call(self) -> dict[str, Any]:
         payload = self._parsed_object()

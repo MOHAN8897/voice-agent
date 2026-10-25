@@ -47,7 +47,8 @@ def test_compose_single_plain_text():
     assert "friendly" in out
     assert "--- CALL END POLICY ---" in out
     assert "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం." in out
-    assert "Never speak it yourself" in out
+    assert "one farewell owner" in out
+    assert "never speak a goodbye or this line yourself" in out
     assert "Sare, time ichinanduku thanks. Good day." not in out
 
 

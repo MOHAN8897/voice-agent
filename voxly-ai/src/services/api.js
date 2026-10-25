@@ -127,7 +127,16 @@ export function parseApiError(data, status) {
     status === 429 && retryAfter ? ` Retry in ${retryAfter}s.` : '';
   const issues = Array.isArray(err?.issues) ? err.issues : [];
   const issueText = issues.map((issue) => issue?.message).filter(Boolean).join(' ');
-  return { code, message: `${message}${retryHint}${issueText ? ` ${issueText}` : ''}`, issues, retryAfter, status };
+  return {
+    code,
+    message: `${message}${retryHint}${issueText ? ` ${issueText}` : ''}`,
+    issues,
+    retryAfter,
+    retryable: typeof err?.retryable === 'boolean' ? err.retryable : undefined,
+    correlationId: typeof err === 'object' ? err?.correlationId : undefined,
+    stage: typeof err === 'object' ? err?.stage : undefined,
+    status,
+  };
 }
 
 function parseError(data, status) {
@@ -623,6 +632,9 @@ export const api = {
         e.status = response.status;
         e.isServerDegraded = isServerDegraded;
         e.retryAfter = Number(response.headers.get('Retry-After') || parsed.retryAfter || 0);
+        e.retryable = parsed.retryable;
+        e.correlationId = parsed.correlationId;
+        e.stage = parsed.stage;
         logApiEvent(isConfirmedAuthDead ? 'warn' : 'error', 'request_failed', {
           method,
           path,
@@ -965,6 +977,7 @@ export const api = {
         agentRole: payload.agentRole || payload.role || '',
         callDirection: payload.callDirection || payload.direction || '',
         requestId: payload.requestId,
+        retryFailed: Boolean(payload.retryFailed),
         clarificationAnswers: payload.clarificationAnswers || [],
       });
       const agent = data.agent || {};

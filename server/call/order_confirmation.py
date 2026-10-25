@@ -22,7 +22,7 @@ CONFIRM_ORDER_TOOL: dict[str, Any] = {
         "Record an order the caller has explicitly confirmed. Collect the quantity, "
         "the caller's name and the full delivery address first; never guess a value. "
         "Do not tell the caller the order is confirmed until this returns status ok. "
-        "Set order_claimed=true only after that success."
+        "Set action_claimed=order_confirmed only after that success."
     ),
     "parameters": {
         "type": "object",
@@ -56,6 +56,18 @@ CONFIRM_ORDER_TOOL: dict[str, Any] = {
     },
 }
 
+# The order tool is a capability of order-taking businesses, not of every
+# agent. The compiler records that permission as typed metadata in the
+# compiled brain (server/brain/capabilities.py); a probe over the whole prompt
+# used to offer it to a Telugu quote-only brief merely because a minimum-order
+# sentence contains the noun "ఆర్డర్" (2026-10-25 audit F10).
+def order_workflow_active(compiled_text: str | None) -> bool:
+    """True only when the compiled capability contract allows order confirmation."""
+    from server.brain.capabilities import order_confirmation_allowed
+
+    return order_confirmation_allowed(compiled_text)
+
+
 # Past-tense confirmation claims, English and Indic. A question ("shall I
 # confirm?") is not a claim; a bare future promise ("I will confirm") is not
 # either. Used only server-side to block unproven speech.
@@ -70,18 +82,10 @@ _ORDER_CONFIRMATION_CLAIM = re.compile(
     re.I,
 )
 
-_ORDER_UNCONFIRMED_LINES: dict[str, str] = {
-    "te": "వివరాలు సరిచూసుకుని మీకు నిర్ధారణ చెప్తాను.",
-    "hi": "मैं विवरण जाँचकर आपको पुष्टि बताऊँगा।",
-    "mr": "तपशील तपासून मी तुम्हाला खात्री देईन.",
-    "ta": "விவரங்களைச் சரிபார்த்த பிறகு உறுதிப்படுத்துகிறேன்.",
-    "kn": "ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ ನಂತರ ದೃಢೀಕರಿಸುತ್ತೇನೆ.",
-    "ml": "വിശദാംശങ്ങൾ പരിശോധിച്ച ശേഷം സ്ഥിരീകരിക്കാം.",
-    "bn": "বিবরণ যাচাই করে তারপর নিশ্চিত করব।",
-    "gu": "વિગતો ચકાસીને પછી પુષ્ટિ કરીશ.",
-    "pa": "ਵੇਰਵੇ ਜਾਂਚ ਕੇ ਫਿਰ ਪੁਸ਼ਟੀ ਕਰਾਂਗਾ।",
-    "en": "Let me verify those details before I confirm anything.",
-}
+def order_unconfirmed_line_for(language: str | None) -> str:
+    from server.call.action_proof import action_unconfirmed_line_for
+
+    return action_unconfirmed_line_for(language)
 
 
 def order_proof_path(call_id: str):
@@ -90,13 +94,6 @@ def order_proof_path(call_id: str):
 
 def claims_order_confirmation(text: str) -> bool:
     return bool(_ORDER_CONFIRMATION_CLAIM.search(text or ""))
-
-
-def order_unconfirmed_line_for(language: str | None) -> str:
-    from server.prompts.agent_voice_rules import normalize_compile_language
-
-    lang = normalize_compile_language(language)
-    return _ORDER_UNCONFIRMED_LINES.get(lang.split("-")[0], _ORDER_UNCONFIRMED_LINES["en"])
 
 
 def _clean(value: Any, limit: int) -> str:

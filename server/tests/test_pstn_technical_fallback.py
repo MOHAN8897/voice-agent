@@ -309,7 +309,9 @@ async def test_classic_fallback_plays_once_then_closes_with_technical_reason(mon
     loop = PstnVoiceLoop(session_id="fallback", call_id=None, on_agent_wire=on_wire)
     hangup = AsyncMock()
     loop.set_hangup_handler(hangup)
-    close = AsyncMock(return_value=SimpleNamespace(background_task=None))
+    close = AsyncMock(
+        return_value=SimpleNamespace(background_task=None, cancelled=False)
+    )
     monkeypatch.setattr("server.call.close_call_executor.execute_agent_close", close)
 
     await loop._play_technical_fallback_and_hangup(trigger="tts_failure")

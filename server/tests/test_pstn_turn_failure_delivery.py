@@ -136,7 +136,7 @@ async def test_partial_audio_from_an_early_stop_closes_without_outage(monkeypatc
 
     assert loop._turn_audio_delivered is True
     fallback.assert_not_awaited()
-    loop._finish_agent_hangup.assert_awaited_once_with(reason="agent_hangup")
+    loop._finish_agent_hangup.assert_awaited_once_with(reason="agent_hangup", revocable=False)
     assert loop._phase != "ended"
     assert failures and failures[0]["finish_reason"] == "length"
     assert failures[0]["delivered"] is False
@@ -179,7 +179,7 @@ async def test_call_58102ce4_refusal_gets_one_honorific_farewell_without_callbac
     assert len(spoken) == 1
     assert "సరేనండి" in spoken[0] and "ధన్యవాదాలు" in spoken[0]
     assert "Goodbye" not in spoken[0]
-    loop._finish_agent_hangup.assert_awaited_once_with(reason="not_interested")
+    loop._finish_agent_hangup.assert_awaited_once_with(reason="not_interested", revocable=False)
     fallback.assert_not_awaited()
     assert failures and failures[0]["finish_reason"] == "length"
     await loop.close()

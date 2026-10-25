@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from server.brain import employee_script_pipeline as pipeline
 from server.brain.brief_contract import BriefValidationError
+from server.brain.employee_script_pipeline import GenerationStageError
 from server.providers.base import LLMConfig
 
 
@@ -99,8 +100,10 @@ async def test_answers_are_extraction_inputs_and_optional_unknowns_are_not_reask
 async def test_questions_are_not_evidence_and_invented_prices_are_rejected(pipeline_model):
     pipeline_model.extracted["facts"] = [{"text": "The price is INR 500.", "evidence": "The price is INR 500."}]
     answer = pipeline.ClarificationAnswer(field="price", question="The price is INR 500.", answer="Not known", unavailable=False)
-    with pytest.raises(ValueError, match="unsupported fact"):
+    with pytest.raises(GenerationStageError) as failure:
         await pipeline.analyze_employee_brief(brief=BRIEF, language="en-IN", answers=[answer])
+    assert failure.value.stage == "extract"
+    assert failure.value.to_public_dict()["code"] == "generation_needs_review"
 
 
 @pytest.mark.asyncio
@@ -122,7 +125,7 @@ async def test_fail_closed_at_the_relevant_stage(pipeline_model, mutation):
         pipeline_model.repaired["opening"] = "Hello, I’m Alex from Example Clinic. How can I help?"
     else:
         pipeline_model.passed = False
-    with pytest.raises((ValueError, BriefValidationError)):
+    with pytest.raises((GenerationStageError, BriefValidationError)):
         await pipeline.compile_employee_script(brief=BRIEF, language="en-IN")
 
 
@@ -135,6 +138,35 @@ async def test_provider_failure_does_not_fall_back_or_repeat(monkeypatch):
     with pytest.raises(RuntimeError):
         await pipeline.compile_employee_script(brief=BRIEF, language="en-IN")
     provider.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_wrong_locale_after_review_gets_one_grounded_repair(monkeypatch, pipeline_model):
+    from server.brain import generation_runtime
+
+    calls = []
+
+    async def complete(**kwargs):
+        calls.append(kwargs["schema_name"])
+        if kwargs["schema_name"] == "employee_brief_extract":
+            return extraction()
+        if kwargs["schema_name"] == "employee_script_write":
+            return draft()
+        data = json.loads(kwargs["input_messages"][1]["content"][0]["text"])
+        fixed = draft()
+        if not data.get("validation_feedback"):
+            fixed["opening"] = "నమస్కారం, నేను మీరా మాట్లాడుతున్నాను."
+        else:
+            assert data["selected_language"] == "en-IN"
+            assert data["business"]["agent_name"] == "Meera"
+        return {"passed": True, "issues": [], "fixed_script": fixed}
+
+    monkeypatch.setattr(generation_runtime, "generation_target", lambda: (
+        SimpleNamespace(structured_completion=complete), LLMConfig(provider="gemini", model="test-model")))
+    _compiled, result = await pipeline.compile_employee_script(brief=BRIEF, language="en-IN")
+    assert draft()["opening"] in result.agent_script
+    assert calls.count("employee_script_review") == 2
+    assert calls.count("employee_brief_extract") == 1
 
 
 @pytest.mark.asyncio

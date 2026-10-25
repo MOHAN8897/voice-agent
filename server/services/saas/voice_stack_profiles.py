@@ -601,6 +601,43 @@ async def validate_agent_voice_selection_async(
     )
 
 
+async def profile_language_support(environment: str, tier: str) -> dict[str, Any]:
+    """Locale coverage of one tier, independent of any tenant or saved selection."""
+    tier_norm = canonical_voice_tier(tier)
+    record = (await load_profile_records(environment, (tier_norm,))).get(tier_norm)
+    profile = (record or {}).get("profile")
+    if not isinstance(profile, dict):
+        return {"tier": tier_norm, "configured": False, "supportedLanguages": []}
+    return {
+        "tier": tier_norm,
+        "configured": True,
+        "supportedLanguages": [str(code) for code in profile.get("supportedLanguages") or []],
+    }
+
+
+async def validate_agent_language_for_tier(environment: str, tier: str, language: str) -> None:
+    """Reject a locale the selected tier cannot serve; never substitute another one."""
+    support = await profile_language_support(environment, tier)
+    supported = support["supportedLanguages"]
+    if not support["configured"] or not supported or language in supported:
+        return
+    from server.config.constants import constants
+
+    def _name(code: str) -> str:
+        return str((constants.SUPPORTED_LANGUAGES.get(code) or {}).get("name") or code)
+
+    chosen = _name(language)
+    choices = ", ".join(_name(code) for code in supported[:-1])
+    if supported:
+        choices = f"{choices} or {_name(supported[-1])}" if choices else _name(supported[-1])
+    raise VoiceProfileError(
+        "unsupported_language",
+        f"{chosen} is not available on the {TIER_LABELS.get(support['tier'], 'selected')} calling plan. Choose {choices}.",
+        status_code=422,
+        details={"tier": support["tier"], "supportedLanguages": supported},
+    )
+
+
 async def _load_rates_without_fallback() -> dict[str, Any] | None:
     """Only DB-backed rates can authorize a tier; disk/legacy defaults are not tier prices."""
     factory = get_session_factory()

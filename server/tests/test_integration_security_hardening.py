@@ -167,6 +167,10 @@ async def test_timeout_and_storage_failure_do_not_repeat_writes(db, monkeypatch)
     assert (await router.route_and_execute(**args))["status"] == "unknown"
     assert (await router.route_and_execute(**args))["status"] == "unknown"
     execute.assert_awaited_once()
+    # Different arguments must not turn an uncertain outcome into a second write.
+    args["arguments"] = {"channel": "C-test", "text": "Different message"}
+    assert (await router.route_and_execute(**args))["status"] == "unknown"
+    execute.assert_awaited_once()
     async with db() as session:
         assert (await session.execute(select(ToolExecution))).scalar_one().status == "timed_out_pending"
     monkeypatch.setattr(router, "_record_execution_start", AsyncMock(return_value=None))

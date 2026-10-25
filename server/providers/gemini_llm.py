@@ -382,8 +382,8 @@ class GeminiLLMAdapter:
                                         if extractor is not None
                                         else None
                                     ),
-                                    "order_preview": (
-                                        extractor.preview_order_claim()
+                                    "action_preview": (
+                                        extractor.preview_action_claim()
                                         if extractor is not None
                                         else None
                                     ),
@@ -454,11 +454,13 @@ class GeminiLLMAdapter:
             memory_update = extractor.parse_memory_update()
             memory_parse_failed = extractor.structured_parse_failed()
             end_call = extractor.parse_end_call()
+            action_claimed = extractor.parse_action_claim()
         else:
             full_text = "".join(plain_parts).strip()
             memory_update = {"operations": []}
             memory_parse_failed = False
             end_call = {"should_end": False, "reason": "none", "farewell": ""}
+            action_claimed = None
         if not full_text or (declarations and memory_parse_failed):
             raise IncompleteTurnError(
                 provider=self.provider_id,
@@ -501,6 +503,7 @@ class GeminiLLMAdapter:
             "memory_update": memory_update,
             "memory_parse_failed": memory_parse_failed,
             "end_call": end_call,
+            "action_claimed": action_claimed,
         }
 
     async def structured_completion(

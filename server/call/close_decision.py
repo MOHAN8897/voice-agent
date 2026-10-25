@@ -8,6 +8,7 @@ regex match alone never justifies a permanent opt-out.
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
@@ -34,8 +35,8 @@ _OPT_OUT_EVIDENCE = re.compile(
     r"remove\s+me|take\s+me\s+off|"
     r"(?:కాల్|ఫోన్|call).{0,24}(?:వద్దు|చేయకండి|చేయొద్దు|అవసరం\s*లేదు)|"
     r"(?:कॉल|फोन|संपर्क|call).{0,24}(?:नहीं|मत|बंद|न\s*करें)|"
-    r"(?:அழைக்க|தொடர்பு|கால்).{0,24}(?:வேண்டாம்|கூடாது)|"
-    r"(?:ಕರೆ|ಫೋನ್|ಸಂಪರ್ಕ).{0,24}(?:ಬೇಡ|ಮಾಡಬೇಡಿ)|"
+    r"(?:அழைக்க|தொடர்பு|கால்|call).{0,24}(?:வேண்டாம்|கூடாது|செய்யாதீங்க|செய்யாதீர்கள்|வேண்டாம)|"
+    r"(?:ಕರೆ|ಫೋನ್|ಸಂಪರ್ಕ|call).{0,24}(?:ಬೇಡ|ಬೇಡಿ|ಮಾಡಬೇಡಿ|ಮಾಡಬೇಡ)|"
     r"(?:കോൾ|ഫോൺ|ബന്ധപ്പെട|വിളിക്ക).{0,24}(?:വേണ്ട|ഇല്ല|രുത്|േണ്ട(?!ത))|"
     r"(?:কল|ফোন|যোগাযোগ).{0,24}(?:নয়|না|করবেন\s*না)|"
     r"(?:કૉલ|કોલ|ફોન|સંપર્ક).{0,24}(?:નહીં|ના|ન\s*કરો)|"
@@ -111,7 +112,9 @@ def parse_close_proposal(raw: Any) -> CloseProposal:
 
 
 def _normalized(text: str) -> str:
-    return _PUNCT.sub("", (text or "").casefold())
+    # STT providers disagree on composed/decomposed Indic vowels; normalize
+    # before stripping so a quote and the transcript still compare equal.
+    return _PUNCT.sub("", unicodedata.normalize("NFC", (text or "").casefold()))
 
 
 def evidence_matches(evidence: str, transcript: str) -> bool:
@@ -123,10 +126,18 @@ def evidence_matches(evidence: str, transcript: str) -> bool:
 
 
 def meaningful_remaining_request(text: str) -> bool:
-    cleaned = _text(text, 240)
-    if len(cleaned) < 4:
+    """Any real leftover ask blocks a close, however short the note is.
+
+    The model writes short notes like "price" or "ధర"; a four-character
+    minimum silently discarded exactly those asks. Only the explicit "none"
+    spellings the schema invites are empty.
+    """
+    cleaned = _text(text, 240).casefold()
+    if not cleaned:
         return False
-    return cleaned.casefold() not in {"none", "null", "n/a", "na", "nothing"}
+    return cleaned.strip(" .,!?;:-") not in {
+        "none", "null", "n/a", "na", "nothing", "no request",
+    }
 
 
 def continuation_line_for(language: str | None) -> str:
@@ -136,9 +147,94 @@ def continuation_line_for(language: str | None) -> str:
     return _CONTINUATION_LINES.get(lang.split("-")[0], _CONTINUATION_LINES["en"])
 
 
+_FAREWELL_ONLY = re.compile(
+    r"^(?:ok(?:ay)?|sure|thanks?|thank\s+you|bye|goodbye|good\s+night|"
+    r"have\s+a\s+(?:nice|good|wonderful)\s+day|thank\s+you\s+for\s+(?:calling|your\s+time)|"
+    r"ధన్యవాదాలు|నమస్కారం|सधन्यवाद|नमस्ते|நன்றி|வணக்கம்|ಧನ್ಯವಾದಗಳು|ನಮಸ್ಕಾರ)"
+    r"[\s,.;!?]*$",
+    re.I,
+)
+
+
+_FAREWELL_CUE = re.compile(
+    r"\b(?:goodbye|bye|farewell|take\s+care|talk\s+to\s+you\s+later|see\s+you)\b|"
+    r"ధన్యవాదాలు|నమస్కారం|సమయం\s+ఇచ్చినందుకు|శుభ\s*దినం|మళ్లీ\s*మాట్లాడుకుందాం|"
+    r"धन्यवाद|नमस्ते|नमस्कार|फिर\s*मिलेंगे|आपका\s*दिन\s*शुभ|"
+    r"நன்றி|வணக்கம்|இனிதாக\s*அமையட்டும்|போய்\s*வருகிறேன்|"
+    r"ಧನ್ಯವಾದಗಳು|ನಮಸ್ಕಾರ|ಶುಭವಾಗಲಿ|ಮತ್ತೆ\s*ಮಾತನಾಡೋಣ|ವಿದಾಯ",
+    re.I,
+)
+
+
+def _is_farewell_tail(sentence: str) -> bool:
+    """True for a goodbye/thanks sentence, including a polite lead-in tail."""
+    from server.call.hangup_judge import agent_spoke_terminal_farewell
+
+    s = (sentence or "").strip()
+    if not s:
+        return True
+    if _FAREWELL_ONLY.match(s):
+        return True
+    if "?" in s:
+        return False
+    return bool(
+        len(s.split()) <= 12
+        and (_FAREWELL_CUE.search(s) or agent_spoke_terminal_farewell(s))
+    )
+
+
+def useful_answer_after_rejected_close(
+    text: str, *, language: str | None = None
+) -> str | None:
+    """Keep the model's actual answer when the server rejects its close.
+
+    The 2026-10-25 audit lost answers because every rejected close was replaced
+    by "please go ahead", even when the reply had just stated the price and
+    delivery. Only a farewell, an empty reply or a bare filler is discarded.
+    """
+    from server.call.hangup_judge import agent_spoke_terminal_farewell
+
+    cleaned = _text(text, 2000)
+    if not cleaned:
+        return None
+    if cleaned.casefold().strip(" .!?") == continuation_line_for(language).casefold().strip(" .!?"):
+        return None
+    parts = re.split(r"(?<=[.!?।])\s+", cleaned)
+    while parts and _is_farewell_tail(parts[-1]):
+        parts.pop()
+    answer = " ".join(parts).strip()
+    if not answer:
+        return None
+    # A reply that is *only* a farewell is not an answer; an answer followed by
+    # one keeps its substance ("...is 4999 rupees. Goodbye.").
+    if agent_spoke_terminal_farewell(answer) and len(answer.split()) <= 8:
+        return None
+    from server.services.voice_pipeline_limits import (
+        clamp_live_spoken_reply,
+        is_incomplete_spoken_crumb,
+    )
+
+    answer = clamp_live_spoken_reply(answer)
+    if not answer or is_incomplete_spoken_crumb(answer):
+        return None
+    bare = answer.casefold().strip(" .!?")
+    if bare in {"of course", "please go ahead", "go ahead", "okay", "sure", "thanks"}:
+        return None
+    return answer
+
+
 def opt_out_evidence(text: str) -> bool:
-    """True only when the words themselves ask to stop being contacted."""
-    return bool(_OPT_OUT_EVIDENCE.search((text or "").casefold()))
+    """True only when the words themselves ask to stop being contacted.
+
+    "Call cut చేయకండి" and "call करने के लिए नहीं कह रहा" contain a call word
+    next to a negative but ask the opposite; they are not opt-outs.
+    """
+    from server.call.caller_intent import caller_revoked_callback, is_negated_end
+
+    raw = text or ""
+    if is_negated_end(raw) or caller_revoked_callback(raw):
+        return False
+    return bool(_OPT_OUT_EVIDENCE.search(raw.casefold()))
 
 
 def contact_preference_for(

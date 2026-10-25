@@ -106,6 +106,7 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
     setBusy(true);
     creatingRef.current = true;
     setError(null);
+    let buildStarted = false;
     try {
       const clarificationAnswers = Object.values(answers)
         .filter((item) => item.answer.trim() || item.unavailable)
@@ -122,11 +123,13 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
       setPhase('writing');
       const fingerprint = JSON.stringify(payload);
       if (creationRequestRef.current?.fingerprint !== fingerprint) {
-        creationRequestRef.current = { fingerprint, id: crypto.randomUUID() };
+        creationRequestRef.current = { fingerprint, id: crypto.randomUUID(), retryable: false };
       }
+      buildStarted = true;
       const result = await api.agents.buildEmployee({
         ...payload,
         requestId: creationRequestRef.current.id,
+        retryFailed: creationRequestRef.current.retryable === true,
       });
       const agentId = result.id;
       if (!agentId) throw new Error('The agent was created but no id came back. Try again.');
@@ -139,6 +142,11 @@ export function CreateAgentWizard({ isOpen, onClose, onNavigate }) {
       onClose();
       onNavigate('employees', { agentId, step: 'script' });
     } catch (e) {
+      if (buildStarted && creationRequestRef.current) {
+        // A transient provider failure keeps this draft; the next press resumes it
+        // instead of replaying the recorded failure.
+        creationRequestRef.current.retryable = e?.retryable === true;
+      }
       setError(e.message || 'Could not create the agent');
       setPhase(questions.length ? 'questions' : 'brief');
     } finally {

@@ -52,8 +52,12 @@ export const LANGUAGE_LABELS = {
   'pa-IN': { label: 'Punjabi', sub: 'ਪੰਜਾਬੀ' },
 };
 
-/** Last-resort default so the picker is never empty if the API is unreachable. */
-export const DEFAULT_ENABLED_LANGUAGE_CODES = ['en-IN', 'en-GB', 'te-IN', 'hi-IN', 'ta-IN', 'kn-IN'];
+/**
+ * Last-resort labels if the admin API is unreachable. Mirrors the languages the
+ * default calling tier can actually serve, so an offline picker never offers a
+ * locale that creation would reject (British English is not on Standard).
+ */
+export const DEFAULT_ENABLED_LANGUAGE_CODES = ['en-IN', 'te-IN', 'hi-IN', 'ta-IN', 'kn-IN'];
 
 export function describeLanguage(code) {
   return LANGUAGE_LABELS[code] || { label: code, sub: code };

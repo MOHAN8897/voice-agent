@@ -4,21 +4,128 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
+import os
 import re
+import uuid
+import weakref
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+import httpx
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from server.brain.brief_contract import (
     BriefValidationError, brief_issue, clean_person_name, normalize_generation_config,
     source_supported, validate_brief_requirements,
 )
+from server.brain.fact_canon import canonicalize_superseded_facts
+from server.call.call_end_policy import closing_policy_section
 
 if TYPE_CHECKING:
     from server.brain.agent_script_compiler import AgentScriptResult
 
 _LINK = re.compile(r"\b(?:https?://|www\.)[^\s<>\"']+|\b(?:[a-z0-9-]+\.)+(?:com|org|net|in|io|ai|co|edu|gov)(?:/[^\s<>\"']*)?", re.I)
+
+logger = logging.getLogger(__name__)
+
+_STAGES = {
+    "employee_brief_extract": "extract",
+    "employee_script_write": "write",
+    "employee_script_review": "review",
+}
+_STAGE_LABELS = {"extract": "business details", "write": "the script", "review": "the script review"}
+_STAGE_ATTEMPTS = 2
+_TRANSIENT_HTTP = frozenset({408, 409, 425, 429, 500, 502, 503, 504})
+_LIMITERS: "weakref.WeakKeyDictionary[Any, asyncio.Semaphore]" = weakref.WeakKeyDictionary()
+
+
+class GenerationStageError(RuntimeError):
+    """A generation stage failed; public diagnostics stay safe and actionable."""
+
+    def __init__(
+        self,
+        stage: str,
+        *,
+        transient: bool,
+        correlation_id: str,
+        reason: str = "provider_error",
+    ):
+        self.stage = stage if stage in _STAGE_LABELS else "extract"
+        self.transient = bool(transient)
+        self.correlation_id = correlation_id
+        self.reason = reason
+        super().__init__(f"generation_stage_failed:{self.stage}")
+
+    def to_public_dict(self) -> dict[str, Any]:
+        label = _STAGE_LABELS[self.stage]
+        if self.reason == "ungrounded":
+            return {
+                "code": "generation_needs_review",
+                "stage": self.stage,
+                "retryable": False,
+                "correlationId": self.correlation_id,
+                "message": (
+                    f"The generated {label} did not match your brief. "
+                    "Check the exact names, prices and links, then start a new creation."
+                ),
+            }
+        if self.transient:
+            return {
+                "code": "generation_temporarily_unavailable",
+                "stage": self.stage,
+                "retryable": True,
+                "correlationId": self.correlation_id,
+                "message": (
+                    f"We could not finish {label} because script generation is busy. "
+                    "Your draft is kept; retry this creation to continue."
+                ),
+            }
+        return {
+            "code": "generation_failed",
+            "stage": self.stage,
+            "retryable": False,
+            "correlationId": self.correlation_id,
+            "message": f"We could not finish {label}. Check the brief and try again.",
+        }
+
+    @property
+    def status_code(self) -> int:
+        if self.reason == "ungrounded":
+            return 422
+        return 503 if self.transient else 502
+
+
+def _generation_limit() -> int:
+    try:
+        return max(1, int(os.getenv("AGENT_GENERATION_MAX_CONCURRENCY", "3")))
+    except ValueError:
+        return 3
+
+
+def _generation_limiter() -> asyncio.Semaphore:
+    loop = asyncio.get_running_loop()
+    limiter = _LIMITERS.get(loop)
+    if limiter is None:
+        limiter = asyncio.Semaphore(_generation_limit())
+        _LIMITERS[loop] = limiter
+    return limiter
+
+
+def _provider_status(exc: BaseException) -> int | None:
+    response = getattr(exc, "response", None)
+    status = getattr(exc, "status_code", None) or getattr(response, "status_code", None)
+    if isinstance(status, int):
+        return status
+    match = re.search(r"\bHTTP\s+(\d{3})\b", str(exc))
+    return int(match.group(1)) if match else None
+
+
+def _transient_provider_error(exc: BaseException) -> bool:
+    if isinstance(exc, (asyncio.TimeoutError, TimeoutError, httpx.TimeoutException, httpx.TransportError, ConnectionError)):
+        return True
+    status = _provider_status(exc)
+    return status is not None and status in _TRANSIENT_HTTP
 
 
 def _links(text: str) -> set[str]:
@@ -139,18 +246,49 @@ ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
 async def _completion(name: str, rules: str, data: dict[str, Any], model: type[ModelT],
-                      *, temperature: float, tokens: int) -> ModelT:
+                      *, temperature: float, tokens: int, correlation_id: str) -> ModelT:
     from server.brain.generation_runtime import generation_target
 
+    stage = _STAGES.get(name, "extract")
     adapter, config = generation_target()
-    payload = await asyncio.wait_for(adapter.structured_completion(
-        input_messages=[
-            {"role": "developer", "content": [{"type": "input_text", "text": rules}]},
-            {"role": "user", "content": [{"type": "input_text", "text": json.dumps(data, ensure_ascii=False)}]},
-        ], schema=model.model_json_schema(), config=replace(config, temperature=temperature),
-        schema_name=name, max_output_tokens=tokens,
-    ), timeout=45)
-    return model.model_validate(payload)
+    async with _generation_limiter():
+        for attempt in range(1, _STAGE_ATTEMPTS + 1):
+            try:
+                payload = await asyncio.wait_for(adapter.structured_completion(
+                    input_messages=[
+                        {"role": "developer", "content": [{"type": "input_text", "text": rules}]},
+                        {"role": "user", "content": [{"type": "input_text", "text": json.dumps(data, ensure_ascii=False)}]},
+                    ], schema=model.model_json_schema(), config=replace(config, temperature=temperature),
+                    schema_name=name, max_output_tokens=tokens,
+                ), timeout=45)
+            except Exception as exc:
+                transient = _transient_provider_error(exc)
+                if transient and attempt < _STAGE_ATTEMPTS:
+                    delay = 2.0 * attempt
+                    logger.warning(
+                        "agent_generation_retry stage=%s correlation_id=%s attempt=%s delay_s=%.1f error=%s status=%s",
+                        stage, correlation_id, attempt, delay, type(exc).__name__, _provider_status(exc),
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                logger.warning(
+                    "agent_generation_failed stage=%s transient=%s correlation_id=%s error=%s status=%s",
+                    stage, transient, correlation_id, type(exc).__name__, _provider_status(exc),
+                )
+                raise GenerationStageError(
+                    stage, transient=transient, correlation_id=correlation_id,
+                ) from exc
+            break
+    try:
+        return model.model_validate(payload)
+    except ValidationError as exc:
+        logger.warning(
+            "agent_generation_invalid_output stage=%s correlation_id=%s errors=%s",
+            stage, correlation_id, len(exc.errors()),
+        )
+        raise GenerationStageError(
+            stage, transient=False, correlation_id=correlation_id,
+        ) from exc
 
 
 def _numbers(text: str) -> set[str]:
@@ -159,9 +297,11 @@ def _numbers(text: str) -> set[str]:
 
 async def analyze_employee_brief(*, brief: str, language: str,
                                  generation_config: dict[str, Any] | None = None,
-                                 answers: list[ClarificationAnswer] | None = None) -> ExtractedBrief:
+                                 answers: list[ClarificationAnswer] | None = None,
+                                 correlation_id: str | None = None) -> ExtractedBrief:
     from server.prompts.agent_voice_rules import normalize_compile_language
 
+    correlation_id = correlation_id or uuid.uuid4().hex[:12]
     normalize_compile_language(language)  # Select an existing pack; never modify it.
     config = normalize_generation_config(generation_config)
     answers = answers or []
@@ -174,7 +314,8 @@ async def analyze_employee_brief(*, brief: str, language: str,
         raise BriefValidationError(issues)
     extracted = await _completion("employee_brief_extract", EXTRACTION_RULES,
         {"brief": brief, "selected_language": language, "settings": config,
-         "answers": [item.model_dump() for item in answers]}, ExtractedBrief, temperature=0.2, tokens=6500)
+         "answers": [item.model_dump() for item in answers]}, ExtractedBrief, temperature=0.2, tokens=6500,
+        correlation_id=correlation_id)
     if config.get("employeeName"):
         extracted.agent_name = config["employeeName"]
     facts = [*extracted.facts, *extracted.workflow, *extracted.permitted_next_steps, *extracted.forbidden_actions]
@@ -185,14 +326,20 @@ async def analyze_employee_brief(*, brief: str, language: str,
         if (" ".join(fact.evidence.casefold().split()) not in normalized_source
                 or not _numbers(fact.text).issubset(_numbers(fact.evidence))
                 or not _links(fact.text).issubset(_links(fact.evidence))):
-            raise ValueError("Brief analysis returned an unsupported fact")
+            raise GenerationStageError(
+                "extract", transient=False, correlation_id=correlation_id, reason="ungrounded",
+            )
     for name in (extracted.agent_name, extracted.company_name):
         if name and not source_supported(name, source + "\n" + config.get("employeeName", "")):
-            raise ValueError("Brief analysis returned an unsupported identity")
+            raise GenerationStageError(
+                "extract", transient=False, correlation_id=correlation_id, reason="ungrounded",
+            )
     if extracted.agent_name:
         name = clean_person_name(extracted.agent_name)
         if name.casefold() != extracted.agent_name.casefold():
-            raise ValueError("Brief analysis returned a merged identity")
+            raise GenerationStageError(
+                "extract", transient=False, correlation_id=correlation_id, reason="ungrounded",
+            )
         extracted.agent_name = name
     questions = {item.field: item for item in extracted.missing_critical_info}
     if not extracted.agent_name:
@@ -214,7 +361,8 @@ def clarification_response(extracted: ExtractedBrief) -> dict[str, Any]:
 
 async def compile_employee_script(*, brief: str, language: str,
                                   generation_config: dict[str, Any] | None = None,
-                                  answers: list[ClarificationAnswer] | None = None) -> tuple[str, AgentScriptResult]:
+                                  answers: list[ClarificationAnswer] | None = None,
+                                  correlation_id: str | None = None) -> tuple[str, AgentScriptResult]:
     from server.agent.brain_prompt_composer import estimate_tokens
     from server.brain.agent_script_compiler import (
         AgentScriptResult, _opening_line_is_language_compatible, _platform_call_rules,
@@ -225,20 +373,37 @@ async def compile_employee_script(*, brief: str, language: str,
     from server.call.call_end_policy import normalize_call_end_policy
     from server.prompts.voice_defaults import default_style_for
 
+    correlation_id = correlation_id or uuid.uuid4().hex[:12]
     config = normalize_generation_config(generation_config)
-    extracted = await analyze_employee_brief(brief=brief, language=language, generation_config=config, answers=answers)
+    extracted = await analyze_employee_brief(brief=brief, language=language, generation_config=config,
+                                             answers=answers, correlation_id=correlation_id)
     if extracted.missing_critical_info:
         raise BriefValidationError([brief_issue("missing_information", item.question, field=item.field)
                                     for item in extracted.missing_critical_info])
     data = {"business": extracted.model_dump(exclude={"missing_critical_info", "conflicts"}),
             "selected_language": language, "settings": config,
             "unavailable_fields": [item.field for item in answers or [] if item.unavailable]}
-    draft = await _completion("employee_script_write", WRITING_RULES, data, ScriptDraft, temperature=0.5, tokens=5500)
+    draft = await _completion("employee_script_write", WRITING_RULES, data, ScriptDraft, temperature=0.5,
+                              tokens=5500, correlation_id=correlation_id)
     review = await _completion("employee_script_review", REVIEW_RULES,
-        {**data, "script": draft.model_dump()}, ScriptReview, temperature=0.2, tokens=6000)
+        {**data, "script": draft.model_dump()}, ScriptReview, temperature=0.2, tokens=6000,
+        correlation_id=correlation_id)
     if not review.passed:
         raise BriefValidationError([brief_issue("script_needs_review", "The script could not be checked against your details. Review the brief and try again.", field="brief")])
     final = review.fixed_script
+    if not _opening_line_is_language_compatible(final.opening, language):
+        # A reviewer can approve the wrong Indic script. Give it one concrete
+        # validator finding; never publish the mismatch or invent a new brief.
+        repair = await _completion(
+            "employee_script_review", REVIEW_RULES,
+            {**data, "script": final.model_dump(), "validation_feedback": [
+                (f"Opening conflicts with selected locale {language}. Repair the opening and "
+                "spoken examples in that locale's native script, preserving exact identity "
+                "and all approved facts. Use ASCII digits for factual numbers.")
+            ]}, ScriptReview, temperature=0.2, tokens=6000, correlation_id=correlation_id,
+        )
+        if repair.passed:
+            final = repair.fixed_script
     assert extracted.agent_name is not None and extracted.primary_goal is not None
     name = extracted.agent_name
     company = extracted.company_name or ""
@@ -253,11 +418,14 @@ async def compile_employee_script(*, brief: str, language: str,
         ("CONVERSATION FLOW", final.call_flow), ("CALL TO ACTION", final.call_to_action),
         ("OBJECTION HANDLING", final.objection_handling), ("UNKNOWN INFORMATION", final.unknown_information),
         ("LANGUAGE", f"Use the selected {language} language pack. Follow the platform language policy."),
-        ("CLOSING", final.closing),
+        # The platform owns the farewell. A model-written CLOSING used to tell
+        # the agent to say goodbye, contradicting the call-end policy.
+        ("CLOSING", closing_policy_section(language)),
         ("BUSINESS REQUIREMENTS", "\n".join(item.text for item in extracted.workflow) or "Follow only the applicable business workflow."),
         ("GUARDRAILS", "\n".join(item.text for item in extracted.forbidden_actions) + "\nPlatform safety, tool permissions and call-end policy take precedence."),
     ]
     script = "\n\n".join(f"--- {title} ---\n{body.strip()}" for title, body in sections)
+    script = canonicalize_superseded_facts(script)
     source = brief + "\n" + "\n".join(item.answer for item in answers or [] if not item.unavailable)
     validation = validate_agent_script(script, brief=source, agent_name=name, company_name=company)
     if not _numbers(script).issubset(_numbers(source) | _numbers(language)):

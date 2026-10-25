@@ -45,7 +45,7 @@ class AgentVoiceRevisionConflict(ValueError):
 class AgentService:
     async def claim_build_request(
         self, *, request_id: str, fingerprint: str, tenant_id: str,
-        name: str, language: str,
+        name: str, language: str, retry_failed: bool = False,
     ) -> dict[str, Any]:
         """One durable agent claim per workspace request, before generation starts."""
         aid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"agent-build:{tenant_id}:{uuid.UUID(request_id)}"))
@@ -54,13 +54,28 @@ class AgentService:
         def existing_result(agent: dict[str, Any], saved: dict[str, Any]) -> dict[str, Any]:
             if saved.get("fingerprint") != fingerprint:
                 raise AgentBuildRequestConflict("request_input_changed", "This creation request was already used with different inputs. Start a new request.")
-            return {"agent": agent, **saved, "created": False}
+            return {"agent": agent, **{key: value for key, value in saved.items() if key != "resumed"}, "created": False}
+
+        def resume_payload(saved: dict[str, Any]) -> dict[str, Any] | None:
+            """Reopen only a retryable failed generation over the same owned draft."""
+            if not retry_failed or saved.get("fingerprint") != fingerprint:
+                return None
+            if saved.get("state") != "failed" or (saved.get("error") or {}).get("retryable") is not True:
+                return None
+            resumed = {key: value for key, value in saved.items() if key not in {"error", "status_code", "resumed"}}
+            resumed["state"] = "building"
+            return resumed
 
         factory = get_session_factory()
         if factory is None:
             if aid in _MEM_AGENTS:
                 agent = await self.get_agent(aid, tenant_id=tenant_id)
-                return existing_result(agent, _MEM_BUILD_REQUESTS.get(aid) or {})
+                saved = _MEM_BUILD_REQUESTS.get(aid) or {}
+                resumed = resume_payload(saved)
+                if resumed is not None:
+                    _MEM_BUILD_REQUESTS[aid] = dict(resumed)
+                    return {"agent": agent, **resumed, "created": False, "resumed": True}
+                return existing_result(agent, saved)
             if aid in _MEM_BUILD_REQUESTS:
                 raise AgentBuildRequestConflict("creation_removed", "The agent for this creation request was removed. Start a new request.")
             agent = self._default_agent_dict(aid, name=name)
@@ -83,7 +98,13 @@ class AgentService:
                         Agent.tenant_id == uuid.UUID(tenant_id),
                         ConfigVersion.resource_type == "agent_build_request", ConfigVersion.resource_id == aid,
                     ))).scalar_one_or_none()
-                    return existing_result(self._row_to_dict(row), dict(record.payload or {}) if record else {})
+                    saved = dict(record.payload or {}) if record else {}
+                    resumed = resume_payload(saved)
+                    if resumed is not None:
+                        record.payload = resumed
+                        await session.commit()
+                        return {"agent": self._row_to_dict(row), **resumed, "created": False, "resumed": True}
+                    return existing_result(self._row_to_dict(row), saved)
                 prior = (await session.execute(select(ConfigVersion).where(
                     ConfigVersion.resource_type == "agent_build_request", ConfigVersion.resource_id == aid,
                     ConfigVersion.payload["tenant_id"].as_string() == tenant_id,
@@ -303,6 +324,24 @@ class AgentService:
                     status_code=503,
                 )
             agent = await self.get_agent(agent_id, tenant_id=tenant_id)
+            if "languages" in patch or "default_tier" in patch:
+                from server.services.saas.voice_stack_profiles import (
+                    VoiceProfileError,
+                    validate_agent_language_for_tier,
+                )
+
+                language_values = patch.get("languages") if patch.get("languages") is not None else agent.get("languages")
+                language = str((language_values or ["en-US"])[0])
+                try:
+                    await validate_agent_language_for_tier(
+                        str(agent.get("environment") or "development"),
+                        str(patch.get("default_tier") or agent.get("default_tier") or "medium"),
+                        language,
+                    )
+                except VoiceProfileError as exc:
+                    raise AgentVoiceRevisionConflict(
+                        str(exc), code=exc.code, status_code=exc.status_code, details=exc.details,
+                    ) from exc
             agent.update({k: v for k, v in patch.items() if v is not None})
             _MEM_AGENTS[agent_id] = agent
             return agent
@@ -396,6 +435,25 @@ class AgentService:
                 except VoiceProfileError as exc:
                     raise AgentVoiceRevisionConflict(
                         str(exc), code=exc.code, status_code=exc.status_code
+                    ) from exc
+            elif "languages" in patch or "default_tier" in patch:
+                # A non-composed agent can still be saved onto a tier whose approved
+                # profile cannot speak its language. Reject that before a call does.
+                effective_tier = str(patch.get("default_tier") or row.default_tier or "medium")
+                language_values = patch.get("languages") if patch.get("languages") is not None else row.languages
+                language = str((language_values or ["en-US"])[0])
+                from server.services.saas.voice_stack_profiles import (
+                    VoiceProfileError,
+                    validate_agent_language_for_tier,
+                )
+
+                try:
+                    await validate_agent_language_for_tier(
+                        str(row.environment or "development"), effective_tier, language,
+                    )
+                except VoiceProfileError as exc:
+                    raise AgentVoiceRevisionConflict(
+                        str(exc), code=exc.code, status_code=exc.status_code, details=exc.details,
                     ) from exc
             for key in (
                 "name",

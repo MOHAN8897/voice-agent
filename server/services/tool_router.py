@@ -77,6 +77,14 @@ class VoxlyToolRouter:
         if action_type == "write":
             if not call_id:
                 return {"status": "error", "message": "A call context is required for this action."}
+            if await self._has_uncertain_prior_write(tenant_id, call_id, tool_name):
+                # A timed-out write may have reached the provider. Replaying it
+                # with different arguments could create a second record, so the
+                # result stays unknown until a human or a read reconciles it.
+                return {
+                    "status": "unknown",
+                    "message": "An earlier attempt of this action has an unknown outcome. Do not retry it.",
+                }
             claim = await self._record_execution_start(
                 tenant_id, agent_id, call_id, tool_name, action_type,
                 self._generate_idempotency_key(tenant_id, call_id, tool_name, arguments), arguments,
@@ -124,6 +132,29 @@ class VoxlyToolRouter:
     def _generate_idempotency_key(self, tenant_id: str, call_id: str, tool_name: str, args: dict[str, Any]) -> str:
         digest = hashlib.sha256(json.dumps([tenant_id, call_id, tool_name, args], sort_keys=True).encode()).hexdigest()
         return f"tool:{digest}"
+
+    async def _has_uncertain_prior_write(
+        self, tenant_id: str, call_id: str, action: str,
+    ) -> bool:
+        """True when this call already has an unresolved write for the action."""
+        factory = get_session_factory()
+        if factory is None:
+            return False
+        try:
+            async with factory() as session:
+                row = (await session.execute(
+                    select(ToolExecution.id).where(
+                        ToolExecution.tenant_id == uuid.UUID(tenant_id),
+                        ToolExecution.call_id == call_id,
+                        ToolExecution.action == action,
+                        ToolExecution.status == "timed_out_pending",
+                    ).limit(1)
+                )).first()
+                return row is not None
+        except Exception as exc:
+            # Fail closed: an unchecked prior write must not be replayed.
+            logger.warning("[TOOL_ROUTER] Prior-write check unavailable: %s", type(exc).__name__)
+            return True
 
     async def _record_execution_start(
         self, tenant_id: str, agent_id: str, call_id: str, action: str,

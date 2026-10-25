@@ -11,6 +11,7 @@ import pytest
 import server.call.live_turn_orchestrator as orchestrator_module
 from server.agent.conversation_manager import conversation_manager
 from server.call.live_turn_orchestrator import LiveTurnOrchestrator
+from server.call.live_turn_schema import LIVE_SPEECH_JSON_SCHEMA, LIVE_TURN_JSON_SCHEMA
 from server.providers import sarvam_llm
 from server.providers.llm_protocol import IncompleteTurnError
 
@@ -339,3 +340,96 @@ async def test_done_event_reports_requested_effective_tokens_and_reasoning():
     assert done["requested_max_tokens"] == 3000
     assert done["effective_max_tokens"] == 3000
     assert done["reasoning_effort"] == "none"
+
+
+@pytest.mark.asyncio
+async def test_the_one_recovery_uses_a_different_speech_only_contract():
+    schemas: list[dict | None] = []
+
+    async def stream_fn(*, input_messages, schema, **kwargs):
+        schemas.append(schema)
+        if len(schemas) == 1:
+            raise IncompleteTurnError(
+                provider="sarvam", finish_reason="length", partial_text="The fee is",
+            )
+        yield {"delta": "The fee is 4999 rupees total."}
+        yield {"done": True, "text": "The fee is 4999 rupees total."}
+
+    events = [
+        event
+        async for event in LiveTurnOrchestrator()._stream_composed_turn(
+            stream_fn=stream_fn,
+            messages=[{"role": "user", "content": "price?"}],
+            schema=LIVE_TURN_JSON_SCHEMA,
+            retry_schema=LIVE_SPEECH_JSON_SCHEMA,
+            stream_kwargs={"max_output_tokens": 1280},
+            call_id=None,
+            provider="sarvam",
+            model="sarvam-105b-conversations",
+        )
+    ]
+
+    assert schemas == [LIVE_TURN_JSON_SCHEMA, LIVE_SPEECH_JSON_SCHEMA]
+    assert events[-1]["text"] == "The fee is 4999 rupees total."
+    assert events[-1]["retry_count"] == 1
+
+
+def test_spoken_reply_is_not_hard_capped_in_the_schema():
+    spoken = LIVE_TURN_JSON_SCHEMA["properties"]["spoken_response"]
+    assert "maxLength" not in spoken
+    assert "complete" in spoken["description"].lower()
+
+
+@pytest.mark.asyncio
+async def test_whitespace_tail_after_a_complete_answer_is_salvaged(monkeypatch):
+    answer = "The adult beginner Python course costs 4999 rupees total. " * 12
+    body = (
+        '{"spoken_response": "'
+        + answer
+        + '", "envelope": "'
+        + ("x" * 400)
+        + '"'
+    )
+    _mock_sarvam_stream(
+        monkeypatch,
+        [
+            {"choices": [{"delta": {"content": body}}]},
+            {"choices": [{"delta": {"content": " " * 500}}]},
+            {"choices": [{"delta": {"content": "\n" * 400}}]},
+        ],
+    )
+
+    events = [
+        event
+        async for event in sarvam_llm.SarvamLLMAdapter(api_key="unit-key").stream_structured_turn(
+            model="sarvam-105b-conversations",
+            api_mode="chat_completions_v1",
+            schema=LIVE_TURN_JSON_SCHEMA,
+            input_messages=[{"role": "user", "content": "What is the fee?"}],
+        )
+    ]
+
+    done = events[-1]
+    assert done["text"] == answer.strip()
+    assert done["finish_reason"] == "whitespace_tail"
+    assert done["memory_parse_failed"] is True
+
+
+@pytest.mark.asyncio
+async def test_whitespace_stall_before_any_speech_is_retryable(monkeypatch):
+    _mock_sarvam_stream(
+        monkeypatch,
+        [{"choices": [{"delta": {"content": " " * 700}}]}],
+    )
+
+    with pytest.raises(IncompleteTurnError) as caught:
+        async for _ in sarvam_llm.SarvamLLMAdapter(api_key="unit-key").stream_structured_turn(
+            model="sarvam-105b-conversations",
+            api_mode="chat_completions_v1",
+            schema=LIVE_TURN_JSON_SCHEMA,
+            input_messages=[{"role": "user", "content": "What is the fee?"}],
+        ):
+            pass
+
+    assert caught.value.finish_reason == "whitespace_stall"
+    assert caught.value.retryable is True

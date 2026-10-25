@@ -20,6 +20,15 @@ SARVAM_CHAT_COMPLETIONS_V2_URL = "https://api.sarvam.ai/v2/chat/completions"
 SARVAM_CHAT_COMPLETIONS_V1_URL = "https://api.sarvam.ai/v1/chat/completions"
 SARVAM_V1_CHAT_MODELS = frozenset({"sarvam-105b", "sarvam-105b-conversations"})
 
+# The 2026-10-25 audit recorded 227 requests that emitted >1,000 content chars
+# then an all-whitespace tail for hundreds of characters until `length`. Once
+# the spoken string is closed nothing audible can follow, so a long whitespace
+# run is a completed reply with a broken envelope, not a reason to burn the
+# budget (or retry and risk a second answer).
+_WHITESPACE_TAIL_LIMIT = 240
+_WHITESPACE_STALL_LIMIT = 640
+_WHITESPACE_MIN_VISIBLE = 600
+
 
 def sarvam_chat_api_modes(model: str) -> list[str]:
     from server.providers.llm_protocol import sarvam_chat_modes
@@ -144,6 +153,14 @@ class SarvamLLMAdapter:
     """V1 serves Sarvam chat models; V2 beta access is separately granted per key."""
 
     provider_id = "sarvam"
+    # V1 returns tool calls only when no response_format schema is present
+    # (2026-10-25 audit F06: full schema + tools yielded zero native calls).
+    # The orchestrator therefore runs native selection first, then a validated
+    # speech turn.
+    selects_tools_without_schema = True
+    # Live rerun: both full and reduced JSON stalled; native speech completed
+    # 20/20 probes. Keep structured_completion for offline generation intact.
+    uses_plain_live_speech = True
 
     def __init__(self, *, api_key: str | None = None) -> None:
         self._provided_api_key = api_key
@@ -349,7 +366,9 @@ class SarvamLLMAdapter:
         tool_calls: dict[int, dict[str, Any]] = {}
         completed = False
         finish_reason: str | None = None
-        buffer_output = bool(kwargs.get("tools"))
+        visible_chars = 0
+        whitespace_run = 0
+        buffer_output = bool(kwargs.get("tools") or kwargs.get("buffer_response"))
         async with httpx.AsyncClient(timeout=self._timeout()) as client:
             try:
                 async with client.stream(
@@ -405,6 +424,11 @@ class SarvamLLMAdapter:
                                     if isinstance(part, dict)
                                 )
                             if isinstance(content, str) and content:
+                                if content.strip():
+                                    visible_chars += len(content.strip())
+                                    whitespace_run = len(content) - len(content.rstrip())
+                                else:
+                                    whitespace_run += len(content)
                                 if extractor is not None:
                                     spoken = extractor.feed(content)
                                 else:
@@ -419,12 +443,35 @@ class SarvamLLMAdapter:
                                             if extractor is not None
                                             else None
                                         ),
-                                        "order_preview": (
-                                            extractor.preview_order_claim()
+                                        "action_preview": (
+                                            extractor.preview_action_claim()
                                             if extractor is not None
                                             else None
                                         ),
                                     }
+                                if (
+                                    extractor is not None
+                                    and extractor.spoken_complete
+                                    and whitespace_run >= _WHITESPACE_TAIL_LIMIT
+                                    and visible_chars >= _WHITESPACE_MIN_VISIBLE
+                                ):
+                                    completed = True
+                                    finish_reason = "whitespace_tail"
+                                    break
+                                if (
+                                    whitespace_run >= _WHITESPACE_STALL_LIMIT
+                                    and not (extractor and extractor.spoken_complete)
+                                ):
+                                    raise IncompleteTurnError(
+                                        provider=self.provider_id,
+                                        finish_reason="whitespace_stall",
+                                        partial_text=(
+                                            extractor.spoken_text
+                                            if extractor is not None
+                                            else "".join(plain_parts)
+                                        ),
+                                        usage=usage,
+                                    )
                         if stop_reason:
                             finish_reason = stop_reason
                             if stop_reason in {"stop", "tool_calls"}:
@@ -454,6 +501,15 @@ class SarvamLLMAdapter:
             extractor.spoken_text.strip() if extractor is not None else "".join(plain_parts).strip()
         )
         completed_tool_calls = [tool_calls[index] for index in sorted(tool_calls)]
+        if kwargs.get("speech_only") and full_text.lstrip().startswith(("{", "[", "```")):
+            # The delivery contract forbids control data. It was buffered, so
+            # none reached TTS and the bounded reply recovery can restart clean.
+            raise IncompleteTurnError(
+                provider=self.provider_id,
+                finish_reason="unexpected_speech_format",
+                partial_text="",
+                usage=usage,
+            )
         if completed_tool_calls and not completed:
             raise IncompleteTurnError(
                 provider=self.provider_id,
@@ -461,7 +517,7 @@ class SarvamLLMAdapter:
                 partial_text=full_text,
                 usage=usage,
             )
-        if not full_text and not completed_tool_calls:
+        if not full_text and not completed_tool_calls and not kwargs.get("allow_empty_response"):
             raise IncompleteTurnError(
                 provider=self.provider_id,
                 finish_reason=finish_reason or "empty",
@@ -491,6 +547,7 @@ class SarvamLLMAdapter:
                 {
                     "memory_update": extractor.parse_memory_update(),
                     "end_call": extractor.parse_end_call(),
+                    "action_claimed": extractor.parse_action_claim(),
                     "memory_parse_failed": extractor.structured_parse_failed(),
                 }
             )
@@ -506,8 +563,8 @@ class SarvamLLMAdapter:
                 "close_preview": (
                     extractor.preview_decision() if extractor is not None else None
                 ),
-                "order_preview": (
-                    extractor.preview_order_claim() if extractor is not None else None
+                "action_preview": (
+                    extractor.preview_action_claim() if extractor is not None else None
                 ),
             }
 

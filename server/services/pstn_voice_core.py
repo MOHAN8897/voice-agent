@@ -219,6 +219,7 @@ class PstnVoiceLoop:
         self._on_remote_hangup: Callable[[], Awaitable[None]] | None = None
         self._on_turn_audio_done: Callable[[], Awaitable[None]] | None = None
         self._hangup_started = False
+        self._background_hangup_task: asyncio.Task | None = None
         self._technical_fallback_played = False
         self._technical_fallback_active = False
         self._turn_audio_delivered = False
@@ -440,6 +441,114 @@ class PstnVoiceLoop:
                 return False
         return False
 
+    def _close_revocable_text(self, text: str) -> bool:
+        """True when a caller turn should cancel a pending goodbye.
+
+        A question, a new request, a correction or a "wait" reopens the call.
+        The caller's own goodbye/refusal, a thanks, or an acknowledgement does
+        not — those let the close finish.
+        """
+        from server.call.caller_intent import (
+            caller_revoked_callback,
+            has_future_interest,
+            is_negated_end,
+            is_wait_or_continue,
+        )
+        from server.call.end_call_validate import (
+            caller_close_reason,
+            caller_engaged_in_turn,
+            caller_stop_contact,
+            caller_wants_to_continue,
+            looks_like_question,
+        )
+        from server.call.hangup_judge import caller_polite_thanks_only
+
+        cleaned = (text or "").strip()
+        if not cleaned:
+            return False
+        if is_backchannel(cleaned):
+            # "Okay"/"yes" acknowledges the goodbye unless a question is open.
+            return self._agent_expects_answer()
+        if caller_polite_thanks_only(cleaned):
+            return False
+        # Holding the line open outranks a close phrase in the same turn; this
+        # is the same precedence the turn gate uses ("Call cut చేయకండి").
+        if is_negated_end(cleaned) or is_wait_or_continue(cleaned):
+            return True
+        # An explicit opt-out outranks a stray "future" mention ("remove me from
+        # future calls" is not future interest).
+        if caller_stop_contact(cleaned):
+            return False
+        if caller_revoked_callback(cleaned) or has_future_interest(cleaned):
+            return True
+        if caller_close_reason(cleaned) is not None:
+            return False
+        if looks_like_question(cleaned) or caller_wants_to_continue(cleaned):
+            return True
+        if _STRONG_HALT_RE.fullmatch(cleaned) or _WEAK_NEGATION_RE.fullmatch(cleaned):
+            return True
+        return bool(
+            caller_engaged_in_turn(cleaned)
+            and self._accepts_user_turn(cleaned, after_barge=True)
+        )
+
+    def _pending_caller_turn(self) -> str | None:
+        for candidate in (self._pending_transcript, self._coalesce_transcript):
+            text = (candidate or "").strip()
+            if text and self._close_revocable_text(text):
+                return text
+        return None
+
+    def _close_still_authorized(self) -> bool:
+        """The provider hangup stays revocable while the caller takes the turn."""
+        if self._closed or self._phase == PHASE_ENDED:
+            return True
+        if self._awaiting_barge_final:
+            return False
+        return self._pending_caller_turn() is None
+
+    async def _revoke_agent_hangup(self, *, source: str) -> None:
+        """Undo a close that never reached the provider and resume listening."""
+        pending = self._pending_caller_turn() or ""
+        self._hangup_started = False
+        if self.call_id:
+            from server.call.call_context import get as get_ctx
+
+            ctx = get_ctx(self.call_id)
+            if ctx is not None:
+                ctx.agent_hangup_armed = False
+        reopened = False
+        async with self._phase_lock:
+            if self._phase == PHASE_CLOSING:
+                # The one legitimate exit from CLOSING besides ENDED: the
+                # caller proved the goodbye was premature.
+                self._phase = PHASE_LISTENING
+                self._intro_phase = False
+                reopened = True
+                if self.call_id:
+                    pstn_media_flow.emit(
+                        self.call_id,
+                        "fsm_phase",
+                        "internal",
+                        detail=PHASE_LISTENING,
+                        turn_id=self.current_turn_id,
+                        generation_id=self.current_generation_id,
+                    )
+        log_pstn(
+            "hangup.revoked",
+            call_id=self.call_id,
+            source=source,
+            text=pending[:80],
+        )
+        if reopened and self.call_id:
+            pstn_media_flow.emit(
+                self.call_id,
+                "hangup_revoked",
+                "internal",
+                detail=source,
+                status="healthy",
+            )
+
     async def _finish_agent_hangup(
         self,
         *,
@@ -447,9 +556,20 @@ class PstnVoiceLoop:
         spoke_farewell: bool = True,
         trail_sec: float | None = None,
         playback_timeout_sec: float | None = None,
+        revocable: bool = True,
     ) -> None:
-        """Speak-complete hangup: drain farewell, pause, then disconnect."""
+        """Speak-complete hangup: drain farewell, pause, then disconnect.
+
+        ``revocable`` is true only for a conversational goodbye. Failure
+        teardowns (no usable voice / model outage) must still end the line, so
+        they pass False.
+        """
         if self._hangup_started or self._phase == PHASE_ENDED or self._closed:
+            return
+        if revocable and self._pending_caller_turn() is not None:
+            # The caller already took the turn back; keep the line and let the
+            # pending turn answer instead of speaking a goodbye they did not ask for.
+            await self._revoke_agent_hangup(source="caller_turn_before_close")
             return
         self._hangup_started = True
         self._pending_transcript = None
@@ -472,7 +592,11 @@ class PstnVoiceLoop:
                 on_ended=enter_ended,
                 trail_sec=trail_sec,
                 playback_timeout_sec=playback_timeout_sec,
+                can_disconnect=self._close_still_authorized if revocable else None,
             )
+            if result.cancelled:
+                await self._revoke_agent_hangup(source="caller_turn_before_disconnect")
+                return
             self._background_hangup_task = result.background_task
         except (Exception, asyncio.CancelledError):
             self._hangup_started = False
@@ -516,6 +640,7 @@ class PstnVoiceLoop:
             reason=reason,
             spoke_farewell=False,
             trail_sec=FALLBACK_TAIL_SEC,
+            revocable=False,
         )
 
     async def _close_after_tts_failure(
@@ -554,13 +679,30 @@ class PstnVoiceLoop:
         )
         await self._play_technical_fallback_and_hangup(trigger=trigger)
 
-    async def _close_after_non_tts_failure(self, *, reason: str = "agent_hangup", session: Any = None) -> None:
-        """Use the working voice for a courteous close; the clip needs outage proof."""
+    async def _close_after_non_tts_failure(
+        self,
+        *,
+        reason: str = "agent_hangup",
+        session: Any = None,
+        technical: bool = False,
+    ) -> None:
+        """Use the working voice for a courteous close; the clip needs outage proof.
+
+        ``technical`` is an unrecovered model failure, not a conversation that
+        reached its end. The caller hears the honest localized technical line
+        instead of a normal goodbye, so a failed turn is never presented as a
+        successful close.
+        """
         if self._hangup_started or self._closed or self._phase == PHASE_ENDED:
             return
         from server.call.hangup_judge import default_farewell_for
+        from server.services.pstn_technical_fallback import CALL_BACK, fallback_text
 
-        farewell = default_farewell_for(self._resolve_language())
+        farewell = (
+            fallback_text(self._resolve_language(), CALL_BACK)
+            if technical
+            else default_farewell_for(self._resolve_language())
+        )
         await self._recover_tts_after_failure(session)
         frames_before = self._wire_frames_out
         try:
@@ -595,7 +737,7 @@ class PstnVoiceLoop:
                 await call_ledger.append_assistant_turn(self.call_id, farewell)
             except Exception as exc:
                 log_pstn("turn.close.ledger_failed", call_id=self.call_id, error_type=type(exc).__name__)
-        await self._finish_agent_hangup(reason=reason)
+        await self._finish_agent_hangup(reason=reason, revocable=False)
 
     async def _play_technical_fallback_and_hangup(self, *, trigger: str) -> None:
         """Play a pre-recorded apology in the call language, then close the line.
@@ -644,6 +786,7 @@ class PstnVoiceLoop:
                 reason="technical_fallback",
                 spoke_farewell=False,
                 trail_sec=FALLBACK_TAIL_SEC,
+                revocable=False,
             )
             return
 
@@ -759,6 +902,7 @@ class PstnVoiceLoop:
             trail_sec=FALLBACK_TAIL_SEC,
             # A broken wire cannot drain; do not hold the caller for the 14 s cap.
             playback_timeout_sec=0.0 if defect in ("playback_watchdog", "playback_failed") else None,
+            revocable=False,
         )
 
     def set_turn_audio_done_handler(self, fn: Callable[[], Awaitable[None]]) -> None:
@@ -1986,6 +2130,16 @@ class PstnVoiceLoop:
                             self._pending_transcript = self._merge_pending_transcript(
                                 self._pending_transcript or "", text,
                             )
+                    elif self._phase == PHASE_CLOSING:
+                        # The goodbye is revocable until the carrier hangup; keep
+                        # a new question instead of dropping it with the closing line.
+                        if self._close_revocable_text(text):
+                            self._queue_user_transcript(text)
+                            log_pstn(
+                                "hangup.revoke_queued",
+                                call_id=self.call_id,
+                                text=text[:80],
+                            )
                     elif self._turn_busy or self._phase in (PHASE_THINKING, PHASE_SPEAKING, PHASE_INTERRUPTING):
                         if (is_backchannel(text) or _STRONG_HALT_RE.fullmatch(text)
                                 or self._has_barge_voice(now, started_at=self._partial_started_at,
@@ -2762,7 +2916,8 @@ class PstnVoiceLoop:
                 else:
                     from server.call.end_call_validate import caller_close_reason
 
-                    reason = caller_close_reason(text) or "agent_hangup"
+                    caller_reason = caller_close_reason(text)
+                    reason = caller_reason or "agent_hangup"
                     if getattr(tts_session, "had_error", False):
                         await self._close_after_tts_failure(
                             defect="tts_provider_error",
@@ -2771,7 +2926,13 @@ class PstnVoiceLoop:
                             reason=reason,
                         )
                     else:
-                        await self._close_after_non_tts_failure(reason=reason, session=tts_session)
+                        # No caller close + no delivered reply = the model stopped
+                        # early. Say the honest technical line, not a goodbye.
+                        await self._close_after_non_tts_failure(
+                            reason=reason,
+                            session=tts_session,
+                            technical=caller_reason is None,
+                        )
             elif not spoke_from_stream and not delivered and self._phase != PHASE_ENDED and not self._closed:
                 await self._close_after_non_tts_failure(session=tts_session)
             if self.call_id:

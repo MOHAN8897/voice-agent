@@ -119,6 +119,7 @@ def advance_callback_close(
     request_text: str = "",
 ) -> CallbackCloseState:
     """Advance (or derive) the callback close phase for this utterance."""
+    from server.call.caller_intent import caller_revoked_callback
     from server.call.end_call_validate import (
         caller_asked_to_record_details,
         caller_requested_hangup,
@@ -129,6 +130,14 @@ def advance_callback_close(
     )
 
     extra = {k: str(v).strip() for k, v in (extra_slots or {}).items() if str(v).strip()}
+    if caller_revoked_callback(user_text):
+        # "I am not asking you to call me later" cancels the intent. A stale
+        # callback phase must not outlive the caller's correction.
+        if ctx is not None:
+            ctx.callback_request_text = ""
+        state = CallbackCloseState(PHASE_IDLE)
+        _persist(ctx, state)
+        return state
     if caller_requested_hangup(user_text) or caller_firm_refusal(user_text):
         if ctx is not None:
             ctx.callback_request_text = ""

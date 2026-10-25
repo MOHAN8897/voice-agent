@@ -39,6 +39,25 @@ _DEFAULT_AGENT_ID: str | None = None
 
 
 class CompiledBrainService:
+    def _reject_contradictory_brain(self, compiled_text: str, language: str, *, agent_id: str, status_code: int) -> None:
+        from server.brain.brain_prompt_validate import validate_rendered_brain
+        from server.utils.logger import logger
+
+        issues = validate_rendered_brain(compiled_text, language)
+        if not issues:
+            return
+        logger.error(
+            "[BRAIN] Rejected contradictory instructions for agent %s (lang=%s): %s",
+            agent_id,
+            language,
+            "; ".join(issues),
+        )
+        raise AppError(
+            ErrorCode.VALIDATION_ERROR,
+            message="The agent instructions contain conflicting platform rules: " + "; ".join(issues[:3]),
+            status_code=status_code,
+        )
+
     async def _agent_info(self, agent_id: str) -> tuple[str, bool, str | None]:
         factory = get_session_factory()
         if factory is None:
@@ -123,6 +142,7 @@ class CompiledBrainService:
             disclosure_text=disclosure_text,
             language=lang,
         )
+        self._reject_contradictory_brain(compiled_text, lang, agent_id=agent_id, status_code=409)
         checksum = checksum_instructions(compiled_text)
         compiled_version = f"cb_v{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:6]}"
         token_estimate = estimate_tokens(compiled_text)
@@ -243,6 +263,7 @@ class CompiledBrainService:
             disclosure_text=disclosure_text,
             language=lang,
         )
+        self._reject_contradictory_brain(compiled_text, lang, agent_id=agent_id, status_code=422)
         published = {
             "version_id": f"bb_v{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:12]}",
             "agent_id": agent_id, "optimized_prompt": optimized_prompt,

@@ -175,7 +175,7 @@ def test_qualified_is_only_downgraded_when_the_outcome_claims_an_order():
 def test_server_lines_are_localized():
     assert order_unconfirmed_line_for("te-IN")
     assert order_unconfirmed_line_for("hi-IN")
-    assert order_unconfirmed_line_for("en-IN") == "Let me verify those details before I confirm anything."
+    assert "couldn't confirm" in order_unconfirmed_line_for("en-IN")
 
 
 @pytest.mark.asyncio
@@ -212,6 +212,7 @@ async def test_composed_tool_round_trip_records_proof_without_the_gateway(monkey
         turn_state=turn_state,
     )
     assert turn_state["order_proof"] is True
+    assert "order_confirmed" in turn_state["action_proofs"]
     tool_result = json.loads(messages[-1]["content"])
     assert tool_result["status"] == "ok"
     assert order_details_present(read_order_proof("call-order"))

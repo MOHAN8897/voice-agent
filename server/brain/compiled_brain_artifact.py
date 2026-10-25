@@ -67,6 +67,11 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
     raw = (text or "").strip()
     if not is_unified_compiled_brain(raw) and not _SPOKEN_HEADER.search(raw):
         return raw
+    from server.brain.fact_canon import canonicalize_superseded_facts
+
+    # A corrected price must not survive in a stored publication either, and a
+    # legacy CLOSING block must not compete with the platform's farewell owner.
+    raw = canonicalize_superseded_facts(strip_closing_section(raw))
     from server.prompts.agent_voice_rules import (
         CALL_END_FAREWELLS,
         build_recording_disclosure_instruction,
@@ -101,6 +106,10 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
             block = STATIC_OUTPUT_RULES + ("\n\n" + suffix if suffix else "")
         elif title.startswith("SPOKEN LANGUAGE ("):
             block = spoken_pack_for(language, include_brevity=False, core_only=True)
+        elif title == "CALL CAPABILITIES":
+            from server.brain.capabilities import render_capabilities_section
+
+            block = render_capabilities_section(raw)
         elif title == "CALL END POLICY":
             old = raw[match.start():end]
             reasons = re.search(r"Allowed (?:hangup|close) reasons for this agent:\s*([^\n.]+)", old)
@@ -121,7 +130,24 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
         else:
             block = raw[match.start():end]
         chunks.append(block.strip())
-    return "\n\n".join(chunk for chunk in chunks if chunk.strip())
+    refreshed = "\n\n".join(chunk for chunk in chunks if chunk.strip())
+    return _ensure_capabilities_section(refreshed)
+
+
+def _ensure_capabilities_section(text: str) -> str:
+    """Insert the contract into publications stored before it existed."""
+    from server.brain.capabilities import (
+        capabilities_section_present,
+        render_capabilities_section,
+    )
+
+    if capabilities_section_present(text):
+        return text
+    anchor = re.search(r"(?m)^--- (?:CALL END POLICY|STATIC OUTPUT RULES) ---", text)
+    if not anchor or not re.search(r"(?m)^--- CALLING SCRIPT ---", text):
+        return text
+    section = render_capabilities_section(text)
+    return f"{text[:anchor.start()].rstrip()}\n\n{section}\n\n{text[anchor.start():]}"
 
 
 def business_from_unified_brain(text: str) -> str:
@@ -130,7 +156,10 @@ def business_from_unified_brain(text: str) -> str:
     if not start:
         raise ValueError("Legacy publication is missing its calling script")
     body = text[start.end():]
-    end = re.search(r"(?m)^--- (?:CALL END POLICY|STATIC OUTPUT RULES) ---", body)
+    end = re.search(
+        r"(?m)^--- (?:CALL CAPABILITIES|PLATFORM CALL RULES|CALL END POLICY|STATIC OUTPUT RULES) ---",
+        body,
+    )
     return body[:end.start()].strip() if end else body.strip()
 
 
@@ -146,6 +175,32 @@ def strip_section_markers(script: str | None) -> str:
     return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
 
 
+_CLOSING_HEADER = re.compile(
+    r"^\s*-{2,}\s*(?:CLOSING|CLOSE|FAREWELL)\s*-{2,}\s*$", re.I
+)
+_SECTION_HEADER = re.compile(r"^\s*-{2,}\s*[A-Z][A-Z0-9 &/()'.,-]{1,60}\s*-{2,}\s*$")
+
+
+def strip_closing_section(script: str | None) -> str:
+    """Drop a model-authored closing block; the platform owns the farewell.
+
+    Stored scripts from before the 2026-10-25 audit still carry a CLOSING such
+    as "Thank you ... Have a wonderful day. Goodbye." Assembling it next to the
+    platform's "never speak a goodbye" policy gives the model two owners.
+    """
+    out: list[str] = []
+    skipping = False
+    for line in (script or "").splitlines():
+        if _CLOSING_HEADER.match(line):
+            skipping = True
+            continue
+        if skipping and _SECTION_HEADER.match(line):
+            skipping = False
+        if not skipping:
+            out.append(line)
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
+
+
 def assemble_unified_brain(
     *,
     language: str,
@@ -159,7 +214,14 @@ def assemble_unified_brain(
     """Canonical compile output used by brief, session, factory, and SaaS paths."""
     lang = normalize_compile_language(language)
     style_val = style_for_language(style, lang)
-    calling = f"--- CALLING SCRIPT ---\n{strip_section_markers(script)}\n\n"
+    from server.brain.capabilities import render_capabilities_section
+    from server.brain.fact_canon import canonicalize_superseded_facts
+
+    business = canonicalize_superseded_facts(strip_closing_section(strip_section_markers(script)))
+    # Permissions come from the authored brief alone. Reading them here, at
+    # compile time, keeps platform safety text (which also names orders) from
+    # ever granting or denying a business capability.
+    calling = f"--- CALLING SCRIPT ---\n{business}\n\n{render_capabilities_section(business)}\n\n"
     platform = (platform_call_rules or "").strip()
     if platform:
         calling += f"--- PLATFORM CALL RULES ---\n{platform.strip()}\n\n"
