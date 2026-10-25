@@ -120,9 +120,12 @@ def _normalized(text: str) -> str:
 def evidence_matches(evidence: str, transcript: str) -> bool:
     """True when the span is present in the caller's own current words."""
     needle = _normalized(evidence)
-    if len(needle) < 3:
+    if len(needle) < 2:
         return False
-    return needle in _normalized(transcript)
+    norm_trans = _normalized(transcript)
+    if len(norm_trans) < 2:
+        return False
+    return needle in norm_trans or norm_trans in needle
 
 
 def meaningful_remaining_request(text: str) -> bool:

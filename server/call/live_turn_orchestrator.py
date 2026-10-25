@@ -204,6 +204,7 @@ class LiveTurnOrchestrator:
         language_code: str,
         call_id: str | None,
         spoken_text: str = "",
+        classifier_sourced: bool = False,
     ) -> dict[str, Any]:
         ctx = call_context.get(call_id) if call_id else None
         completed = 0
@@ -212,7 +213,7 @@ class LiveTurnOrchestrator:
             from server.agent.conversation_manager import conversation_manager
             from server.call.memory_manager import memory_manager
 
-            completed = conversation_manager.get_completed_turns(ctx.session_id if ctx else "")
+            completed = conversation_manager.get_completed_turns(getattr(ctx, "session_id", "") if ctx else "")
             try:
                 snapshot = memory_manager.peek_snapshot(call_id)
             except Exception:
@@ -221,27 +222,29 @@ class LiveTurnOrchestrator:
             ctx,
             transcript,
             snapshot,
-            request_text=ctx.callback_request_text if ctx else "",
+            request_text=getattr(ctx, "callback_request_text", "") if ctx else "",
         )
         if ctx is not None and caller_requested_callback(transcript):
             ctx.callback_request_text = transcript
         evidence = transcript
-        if ctx and ctx.callback_request_text:
+        if ctx and getattr(ctx, "callback_request_text", ""):
             evidence = ctx.callback_request_text
             snapshot = memory_with_live_lead(snapshot, transcript)
         decision = validate_end_call(
             raw,
             user_text=evidence,
             language=language_code,
-            call_status=ctx.status if ctx else "active",
-            already_armed=bool(ctx and ctx.agent_hangup_armed),
-            barge_in_flight=bool(ctx and ctx.barge_in_flight),
-            last_stt_partial_at=ctx.last_stt_partial_at if ctx else None,
+            call_status=getattr(ctx, "status", "active") if ctx else "active",
+            already_armed=bool(ctx and getattr(ctx, "agent_hangup_armed", False)),
+            barge_in_flight=bool(ctx and getattr(ctx, "barge_in_flight", False)),
+            last_stt_partial_at=getattr(ctx, "last_stt_partial_at", None) if ctx else None,
             completed_turns=completed,
             memory_snapshot=snapshot,
-            call_end_policy=ctx.call_end_policy if ctx else None,
+            call_end_policy=getattr(ctx, "call_end_policy", None) if ctx else None,
             spoken_text=spoken_text,
             callback_close_phase=callback_state.phase,
+            classifier_sourced=classifier_sourced,
+            pending_tool_result=bool(ctx and getattr(ctx, "pending_tool_result", False)),
         )
         proposal = parse_close_proposal(raw)
         close_attempt = bool(proposal.should_end and decision.evidence_valid)
@@ -259,6 +262,7 @@ class LiveTurnOrchestrator:
                     close_attempt=close_attempt,
                     remaining_request_chars=len(proposal.remaining_request),
                     farewell_chars=len(decision.farewell or ""),
+                    classifier_sourced=classifier_sourced,
                 )
             return {
                 "should_end": False,
@@ -289,6 +293,7 @@ class LiveTurnOrchestrator:
                 evidence_valid=True,
                 close_attempt=close_attempt,
                 farewell_chars=len(farewell),
+                classifier_sourced=classifier_sourced,
             )
         return {
             "should_end": True,
@@ -359,7 +364,7 @@ class LiveTurnOrchestrator:
             ctx,
             transcript,
             snapshot,
-            request_text=ctx.callback_request_text if ctx else "",
+            request_text=getattr(ctx, "callback_request_text", "") if ctx else "",
         )
         if state.phase == "idle":
             return None
@@ -381,7 +386,7 @@ class LiveTurnOrchestrator:
 
         if not should_nudge_slow_down(transcript):
             return None
-        if ctx is not None and ctx.slow_down_nudged:
+        if ctx is not None and getattr(ctx, "slow_down_nudged", False):
             return None
         if ctx is not None:
             ctx.slow_down_nudged = True
@@ -403,7 +408,7 @@ class LiveTurnOrchestrator:
         if ctx is None:
             return None
         composed = getattr(ctx, "pipeline", None) == "composed_voice"
-        if not ctx.compiled_brain_text and not composed:
+        if not getattr(ctx, "compiled_brain_text", None) and not composed:
             return None
         from server.agent.brain_prompt_composer import estimate_tokens
         from server.agent.conversation_manager import conversation_manager
@@ -420,8 +425,10 @@ class LiveTurnOrchestrator:
             session_id,
             max_turns=context_turns,
         )
-        model = openai_model or ctx.resolved_stack.llm.model
-        brain = ctx.compiled_brain_text
+        resolved = getattr(ctx, "resolved_stack", None)
+        llm = getattr(resolved, "llm", None)
+        model = openai_model or getattr(llm, "model", None)
+        brain = getattr(ctx, "compiled_brain_text", "")
         if composed:
             from server.services.composed_voice_session import composed_system_prompt
 
@@ -457,9 +464,12 @@ class LiveTurnOrchestrator:
         settings = get_settings()
         ctx = call_context.get(call_id) if call_id else None
         if ctx:
-            ctx.heartbeat()
+            if hasattr(ctx, "heartbeat"):
+                ctx.heartbeat()
             ctx.barge_in_flight = False
-            openai_model = openai_model or ctx.resolved_stack.llm.model
+            resolved = getattr(ctx, "resolved_stack", None)
+            llm = getattr(resolved, "llm", None)
+            openai_model = openai_model or getattr(llm, "model", None)
 
         turn_lock = lock_for(call_id) if call_id else None
         if turn_lock:
@@ -467,6 +477,7 @@ class LiveTurnOrchestrator:
 
         user_seq = 0
         ledger_task: asyncio.Task | None = None
+        close_task: asyncio.Task | None = None
         try:
             # A watchdog re-ask repeats the same caller utterance; its first
             # attempt already owns the single user ledger row.
@@ -478,6 +489,29 @@ class LiveTurnOrchestrator:
             from server.realtime.manager import realtime_text_manager
 
             realtime = bool(call_id and realtime_text_manager.get(call_id))
+            if (
+                ctx is not None
+                and call_id
+                and not realtime
+                and not retry_attempt
+                and getattr(ctx, "pipeline", None) == "composed_voice"
+                and not getattr(ctx, "agent_hangup_armed", False)
+            ):
+                # Plain-speech replies carry no close field. Ask the pinned model
+                # the one narrow question in parallel with the reply, so the
+                # decision is ready before the buffered speech is released.
+                from server.call.close_classifier import (
+                    previous_agent_line,
+                    start_close_classification,
+                )
+
+                close_task = start_close_classification(
+                    transcript=transcript,
+                    agent_previous=previous_agent_line(session_id),
+                    language=language_code,
+                    llm=ctx.resolved_stack.llm,
+                    call_id=call_id,
+                )
             turn_hints = [
                 h
                 for h in (
@@ -588,12 +622,23 @@ class LiveTurnOrchestrator:
                         if chunk.get("cancelled") and not assistant_text.strip():
                             turn_cancelled_empty = True
                         gated = dict(chunk)
+                        classifier_sourced = False
+                        raw_close = chunk.get("end_call")
+                        if close_task is not None and not parse_close_proposal(raw_close).should_end:
+                            from server.call.close_classifier import resolve_close_proposal
+
+                            proposal = await resolve_close_proposal(close_task, call_id=call_id)
+                            close_task = None
+                            if proposal:
+                                raw_close = proposal
+                                classifier_sourced = True
                         gated["end_call"] = self._gate_end_call(
-                            chunk.get("end_call"),
+                            raw_close,
                             transcript=transcript,
                             language_code=language_code,
                             call_id=call_id,
                             spoken_text=assistant_text,
+                            classifier_sourced=classifier_sourced,
                         )
                         if gated["end_call"].get("should_end"):
                             from server.call.contact_preference import record_contact_preference
@@ -658,45 +703,49 @@ class LiveTurnOrchestrator:
                             # the definitive text must be spoken in full.
                             gated["replace_speech"] = True
                         proposed_close = parse_close_proposal(chunk.get("end_call")).should_end
-                        if structured:
-                            if approved_close:
-                                # The server owns the farewell. Model close-turn
-                                # text is never spoken, approved or not.
-                                assistant_text = (
-                                    str(gated["end_call"].get("farewell") or "").strip()
-                                    or server_farewell_for(
-                                        language_code,
-                                        policy=ctx.call_end_policy if ctx else None,
-                                        contact_preference=gated["end_call"].get(
-                                            "contact_preference"
-                                        ),
-                                    )
-                                )
-                            elif proposed_close:
-                                # Keep the answer the caller can use; only a
-                                # farewell or empty reply is replaced. A bare
-                                # "please go ahead" loses the facts the audit
-                                # showed callers asking for.
-                                from server.call.close_decision import (
-                                    useful_answer_after_rejected_close,
-                                )
+                        if approved_close:
+                            from server.call.call_end_policy import server_farewell_for
 
-                                assistant_text = (
-                                    useful_answer_after_rejected_close(
-                                        assistant_text, language=language_code
-                                    )
-                                    or continuation_line_for(language_code)
+                            # The server owns the farewell. Model close-turn
+                            # text is never spoken, approved or not.
+                            assistant_text = (
+                                str(gated["end_call"].get("farewell") or "").strip()
+                                or server_farewell_for(
+                                    language_code,
+                                    policy=ctx.call_end_policy if ctx else None,
+                                    contact_preference=gated["end_call"].get(
+                                        "contact_preference"
+                                    ),
                                 )
-                            elif agent_spoke_terminal_farewell(assistant_text):
-                                # A rejected close must not leak the model's goodbye.
-                                assistant_text = continuation_line_for(language_code)
-                            if approved_close or proposed_close:
-                                # Held or already-streamed deltas cannot stand in
-                                # for the server's decision: speak the final text.
-                                gated["replace_speech"] = True
+                            )
+                            gated["replace_speech"] = True
                             held_deltas.clear()
-                        elif approved_close and not assistant_text.strip():
-                            assistant_text = str(gated["end_call"].get("farewell") or "").strip()
+                        elif structured and proposed_close:
+                            # Keep the answer the caller can use; only a
+                            # farewell or empty reply is replaced. A bare
+                            # "please go ahead" loses the facts the audit
+                            # showed callers asking for.
+                            from server.call.close_decision import (
+                                useful_answer_after_rejected_close,
+                            )
+
+                            assistant_text = (
+                                useful_answer_after_rejected_close(
+                                    assistant_text, language=language_code
+                                )
+                                or continuation_line_for(language_code)
+                            )
+                            gated["replace_speech"] = True
+                            held_deltas.clear()
+                        elif agent_spoke_terminal_farewell(assistant_text):
+                            # A rejected close must not leak the model's goodbye.
+                            assistant_text = continuation_line_for(language_code)
+                            gated["replace_speech"] = True
+                            held_deltas.clear()
+                        elif held_deltas:
+                            # Speech was held for close evaluation that resolved to continue:
+                            gated["replace_speech"] = True
+                            held_deltas.clear()
                         gated["text"] = assistant_text
                         yield gated
                         continue
@@ -715,6 +764,28 @@ class LiveTurnOrchestrator:
                     if emit:
                         guarded = dict(chunk)
                         guarded["delta"] = emit
+                        if close_task is not None:
+                            if not close_task.done():
+                                if not hold_announced:
+                                    hold_announced = True
+                                    yield {"status": "close_pending"}
+                                held_deltas.append(guarded)
+                                continue
+                            elif close_state is None:
+                                proposal_done = None
+                                try:
+                                    proposal_done = close_task.result()
+                                except Exception:
+                                    pass
+                                if proposal_done and proposal_done.get("decision") == "close":
+                                    close_state = "close"
+                                    held_deltas.append(guarded)
+                                    continue
+                                else:
+                                    close_state = "open"
+                                    for buffered in held_deltas:
+                                        yield buffered
+                                    held_deltas.clear()
                         if structured:
                             if chunk.get("order_proof"):
                                 turn_proofs.add("order_confirmed")
@@ -998,7 +1069,7 @@ class LiveTurnOrchestrator:
         callback_state = advance_callback_close(
             ctx,
             transcript,
-            request_text=ctx.callback_request_text if ctx else "",
+            request_text=getattr(ctx, "callback_request_text", "") if ctx else "",
         )
         if caller_requested_hangup(transcript) or caller_firm_refusal(transcript) or (
             caller_requested_callback(transcript)
@@ -1009,11 +1080,11 @@ class LiveTurnOrchestrator:
         ):
             decision = validate_end_call(
                 None, user_text=transcript, language=language,
-                call_status=ctx.status if ctx else "active",
-                already_armed=bool(ctx and ctx.agent_hangup_armed),
-                barge_in_flight=bool(ctx and ctx.barge_in_flight),
-                last_stt_partial_at=ctx.last_stt_partial_at if ctx else None,
-                call_end_policy=ctx.call_end_policy if ctx else None,
+                call_status=getattr(ctx, "status", "active") if ctx else "active",
+                already_armed=bool(ctx and getattr(ctx, "agent_hangup_armed", False)),
+                barge_in_flight=bool(ctx and getattr(ctx, "barge_in_flight", False)),
+                last_stt_partial_at=getattr(ctx, "last_stt_partial_at", None) if ctx else None,
+                call_end_policy=getattr(ctx, "call_end_policy", None) if ctx else None,
                 callback_close_phase=callback_state.phase,
             )
             if decision.accepted:

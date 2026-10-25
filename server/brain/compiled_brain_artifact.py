@@ -131,7 +131,7 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
             block = raw[match.start():end]
         chunks.append(block.strip())
     refreshed = "\n\n".join(chunk for chunk in chunks if chunk.strip())
-    return _ensure_capabilities_section(refreshed)
+    return sanitize_closing_instructions(_ensure_capabilities_section(refreshed))
 
 
 def _ensure_capabilities_section(text: str) -> str:
@@ -181,6 +181,54 @@ _CLOSING_HEADER = re.compile(
 _SECTION_HEADER = re.compile(r"^\s*-{2,}\s*[A-Z][A-Z0-9 &/()'.,-]{1,60}\s*-{2,}\s*$")
 
 
+def sanitize_closing_instructions(text: str | None) -> str:
+    """Eliminate contradictory closing instructions from saved scripts and prompts.
+
+    Enforces exactly one rule: the model makes the close decision; the server
+    plays the approved farewell.
+    """
+    raw = str(text or "")
+    if not raw:
+        return ""
+    # 1. "confirm, thank, farewell, and close — no extra pitch"
+    raw = re.sub(
+        r"confirm,\s*thank,\s*farewell,\s*and\s*close\s*[-—]\s*no\s+extra\s+pitch\.?",
+        "confirm, thank, and make the close decision — no extra pitch. Never speak the farewell yourself; the platform speaks it after approval.",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    # 2. "Confirm in one line, thank them, short farewell, end_call. Then stop — the platform disconnects when farewell playback finishes."
+    # or "Confirm in one line, thank them, short farewell, end_call. Then stop — if they speak after goodbye, keep talking."
+    raw = re.sub(
+        r"Confirm\s+in\s+one\s+line,\s*thank\s+them,\s*short\s+farewell,\s*end_call\.\s*Then\s+stop\s*[-—]\s*(?:the\s+platform\s+disconnects\s+when\s+farewell\s+playback\s+finishes|if\s+they\s+speak\s+after\s+goodbye,\s*keep\s+talking)\.?",
+        "Confirm in one line, thank them, and make the close decision. Never speak the farewell yourself — the server plays the approved farewell.",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    # 3. "say a farewell and (call )?end_call"
+    raw = re.sub(
+        r"(?:say|speak)\s+a\s+farewell\s+and\s+(?:call\s+)?end_call",
+        "make the close decision; never speak the farewell yourself — the server plays the approved farewell",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    # 4. "Speak the farewell AND call end_call"
+    raw = re.sub(
+        r"speak\s+the\s+farewell\s+and\s+call\s+end_call",
+        "make the close decision; never speak the farewell yourself — the server plays the approved farewell",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    # 5. "short farewell, end_call"
+    raw = re.sub(
+        r"short\s+farewell,\s*end_call",
+        "make the close decision; never speak the farewell yourself — the server plays the approved farewell",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    return raw
+
+
 def strip_closing_section(script: str | None) -> str:
     """Drop a model-authored closing block; the platform owns the farewell.
 
@@ -198,7 +246,8 @@ def strip_closing_section(script: str | None) -> str:
             skipping = False
         if not skipping:
             out.append(line)
-    return re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
+    cleaned = sanitize_closing_instructions("\n".join(out))
+    return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
 
 
 def assemble_unified_brain(
@@ -217,7 +266,7 @@ def assemble_unified_brain(
     from server.brain.capabilities import render_capabilities_section
     from server.brain.fact_canon import canonicalize_superseded_facts
 
-    business = canonicalize_superseded_facts(strip_closing_section(strip_section_markers(script)))
+    business = sanitize_closing_instructions(canonicalize_superseded_facts(strip_closing_section(strip_section_markers(script))))
     # Permissions come from the authored brief alone. Reading them here, at
     # compile time, keeps platform safety text (which also names orders) from
     # ever granting or denying a business capability.

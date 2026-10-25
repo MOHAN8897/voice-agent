@@ -33,6 +33,9 @@ class CallContext:
     end_reason: str | None = None
     contact_preference: str = "none"
     agent_hangup_armed: bool = False
+    #: A server-side tool result is still being fetched; no proposed close may
+    #: commit until it lands (the caller's own explicit end still wins).
+    pending_tool_result: bool = False
     language_mismatch_handled: bool = False
     barge_in_flight: bool = False
     slow_down_nudged: bool = False

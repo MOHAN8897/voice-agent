@@ -54,9 +54,15 @@ _INTERESTED_CONTINUE = re.compile(
     r"sounds interesting|i want (?:to )?(?:know|see|visit|buy|book)|"
     r"please (?:explain|continue|tell)|what (?:else|next)|"
     r"how (?:much|does|do|can)|can you (?:tell|explain|help)|"
-    r"दिलचस्पी\s*है|और\s*जानना|और\s*बताइए|आगे\s*बताइए|"
-    r"ఆసక్తి\s*ఉంది|ఇంకా\s*చెప్పండి|మరింత\s*వివరించండి|"
-    r"ஆர்வமாக\s*இருக்கிறது|ஆர்வம்\s*இருக்கு|மேலும்\s*சொல்லுங்கள்|இன்னும்\s*விவரமாக"
+    # Asking for more is a continuation even when it starts with a close-like
+    # courtesy ("thanks, but one more question"). Backup only — the close
+    # decision step reads the turn's meaning.
+    r"(?:one|a) (?:more|other|last) (?:question|thing|doubt|query)|"
+    r"thanks?,? but .{0,40}(?:question|ask|know|understand)|"
+    r"दिलचस्पी\s*है|और\s*जानना|और\s*बताइए|आगे\s*बताइए|एक\s*और\s*(?:सवाल|बात)|"
+    r"ఆసక్తి\s*ఉంది|ఇంకా\s*చెప్పండి|మరింత\s*వివరించండి|ఇంకో\s*(?:ప్రశ్న|విషయం)|"
+    r"ஆர்வமாக\s*இருக்கிறது|ஆர்வம்\s*இருக்கு|மேலும்\s*சொல்லுங்கள்|இன்னும்\s*விவரமாக|"
+    r"இன்னொரு\s*(?:கேள்வி|விஷயம்)"
     r")\b",
     re.I,
 )

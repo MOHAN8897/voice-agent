@@ -773,6 +773,8 @@ def validate_end_call(
     callback_close_phase: str | None = None,
     tool_sourced: bool = False,
     agent_farewell_ends_call: bool = False,
+    classifier_sourced: bool = False,
+    pending_tool_result: bool = False,
 ) -> EndCallDecision:
     parsed = parse_end_call_payload(raw)
     user = user_text or ""
@@ -814,6 +816,13 @@ def validate_end_call(
         return EndCallDecision(
             False, False, "none", parsed.get("farewell") or "", "remaining_request", evidence_valid=quoted
         )
+    if parsed["should_end"] and pending_tool_result and not hard_end:
+        # A result the server is still fetching is an unfinished task. A caller's
+        # own explicit end still wins; a proposed close waits for the result.
+        logger.info("[END_CALL] rejected code=tool_result_pending")
+        return EndCallDecision(
+            False, False, "none", parsed.get("farewell") or "", "tool_result_pending", evidence_valid=quoted
+        )
 
     # True when the server, not the model, established this close from the
     # caller's own words. Those closes need no model evidence span.
@@ -831,7 +840,7 @@ def validate_end_call(
         server_forced = True
     elif agent_still_collecting_lead(spoken) and not (
         (
-            tool_sourced
+            (tool_sourced or classifier_sourced)
             and parsed.get("should_end")
             and parsed.get("reason") in {"goodbye", "firm_refusal", "abuse"}
         )
@@ -973,7 +982,25 @@ def validate_end_call(
         and not caller_engaged_in_turn(user)
         and not meaningful_remaining_request(parsed.get("remaining_request") or "")
     )
-    evidence_ok = agent_concluded or semantic_close or (
+    # The dedicated close step reads meaning in any language and quotes the
+    # caller. The server still requires that quote to be present in this turn
+    # and every factual veto above to pass; no phrase list is consulted.
+    classifier_close = bool(
+        classifier_sourced
+        and parsed["should_end"]
+        and reason in {"goal_complete", "goodbye", "not_interested", "firm_refusal", "abuse"}
+        and evidence_matches(parsed.get("evidence") or "", user)
+        and not caller_wants_to_continue(user)
+        and not caller_negated_refusal(user)
+        and not meaningful_remaining_request(parsed.get("remaining_request") or "")
+        and not (
+            caller_polite_thanks_only(user)
+            and not agent_concluded
+            and not agent_spoke_closing(spoken)
+            and not caller_confirmed_goal_complete(user)
+        )
+    )
+    evidence_ok = agent_concluded or classifier_close or semantic_close or (
         _trust_live_tool_evidence(
             reason,
             user,
