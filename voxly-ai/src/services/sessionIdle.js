@@ -18,6 +18,9 @@ import { publishActivity, publishIdleWarning } from './authSessionSync';
 /** Defaults only; a real deployment overwrites these from /api/auth/session-policy. */
 export const DEFAULT_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 export const DEFAULT_WARNING_MS = 2 * 60 * 1000;
+/** Opt-in "Keep me signed in" fallbacks when the server policy has not arrived yet. */
+export const DEFAULT_REMEMBER_IDLE_MINUTES = 2 * 24 * 60;
+export const DEFAULT_REMEMBER_ABSOLUTE_HOURS = 3 * 24;
 
 /** Set to 0 to turn the client timer off (the server check still applies). */
 const OVERRIDE_KEY = 'voxly_idle_timeout_ms';

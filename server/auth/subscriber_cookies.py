@@ -24,9 +24,27 @@ def _cookie_opts() -> dict:
     return {"httponly": True, "secure": secure, "samesite": "lax", "path": "/"}
 
 
-def set_refresh_cookie(response: Response, refresh_token: str) -> None:
+def set_refresh_cookie(
+    response: Response,
+    refresh_token: str,
+    *,
+    persistent: bool = False,
+) -> None:
+    """Set the refresh cookie.
+
+    ``persistent=False`` omits Max-Age, so the browser drops the cookie when the
+    browser session ends. Only an explicit "Keep me signed in" gets a dated cookie;
+    the server-side idle/absolute bounds still apply either way.
+    """
     settings = get_settings()
-    max_age = settings.jwt_refresh_ttl_days * 86400
+    max_age = None
+    if persistent:
+        # Never leave a remembered cookie on disk past the ceiling enforced by the
+        # server, even if the refresh-token lifetime itself is longer.
+        max_age = min(
+            settings.jwt_refresh_ttl_days * 86400,
+            int(settings.session_remember_absolute_max_hours * 3600),
+        )
     response.set_cookie(REFRESH_COOKIE, refresh_token, max_age=max_age, **_cookie_opts())
 
 

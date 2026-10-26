@@ -296,6 +296,16 @@ class Settings(BaseSettings):
     # token is good for its whole 30-day lifetime no matter how idle the account was).
     session_idle_timeout_minutes: int = Field(30, alias="SESSION_IDLE_TIMEOUT_MINUTES")
     session_absolute_max_hours: int = Field(24, alias="SESSION_ABSOLUTE_MAX_HOURS")
+    # Opt-in "Keep me signed in" bounds. They only apply to sessions whose sign-in
+    # explicitly requested it; the flag is bound to the refresh-token family server
+    # side, never accepted from the browser at refresh time. Deliberately short:
+    # a remembered device is still a shared-device risk, so it gets days, not weeks.
+    session_remember_idle_timeout_minutes: int = Field(
+        2 * 24 * 60, alias="SESSION_REMEMBER_IDLE_TIMEOUT_MINUTES"
+    )
+    session_remember_absolute_max_hours: int = Field(
+        3 * 24, alias="SESSION_REMEMBER_ABSOLUTE_MAX_HOURS"
+    )
     # Development escape hatch: return the password-reset link from /forgot-password
     # so the flow can be driven without a working mail provider. Never enable in prod.
     auth_debug_expose_reset_token: bool = Field(False, alias="AUTH_DEBUG_EXPOSE_RESET_TOKEN")

@@ -121,6 +121,10 @@ class RefreshToken(Base):
     absolute_expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow
     )
+    # The sign-in explicitly asked to be remembered ("Keep me signed in"). The flag
+    # is bound to the token family at sign-in and inherited by every rotation, so a
+    # client cannot promote its own session by sending it on refresh.
+    remember_me: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
 class PasswordResetToken(Base):

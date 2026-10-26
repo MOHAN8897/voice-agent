@@ -93,13 +93,18 @@ async def _issue_tokens(
     impersonator: str | None = None,
     access_ttl_seconds: int | None = None,
     absolute_expires_at: datetime | None = None,
+    remember_me: bool = False,
 ) -> dict[str, Any]:
+    # Support handoffs are always short-lived; a support session must not outlive the
+    # 30-minute window regardless of what the tenant's account asked for.
+    remember_me = bool(remember_me) and not impersonator
     claims = AccessTokenClaims(
         user_id=str(user.user_id),
         tenant_id=str(tenant_id),
         role=role,
         email=user.email,
         impersonator=impersonator,
+        remember=remember_me,
     )
     access, expires_in = create_access_token(claims, ttl_seconds=access_ttl_seconds)
     raw_refresh = secrets.token_urlsafe(48)
@@ -113,10 +118,15 @@ async def _issue_tokens(
     # The absolute ceiling belongs to the *sign-in*, not the token, so a rotation must
     # carry the family's original deadline forward. Otherwise every refresh would
     # restart the clock and the ceiling would never be reached.
+    absolute_hours = (
+        settings.session_remember_absolute_max_hours
+        if remember_me
+        else settings.session_absolute_max_hours
+    )
     out_exp = await _session_absolute_deadline(
         session,
         family_id,
-        default=now + timedelta(hours=max(1, settings.session_absolute_max_hours or 24)),
+        default=now + timedelta(hours=max(1, absolute_hours or 24)),
         inherit=absolute_expires_at,
     )
     session.add(
@@ -128,6 +138,7 @@ async def _issue_tokens(
             created_at=now,
             last_active_at=now,
             absolute_expires_at=out_exp,
+            remember_me=remember_me,
         )
     )
     out: dict[str, Any] = {
@@ -135,6 +146,7 @@ async def _issue_tokens(
         "refreshToken": raw_refresh,
         "expiresIn": expires_in,
         "sessionExpiresAt": out_exp.isoformat(),
+        "rememberMe": remember_me,
     }
     if impersonator:
         out["impersonation"] = {
@@ -171,6 +183,10 @@ def session_policy() -> dict[str, Any]:
         "idleTimeoutMinutes": settings.session_idle_timeout_minutes,
         "absoluteMaxHours": settings.session_absolute_max_hours,
         "accessTokenMinutes": settings.jwt_access_ttl_minutes,
+        # "Keep me signed in" bounds. Applied only to the opt-in sessions; the client
+        # mirrors them when the session reports rememberMe.
+        "rememberIdleTimeoutMinutes": settings.session_remember_idle_timeout_minutes,
+        "rememberAbsoluteMaxHours": settings.session_remember_absolute_max_hours,
     }
 
 
@@ -521,7 +537,13 @@ async def signup(
     return payload
 
 
-async def login(*, email: str, password: str, ip: str | None = None) -> dict[str, Any]:
+async def login(
+    *,
+    email: str,
+    password: str,
+    ip: str | None = None,
+    remember_me: bool = False,
+) -> dict[str, Any]:
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
@@ -563,6 +585,9 @@ async def login(*, email: str, password: str, ip: str | None = None) -> dict[str
         role = _role_for_user(user.email, membership.role)
         if membership.role != role:
             membership.role = role
+        # Platform administrators hold the highest-privilege accounts in the product;
+        # their sessions always expire on the short policy, whatever the form asked.
+        remember_me = bool(remember_me) and not is_platform_admin_email(user.email)
         await _log_event(
             session,
             "login",
@@ -570,7 +595,9 @@ async def login(*, email: str, password: str, ip: str | None = None) -> dict[str
             tenant_id=tenant.tenant_id,
             ip=ip,
         )
-        tokens = await _issue_tokens(session, user, tenant.tenant_id, role)
+        tokens = await _issue_tokens(
+            session, user, tenant.tenant_id, role, remember_me=remember_me
+        )
         onboarded = await check_user_completed_onboarding(session, user.user_id)
         await session.commit()
         await _seed_admin_wallet(tenant.tenant_id, user.user_id, user.email)
@@ -601,13 +628,15 @@ async def refresh(refresh_token: str) -> dict[str, Any]:
     SESSION_ABSOLUTE_MAX_HOURS). They are what stop a 30-day token from acting as a
     30-day session: the browser's silent 401-refresh used to resurrect a session that
     nobody had touched for hours, on a machine that had been walked away from.
+
+    "Keep me signed in" sessions carry their own bounds (the longer pair), selected by
+    the flag stored on the family at sign-in. The browser never sends that flag here,
+    so a script holding a short session's cookie cannot promote it by asking nicely.
     """
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
     settings = get_settings()
-    idle_limit = settings.session_idle_timeout_minutes
-    absolute_limit = settings.session_absolute_max_hours
     th = _hash_token(refresh_token)
     async with factory() as session:
         now = _utcnow()
@@ -616,18 +645,34 @@ async def refresh(refresh_token: str) -> dict[str, Any]:
         if row is None or row.expires_at <= now:
             raise ValueError("invalid_refresh")
 
+        remember = bool(getattr(row, "remember_me", False))
+        idle_limit = (
+            settings.session_remember_idle_timeout_minutes
+            if remember
+            else settings.session_idle_timeout_minutes
+        )
+        absolute_limit = (
+            settings.session_remember_absolute_max_hours
+            if remember
+            else settings.session_absolute_max_hours
+        )
+
         # Sliding window + absolute ceiling. Both are per-family, so they revoke the
         # whole chain rather than leaving sibling tokens usable.
+        #
+        # The ceiling is the deadline stamped at sign-in, NOT a function of the current
+        # token's age: rotation replaces the row every few minutes, so an age test on
+        # the presented row would restart the clock and never fire. A family minted
+        # before the deadline was persisted gets the same deadline derived from its
+        # creation time.
         last_active = row.last_active_at or row.created_at or now
-        absolute_deadline = row.absolute_expires_at or row.expires_at
+        absolute_deadline = row.absolute_expires_at
+        if absolute_deadline is None and absolute_limit and absolute_limit > 0:
+            absolute_deadline = (row.created_at or now) + timedelta(hours=absolute_limit)
         breach: str | None = None
         if idle_limit and idle_limit > 0 and (now - last_active) > timedelta(minutes=idle_limit):
             breach = "session_idle"
-        elif (
-            absolute_limit
-            and absolute_limit > 0
-            and (now - (row.created_at or now)) >= timedelta(hours=absolute_limit)
-        ):
+        elif absolute_deadline is not None and now >= absolute_deadline:
             breach = "session_absolute_max"
         if breach is not None:
             await session.execute(
@@ -681,6 +726,7 @@ async def refresh(refresh_token: str) -> dict[str, Any]:
             role,
             family_id=row.family_id,
             absolute_expires_at=absolute_deadline,
+            remember_me=remember,
         )
         onboarded = await check_user_completed_onboarding(session, user.user_id)
         await session.commit()
@@ -722,6 +768,7 @@ async def get_me(
     principal_tenant_id: uuid.UUID,
     *,
     impersonator: str | None = None,
+    remember_me: bool = False,
 ) -> dict[str, Any]:
     factory = get_session_factory()
     if factory is None:
@@ -754,6 +801,9 @@ async def get_me(
         payload = {
             **_session_public(user, tenant, role, has_completed_onboarding=onboarded),
             "memberships": mems,
+            # Tells the client which idle/absolute timer to mirror. It is a session
+            # property read from the access-token claim, not an authorization grant.
+            "rememberMe": bool(remember_me) and not impersonator,
         }
         if impersonator:
             payload["impersonation"] = {

@@ -49,11 +49,15 @@ function applySessionPolicy(policy) {
     idleTimeoutMinutes: Number(policy.idleTimeoutMinutes) || 0,
     absoluteMaxHours: Number(policy.absoluteMaxHours) || 0,
     accessTokenMinutes: Number(policy.accessTokenMinutes) || 0,
+    rememberIdleTimeoutMinutes: Number(policy.rememberIdleTimeoutMinutes) || 0,
+    rememberAbsoluteMaxHours: Number(policy.rememberAbsoluteMaxHours) || 0,
   };
   if (
     sessionPolicy &&
     sessionPolicy.idleTimeoutMinutes === next.idleTimeoutMinutes &&
-    sessionPolicy.absoluteMaxHours === next.absoluteMaxHours
+    sessionPolicy.absoluteMaxHours === next.absoluteMaxHours &&
+    sessionPolicy.rememberIdleTimeoutMinutes === next.rememberIdleTimeoutMinutes &&
+    sessionPolicy.rememberAbsoluteMaxHours === next.rememberAbsoluteMaxHours
   ) {
     return;
   }
@@ -90,6 +94,31 @@ function applyAuthResponse(data) {
 }
 
 const fetchOpts = { credentials: 'include' };
+
+/**
+ * One client-wide degraded flag.
+ *
+ * The banner used to be driven by the last *auth refresh* outcome, so an old
+ * refresh fault was attributed to later unrelated 4xx responses, and nothing
+ * except another refresh could clear it. Track the current state here: any 5xx
+ * raises it, any successful API response clears it.
+ */
+let serviceDegraded = false;
+
+function markServiceDegraded(detail) {
+  if (typeof window === 'undefined') return;
+  const first = !serviceDegraded;
+  serviceDegraded = true;
+  if (first) {
+    window.dispatchEvent(new CustomEvent('voxly:service-degraded', { detail }));
+  }
+}
+
+function markServiceRestored() {
+  if (typeof window === 'undefined' || !serviceDegraded) return;
+  serviceDegraded = false;
+  window.dispatchEvent(new CustomEvent('voxly:service-restored'));
+}
 
 /**
  * Drop the machine-readable `--- ENTITY TAGS ---` block from a calling script.
@@ -369,14 +398,10 @@ export const api = {
                   : 'Refresh endpoint error (server degraded; session preserved)',
             });
             if (isServerFault) {
-              window.dispatchEvent(
-                new CustomEvent('voxly:service-degraded', {
-                  detail: {
-                    status: res.status,
-                    message: 'Authentication service is momentarily busy. Workspace session preserved.',
-                  },
-                })
-              );
+              markServiceDegraded({
+                status: res.status,
+                message: 'Authentication service is momentarily busy. Workspace session preserved.',
+              });
             }
             return false;
           }
@@ -390,7 +415,7 @@ export const api = {
             isServerFault: false,
           };
           logApiEvent('debug', 'refresh_ok', {});
-          window.dispatchEvent(new CustomEvent('voxly:service-restored'));
+          markServiceRestored();
           return true;
         } catch (err) {
           api._lastRefreshOutcome = {
@@ -402,13 +427,9 @@ export const api = {
             isNetworkError: true,
           };
           logApiEvent('warn', 'refresh_network_error', { message: String(err?.message || err) });
-          window.dispatchEvent(
-            new CustomEvent('voxly:service-degraded', {
-              detail: {
-                message: 'Network connection error. Workspace session preserved.',
-              },
-            })
-          );
+          markServiceDegraded({
+            message: 'Network connection error. Workspace session preserved.',
+          });
           return false;
         }
       });
@@ -480,6 +501,7 @@ export const api = {
       e.status = response.status;
       throw e;
     }
+    markServiceRestored();
     const blob = await response.blob();
     const header = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
     const isWav =
@@ -534,6 +556,7 @@ export const api = {
       error.status = response.status;
       throw error;
     }
+    markServiceRestored();
     const disposition = response.headers.get('Content-Disposition') || '';
     const match = /filename="?([^";]+)"?/i.exec(disposition);
     return { blob: await response.blob(), filename: match?.[1] || null };
@@ -619,8 +642,12 @@ export const api = {
         // Server faults (5xx) or individual endpoint 401s must NEVER wipe the session.
         const isConfirmedAuthDead =
           Boolean(api._lastRefreshOutcome?.isAuthDead) && triedRefresh && !refreshOk;
-        const isServerDegraded =
-          response.status >= 500 || Boolean(api._lastRefreshOutcome?.isServerFault);
+        // Only this request's own failure marks the service degraded. A refresh
+        // fault counts solely when this request actually triggered the refresh;
+        // otherwise a stale outcome mislabels ordinary 4xx responses.
+        const refreshFaulted =
+          triedRefresh && !refreshOk && Boolean(api._lastRefreshOutcome?.isServerFault);
+        const isServerDegraded = response.status >= 500 || refreshFaulted;
 
         const e = new Error(
           isConfirmedAuthDead
@@ -648,15 +675,11 @@ export const api = {
         });
 
         if (isServerDegraded) {
-          window.dispatchEvent(
-            new CustomEvent('voxly:service-degraded', {
-              detail: {
-                status: response.status,
-                path,
-                message: 'A backend service is momentarily busy. Workspace session is active.',
-              },
-            })
-          );
+          markServiceDegraded({
+            status: response.status,
+            path,
+            message: 'A backend service is momentarily busy. Workspace session is active.',
+          });
         }
 
         if (isConfirmedAuthDead) {
@@ -673,12 +696,17 @@ export const api = {
       fail();
     }
 
+    markServiceRestored();
     return data;
   },
 
   auth: {
-    async login(email, password) {
-      const data = await api.request('POST', '/api/auth/login', { email, password });
+    async login(email, password, { rememberMe = false } = {}) {
+      const data = await api.request('POST', '/api/auth/login', {
+        email,
+        password,
+        rememberMe: Boolean(rememberMe),
+      });
       applyAuthResponse(data);
       return data;
     },

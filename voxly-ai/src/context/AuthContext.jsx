@@ -13,6 +13,8 @@ import { initAuthSessionSync } from '../services/authSessionSync';
 import {
   createIdleSessionMonitor,
   DEFAULT_IDLE_TIMEOUT_MS,
+  DEFAULT_REMEMBER_ABSOLUTE_HOURS,
+  DEFAULT_REMEMBER_IDLE_MINUTES,
   readStoredActivity,
   clearStoredActivity,
 } from '../services/sessionIdle';
@@ -46,6 +48,9 @@ function normalizeUser(meOrAuth) {
     role: meOrAuth?.role,
     isPlatformAdmin: Boolean(meOrAuth?.isPlatformAdmin),
     isDevTester: Boolean(meOrAuth?.isDevTester),
+    // Server-owned: tells the client timer whether this session opted into the long
+    // "Keep me signed in" bounds. Never used for authorization.
+    rememberMe: Boolean(meOrAuth?.rememberMe) && !imp,
     hasCompletedOnboarding: Boolean(
       user.hasCompletedOnboarding ?? meOrAuth?.hasCompletedOnboarding ?? false
     ),
@@ -62,6 +67,31 @@ function normalizeUser(meOrAuth) {
 }
 
 const IMP_KEY = 'voxly_impersonation';
+
+/**
+ * Idle / absolute bounds for the session's kind.
+ *
+ * A remembered session gets the long pair, everything else the short pair. Platform
+ * administrators stay on the short idle window even if something claims otherwise:
+ * the server never issues them a remembered family, so the client must not pretend
+ * it did.
+ */
+function sessionBounds(userLike, policy) {
+  const isPlatformAdmin = Boolean(userLike?.isPlatformAdmin);
+  const remember =
+    Boolean(userLike?.rememberMe) && !userLike?.impersonation && !isPlatformAdmin;
+  const idleMinutes = remember
+    ? policy?.rememberIdleTimeoutMinutes || DEFAULT_REMEMBER_IDLE_MINUTES
+    : policy?.idleTimeoutMinutes || DEFAULT_IDLE_TIMEOUT_MS / 60000;
+  const absoluteHours = remember
+    ? policy?.rememberAbsoluteMaxHours || DEFAULT_REMEMBER_ABSOLUTE_HOURS
+    : policy?.absoluteMaxHours || 24;
+  return {
+    remember,
+    idleTimeoutMinutes: isPlatformAdmin ? Math.min(idleMinutes, 15) : idleMinutes,
+    absoluteMaxHours: absoluteHours,
+  };
+}
 
 function readStoredImpersonation() {
   try {
@@ -115,11 +145,15 @@ export function AuthProvider({ children }) {
         idleTimeoutMinutes: Number(policy.idleTimeoutMinutes) || 0,
         absoluteMaxHours: Number(policy.absoluteMaxHours) || 0,
         accessTokenMinutes: Number(policy.accessTokenMinutes) || 0,
+        rememberIdleTimeoutMinutes: Number(policy.rememberIdleTimeoutMinutes) || 0,
+        rememberAbsoluteMaxHours: Number(policy.rememberAbsoluteMaxHours) || 0,
       };
       if (
         prev &&
         prev.idleTimeoutMinutes === next.idleTimeoutMinutes &&
-        prev.absoluteMaxHours === next.absoluteMaxHours
+        prev.absoluteMaxHours === next.absoluteMaxHours &&
+        prev.rememberIdleTimeoutMinutes === next.rememberIdleTimeoutMinutes &&
+        prev.rememberAbsoluteMaxHours === next.rememberAbsoluteMaxHours
       ) {
         return prev;
       }
@@ -249,9 +283,8 @@ export function AuthProvider({ children }) {
 
       const storedLastActivity = readStoredActivity();
       const stored = authService.getSession();
-      const isPrivileged = stored?.isPlatformAdmin;
-      const effectiveIdleLimitMins = isPrivileged ? 15 : (sessionPolicy?.idleTimeoutMinutes || 30);
-      if (storedLastActivity && Date.now() - storedLastActivity >= effectiveIdleLimitMins * 60000) {
+      const bounds = sessionBounds(stored, sessionPolicy);
+      if (storedLastActivity && Date.now() - storedLastActivity >= bounds.idleTimeoutMinutes * 60000) {
         clearStoredActivity();
         api.clearToken();
         authService.clearSession();
@@ -332,14 +365,11 @@ export function AuthProvider({ children }) {
       setIdleWarning(null);
       return undefined;
     }
-    const isPlatformAdmin = Boolean(user?.isPlatformAdmin);
-    const configuredIdleMins = sessionPolicy?.idleTimeoutMinutes || DEFAULT_IDLE_TIMEOUT_MS / 60000;
-    // Platform administrators are enforced to maximum 15 minutes of inactivity for SOC2/security hardening
-    const effectiveIdleMins = isPlatformAdmin ? Math.min(configuredIdleMins, 15) : configuredIdleMins;
+    const bounds = sessionBounds(user, sessionPolicy);
 
     const monitor = createIdleSessionMonitor({
-      idleTimeoutMinutes: effectiveIdleMins,
-      absoluteMaxHours: sessionPolicy?.absoluteMaxHours || 24,
+      idleTimeoutMinutes: bounds.idleTimeoutMinutes,
+      absoluteMaxHours: bounds.absoluteMaxHours,
       onState: (state) => {
         if (state.state === 'warning') {
           setIdleWarning({ remainingMs: state.remainingMs });
@@ -371,7 +401,13 @@ export function AuthProvider({ children }) {
       }
       idleRef.current = null;
     };
-  }, [user, sessionPolicy?.idleTimeoutMinutes, sessionPolicy?.absoluteMaxHours]);
+  }, [
+    user,
+    sessionPolicy?.idleTimeoutMinutes,
+    sessionPolicy?.absoluteMaxHours,
+    sessionPolicy?.rememberIdleTimeoutMinutes,
+    sessionPolicy?.rememberAbsoluteMaxHours,
+  ]);
 
   const staySignedIn = useCallback(() => {
     idleRef.current?.extend();
@@ -439,8 +475,8 @@ export function AuthProvider({ children }) {
     throw new Error('GitHub sign-in is not available.');
   };
 
-  const loginWithEmail = async (email, password) => {
-    const data = await authService.signInWithEmailPassword(email, password);
+  const loginWithEmail = async (email, password, options = {}) => {
+    const data = await authService.signInWithEmailPassword(email, password, options);
     const normalized = normalizeUser(data);
     authService.saveSession(normalized);
     setUser(normalized);

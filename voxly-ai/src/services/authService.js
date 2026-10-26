@@ -77,8 +77,12 @@ export const authService = {
 
   /**
    * Sign in with Email & Password
+   *
+   * `rememberMe` is an explicit opt-in; the server decides the final value (platform
+   * administrators are never remembered) and reports it back, so the stored session
+   * mirrors what the refresh-token family actually enforces.
    */
-  async signInWithEmailPassword(email, password) {
+  async signInWithEmailPassword(email, password, { rememberMe = false } = {}) {
     if (!email || !password) {
       throw new Error('Please enter both your work email and password.');
     }
@@ -92,12 +96,13 @@ export const authService = {
       throw new Error('Password must be at least 6 characters long.');
     }
 
-    const res = await api.auth.login(email.trim(), password);
+    const res = await api.auth.login(email.trim(), password, { rememberMe });
     const user = {
       id: res.user?.userId,
       name: res.user?.fullName || res.user?.email,
       email: res.user?.email,
       tenantId: res.tenant?.tenantId,
+      rememberMe: Boolean(res.rememberMe),
     };
     this.saveSession(user);
     return { ...res, user: { ...res.user, ...user } };

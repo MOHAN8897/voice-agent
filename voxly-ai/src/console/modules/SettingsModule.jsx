@@ -208,14 +208,28 @@ export function SettingsModule() {
           <Shield className="w-3.5 h-3.5 text-[#6344E7]" />
           Session security
         </h3>
-        <p className="text-[11px] text-[#524E5E] leading-relaxed">
-          You are signed out automatically after{' '}
-          <strong data-testid="session-idle-minutes">
-            {sessionPolicy?.idleTimeoutMinutes ?? 30} minutes
-          </strong>{' '}
-          of inactivity, with a 2-minute countdown so you are never logged out by surprise. A single
-          sign-in cannot last longer than {sessionPolicy?.absoluteMaxHours ?? 24} hours.
-        </p>
+        {user?.rememberMe ? (
+          <p className="text-[11px] text-[#524E5E] leading-relaxed" data-testid="session-remember-status">
+            This device is set to keep you signed in. You will still be signed out automatically after
+            an extended period of inactivity, and every session ends at its maximum age. Sign out
+            before leaving a shared computer.
+          </p>
+        ) : (
+          <>
+            <p className="text-[11px] text-[#524E5E] leading-relaxed">
+              You are signed out automatically after{' '}
+              <strong data-testid="session-idle-minutes">
+                {sessionPolicy?.idleTimeoutMinutes ?? 30} minutes
+              </strong>{' '}
+              of inactivity, with a 2-minute countdown so you are never logged out by surprise. A single
+              sign-in cannot last longer than {sessionPolicy?.absoluteMaxHours ?? 24} hours.
+            </p>
+            <p className="text-[11px] text-[#524E5E] leading-relaxed">
+              Tick “Keep me signed in” on the sign-in form to stay signed in on this device. Leave it
+              off on shared computers.
+            </p>
+          </>
+        )}
       </SolidCard>
 
       <SolidCard className="space-y-3">

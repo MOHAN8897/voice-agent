@@ -175,6 +175,7 @@ async def auth_me(request: Request):
                     uuid.UUID(claims.user_id),
                     uuid.UUID(claims.tenant_id),
                     impersonator=claims.impersonator,
+                    remember_me=claims.remember,
                 )
             except ValueError:
                 raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})

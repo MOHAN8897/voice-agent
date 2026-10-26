@@ -15,7 +15,11 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import pytest
+from fastapi import Response
 
+from server.auth.jwt_tokens import decode_access_token
+from server.auth.subscriber_cookies import set_refresh_cookie
+from server.config.env import get_settings
 from server.db.models.entities import Tenant
 from server.db.models.saas_models import PasswordResetToken, RefreshToken, TenantMembership, User
 from server.services.saas import auth_service
@@ -117,6 +121,7 @@ def harness(monkeypatch):
         created_at=None,
         last_active_at=None,
         absolute_expires_at=None,
+        remember_me=False,
         password="correct-horse-battery",
     ):
         user = User(
@@ -141,6 +146,7 @@ def harness(monkeypatch):
                 created_at=created_at,
                 last_active_at=last_active_at or created_at,
                 absolute_expires_at=absolute_expires_at or (_utcnow() + timedelta(days=29)),
+                remember_me=remember_me,
             )
         session = _FakeSession(
             user=user,
@@ -267,6 +273,24 @@ def test_session_policy_exposes_the_bounds_the_client_mirrors():
     assert policy["idleTimeoutMinutes"] > 0
     assert policy["absoluteMaxHours"] > 0
     assert policy["accessTokenMinutes"] > 0
+    # The opt-in "Keep me signed in" bounds are longer than the default pair.
+    assert policy["rememberIdleTimeoutMinutes"] > policy["idleTimeoutMinutes"]
+    assert policy["rememberAbsoluteMaxHours"] > policy["absoluteMaxHours"]
+    assert (
+        policy["rememberIdleTimeoutMinutes"]
+        <= policy["rememberAbsoluteMaxHours"] * 60
+    )
+
+
+def test_remembered_bounds_stay_at_days_not_weeks():
+    """A remembered device is still a shared-device risk; the window is capped at 3 days."""
+    settings = get_settings()
+    assert 0 < settings.session_remember_idle_timeout_minutes <= 3 * 24 * 60
+    assert 0 < settings.session_remember_absolute_max_hours <= 3 * 24
+    assert (
+        settings.session_remember_idle_timeout_minutes
+        <= settings.session_remember_absolute_max_hours * 60
+    )
 
 
 async def test_rotation_carries_the_original_absolute_deadline():
@@ -288,6 +312,123 @@ async def test_first_sign_in_gets_a_fresh_absolute_deadline():
         session, uuid.uuid4(), default=_utcnow() + timedelta(hours=24), inherit=None
     )
     assert deadline - _utcnow() <= timedelta(hours=24, seconds=5)
+
+
+# --------------------------------------------------------------------------- #
+# "Keep me signed in" sessions
+# --------------------------------------------------------------------------- #
+
+
+async def test_remembered_session_survives_the_short_idle_bound(harness):
+    """Six idle hours end a normal session; an opted-in one is still alive."""
+    _session, _user, _tenant = harness(
+        created_at=_utcnow() - timedelta(hours=6),
+        last_active_at=_utcnow() - timedelta(hours=6),
+        remember_me=True,
+    )
+
+    payload = await auth_service.refresh("tok")
+
+    assert payload["rememberMe"] is True
+    assert payload["refreshToken"]
+
+
+async def test_remembered_session_has_its_own_idle_bound(harness):
+    session, _user, _tenant = harness(
+        created_at=_utcnow() - timedelta(days=3),
+        last_active_at=_utcnow() - timedelta(days=3),
+        absolute_expires_at=_utcnow() + timedelta(hours=1),
+        remember_me=True,
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        await auth_service.refresh("tok")
+    assert str(excinfo.value) == "session_idle"
+    assert session.family_revocations
+
+
+async def test_remembered_session_hits_its_own_absolute_ceiling(harness):
+    session, _user, _tenant = harness(
+        created_at=_utcnow() - timedelta(days=4),
+        last_active_at=_utcnow(),
+        absolute_expires_at=_utcnow() - timedelta(minutes=1),
+        remember_me=True,
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        await auth_service.refresh("tok")
+    assert str(excinfo.value) == "session_absolute_max"
+    assert session.family_revocations
+
+
+async def test_rotation_carries_the_remember_flag_into_the_new_token(harness):
+    session, _user, _tenant = harness(
+        created_at=_utcnow() - timedelta(minutes=5),
+        last_active_at=_utcnow() - timedelta(minutes=5),
+        remember_me=True,
+    )
+
+    payload = await auth_service.refresh("tok")
+
+    # The flag is read from the stored family, so a client cannot opt itself in by
+    # sending a flag on refresh — there is no such parameter.
+    assert session.added[0].remember_me is True
+    assert payload["rememberMe"] is True
+    assert decode_access_token(payload["accessToken"]).remember is True
+
+
+async def test_remembered_sign_in_uses_the_configured_absolute_ceiling(harness):
+    session, user, tenant = harness()
+
+    payload = await auth_service._issue_tokens(
+        session, user, tenant.tenant_id, "customer_admin", remember_me=True
+    )
+
+    assert payload["rememberMe"] is True
+    assert session.added[-1].remember_me is True
+    settings = get_settings()
+    deadline = datetime.fromisoformat(payload["sessionExpiresAt"])
+    remaining = deadline - _utcnow()
+    configured = timedelta(hours=settings.session_remember_absolute_max_hours)
+    assert configured - timedelta(seconds=5) <= remaining <= configured + timedelta(seconds=5)
+
+
+async def test_impersonation_is_never_remembered(harness):
+    session, user, tenant = harness()
+
+    payload = await auth_service._issue_tokens(
+        session,
+        user,
+        tenant.tenant_id,
+        "customer_admin",
+        impersonator="platform-admin@hustlelabs.in",
+        remember_me=True,
+        absolute_expires_at=_utcnow() + timedelta(days=3),
+    )
+
+    assert payload["rememberMe"] is False
+    assert session.added[-1].remember_me is False
+    assert decode_access_token(payload["accessToken"]).remember is False
+
+
+def test_only_a_remembered_session_gets_a_persistent_cookie():
+    """A normal sign-in must not leave a cookie that outlives the browser session."""
+    response = Response()
+    set_refresh_cookie(response, "tok", persistent=False)
+    header = response.headers.get("set-cookie", "").lower()
+    assert "max-age" not in header
+    assert "httponly" in header
+    assert "samesite=lax" in header
+
+    remembered = Response()
+    set_refresh_cookie(remembered, "tok", persistent=True)
+    remembered_header = remembered.headers.get("set-cookie", "").lower()
+    settings = get_settings()
+    expected_max_age = min(
+        settings.jwt_refresh_ttl_days * 86400,
+        int(settings.session_remember_absolute_max_hours * 3600),
+    )
+    assert f"max-age={expected_max_age}" in remembered_header
 
 
 # --------------------------------------------------------------------------- #

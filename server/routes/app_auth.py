@@ -46,6 +46,9 @@ class SignupBody(BaseModel):
 class LoginBody(BaseModel):
     email: str = Field(max_length=320)
     password: str = Field(max_length=200)
+    # Opt-in long-lived session ("Keep me signed in"). The browser never sends this on
+    # refresh — the choice is bound to the token family server-side at sign-in.
+    rememberMe: bool = False
 
 
 class RefreshBody(BaseModel):
@@ -132,7 +135,10 @@ def _attach_refresh(response: Response, payload: dict) -> dict:
     refresh = payload.get("refreshToken")
     out = payload
     if refresh:
-        set_refresh_cookie(response, refresh)
+        # A "Keep me signed in" session gets a persistent cookie; every other sign-in
+        # gets a session cookie that dies with the browser session. This is what makes
+        # closing the tab sign a non-remembered user out without touching the server.
+        set_refresh_cookie(response, refresh, persistent=bool(payload.get("rememberMe")))
         out = {k: v for k, v in payload.items() if k != "refreshToken"}
     # Every authenticated response carries the policy the browser mirrors for its idle
     # timer, so the client never has a hard-coded copy that can drift from the server.
@@ -207,7 +213,12 @@ async def auth_login(body: LoginBody, request: Request, response: Response):
     if not allowed:
         raise HTTPException(status_code=429, detail={"error": {"code": "rate_limit", "retry_after": retry}})
     try:
-        data = await auth_service.login(email=body.email, password=body.password, ip=ip)
+        data = await auth_service.login(
+            email=body.email,
+            password=body.password,
+            ip=ip,
+            remember_me=body.rememberMe,
+        )
         return _attach_refresh(response, data)
     except ValueError as e:
         code = str(e)

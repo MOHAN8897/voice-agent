@@ -79,6 +79,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loadingMethod, setLoadingMethod] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -142,6 +143,8 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
     setErrorMessage('');
     setSuccessMessage('');
     setConfirmPassword('');
+    // Opt-in security choice: a fresh open always starts unchecked.
+    setRememberMe(false);
   }, [initialMode, isOpen]);
 
   useEffect(() => {
@@ -270,8 +273,11 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
         setSuccessMessage(`Password updated. Welcome back, ${authedUser?.name || 'there'}!`);
       } else if (mode === 'signin') {
         setLoadingMethod('email');
-        authedUser = await loginWithEmail(email, password);
-        analytics.track('auth_signin_success', { userId: authedUser.id });
+        authedUser = await loginWithEmail(email, password, { rememberMe });
+        analytics.track('auth_signin_success', {
+          userId: authedUser.id,
+          rememberMe: Boolean(authedUser.rememberMe),
+        });
         setSuccessMessage(`Welcome back, ${authedUser.name}!`);
       }
       setTimeout(() => {
@@ -744,6 +750,23 @@ export function AuthModal({ isOpen, onClose, initialMode = 'signin', onAuthSucce
                     <p className="mt-1.5 text-[11px] text-[#6B6678]">At least 8 characters.</p>
                   )}
                 </div>
+              )}
+
+              {mode === 'signin' && (
+                <label
+                  htmlFor="voxly-auth-remember"
+                  className="flex w-fit cursor-pointer items-center gap-2 text-[12px] text-[#3F3B4D]"
+                >
+                  <input
+                    id="voxly-auth-remember"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    data-testid="auth-remember-me"
+                    className="h-4 w-4 shrink-0 cursor-pointer rounded border-[#C9C5D4] accent-[#6344E7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6344E7]/30 focus-visible:ring-offset-1"
+                  />
+                  <span>Keep me signed in</span>
+                </label>
               )}
 
               {mode === 'reset' && (

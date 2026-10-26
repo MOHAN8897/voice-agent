@@ -18,6 +18,7 @@ class AccessTokenClaims:
     role: str
     email: str
     impersonator: str | None = None
+    remember: bool = False
 
 
 def create_access_token(
@@ -40,6 +41,10 @@ def create_access_token(
     }
     if claims.impersonator:
         payload["imp"] = claims.impersonator
+    if claims.remember:
+        # Session property, not an authorization grant: it only tells /auth/me which
+        # client-side idle timer to mirror. The refresh token carries the enforcement.
+        payload["rmb"] = True
     token = jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
     return token, expires_in
 
@@ -63,4 +68,5 @@ def decode_access_token(token: str) -> AccessTokenClaims | None:
         role=str(role),
         email=str(email or ""),
         impersonator=str(imp) if imp else None,
+        remember=bool(payload.get("rmb")),
     )
