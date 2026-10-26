@@ -2074,6 +2074,12 @@ class PstnVoiceLoop:
                     self._cancel_backchannel()
                     if text:
                         self._last_user_partial_at = 0.0
+                        if self.call_id:
+                            from server.call.call_context import get as get_ctx
+
+                            ctx = get_ctx(self.call_id)
+                            if ctx:
+                                ctx.last_stt_partial_at = 0.0
                         safe = text[:120].encode("ascii", "replace").decode("ascii")
                         log_pstn("stt.transcript", call_id=self.call_id, text=safe)
                         log_stt("PSTN transcript final", call_id=self.call_id, text=safe)

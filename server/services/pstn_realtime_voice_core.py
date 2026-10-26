@@ -3266,21 +3266,18 @@ class PstnRealtimeVoiceLoop:
         if self.controller.callback_cancelled:
             from server.call.hangup_judge import default_farewell_for
             farewell = default_farewell_for(self._resolve_language())
-        if callback_close:
-            from server.call.hangup_judge import callback_farewell_for
-
-            farewell = callback_farewell_for(self._resolve_language())
-            if state.when and self._resolve_language().startswith("en"):
-                farewell = f"Your request for a callback {state.when} is noted. Thank you. Goodbye."
         from server.call.contact_preference import record_contact_preference
 
         await record_contact_preference(self.call_id, decision.contact_preference)
-        return {
+        result = {
             "should_end": True,
             "reason": decision.reason,
             "farewell": farewell,
             "contact_preference": decision.contact_preference,
         }
+        from server.services.saas.callback_request_service import prepare_callback_close
+
+        return await prepare_callback_close(ctx, result, self._resolve_language(), evidence_user)
 
     def _schedule_backup_hangup_from_words(self, text: str) -> None:
         """Defer backup hangup so a same-turn request_end_call tool can win (HUP-1)."""

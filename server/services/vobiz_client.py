@@ -404,7 +404,18 @@ class VobizClient:
             return await self._request("DELETE", f"/Account/{auth_id}/Call/{call_uuid}/")
         except VobizApiError as exc:
             if exc.status in (404, 422):
-                return {"ok": True, "already_ended": True, "status": exc.status}
+                # Not-found/invalid-state can also mean the wrong ID or account.
+                # Accept an already-ended call only with a matching final CDR.
+                try:
+                    cdr = await self.get_call_cdr(call_uuid)
+                    data = cdr.get("data", cdr)
+                    if isinstance(data, list):
+                        data = next((row for row in data if isinstance(row, dict) and row.get("uuid") == call_uuid), {})
+                    if isinstance(data, dict) and str(data.get("uuid")) == call_uuid and data.get("end_time"):
+                        return {"ok": True, "already_ended": True, "status": exc.status}
+                except (VobizApiError, httpx.HTTPError, ValueError, TypeError):
+                    # Preserve the original disconnect error when confirmation fails.
+                    raise exc from None
             raise
 
     def build_stream_ws_url(self, token: str, call_uuid: str | None = None) -> str:

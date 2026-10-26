@@ -89,9 +89,17 @@ export function parseStudioFieldsFromSections(sections) {
   const identityGreeting = gm ? gm[1].split('\n')[0].trim() : '';
   const split = splitOpeningLine(stored);
   const guardrails = sections.find((s) => s.enabled !== false && s.title === 'Guardrails' && s.type === 'guardrails');
+  let farewell = '';
+  const closing = sections.find((s) => s.title === 'saas_call_end_policy');
+  try {
+    farewell = JSON.parse(closing?.raw_text || '{}').farewell || '';
+  } catch {
+    farewell = '';
+  }
   return {
     script: split.script,
     greeting: identityGreeting || split.greeting,
+    farewell,
     variableDefinitions: parseScriptVariablesFromSections(sections),
     objectionRules: parseObjectionRulesFromSections(sections),
     boundaries: guardrails ? String(guardrails.raw_text || '').split('\n').map((line) => line.replace(/^\s*-\s*/, '')).filter(Boolean) : undefined,

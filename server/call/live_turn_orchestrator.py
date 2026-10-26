@@ -26,7 +26,9 @@ from server.call.callback_close import advance_callback_close
 from server.call.caller_detail_capture import caller_detail_memory_operations
 from server.call.close_decision import continuation_line_for, parse_close_proposal
 from server.call.end_call_validate import (
+    caller_firm_refusal,
     caller_requested_callback,
+    caller_requested_hangup,
     memory_with_live_lead,
     validate_end_call,
 )
@@ -218,16 +220,23 @@ class LiveTurnOrchestrator:
                 snapshot = memory_manager.peek_snapshot(call_id)
             except Exception:
                 snapshot = None
+        # A semantic completion quotes this caller turn. Historical callback
+        # collection must not substitute older words or keep collecting after
+        # the caller has explicitly finished the conversation.
+        semantic_completion = classifier_sourced and parse_close_proposal(raw).should_end
         callback_state = advance_callback_close(
-            ctx,
+            None if semantic_completion else ctx,
             transcript,
             snapshot,
-            request_text=getattr(ctx, "callback_request_text", "") if ctx else "",
+            request_text=(
+                getattr(ctx, "callback_request_text", "")
+                if ctx and not semantic_completion else ""
+            ),
         )
         if ctx is not None and caller_requested_callback(transcript):
             ctx.callback_request_text = transcript
         evidence = transcript
-        if ctx and getattr(ctx, "callback_request_text", ""):
+        if ctx and not classifier_sourced and getattr(ctx, "callback_request_text", ""):
             evidence = ctx.callback_request_text
             snapshot = memory_with_live_lead(snapshot, transcript)
         decision = validate_end_call(
@@ -273,6 +282,9 @@ class LiveTurnOrchestrator:
             }
         if ctx:
             ctx.agent_hangup_armed = True
+            if semantic_completion:
+                ctx.callback_request_text = ""
+                ctx.callback_close_phase = "idle"
         from server.call.call_end_policy import server_farewell_for
 
         farewell = server_farewell_for(
@@ -493,9 +505,10 @@ class LiveTurnOrchestrator:
                 ctx is not None
                 and call_id
                 and not realtime
-                and not retry_attempt
                 and getattr(ctx, "pipeline", None) == "composed_voice"
                 and not getattr(ctx, "agent_hangup_armed", False)
+                and not caller_requested_hangup(transcript)
+                and not caller_firm_refusal(transcript)
             ):
                 # Plain-speech replies carry no close field. Ask the pinned model
                 # the one narrow question in parallel with the reply, so the
@@ -640,6 +653,11 @@ class LiveTurnOrchestrator:
                             spoken_text=assistant_text,
                             classifier_sourced=classifier_sourced,
                         )
+                        from server.services.saas.callback_request_service import (
+                            prepare_callback_close,
+                        )
+
+                        gated["end_call"] = await prepare_callback_close(ctx, gated["end_call"], language_code, transcript)
                         if gated["end_call"].get("should_end"):
                             from server.call.contact_preference import record_contact_preference
 
@@ -704,8 +722,6 @@ class LiveTurnOrchestrator:
                             gated["replace_speech"] = True
                         proposed_close = parse_close_proposal(chunk.get("end_call")).should_end
                         if approved_close:
-                            from server.call.call_end_policy import server_farewell_for
-
                             # The server owns the farewell. Model close-turn
                             # text is never spoken, approved or not.
                             assistant_text = (
@@ -775,7 +791,7 @@ class LiveTurnOrchestrator:
                                 proposal_done = None
                                 try:
                                     proposal_done = close_task.result()
-                                except Exception:
+                                except (Exception, asyncio.CancelledError):
                                     pass
                                 if proposal_done and proposal_done.get("decision") == "close":
                                     close_state = "close"
@@ -899,6 +915,10 @@ class LiveTurnOrchestrator:
                     )
                 )
         finally:
+            if close_task is not None:
+                if not close_task.done():
+                    close_task.cancel()
+                await asyncio.gather(close_task, return_exceptions=True)
             if turn_lock and turn_lock.locked():
                 turn_lock.release()
 
@@ -1014,6 +1034,11 @@ class LiveTurnOrchestrator:
                 language_code=str(kwargs.get("language_code") or "te-IN"),
                 call_id=call_id,
                 spoken_text=result.get("text") or "",
+            )
+            from server.services.saas.callback_request_service import prepare_callback_close
+
+            result["end_call"] = await prepare_callback_close(
+                ctx, result["end_call"], str(kwargs.get("language_code") or "te-IN"), transcript,
             )
             if result["end_call"].get("should_end"):
                 from server.call.contact_preference import record_contact_preference
@@ -1826,6 +1851,8 @@ class LiveTurnOrchestrator:
                     code=str(result.get("code") or ""),
                 )
             else:
+                pending_before = bool(getattr(ctx, "pending_tool_result", False))
+                ctx.pending_tool_result = True
                 try:
                     result = await tool_router.route_and_execute(
                         tenant_id=str(ctx.tenant_id),
@@ -1838,6 +1865,8 @@ class LiveTurnOrchestrator:
                 except Exception as exc:
                     logger.warning("[COMPOSED_TOOL] execution failed: %s", type(exc).__name__)
                     result = {"status": "unknown", "message": "The action result could not be confirmed."}
+                finally:
+                    ctx.pending_tool_result = pending_before
             if not isinstance(result, dict):
                 result = {"status": "unknown", "message": "The action result could not be confirmed."}
             from server.call.action_proof import proof_for_tool_result

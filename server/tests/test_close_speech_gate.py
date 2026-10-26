@@ -400,7 +400,7 @@ def test_server_farewell_uses_tenant_policy_then_language_pack():
         == "మళ్లీ కలుద్దాం."
     )
     callback = server_farewell_for("en-IN", contact_preference="callback")
-    assert "callback request is noted" in callback.lower()
+    assert "saved your details and your request" in callback.lower()
 
 
 def test_action_claim_preview_is_read_before_spoken_text():

@@ -531,6 +531,12 @@ class CallLifecycleService:
             from server.services.composed_voice_session import composed_system_prompt
 
             composed_system_prompt(ctx)
+        if compiled_text:
+            from server.call.call_end_policy import policy_from_brain
+
+            published_policy = policy_from_brain(compiled_text, language)
+            if published_policy:
+                ctx.call_end_policy = published_policy
         call_context.put(ctx)
         self._schedule_max_duration_watchdog(call_id, max_dur)
         realtime_status: dict[str, Any] = {"status": "n/a"}
@@ -628,6 +634,9 @@ class CallLifecycleService:
         ended = _utcnow()
         reason = _normalize_end_reason(reason)
         ctx = call_context.get(call_id)
+        issued_reason = getattr(ctx, "agent_hangup_reason", None)
+        if reason in {"ws_disconnect", "pstn_hangup"} and issued_reason:
+            reason = _normalize_end_reason(issued_reason)
         stored = await call_store.get(call_id)
         if ctx is None and stored is None:
             raise AppError(ErrorCode.NOT_FOUND, message="Call not found", status_code=404)

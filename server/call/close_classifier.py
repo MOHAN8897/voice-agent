@@ -99,7 +99,7 @@ def previous_agent_line(session_id: str) -> str:
 
 
 def classifier_available(llm: StageSelection | None) -> bool:
-    """True whenever an LLM adapter is available to classify plausible close turns."""
+    """Only speech-only adapters need a separate close decision channel."""
     if llm is None or not getattr(llm, "provider", None) or not getattr(llm, "model", None):
         return False
     try:
@@ -111,7 +111,7 @@ def classifier_available(llm: StageSelection | None) -> bool:
         if not registry.is_model_allowed(llm.provider, "llm", llm.model):
             return False
         adapter = registry.get_llm(llm.provider)
-        return adapter is not None
+        return bool(adapter and getattr(adapter, "uses_plain_live_speech", False))
     except Exception:
         return False
 
@@ -140,14 +140,8 @@ def parse_classifier_output(raw: Any, transcript: str) -> dict[str, Any] | None:
     raw_reason = str(raw.get("reason") or "").strip().lower()
     reason = _REASON_MAP.get(raw_reason)
     if reason is None:
-        reason = (
-            "goal_complete"
-            if any(w in raw_reason for w in ("done", "finish", "complete", "satisf"))
-            else "goodbye"
-        )
+        return None
     evidence = re.sub(r"\s+", " ", str(raw.get("evidence") or "")).strip()[:200]
-    if not evidence and len(transcript.split()) <= _MAX_TURN_WORDS:
-        evidence = transcript.strip()[:200]
     if not evidence_matches(evidence, transcript):
         # A paraphrase is not evidence; an invented close must never end a call.
         return None
@@ -213,6 +207,13 @@ async def classify_close_turn(
         return None
 
     proposal = parse_classifier_output(_json_object(output), transcript)
+    if call_id and usage:
+        from server.services.saas.composed_costing import (
+            composed_llm_usage,
+            record_composed_stage_usage,
+        )
+
+        record_composed_stage_usage(call_id, "llm", composed_llm_usage(usage))
     log_pstn(
         "close.classifier",
         call_id=call_id,

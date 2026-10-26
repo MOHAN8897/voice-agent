@@ -1,6 +1,7 @@
 """Pytest defaults — no live Postgres unless LIVE_DB=1."""
 from __future__ import annotations
 
+import asyncio
 import os
 
 import pytest
@@ -125,4 +126,20 @@ async def _cleanup_engine_between_tests():
         except Exception:
             connection._engine = None
             connection._session_factory = None
+
+
+@pytest.fixture(autouse=True)
+async def _isolate_post_call_worker():
+    """A unit test's event loop cannot reuse the previous test's queue/worker."""
+    from server.call import post_call_pipeline
+
+    post_call_pipeline._QUEUE = asyncio.Queue(maxsize=1024)
+    post_call_pipeline._WORKER = None
+    post_call_pipeline._PENDING.clear()
+    yield
+    worker = post_call_pipeline._WORKER
+    if isinstance(worker, asyncio.Task) and worker.get_loop() is asyncio.get_running_loop():
+        if not worker.done():
+            worker.cancel()
+        await asyncio.gather(worker, return_exceptions=True)
 

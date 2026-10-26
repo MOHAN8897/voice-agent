@@ -1,4 +1,16 @@
 import { test, expect } from '@playwright/test';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { writeFile } from 'node:fs/promises';
+
+async function reticleVerify(page, commands, filename) {
+  const bridge = '../artifacts/call-quality-review/callback-farewell-20261026/reticle_rpc.py';
+  const { stdout } = await promisify(execFile)('python', [bridge, JSON.stringify(commands), page.url()], { timeout: 55_000 });
+  await writeFile(`../artifacts/call-quality-review/callback-farewell-20261026/${filename}.jsonl`, stdout);
+  const last = JSON.parse(stdout.trim().split('\n').at(-1));
+  const evidence = JSON.parse(last.result.content.find((item) => item.type === 'text').text);
+  expect(evidence.verdict?.verified ?? evidence.verified, JSON.stringify(evidence)).toBe('yes');
+}
 
 const agent = { id: 'primary-script-test', agent_id: 'primary-script-test', name: 'Script Test Agent', status: 'active', languages: ['en-IN'] };
 const original = '--- AGENT IDENTITY ---\nYou are Meera, representing Example Support.\n\n--- CANONICAL OPENING ---\nSay once:\nHello, how can I help?\n\n--- COMPANY & OFFER ---\nApproved price INR 13750.';
@@ -13,6 +25,15 @@ const initialSections = [
 ];
 
 async function setup(page, { failPublish = false, failRead = false, generationReport = null } = {}) {
+  if (process.env.RETICLE_VERIFY) {
+    // Capture only synthetic fixtures in this isolated browser context. The
+    // developer's app keeps its normal network-body privacy setting.
+    await page.route('**/src/services/reticleGate.js', async (route) => {
+      const response = await route.fetch();
+      const body = (await response.text()).replace('reticle.connect({', 'reticle.connect({ captureNetworkBodies: true,');
+      await route.fulfill({ response, body });
+    });
+  }
   const state = { reads: 0, voiceReads: 0, writes: [], publishes: 0, failRead, revision: 'draft-1', sections: structuredClone(initialSections) };
   const user = { id: 'script-test-user', userId: 'script-test-user', fullName: 'Script Tester', name: 'Script Tester', email: 'script-test@example.invalid', hasCompletedOnboarding: true, role: 'subscriber', tenantId: 'script-test-tenant' };
   const b64 = (data) => Buffer.from(JSON.stringify(data)).toString('base64url');
@@ -122,6 +143,84 @@ test('successful publication preserves extra facts, notes and guardrails', async
   expect(saved.find((row) => row.title === 'Guardrails').raw_text).toContain('Never promise refunds without approval.');
   expect(saved.find((row) => row.title === 'FAQ & Objections').raw_text).toContain('Unstructured approved FAQ note: escalation requires consent.');
   expect(saved.filter((row) => ['saas_voice_config', 'Voice profile (console)'].includes(row.title)).every((row) => row.enabled === false)).toBe(true);
+});
+
+test('farewell below the script persists through publication and reload', async ({ page }) => {
+  const state = await setup(page);
+  const farewell = page.getByTestId('agent-studio-farewell');
+  const text = 'Thank you for giving us your time. We appreciate your interest. Goodbye.';
+  if (process.env.RETICLE_VERIFY) {
+    await reticleVerify(page, [
+      { tool: 'reticle_act', args: { target: { testid: 'agent-studio-farewell' }, action: 'fill', args: { value: text } } },
+      { tool: 'reticle_act_and_wait', args: { target: { testid: 'agent-save' }, action: 'click', until: { kind: 'allOf', predicates: [
+        { kind: 'net', method: 'PUT', urlContains: '/business-brain/draft', status: 200, requestBodyContains: 'saas_call_end_policy' },
+        { kind: 'net', method: 'POST', urlContains: '/business-brain/publish', status: 200 },
+        { kind: 'text', contains: 'Saved for calls' },
+      ] }, intent: 'Tenant farewell edits are persisted and published for subsequent calls.' } },
+    ], 'reticle-farewell');
+  } else {
+    await farewell.fill(text);
+    await page.getByTestId('agent-save').click();
+  }
+  await expect(page.getByTestId('script-save-status')).toHaveText('Saved for calls');
+  const config = state.writes[0].sections.find((row) => row.title === 'saas_call_end_policy');
+  expect(config.enabled).toBe(false);
+  expect(JSON.parse(config.raw_text).farewell).toBe(text);
+  const script = await page.getByRole('combobox', { name: 'Calling script' }).boundingBox();
+  const closing = await farewell.boundingBox();
+  expect(closing.y).toBeGreaterThan(script.y);
+  await page.reload();
+  await expect(farewell).toHaveValue(text);
+  await expect(page.getByRole('combobox', { name: 'Calling script' })).toHaveValue(original);
+});
+
+test('callback requests stay visible on failure and clear after conversion', async ({ page }) => {
+  await setup(page);
+  let fail = true;
+  let resolved = false;
+  let dialCount = 0;
+  let failDial = true;
+  await page.route('**/api/calls/test-call/callback', async (route) => {
+    dialCount++;
+    expect(route.request().postDataJSON()).toMatchObject({ agentId: agent.id, mode: 'manual' });
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ok: !failDial, status: failDial ? 'failed' : 'queued' }) });
+  });
+  await page.route('**/api/callback-requests**', async (route) => {
+    if (route.request().method() === 'PATCH') {
+      expect(route.request().postDataJSON().status).toBe('converted');
+      if (!fail) resolved = true;
+      await route.fulfill({ status: fail ? 503 : 200, contentType: 'application/json', body: JSON.stringify(fail ? { detail: 'Please retry saving.' } : { status: 'converted' }) });
+    } else {
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ requests: resolved ? [] : [{ id: 'test-callback', callId: 'test-call', agentId: agent.id, phone: '+12025550123', requestedWhen: 'Next month', requestText: 'Call me next month' }] }) });
+    }
+  });
+  await page.goto('/#dashboard/leads');
+  await expect(page.getByTestId('callback-request-list')).toContainText('Next month');
+  expect(dialCount).toBe(0);
+  await page.getByRole('button', { name: 'Call back', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Could not start the callback.');
+  await expect(page.getByTestId('callback-request-list')).toContainText('Next month');
+  failDial = false;
+  await page.getByRole('button', { name: 'Call back', exact: true }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Callback requested.' })).toBeVisible();
+  expect(dialCount).toBe(2);
+  await expect(page.getByTestId('callback-request-list')).toContainText('Next month');
+  await page.getByRole('button', { name: 'Mark converted' }).click();
+  await expect(page.getByRole('alert')).toContainText('Please retry saving.');
+  await expect(page.getByTestId('callback-request-list')).toContainText('Next month');
+  fail = false;
+  if (process.env.RETICLE_VERIFY) {
+    await reticleVerify(page, [{ tool: 'reticle_act_and_wait', args: { target: { role: 'button', name: 'Mark converted' }, action: 'click', until: { kind: 'allOf', predicates: [
+      { kind: 'net', method: 'PATCH', urlContains: '/api/callback-requests/test-callback', status: 200, requestBodyContains: 'converted' },
+      { kind: 'text', contains: 'No pending callback requests.' },
+    ] }, intent: 'Converted callback requests leave the pending queue only after a successful save.' } }], 'reticle-callback');
+  } else {
+    await page.getByRole('button', { name: 'Mark converted' }).click();
+  }
+  await expect(page.getByRole('status').filter({ hasText: 'Marked converted' })).toBeVisible();
+  await expect(page.getByText('No pending callback requests.', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('No pending callback requests.', { exact: true })).toBeVisible();
 });
 
 test('publish failure keeps unsaved draft and shows error', async ({ page }) => {

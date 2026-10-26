@@ -10,6 +10,7 @@ import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
 import { KanbanSkeleton, LeadsTableSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { CallbackRequests } from './CallbackRequests';
 
 /**
  * Lead pipeline for the fleet, or for one agent.
@@ -72,6 +73,7 @@ export function LeadsModule({ agentId = null, agentName = '' }) {
 
   return (
     <div className="space-y-6">
+      <CallbackRequests agentId={agentId} />
       {callError && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">{callError}</div>
       )}

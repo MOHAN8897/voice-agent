@@ -66,14 +66,13 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
     """Refresh platform-owned blocks at render time without changing saved business scripts."""
     raw = (text or "").strip()
     if not is_unified_compiled_brain(raw) and not _SPOKEN_HEADER.search(raw):
-        return raw
+        return sanitize_closing_instructions(raw)
     from server.brain.fact_canon import canonicalize_superseded_facts
 
     # A corrected price must not survive in a stored publication either, and a
     # legacy CLOSING block must not compete with the platform's farewell owner.
     raw = canonicalize_superseded_facts(strip_closing_section(raw))
     from server.prompts.agent_voice_rules import (
-        CALL_END_FAREWELLS,
         build_recording_disclosure_instruction,
     )
 
@@ -112,20 +111,11 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
             block = render_capabilities_section(raw)
         elif title == "CALL END POLICY":
             old = raw[match.start():end]
-            reasons = re.search(r"Allowed (?:hangup|close) reasons for this agent:\s*([^\n.]+)", old)
-            farewells = re.findall(
-                r"(?:Farewell example|platform speaks this farewell):\s*`([^`]+)`", old,
-            )
-            policy: dict[str, Any] = {}
-            if reasons:
-                policy["allowedReasons"] = [reason.strip() for reason in reasons.group(1).split(",")]
-            if farewells:
-                # Older assemblies carried a default example before the actual
-                # configured farewell. The last entry is the policy overlay.
-                farewell_text = farewells[-1]
-                if locale_changed and farewell_text not in CALL_END_FAREWELLS.values():
-                    raise ValueError("Custom farewell must be reviewed for the selected language")
-                policy["farewell"] = farewell_text
+            from server.call.call_end_policy import policy_from_brain
+
+            policy = policy_from_brain(old, lang) or {}
+            if locale_changed and policy.get("farewellSource") == "tenant":
+                raise ValueError("Custom farewell must be reviewed for the selected language")
             block = call_end_policy_section(lang, policy)
         else:
             block = raw[match.start():end]

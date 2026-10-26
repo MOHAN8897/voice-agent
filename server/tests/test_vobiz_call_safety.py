@@ -160,27 +160,34 @@ def make_bridge():
 
 
 @pytest.mark.asyncio
-async def test_failed_rest_hangup_closes_socket_and_is_idempotent(isolated, monkeypatch):
+async def test_failed_rest_hangup_keeps_media_and_is_retryable(isolated, monkeypatch):
     bridge = make_bridge()
     monkeypatch.setattr(client, "vobiz_enabled", lambda: True)
     hangup = AsyncMock(side_effect=RuntimeError("carrier unavailable"))
     monkeypatch.setattr(client, "VobizClient", lambda: SimpleNamespace(hangup_call=hangup))
+    with pytest.raises(RuntimeError, match="not acknowledged"):
+        await bridge.hangup()
+    bridge.ws.close.assert_not_awaited()
+    assert not bridge._closed
+    hangup.side_effect = None
+    hangup.return_value = {"ok": True}
     await bridge.hangup()
     await bridge.hangup()
     bridge.ws.close.assert_awaited_once()
-    hangup.assert_awaited_once_with("call-a")
+    assert hangup.await_count == 3
     assert bridge._closed
 
 
 @pytest.mark.asyncio
 async def test_total_disconnect_failure_is_retryable(isolated, monkeypatch):
     bridge = make_bridge()
-    monkeypatch.setattr(client, "vobiz_enabled", lambda: False)
-    bridge.ws.close.side_effect = RuntimeError("socket busy")
-    with pytest.raises(RuntimeError, match="disconnect both failed"):
+    resolve = AsyncMock(return_value=None)
+    monkeypatch.setattr("server.services.saas.voice_kyc_service.vobiz_client_for_call", resolve)
+    with pytest.raises(RuntimeError, match="not acknowledged"):
         await bridge.hangup()
     assert not bridge._closed
-    bridge.ws.close.side_effect = None
+    bridge.ws.close.assert_not_awaited()
+    resolve.return_value = SimpleNamespace(hangup_call=AsyncMock(return_value={"ok": True}))
     await bridge.hangup()
     assert bridge._closed
 
@@ -203,10 +210,61 @@ async def test_stalled_rest_and_socket_disconnect_are_bounded(isolated, monkeypa
     monkeypatch.setattr(client, "VobizClient", lambda: SimpleNamespace(hangup_call=stall))
     monkeypatch.setattr(bridge_module.asyncio, "wait_for", short_wait)
     bridge.ws.close.side_effect = stall
-    with pytest.raises(RuntimeError, match="disconnect both failed"):
+    with pytest.raises(RuntimeError, match="not acknowledged"):
         await real_wait_for(bridge.hangup(), timeout=0.5)
-    assert timeouts == [5.0, 2.0]
+    assert timeouts == [5.0, 5.0]
+    bridge.ws.close.assert_not_awaited()
     assert not bridge._closed
+
+
+@pytest.mark.asyncio
+async def test_media_stays_open_until_carrier_ack_even_when_dialing_disabled(isolated, monkeypatch):
+    import asyncio
+    bridge = make_bridge()
+    entered, release = asyncio.Event(), asyncio.Event()
+
+    async def delayed(_call):
+        entered.set()
+        await release.wait()
+        assert not bridge._closed
+        bridge.ws.close.assert_not_awaited()
+        return {"ok": True}
+
+    monkeypatch.setattr(client, "vobiz_enabled", lambda: False)
+    monkeypatch.setattr("server.services.saas.voice_kyc_service.vobiz_client_for_call", AsyncMock(return_value=SimpleNamespace(hangup_call=delayed)))
+    task = asyncio.create_task(bridge.hangup())
+    await asyncio.wait_for(entered.wait(), 1)
+    assert not bridge._closed
+    release.set()
+    await task
+    assert bridge._carrier_hangup_acknowledged
+    bridge.ws.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", [404, 422])
+@pytest.mark.parametrize("ended", [False, True])
+async def test_carrier_error_requires_matching_ended_cdr(status, ended):
+    import uuid
+    call_uuid = str(uuid.uuid4())
+    carrier = client.VobizClient(cfg={"auth_id": "test", "auth_token": "test"})
+    error = client.VobizApiError("call not found", status=status)
+    carrier._request = AsyncMock(side_effect=error)
+    carrier.get_call_cdr = AsyncMock(return_value={"data": {"uuid": call_uuid, "end_time": "2026-10-26T05:50:40Z" if ended else None}})
+    if ended:
+        assert (await carrier.hangup_call(call_uuid))["already_ended"]
+    else:
+        with pytest.raises(client.VobizApiError):
+            await carrier.hangup_call(call_uuid)
+
+
+@pytest.mark.asyncio
+async def test_another_calls_cdr_cannot_confirm_hangup():
+    carrier = client.VobizClient(cfg={"auth_id": "test", "auth_token": "test"})
+    carrier._request = AsyncMock(side_effect=client.VobizApiError("bad id", status=422))
+    carrier.get_call_cdr = AsyncMock(return_value={"data": {"uuid": "someone-else", "end_time": "2026-10-26T05:50:40Z"}})
+    with pytest.raises(client.VobizApiError):
+        await carrier.hangup_call("wrong-call")
 
 
 @pytest.mark.asyncio

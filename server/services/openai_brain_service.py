@@ -600,7 +600,7 @@ async def _gate_end_call_for_brain(
     from server.call.contact_preference import record_contact_preference
 
     await record_contact_preference(call_id, decision.contact_preference)
-    return {
+    result = {
         "should_end": True,
         "reason": decision.reason,
         "farewell": server_farewell_for(
@@ -610,6 +610,9 @@ async def _gate_end_call_for_brain(
         ),
         "contact_preference": decision.contact_preference,
     }
+    from server.services.saas.callback_request_service import prepare_callback_close
+
+    return await prepare_callback_close(ctx, result, language_code, transcript)
 
 
 async def generate_response(

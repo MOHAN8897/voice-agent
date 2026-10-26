@@ -129,6 +129,8 @@ class CallerIntent:
 
     @property
     def keeps_call_open(self) -> bool:
+        if self.stop_contact:
+            return False
         return bool(
             self.wait_or_continue
             or self.negated_end
@@ -176,25 +178,20 @@ def classify_caller_intent(text: str) -> CallerIntent:
         _CALLER_DONE,
         _DONE_WORDS,
         _END_REQUEST,
-        _OPT_OUT,
         _STAY_ON_LINE,
         _UNAVAILABLE_NOW,
         _REFUSAL,
         _scoped_refusal,
         caller_unavailable_now,
+        caller_stop_contact,
         looks_like_question,
     )
-    from server.call.close_decision import opt_out_evidence
 
     norm = normalize_caller_text(raw)
     negated = is_negated_end(raw)
     revoked = caller_revoked_callback(raw)
     explicit_end = bool(_END_REQUEST.search(norm)) and not negated
-    stop_contact = bool(
-        (_OPT_OUT.search(norm) or opt_out_evidence(raw))
-        and not negated
-        and not revoked
-    )
+    stop_contact = caller_stop_contact(raw)
     done = bool(_CALLER_DONE.search(norm) or _DONE_WORDS.search(norm))
     unavailable = caller_unavailable_now(raw)
     question = looks_like_question(raw)

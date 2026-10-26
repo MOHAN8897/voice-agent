@@ -631,13 +631,18 @@ def caller_stop_contact(user_text: str) -> bool:
     text = user_text or ""
     if not text.strip():
         return False
-    if is_negated_end(text) or caller_revoked_callback(text):
+    if is_negated_end(text):
         # "Do not cut this call" and "I am not asking you to call me" both
         # contain a call word plus a negative, and mean the opposite.
         return False
     from server.call.close_decision import opt_out_evidence
 
-    return bool(_OPT_OUT.search(text) or opt_out_evidence(text))
+    matched = _OPT_OUT.search(text)
+    if matched and not caller_revoked_callback(matched.group()):
+        # "Don't call me again; I'll call you" contains both an explicit
+        # opt-out and a withdrawn callback. The independent opt-out still wins.
+        return True
+    return bool(not caller_revoked_callback(text) and opt_out_evidence(text))
 
 
 def _scoped_refusal(text: str) -> bool:
@@ -842,7 +847,10 @@ def validate_end_call(
         (
             (tool_sourced or classifier_sourced)
             and parsed.get("should_end")
-            and parsed.get("reason") in {"goodbye", "firm_refusal", "abuse"}
+            and (
+                parsed.get("reason") in {"goodbye", "firm_refusal", "abuse"}
+                or classifier_sourced
+            )
         )
         or caller_firm_refusal(user)
         or _user_wants_hangup(user)
@@ -960,6 +968,7 @@ def validate_end_call(
     if (
         looks_like_question(spoken)
         and reason == "goal_complete"
+        and not classifier_sourced
         and not _user_wants_hangup(user)
         and not caller_firm_refusal(user)
     ):

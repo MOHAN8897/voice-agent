@@ -617,6 +617,7 @@ async def vobiz_hangup(request: Request):
         mark_call_disconnected(internal_id, payload.get("EndTime") or payload.get("end_time"))
         meta = call_ledger.read_meta(internal_id)
         meta["hangup_cause"] = hangup_cause
+        meta["carrier_hangup_confirmed"] = True
         billsec = nonnegative(payload.get("billsec", payload.get("BillDuration")))
         if billsec is not None:
             meta["carrier_billable_duration_sec"] = int(billsec)

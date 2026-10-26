@@ -1,0 +1,324 @@
+{
+  "model": "sarvam-105b-conversations",
+  "scope": "live classifier; simulated business speech, playback and carrier",
+  "source_sha256": {
+    "server\\call\\close_classifier.py": "421dc90cb5b38ec2c3b43c18fb1920f00aaef11b08e6046a4483cef86039983d",
+    "server\\call\\live_turn_orchestrator.py": "a29caabf59414ce3b21cec54233dff8b379986176dc62fed7f3ef6333a4d54f9",
+    "server\\call\\end_call_validate.py": "3ea5b4d2d8650a6d3ce3779a4b51b28b81f673d7bfdcf536a8fd2ee5ba361e68",
+    "server\\call\\close_call_executor.py": "d36d2d946a088702f6e4c5cd9fbd1b91be8cdc9f9492e3d36b2fce5d8c58030d",
+    "server\\call\\call_lifecycle_service.py": "3d20afdbc8cf23feaed7884090d83260555efcec46da014a9678f403dbcbba3a",
+    "server\\call\\natural_hangup.py": "90ad58943b2e70d9e1131fdd121410531f19834dc58ccd7659a64564a5f7d557",
+    "server\\call\\caller_intent.py": "a7314d287506d6d13f07e5083a34adaee3f67e8bb8af2a1bc58ddeb37fed7350",
+    "server\\call\\close_decision.py": "26148e13210bf3ac83ee9886af7815de5aa32421971a9059833df2b15475921a",
+    "server\\call\\call_context.py": "a7871a8c7f89928902efad93ae8b0da45f5fd2750e4ab2befdaa88e70f0b5c36",
+    "server\\services\\pstn_voice_core.py": "287ccaac6cca54f1915941fa64ed37de34f88874fa4a52bffe39fbef8205ab5d",
+    "server\\brain\\compiled_brain_artifact.py": "3a95e1570269664f2de58a848787d75222f2bbab1ba45c5db52b1a4ab4eff944",
+    "server\\call\\call_end_policy.py": "76d4fe334a576722ecb7998b3523998459881b12c69bdeb90c5f4782c4edcfc3",
+    "server\\services\\saas\\callback_request_service.py": "5d3f9bbf7e88fb1caf9eafb9f6875a8b6f64568d20c166526e50b9b393a76ea4",
+    "server\\services\\vobiz_pstn_bridge.py": "fd0103cfb8b34a8e2dd8eff32d910e9b96f6e7bc69c53846ebf8957e941095c6"
+  },
+  "results": [
+    {
+      "language": "te-IN",
+      "caller": "అంతే అంతే థ్యాంక్ యూ",
+      "expected_close": true,
+      "hangup_commands": 1,
+      "spoken": [
+        "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      ],
+      "end_reason": "goodbye",
+      "hangup_outcome": "agent_ended",
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 540,
+        "output_tokens": 34,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "te-IN",
+      "caller": "సరే ఓకే థాంక్స్",
+      "expected_close": true,
+      "hangup_commands": 1,
+      "spoken": [
+        "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      ],
+      "end_reason": "goodbye",
+      "hangup_outcome": "agent_ended",
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 541,
+        "output_tokens": 35,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "te-IN",
+      "caller": "థాంక్స్",
+      "expected_close": false,
+      "hangup_commands": 0,
+      "spoken": [
+        "Is there anything else I can help you with?"
+      ],
+      "end_reason": null,
+      "hangup_outcome": null,
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 529,
+        "output_tokens": 30,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "te-IN",
+      "caller": "థాంక్స్ కానీ ఇంకో ప్రశ్న ఉంది",
+      "expected_close": false,
+      "hangup_commands": 0,
+      "spoken": [
+        "Is there anything else I can help you with?"
+      ],
+      "end_reason": null,
+      "hangup_outcome": null,
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 534,
+        "output_tokens": 35,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "en-IN",
+      "caller": "that's all I needed",
+      "expected_close": true,
+      "hangup_commands": 1,
+      "spoken": [
+        "Thank you for your time. Goodbye."
+      ],
+      "end_reason": "goodbye",
+      "hangup_outcome": "agent_ended",
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 535,
+        "output_tokens": 34,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "en-IN",
+      "caller": "thanks",
+      "expected_close": false,
+      "hangup_commands": 0,
+      "spoken": [
+        "Is there anything else I can help you with?"
+      ],
+      "end_reason": null,
+      "hangup_outcome": null,
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 527,
+        "output_tokens": 28,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "en-IN",
+      "caller": "thanks, but one more question",
+      "expected_close": false,
+      "hangup_commands": 0,
+      "spoken": [
+        "Is there anything else I can help you with?"
+      ],
+      "end_reason": null,
+      "hangup_outcome": null,
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 532,
+        "output_tokens": 33,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "hi-IN",
+      "caller": "बस इतना ही धन्यवाद",
+      "expected_close": true,
+      "hangup_commands": 1,
+      "spoken": [
+        "समय देने के लिए धन्यवाद। नमस्कार।"
+      ],
+      "end_reason": "goodbye",
+      "hangup_outcome": "agent_ended",
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 533,
+        "output_tokens": 32,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "hi-IN",
+      "caller": "धन्यवाद",
+      "expected_close": false,
+      "hangup_commands": 0,
+      "spoken": [
+        "Is there anything else I can help you with?"
+      ],
+      "end_reason": null,
+      "hangup_outcome": null,
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 529,
+        "output_tokens": 29,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "hi-IN",
+      "caller": "धन्यवाद, लेकिन एक और सवाल है",
+      "expected_close": false,
+      "hangup_commands": 0,
+      "spoken": [
+        "Is there anything else I can help you with?"
+      ],
+      "end_reason": null,
+      "hangup_outcome": null,
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 535,
+        "output_tokens": 35,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "ta-IN",
+      "caller": "அவ்வளவுதான் நன்றி",
+      "expected_close": true,
+      "hangup_commands": 1,
+      "spoken": [
+        "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      ],
+      "end_reason": "goodbye",
+      "hangup_outcome": "agent_ended",
+      "passed": true,
+      "classifier_usage": {},
+      "retry_attempt": false
+    },
+    {
+      "language": "ta-IN",
+      "caller": "நன்றி",
+      "expected_close": false,
+      "hangup_commands": 0,
+      "spoken": [
+        "Is there anything else I can help you with?"
+      ],
+      "end_reason": null,
+      "hangup_outcome": null,
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 530,
+        "output_tokens": 29,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "ta-IN",
+      "caller": "நன்றி, ஆனால் இன்னொரு கேள்வி இருக்கு",
+      "expected_close": false,
+      "hangup_commands": 0,
+      "spoken": [
+        "Is there anything else I can help you with?"
+      ],
+      "end_reason": null,
+      "hangup_outcome": null,
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 535,
+        "output_tokens": 34,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "kn-IN",
+      "caller": "ಇಷ್ಟೇ ಸಾಕು ಧನ್ಯವಾದಗಳು",
+      "expected_close": true,
+      "hangup_commands": 1,
+      "spoken": [
+        "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      ],
+      "end_reason": "goodbye",
+      "hangup_outcome": "agent_ended",
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 536,
+        "output_tokens": 33,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "kn-IN",
+      "caller": "ಧನ್ಯವಾದಗಳು",
+      "expected_close": false,
+      "hangup_commands": 0,
+      "spoken": [
+        "Is there anything else I can help you with?"
+      ],
+      "end_reason": null,
+      "hangup_outcome": null,
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 528,
+        "output_tokens": 30,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "kn-IN",
+      "caller": "ಧನ್ಯವಾದಗಳು, ಆದರೆ ಇನ್ನೊಂದು ಪ್ರಶ್ನೆ ಇದೆ",
+      "expected_close": false,
+      "hangup_commands": 0,
+      "spoken": [
+        "Is there anything else I can help you with?"
+      ],
+      "end_reason": null,
+      "hangup_outcome": null,
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 533,
+        "output_tokens": 35,
+        "cached_tokens": 0
+      },
+      "retry_attempt": false
+    },
+    {
+      "language": "te-IN",
+      "caller": "అంతే అంతే థ్యాంక్ యూ",
+      "expected_close": true,
+      "hangup_commands": 1,
+      "spoken": [
+        "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      ],
+      "end_reason": "goodbye",
+      "hangup_outcome": "agent_ended",
+      "passed": true,
+      "classifier_usage": {
+        "input_tokens": 540,
+        "output_tokens": 34,
+        "cached_tokens": 0
+      },
+      "retry_attempt": true
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "verdict": "PASS for the tested Standard conversational hangup scope",
+  "regression": {
+    "tests": 1075,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "live_classifier_simulation": {
+    "sessions": 17,
+    "passed": 17,
+    "languages": [
+      "en-IN",
+      "hi-IN",
+      "kn-IN",
+      "ta-IN",
+      "te-IN"
+    ],
+    "expected_endings": 7,
+    "hangup_commands": 7,
+    "non_endings_kept_open": 10,
+    "real_classifier_requests": 16,
+    "max_classifier_output_tokens": 35
+  },
+  "source_hashes_match_live_run": true,
+  "introduced_lint_findings": 0,
+  "scope": "Actual Standard LLM close classifier, close gate, PSTN voice loop, close executor and lifecycle. Business reply, TTS/playback and carrier are simulated. Includes carrier disconnect arriving before command acknowledgement.",
+  "limits": [
+    "Physical PSTN disconnect was not tested.",
+    "Semgrep SAST failed to execute (exit 4294967295).",
+    "Additional existing test_post_call_transcription.py::test_gemini_live_connect_config_omits_native_transcription fails against unchanged Gemini code."
+  ],
+  "changes": "Local working tree; restart the API before checking a new physical call."
+}

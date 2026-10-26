@@ -455,11 +455,11 @@ async def test_carrier_hangup_logs_agent_ended_not_ws_disconnect(monkeypatch):
     3. Recheck confirms caller has not resumed
     4. Provider hangup is invoked with reason='agent_ended', NOT 'ws_disconnect'
     """
-    logged_reasons: list[str] = []
+    events = []
     playing = {"on": True}
-
-    async def mock_provider_hangup():
-        logged_reasons.append("agent_ended")
+    provider_hangup = AsyncMock()
+    monkeypatch.setattr("server.utils.logger.log_pstn", lambda phase, **fields: events.append((phase, fields)))
+    monkeypatch.setattr("server.call.call_lifecycle_service.call_lifecycle_service.end", AsyncMock())
 
     def is_playing():
         return playing["on"]
@@ -477,12 +477,15 @@ async def test_carrier_hangup_logs_agent_ended_not_ws_disconnect(monkeypatch):
         reason="goal_complete",
         spoke_farewell=True,
         is_playing=is_playing,
-        on_provider_hangup=mock_provider_hangup,
+        on_provider_hangup=provider_hangup,
     )
     if result.background_task:
         await result.background_task
 
     assert result.cancelled is False
     assert result.reason == "goal_complete"
-    assert "agent_ended" in logged_reasons
-    assert "ws_disconnect" not in logged_reasons
+    provider_hangup.assert_awaited_once()
+    disconnect = next(fields for phase, fields in events if phase == "hangup.disconnect")
+    assert disconnect["initiator"] == "agent"
+    assert disconnect["outcome"] == "agent_ended"
+    assert disconnect["reason"] == "goal_complete"

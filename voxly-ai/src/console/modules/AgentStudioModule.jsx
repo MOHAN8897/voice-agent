@@ -145,6 +145,7 @@ const EDITABLE_FIELDS = [
   'name',
   'role',
   'greeting',
+  'farewell',
   'script',
   'language',
   'dynamicVariables',
@@ -246,6 +247,7 @@ function formFromAgent(agent) {
       name: agent.name || '',
       role: agent.role || 'Sales',
       greeting: agent.greeting || '',
+      farewell: agent.farewell || '',
       script: agent.script || '',
       dynamicVariables: agent.dynamicVariables || [],
       objectionRules: agent.objectionRules || [],
@@ -829,6 +831,7 @@ export function AgentStudioModule({
           brainRevision: data?.draft?.revision,
           script: initialScript,
           greeting: initialGreeting,
+          farewell: studio.farewell || '',
           boundaries: studio.boundaries ?? base.boundaries,
           objectionRules: studio.objectionRules?.length
             ? studio.objectionRules
@@ -1584,6 +1587,29 @@ export function AgentStudioModule({
                 Test published script
               </button>
             </div>
+          </SolidCard>
+
+          <SolidCard>
+            <label htmlFor="agent-farewell" className="block text-sm font-semibold text-[#0F0E17]">
+              Farewell the caller hears
+            </label>
+            <p id="agent-farewell-help" className="mt-1 mb-3 text-xs text-[#524E5E]">
+              Write the closing words in the agent’s language. They are spoken live after an approved ending.
+              A saved callback request gets a confirmation before this farewell. Leave blank to use the language default.
+            </p>
+            <textarea
+              id="agent-farewell"
+              name="farewell"
+              rows={3}
+              maxLength={240}
+              value={formData.farewell || ''}
+              onChange={(event) => setFormData((previous) => ({ ...previous, farewell: event.target.value }))}
+              disabled={brainLoading || !!brainLoadError || saving}
+              aria-describedby="agent-farewell-help"
+              data-testid="agent-studio-farewell"
+              className="w-full rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-4 text-sm leading-relaxed text-[#0F0E17] focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-[#6344E7] max-sm:text-base"
+            />
+            <p className="mt-2 text-right text-xs text-[#524E5E]">{(formData.farewell || '').length}/240 characters</p>
           </SolidCard>
 
           {/* Objection Handling Rules */}

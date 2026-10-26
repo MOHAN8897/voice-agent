@@ -56,6 +56,7 @@ function routingSection(inboundRouting) {
 function sectionsFromStudio({
   script,
   greeting,
+  farewell,
   boundaries,
   objectionRules,
   role,
@@ -93,6 +94,10 @@ function sectionsFromStudio({
   const varSection = scriptVariablesSection(variableDefinitions);
   const voiceSec = voiceConfigSection(voice, langCode);
   const sections = [
+    {
+      type: 'custom', title: 'saas_call_end_policy', order: 25,
+      raw_text: JSON.stringify({ farewell: String(farewell || '').trim() }), enabled: false,
+    },
     ...(voiceSec ? [{ ...voiceSec, enabled: false }] : []),
     ...(varSection ? [{ ...varSection, enabled: false }] : []),
     {
@@ -142,7 +147,7 @@ export async function loadAgentBrain(agentId) {
 export function mergeStudioSections(existingSections, studioFields) {
   const base = Array.isArray(existingSections) ? existingSections : [];
   const seeds = sectionsFromStudio(studioFields);
-  const metadataTitles = new Set(['saas_voice_config', 'saas_script_variables', 'Voice profile (console)', 'Inbound routing prefs (console)']);
+  const metadataTitles = new Set(['saas_voice_config', 'saas_script_variables', 'saas_call_end_policy', 'Voice profile (console)', 'Inbound routing prefs (console)']);
   const replaced = new Set();
   const merged = seeds.map((seed) => {
     let prev = base.find((s) => s.type === seed.type && s.title === seed.title);

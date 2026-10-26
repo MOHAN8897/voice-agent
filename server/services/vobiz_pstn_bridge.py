@@ -623,47 +623,61 @@ class VobizPstnBridge:
             pass
 
     async def hangup(self, reason: str = "agent_ended") -> None:
-        """Bound carrier teardown; closing the socket also advances XML to Hangup."""
+        """End the carrier leg before closing media; a socket close is not an ACK."""
         async with self._hangup_lock:
-            if self._closed:
+            if getattr(self, "_carrier_hangup_acknowledged", False):
                 return
-            self._closed = True
-            disconnected = False
+            log_pstn("vobiz.hangup.initiated", call_uuid=self.call_uuid, reason=reason)
+            local = await asyncio.to_thread(vobiz_call_registry.get, self.call_uuid or "") or {}
+            target_uuid = local.get("call_uuid") or self.call_uuid
+            if target_uuid and target_uuid.startswith("vobiz-"):
+                target_uuid = local.get("request_uuid") or target_uuid
             try:
-                log_pstn("vobiz.hangup.initiated", call_uuid=self.call_uuid, reason=reason)
-                target_uuid = self.call_uuid
-                local = await asyncio.to_thread(vobiz_call_registry.get, self.call_uuid or "") or {}
-                if target_uuid and target_uuid.startswith("vobiz-"):
-                    target_uuid = local.get("call_uuid") or local.get("request_uuid") or target_uuid
+                from server.services.saas.voice_kyc_service import vobiz_client_for_call
+
+                # Disabling new calls must never disable teardown of an existing call.
+                client = await vobiz_client_for_call({**local, **self._token_meta})
+                if not target_uuid or client is None:
+                    raise RuntimeError("Carrier disconnect client unavailable")
                 try:
-                    from server.services.saas.voice_kyc_service import vobiz_client_for_call
-                    from server.services.vobiz_client import vobiz_enabled
-                    meta = {**local, **self._token_meta}
-                    client = await vobiz_client_for_call(meta) if meta.get("vobiz_account_scope") == "tenant" or vobiz_enabled() else None
-                    if target_uuid and client:
-                        result = await asyncio.wait_for(client.hangup_call(target_uuid), timeout=5.0)
-                        disconnected = True
-                        # A successful carrier disconnect must release the durable
-                        # admission even if its HTTP callback never reaches us.
-                        from server.services.saas.call_admission import provider_event
-                        tenant_id = self._token_meta.get("admission_tenant_id") or local.get("admission_tenant_id")
-                        if tenant_id and (not result.get("already_ended") or result.get("status") == 404):
-                            await asyncio.wait_for(provider_event(tenant_id=uuid.UUID(str(tenant_id)),
-                                key=self._token_meta.get("admission_key") or local.get("admission_key"),
-                                carrier_ids=(target_uuid, self.call_uuid), status="ended"), timeout=2)
-                except Exception as exc:
-                    log_pstn("vobiz.hangup.api_failed", call_uuid=target_uuid, error=type(exc).__name__)
-                finally:
-                    try:
-                        await asyncio.wait_for(self.ws.close(), timeout=2.0)
-                        disconnected = True
-                    except Exception as exc:
-                        log_pstn("vobiz.hangup.stream_failed", call_uuid=target_uuid, error=type(exc).__name__)
-                if not disconnected:
-                    raise RuntimeError("Carrier and media disconnect both failed")
-            finally:
-                # The voice-loop watchdog can retry an unsuccessful disconnect.
-                self._closed = disconnected
+                    result = await asyncio.wait_for(client.hangup_call(target_uuid), timeout=5.0)
+                except Exception as exc:  # noqa: BLE001 -- bounded retry of carrier transport failures.
+                    # One bounded retry covers transient carrier/network rejection.
+                    # Media remains open throughout; never announce success here.
+                    log_pstn("vobiz.hangup.retry", call_uuid=target_uuid, error=type(exc).__name__)
+                    await asyncio.sleep(0.25)
+                    result = await asyncio.wait_for(client.hangup_call(target_uuid), timeout=5.0)
+            except Exception as exc:
+                log_pstn("vobiz.hangup.api_failed", call_uuid=target_uuid, error=type(exc).__name__)
+                # Keep media connected; a later close attempt may retry the carrier command.
+                raise RuntimeError("Carrier disconnect was not acknowledged") from exc
+            self._carrier_hangup_acknowledged = True
+            self._closed = True
+            log_pstn("vobiz.hangup.api_accepted", call_uuid=target_uuid,
+                     already_ended=bool(result.get("already_ended")))
+            if self.call_id:
+                from server.call.call_ledger import call_ledger
+
+                try:
+                    meta = call_ledger.read_meta(self.call_id)
+                    meta["carrier_hangup_acknowledged"] = True
+                    call_ledger.write_meta(self.call_id, meta)
+                except Exception as exc:  # noqa: BLE001 -- audit storage must not prevent carrier teardown.
+                    log_pstn("vobiz.hangup.audit_failed", call_uuid=target_uuid, error=type(exc).__name__)
+            try:
+                from server.services.saas.call_admission import provider_event
+
+                tenant_id = self._token_meta.get("admission_tenant_id") or local.get("admission_tenant_id")
+                if tenant_id:
+                    await asyncio.wait_for(provider_event(tenant_id=uuid.UUID(str(tenant_id)),
+                        key=self._token_meta.get("admission_key") or local.get("admission_key"),
+                        carrier_ids=(target_uuid, self.call_uuid), status="ended"), timeout=2)
+            except Exception as exc:  # noqa: BLE001 -- admission cleanup cannot prevent media closure.
+                log_pstn("vobiz.hangup.admission_failed", call_uuid=target_uuid, error=type(exc).__name__)
+            try:
+                await asyncio.wait_for(self.ws.close(), timeout=2.0)
+            except Exception as exc:
+                log_pstn("vobiz.hangup.stream_failed", call_uuid=target_uuid, error=type(exc).__name__)
 
     async def _cleanup(self, reason: str) -> None:
         if self._cleanup_done:

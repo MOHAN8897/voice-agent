@@ -1,6 +1,18 @@
 {
   "entries": [
     {
+      "id": "inline:converted-callback-requests-leave-the-pending-qu-854ff231",
+      "statement": "Converted callback requests leave the pending queue only after a succes…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
+      "id": "inline:tenant-farewell-edits-are-persisted-and-publishe-956db398",
+      "statement": "Tenant farewell edits are persisted and published for subsequent calls.",
+      "status": "proved",
+      "subject": "business-brain"
+    },
+    {
       "id": "india-tenant-compliance",
       "statement": "Indian tenants see Indian calling consent and privacy obligations with…",
       "status": "proposed",

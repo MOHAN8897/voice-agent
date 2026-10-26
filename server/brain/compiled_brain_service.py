@@ -88,6 +88,9 @@ class CompiledBrainService:
         platform = await platform_brain_store.get_active()
         lang, disclosure_enabled, disclosure_text = await self._agent_info(agent_id)
         sections = await business_brain_store.ensure_default_sections(agent_id)
+        from server.call.call_end_policy import apply_call_end_policy, policy_from_sections
+
+        closing_policy = policy_from_sections(sections, lang)
         raw_prompt, source_checksum = assemble_raw_business_prompt(sections)
 
         latest = await business_brain_store.get_latest_published(agent_id)
@@ -96,6 +99,8 @@ class CompiledBrainService:
             if latest is None:
                 raise KeyError(business_version_id)
         if latest:
+            # Recompiles use the approved policy, never a newer draft edit.
+            closing_policy = (latest.get("optimizer_report") or {}).get("call_end_policy")
             optimized_text = latest["optimized_prompt"]
             business_version = latest["version_id"]
         else:
@@ -142,6 +147,7 @@ class CompiledBrainService:
             disclosure_text=disclosure_text,
             language=lang,
         )
+        compiled_text = apply_call_end_policy(compiled_text, lang, closing_policy)
         self._reject_contradictory_brain(compiled_text, lang, agent_id=agent_id, status_code=409)
         checksum = checksum_instructions(compiled_text)
         compiled_version = f"cb_v{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:6]}"
@@ -196,6 +202,12 @@ class CompiledBrainService:
             )
         from server.brain.brief_contract import validate_brief_requirements
         lang = await self._primary_language(agent_id)
+        from server.call.call_end_policy import policy_from_sections
+
+        try:
+            policy_from_sections(sections, lang)
+        except ValueError as exc:
+            raise AppError(ErrorCode.VALIDATION_ERROR, str(exc), status_code=422) from exc
         for section in sections:
             source = str(section.get("raw_text") or "")
             if section.get("enabled", True) and source.strip():
@@ -263,6 +275,11 @@ class CompiledBrainService:
             disclosure_text=disclosure_text,
             language=lang,
         )
+        from server.call.call_end_policy import apply_call_end_policy, policy_from_sections
+
+        closing_policy = policy_from_sections(source_sections, lang)
+        report["call_end_policy"] = closing_policy
+        compiled_text = apply_call_end_policy(compiled_text, lang, closing_policy)
         self._reject_contradictory_brain(compiled_text, lang, agent_id=agent_id, status_code=422)
         published = {
             "version_id": f"bb_v{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:12]}",

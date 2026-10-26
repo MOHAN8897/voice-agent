@@ -125,7 +125,7 @@ def evidence_matches(evidence: str, transcript: str) -> bool:
     norm_trans = _normalized(transcript)
     if len(norm_trans) < 2:
         return False
-    return needle in norm_trans or norm_trans in needle
+    return needle in norm_trans
 
 
 def meaningful_remaining_request(text: str) -> bool:

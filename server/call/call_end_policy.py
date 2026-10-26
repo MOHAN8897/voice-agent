@@ -1,6 +1,8 @@
 """Session call-end policy — UI overlay + brain section + hangup reason allow-list."""
 from __future__ import annotations
 
+import json
+import re
 from typing import Any
 
 from server.prompts.agent_voice_rules import (
@@ -30,7 +32,7 @@ CLOSING_TOOL_DESCRIPTION = (
     "Never call for bare okay/thanks, unclear speech, an unanswered question or busy without an end request. "
     "Before disconnect is committed, a meaningful new request may reopen the conversation. "
     "After an accepted close, stop generating turns; the platform disconnects immediately when "
-    "the farewell playback finishes, without a post-farewell silence wait."
+    "the farewell playback and brief caller-resumption window finish."
 )
 
 
@@ -41,6 +43,7 @@ def default_call_end_policy(language: str | None = None) -> dict[str, Any]:
         # an explicit policy overlay, but is unsafe as a default hangup reason.
         "allowedReasons": list(DEFAULT_HANGUP_REASONS),
         "farewell": pack_get(CALL_END_FAREWELLS, lang),
+        "farewellSource": "default",
     }
 
 
@@ -55,8 +58,9 @@ def normalize_call_end_policy(raw: Any, *, language: str | None = None) -> dict[
         if reasons:
             base["allowedReasons"] = reasons
     farewell = str(raw.get("farewell") or "").strip()[:240]
-    if farewell and farewell not in CALL_END_FAREWELLS.values():
+    if farewell and (raw.get("farewellSource") == "tenant" or farewell not in CALL_END_FAREWELLS.values()):
         base["farewell"] = farewell
+        base["farewellSource"] = "tenant"
     return base
 
 
@@ -75,17 +79,89 @@ def server_farewell_for(
     contact_preference: str | None = None,
 ) -> str:
     """The only farewell spoken on a close. Tenant policy wins, then the language pack."""
-    if contact_preference == "callback":
-        from server.call.hangup_judge import callback_farewell_for
-
-        return callback_farewell_for(language)
     normalized = normalize_call_end_policy(policy, language=language)
     farewell = str(normalized.get("farewell") or "").strip()
-    if farewell:
-        return farewell
-    from server.call.hangup_judge import default_farewell_for
+    if not farewell:
+        from server.call.hangup_judge import default_farewell_for
 
-    return default_farewell_for(language)
+        farewell = default_farewell_for(language)
+    if contact_preference == "callback":
+        acknowledgement = callback_acknowledgement_for(language)
+        return f"{acknowledgement} {farewell}"
+    return farewell
+
+
+def callback_acknowledgement_for(language: str | None) -> str:
+    lang = normalize_compile_language(language)
+    return {
+        "te-IN": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను.",
+        "hi-IN": "आपकी जानकारी और दोबारा कॉल करने का अनुरोध दर्ज कर लिया है।",
+        "ta-IN": "உங்கள் விவரங்களையும் மீண்டும் அழைக்க வேண்டிய கோரிக்கையையும் பதிவு செய்துள்ளேன்.",
+        "kn-IN": "ನಿಮ್ಮ ವಿವರಗಳನ್ನು ಮತ್ತು ಮತ್ತೆ ಕರೆ ಮಾಡುವ ವಿನಂತಿಯನ್ನು ದಾಖಲಿಸಿದ್ದೇನೆ.",
+    }.get(lang, "I've saved your details and your request for a follow-up call.")
+
+
+def callback_save_failed_for(language: str | None) -> str:
+    return {
+        "te-IN": "క్షమించండి, మీ కాల్‌బ్యాక్ అభ్యర్థనను సేవ్ చేయలేకపోయాను. దయచేసి వ్యాపార సంస్థను నేరుగా సంప్రదించండి.",
+        "hi-IN": "माफ़ कीजिए, आपका दोबारा कॉल करने का अनुरोध सेव नहीं हो सका। कृपया व्यवसाय से सीधे संपर्क करें।",
+        "ta-IN": "மன்னிக்கவும், மீண்டும் அழைக்கும் கோரிக்கையைச் சேமிக்க முடியவில்லை. தயவுசெய்து நிறுவனத்தை நேரடியாகத் தொடர்புகொள்ளுங்கள்.",
+        "kn-IN": "ಕ್ಷಮಿಸಿ, ಮತ್ತೆ ಕರೆ ಮಾಡುವ ವಿನಂತಿಯನ್ನು ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಸಂಸ್ಥೆಯನ್ನು ನೇರವಾಗಿ ಸಂಪರ್ಕಿಸಿ.",
+    }.get(normalize_compile_language(language), "I'm sorry, I couldn't save your callback request. Please contact the business directly.")
+
+
+CALL_END_CONFIG_TITLE = "saas_call_end_policy"
+
+
+def policy_from_sections(sections: list[dict[str, Any]], language: str) -> dict[str, Any] | None:
+    section = next((s for s in sections if s.get("title") == CALL_END_CONFIG_TITLE), None)
+    if section is None:
+        return None
+    try:
+        raw = json.loads(section.get("raw_text") or "{}")
+    except (ValueError, TypeError) as exc:
+        raise ValueError("The farewell configuration is invalid.") from exc
+    if not isinstance(raw, dict) or not isinstance(raw.get("farewell", ""), str):
+        raise ValueError("The farewell must be text.")  # noqa: TRY004 -- validation boundary uses ValueError.
+    if len(raw.get("farewell", "").strip()) > 240:
+        raise ValueError("The farewell must be 240 characters or fewer.")
+    raw["farewellSource"] = "tenant" if raw.get("farewell", "").strip() else "default"
+    return normalize_call_end_policy(raw, language=language)
+
+
+def policy_from_brain(brain: str | None, language: str | None) -> dict[str, Any] | None:
+    text = str(brain or "")
+    block = re.search(r"(?ms)^--- CALL END POLICY ---\n(.*?)(?=^--- [A-Z][^\n]* ---|\Z)", text)
+    if block:
+        text = block.group(1)
+    match = re.search(r"(?m)^Farewell text \(JSON\):\s*(.+)$", text)
+    farewell = None
+    if match:
+        try:
+            farewell = json.loads(match.group(1))
+        except ValueError:
+            return None
+    if farewell is None:
+        legacy = re.findall(r"(?:Farewell example|platform speaks this farewell):\s*`([^`]+)`", text)
+        farewell = legacy[-1] if legacy else None
+    if not isinstance(farewell, str):
+        return None
+    reasons = re.search(r"Allowed (?:hangup|close) reasons for this agent:\s*([^\n.]+)", text)
+    return normalize_call_end_policy({
+        "farewell": farewell,
+        "farewellSource": "tenant" if re.search(r"(?m)^Farewell source: tenant$", text) else "default",
+        "allowedReasons": reasons.group(1).split(",") if reasons else list(DEFAULT_HANGUP_REASONS),
+    }, language=language)
+
+
+def apply_call_end_policy(brain: str, language: str, policy: dict[str, Any] | None) -> str:
+    if policy is None:
+        return brain
+    section = format_call_end_section(language, policy)
+    pattern = r"(?ms)^--- CALL END POLICY ---\n.*?(?=^--- [A-Z][^\n]* ---|\Z)"
+    if re.search(pattern, brain):
+        return re.sub(pattern, lambda _: section + "\n\n", brain, count=1)
+    return brain.rstrip() + "\n\n" + section
 
 
 def format_call_end_section(language: str | None, policy: dict[str, Any] | None = None) -> str:
@@ -99,9 +175,14 @@ def format_call_end_section(language: str | None, policy: dict[str, Any] | None 
         "--- CALL END POLICY ---\n"
         f"{HANGUP_JUDGMENT_RULES}\n"
         f"Allowed close reasons for this agent: {reasons}. "
-        f"On an approved close the platform speaks this farewell: `{farewell}`. "
+        "On an approved close the platform speaks the configured farewell below. "
         "There is one farewell owner: never speak a goodbye or this line yourself. "
-        "On a close turn the platform speaks, so leave spoken_response empty."
+        "On a close turn the platform speaks, so leave spoken_response empty. "
+        "The platform can save a caller-requested callback for the business even without external integrations. "
+        "Gather any required details and requested timing before proposing that close. "
+        "The platform confirms saving only after persistence succeeds; never promise an automatically scheduled call.\n"
+        f"Farewell text (JSON): {json.dumps(farewell, ensure_ascii=False)}\n"
+        f"Farewell source: {normalized['farewellSource']}"
     )
 
 

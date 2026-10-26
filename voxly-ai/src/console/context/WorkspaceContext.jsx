@@ -465,6 +465,7 @@ export function WorkspaceProvider({ children }) {
         if (
           updates.script ||
           updates.greeting ||
+          updates.farewell !== undefined ||
           updates.voice ||
           updates.inboundRouting ||
           updates.boundaries?.length ||

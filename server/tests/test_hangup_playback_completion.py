@@ -223,6 +223,7 @@ async def test_classic_close_returns_before_archive_work():
     result = await asyncio.wait_for(execute_agent_close(
         call_id=None, reason="goodbye", on_provider_hangup=provider,
         drain_archive=release.wait,
+        trail_sec=0.0,  # Measure archive scheduling independently of the farewell pause.
     ), 0.3)
     provider.assert_awaited_once()
     release.set()

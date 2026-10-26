@@ -127,8 +127,21 @@ async def execute_agent_close(
             reason=canonical,
             cancelled=True,
         )
-    # Provider errors propagate so the caller can retry; never mark failure ended.
-    await _maybe_await(on_provider_hangup)
+    # The media-close callback can beat the provider command's acknowledgement.
+    # Record the issued command before awaiting it so that event retains the
+    # approved cause instead of winning the lifecycle race as ws_disconnect.
+    from server.call import call_context
+
+    ctx = call_context.get(call_id) if call_id else None
+    previous_reason = getattr(ctx, "agent_hangup_reason", None)
+    if ctx is not None and on_provider_hangup is not None:
+        ctx.agent_hangup_reason = canonical
+    try:
+        await _maybe_await(on_provider_hangup)
+    except (Exception, asyncio.CancelledError):
+        if ctx is not None:
+            ctx.agent_hangup_reason = previous_reason
+        raise
 
     await _maybe_await(on_ended)
 
@@ -142,6 +155,8 @@ async def execute_agent_close(
         "hangup.disconnect",
         call_id=call_id,
         reason=canonical,
+        initiator="agent",
+        outcome="agent_ended",
         heard_playback=heard,
         spoke_farewell=spoke_farewell,
         playback_wait_ms=wait_ms,
@@ -198,13 +213,15 @@ def _stamp_hangup_telemetry(call_id: str | None, result: CloseCallResult) -> Non
         if not meta:
             return
         meta["hangup_reason"] = result.reason
+        meta["hangup_initiator"] = "agent"
+        meta["hangup_outcome"] = "agent_ended"
         meta["hangup_playback_wait_ms"] = result.playback_wait_ms
         meta["hangup_trail_ms"] = result.trail_ms
         meta["hangup_heard_playback"] = result.heard_playback
         ctx = call_context.get(call_id)
         if ctx is not None:
-            meta["callback_close_phase"] = ctx.callback_close_phase
-            meta["contact_preference"] = ctx.contact_preference
+            meta["callback_close_phase"] = getattr(ctx, "callback_close_phase", "idle")
+            meta["contact_preference"] = getattr(ctx, "contact_preference", "none")
         call_ledger.write_meta(call_id, meta)
     except Exception:
         pass

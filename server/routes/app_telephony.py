@@ -1213,6 +1213,33 @@ async def call_callbacks(
     return {"callbacks": await list_callbacks(principal, call_id=call_id)}
 
 
+class CallbackRequestStatusBody(BaseModel):
+    status: str = Field(pattern="^(converted|dismissed)$")
+
+
+@router.get("/api/callback-requests")
+async def callback_requests(
+    agentId: str | None = Query(None, max_length=64),
+    status: str = Query("requested"),
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),  # noqa: B008 -- FastAPI auth dependency.
+):
+    require_subscriber_permission(principal, "app.calls.read")
+    from server.services.saas.callback_request_service import list_callback_requests
+
+    return {"requests": await list_callback_requests(principal, agent_id=agentId, status=status)}
+
+
+@router.patch("/api/callback-requests/{callback_id}")
+async def patch_callback_request(
+    callback_id: uuid.UUID, body: CallbackRequestStatusBody,
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),  # noqa: B008 -- FastAPI auth dependency.
+):
+    require_subscriber_permission(principal, "app.telephony.write")
+    from server.services.saas.callback_request_service import update_callback_request
+
+    return await update_callback_request(principal, callback_id, body.status)
+
+
 @router.patch("/api/telephony/contacts/{contact_id}")
 async def patch_contact(
     contact_id: str,
