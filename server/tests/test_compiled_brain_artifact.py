@@ -8,6 +8,7 @@ from server.brain.compiled_brain_artifact import (
     build_artifact,
     is_unified_compiled_brain,
     platform_body_for_agent_language,
+    refresh_platform_sections,
 )
 from server.brain.sections import STATIC_OUTPUT_RULES
 from server.prompts.agent_voice_rules import spoken_pack_for
@@ -79,7 +80,33 @@ def test_build_artifact_checksum_stable():
     assert a.schema_version == "1"
 
 
-@pytest.mark.parametrize("locale", ["te-IN", "hi-IN", "en-IN", "en-GB", "ta-IN", "kn-IN"])
+def test_assemble_realigns_stale_script_language_marker():
+    """Switching an agent's language must not leave the stored script naming the old pack."""
+    from server.brain.brain_prompt_validate import validate_rendered_brain
+
+    script = (
+        "--- LANGUAGE ---\nUse the selected en-IN language pack. Follow the platform language policy.\n\n"
+        "--- CANONICAL OPENING ---\nAfter the callee speaks, say once:\nHello, this is Meera.\n"
+    )
+    brain = assemble_unified_brain(language="te-IN", script=script)
+    assert "Use the selected te-IN language pack" in brain
+    assert validate_rendered_brain(brain, "te-IN") == []
+
+
+def test_refresh_platform_sections_realigns_language_change():
+    from server.brain.brain_prompt_validate import validate_rendered_brain
+
+    brain = assemble_unified_brain(
+        language="te-IN",
+        script="--- LANGUAGE ---\nUse the selected te-IN language pack.\n\n--- AGENT IDENTITY ---\nYou are Priya.\n",
+    )
+    refreshed = refresh_platform_sections(brain, "hi-IN")
+    assert "Use the selected hi-IN language pack" in refreshed
+    assert "--- SPOKEN LANGUAGE (hi-IN) ---" in refreshed
+    assert validate_rendered_brain(refreshed, "hi-IN") == []
+
+
+@pytest.mark.parametrize("locale", ["te-IN", "hi-IN", "en-IN", "en-US", "ta-IN", "kn-IN"])
 def test_assemble_and_validate_all_supported_languages(locale):
     from server.brain.brain_prompt_validate import assert_rendered_brain_valid
 
@@ -91,7 +118,7 @@ def test_assemble_and_validate_all_supported_languages(locale):
     assert_rendered_brain_valid(brain, locale)
 
 
-@pytest.mark.parametrize("target_locale", ["en-IN", "en-GB", "ta-IN", "kn-IN", "hi-IN", "te-IN"])
+@pytest.mark.parametrize("target_locale", ["en-IN", "en-US", "ta-IN", "kn-IN", "hi-IN", "te-IN"])
 def test_realign_compiled_brain_validates_cleanly(target_locale):
     from server.brain.brain_prompt_validate import assert_rendered_brain_valid
     from server.brain.script_entities import realign_compiled_brain_for_session

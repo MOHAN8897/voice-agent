@@ -1,4 +1,4 @@
-"""Reviewed close-decision corpus: 10 languages / 12 supported locales.
+"""Reviewed close-decision corpus: 10 languages / 11 supported locales.
 
 Every case is a reviewed expectation, not a phrase list to copy into the live
 matchers. A valid refusal closes through the model's evidence span, so a new
@@ -27,7 +27,6 @@ _REFUSALS = {
     "te-IN": "నాకు ఇవేమీ అక్కర్లేదండి",
     "en-IN": "I'm not interested.",
     "en-US": "No thanks, I don't want this.",
-    "en-GB": "Not for me, thanks.",
     "hi-IN": "मुझे इसमें दिलचस्पी नहीं है।",
     "ta-IN": "எனக்கு இது வேண்டாம்.",
     "kn-IN": "ನನಗೆ ಇದು ಬೇಡ.",
@@ -42,7 +41,6 @@ _OPT_OUTS = {
     "te-IN": "దయచేసి మళ్లీ కాల్ చేయకండి.",
     "en-IN": "Please stop calling me.",
     "en-US": "Don't call me again.",
-    "en-GB": "Do not contact me ever again.",
     "hi-IN": "मुझे दोबारा कॉल न करें।",
     "ta-IN": "என்னை மீண்டும் அழைக்க வேண்டாம்.",
     "kn-IN": "ನನ್ನನ್ನು ಮತ್ತೆ ಕರೆ ಮಾಡಬೇಡಿ.",
@@ -261,7 +259,7 @@ def test_do_not_contact_is_a_final_opt_out_not_a_soft_preference():
     assert opt_out_evidence("Do not contact me ever again.") is True
     assert opt_out_evidence("Don't call me at night.") is False
 
-    decision = _close("Do not contact me ever again.", "en-GB", reason="goodbye")
+    decision = _close("Do not contact me ever again.", "en-IN", reason="goodbye")
 
     assert decision.accepted is True
     assert decision.contact_preference == "do_not_call"

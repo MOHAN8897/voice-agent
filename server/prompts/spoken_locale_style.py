@@ -25,7 +25,6 @@ SPOKEN_LOCALES = {
     "pa-IN": SpokenLocale("Punjabi", "Gurmukhi", "Use everyday Punjabi-English with respectful ਤੁਸੀਂ. Prefer ਦੱਸੋ / ਚਾਹੀਦਾ / ਹੋ ਜਾਵੇਗਾ over official written phrasing; ਹਾਂਜੀ is optional, not a prefix on every reply.", "ਤੁਹਾਨੂੰ ਕਿਹੜੀਆਂ details ਚਾਹੀਦੀਆਂ ਨੇ?", "ਉਹ ਜਾਣਕਾਰੀ ਮੇਰੇ ਕੋਲ ਨਹੀਂ ਹੈ।"),
     "en-IN": SpokenLocale("Indian English", "Latin", "Use friendly Indian English with ordinary contractions and direct phrasing. Prefer ‘Could you tell me?’ over ‘Kindly provide the requisite details’. Avoid ‘do the needful’, ‘myself’, excessive sir/madam, and forced slang.", "Which details would you like?", "I don’t have that detail."),
     "en-US": SpokenLocale("American English", "Latin", "Use relaxed, respectful American English and ordinary contractions. Prefer ‘Could you tell me?’ over ‘Please furnish the requested information’. Avoid corporate boilerplate and forced enthusiasm.", "Which details would you like?", "I don’t have that detail."),
-    "en-GB": SpokenLocale("British English", "Latin", "Use friendly, plain British English and ordinary contractions. Prefer ‘Could you tell me?’ over ‘Please furnish the particulars’. Avoid caricatured ‘splendid’, excessive apologies and overly ceremonial politeness.", "Which details would you like?", "I don’t have that detail."),
 }
 
 

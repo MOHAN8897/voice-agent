@@ -77,9 +77,16 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
     )
 
     lang = normalize_compile_language(language)
+    from server.brain.script_entities import patch_calling_script_language_markers
+
     previous = re.search(r"---\s*SPOKEN LANGUAGE\s*\(([^)]+)\)", raw, re.IGNORECASE)
     previous_language = normalize_compile_language(previous.group(1)) if previous else lang
     locale_changed = previous_language != lang
+    # A stored publication keeps its old `--- LANGUAGE ---` marker and @language
+    # tags as separate sections, so align the whole document before the section
+    # loop rebuilds the platform blocks. Without this a language change left the
+    # brain naming two packs and validation rejected it as contradictory.
+    raw = patch_calling_script_language_markers(raw, lang)
     if locale_changed and "### RECORDING DISCLOSURE POLICY" in raw:
         old_disclosure = build_recording_disclosure_instruction(language=previous_language).strip()
         if old_disclosure not in raw:
@@ -117,6 +124,12 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
             if locale_changed and policy.get("farewellSource") == "tenant":
                 raise ValueError("Custom farewell must be reviewed for the selected language")
             block = call_end_policy_section(lang, policy)
+        elif title == "CALLING SCRIPT":
+            # A stored script keeps the LANGUAGE marker it was generated under.
+            # The edit-language picker changes the session pack without rewriting
+            # the script, so refresh that marker or the validation pass sees two
+            # different packs in one brain.
+            block = patch_calling_script_language_markers(raw[match.start():end], lang)
         else:
             block = raw[match.start():end]
         chunks.append(block.strip())
@@ -255,8 +268,13 @@ def assemble_unified_brain(
     style_val = style_for_language(style, lang)
     from server.brain.capabilities import render_capabilities_section
     from server.brain.fact_canon import canonicalize_superseded_facts
+    from server.brain.script_entities import patch_calling_script_language_markers
 
-    business = sanitize_closing_instructions(canonicalize_superseded_facts(strip_closing_section(strip_section_markers(script))))
+    # The script's own LANGUAGE section is platform bookkeeping, not user prose.
+    # It must name the pack this brain is compiled with even when the agent's
+    # language was changed after the script was generated.
+    aligned_script = patch_calling_script_language_markers(script, lang)
+    business = sanitize_closing_instructions(canonicalize_superseded_facts(strip_closing_section(strip_section_markers(aligned_script))))
     # Permissions come from the authored brief alone. Reading them here, at
     # compile time, keeps platform safety text (which also names orders) from
     # ever granting or denying a business capability.

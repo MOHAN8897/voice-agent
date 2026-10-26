@@ -9,15 +9,15 @@ const ALIASES: Record<string, string> = {
   "en-in": "en-IN",
   english: "en-IN",
   "en-us": "en-US",
-  "en-gb": "en-GB",
-  "en-au": "en-GB",
-  "en-ca": "en-GB",
-  "en-uk": "en-GB",
+  "en-gb": "en-IN",
+  "en-au": "en-IN",
+  "en-ca": "en-IN",
+  "en-uk": "en-IN",
   "english-us": "en-US",
-  "english-uk": "en-GB",
-  "uk-english": "en-GB",
+  "english-uk": "en-IN",
+  "uk-english": "en-IN",
   american: "en-US",
-  british: "en-GB",
+  british: "en-IN",
   hi: "hi-IN",
   "hi-in": "hi-IN",
   hindi: "hi-IN",
@@ -29,7 +29,7 @@ const ALIASES: Record<string, string> = {
   kannada: "kn-IN",
 };
 
-const SUPPORTED = new Set(["te-IN", "en-IN", "en-GB", "en-US", "hi-IN", "ta-IN", "kn-IN"]);
+const SUPPORTED = new Set(["te-IN", "en-IN", "en-US", "hi-IN", "ta-IN", "kn-IN"]);
 
 export function normalizeLanguageCode(code: string | null | undefined): string {
   const raw = String(code || "").trim();
@@ -38,7 +38,7 @@ export function normalizeLanguageCode(code: string | null | undefined): string {
   const collapsed = raw.toLowerCase().split("_").join("-").split(" ").join("");
   if (collapsed in ALIASES) return ALIASES[collapsed];
   const compact = collapsed.split("-").join("");
-  if (compact === "engb" || compact === "enuk") return "en-GB";
+  if (compact === "engb" || compact === "enuk") return "en-IN";
   if (compact === "enus") return "en-US";
   if (compact === "enin" || compact === "eng") return "en-IN";
   if (compact === "tein" || collapsed === "telugu") return "te-IN";

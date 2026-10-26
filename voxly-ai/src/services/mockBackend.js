@@ -226,13 +226,13 @@ export const mockBackend = {
         numberId: body.numberId || null,
         voice: body.voice || {
           provider: 'Cartesia',
-          voiceId: 'sonic-british-warm',
-          voiceName: 'Sarah — British Warm',
+          voiceId: 'sonic-warm-professional',
+          voiceName: 'Sarah — Warm Professional',
           speed: 1.0,
           pitch: 0.0,
           stability: 0.75
         },
-        language: body.language || 'English (US & UK)',
+        language: body.language || 'English (US)',
         greeting: body.greeting || 'Hello, thank you for calling. How can I assist you today?',
         script: body.script || 'You are an autonomous voice employee. Be polite, concise, and helpful.',
         dynamicVariables: body.dynamicVariables || ['caller_name'],

@@ -44,7 +44,10 @@ def _gnani_language_code(language_code: str | None, *, model: str | None = None)
         return lang
     if lang == "hi-en":
         lang = "hi-IN"
-    if lang in {"en-GB", "en-US"}:
+    from server.config.constants import normalize_supported_language
+
+    lang = normalize_supported_language(lang)
+    if lang == "en-US":
         lang = "en-IN"
     selected_model = str(model or constants.GNANI_DEFAULT_MODEL)
     supported = {code for row in voices_for_model("gnani", selected_model) for code in row["languages"]}

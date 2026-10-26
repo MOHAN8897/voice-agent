@@ -6,7 +6,6 @@ Language-specific spoken style is selected by default_style_for().
 DEFAULT_RESPONSE_STYLES: dict[str, str] = {
     "te-IN": "warm, brief, 1-2 sentences, spoken Telugu with natural English mixing",
     "en-IN": "warm, brief, 1-2 sentences, spoken Indian English like a person on a phone",
-    "en-GB": "warm, brief, 1-2 sentences, spoken British English like a person on a phone",
     "en-US": "warm, brief, 1-2 sentences, natural spoken English like a person on a phone",
     "hi-IN": "very brief, 1-2 sentences, spoken Hinglish",
     "ta-IN": "very brief, 1-2 sentences, spoken Tamil like a person on a phone",
@@ -26,13 +25,14 @@ _STYLE_ALIASES = {
     "te-in": "te-IN",
     "en": "en-IN",
     "en-in": "en-IN",
-    "en-gb": "en-GB",
-    "en-uk": "en-GB",
-    "british": "en-GB",
-    "uk-english": "en-GB",
+    # Retired UK/Commonwealth English resolves to the supported English pack.
+    "en-gb": "en-IN",
+    "en-uk": "en-IN",
+    "british": "en-IN",
+    "uk-english": "en-IN",
     "en-us": "en-US",
-    "en-au": "en-GB",
-    "en-ca": "en-GB",
+    "en-au": "en-IN",
+    "en-ca": "en-IN",
     "english": "en-IN",
     "hi": "hi-IN",
     "hi-in": "hi-IN",
@@ -59,7 +59,7 @@ def canonical_language(language: str | None) -> str:
     if mapped:
         return mapped
     if raw.lower().startswith("en-gb") or raw.lower() in {"en-uk", "british", "uk-english"}:
-        return "en-GB"
+        return "en-IN"
     if raw.lower().startswith("en-us"):
         return "en-US"
     if raw.lower().startswith("en"):
@@ -80,6 +80,8 @@ def default_style_for(language: str | None) -> str:
 _LANG_STYLE_MARKERS = {
     "te-IN": ("spoken telugu", "telugu-english", "tenglish"),
     "en-IN": ("spoken indian english",),
+    # Legacy British style strings from the retired en-GB pack must not leak
+    # into another English agent's brain.
     "en-GB": ("spoken british english", "uk english", "british"),
     "en-US": ("natural spoken english", "us/uk"),
     "hi-IN": ("spoken hinglish",),

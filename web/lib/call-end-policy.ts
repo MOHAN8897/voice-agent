@@ -16,7 +16,6 @@ export const DEFAULT_CALL_END_FAREWELL: Record<string, string> = {
   "te-IN": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
   "en-IN": "Thank you for your time. Goodbye.",
   "en-US": "Thank you for your time. Goodbye.",
-  "en-GB": "Thank you for your time. Goodbye.",
   "hi-IN": "समय देने के लिए धन्यवाद। नमस्कार।",
   "ta-IN": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
   "kn-IN": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",

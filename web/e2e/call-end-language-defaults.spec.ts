@@ -7,7 +7,6 @@ import {
 
 const SUPPORTED_LANGUAGES = [
   "bn-IN",
-  "en-GB",
   "en-IN",
   "en-US",
   "gu-IN",

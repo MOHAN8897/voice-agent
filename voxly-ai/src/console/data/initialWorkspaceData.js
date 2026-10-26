@@ -15,13 +15,13 @@ export const initialAgents = [
     numberId: 'num-415-0199',
     voice: {
       provider: 'Cartesia',
-      voiceId: 'sonic-british-warm',
-      voiceName: 'Sarah — British Warm',
+      voiceId: 'sonic-warm-professional',
+      voiceName: 'Sarah — Warm Professional',
       speed: 1.02,
       pitch: 0.0,
       stability: 0.78,
     },
-    language: 'English (US & UK)',
+    language: 'English (US)',
     greeting: "Thank you for calling Summit Dental Care. My name is Maya, your virtual receptionist. How can I assist with your visit today?",
     script: `You are Maya, senior dental receptionist for Summit Dental Care.
 Tone: Warm, empathetic, professional, and efficient.

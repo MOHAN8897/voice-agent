@@ -63,29 +63,44 @@ def creation(monkeypatch):
 @pytest.mark.asyncio
 async def test_unsupported_locale_names_the_supported_choices(medium_profile):
     with pytest.raises(voice_stack_profiles.VoiceProfileError) as failure:
-        await voice_stack_profiles.validate_agent_language_for_tier("development", "medium", "en-GB")
+        await voice_stack_profiles.validate_agent_language_for_tier("development", "medium", "hi-IN")
 
     error = failure.value
     assert error.code == "unsupported_language"
     assert error.status_code == 422
     assert error.details == {"tier": "medium", "supportedLanguages": ["en-IN", "te-IN"]}
-    assert "English (UK)" in str(error)
+    assert "Hindi" in str(error)
     assert "English (India)" in str(error)
     await voice_stack_profiles.validate_agent_language_for_tier("development", "medium", "en-IN")
 
 
-def test_creation_rejects_british_english_before_a_draft_is_presented_as_ready(creation, medium_profile):
+@pytest.mark.asyncio
+async def test_retired_british_english_resolves_to_the_supported_english_pack(medium_profile):
+    await voice_stack_profiles.validate_agent_language_for_tier("development", "medium", "en-GB")
+
+
+def test_creation_rejects_a_locale_the_creation_tier_cannot_serve(creation, medium_profile):
     response = creation.client.post(
         "/api/app/agents/build-employee",
-        json={"brief": "Meera answers printer questions.", "language": "en-GB"},
+        json={"brief": "Meera answers printer questions.", "language": "hi-IN"},
     )
     assert response.status_code == 422
     error = response.json()["detail"]["error"]
     assert error["code"] == "unsupported_language"
     assert error["supportedLanguages"] == ["en-IN", "te-IN"]
-    assert "English (UK)" in error["message"]
+    assert "Hindi" in error["message"]
     creation.compile.assert_not_awaited()
     creation.create.assert_not_awaited()
+
+
+def test_creation_resolves_retired_british_english_to_indian_english(creation, medium_profile):
+    response = creation.client.post(
+        "/api/app/agents/build-employee",
+        json={"brief": "Meera answers printer questions.", "language": "en-GB"},
+    )
+    assert response.status_code == 200
+    assert creation.compile.await_args.kwargs["language"] == "en-IN"
+    assert creation.create.await_args.kwargs["languages"] == ["en-IN"]
 
 
 def test_creation_still_accepts_a_locale_the_tier_supports(creation, medium_profile):
@@ -105,12 +120,12 @@ async def test_language_endpoint_withholds_locales_the_creation_tier_cannot_serv
     )
     monkeypatch.setattr(app_agents.platform_languages, "language_options", lambda: [
         {"code": "en-IN", "label": "English (India)"},
-        {"code": "en-GB", "label": "English (UK)"},
+        {"code": "hi-IN", "label": "Hindi"},
         {"code": "te-IN", "label": "Telugu"},
     ])
     result = await app_agents.available_languages()
     assert [option["code"] for option in result["languages"]] == ["en-IN", "te-IN"]
-    assert [option["code"] for option in result["unavailableOnTier"]] == ["en-GB"]
+    assert [option["code"] for option in result["unavailableOnTier"]] == ["hi-IN"]
     assert result["default"] == "en-IN"
     assert result["tier"] == "medium"
 
@@ -127,13 +142,20 @@ def memory_service(monkeypatch):
 async def test_saving_an_unsupported_locale_on_an_agent_is_rejected(memory_service, medium_profile):
     agent = await memory_service.create_agent(name="Meera", languages=["en-IN"])
     with pytest.raises(AgentVoiceRevisionConflict) as failure:
-        await memory_service.patch_agent(agent["agent_id"], {"languages": ["en-GB"]}, tenant_id=agent["tenant_id"])
+        await memory_service.patch_agent(agent["agent_id"], {"languages": ["hi-IN"]}, tenant_id=agent["tenant_id"])
     assert failure.value.code == "unsupported_language"
     assert failure.value.status_code == 422
     unchanged = await memory_service.get_agent(agent["agent_id"], tenant_id=agent["tenant_id"])
     assert unchanged["languages"] == ["en-IN"]
     updated = await memory_service.patch_agent(agent["agent_id"], {"languages": ["te-IN"]}, tenant_id=agent["tenant_id"])
     assert updated["languages"] == ["te-IN"]
+
+
+@pytest.mark.asyncio
+async def test_saving_a_retired_british_agent_stores_the_supported_english_pack(memory_service, medium_profile):
+    agent = await memory_service.create_agent(name="Meera", languages=["en-IN"])
+    updated = await memory_service.patch_agent(agent["agent_id"], {"languages": ["en-GB"]}, tenant_id=agent["tenant_id"])
+    assert updated["languages"] == ["en-IN"]
 
 
 @pytest.mark.asyncio

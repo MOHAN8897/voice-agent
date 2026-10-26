@@ -26,7 +26,7 @@ _cache: dict[str, Any] | None = None
 
 #: Shipped default. The site is for English-speaking countries, so only English
 #: variants are offered until an operator enables more from the admin panel.
-DEFAULT_ENABLED: tuple[str, ...] = ("en-IN", "en-GB", "te-IN", "hi-IN", "ta-IN", "kn-IN")
+DEFAULT_ENABLED: tuple[str, ...] = ("en-IN", "te-IN", "hi-IN", "ta-IN", "kn-IN")
 
 
 def _path() -> Path:
@@ -96,7 +96,7 @@ def enabled_languages() -> list[str]:
     wanted = [str(c).strip() for c in raw if str(c).strip()] if isinstance(raw, list) else []
     if not wanted:
         wanted = list(DEFAULT_ENABLED)
-    # Resolve aliases ("en-GB" -> "en-US") and drop anything genuinely unknown,
+    # Resolve aliases ("en-GB" -> "en-IN") and drop anything genuinely unknown,
     # so a stored code the platform cannot speak never reaches the picker.
     return [c for c in dict.fromkeys(_canonical(c) for c in wanted) if c]
 
@@ -110,7 +110,13 @@ def language_options() -> list[dict[str, str]]:
 
 
 def is_enabled(code: str | None) -> bool:
-    return bool(code) and str(code).strip() in set(enabled_languages())
+    raw = str(code or "").strip()
+    if not raw:
+        return False
+    # Canonicalize: a retired alias ("en-GB") is served by the canonical English
+    # pack, so enablement must be judged on the language it resolves to.
+    canonical = _canonical(raw)
+    return canonical is not None and canonical in set(enabled_languages())
 
 
 def set_enabled(codes: list[str]) -> dict[str, Any]:

@@ -40,7 +40,7 @@ def test_legacy_writer_accepts_every_supported_locale(locale):
     assert f'selected language {locale}' in prompt
 
 
-@pytest.mark.parametrize('locale', ['en-GB', 'ta-IN', 'kn-IN', 'ml-IN', 'mr-IN', 'bn-IN', 'gu-IN', 'pa-IN'])
+@pytest.mark.parametrize('locale', ['ta-IN', 'kn-IN', 'ml-IN', 'mr-IN', 'bn-IN', 'gu-IN', 'pa-IN'])
 @pytest.mark.parametrize('direction', ['inbound', 'outbound'])
 def test_personal_opening_does_not_fall_back_to_hindi_or_telugu(locale, direction):
     line = build_opening_line(agent_name='Sam', company_name='', work_scope='',
@@ -72,9 +72,11 @@ def test_live_rules_do_not_contradict_language_or_truthfulness(locale, model, un
         assert [pack.lower() for pack in packs] == [locale.lower()]
 
 
-def test_british_pack_preserves_business_currency():
-    assert 'Use UK conventions (pounds, pence) when discussing money' not in rules.spoken_pack_for('en-GB')
-    assert rules.is_native_english('en-GB')
+def test_retired_british_pack_resolves_to_supported_english():
+    assert 'en-GB' not in rules.SPOKEN_PACKS
+    assert rules.normalize_compile_language('en-GB') == 'en-IN'
+    assert rules.is_native_english('en-GB') is False
+    assert '--- SPOKEN LANGUAGE (en-GB) ---' not in rules.spoken_pack_for('en-GB')
 
 
 def test_language_footer_does_not_reject_understood_code_switching():

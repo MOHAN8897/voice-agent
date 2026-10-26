@@ -938,7 +938,7 @@ def infer_agent_name(brief: str, language: str = "te-IN") -> str:
     if named and _looks_like_agent_name(named):
         return named
     lang = (language or "").lower()
-    return "Alex" if lang.startswith(("en-us", "en-gb")) else "Priya"
+    return "Alex" if lang.startswith("en-us") else "Priya"
 
 
 def work_scope_from_brief(brief: str, company: str, *, max_chars: int | None = 360) -> str:
@@ -1071,7 +1071,6 @@ def _personal_opening_line(
         opening = opening_line_for(lang, agent_name=agent_name, company_name='',
                                    work_scope='', direction=direction)
         test_notice = {
-            "en-GB": "This is a test call.",
             "ta-IN": "இது ஒரு சோதனை அழைப்பு.",
             "kn-IN": "ಇದು ಒಂದು ಪರೀಕ್ಷಾ ಕರೆ.",
             "ml-IN": "ഇതൊരു പരീക്ഷണ കോളാണ്.",

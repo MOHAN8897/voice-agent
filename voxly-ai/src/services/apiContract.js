@@ -86,7 +86,7 @@ export const openApiSpec = {
                       pitch: { type: 'number', minimum: -0.15, maximum: 0.15 }
                     }
                   },
-                  language: { type: 'string', example: 'English (US & UK)' },
+                  language: { type: 'string', example: 'English (US)' },
                   greeting: { type: 'string', example: 'Hello, thank you for calling Summit Dental...' },
                   script: { type: 'string', example: 'You are an autonomous AI voice receptionist...' },
                   transferNumber: { type: 'string', example: '+1 (415) 555-0100' },

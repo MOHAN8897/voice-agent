@@ -130,7 +130,7 @@ class StackResolver:
                 stt=cached.stt,
                 llm=cached.llm,
                 tts=cached.tts,
-                language=cached.language or language,
+                language=normalize_supported_language(cached.language) if cached.language else language,
                 voice_preset=cached.voice_preset,
             )
         return self._from_tier_env(tier, language)

@@ -18,7 +18,7 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm.attributes import flag_modified
 
-from server.config.constants import constants
+from server.config.constants import constants, normalize_supported_language
 from server.db.connection import get_session_factory
 from server.db.models.entities import ConfigVersion, TierAssignment
 
@@ -617,11 +617,14 @@ async def profile_language_support(environment: str, tier: str) -> dict[str, Any
 
 async def validate_agent_language_for_tier(environment: str, tier: str, language: str) -> None:
     """Reject a locale the selected tier cannot serve; never substitute another one."""
+    # Agents stored before the British pack was retired still carry "en-GB";
+    # resolve it to the English locale that actually serves those callers
+    # instead of rejecting a language the platform still speaks.
+    language = normalize_supported_language(language)
     support = await profile_language_support(environment, tier)
     supported = support["supportedLanguages"]
     if not support["configured"] or not supported or language in supported:
         return
-    from server.config.constants import constants
 
     def _name(code: str) -> str:
         return str((constants.SUPPORTED_LANGUAGES.get(code) or {}).get("name") or code)

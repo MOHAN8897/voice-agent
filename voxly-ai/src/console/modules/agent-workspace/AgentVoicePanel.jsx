@@ -229,13 +229,6 @@ export const EXTENDED_LANGUAGES = [
     badge: 'Multilingual Voice',
   },
   {
-    code: 'en-GB',
-    name: 'English (UK)',
-    nativeName: 'British English',
-    flag: '🇬🇧',
-    badge: 'RP Accent',
-  },
-  {
     code: 'en-US',
     name: 'English (US)',
     nativeName: 'American English',

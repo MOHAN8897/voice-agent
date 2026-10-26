@@ -210,7 +210,7 @@ async def test_turn_completion_keeps_answers_and_purges_statement_nods(
     assert loop._tts_current_factor == loop._tts_target_factor == 1.0
 
 
-@pytest.mark.parametrize("language", ["en-IN", "en-US", "en-GB", "te-IN", "hi-IN", "ta-IN",
+@pytest.mark.parametrize("language", ["en-IN", "en-US", "te-IN", "hi-IN", "ta-IN",
                                      "kn-IN", "ml-IN", "mr-IN", "bn-IN", "gu-IN", "pa-IN"])
 def test_backchannel_pools_are_native(language):
     from server.services.pstn_backchannel import BACKCHANNEL_PHRASES, pick_backchannel_phrase

@@ -616,6 +616,8 @@ class AgentService:
 
     @staticmethod
     def _row_to_dict(row: Agent) -> dict[str, Any]:
+        from server.prompts.agent_voice_rules import normalize_compile_language
+
         raw_voice_settings = getattr(row, "voice_settings", None) or {}
         voice_settings = {
             key: value
@@ -629,7 +631,9 @@ class AgentService:
             "status": row.status,
             "active_compiled_brain_version": row.active_compiled_brain_version,
             "default_tier": row.default_tier,
-            "languages": list(row.languages or ["te-IN"]),
+            "languages": list(dict.fromkeys(
+                normalize_compile_language(lang) for lang in (row.languages or ["te-IN"])
+            )),
             "memory_schema": row.memory_schema,
             "environment": getattr(row, "environment", None) or "development",
             "recording_disclosure_enabled": bool(getattr(row, "recording_disclosure_enabled", False)),

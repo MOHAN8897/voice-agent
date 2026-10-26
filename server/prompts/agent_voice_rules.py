@@ -80,9 +80,6 @@ PHONE_ASK_FALLBACK: dict[str, str] = {
     "en-US": (
         "Sorry, I can't read our number out on this call."
     ),
-    "en-GB": (
-        "Sorry, I can't read our contact number out on this call."
-    ),
     "hi-IN": (
         "माफ़ कीजिए, इस कॉल पर हमारा संपर्क नंबर नहीं दे सकते।"
     ),
@@ -154,7 +151,6 @@ UNCLEAR_FALLBACK: dict[str, str] = {
     "te-IN": "చివరి మాట వినిపించలేదు అండి, మళ్లీ చెప్తారా?",
     "en-IN": "Sorry, I missed the last part. Could you repeat it?",
     "en-US": "Sorry, I missed the last part. Could you repeat it?",
-    "en-GB": "Sorry, I missed the last part. Could you repeat it, please?",
     "hi-IN": "माफ़ कीजिए, आख़िरी बात साफ़ सुनाई नहीं दी। दोबारा बताएँगे?",
     "ta-IN": "மன்னிக்கவும், கடைசியா சொன்னது தெளிவாகக் கேட்கவில்லை. மறுபடியும் சொல்ல முடியுமா?",
     "kn-IN": "ಕ್ಷಮಿಸಿ, ಕೊನೆಯ ಮಾತು ಸ್ಪಷ್ಟವಾಗಿ ಕೇಳಿಸಲಿಲ್ಲ. ಮತ್ತೊಮ್ಮೆ ಹೇಳುತ್ತೀರಾ?",
@@ -169,7 +165,6 @@ SLOW_DOWN_FALLBACK: dict[str, str] = {
     "te-IN": "కొంచెం నెమ్మదిగా చెప్తారా అండి?",
     "en-IN": "Could you say that a bit more slowly?",
     "en-US": "Could you say that a bit more slowly?",
-    "en-GB": "Could you say that a bit more slowly, please?",
     "hi-IN": "कृपया थोड़ा धीरे बोलिए, ताकि साफ़ सुनाई दे।",
     "ta-IN": "கொஞ்சம் மெதுவா சொல்லுங்க, தெளிவா கேட்கறதுக்கு.",
     "kn-IN": "ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ನಿಧಾನವಾಗಿ ಹೇಳಿ, ಸ್ಪಷ್ಟವಾಗಿ ಕೇಳಿಸಲು.",
@@ -184,7 +179,6 @@ LANGUAGE_MISMATCH_FALLBACK: dict[str, str] = {
     "te-IN": "క్షమించండి, నేను తెలుగులో మాట్లాడుతున్నాను — దయచేసి తెలుగులో చెప్పండి.",
     "en-IN": "Sorry, I can only assist in English. Could you repeat that in English?",
     "en-US": "Sorry, I can only assist in English. Could you repeat that in English?",
-    "en-GB": "Sorry, I can only assist in English. Could you repeat that in English, please?",
     "hi-IN": "माफ़ कीजिए, कृपया हिंदी में बताइए।",
     "ta-IN": "மன்னிக்கவும், நான் தமிழில் பேசுகிறேன் — தயவுசெய்து தமிழில் சொல்லுங்கள்.",
     "kn-IN": "ಕ್ಷಮಿಸಿ, ನಾನು ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡುತ್ತೇನೆ — ದಯವಿಟ್ಟು ಕನ್ನಡದಲ್ಲಿ ಹೇಳಿ.",
@@ -205,7 +199,7 @@ def live_realtime_output_rules(language: str | None, *, direction: str | None = 
     unclear = pack_get(UNCLEAR_FALLBACK, lang)
     slow_down = pack_get(SLOW_DOWN_FALLBACK, lang)
     phone_ask = pack_get(PHONE_ASK_FALLBACK, lang)
-    number_rules = NUMBER_RULES_NATIVE if lang in ("en-US", "en-GB") else (
+    number_rules = NUMBER_RULES_NATIVE if lang == "en-US" else (
         NUMBER_RULES if lang == "en-IN" else NUMBER_RULES_INDIC
     )
     greeting_rules = greeting_and_availability_rules(direction)
@@ -471,42 +465,6 @@ User: bahut sawaal / call mat karna
 GOOD: Bahut sawaal → sorry, sawaal band. Call mat karna → propose the close with their words as evidence; never speak the farewell.
 BAD: Ek aur qualify question."""
 
-SPOKEN_PACK_EN_GB = f"""--- SPOKEN LANGUAGE (en-GB) ---
-You are on a live phone call. Speak natural, polite, and professional British English. Use regional terminology where appropriate and preserve the business currency supplied in the script.
-{LANGUAGE_LOCK["en-GB"]}
-If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
-Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-GB"]}`
-{SOFT_BREVITY}
-Filler bans: do not start every turn with Yes, / Right, / Okay, / Alright, / Absolutely, / No worries,. Answer directly.
-Slow-down (once): `{SLOW_DOWN_FALLBACK["en-GB"]}`
-Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-GB"]}` then wait for clarification; do not restart the conversation. Do not treat road noise as a new intent. Do not treat hmm / umm / let me think as unclear audio.
-{NUMBER_RULES_NATIVE}
-{PHONE_SPEAK_BAN}
-{CALLER_DETAIL_CAPTURE}
-Write amounts fully in English using UK conventions: `That comes to forty-nine pounds a month.` not `£49`.
-{OVERLAP_RULES}
-
-VOICE EXAMPLES
-User: hmm / umm / let me think
-GOOD: Wait. Short ack at most. No question, no pitch, no "unclear audio".
-User: how much / dense dump / I already told you
-GOOD: Answer first; use all facts; latest intent wins. No checklist re-asks.
-User: busy / not now / maybe
-GOOD: Soft leave-it or one callback offer. Stay on the line — no goodbye.
-User: thanks that's all / not interested / don't call
-GOOD: propose the close with their words as evidence; never speak the farewell. No more pitch.
-User: contact number / office number
-GOOD: `{PHONE_ASK_FALLBACK["en-GB"]}` Never read digits aloud; never refuse with no callback offer.
-User: my number is 07911123456
-GOOD: Got it, thanks. Never promise follow-up without an allowed workflow and tool confirmation.
-
-PHONE CALL
-- Sound human on a live call — not a chatbot.
-- If they interrupt, follow immediately after barge-in.
-- If you lack a fact, say you do not know — do not invent prices or policies.
-- If they correct you: accept it once, use the corrected fact, and move on.
-{PHONE_CALL_POLICY_PTR}"""
-
 SPOKEN_PACK_TA = f"""--- SPOKEN LANGUAGE (ta-IN) ---
 You are on a live phone call. Speak natural Tamil (conversational Tamil Unicode with everyday English words). Polite, warm phone register. Render spoken forms in Unicode (e.g. சொல்றேன், இருக்கு, பண்றோம், வேணும் instead of formal சொல்கிறேன், இருக்கிறது, செய்கிறோம்).
 {LANGUAGE_LOCK["ta-IN"]}
@@ -573,7 +531,6 @@ SPOKEN_PACKS: dict[str, str] = {
     "te-IN": SPOKEN_PACK_TE,
     "en-IN": SPOKEN_PACK_EN,
     "en-US": SPOKEN_PACK_EN_US,
-    "en-GB": SPOKEN_PACK_EN_GB,
     "hi-IN": SPOKEN_PACK_HI,
     "ta-IN": SPOKEN_PACK_TA,
     "kn-IN": SPOKEN_PACK_KN,
@@ -587,7 +544,6 @@ CALL_END_FAREWELLS: dict[str, str] = {
     "te-IN": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
     "en-IN": "Thank you for your time. Goodbye.",
     "en-US": "Thank you for your time. Goodbye.",
-    "en-GB": "Thank you for your time. Goodbye.",
     "hi-IN": "समय देने के लिए धन्यवाद। नमस्कार।",
 }
 
@@ -605,7 +561,6 @@ OPENING_WITH_COMPANY: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}, {company} nundi matladutunnanu. Meeru ela sahayam kavali?",
     "en-IN": "Hi, this is {name} calling from {company}. How can I help you today?",
     "en-US": "Hi, this is {name} from {company}. How can I help you today?",
-    "en-GB": "Hi, this is {name} calling from {company}. How can I help you today?",
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se. Main aapki kaise madad karun?",
     "ta-IN": "Vanakkam! Naan {name}, {company}-la irundhu pesuren. Ungalukku enna help venum?",
     "kn-IN": "Namaskara! Naanu {name}, {company} inda matladuttiddene. Nimge hege sahayavagali?",
@@ -620,7 +575,6 @@ OPENING_OUTBOUND_WITH_COMPANY: dict[str, str] = {
     "te-IN": "Hi, nenu {name}, {company} nundi matladutunnanu. Meeku oka moment unda?",
     "en-IN": "Hi, this is {name} calling from {company}. Do you have a moment?",
     "en-US": "Hi, this is {name} from {company}. Do you have a minute?",
-    "en-GB": "Hi, this is {name} calling from {company}. Do you have a moment?",
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se. Kya aap free hain — ek minute mil sakta hai?",
     "ta-IN": "Hi, naan {name}, {company}-la irundhu pesuren. Oru nimisham pesalaama?",
     "kn-IN": "Hi, naanu {name}, {company} inda. Ondu nimisha matladabahuda?",
@@ -635,7 +589,6 @@ OPENING_WITH_COMPANY_PURPOSE: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}, {company} nundi {purpose} gurinchi matladutunnanu. Meeru ela sahayam kavali?",
     "en-IN": "Hi, this is {name} calling from {company} about {purpose}. How can I help you today?",
     "en-US": "Hi, this is {name} from {company}. How can I help you today?",
-    "en-GB": "Hi, this is {name} calling from {company} about {purpose}. How can I help you today?",
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Main aapki kaise madad karun?",
     "ta-IN": "Vanakkam! Naan {name}, {company}-la irundhu {purpose} pathi pesuren. Ungalukku enna help venum?",
     "kn-IN": "Namaskara! Naanu {name}, {company} inda {purpose} bagge matladuttiddene. Nimge hege sahayavagali?",
@@ -650,7 +603,6 @@ OPENING_OUTBOUND_WITH_COMPANY_PURPOSE: dict[str, str] = {
     "te-IN": "Hi, nenu {name}, {company} nundi {purpose} gurinchi matladutunnanu. Meeru free unnara — oka moment unda?",
     "en-IN": "Hi, this is {name} calling from {company} about {purpose}. Do you have a moment?",
     "en-US": "Hi, this is {name} from {company}, calling about {purpose}. Do you have a minute?",
-    "en-GB": "Hi, this is {name} calling from {company} regarding {purpose}. Do you have a moment?",
     "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Kya aap free hain — ek minute?",
     "ta-IN": "Hi, naan {name}, {company}-la irundhu {purpose} pathi. Oru nimisham pesalaama?",
     "kn-IN": "Hi, naanu {name}, {company} inda {purpose} bagge. Ondu nimisha matladabahuda?",
@@ -665,7 +617,6 @@ OPENING_NO_COMPANY: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}. {work} ki related ga meeku help chestunnanu. Meeru ela sahayam kavali?",
     "en-IN": "Hi, this is {name}. I'm calling about {work}. How can I help you?",
     "en-US": "Hi, this is {name}. How can I help you?",
-    "en-GB": "Hi, this is {name}. I'm calling regarding {work}. How can I help you?",
     "hi-IN": "Namaste, main {name} bol rahi hoon. {work} ke baare mein help karungi. Main aapki kaise madad karun?",
     "ta-IN": "Vanakkam! Naan {name}. {work} pathi pesuren. Ungalukku enna help venum?",
     "kn-IN": "Namaskara! Naanu {name}. {work} bagge help maadalu matladuttiddene. Nimge hege sahayavagali?",
@@ -680,7 +631,6 @@ OPENING_OUTBOUND_NO_COMPANY: dict[str, str] = {
     "te-IN": "Hi, nenu {name}. {work} gurinchi matladutunnanu. Meeku oka moment unda?",
     "en-IN": "Hi, this is {name}. I'm calling about {work}. Do you have a moment?",
     "en-US": "Hi, this is {name}. I'm calling about {work}. Do you have a minute?",
-    "en-GB": "Hi, this is {name}. I'm calling regarding {work}. Do you have a moment?",
     "hi-IN": "Namaste, main {name} bol rahi hoon. {work} ke baare mein. Kya aap free hain?",
     "ta-IN": "Hi, naan {name}. {work} pathi pesuren. Oru nimisham pesalaama?",
     "kn-IN": "Hi, naanu {name}. {work} bagge. Ondu nimisha matladabahuda?",
@@ -695,7 +645,6 @@ OPENING_NAME_ONLY: dict[str, str] = {
     "te-IN": "Namaste! Nenu {name}. Meeru ela sahayam kavali?",
     "en-IN": "Hi, this is {name}. How can I help you?",
     "en-US": "Hi, this is {name}. How can I help you?",
-    "en-GB": "Hi, this is {name}. How may I help you today?",
     "hi-IN": "Namaste, main {name} bol rahi hoon. Main aapki kaise madad karun?",
     "ta-IN": "Vanakkam! Naan {name}. Ungalukku enna help venum?",
     "kn-IN": "Namaskara! Naanu {name}. Nimge hege sahayavagali?",
@@ -710,7 +659,6 @@ OPENING_OUTBOUND_NAME_ONLY: dict[str, str] = {
     "te-IN": "Hi, nenu {name}. Meeru free unnara — oka moment unda?",
     "en-IN": "Hi, this is {name}. Do you have a moment?",
     "en-US": "Hi, this is {name}. Do you have a minute?",
-    "en-GB": "Hi, this is {name}. Do you have a moment?",
     "hi-IN": "Namaste, main {name} bol rahi hoon. Kya aap free hain — ek minute?",
     "ta-IN": "Hi, naan {name}. Oru nimisham pesalaama?",
     "kn-IN": "Hi, naanu {name}. Ondu nimisha matladabahuda?",
@@ -738,10 +686,6 @@ IDENTITY_SPEAK: dict[str, str] = {
     ),
     "en-US": (
         "Speak natural everyday English. You are this business's phone representative — warm, helpful, on-brand. "
-        "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
-    ),
-    "en-GB": (
-        "Speak natural British / UK English. You are this business's phone representative — warm, helpful, polite, and on-brand. "
         "Introduce yourself only on the first turn of each call — never re-introduce mid-call."
     ),
     "hi-IN": (
@@ -798,7 +742,7 @@ for _opening_table in (
 
 
 def is_native_english(language: str | None) -> bool:
-    return normalize_compile_language(language) in ("en-US", "en-GB")
+    return normalize_compile_language(language) == "en-US"
 
 
 def pack_get(table: dict[str, str], language: str | None) -> str:

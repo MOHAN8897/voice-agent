@@ -101,3 +101,28 @@ def test_parse_uuid_rejects_telnyx_control_id():
     assert _parse_uuid("v3:Y2FsbF8...") is None
     assert _parse_uuid("not-a-uuid") is None
     assert _parse_uuid("11111111-1111-1111-1111-111111111111") is not None
+
+
+@pytest.mark.asyncio
+async def test_list_tags_casts_nullable_agent_param_for_postgres(monkeypatch):
+    """asyncpg cannot infer a type for a bare `:agent_id IS NULL`, which 500'd /api/calls/tags."""
+    captured = {}
+
+    class FakeSession:
+        async def execute(self, statement, params):
+            captured["sql"] = str(statement)
+            captured["params"] = params
+            return []
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(
+        "server.call.call_store.get_session_factory", lambda: lambda: FakeSession()
+    )
+    await call_store.list_tags(tenant_id="11111111-1111-1111-1111-111111111111")
+    assert "CAST(:agent_id AS uuid) IS NULL" in captured["sql"]
+    assert "calls.agent_id = CAST(:agent_id AS uuid)" in captured["sql"]

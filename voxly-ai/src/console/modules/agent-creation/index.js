@@ -39,7 +39,6 @@ export const AGENT_ROLES = [
  */
 export const LANGUAGE_LABELS = {
   'en-US': { label: 'English (US)', sub: 'US English' },
-  'en-GB': { label: 'English (UK)', sub: 'UK English' },
   'en-IN': { label: 'English (India)', sub: 'Neutral Indian English' },
   'hi-IN': { label: 'Hindi', sub: 'हिन्दी' },
   'te-IN': { label: 'Telugu', sub: 'తెలుగు' },
@@ -55,7 +54,7 @@ export const LANGUAGE_LABELS = {
 /**
  * Last-resort labels if the admin API is unreachable. Mirrors the languages the
  * default calling tier can actually serve, so an offline picker never offers a
- * locale that creation would reject (British English is not on Standard).
+ * locale that creation would reject.
  */
 export const DEFAULT_ENABLED_LANGUAGE_CODES = ['en-IN', 'te-IN', 'hi-IN', 'ta-IN', 'kn-IN'];
 

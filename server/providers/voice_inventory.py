@@ -17,7 +17,7 @@ from typing import Any
 
 import httpx
 
-from server.config.constants import constants
+from server.config.constants import constants, normalize_supported_language
 
 SNAPSHOT = Path(__file__).with_name("catalog_data") / "voices.json"
 DOCUMENTS = {
@@ -228,8 +228,8 @@ def inventory() -> dict[str, Any]:
 
 def default_voice(provider: str, model: str, language: str | None = None, preferred: str | None = None) -> str:
     """First catalog voice valid for the model/language, honoring a configured preference."""
-    normalized = language
-    if provider in {"sarvam", "gnani"} and normalized in {"en-US", "en-GB"}:
+    normalized = normalize_supported_language(language) if language else None
+    if provider in {"sarvam", "gnani"} and normalized == "en-US":
         normalized = "en-IN"
     candidates = voices_for_model(provider, model)
     if normalized:
@@ -301,7 +301,9 @@ def validate_voice(provider: str, model: str, voice_id: str, language: str | Non
     voice = index.get(voice_id)
     if voice is None:
         raise ValueError("The voice is absent from the selected model's current catalog")
-    if provider in {"sarvam", "gnani"} and language in {"en-US", "en-GB"}:
+    if language:
+        language = normalize_supported_language(language)
+    if provider in {"sarvam", "gnani"} and language == "en-US":
         language = "en-IN"
     if language and language not in voice["languages"]:
         raise ValueError("The voice does not match the selected language")

@@ -26,7 +26,6 @@ MIN_WORDS = 4
 BACKCHANNEL_PHRASES: dict[str, list[str]] = {
     "en-IN": ["Hmm.", "Mhm.", "Right.", "I see.", "Okay."],
     "en-US": ["Hmm.", "Mhm.", "Right.", "Got it.", "Okay."],
-    "en-GB": ["Hmm.", "Mhm.", "Right.", "I see.", "Indeed."],
     "te-IN": ["సరే.", "అవును.", "అలాగే."],
     "hi-IN": ["हाँ.", "अच्छा.", "ठीक है."],
     "ta-IN": ["ஆம்.", "சரி.", "சரிங்க."],

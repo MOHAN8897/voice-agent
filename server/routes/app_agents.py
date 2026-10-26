@@ -19,6 +19,7 @@ from server.brain.employee_script_pipeline import (
     clarification_response,
 )
 from server.brain.script_entities import strip_entity_tags_section
+from server.config.constants import normalize_supported_language
 from server.routes.agents import _subscriber_agent
 from server.services.saas import platform_languages
 from server.services.saas.agent_onboarding_compose import compose_agent_onboarding
@@ -114,7 +115,8 @@ async def analyze_brief(
     """Read-only clarification: never creates an agent or publishes a draft."""
     require_subscriber_permission(principal, "app.agents.write")
     subscriber_workspace_tenant_id(principal)
-    language = body.language.strip() or "en-IN"
+    # Retired codes such as "en-GB" resolve to the pack that actually speaks them.
+    language = normalize_supported_language(body.language.strip() or "en-IN")
     if not platform_languages.is_enabled(language):
         raise HTTPException(status_code=400, detail={"error": {"code": "language_not_enabled", "message": "Choose an available spoken language."}})
     try:
@@ -143,7 +145,7 @@ async def compose_onboarding(
     result = await compose_agent_onboarding(
         name=body.name.strip(),
         role=body.role.strip(),
-        language=body.language.strip(),
+        language=normalize_supported_language(body.language.strip() or "en-IN"),
         business_summary=body.businessSummary.strip(),
         goals=body.goals.strip(),
         extra_notes=body.notes.strip(),
@@ -163,7 +165,9 @@ async def build_employee(
 ):
     """Brief → dev-panel script compiler → single Calling script section → cached brain."""
     require_subscriber_permission(principal, "app.agents.write")
-    lang = (body.language.strip() or "en-IN")
+    # Legacy clients may still send a retired code such as "en-GB"; it resolves to
+    # the English locale the live stack speaks, never to a different language.
+    lang = normalize_supported_language(body.language.strip() or "en-IN")
     # The picker only offers enabled languages; enforce it here too, or a crafted
     # request could create an agent in a language the platform has switched off.
     # Existing agents keep working — this only gates creation.

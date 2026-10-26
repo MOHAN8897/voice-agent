@@ -1,4 +1,4 @@
-"""Live-stack language aliases (en-US / eng / en-GB) must resolve, not crash PSTN start."""
+"""Live-stack language aliases (en-US / eng) must resolve, not crash PSTN start."""
 from __future__ import annotations
 
 import inspect
@@ -7,6 +7,7 @@ import pytest
 
 from server.config.constants import (
     coerce_supported_language,
+    constants,
     language_in_supported,
     normalize_supported_language,
     provider_language_code,
@@ -33,8 +34,10 @@ def test_normalize_english_aliases():
     assert normalize_supported_language("en-US") == "en-US"
     assert normalize_supported_language("en-us") == "en-US"
     assert normalize_supported_language("en_US") == "en-US"
-    assert normalize_supported_language("en-gb") == "en-GB"
-    assert normalize_supported_language("en-GB") == "en-GB"
+    assert normalize_supported_language("en-gb") == "en-IN"
+    assert normalize_supported_language("en-GB") == "en-IN"
+    assert normalize_supported_language("british") == "en-IN"
+    assert "en-GB" not in constants.SUPPORTED_LANGUAGES
     assert normalize_supported_language("eng") == "en-IN"
     assert normalize_supported_language("english") == "en-IN"
     assert normalize_supported_language("en") == "en-IN"
@@ -42,8 +45,7 @@ def test_normalize_english_aliases():
     assert normalize_supported_language("hi_in") == "hi-IN"
     assert language_in_supported("en-US")
     assert language_in_supported("en-us")
-    assert language_in_supported("en-GB")
-    assert language_in_supported("en-gb")
+    assert language_in_supported("en-GB")  # retired code still resolves to a working pack
     assert not language_in_supported("fr-FR")
     assert coerce_supported_language("fr-FR") == "te-IN"
 
@@ -54,20 +56,30 @@ def test_sarvam_provider_code_maps_en_us_to_en_in():
     assert provider_language_code("en-US", provider="cartesia", stage="stt") == "en"
 
 
+def test_retired_british_english_is_judged_by_the_pack_it_resolves_to(monkeypatch):
+    from server.services.saas import platform_languages
+
+    monkeypatch.setattr(platform_languages, "enabled_languages", lambda: ["en-IN", "te-IN"])
+    assert platform_languages.is_enabled("en-GB") is True
+    assert platform_languages.is_enabled("hi-IN") is False
+    assert platform_languages.is_enabled("fr-FR") is False
+    assert platform_languages.is_enabled(None) is False
+
+
 def test_compile_language_keeps_spoken_packs():
     assert normalize_compile_language("en-US") == "en-US"
-    assert normalize_compile_language("en-gb") == "en-GB"
+    assert normalize_compile_language("en-gb") == "en-IN"
     assert normalize_compile_language("eng") == "en-IN"
 
 
 def test_resolver_accepts_en_us_and_aliases(resolver):
     for code in ("en-US", "en-us", "en-GB", "eng"):
         stack = resolver.resolve(mode="env", tier="medium", language=code)
-        assert stack.language in ("en-US", "en-IN", "en-GB")
+        assert stack.language in ("en-US", "en-IN")
         if code.lower() == "en-us":
             assert stack.language == "en-US"
         if code.lower() == "en-gb":
-            assert stack.language == "en-GB"
+            assert stack.language == "en-IN"
         if code == "eng":
             assert stack.language == "en-IN"
 

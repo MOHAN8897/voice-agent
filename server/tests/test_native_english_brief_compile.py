@@ -1,4 +1,4 @@
-"""Native US/UK English compile suite — hard briefs, no Indian-English leakage."""
+"""Native US English compile suite — hard briefs, no Indian-English leakage."""
 from __future__ import annotations
 
 import re
@@ -278,4 +278,4 @@ async def test_native_english_brief_compiles_clean_script(case):
     )
     issues = _issues_for(case, result, compiled)
     assert not issues, f"{case['id']}: " + "; ".join(issues)
-    assert "natural spoken English" in compiled or "US/UK" in compiled or "en-US" in compiled
+    assert "natural spoken English" in compiled or "en-US" in compiled

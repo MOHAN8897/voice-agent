@@ -322,7 +322,7 @@ class CallStore:
             FROM calls, unnest(calls.status_tags) AS tag
             WHERE calls.tenant_id = :tenant_id
               AND calls.is_test = false
-              AND (:agent_id IS NULL OR calls.agent_id = :agent_id)
+              AND (CAST(:agent_id AS uuid) IS NULL OR calls.agent_id = CAST(:agent_id AS uuid))
             GROUP BY tag
             ORDER BY tag_count DESC, tag ASC
             LIMIT :limit

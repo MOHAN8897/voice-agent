@@ -441,7 +441,7 @@ def test_native_english_brain_does_not_use_indian_register():
         style="warm, brief, 1-2 sentences, spoken Indian English like a person on a phone",
     )
     assert "spoken Indian English" not in brain
-    assert "US and UK" in brain or "en-US" in brain
+    assert "en-US" in brain
     assert "Speak natural Tanglish" not in brain
 
 

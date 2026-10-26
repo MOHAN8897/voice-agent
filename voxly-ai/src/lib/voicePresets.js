@@ -7,7 +7,6 @@ export const VOICE_PRESETS = [
 
 export const LANGUAGE_OPTIONS = [
   { label: 'English (India)', code: 'en-IN' },
-  { label: 'English (UK)', code: 'en-GB' },
   { label: 'Telugu', code: 'te-IN' },
   { label: 'Hindi', code: 'hi-IN' },
   { label: 'Tamil', code: 'ta-IN' },
