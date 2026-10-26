@@ -115,6 +115,11 @@ async def call_start(
     try:
         if isinstance(body.stack_override, dict) and "_voice_stack_snapshot" in body.stack_override:
             raise HTTPException(status_code=400, detail="Voice profile snapshots are managed by the server.")
+        if body.language:
+            from server.config.constants import normalize_supported_language
+
+            # Retired codes ("en-GB") must resolve before the stack resolver sees them.
+            body.language = normalize_supported_language(body.language)
         # The browser call endpoint is tenant-facing. Resolve the workspace from
         # the verified bearer/session context; never accept it from the request body.
         tenant_id = resolve_call_tenant(request, _auth) if get_settings().saas_auth_enabled else None
@@ -136,10 +141,13 @@ async def call_start(
             if body.environment and body.environment != saved_environment:
                 raise HTTPException(status_code=409, detail="The requested environment does not match the saved agent.")
             if body.language:
+                requested_language = body.language
                 languages = agent.get("languages") or [agent.get("language") or "te-IN"]
-                if body.language not in languages:
+                if requested_language not in languages:
                     raise HTTPException(status_code=409, detail="Choose a language configured for this agent.")
-                agent = {**agent, "languages": [body.language, *[code for code in languages if code != body.language]]}
+                agent = {**agent, "languages": [
+                    requested_language, *[code for code in languages if code != requested_language],
+                ]}
             try:
                 body.stack_override = await saas_stack_override_for_agent(agent)
             except VoiceProfileError as exc:
