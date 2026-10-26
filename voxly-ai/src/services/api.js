@@ -585,7 +585,22 @@ export const api = {
         ...(bodyInit !== undefined ? { body: bodyInit } : {}),
       });
 
-    let response = await doFetch();
+    let response;
+    try {
+      response = await doFetch();
+    } catch (err) {
+      logApiEvent('warn', 'request_network_error', { method, path, message: String(err?.message || err) });
+      markServiceDegraded({
+        status: 0,
+        path,
+        message: 'A backend service is momentarily busy. Workspace session is active.',
+      });
+      const netErr = new Error('Network connection error. Workspace session preserved.');
+      netErr.isServerDegraded = true;
+      netErr.status = 0;
+      throw netErr;
+    }
+
     let refreshOk = false;
     let triedRefresh = false;
     if (response.status === 401 && token) {
@@ -593,7 +608,20 @@ export const api = {
       refreshOk = await this.refreshAccessToken();
       if (refreshOk) {
         headers.Authorization = `Bearer ${this.getToken()}`;
-        response = await doFetch();
+        try {
+          response = await doFetch();
+        } catch (err) {
+          logApiEvent('warn', 'request_network_error_after_refresh', { method, path, message: String(err?.message || err) });
+          markServiceDegraded({
+            status: 0,
+            path,
+            message: 'A backend service is momentarily busy. Workspace session is active.',
+          });
+          const netErr = new Error('Network connection error. Workspace session preserved.');
+          netErr.isServerDegraded = true;
+          netErr.status = 0;
+          throw netErr;
+        }
       }
     }
     // Stale voxly_backend_url without /api → FastAPI {"detail":"Not found"} on /agents etc.

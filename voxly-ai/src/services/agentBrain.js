@@ -86,11 +86,17 @@ function sectionsFromStudio({
   if (!hasCanonical && greeting && greeting.trim()) {
     cleanScript = `--- CANONICAL OPENING ---\nAfter the callee speaks, say once:\n${greeting.trim()}\n\n${cleanScript}`.trim();
   }
-  const callingScript = cleanScript;
   const langCode =
     typeof language === 'string' && language.includes('-')
       ? language
       : language || 'en-IN';
+
+  // Align any embedded language pack clauses or markers with the chosen language
+  cleanScript = cleanScript
+    .replace(/(?:^|\n)---\s*(?:SPOKEN\s+)?LANGUAGE\s*(?:\([a-z]{2}(?:-[a-z]{2})?\))?\s*---[ \t]*\n[^\n]*\blanguage\s+pack\b[^\n]*/gi, `\n--- SPOKEN LANGUAGE (${langCode}) ---\nUse the selected ${langCode} language pack.`)
+    .replace(/\b([a-z]{2}(?:-[a-z]{2})?)\s+language\s+pack\b/gi, `${langCode} language pack`)
+    .replace(/@language:\s*[a-z]{2}(?:-[a-z]{2})?/gi, `@language: ${langCode}`);
+  const callingScript = cleanScript;
   const varSection = scriptVariablesSection(variableDefinitions);
   const voiceSec = voiceConfigSection(voice, langCode);
   const sections = [

@@ -135,3 +135,56 @@ def test_realign_compiled_brain_validates_cleanly(target_locale):
     )
     assert f"--- SPOKEN LANGUAGE ({target_locale}) ---" in realigned
     assert_rendered_brain_valid(realigned, target_locale)
+
+
+def test_sanitize_closing_instructions_handles_unicode_dashes_and_tool_variants():
+    from server.brain.brain_prompt_validate import validate_rendered_brain
+
+    legacy_script = (
+        "--- AGENT IDENTITY ---\nYou are Meera.\n@language: te-IN\n\n"
+        "--- CONVERSATION FLOW ---\n"
+        "When they confirm they are done: confirm, thank, farewell, and close \ufffd no extra pitch.\n"
+        "Follow HANGUP JUDGMENT: Speak the farewell AND call end_call (should_end true) in the same turn.\n"
+        "In one line, say goodbye (or have a great day), and invoke the tool in that SAME turn.\n"
+        "- Thank them, say goodbye once, then stop. The platform disconnects.\n"
+    )
+    assembled = assemble_unified_brain(language="te-IN", script=legacy_script)
+    issues = validate_rendered_brain(assembled, "te-IN")
+    assert not any("farewell" in issue.lower() or "close" in issue.lower() for issue in issues), issues
+
+
+def test_patch_calling_script_language_markers_replaces_stale_en_pack_and_metadata():
+    from server.brain.brain_prompt_validate import validate_rendered_brain
+
+    stale_script = (
+        "--- AGENT IDENTITY ---\nYou are Meera.\n@language: en-IN\n\n"
+        "--- LANGUAGE ---\nUse the selected en-IN language pack. Follow the platform language policy.\n"
+        "Language: en-IN\n"
+    )
+    assembled = assemble_unified_brain(language="te-IN", script=stale_script)
+    issues = validate_rendered_brain(assembled, "te-IN")
+    assert issues == [], f"Expected 0 issues, got: {issues}"
+    assert "--- SPOKEN LANGUAGE (te-IN) ---" in assembled
+    assert "en-IN language pack" not in assembled
+
+
+def test_pydantic_revision_optional_and_validation():
+    from server.routes.agents_business_brain import DraftSectionsBody, PublishBrainBody
+
+    # Omitted, empty string, and None should be normalized to None
+    d1 = DraftSectionsBody(sections=[{"title": "Calling script"}])
+    assert d1.expected_revision is None
+
+    d2 = DraftSectionsBody(sections=[], expected_revision="")
+    assert d2.expected_revision is None
+
+    p1 = PublishBrainBody()
+    assert p1.expected_revision is None
+
+    p2 = PublishBrainBody(expected_revision="   ")
+    assert p2.expected_revision is None
+
+    valid_hex = "a" * 64
+    d3 = DraftSectionsBody(sections=[], expected_revision=valid_hex)
+    assert d3.expected_revision == valid_hex
+

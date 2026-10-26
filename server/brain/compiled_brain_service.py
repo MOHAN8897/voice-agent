@@ -22,8 +22,11 @@ from server.brain.compiled_brain_artifact import (
     checksum_instructions,
     is_unified_compiled_brain,
     platform_body_for_agent_language,
+    refresh_platform_sections,
+    sanitize_closing_instructions,
 )
 from server.brain.platform_brain_store import platform_brain_store
+from server.brain.script_entities import patch_calling_script_language_markers
 from server.brain.sections import STATIC_OUTPUT_RULES_VERSION
 from server.brain.semantic_validation import validate_sections
 from server.config.env import get_settings
@@ -132,11 +135,15 @@ class CompiledBrainService:
                     optimized_text = business_from_unified_brain(optimized_text)
 
         platform_rules = platform_body_for_agent_language(platform["body"], lang)
-        compiled_text = optimized_text if exact_artifact else assemble_unified_brain(
-            language=lang,
-            script=optimized_text,
-            platform_call_rules=platform_rules,
-        )
+        if exact_artifact:
+            compiled_text = refresh_platform_sections(optimized_text, lang)
+        else:
+            cleaned_script = sanitize_closing_instructions(patch_calling_script_language_markers(optimized_text, lang))
+            compiled_text = assemble_unified_brain(
+                language=lang,
+                script=cleaned_script,
+                platform_call_rules=platform_rules,
+            )
         # Exact artifacts bypass platform assembly; apply the disclosure to both
         # shapes so toggling it always reaches the compiled snapshot a call uses.
         from server.prompts.agent_voice_rules import inject_recording_disclosure
@@ -260,13 +267,14 @@ class CompiledBrainService:
         platform = await platform_brain_store.get_active()
         lang, disclosure_enabled, disclosure_text = await self._agent_info(agent_id)
         if is_unified_compiled_brain(optimized_prompt):
-            compiled_text = optimized_prompt
+            compiled_text = refresh_platform_sections(optimized_prompt, lang)
             # Keep the stored checksum on the artifact as published; the
             # disclosure is re-applied on every compile for the active config.
-            report["compiled_artifact_checksum"] = checksum_instructions(optimized_prompt)
+            report["compiled_artifact_checksum"] = checksum_instructions(compiled_text)
         else:
+            cleaned_script = sanitize_closing_instructions(patch_calling_script_language_markers(optimized_prompt, lang))
             platform_rules = platform_body_for_agent_language(platform["body"], lang)
-            compiled_text = assemble_unified_brain(language=lang, script=optimized_prompt, platform_call_rules=platform_rules)
+            compiled_text = assemble_unified_brain(language=lang, script=cleaned_script, platform_call_rules=platform_rules)
         from server.prompts.agent_voice_rules import inject_recording_disclosure
 
         compiled_text = inject_recording_disclosure(

@@ -193,17 +193,16 @@ def sanitize_closing_instructions(text: str | None) -> str:
     raw = str(text or "")
     if not raw:
         return ""
-    # 1. "confirm, thank, farewell, and close — no extra pitch"
+    # 1. "confirm, thank, farewell, and close — no extra pitch" (with any dash or encoding)
     raw = re.sub(
-        r"confirm,\s*thank,\s*farewell,\s*and\s*close\s*[-—]\s*no\s+extra\s+pitch\.?",
+        r"confirm,\s*thank,\s*farewell,\s*and\s*close\s*[-—–\ufffd]?\s*(?:no\s+extra\s+pitch\.?)?",
         "confirm, thank, and make the close decision — no extra pitch. Never speak the farewell yourself; the platform speaks it after approval.",
         raw,
         flags=re.IGNORECASE,
     )
-    # 2. "Confirm in one line, thank them, short farewell, end_call. Then stop — the platform disconnects when farewell playback finishes."
-    # or "Confirm in one line, thank them, short farewell, end_call. Then stop — if they speak after goodbye, keep talking."
+    # 2. "Confirm in one line, thank them, short farewell, end_call. Then stop — ..."
     raw = re.sub(
-        r"Confirm\s+in\s+one\s+line,\s*thank\s+them,\s*short\s+farewell,\s*end_call\.\s*Then\s+stop\s*[-—]\s*(?:the\s+platform\s+disconnects\s+when\s+farewell\s+playback\s+finishes|if\s+they\s+speak\s+after\s+goodbye,\s*keep\s+talking)\.?",
+        r"Confirm\s+in\s+one\s+line,\s*thank\s+them,\s*short\s+farewell,\s*end_call\.\s*Then\s+stop\s*[-—–\ufffd]?[^\n.]*",
         "Confirm in one line, thank them, and make the close decision. Never speak the farewell yourself — the server plays the approved farewell.",
         raw,
         flags=re.IGNORECASE,
@@ -215,17 +214,52 @@ def sanitize_closing_instructions(text: str | None) -> str:
         raw,
         flags=re.IGNORECASE,
     )
-    # 4. "Speak the farewell AND call end_call"
+    # 4. "Speak the farewell AND call end_call (should_end true)"
     raw = re.sub(
-        r"speak\s+the\s+farewell\s+and\s+call\s+end_call",
+        r"speak\s+the\s+farewell\s+and\s+call\s+end_call(?:\s*\([^)]*\))?",
         "make the close decision; never speak the farewell yourself — the server plays the approved farewell",
         raw,
         flags=re.IGNORECASE,
     )
-    # 5. "short farewell, end_call"
+    # 5. "Thank them, say goodbye once, then stop"
+    raw = re.sub(
+        r"thank\s+them,\s*say\s+goodbye(?:\s+once)?,\s*then\s+stop",
+        "thank them and make the close decision; never speak the farewell yourself — the platform disconnects when farewell finishes",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    # 6. "short farewell, end_call"
     raw = re.sub(
         r"short\s+farewell,\s*end_call",
         "make the close decision; never speak the farewell yourself — the server plays the approved farewell",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    # 7. "short farewell plus/ + end_call"
+    raw = re.sub(
+        r"short\s+farewell\s*(?:plus|\+)\s*(?:request_)?end_call",
+        "make the close decision; never speak the farewell yourself",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    # 8. "in the SAME turn as a short farewell"
+    raw = re.sub(
+        r"in\s+the\s+same\s+turn\s+as\s+a\s+short\s+farewell",
+        "when closing; never speak the farewell yourself",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    # 9. bare "farewell + tool" or "farewell + request_end_call"
+    raw = re.sub(
+        r"\bfarewell\s*\+\s*(?:tool|request_end_call|end_call)\b",
+        "make the close decision",
+        raw,
+        flags=re.IGNORECASE,
+    )
+    # 10. "say goodbye (or have a great day), and invoke the tool"
+    raw = re.sub(
+        r"say\s+goodbye(?:\s*\([^)]*\))?,\s*and\s+invoke\s+the\s+tool",
+        "make the close decision and invoke the tool (never speak the farewell yourself)",
         raw,
         flags=re.IGNORECASE,
     )

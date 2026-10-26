@@ -42,6 +42,9 @@ export function ServiceDegradedBanner() {
       const res = await fetch('/api/health');
       if (res.ok) {
         setDegradedState(null);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('voxly:service-restored'));
+        }
       }
     } catch {
       // Still degraded

@@ -75,15 +75,36 @@ async def _guard_agent(
 
 class DraftSectionsBody(BaseModel):
     sections: list[dict[str, Any]]
-    expected_revision: str = Field(..., min_length=64, max_length=64)
+    expected_revision: Optional[str] = Field(None)
+
+    @field_validator("expected_revision")
+    @classmethod
+    def _validate_revision(cls, v: Optional[str]) -> Optional[str]:
+        if not v or not str(v).strip():
+            return None
+        clean = str(v).strip()
+        if len(clean) != 64:
+            raise ValueError("expected_revision must be a 64-character SHA-256 hex string")
+        return clean
 
 
 class PublishBrainBody(BaseModel):
-    expected_revision: str = Field(..., min_length=64, max_length=64)
+    expected_revision: Optional[str] = Field(None)
+
+    @field_validator("expected_revision")
+    @classmethod
+    def _validate_revision(cls, v: Optional[str]) -> Optional[str]:
+        if not v or not str(v).strip():
+            return None
+        clean = str(v).strip()
+        if len(clean) != 64:
+            raise ValueError("expected_revision must be a 64-character SHA-256 hex string")
+        return clean
 
 
 class PreviewSectionsBody(BaseModel):
-    sections: list[dict[str, Any]] = Field(..., max_length=64)
+    sections: list[dict[str, Any]] = Field(..., max_length=128)
+
 
 
 @router.post("/api/agents/{agent_id}/business-brain/preview")
@@ -264,8 +285,12 @@ async def _preserve_tags(agent_id: str, script: str) -> str:
         if name:
             entities["agent_name"] = name
             entities["company_name"] = company
+    primary_lang = await compiled_brain_service._primary_language(agent_id)
     if entities:
-        entities["language"] = await compiled_brain_service._primary_language(agent_id)
+        entities["language"] = primary_lang
+    from server.brain.script_entities import patch_calling_script_language_markers
+    from server.brain.compiled_brain_artifact import sanitize_closing_instructions
+    script = sanitize_closing_instructions(patch_calling_script_language_markers(script, primary_lang))
 
     # Extract opening line from script's CANONICAL OPENING and update @opening_line
     canonical_match = re.search(

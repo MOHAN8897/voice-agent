@@ -248,22 +248,28 @@ def _patch_role_speak_line(script: str, language: str) -> str:
 
 
 def patch_calling_script_language_markers(script: str, language: str) -> str:
-    """Fix stale SPOKEN LANGUAGE headers and @language tags inside the user script when dial language differs."""
+    """Fix stale SPOKEN LANGUAGE headers, language pack rules and @language tags inside the user script when dial language differs."""
     from server.prompts.agent_voice_rules import normalize_compile_language
 
     lang = normalize_compile_language(language or "te-IN")
     if not script.strip():
         return script
-    res = _SPOKEN_LANG_HEADER.sub(f"--- SPOKEN LANGUAGE ({lang}) ---", script, count=1)
+    res = script
     res = re.sub(r"@language:\s*[a-z]{2}(?:-[a-z]{2})?", f"@language: {lang}", res, flags=re.I)
-    # Platform-generated LANGUAGE section from an earlier compile must name the
-    # session pack, not the locale it was first generated under.
-    return re.sub(
-        r"^(use the selected )[a-z]{2}(?:-[a-z]{2})?( language pack\b)",
-        lambda match: f"{match.group(1)}{lang}{match.group(2)}",
+    res = _SPOKEN_LANG_HEADER.sub(f"--- SPOKEN LANGUAGE ({lang}) ---", res, count=1)
+    res = re.sub(r"(?im)^Language:\s*[a-z]{2}(?:-[a-z]{2})?", f"Language: {lang}", res)
+    res = re.sub(
+        r"(?im)^([ \t]*(?:-\s*)?use\s+(?:the\s+)?(?:selected\s+)?)[a-z]{2}(?:-[a-z]{2})?(\s+language\s+pack\b.*)$",
+        rf"\g<1>{lang}\g<2>",
         res,
-        flags=re.M | re.I,
     )
+    res = re.sub(
+        r"\b([a-z]{2}(?:-[a-z]{2})?)\s+language\s+pack\b",
+        f"{lang} language pack",
+        res,
+        flags=re.I,
+    )
+    return res
 
 
 def realign_calling_script_for_session(
