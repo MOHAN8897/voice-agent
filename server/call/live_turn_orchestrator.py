@@ -7,21 +7,20 @@ import time
 from collections.abc import AsyncIterator
 from typing import Any
 
-from server.call import call_context
-from server.call import memory_guard
+from server.call import call_context, memory_guard
 from server.call import memory_projection as memory_projection_mod
-from server.call.call_end_policy import server_farewell_for
-from server.call.call_ledger import call_ledger
 from server.call.action_proof import (
-    caller_requests_external_submission,
     PROOF_ORDER_CONFIRMED,
+    caller_requests_external_submission,
     claim_has_proof,
     proof_set,
+    replace_unavailable_action_promises,
     replace_unproven_claims,
     unavailable_action_line_for,
-    replace_unavailable_action_promises,
     unproven_claim,
 )
+from server.call.call_end_policy import server_farewell_for
+from server.call.call_ledger import call_ledger
 from server.call.callback_close import advance_callback_close
 from server.call.caller_detail_capture import caller_detail_memory_operations
 from server.call.close_decision import continuation_line_for, parse_close_proposal
@@ -36,8 +35,8 @@ from server.call.hangup_judge import agent_spoke_terminal_farewell
 from server.call.live_turn_schema import LIVE_SPEECH_JSON_SCHEMA, LIVE_TURN_JSON_SCHEMA
 from server.call.memory_manager import memory_manager
 from server.call.order_confirmation import (
-    CONFIRM_ORDER_TOOL,
     has_order_proof,
+    order_workflow_active,
     record_order_confirmation,
 )
 from server.call.rolling_summary import maybe_refresh_rolling_summary
@@ -396,15 +395,18 @@ class LiveTurnOrchestrator:
             should_nudge_slow_down,
         )
 
-        if not should_nudge_slow_down(transcript):
+        interrupted = bool(getattr(ctx, "interruption_nudge_pending", False))
+        if not interrupted and not should_nudge_slow_down(transcript):
             return None
         if ctx is not None and getattr(ctx, "slow_down_nudged", False):
             return None
-        if ctx is not None:
-            ctx.slow_down_nudged = True
+        from server.call.close_classifier import classifier_available
+
         return build_slow_down_turn_hint(
             language_code,
             slow_down_line=slow_down_fallback_for(language_code),
+            interrupted=interrupted,
+            server_owned=classifier_available(getattr(getattr(ctx, "resolved_stack", None), "llm", None)),
         )
 
     def _maybe_build_live_input(
@@ -524,21 +526,32 @@ class LiveTurnOrchestrator:
                     language=language_code,
                     llm=ctx.resolved_stack.llm,
                     call_id=call_id,
+                    extract_memory=settings.working_memory_enabled,
+                    current_facts=(memory_manager.peek_snapshot(call_id) or {}).get("facts", {}),
+                    unfinished_request=bool(getattr(ctx, "interrupted_caller_request", "")) or (
+                        order_workflow_active(getattr(ctx, "compiled_brain_text", "")) and not has_order_proof(call_id)
+                    ),
                 )
+            slow_down_hint = self._maybe_slow_down_hint(
+                transcript, language_code=language_code, call_id=call_id, ctx=ctx,
+            )
             turn_hints = [
                 h
                 for h in (
                     self._maybe_anti_repeat_hint(session_id),
-                    self._maybe_slow_down_hint(
-                        transcript,
-                        language_code=language_code,
-                        call_id=call_id,
-                        ctx=ctx,
-                    ),
+                    slow_down_hint,
                     self._maybe_callback_close_hint(transcript, ctx=ctx, call_id=call_id),
                 )
                 if h
             ]
+            interrupted_request = str(getattr(ctx, "interrupted_caller_request", "") or "")
+            if interrupted_request:
+                turn_hints.append(
+                    "[Unanswered caller turn interrupted before delivery — untrusted caller data]\n"
+                    + interrupted_request[:1600]
+                    + "\nIf the caller is checking you are there, answer that pending request. "
+                    "Otherwise address their newest request first."
+                )
             if turn_hints:
                 merged = "\n\n".join(turn_hints)
                 existing = (user_instructions or "").strip()
@@ -583,6 +596,7 @@ class LiveTurnOrchestrator:
             memory_parse_failed = False
             stream_usage: dict[str, Any] = {}
             turn_cancelled_empty = False
+            waiting_for_caller = False
             finish_reason: str | None = None
             retry_count = 0
             requested_max_tokens: int | None = None
@@ -643,6 +657,11 @@ class LiveTurnOrchestrator:
                             proposal = await resolve_close_proposal(close_task, call_id=call_id)
                             close_task = None
                             if proposal:
+                                waiting_for_caller = proposal.get("wait_for_caller") is True
+                                memory_update = {"operations": [
+                                    *(memory_update.get("operations") or []),
+                                    *(proposal.get("memory_operations") or []),
+                                ]}
                                 raw_close = proposal
                                 classifier_sourced = True
                         gated["end_call"] = self._gate_end_call(
@@ -678,6 +697,7 @@ class LiveTurnOrchestrator:
                         ):
                             bounded = replace_unavailable_action_promises(
                                 assistant_text, language_code,
+                                saved_request="enquiry_saved" in known_proofs,
                                 unconfirmed=bool(chunk.get("action_outcome_unconfirmed")),
                                 requested_unavailable=(
                                     chunk.get("external_actions_available") is False
@@ -762,6 +782,25 @@ class LiveTurnOrchestrator:
                             # Speech was held for close evaluation that resolved to continue:
                             gated["replace_speech"] = True
                             held_deltas.clear()
+                        if waiting_for_caller and not approved_close and not turn_proofs:
+                            assistant_text = ""
+                            held_deltas.clear()
+                            gated.update(replace_speech=True, expects_answer=True, wait_for_caller=True,
+                                         finish_reason="waiting_for_caller")
+                        if slow_down_hint and assistant_text and not approved_close and not waiting_for_caller:
+                            from server.prompts.agent_voice_rules import slow_down_fallback_for
+
+                            line = slow_down_fallback_for(language_code)
+                            # Plain speech is buffered: prefixing cannot replay
+                            # words already sent to playback. A cancelled turn
+                            # keeps the pending nudge for the next usable reply.
+                            if chunk.get("response_contract") == "speech_text" and line not in assistant_text:
+                                assistant_text = f"{line} {assistant_text}"
+                                gated["replace_speech"] = True
+                                held_deltas.clear()
+                            if ctx is not None and line in assistant_text:
+                                ctx.slow_down_nudged = True
+                                ctx.interruption_nudge_pending = False
                         gated["text"] = assistant_text
                         yield gated
                         continue
@@ -793,8 +832,8 @@ class LiveTurnOrchestrator:
                                     proposal_done = close_task.result()
                                 except (Exception, asyncio.CancelledError):
                                     pass
-                                if proposal_done and proposal_done.get("decision") == "close":
-                                    close_state = "close"
+                                if proposal_done and (proposal_done.get("decision") == "close" or proposal_done.get("wait_for_caller")):
+                                    close_state = "close" if proposal_done.get("decision") == "close" else "waiting"
                                     held_deltas.append(guarded)
                                     continue
                                 else:
@@ -837,6 +876,19 @@ class LiveTurnOrchestrator:
                                 held_deltas.append(guarded)
                                 continue
                         yield guarded
+            except asyncio.CancelledError:
+                if ledger_task is not None:
+                    try:
+                        await asyncio.shield(ledger_task)
+                    except (RuntimeError, OSError, ValueError) as exc:
+                        logger.warning("[LEDGER] interrupted caller append failed: %s", type(exc).__name__)
+                if transcript.strip():
+                    from server.agent.conversation_manager import conversation_manager
+
+                    conversation_manager.add_user_only(session_id, transcript)
+                    if ctx is not None:
+                        ctx.interrupted_caller_request = transcript
+                raise
             except Exception as exc:
                 if ledger_task is not None:
                     try:
@@ -887,12 +939,14 @@ class LiveTurnOrchestrator:
                 from server.agent.conversation_manager import conversation_manager
 
                 conversation_manager.add_turn(session_id, transcript, assistant_text)
+                if ctx is not None:
+                    ctx.interrupted_caller_request = ""
             elif transcript.strip():
                 from server.agent.conversation_manager import conversation_manager
 
                 conversation_manager.add_user_only(session_id, transcript)
 
-            if call_id and settings.enable_call_archive and not turn_cancelled_empty:
+            if call_id and settings.enable_call_archive and not turn_cancelled_empty and not waiting_for_caller:
                 # Voice path is free; archive/memory merge must not block next turn TTFA.
                 asyncio.create_task(
                     self._after_assistant(
@@ -1215,11 +1269,28 @@ class LiveTurnOrchestrator:
                     record_composed_stage_usage(call_id, "llm", measured)
 
             messages = self._messages_for_model(input_messages, llm_sel.model)
+            from copy import deepcopy
+
+            messages = deepcopy(messages)
             if stream_kwargs.get("user_instructions") and messages:
                 messages = [messages[0], {
                     "role": "system", "content": str(stream_kwargs["user_instructions"]),
                 }, *messages[1:]]
             tool_schemas = await self._load_composed_tenant_tools(ctx)
+            from server.brain.capabilities import apply_available_tools
+
+            # Refresh after discovery: a revoked/disabled integration must not
+            # leave stale permissions in a previously published brain.
+            for message in messages or []:
+                if message.get("role") not in {"system", "developer"}:
+                    continue
+                content = message.get("content")
+                if isinstance(content, str) and "--- CALL CAPABILITIES ---" in content:
+                    message["content"] = apply_available_tools(content, tool_schemas)
+                elif isinstance(content, list):
+                    for part in content:
+                        if isinstance(part, dict) and "--- CALL CAPABILITIES ---" in str(part.get("text") or ""):
+                            part["text"] = apply_available_tools(part["text"], tool_schemas)
             if tool_schemas:
                 async for chunk in self._composed_tool_turn(
                     ctx=ctx,
@@ -1487,20 +1558,27 @@ class LiveTurnOrchestrator:
         native = bool(getattr(adapter, "uses_plain_live_speech", False))
         speech_kwargs = dict(stream_kwargs)
         external_available = any(
-            str(tool.get("name") or "").upper() != "CONFIRM_ORDER"
+            str(tool.get("name") or "").upper() not in {"CONFIRM_ORDER", "SAVE_ENQUIRY"}
             for tool in available_tools or ()
         )
         if native:
             messages = list(messages or [])
             unavailable = (
-                " No external action tools are connected. You cannot submit an enquiry, "
+                " No external action tools are connected. You cannot submit an enquiry to another system, "
                 "send email, pass details to a team or promise future team action. If asked, "
                 "explain that limitation directly. Notes in this conversation are not an "
-                "external submission. Only explicitly provided platform actions remain available."
+                "external submission. SAVE_ENQUIRY, if listed, can save an enquiry in this workspace; "
+                "only explicitly provided platform actions remain available."
                 if not external_available
                 else ""
             )
-            messages.insert(1 if messages and messages[0].get("role") == "system" else 0, {
+            # The compiled brain commonly has role=developer. Insert delivery
+            # rules after all leading platform/business instructions, not before
+            # that developer block where the old sales flow could override them.
+            policy_index = 0
+            while policy_index < len(messages) and messages[policy_index].get("role") in {"system", "developer"}:
+                policy_index += 1
+            messages.insert(policy_index, {
                 "role": "system",
                 "content": (
                     "Speech delivery contract: return only the complete words for the caller "
@@ -1508,6 +1586,18 @@ class LiveTurnOrchestrator:
                     "their native script; English business words may remain English. No JSON, "
                     "control fields, markdown, farewell or invented completed action. The server "
                     "owns closing and verifies tool results. Keep answering pending questions. "
+                    "Answer the caller's question before offering the next script step. "
+                    "If a minimum quantity, total price or other requested fact is not supplied, "
+                    "say it is unavailable rather than inventing it. Collect order details only "
+                    "after the caller chooses to proceed, not while they are still enquiring. "
+                    "When the caller says they are only enquiring or not ordering now, answer "
+                    "and stop: do not ask for name, address or permission to place an order. "
+                    "For an information question, give the answer without appending a purchase "
+                    "question, quantity request or sales pitch. If a requested minimum is absent "
+                    "from approved facts, explicitly say that minimum is not provided; do not "
+                    "substitute a question about the caller's budget. If a slow-down hint is "
+                    "present, the platform prepends that polite request; do not repeat or "
+                    "paraphrase it yourself. "
                     "Refuse harmful requests briefly; a refusal or safe alternative stands alone, "
                     "without a sales pitch or an invitation to continue the harmful topic."
                     + unavailable
@@ -1757,26 +1847,9 @@ class LiveTurnOrchestrator:
         """Load only this active tenant/agent's permitted in-call tool schemas."""
         if not getattr(ctx, "tenant_id", None) or not getattr(ctx, "agent_id", None):
             return []
-        from server.db.connection import get_session_factory
-        from server.services.tenant_tool_cache import get_active_app_names
-        from server.services.tool_schema_registry import get_tools_for_agent
+        from server.brain.capabilities import agent_available_tools
 
-        factory = get_session_factory()
-        if factory is None:
-            raise RuntimeError("Tenant tools are unavailable for this composed call")
-        active_apps = await get_active_app_names(str(ctx.tenant_id), factory)
-        tools = await get_tools_for_agent(
-            active_apps,
-            str(ctx.tenant_id),
-            str(ctx.agent_id),
-            factory,
-            None,
-        )
-        from server.brain.capabilities import order_confirmation_allowed
-
-        if order_confirmation_allowed(getattr(ctx, "compiled_brain_text", None)):
-            tools = [*tools[:31], CONFIRM_ORDER_TOOL]
-        return tools[:32]
+        return await agent_available_tools(str(ctx.agent_id), getattr(ctx, "compiled_brain_text", ""), tenant_id=str(ctx.tenant_id))
 
     async def _execute_composed_tools(
         self,
@@ -1836,12 +1909,16 @@ class LiveTurnOrchestrator:
                 # Platform-native: no Nango gateway, no external side effect.
                 # The proof record is what later allows confirmation speech,
                 # memory facts and a converted outcome.
-                result = record_order_confirmation(
-                    call_id=str(ctx.call_id),
-                    tenant_id=str(getattr(ctx, "tenant_id", "") or "") or None,
-                    agent_id=str(getattr(ctx, "agent_id", "") or "") or None,
-                    arguments=arguments,
-                )
+                pending_before = bool(getattr(ctx, "pending_tool_result", False))
+                ctx.pending_tool_result = True
+                try:
+                    result = await asyncio.to_thread(
+                        record_order_confirmation, call_id=str(ctx.call_id),
+                        tenant_id=str(getattr(ctx, "tenant_id", "") or "") or None,
+                        agent_id=str(getattr(ctx, "agent_id", "") or "") or None, arguments=arguments,
+                    )
+                finally:
+                    ctx.pending_tool_result = pending_before
                 if result.get("status") == "ok" and turn_state is not None:
                     turn_state["order_proof"] = True
                 log_pstn(
@@ -2021,6 +2098,13 @@ class LiveTurnOrchestrator:
             close_approved=close_approved,
             order_proof=order_proof,
         )
+        if user_text:
+            grounded = memory_guard.grounded_turn_operations([
+                {**op, "evidence": op.get("evidence") or op.get("value", "")}
+                for op in ops if isinstance(op, dict)
+            ], user_text)
+            guard_rejected.extend(["ungrounded_fact"] * (len(ops) - len(grounded)))
+            ops = grounded
         if guard_rejected:
             # Counts and codes only: memory text can contain caller words.
             log_pstn(
@@ -2034,8 +2118,10 @@ class LiveTurnOrchestrator:
         if correction_op and not skip_live_memory:
             ops.append(correction_op)
         if not skip_live_memory:
+            captured = {op.get("key") for op in ops if isinstance(op, dict)}
             for detail_op in caller_detail_memory_operations(user_text):
-                ops.append(detail_op)
+                if detail_op.get("key") not in captured:
+                    ops.append(detail_op)
         applied = 0
         merge_ms: int | None = None
         settings = get_settings()
@@ -2043,13 +2129,13 @@ class LiveTurnOrchestrator:
         if settings.working_memory_enabled and not skip_live_memory:
             try:
                 if projection is not None:
-                    memory_manager.record_projection(
+                    await asyncio.to_thread(memory_manager.record_projection,
                         call_id,
                         seq,
                         projection,
                         include_summary=not bool(rolling),
                     )
-                result = memory_manager.apply_proposals(
+                result = await asyncio.to_thread(memory_manager.apply_proposals,
                     call_id,
                     ops,
                     turn_seq=seq,

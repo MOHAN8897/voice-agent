@@ -541,8 +541,8 @@ async def _build_prewarm_bundle(
             from server.services.tool_schema_registry import get_tools_for_agent
             factory = get_session_factory()
             active_apps = await get_active_app_names(str(tenant_id), factory)
-            if active_apps:
-                tenant_tools = await get_tools_for_agent(active_apps, str(tenant_id), agent_id, factory, None)
+            tenant_tools = await get_tools_for_agent(active_apps, str(tenant_id), agent_id, factory, None,
+                                                    include_platform=True, compiled_text=compiled)
 
         await realtime_voice_manager.create(
             rt_key,

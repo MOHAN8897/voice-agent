@@ -22,7 +22,7 @@ CONFIRM_ORDER_TOOL: dict[str, Any] = {
         "Record an order the caller has explicitly confirmed. Collect the quantity, "
         "the caller's name and the full delivery address first; never guess a value. "
         "Do not tell the caller the order is confirmed until this returns status ok. "
-        "Set action_claimed=order_confirmed only after that success."
+        "The server carries the successful receipt; never invent a confirmation."
     ),
     "parameters": {
         "type": "object",
@@ -93,7 +93,13 @@ def order_proof_path(call_id: str):
 
 
 def claims_order_confirmation(text: str) -> bool:
-    return bool(_ORDER_CONFIRMATION_CLAIM.search(text or ""))
+    from server.call.action_proof import (
+        PROOF_APPOINTMENT_CONFIRMED,
+        PROOF_ORDER_CONFIRMED,
+        unproven_claim,
+    )
+
+    return unproven_claim(text, ()) in {PROOF_ORDER_CONFIRMED, PROOF_APPOINTMENT_CONFIRMED}
 
 
 def _clean(value: Any, limit: int) -> str:

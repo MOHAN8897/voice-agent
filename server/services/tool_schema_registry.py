@@ -1164,17 +1164,29 @@ def get_tool_names_for_tenant(active_app_names: list[str]) -> set[str]:
     return {name for tool in get_tools_for_tenant(active_app_names) for name in (tool["name"], tool["name"].lower())}
 
 
-async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: str | None, factory, configured_tools: set[str] | None = None) -> list[dict]:
+@lru_cache(maxsize=128)
+def default_action_timing(app_name: str) -> str:
+    """The catalog default is shared by discovery and execution authorization."""
+    from server.routes.integrations_catalog import CATALOG_INTEGRATIONS
+
+    app = _normalize(app_name)
+    return next((row["timing"] for row in CATALOG_INTEGRATIONS if _normalize(row["id"]) == app), "post_call")
+
+
+async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: str | None, factory, configured_tools: set[str] | None = None, *, include_platform: bool = False, compiled_text: str = "") -> list[dict]:
     """Apply agent-specific disable, timing and action rules before discovery."""
     if factory is None or not agent_id:
         return []
     import uuid
+
     from sqlalchemy import select
-    from server.db.models.entities import Agent
+
+    from server.db.models.entities import Agent, Tenant
     from server.db.models.integration_models import AgentIntegration
     async with factory() as session:
-        owned = (await session.execute(select(Agent.agent_id).where(
+        owned = (await session.execute(select(Agent.agent_id).join(Tenant, Agent.tenant_id == Tenant.tenant_id).where(
             Agent.tenant_id == uuid.UUID(tenant_id), Agent.agent_id == uuid.UUID(agent_id), Agent.status == "active",
+            Tenant.status == "active",
         ))).scalar_one_or_none()
         if owned is None:
             return []
@@ -1188,15 +1200,31 @@ async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: 
         if configured is not None and tool["name"] not in configured and app not in configured:
             continue
         matching = [r for r in rules if _normalize(r.app_name) == app]
+        if not matching and default_action_timing(app) != "in_call":
+            continue
         if matching and not any(r.enabled and r.timing_mode == "in_call" and
                                 (not r.action_whitelist or tool["name"] in {a.upper() for a in r.action_whitelist}) for r in matching):
             continue
         allowed.append(tool)
+    if include_platform:
+        from server.brain.capabilities import order_confirmation_allowed_from_script
+        from server.call.enquiry import SAVE_ENQUIRY_TOOL
+        from server.call.order_confirmation import CONFIRM_ORDER_TOOL
+
+        platform_tools = [SAVE_ENQUIRY_TOOL]
+        if order_confirmation_allowed_from_script(compiled_text):
+            platform_tools.append(CONFIRM_ORDER_TOOL)
+        allowed = [*allowed[:32-len(platform_tools)], *platform_tools]
     return allowed
 
 
 def tool_definition(tool_name: str) -> tuple[str, dict] | None:
     name = tool_name.upper()
+    if name in {"SAVE_ENQUIRY", "CONFIRM_ORDER"}:
+        from server.call.enquiry import SAVE_ENQUIRY_TOOL
+        from server.call.order_confirmation import CONFIRM_ORDER_TOOL
+
+        return "PLATFORM", SAVE_ENQUIRY_TOOL if name == "SAVE_ENQUIRY" else CONFIRM_ORDER_TOOL
     return next(((app, tool) for app, tools in _SCHEMAS.items() for tool in tools if tool["name"] == name), None)
 
 

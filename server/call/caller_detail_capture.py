@@ -172,7 +172,7 @@ def caller_detail_memory_operations(user_text: str) -> list[dict[str, Any]]:
         ops.append(
             {
                 "op": "append_context",
-                "value": "Caller shared contact details for the team to follow up.",
+                "value": "Caller provided contact details in this call.",
             }
         )
     return ops

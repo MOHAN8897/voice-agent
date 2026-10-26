@@ -15,7 +15,12 @@ from server.db.connection import get_session_factory
 from server.db.models.entities import Agent, Tenant
 from server.db.models.integration_models import AgentIntegration, TenantIntegration, ToolExecution
 from server.services.nango_service import nango_service
-from server.services.tool_schema_registry import _normalize, tool_definition, validate_tool_arguments
+from server.services.tool_schema_registry import (
+    _normalize,
+    default_action_timing,
+    tool_definition,
+    validate_tool_arguments,
+)
 from server.utils.logger import logger
 
 TOOL_TIMEOUT_SECONDS = 8.0
@@ -40,6 +45,8 @@ class VoxlyToolRouter:
                 tenant = await session.get(Tenant, tenant_uuid)
                 if agent is None or tenant is None or tenant.status != "active":
                     return False
+                if definition[0] == "PLATFORM":
+                    return timing == "in_call"
                 integrations = (await session.execute(select(TenantIntegration).where(
                     TenantIntegration.tenant_id == tenant_uuid, TenantIntegration.status == "ACTIVE",
                 ))).scalars().all()
@@ -55,7 +62,7 @@ class VoxlyToolRouter:
                                (not r.action_whitelist or tool_name.upper() in {a.upper() for a in r.action_whitelist})
                                for r in matching)
                 # Explicit agent setup is required for automatic after-call writes.
-                return timing == "in_call"
+                return timing == "in_call" and default_action_timing(app) == "in_call"
         except Exception as exc:
             logger.warning("[TOOL_ROUTER] Authorization unavailable: %s", type(exc).__name__)
             return False
@@ -72,6 +79,16 @@ class VoxlyToolRouter:
             return {"status": "error", "message": error}
         if not await self.authorized(tenant_id, agent_id, tool_name, timing=timing):
             return {"status": "error", "message": "This action is not enabled for this agent and workspace."}
+        if tool_name in {"SAVE_ENQUIRY", "CONFIRM_ORDER"}:
+            from server.call.enquiry import execute_platform_action
+
+            try:
+                return await asyncio.wait_for(execute_platform_action(
+                    tool_name, call_id=call_id, tenant_id=tenant_id, agent_id=agent_id, arguments=arguments,
+                ), timeout=TOOL_TIMEOUT_SECONDS)
+            except Exception as exc:  # noqa: BLE001 - tool failures must return an unconfirmed result to the call.
+                logger.warning("[TOOL_ROUTER] Platform action unconfirmed: %s", type(exc).__name__)
+                return {"status": "unknown", "message": "Saving could not be confirmed. Check the existing request before retrying."}
         action_type = self._get_action_metadata(tool_name)["type"]
         execution_id = None
         if action_type == "write":

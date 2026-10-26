@@ -162,8 +162,8 @@ async def test_external_tool_sets_and_clears_pending_state(monkeypatch, cancel):
 
     monkeypatch.setattr("server.services.tool_router.tool_router.route_and_execute", execute)
     kwargs = {
-        "ctx": ctx, "messages": [], "allowed_tools": {"SAVE_ENQUIRY"},
-        "tool_calls": [{"id": "request-1", "function": {"name": "SAVE_ENQUIRY", "arguments": "{}"}}],
+        "ctx": ctx, "messages": [], "allowed_tools": {"HUBSPOT_CREATE_CONTACT"},
+        "tool_calls": [{"id": "request-1", "function": {"name": "HUBSPOT_CREATE_CONTACT", "arguments": "{}"}}],
     }
     if cancel:
         with pytest.raises(asyncio.CancelledError):
@@ -172,6 +172,19 @@ async def test_external_tool_sets_and_clears_pending_state(monkeypatch, cancel):
         await live_turn_orchestrator._execute_composed_tools(**kwargs)
     assert observed == [True], "close gate cannot see the running tool"
     assert ctx.pending_tool_result is False
+
+
+@pytest.mark.asyncio
+async def test_incomplete_address_waits_without_speaking_or_hanging_up(monkeypatch):
+    class FragmentAdapter:
+        uses_plain_live_speech = True
+
+        async def stream_live_turn(self, **_kwargs):
+            yield {"done": True, "text": json.dumps({"decision": "continue", "wait_for_caller": True, "memory_operations": []})}
+
+    result = await run_voice_simulation(monkeypatch, "te-IN", "మాది", False, adapter=FragmentAdapter())
+    assert result["spoken"] == []
+    assert result["hangup_commands"] == 0
 
 
 async def run_voice_simulation(monkeypatch, language, user, closing, *, adapter=None, retry_attempt=False):

@@ -1892,9 +1892,10 @@ class PstnRealtimeVoiceLoop:
                 )
                 _sf = _get_sf()
                 active_apps = await get_active_app_names(str(self._tenant_id), _sf)
-                if active_apps:
+                if _sf:
                     tenant_tool_schemas = await get_tools_for_agent(
-                        active_apps, str(self._tenant_id), self._agent_id, _sf, self._configured_agent_tools
+                        active_apps, str(self._tenant_id), self._agent_id, _sf, self._configured_agent_tools,
+                        include_platform=True, compiled_text=self._compiled_brain(),
                     )
                     # Exact tool names from registry — no guesswork suffixes
                     self._agent_tools = {tool["name"] for tool in tenant_tool_schemas}

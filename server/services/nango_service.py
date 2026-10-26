@@ -245,7 +245,9 @@ class NangoService:
 
         connections: list[dict[str, Any]] = []
         async with httpx.AsyncClient(timeout=4.0) as client:
-            for page in range(1, 11):
+            # The gateway uses zero-based pages. Starting at 1 skipped the
+            # first 100 connections and rejected successful OAuth activation.
+            for page in range(10):
                 response = await client.get(
                     f"{self.base_url}/connections",
                     headers={"Authorization": f"Bearer {env_key}", "Accept": "application/json"},

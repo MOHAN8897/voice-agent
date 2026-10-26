@@ -155,6 +155,9 @@ class CompiledBrainService:
             language=lang,
         )
         compiled_text = apply_call_end_policy(compiled_text, lang, closing_policy)
+        from server.brain.capabilities import compile_agent_capabilities
+
+        compiled_text = await compile_agent_capabilities(compiled_text, agent_id)
         self._reject_contradictory_brain(compiled_text, lang, agent_id=agent_id, status_code=409)
         checksum = checksum_instructions(compiled_text)
         compiled_version = f"cb_v{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:6]}"
@@ -288,6 +291,9 @@ class CompiledBrainService:
         closing_policy = policy_from_sections(source_sections, lang)
         report["call_end_policy"] = closing_policy
         compiled_text = apply_call_end_policy(compiled_text, lang, closing_policy)
+        from server.brain.capabilities import compile_agent_capabilities
+
+        compiled_text = await compile_agent_capabilities(compiled_text, agent_id)
         self._reject_contradictory_brain(compiled_text, lang, agent_id=agent_id, status_code=422)
         published = {
             "version_id": f"bb_v{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid.uuid4().hex[:12]}",

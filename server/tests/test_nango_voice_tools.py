@@ -268,6 +268,9 @@ async def test_nango_webhook_updates_tenant_integrations(client, monkeypatch):
 # ---------------------------------------------------------------------------
 @pytest.mark.asyncio
 async def test_realtime_voice_loop_auto_discovers_tenant_tools(db, monkeypatch):
+    from server.tests.test_integration_security_hardening import enable_live_slack
+
+    await enable_live_slack(db)
     from server.realtime.testing import FakeRealtimeVoiceAdapter
     from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
     from server.services import tenant_tool_cache

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Calendar, Database, MessageSquare, Mail, CheckCircle2, 
   ExternalLink, Trash2, RefreshCw, Sliders, ShieldCheck,
@@ -102,6 +102,10 @@ export function IntegrationsModule() {
   const [requestSubmitted, setRequestSubmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [disconnectApp, setDisconnectApp] = useState(null);
+  const connectUiRef = useRef(null);
+  const pendingAuthorizationRef = useRef(null);
+
+  useEffect(() => () => connectUiRef.current?.close(), []);
 
   const fetchIntegrations = async () => {
     try {
@@ -161,7 +165,36 @@ export function IntegrationsModule() {
     setConnectionError(null);
     const alias = accountAlias.trim();
     const name = connectModalApp?.name || appId;
+    const activate = async (connectionId) => {
+      try {
+        await api.request('POST', `/api/integrations/${appId}/activate`, {
+          connection_id: connectionId,
+          account_identifier: alias || undefined,
+        });
+      } catch (error) {
+        // Permanent rejection needs fresh authorization. Network/server faults
+        // keep the existing authorization available for a verification retry.
+        if ([400, 401, 403, 404, 409, 422].includes(error?.status)) {
+          pendingAuthorizationRef.current = null;
+        }
+        throw error;
+      }
+      pendingAuthorizationRef.current = null;
+      triggerConfetti();
+      setToastMessage(`Connected ${name} successfully!`);
+      setTimeout(() => setToastMessage(null), 4000);
+      setConnectModalApp(null);
+      await fetchIntegrations();
+    };
     try {
+      if (pendingAuthorizationRef.current?.appId === appId) {
+        try {
+          await activate(pendingAuthorizationRef.current.connectionId);
+        } finally {
+          setConnecting(null);
+        }
+        return;
+      }
       const data = await api.request('POST', `/api/integrations/${appId}/connect`, {
         base_redirect_uri: `${window.location.origin}/api/integrations/callback`,
         account_identifier: alias || undefined,
@@ -172,30 +205,32 @@ export function IntegrationsModule() {
       let activating = false;
       let completed = false;
       const nango = new Nango({ connectSessionToken: data.session_token });
-      nango.openConnectUI({
+      connectUiRef.current?.close();
+      connectUiRef.current = nango.openConnectUI({
         sessionToken: data.session_token,
+        detectClosedAuthWindow: true,
         onEvent: async (event) => {
           if (event.type === 'connect' && !activating && !completed) {
             activating = true;
             try {
               const connectionId = event.payload?.connectionId;
               if (!connectionId) throw new Error('Authorization returned no connection. Please retry.');
-              await api.request('POST', `/api/integrations/${appId}/activate`, {
-                connection_id: connectionId,
-                account_identifier: alias || undefined,
-              });
+              pendingAuthorizationRef.current = { appId, connectionId };
+              await activate(connectionId);
               completed = true;
-              triggerConfetti();
-              setToastMessage(`Connected ${name} successfully!`);
-              setTimeout(() => setToastMessage(null), 4000);
-              setConnectModalApp(null);
-              await fetchIntegrations();
             } catch {
               setConnectionError('Connection could not be verified. Please retry or contact your administrator.');
             } finally {
+              connectUiRef.current?.close();
+              connectUiRef.current = null;
               activating = false;
               setConnecting(null);
             }
+          } else if (event.type === 'error') {
+            setConnectionError('Authorization did not complete. Please retry the secure connection.');
+            connectUiRef.current?.close();
+            connectUiRef.current = null;
+            setConnecting(null);
           } else if (event.type === 'close' && !activating) {
             setConnecting(null);
           }

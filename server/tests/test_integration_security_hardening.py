@@ -137,7 +137,17 @@ async def test_failed_auth_and_disconnect_do_not_authorize_foreign_connections(c
     revoke.assert_not_awaited()
 
 
+async def enable_live_slack(factory):
+    # Slack's catalog default is post-call. These action-execution tests exercise
+    # an agent whose owner explicitly enabled this particular live write.
+    async with factory() as session:
+        session.add(AgentIntegration(tenant_id=TID, agent_id=AID, app_name="SLACK", enabled=True,
+                                    timing_mode="in_call", action_whitelist=["SLACK_SEND_MESSAGE"]))
+        await session.commit()
+
+
 async def test_router_ownership_disable_and_durable_idempotency(db, monkeypatch):
+    await enable_live_slack(db)
     router = router_module.VoxlyToolRouter()
     execute = AsyncMock(return_value={"status": "success", "message_id": "real-id"})
     monkeypatch.setattr(router.nango, "execute_in_call_tool", execute)
@@ -151,7 +161,10 @@ async def test_router_ownership_disable_and_durable_idempotency(db, monkeypatch)
     execute.assert_awaited_once()
     async with db() as session:
         assert (await session.execute(select(ToolExecution))).scalar_one().status == "succeeded"
-        session.add(AgentIntegration(tenant_id=TID, agent_id=AID, app_name="SLACK", enabled=False))
+        rule = (await session.execute(select(AgentIntegration).where(
+            AgentIntegration.tenant_id == TID, AgentIntegration.agent_id == AID, AgentIntegration.app_name == "SLACK",
+        ))).scalar_one()
+        rule.enabled = False
         await session.commit()
     args["arguments"]["text"] = "Another message"
     assert (await router.route_and_execute(**args))["status"] == "error"
@@ -159,6 +172,7 @@ async def test_router_ownership_disable_and_durable_idempotency(db, monkeypatch)
 
 
 async def test_timeout_and_storage_failure_do_not_repeat_writes(db, monkeypatch):
+    await enable_live_slack(db)
     router = router_module.VoxlyToolRouter()
     execute = AsyncMock(side_effect=asyncio.TimeoutError)
     monkeypatch.setattr(router.nango, "execute_in_call_tool", execute)
@@ -180,6 +194,7 @@ async def test_timeout_and_storage_failure_do_not_repeat_writes(db, monkeypatch)
 
 
 async def test_external_error_is_not_a_successful_audit(db, monkeypatch):
+    await enable_live_slack(db)
     router = router_module.VoxlyToolRouter()
     monkeypatch.setattr(router.nango, "execute_in_call_tool", AsyncMock(return_value={"status": "error"}))
     await router.route_and_execute(str(TID), str(AID), "call-error", "SLACK_SEND_MESSAGE", {"channel": "C", "text": "test"})
@@ -197,6 +212,31 @@ async def test_exact_provider_connection_and_owner_are_required(monkeypatch):
     assert not await service.verify_or_sync_connection(str(TID), "GMAIL", "ours")
     monkeypatch.setattr(service, "get_tenant_connections", AsyncMock(side_effect=httpx.ConnectError("offline")))
     assert not await service.verify_or_sync_connection(str(TID), "SLACK", "ours")
+
+
+async def test_connection_discovery_starts_at_zero_and_preserves_tenant_filter(monkeypatch):
+    requested_pages = []
+    original_client = httpx.AsyncClient
+
+    def transport(request):
+        assert request.url.params["tags[end_user_id]"] == str(TID)
+        page = int(request.url.params["page"])
+        requested_pages.append(page)
+        if page == 0:
+            rows = [{"provider_config_key": "slack", "connection_id": f"owned-{i}",
+                     "tags": {"end_user_id": str(TID)}} for i in range(99)]
+            rows.append({"provider_config_key": "slack", "connection_id": "foreign", "tags": {"end_user_id": str(OTHER)}})
+        else:
+            rows = [{"provider_config_key": "google-calendar", "connection_id": "last-page", "tags": {"end_user_id": str(TID)}}]
+        return httpx.Response(200, json={"connections": rows})
+
+    monkeypatch.setattr(httpx, "AsyncClient", lambda **kwargs: original_client(transport=httpx.MockTransport(transport), **kwargs))
+    service = NangoService(secret_key="test-secret")
+    rows = await service.get_tenant_connections(str(TID))
+    assert requested_pages == [0, 1]
+    assert len(rows) == 100
+    assert not any(row["connection_id"] == "foreign" for row in rows)
+    assert rows[-1]["provider_config_key"] == "google-calendar"
 
 
 @pytest.mark.parametrize("payload", [{}, {"calendars": {"primary": {"errors": [{"reason": "forbidden"}]}}},

@@ -114,8 +114,8 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
             block = spoken_pack_for(language, include_brevity=False, core_only=True)
         elif title == "CALL CAPABILITIES":
             from server.brain.capabilities import render_capabilities_section
-
-            block = render_capabilities_section(raw)
+            old = raw[match.start():end]
+            block = old if "capabilities_source: runtime_tools_v1" in old else render_capabilities_section(raw)
         elif title == "CALL END POLICY":
             old = raw[match.start():end]
             from server.call.call_end_policy import policy_from_brain

@@ -117,6 +117,8 @@ def proof_for_tool_result(tool_name: str, result: Any) -> str | None:
         return None
     if name == "CONFIRM_ORDER":
         return PROOF_ORDER_CONFIRMED
+    if name == "SAVE_ENQUIRY":
+        return PROOF_ENQUIRY_SAVED
     if name.endswith(_ENQUIRY_SUFFIXES):
         return PROOF_ENQUIRY_SAVED
     if name.endswith(_APPOINTMENT_SUFFIXES):
@@ -149,6 +151,7 @@ def claim_has_proof(claim: str | None, proofs: Iterable[str]) -> bool:
 _ORDER_CLAIM = re.compile(
     r"\b(?:order|purchase)\b[^.!?]{0,60}\b(?:confirmed|placed|done|complete[d]?)\b|"
     r"\b(?:confirmed|placed)\b[^.!?]{0,40}\b(?:order|purchase)\b|"
+    r"\b(?:order|purchase)\b[^.!?]{0,60}\bconfirm(?:ing)?\b[^.!?]{0,24}(?:చేస్తున్న|అయింది|చేశా)|"
     r"(?:ఆర్డర్|ఆర్డరు)[^.!?]{0,40}(?:నిర్ధార|పూర్తి)|"
     r"(?:ऑर्डर)[^.!?]{0,40}(?:पुष्टि|पूरा)|"
     r"(?:ஆர்டர்)[^.!?]{0,40}(?:உறுதி|முடிந்த)|"
@@ -158,8 +161,8 @@ _ORDER_CLAIM = re.compile(
 )
 _APPOINTMENT_CLAIM = re.compile(
     r"\b(?:appointment|booking|slot|visit|meeting|reservation)\b[^.!?]{0,60}"
-    r"\b(?:confirmed|booked|scheduled|reserved|fixed)\b|"
-    r"\b(?:confirmed|booked|scheduled|reserved)\b[^.!?]{0,40}"
+    r"\b(?:confirmed|booked|placed|scheduled|reserved|fixed)\b|"
+    r"\b(?:confirmed|booked|placed|scheduled|reserved)\b[^.!?]{0,40}"
     r"\b(?:appointment|booking|slot|visit|meeting|reservation)\b|"
     r"(?:అపాయింట్‌మెంట్|బుకింగ్|విజిట్)[^.!?]{0,40}(?:నిర్ధార|బుక్|షెడ్యూల్)|"
     r"(?:अपॉइंटमेंट|बुकिंग|विज़िट)[^.!?]{0,40}(?:पुष्टि|बुक|निर्धारित)|"
@@ -326,6 +329,7 @@ def unavailable_action_line_for(language: str | None) -> str:
 def replace_unavailable_action_promises(
     text: str, language: str | None, *, unconfirmed: bool = False,
     requested_unavailable: bool = False,
+    saved_request: bool = False,
 ) -> str:
     """No connected gateway means no submission promise, including future tense.
 
@@ -337,7 +341,7 @@ def replace_unavailable_action_promises(
     Retain separate price facts, but never forward free-form model promises or
     retry advice after an uncertain write.
     """
-    if unconfirmed or requested_unavailable:
+    if unconfirmed or (requested_unavailable and not saved_request):
         facts = [
             sentence for sentence in _SENTENCE_SPLIT.split((text or "").strip())
             if _FACTUAL_PRICE.search(sentence)
@@ -351,6 +355,9 @@ def replace_unavailable_action_promises(
     output: list[str] = []
     replaced = False
     for sentence in _SENTENCE_SPLIT.split((text or "").strip()):
+        if saved_request and claims_recorded_request(sentence) and not _EXTERNAL_TARGET.search(sentence):
+            output.append(sentence)
+            continue
         unsupported = False
         target_seen = False
         for clause in re.split(r"[,;]|\b(?:but|however)\b|కానీ|लेकिन|ஆனா|ಆದರೆ", sentence):

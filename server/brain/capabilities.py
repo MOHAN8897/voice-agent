@@ -32,6 +32,7 @@ _ORDER_TAKING = re.compile(
     r"\b(?:take|taking|accept|accepting|place|placing|record|recording|handle|process)"
     r"\b[^.\n]{0,40}\borders?\b|"
     r"\b(?:order|purchase)\b[^.\n]{0,40}\b(?:quantity|delivery address|shipping address)\b|"
+    r"\bconfirm\s+(?:the\s+|an?\s+)?order\b|"
     r"ఆర్డర్\s*(?:తీసుకో|తీసుకోండి|పెట్టుకో)|"
     r"ऑर्डर\s*(?:ले|लें|लूँ|बुक कर)|"
     r"ஆர்டர்\s*(?:எடு|எடுங்கள்|பெறு)|"
@@ -107,6 +108,56 @@ def render_capabilities_section(compiled_text: str | None) -> str:
         f"{CAPABILITIES_HEADER}\n"
         f"order_confirmation: {'allowed' if allowed else 'not_allowed'}"
     )
+
+
+def apply_available_tools(text: str, tools: list[dict]) -> str:
+    """Replace platform permissions with this agent/session's executable actions."""
+    names = {str(tool.get("name") or "").upper() for tool in tools}
+    rows = [CAPABILITIES_HEADER, "capabilities_source: runtime_tools_v1",
+            f"order_confirmation: {'allowed' if 'CONFIRM_ORDER' in names else 'not_allowed'}",
+            "Business workflow steps are conditional on these actions. Collecting details is not completion; success requires a successful server result.",
+            "CONFIRM_ORDER, when listed, records the order in this call's platform ledger; it does not prove payment, external fulfilment or an email was sent.",
+            "A caller-requested callback can be saved by the platform after required details and timing are collected. It does not guarantee an automatically scheduled call."]
+    if not tools:
+        rows.append("No in-call action tools are available. Answer questions without promising a submission, booking or order.")
+    for tool in tools[:32]:
+        name = str(tool.get("name") or "")
+        required = (tool.get("parameters") or {}).get("required") or []
+        rows.append(f"- {name}; required: {', '.join(required) or 'none'}")
+    block = "\n".join(rows)
+    pattern = re.compile(r"(?ms)^--- CALL CAPABILITIES ---[ \t]*\n.*?(?=^--- (?:PLATFORM CALL RULES|CALL END POLICY|STATIC OUTPUT RULES) ---|\Z)")
+    if pattern.search(text):
+        return pattern.sub(lambda _: block + "\n\n", text, count=1)
+    return text.rstrip() + "\n\n" + block
+
+
+async def agent_available_tools(agent_id: str, compiled_text: str, *, tenant_id: str | None = None) -> list[dict]:
+    """Use the same tenant/agent permission filters as live action execution."""
+    from server.brain.agent_service import agent_service
+    from server.db.connection import get_session_factory
+    from server.services.tenant_tool_cache import get_active_app_names
+    from server.services.tool_schema_registry import get_tools_for_agent
+
+    factory = get_session_factory()
+    if not tenant_id:
+        try:
+            agent = await agent_service.get_agent(agent_id)
+            tenant_id = agent.get("tenant_id")
+        except (KeyError, ValueError):
+            return []
+    if not factory or not tenant_id:
+        return []
+    active = await get_active_app_names(str(tenant_id), factory)
+    return (await get_tools_for_agent(active, str(tenant_id), agent_id, factory,
+                                     include_platform=True, compiled_text=compiled_text))[:32]
+
+
+async def compile_agent_capabilities(text: str, agent_id: str) -> str:
+    from server.db.connection import get_session_factory
+
+    if get_session_factory() is None:
+        return text
+    return apply_available_tools(text, await agent_available_tools(agent_id, text))
 
 
 def capabilities_section_present(compiled_text: str | None) -> bool:

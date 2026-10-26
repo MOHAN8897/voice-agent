@@ -44,6 +44,9 @@ async def resolve_locked_compiled_brain(
             or meta.get("agentScript")
         ):
             label = f"session-v{version}" if version else "session"
+            from server.brain.capabilities import compile_agent_capabilities
+
+            brain = await compile_agent_capabilities(brain, agent_id)
             return label, brain, classify_brain_source(label)
 
     from server.brain.compiled_brain_service import compiled_brain_service
@@ -52,6 +55,9 @@ async def resolve_locked_compiled_brain(
         snap = await compiled_brain_service.get_active_for_agent(agent_id)
         text = (snap.get("compiled_text") or "").strip()
         if text:
+            from server.brain.capabilities import compile_agent_capabilities
+
+            text = await compile_agent_capabilities(text, agent_id)
             version = str(snap.get("compiled_version") or "")
             return version or None, text, classify_brain_source(version)
     except Exception as e:

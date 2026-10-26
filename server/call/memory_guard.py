@@ -9,6 +9,29 @@ from __future__ import annotations
 import re
 from typing import Any
 
+
+def grounded_turn_operations(raw: Any, caller_text: str) -> list[dict[str, str]]:
+    """Accept only bounded facts quoted from this caller turn, never instructions."""
+    from server.call.close_decision import evidence_matches
+
+    result = []
+    for item in raw[:8] if isinstance(raw, list) else []:
+        if not isinstance(item, dict) or item.get("op") not in {"set_fact", "set_preference"}:
+            continue
+        key = str(item.get("key") or "").strip()
+        value = str(item.get("value") or "").strip()
+        quote = str(item.get("evidence") or "").strip()
+        if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", key):
+            continue
+        if re.search(r"(?:^|_)(?:password|passcode|otp|pin|cvv|card_number|instruction|system_prompt)(?:_|$)", key):
+            continue
+        if not value or len(value) > 400 or not quote or not evidence_matches(quote, caller_text):
+            continue
+        if not evidence_matches(value, quote):
+            continue
+        result.append({"op": item["op"], "key": key, "value": value})
+    return sanitize_model_operations(result)[0]
+
 # Judgment about this call's intent/outcome. Allowed only on a gate-approved
 # close turn, where the server itself established the conclusion.
 _CALL_CONCLUSION_KEY = re.compile(

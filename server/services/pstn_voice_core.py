@@ -1161,6 +1161,13 @@ class PstnVoiceLoop:
             return False
         if _STRONG_HALT_RE.fullmatch(cleaned):
             return True
+        prior = (self._current_turn_transcript or "").casefold().rstrip(" .!?।")
+        current = cleaned.casefold().rstrip(" .!?।")
+        if not _WEAK_NEGATION_RE.fullmatch(cleaned) and prior and current in prior:
+            # STT repeats/refines the same request while its reply is buffered.
+            # Only new caller information should restart that generation.
+            self._think_partial_started_at = 0.0
+            return False
         now = time.monotonic()
         negation = bool(_WEAK_NEGATION_RE.fullmatch(cleaned))
         hold = PSTN_NEGATION_HOLD_S if negation else PSTN_THINK_CANCEL_HOLD_S
@@ -2120,12 +2127,22 @@ class PstnVoiceLoop:
                             generation_id=self._interrupted_generation or self.current_generation_id,
                         )
                         self._awaiting_barge_final = False
+                        self._awaiting_barge_final_at = 0.0
                         self._last_barge_partial = None
                         if not self._turn_busy:
+                            # The final may have been rejected as echo. The old
+                            # generation already ended, so no turn-finally remains
+                            # to release INTERRUPTING. Later caller speech must
+                            # still reach normal listening/coalescing.
+                            if self._phase == PHASE_INTERRUPTING:
+                                self._set_phase(PHASE_LISTENING)
                             pending = self._pending_transcript
                             self._pending_transcript = None
                             if pending:
                                 self._launch_turn(pending)
+                            else:
+                                # Rejected echo is not a caller turn to debounce.
+                                self._barge_epoch = 0.0
                     elif self._phase == PHASE_THINKING and self._turn_busy and not self._agent_audio_playing():
                         if self._should_think_continue_final(text):
                             await self._think_cancel(text, immediate=True)
@@ -2249,6 +2266,7 @@ class PstnVoiceLoop:
         5 cancel LLM
         6 preserve caller partial for final timeout fallback
         """
+        was_intro = self._intro_phase
         now = time.monotonic()
         self._reset_ducking()
         self._last_barge_at = now
@@ -2310,6 +2328,10 @@ class PstnVoiceLoop:
             if ctx:
                 ctx.barge_in_flight = True
                 ctx.agent_hangup_armed = False
+                if not was_intro:
+                    from server.services.user_turn_hints import note_caller_interruption
+
+                    note_caller_interruption(ctx)
         # 2–5) interrupt_tts clears playback, stops TTS, cancels LLM.
         # Provider clear runs once via _on_barge before interrupt to match Telnyx order:
         # clear remote queue then stop local generation.

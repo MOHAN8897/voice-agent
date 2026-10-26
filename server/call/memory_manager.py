@@ -130,7 +130,7 @@ class MemoryManager:
 
     def snapshot_at_turn(self, call_id: str, turn_seq: int) -> dict[str, Any]:
         snap = empty_snapshot()
-        for event in self.list_events(call_id):
+        for event in sorted(self.list_events(call_id), key=lambda e: int(e.get("turn_seq") or 0)):
             if int(event.get("turn_seq") or 0) > turn_seq:
                 break
             if event.get("applied"):
@@ -214,19 +214,38 @@ class MemoryManager:
                 loaded = self._read_snapshot_file(call_id)
                 if loaded:
                     snap = loaded
+            # Background merges can finish after a later caller correction.
+            # Replay persisted events too, so a process restart preserves ordering.
+            events = self._events.get(call_id)
+            if events is None:
+                events = self._read_events_file(call_id)
+                self._events[call_id] = events
+            latest: dict[tuple[str, str], int] = {}
+            for previous in events:
+                for operation in previous.get("operations") or []:
+                    field = (operation.get("op", ""), operation.get("key", ""))
+                    latest[field] = max(latest.get(field, 0), int(previous.get("turn_seq") or 0))
+            if turn_seq > 0:
+                accepted = [op for op in accepted
+                            if latest.get((op["op"], op.get("key", "")), 0) <= turn_seq]
+            event["operations"] = accepted
+            event["applied"] = bool(accepted)
             if accepted:
                 self._apply_ops_to(snap, accepted)
+            # Serialize event and snapshot writes with the state update. Previously
+            # an older merge could replace a newer snapshot outside the lock.
+            self._append_event(call_id, event)
+            self._write_snapshot(call_id, snap)
             self._state[call_id] = snap
             self._events.setdefault(call_id, []).append(event)
+            # This method runs in the memory worker. Serialize the optional cache
+            # write too: an older worker must not publish a stale cold-start view.
+            try:
+                from server.call.redis_memory_cache import set_snapshot as redis_set_snapshot
 
-        self._append_event(call_id, event)
-        self._write_snapshot(call_id, snap)
-        try:
-            from server.call.redis_memory_cache import set_snapshot as redis_set_snapshot
-
-            redis_set_snapshot(call_id, snap)
-        except Exception:
-            pass
+                redis_set_snapshot(call_id, snap)
+            except Exception:
+                pass
         if errors:
             logger.info(f"[MEMORY] rejected ops call={call_id} turn={turn_seq} errors={errors[:4]}")
         return {"snapshot": _copy_snapshot(snap), "event": event}
@@ -262,7 +281,8 @@ class MemoryManager:
                 return False, {}, f"invalid key: {key!r}"
             if not value:
                 return False, {}, f"{op} requires a non-empty value"
-            return True, {"op": op, "key": key, "value": value[:_VALUE_MAX]}, None
+            cap = 400 if "address" in key.lower() else _VALUE_MAX
+            return True, {"op": op, "key": key, "value": value[:cap]}, None
         value = str(raw.get("value") if raw.get("value") is not None else "").strip()
         if not value:
             return False, {}, f"{op} requires a non-empty value"
@@ -309,10 +329,13 @@ class MemoryManager:
         return _copy_snapshot(data if isinstance(data, dict) else empty_snapshot())
 
     def _write_snapshot(self, call_id: str, snapshot: dict[str, Any]) -> None:
-        self.snapshot_path(call_id).write_text(
+        target = self.snapshot_path(call_id)
+        temporary = target.with_suffix(".json.tmp")
+        temporary.write_text(
             json.dumps(snapshot, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+        temporary.replace(target)
 
     def _append_event(self, call_id: str, event: dict[str, Any]) -> None:
         with self.events_path(call_id).open("a", encoding="utf-8") as fh:

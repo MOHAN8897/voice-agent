@@ -1,0 +1,88 @@
+{
+  "source_call": "92064910-e19a-46e5-ba19-420cd8041154",
+  "source_brain_version": "cb_v20261026_75a9d8a8327f",
+  "source_brain_sha256": "5e27d19561e2c74ef2f6e2fb8eb34c9d0cea0a0e2c24edccd6d7963769aff6b8",
+  "llm": {
+    "provider": "sarvam",
+    "model": "sarvam-105b-conversations"
+  },
+  "tts_invocations": 0,
+  "pstn_calls": 0,
+  "attempted_actions": [],
+  "simulations": [
+    {
+      "scenario": "filtered echo interruption then real price question",
+      "turns": [
+        {
+          "caller": "ఒక్కో visiting card ధర ఎంత అండి?",
+          "response": "ఒక్కో visiting card ధర twenty five rupees అండి. ఇవి post ద్వారా delivery అవుతాయి. మరి order ఏమైనా place చేస్తారా అండి?",
+          "close": false,
+          "wait_for_caller": false,
+          "elapsed_s": 2.453,
+          "finish_reason": "stop",
+          "retry_count": 0
+        }
+      ],
+      "passed": true
+    },
+    {
+      "scenario": "three interruptions, unknown minimum budget, then payment question",
+      "turns": [
+        {
+          "caller": "మినిమం ఎంత బడ్జెట్ ఉంటుంది? వివరాలు చెప్పండి, ఇప్పుడే order చేయట్లేదు.",
+          "response": "కొంచెం నెమ్మదిగా చెప్తారా అండి? మా దగ్గర minimum budget details ప్రస్తుతం అందుబాటులో లేవండి. మీరు ఇప్పుడే order చేయట్లేదు అన్నారు కదా, సరేనండి, ఎప్పుడు కావాలన్నా మమ్మల్ని సంప్రదించవచ్చు. ఇంకేమైనా వివరాలు కావాలా అండి?",
+          "close": false,
+          "wait_for_caller": false,
+          "elapsed_s": 1.703,
+          "finish_reason": "stop",
+          "retry_count": 0
+        },
+        {
+          "caller": "Payment ఎలా చేయొచ్చు అండి?",
+          "response": "మా దగ్గర cards ద్వారా payment చేయొచ్చు, అలాగే cash on delivery కూడా available ఉంది అండి. మీరు order తో ముందుకు వెళ్లాలనుకుంటున్నారా?",
+          "close": false,
+          "wait_for_caller": false,
+          "elapsed_s": 1.781,
+          "finish_reason": "stop",
+          "retry_count": 0
+        }
+      ],
+      "passed": true,
+      "manual_review": "Unknown minimum must be admitted, not invented; no order/contact collection during enquiry."
+    },
+    {
+      "scenario": "cancelled live request then availability check and thanks-plus-question",
+      "turns": [
+        {
+          "caller": "హలో మీరు ఉన్నారా అండి? చెప్పండి.",
+          "response": "నేను line లోనే ఉన్నాను అండి. ఒక్కో visiting card ధర twenty five rupees ఉంటుంది. మీకు ఎన్ని కావాలో చెప్తారా?",
+          "close": false,
+          "wait_for_caller": false,
+          "elapsed_s": 1.75,
+          "finish_reason": "stop",
+          "retry_count": 0
+        },
+        {
+          "caller": "థాంక్స్, కానీ ఇంకో ప్రశ్న ఉంది. Delivery ఎలా చేస్తారు?",
+          "response": "మా visiting cards అన్నీ post ద్వారా deliver చేస్తామండి. మరి మీరు order place చేద్దామనుకుంటున్నారా?",
+          "close": false,
+          "wait_for_caller": false,
+          "elapsed_s": 1.609,
+          "finish_reason": "stop",
+          "retry_count": 0
+        },
+        {
+          "caller": "అంతే అంతే థ్యాంక్ యూ",
+          "response": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+          "close": true,
+          "wait_for_caller": false,
+          "elapsed_s": 2.797,
+          "finish_reason": "stop",
+          "retry_count": 1
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "passed": true
+}

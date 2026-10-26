@@ -41,6 +41,8 @@ class CallContext:
     language_mismatch_handled: bool = False
     barge_in_flight: bool = False
     slow_down_nudged: bool = False
+    interruption_times: list[float] = field(default_factory=list, repr=False)
+    interruption_nudge_pending: bool = False
     last_stt_partial_at: float = 0.0
     max_duration_sec: int = 900
     call_end_policy: dict[str, Any] | None = None
