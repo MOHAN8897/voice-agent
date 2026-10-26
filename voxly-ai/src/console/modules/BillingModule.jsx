@@ -471,28 +471,28 @@ export function BillingModule() {
                 <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
                   <span className="block text-[11px] font-semibold text-[#0F0E17]">Economical (Low)</span>
                   <span className="text-xs font-mono font-bold text-[#6344E7]">
-                    ₹{Number(serverWallet?.pstnLowRateInrPerMin ?? 4.70).toFixed(2)}/min
+                    ₹{Number(serverWallet?.pstnLowRateInrPerMin ?? serverWallet?.tierRates?.low?.inrPerMin ?? 4.70).toFixed(2)}/min
                   </span>{' '}
                   <span className="text-[10px] text-[#8C879A] font-mono">
-                    (${Number(serverWallet?.pstnLowRateUsdPerMin ?? 0.05).toFixed(3)}/min)
+                    (${Number(serverWallet?.pstnLowRateUsdPerMin ?? serverWallet?.tierRates?.low?.usdPerMin ?? 0.05).toFixed(3)}/min)
                   </span>
                 </div>
                 <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
                   <span className="block text-[11px] font-semibold text-[#0F0E17]">Standard Regional</span>
                   <span className="text-xs font-mono font-bold text-[#6344E7]">
-                    ₹{Number(serverWallet?.pstnMediumRateInrPerMin ?? 8.46).toFixed(2)}/min
+                    ₹{Number(serverWallet?.pstnMediumRateInrPerMin ?? serverWallet?.tierRates?.medium?.inrPerMin ?? 8.46).toFixed(2)}/min
                   </span>{' '}
                   <span className="text-[10px] text-[#8C879A] font-mono">
-                    (${Number(serverWallet?.pstnMediumRateUsdPerMin ?? 0.09).toFixed(3)}/min)
+                    (${Number(serverWallet?.pstnMediumRateUsdPerMin ?? serverWallet?.tierRates?.medium?.usdPerMin ?? 0.09).toFixed(3)}/min)
                   </span>
                 </div>
                 <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
                   <span className="block text-[11px] font-semibold text-[#0F0E17]">Flagship Live (Premium)</span>
                   <span className="text-xs font-mono font-bold text-[#6344E7]">
-                    ₹{Number(serverWallet?.pstnPremiumRateInrPerMin ?? 14.10).toFixed(2)}/min
+                    ₹{Number(serverWallet?.pstnPremiumRateInrPerMin ?? serverWallet?.tierRates?.premium?.inrPerMin ?? 14.10).toFixed(2)}/min
                   </span>{' '}
                   <span className="text-[10px] text-[#8C879A] font-mono">
-                    (${Number(serverWallet?.pstnPremiumRateUsdPerMin ?? 0.15).toFixed(3)}/min)
+                    (${Number(serverWallet?.pstnPremiumRateUsdPerMin ?? serverWallet?.tierRates?.premium?.usdPerMin ?? 0.15).toFixed(3)}/min)
                   </span>
                 </div>
               </div>

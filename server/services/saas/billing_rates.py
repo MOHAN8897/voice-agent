@@ -566,6 +566,45 @@ async def update_rates_versioned(
                 is_active=True,
             )
             session.add(new_row)
+
+            # Synchronize active TierAssignments for standard tiers
+            try:
+                import copy
+                from server.db.models.entities import TierAssignment
+                from sqlalchemy.orm.attributes import flag_modified
+                from server.services.dev_runtime import effective_app_environment
+                from server.db.tier_store import _cache_put
+
+                env = effective_app_environment()
+                tier_paise_map = {
+                    "low": low_paise,
+                    "medium": medium_paise,
+                    "premium": premium_paise,
+                }
+                for t_name, t_paise in tier_paise_map.items():
+                    if t_paise is None or t_paise <= 0:
+                        continue
+                    inr_val = round(float(t_paise) / 100.0, 2)
+                    t_res = await session.execute(
+                        select(TierAssignment).where(
+                            TierAssignment.environment == env,
+                            TierAssignment.tier == t_name,
+                        ).with_for_update()
+                    )
+                    t_row = t_res.scalar_one_or_none()
+                    if t_row is not None and isinstance(t_row.stack_payload, dict):
+                        payload_dict = copy.deepcopy(t_row.stack_payload)
+                        rec = payload_dict.get("composed_voice_profile")
+                        if isinstance(rec, dict) and isinstance(rec.get("profile"), dict):
+                            rec["profile"]["retailRateInr"] = inr_val
+                            rec["profile"]["rateInr"] = inr_val
+                            payload_dict["composed_voice_profile"] = rec
+                            t_row.stack_payload = payload_dict
+                            flag_modified(t_row, "stack_payload")
+                            _cache_put(env, t_name, payload_dict)
+            except Exception as e:
+                logger.warning("[BILLING_RATES] TierAssignment sync error: %s", e)
+
             await session.commit()
             version_id = next_version
     else:

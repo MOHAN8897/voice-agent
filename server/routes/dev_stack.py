@@ -284,7 +284,7 @@ async def dev_composed_voice_template(tier: str, session: SessionData = Depends(
     from server.services.saas.voice_stack_profiles import VoiceProfileError
 
     try:
-        return {"tier": tier, "composedProfile": recommended_composed_profile(tier)}
+        return {"tier": tier, "composedProfile": recommended_composed_profile(tier, allow_premium=True)}
     except VoiceProfileError as exc:
         raise _voice_profile_http_error(exc) from exc
 

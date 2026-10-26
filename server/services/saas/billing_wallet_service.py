@@ -127,6 +127,22 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
         "myUsageUsd": 0.0,
         "myUsagePaise": 0,
     }
+    if "low" in tier_rates_map and tier_rates_map["low"].get("inrPerMin") is not None:
+        summary["pstnLowRateInrPerMin"] = tier_rates_map["low"]["inrPerMin"]
+        if tier_rates_map["low"].get("usdPerMin") is not None:
+            summary["pstnLowRateUsdPerMin"] = tier_rates_map["low"]["usdPerMin"]
+    if "medium" in tier_rates_map and tier_rates_map["medium"].get("inrPerMin") is not None:
+        summary["pstnMediumRateInrPerMin"] = tier_rates_map["medium"]["inrPerMin"]
+        if tier_rates_map["medium"].get("usdPerMin") is not None:
+            summary["pstnMediumRateUsdPerMin"] = tier_rates_map["medium"]["usdPerMin"]
+    if "premium" in tier_rates_map and tier_rates_map["premium"].get("inrPerMin") is not None:
+        summary["pstnPremiumRateInrPerMin"] = tier_rates_map["premium"]["inrPerMin"]
+        if tier_rates_map["premium"].get("usdPerMin") is not None:
+            summary["pstnPremiumRateUsdPerMin"] = tier_rates_map["premium"]["usdPerMin"]
+        summary["rateInrPerMin"] = tier_rates_map["premium"]["inrPerMin"]
+        if tier_rates_map["premium"].get("usdPerMin") is not None:
+            summary["rateUsdPerMin"] = tier_rates_map["premium"]["usdPerMin"]
+
     if user_id is not None:
         factory = get_session_factory()
         if factory is not None:

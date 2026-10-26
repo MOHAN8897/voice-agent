@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm.attributes import flag_modified
 
 from server.config.constants import constants, normalize_supported_language
@@ -832,10 +832,46 @@ async def save_composed_profile(
                 created_at=datetime.now(timezone.utc),
             )
         )
-        # Profile pricing belongs to its revision; approved global rate versions are immutable here.
+        # Synchronize active BillingRateVersion when retailRateInr is updated for standard tiers
+        retail_inr = profile.get("retailRateInr")
+        if retail_inr is not None and tier_norm in {"low", "medium", "premium"}:
+            try:
+                from server.db.models.saas_models import BillingRateVersion
+
+                rate_res = await session.execute(
+                    select(BillingRateVersion)
+                    .where(BillingRateVersion.is_active == True)  # noqa: E712
+                    .order_by(desc(BillingRateVersion.version))
+                    .limit(1)
+                    .with_for_update()
+                )
+                active_rate = rate_res.scalar_one_or_none()
+                if active_rate is not None:
+                    fx_rate = float(active_rate.fx_rate_inr or 95.64)
+                    inr_paise = int(round(float(retail_inr) * 100))
+                    usd_micros = int(round((float(retail_inr) / fx_rate) * 1_000_000))
+                    if tier_norm == "low":
+                        active_rate.pstn_low_rate_inr_paise_per_min = inr_paise
+                        active_rate.pstn_low_rate_usd_micros_per_min = usd_micros
+                    elif tier_norm == "medium":
+                        active_rate.pstn_medium_rate_inr_paise_per_min = inr_paise
+                        active_rate.pstn_medium_rate_usd_micros_per_min = usd_micros
+                    elif tier_norm == "premium":
+                        active_rate.pstn_premium_rate_inr_paise_per_min = inr_paise
+                        active_rate.pstn_premium_rate_usd_micros_per_min = usd_micros
+                        active_rate.pstn_rate_inr_paise_per_min = inr_paise
+                        active_rate.pstn_rate_usd_micros_per_min = usd_micros
+                        active_rate.pstn_rate_usd_cents_per_min = int(round(usd_micros / 10000))
+                    flag_modified(active_rate, "pstn_rate_inr_paise_per_min")
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning("[VOICE_PROFILE] BillingRateVersion sync error: %s", e)
+
         await session.commit()
         from server.db.tier_store import _cache_put
         _cache_put(environment, tier, row.stack_payload)
+        from server.services.saas.billing_rates import clear_rates_cache
+        clear_rates_cache()
     return await profile_view(tier, environment, include_internal=True)
 
 

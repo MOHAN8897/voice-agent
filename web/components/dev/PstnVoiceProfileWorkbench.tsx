@@ -232,18 +232,68 @@ const EMPTY_EVIDENCE: ProfileEvidence = {
 };
 
 function defaultProfileForTier(tier: ProfileTier): ComposedProfile {
+  if (tier === "premium") {
+    return {
+      schemaVersion: 1,
+      enabled: false,
+      label: DEFAULT_TIER_LABELS[tier] || "Gemini 3.8 Live (Flagship)",
+      retailRateInr: 10.0,
+      supplierCostInr: 3.5,
+      supportedLanguages: [
+        "te-IN", "hi-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN",
+        "bn-IN", "gu-IN", "pa-IN", "en-IN",
+      ],
+      stt: { provider: "gemini", model: "gemini-3.8-live-audio" },
+      llm: { provider: "gemini", modelId: "gemini-2.5-flash", apiMode: "websocket" },
+      engines: [
+        {
+          id: "gemini",
+          label: "Gemini Live Native Audio",
+          models: [
+            {
+              id: "gemini-3.8-live-tts",
+              label: "Gemini 3.8 Live",
+              provider: "gemini",
+              model: "gemini-2.5-flash",
+              apiMode: "websocket",
+              voices: [
+                { id: "Puck", providerVoiceId: "Puck", label: "Puck", languages: ["te-IN", "hi-IN", "en-IN"] },
+                { id: "Charon", providerVoiceId: "Charon", label: "Charon", languages: ["te-IN", "hi-IN", "en-IN"] },
+                { id: "Aoede", providerVoiceId: "Aoede", label: "Aoede", languages: ["te-IN", "hi-IN", "en-IN"] },
+                { id: "Fenrir", providerVoiceId: "Fenrir", label: "Fenrir", languages: ["te-IN", "hi-IN", "en-IN"] },
+                { id: "Kore", providerVoiceId: "Kore", label: "Kore", languages: ["te-IN", "hi-IN", "en-IN"] },
+              ],
+            },
+          ],
+        },
+      ],
+      evidence: { ...EMPTY_EVIDENCE },
+      voiceDynamics: { ...DEFAULT_VOICE_DYNAMICS },
+    };
+  }
+  const defaultSupplier = tier === "low" ? 1.2 : tier === "medium" ? 2.0 : 1.5;
+  const defaultRetail = tier === "low" ? 3.5 : tier === "medium" ? 5.0 : 6.0;
   return {
-    schemaVersion: 1, enabled: false, label: DEFAULT_TIER_LABELS[tier] || tier,
-    retailRateInr: null, supplierCostInr: null, supportedLanguages: [],
-    stt: { provider: "", model: "" }, llm: { provider: "", modelId: "", apiMode: "" },
-    engines: [], evidence: { ...EMPTY_EVIDENCE },
+    schemaVersion: 1,
+    enabled: false,
+    label: DEFAULT_TIER_LABELS[tier] || tier,
+    retailRateInr: defaultRetail,
+    supplierCostInr: defaultSupplier,
+    supportedLanguages: [
+      "te-IN", "hi-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN",
+      "bn-IN", "gu-IN", "pa-IN", "en-IN",
+    ],
+    stt: { provider: "sarvam", model: "saaras:v3-realtime" },
+    llm: { provider: "sarvam", modelId: "sarvam-105b-conversations", apiMode: "chat_completions_v1" },
+    engines: [],
+    evidence: { ...EMPTY_EVIDENCE },
     voiceDynamics: { ...DEFAULT_VOICE_DYNAMICS },
   };
 }
 
 function normalizeProfile(profile: ComposedProfile | null | undefined, tier: ProfileTier): ComposedProfile {
-  if (!profile) return defaultProfileForTier(tier);
   const fallback = defaultProfileForTier(tier);
+  if (!profile) return fallback;
   return {
     schemaVersion: 1,
     enabled: profile.enabled === true,
@@ -341,6 +391,13 @@ export function PstnVoiceProfileWorkbench() {
   const [voiceCategory, setVoiceCategory] = useState("");
   const [autoSaveStatus, setAutoSaveStatus] = useState<string>("");
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const draftsByTierRef = useRef<Record<string, ComposedProfile>>({});
+  const retailInputsByTierRef = useRef<Record<string, string>>({});
+  const supplierInputsByTierRef = useRef<Record<string, string>>({});
+  const labelsByTierRef = useRef<Record<string, string>>({});
+  const pendingSaveRef = useRef<{ draft: ComposedProfile; label?: string; tier: ProfileTier } | null>(null);
+  const activeTierRef = useRef<ProfileTier>("low");
+  activeTierRef.current = selected;
 
   // Audio preview playback state
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
@@ -539,14 +596,26 @@ export function PstnVoiceProfileWorkbench() {
 
   useEffect(() => {
     const row = rows.find((r) => r.tier === selected);
-    const norm = normalizeProfile(row?.composedProfile, selected);
+    const activeRefDraft = draftsByTierRef.current[selected];
+    const norm = activeRefDraft || normalizeProfile(row?.composedProfile, selected);
     if ((norm.retailRateInr === null || norm.retailRateInr === undefined) && row?.retailRate?.inrPaisePerMin) {
       norm.retailRateInr = Number((row.retailRate.inrPaisePerMin / 100).toFixed(2));
     }
     setDraft(norm);
-    setTierLabelInput(row?.label || norm.label || DEFAULT_TIER_LABELS[selected] || selected);
-    setRetailRateInput(norm.retailRateInr !== null && norm.retailRateInr !== undefined ? String(norm.retailRateInr) : "");
-    setSupplierCostInput(norm.supplierCostInr !== null && norm.supplierCostInr !== undefined ? String(norm.supplierCostInr) : "");
+    draftsByTierRef.current[selected] = norm;
+
+    const labelVal = labelsByTierRef.current[selected] ?? (row?.label || norm.label || DEFAULT_TIER_LABELS[selected] || selected);
+    setTierLabelInput(labelVal);
+    labelsByTierRef.current[selected] = labelVal;
+
+    const retailVal = retailInputsByTierRef.current[selected] ?? (norm.retailRateInr !== null && norm.retailRateInr !== undefined ? String(norm.retailRateInr) : "");
+    setRetailRateInput(retailVal);
+    retailInputsByTierRef.current[selected] = retailVal;
+
+    const supplierVal = supplierInputsByTierRef.current[selected] ?? (norm.supplierCostInr !== null && norm.supplierCostInr !== undefined ? String(norm.supplierCostInr) : "");
+    setSupplierCostInput(supplierVal);
+    supplierInputsByTierRef.current[selected] = supplierVal;
+
     setDirty(false);
   }, [rows, selected]);
 
@@ -616,60 +685,83 @@ export function PstnVoiceProfileWorkbench() {
   const speedKnob = currentTtsKnobs.find((spec) => spec.key === "speed") || FALLBACK_SPEED_KNOB;
   const secondaryKnobs = currentTtsKnobs.filter((spec) => spec.key !== "speed");
 
-  async function executeSaveProfile(targetDraft?: ComposedProfile, customLabel?: string) {
-    const activeDraft = targetDraft || draft;
-    const labelVal = (customLabel !== undefined ? customLabel : tierLabelInput).trim() || DEFAULT_TIER_LABELS[selected] || selected;
-    const ttsProv = activeDraft.engines[0]?.models[0]?.provider || currentTtsProvider;
-    const ttsMdl = activeDraft.engines[0]?.models[0]?.model || currentTtsModel;
+  async function executeSaveProfile(targetDraft?: ComposedProfile, customLabel?: string, targetTier?: ProfileTier) {
+    const tierToSave = targetTier || selected;
+    const activeDraft = targetDraft || draftsByTierRef.current[tierToSave] || draft;
+    const currentLabelInput = labelsByTierRef.current[tierToSave] ?? tierLabelInput;
+    const labelVal = (customLabel !== undefined ? customLabel : currentLabelInput).trim() || DEFAULT_TIER_LABELS[tierToSave] || tierToSave;
+    const isNativeLive = activeDraft.llm.apiMode === "websocket" || tierToSave === "premium";
+
+    const ttsProv = activeDraft.engines[0]?.models[0]?.provider || (isNativeLive ? "gemini" : currentTtsProvider);
+    const ttsMdl = activeDraft.engines[0]?.models[0]?.model || (isNativeLive ? "gemini-2.5-flash" : currentTtsModel);
     const matchedTtsModel = providers.find((entry) => entry.id === ttsProv)?.models?.tts?.find((entry) => entry.id === ttsMdl);
     const languages = activeDraft.supportedLanguages.length > 0
       ? activeDraft.supportedLanguages
       : [...new Set((matchedTtsModel?.voices || []).flatMap((voice) => voice.languages))];
-    const voices = getVoicesForTtsProvider(providers, ttsProv, ttsMdl, languages, activeDraft.engines[0]?.models[0]?.voices);
-    const targetKnobs = activeDraft.llm.apiMode === "websocket"
+    let voices = getVoicesForTtsProvider(providers, ttsProv, ttsMdl, languages, activeDraft.engines[0]?.models[0]?.voices);
+    if (!voices.length && isNativeLive) {
+      voices = defaultProfileForTier("premium").engines[0]?.models[0]?.voices || [];
+    }
+    const targetKnobs = isNativeLive
       ? NATIVE_LIVE_KNOBS
       : resolveModelKnobs(providers, ttsProv, ttsMdl);
 
-    if (!voices.length || !activeDraft.llm.modelId || !activeDraft.stt.model) {
+    if (!isNativeLive && (!activeDraft.stt.model || !activeDraft.stt.provider)) {
+      setError("Choose a speech recognition (STT) model for this tier.");
+      setDirty(true);
+      return;
+    }
+    if (!activeDraft.llm.modelId) {
+      setError("Choose an intelligence (LLM) model.");
+      setDirty(true);
+      return;
+    }
+    if (!voices.length) {
       setError("Choose a complete stack with voices from the current provider catalog.");
       setDirty(true);
       return;
     }
 
+    const currentRetailStr = retailInputsByTierRef.current[tierToSave] ?? retailRateInput;
+    const currentSupplierStr = supplierInputsByTierRef.current[tierToSave] ?? supplierCostInput;
+
     const parsedRetail = activeDraft.retailRateInr !== undefined && activeDraft.retailRateInr !== null
       ? activeDraft.retailRateInr
-      : (retailRateInput.trim() !== "" && !isNaN(parseFloat(retailRateInput)) ? parseFloat(retailRateInput) : null);
+      : (currentRetailStr.trim() !== "" && !isNaN(parseFloat(currentRetailStr)) ? parseFloat(currentRetailStr) : null);
     const parsedSupplier = activeDraft.supplierCostInr !== undefined && activeDraft.supplierCostInr !== null
       ? activeDraft.supplierCostInr
-      : (supplierCostInput.trim() !== "" && !isNaN(parseFloat(supplierCostInput)) ? parseFloat(supplierCostInput) : null);
+      : (currentSupplierStr.trim() !== "" && !isNaN(parseFloat(currentSupplierStr)) ? parseFloat(currentSupplierStr) : null);
+
+    const targetRow = rows.find((r) => r.tier === tierToSave);
+    const tierEnabled = targetRow?.readiness?.enabled === true;
 
     const payload: ComposedProfile = {
       schemaVersion: 1,
-      enabled: isEnabled,
+      enabled: tierEnabled,
       label: labelVal,
       retailRateInr: parsedRetail !== null && !isNaN(parsedRetail) ? parsedRetail : null,
       supplierCostInr: parsedSupplier !== null && !isNaN(parsedSupplier) ? parsedSupplier : null,
-      supportedLanguages: languages,
+      supportedLanguages: languages.length > 0 ? languages : ["te-IN", "hi-IN", "en-IN"],
       stt: {
-        provider: activeDraft.stt.provider,
-        model: activeDraft.stt.model,
+        provider: activeDraft.stt.provider || (isNativeLive ? "gemini" : "sarvam"),
+        model: activeDraft.stt.model || (isNativeLive ? "gemini-3.8-live-audio" : "saaras:v3-realtime"),
       },
       llm: {
-        provider: activeDraft.llm.provider,
-        modelId: activeDraft.llm.modelId,
-        apiMode: activeDraft.llm.apiMode,
+        provider: activeDraft.llm.provider || (isNativeLive ? "gemini" : "sarvam"),
+        modelId: activeDraft.llm.modelId || (isNativeLive ? "gemini-2.5-flash" : "sarvam-105b-conversations"),
+        apiMode: activeDraft.llm.apiMode || (isNativeLive ? "websocket" : "chat_completions_v1"),
       },
       engines: [
         {
           id: activeDraft.engines[0]?.id || ttsProv,
-          label: ttsProv === "sarvam" ? "Sarvam Bulbul" : ttsProv === "gemini" ? "Gemini TTS" : ttsProv === "cartesia" ? "Cartesia Sonic" : "Gnani.ai Timbre",
+          label: ttsProv === "sarvam" ? "Sarvam Bulbul" : ttsProv === "gemini" ? (isNativeLive ? "Gemini Live Native Audio" : "Gemini TTS") : ttsProv === "cartesia" ? "Cartesia Sonic" : "Gnani.ai Timbre",
           models: [
             {
               id: activeDraft.engines[0]?.models[0]?.id || ttsMdl,
               label: ttsMdl,
               provider: ttsProv,
               model: ttsMdl,
-              apiMode: activeDraft.engines[0]?.models[0]?.apiMode || matchedTtsModel?.api_mode || "",
+              apiMode: activeDraft.engines[0]?.models[0]?.apiMode || matchedTtsModel?.api_mode || (isNativeLive ? "websocket" : ""),
               voices,
             },
             ...(activeDraft.engines[0]?.models.slice(1) || []),
@@ -683,13 +775,13 @@ export function PstnVoiceProfileWorkbench() {
         : (activeDraft.voiceDynamics || { ...DEFAULT_VOICE_DYNAMICS }),
     };
 
-    const expectedRev = selectedRow?.profileRevision !== null && selectedRow?.profileRevision !== undefined
-      ? selectedRow.profileRevision
+    const expectedRev = targetRow?.profileRevision !== null && targetRow?.profileRevision !== undefined
+      ? targetRow.profileRevision
       : 0;
 
     setAutoSaveStatus("⚡ Auto-saving changes…");
     try {
-      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${selected}`, {
+      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${tierToSave}`, {
         method: "PUT",
         body: JSON.stringify({
           expectedRevision: expectedRev,
@@ -699,6 +791,8 @@ export function PstnVoiceProfileWorkbench() {
 
       if (!response.ok) throw new Error(await responseError(response));
       await response.json().catch(() => null);
+      draftsByTierRef.current[tierToSave] = payload;
+      pendingSaveRef.current = null;
       await loadProfiles(false);
       await loadPrices();
       setAutoSaveStatus("✓ Auto-saved & applied globally");
@@ -711,7 +805,9 @@ export function PstnVoiceProfileWorkbench() {
     }
   }
 
-  function triggerAutoSave(nextDraft: ComposedProfile, customLabel?: string, delayMs: number = 0) {
+  function triggerAutoSave(nextDraft: ComposedProfile, customLabel?: string, delayMs: number = 0, targetTier?: ProfileTier) {
+    const tierToSave = targetTier || selected;
+    pendingSaveRef.current = { draft: nextDraft, label: customLabel, tier: tierToSave };
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
       autoSaveTimerRef.current = null;
@@ -719,11 +815,30 @@ export function PstnVoiceProfileWorkbench() {
     if (delayMs > 0) {
       setAutoSaveStatus("Typing…");
       autoSaveTimerRef.current = setTimeout(() => {
-        void executeSaveProfile(nextDraft, customLabel);
+        autoSaveTimerRef.current = null;
+        pendingSaveRef.current = null;
+        void executeSaveProfile(nextDraft, customLabel, tierToSave);
       }, delayMs);
     } else {
-      void executeSaveProfile(nextDraft, customLabel);
+      pendingSaveRef.current = null;
+      void executeSaveProfile(nextDraft, customLabel, tierToSave);
     }
+  }
+
+  function switchSelectedTier(newTier: ProfileTier) {
+    if (newTier === selected) return;
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    if (pendingSaveRef.current) {
+      const { draft: pDraft, label: pLabel, tier: pTier } = pendingSaveRef.current;
+      pendingSaveRef.current = null;
+      void executeSaveProfile(pDraft, pLabel, pTier);
+    }
+    setStatus("");
+    setError("");
+    setSelected(newTier);
   }
 
   function handleSttProviderChange(provider: string) {
@@ -851,25 +966,31 @@ export function PstnVoiceProfileWorkbench() {
 
   function handleTierLabelChange(val: string) {
     setTierLabelInput(val);
+    labelsByTierRef.current[selected] = val;
     const nextDraft = { ...draft, label: val };
     setDraft(nextDraft);
-    triggerAutoSave(nextDraft, val, 700);
+    draftsByTierRef.current[selected] = nextDraft;
+    triggerAutoSave(nextDraft, val, 700, selected);
   }
 
   function handleRetailRateChange(val: string) {
     setRetailRateInput(val);
+    retailInputsByTierRef.current[selected] = val;
     const num = parseFloat(val);
     const nextDraft = { ...draft, retailRateInr: !isNaN(num) ? num : null };
     setDraft(nextDraft);
-    triggerAutoSave(nextDraft, undefined, 800);
+    draftsByTierRef.current[selected] = nextDraft;
+    triggerAutoSave(nextDraft, undefined, 800, selected);
   }
 
   function handleSupplierCostChange(val: string) {
     setSupplierCostInput(val);
+    supplierInputsByTierRef.current[selected] = val;
     const num = parseFloat(val);
     const nextDraft = { ...draft, supplierCostInr: !isNaN(num) ? num : null };
     setDraft(nextDraft);
-    triggerAutoSave(nextDraft, undefined, 800);
+    draftsByTierRef.current[selected] = nextDraft;
+    triggerAutoSave(nextDraft, undefined, 800, selected);
   }
 
   function handleDynamicsChange(patch: Partial<VoiceDynamics>) {
@@ -963,7 +1084,7 @@ export function PstnVoiceProfileWorkbench() {
       });
       if (!response.ok) throw new Error(await responseError(response));
       await loadProfiles(false);
-      setSelected("medium");
+      switchSelectedTier("medium");
       setStatus(`Tier "${label}" (${tierToDelete}) was deleted successfully.`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not delete tier.");
@@ -1123,7 +1244,7 @@ export function PstnVoiceProfileWorkbench() {
       const data = await response.json();
       const createdTier = data.tier || slug;
       await loadProfiles(false);
-      setSelected(createdTier);
+      switchSelectedTier(createdTier);
       setShowDuplicateModal(false);
       setStatus(`Successfully created new duplicated stack "${duplicateLabel || createdTier}" (${createdTier})! Selected and ready for configuration.`);
     } catch (caught) {
@@ -1282,11 +1403,7 @@ export function PstnVoiceProfileWorkbench() {
               key={tier}
               type="button"
               disabled={busy}
-              onClick={() => {
-                setSelected(tier);
-                setStatus("");
-                setError("");
-              }}
+              onClick={() => switchSelectedTier(tier)}
               className={`flex min-w-[200px] flex-col rounded-xl border p-3.5 text-left transition-all ${
                 active
                   ? "border-accent-primary bg-accent-dim shadow-md"
