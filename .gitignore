@@ -97,3 +97,6 @@ dump.rdb
 /.gravitas/
 
 /.agents/teamwork/
+
+# Local browser authentication state
+web/e2e/.auth/

@@ -25,3 +25,8 @@ cloud-state.json
 issues.json
 *.log
 *.tmp
+# Added by Reticle: the prompts you typed, kept on this machine.
+request.json
+requests.jsonl
+requests.1.jsonl
+episodes/

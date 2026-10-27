@@ -102,7 +102,7 @@ Server:
   `refresh_tokens.absolute_expires_at` (backfilled from `created_at` / `expires_at`, so
   re-running is safe).
 - `auth_service.refresh()` refuses a token older than `SESSION_IDLE_TIMEOUT_MINUTES`
-  (default 30) with `session_idle`, and a sign-in older than
+  (default 360, i.e. 6 hours) with `session_idle`, and a sign-in older than
   `SESSION_ABSOLUTE_MAX_HOURS` (default 24) with `session_absolute_max`. Both revoke the
   whole family and write an `AuthEvent`.
 - The absolute deadline belongs to the sign-in, so a rotation carries the family's
