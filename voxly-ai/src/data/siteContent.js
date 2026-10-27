@@ -16,12 +16,11 @@
  * nowhere is not on the page.
  */
 export const NAV_LINKS = [
+  { name: 'Product', href: '#capabilities' },
+  { name: 'Use cases', href: '#industries' },
   { name: 'How it works', href: '#how-it-works' },
-  { name: 'Capabilities', href: '#capabilities' },
-  { name: 'Industries', href: '#industries' },
   { name: 'Pricing', href: '#pricing' },
-  { name: 'Company', href: '#company' },
-  { name: 'Support', href: '#support' },
+  { name: 'FAQ', href: '#faq' },
 ];
 
 export const HERO_CONTENT = {

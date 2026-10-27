@@ -55,10 +55,12 @@ for (const [label, pattern, max] of SAID_ONCE) {
 
 // 2. Guarantees and absolute claims. A wrong promise is the one thing a buyer cannot
 //    negotiate with later.
+export const UNSOURCED_PERFORMANCE_PATTERN = /\+3[0-9]%|\b3[0-9]%\s+(?:pipeline|uplift|conversion|revenue|growth)|94% inquiry|\$140k|26\.4%|12,482|4\.9\/5|4\.8\/5/;
+
 const FORBIDDEN = [
   ['zero hallucination guarantee', /zero[- ]hallucination|100%\s*(grounded|field accuracy|compliance|combinatorial)/i],
   ['guaranteed outcome', /guarantee[sd]?\b/i],
-  ['unsourced performance figure', /\+?3[0-9]%|94% inquiry|\$140k|26\.4%|12,482|4\.9\/5|4\.8\/5/],
+  ['unsourced performance figure', UNSOURCED_PERFORMANCE_PATTERN],
   ['vendor or carrier name in customer copy', /\bTelnyx\b|\bTwilio\b|\bPlivo\b|\bExotel\b|\bComposio\b/i],
   ['fake live-telemetry signal', /updated \d+s ago/i],
 ];

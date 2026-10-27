@@ -1,0 +1,155 @@
+/* The refreshed marketing surface is scoped below the existing hero. */
+.landing-refresh {
+  --landing-ink: var(--text-main);
+  --landing-muted: var(--text-muted);
+  --landing-accent: var(--brand-accent);
+  --landing-paper: #fdfcf9;
+  --landing-line: rgba(35, 28, 54, .12);
+  color: var(--landing-ink);
+  font-weight: 400;
+}
+.landing-container { width: min(100% - 4rem, 76rem); margin-inline: auto; }
+.landing-section { padding-block: 6rem; scroll-margin-top: 5rem; }
+.landing-refresh h2 { max-width: 22ch; font-size: 3rem; line-height: 1.08; letter-spacing: -.045em; font-weight: 600; text-wrap: balance; }
+.landing-refresh h3 { font-weight: 600; letter-spacing: -.025em; }
+.landing-refresh p { text-wrap: pretty; }
+.landing-eyebrow { display: flex; align-items: center; gap: .5rem; margin-bottom: 1.25rem; color: var(--landing-muted); font-size: .875rem; font-weight: 600; }
+.landing-description { max-width: 48ch; margin-top: 1.5rem; color: var(--landing-muted); font-size: 1.0625rem; line-height: 1.75; }
+.landing-split { display: grid; grid-template-columns: 1fr 1.1fr; align-items: center; gap: 4rem; }
+.landing-text-link { display: inline-flex; align-items: center; gap: .625rem; min-height: 48px; font-size: .9375rem; font-weight: 600; text-align: left; }
+.landing-text-link:hover { color: var(--landing-accent); }
+.landing-refresh :is(button, a, select, summary):focus-visible, .marketing-footer a:focus-visible { outline: 2px solid var(--brand-accent); outline-offset: 5px; border-radius: 4px; }
+.landing-refresh button, .landing-refresh a, .landing-refresh summary { -webkit-tap-highlight-color: transparent; }
+.landing-button { display: inline-flex; align-items: center; justify-content: center; gap: 1rem; min-height: 50px; padding: .875rem 1.125rem; border: 1px solid var(--landing-ink); border-radius: .75rem; background: var(--landing-ink); color: #fff; font-size: .9375rem; font-weight: 600; transition: background .15s; }
+.landing-button:hover { background: #302b41; }
+.landing-demo { background: var(--landing-paper); border-block: 1px solid var(--landing-line); }
+.landing-demo .landing-text-link { margin-top: 1.5rem; }
+.landing-player { padding: 2rem; border: 1px solid var(--landing-line); border-radius: 1.5rem; background: #fff; box-shadow: 0 12px 36px rgba(27, 19, 45, .04); }
+.landing-player-top { display: flex; align-items: center; gap: .875rem; padding-bottom: 1.75rem; font-size: .9375rem; font-weight: 600; }
+.landing-player-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #f0edf9; color: var(--landing-accent); }
+.landing-player label { display: block; margin-bottom: .5rem; color: var(--landing-muted); font-size: .8125rem; }
+.landing-select-wrap { position: relative; }
+.landing-select-wrap > svg { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.landing-player select { width: 100%; min-height: 48px; appearance: none; border: 1px solid var(--landing-line); border-radius: .75rem; padding: .75rem 2.75rem .75rem 1rem; background: #fff; font-weight: 600; }
+.landing-player blockquote { min-height: 9rem; margin-block: 1.5rem; font-size: 1.125rem; line-height: 1.65; letter-spacing: -.02em; }
+.landing-player-bottom { display: flex; align-items: center; gap: .875rem; padding-top: 1.5rem; border-top: 1px solid var(--landing-line); }
+.landing-play { display: grid; place-items: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; background: var(--landing-ink); color: #fff; }
+.landing-play:hover { background: var(--landing-accent); }
+.landing-player-bottom strong { display: block; font-size: .875rem; font-weight: 600; }
+.landing-player-bottom span { display: block; margin-top: .25rem; color: var(--landing-muted); font-size: .75rem; }
+.landing-wave { display: flex; align-items: center; gap: 3px; height: 40px; margin-left: auto; color: #b5a4e9; }
+.landing-wave i { display: block; width: 3px; border-radius: 3px; background: currentColor; }
+.landing-audio-status { min-height: 2.5rem; margin-top: 1rem; color: var(--landing-muted); font-size: .75rem; line-height: 1.6; }
+.landing-product { background: #fff; }
+.landing-section-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin-bottom: 3rem; }
+.landing-section-header > a { flex-shrink: 0; }
+.landing-workspace { overflow: hidden; border: 1px solid var(--landing-line); border-radius: 1.5rem; background: #f8f6fc; }
+.landing-workspace-label { display: flex; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid var(--landing-line); color: var(--landing-muted); font-size: .8125rem; }
+.landing-workspace-label span:first-child { color: var(--landing-ink); font-weight: 600; }
+.landing-workspace img { display: block; width: 100%; height: auto; }
+.landing-workspace figcaption { padding: 1rem 1.5rem; border-top: 1px solid var(--landing-line); color: var(--landing-muted); font-size: .75rem; }
+.landing-benefits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3rem; margin-top: 3rem; }
+.landing-benefits svg { color: var(--landing-accent); }
+.landing-benefits h3 { margin-top: 1rem; font-size: 1.125rem; }
+.landing-benefits p { margin-top: .625rem; color: var(--landing-muted); font-size: 1rem; line-height: 1.7; }
+.landing-usecases { background: var(--landing-paper); border-block: 1px solid var(--landing-line); }
+.landing-workflows { display: grid; grid-template-columns: .8fr 1.4fr; gap: 4rem; margin-top: 3rem; }
+.landing-workflow-options { display: flex; flex-direction: column; align-items: stretch; gap: .5rem; }
+.landing-workflow-options button { display: flex; align-items: center; gap: 1rem; min-height: 64px; padding: 1rem; border: 1px solid transparent; border-radius: .875rem; text-align: left; font-size: 1rem; }
+.landing-workflow-options button > svg:last-child { margin-left: auto; }
+.landing-workflow-options button[aria-pressed="true"] { background: #fff; border-color: var(--landing-line); font-weight: 600; }
+.landing-workflow-options button[aria-pressed="true"] > svg:first-child { color: var(--landing-accent); }
+.landing-workflow-options button:hover { background: #f0edf5; }
+.landing-workflow-options > p { margin: 1.5rem 1rem 0; color: var(--landing-muted); font-size: .875rem; line-height: 1.75; }
+.landing-workflow-detail { padding: 2.5rem; border: 1px solid var(--landing-line); border-radius: 1.5rem; background: #fff; }
+.landing-caption { display: block; color: var(--landing-muted); font-size: .8125rem; line-height: 1.6; }
+.landing-workflow-detail h3 { margin-top: 1rem; font-size: 1.75rem; line-height: 1.25; }
+.landing-workflow-detail > p { min-height: 5.5rem; margin-top: 1rem; color: var(--landing-muted); font-size: 1rem; line-height: 1.75; }
+.landing-workflow-detail ol { margin-top: 1.5rem; }
+.landing-workflow-detail li { display: flex; align-items: baseline; gap: 1.25rem; padding-block: .875rem; border-top: 1px solid var(--landing-line); font-size: .9375rem; line-height: 1.6; }
+.landing-workflow-detail li span { color: #766e87; font-size: .75rem; font-variant-numeric: tabular-nums; }
+.landing-workflow-result { display: flex; align-items: center; gap: .75rem; margin-top: 1.5rem; padding: 1rem; border-radius: .75rem; background: #f1f6f2; color: #24563b; font-size: .875rem; }
+.landing-setup { background: #fff; }
+.landing-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3rem; margin-top: 3rem; }
+.landing-steps li { padding-top: 1.5rem; border-top: 2px solid var(--landing-line); }
+.landing-steps li > span { color: var(--landing-accent); font-size: .8125rem; font-weight: 600; }
+.landing-steps h3 { margin-block: 1rem .75rem; font-size: 1.25rem; }
+.landing-steps p { color: var(--landing-muted); font-size: 1rem; line-height: 1.75; }
+.landing-integration-note { display: flex; justify-content: space-between; align-items: center; gap: 2rem; margin-top: 3rem; padding: 1.5rem; border-radius: 1rem; background: #f7f5fa; }
+.landing-integration-note > div { display: flex; align-items: center; gap: 1rem; }
+.landing-integration-note svg { flex-shrink: 0; }
+.landing-integration-note strong { display: block; font-weight: 600; }
+.landing-integration-note span { display: block; margin-top: .375rem; color: var(--landing-muted); font-size: .875rem; line-height: 1.6; }
+.landing-integration-note button { flex-shrink: 0; }
+.landing-pricing { border-block: 1px solid var(--landing-line); background: #f6f3ed; }
+.landing-pricing-layout { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 4rem; }
+.landing-pricing-card { padding: 2.5rem; border: 1px solid var(--landing-line); border-radius: 1.5rem; background: #fff; }
+.landing-tier-labels { display: flex; flex-wrap: wrap; gap: .5rem; }
+.landing-tier-labels span { padding: .375rem .625rem; border: 1px solid var(--landing-line); border-radius: .5rem; font-size: .75rem; }
+.landing-pricing-card h3 { margin-top: 1.75rem; font-size: 2rem; line-height: 1.2; }
+.landing-pricing-card > p { margin-block: 1.25rem 1.75rem; color: var(--landing-muted); font-size: 1rem; line-height: 1.75; }
+.landing-pricing-card .landing-caption { margin-top: 1rem; }
+.landing-faq { background: #fff; }
+.landing-faq-layout { display: grid; grid-template-columns: .9fr 1.2fr; gap: 4rem; }
+.landing-faq details { border-bottom: 1px solid var(--landing-line); }
+.landing-faq details:first-child { border-top: 1px solid var(--landing-line); }
+.landing-faq summary { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding-block: 1.5rem; list-style: none; font-size: 1rem; font-weight: 600; cursor: pointer; }
+.landing-faq summary::-webkit-details-marker { display: none; }
+.landing-faq summary svg { flex-shrink: 0; }
+.landing-faq details[open] summary svg { transform: rotate(180deg); }
+.landing-faq details > p { padding: 0 1.5rem 1.5rem 0; color: var(--landing-muted); font-size: 1rem; line-height: 1.75; }
+.landing-final { padding-top: 0; background: #fff; }
+.landing-final-panel { display: flex; justify-content: space-between; align-items: center; gap: 3rem; padding: 4rem; border-radius: 1.5rem; background: #201a30; color: #fff; }
+.landing-final-panel h2 { color: #fff; }
+.landing-final-panel .landing-eyebrow { color: #c9bedc; }
+.landing-final-panel > div:last-child { display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; flex-shrink: 0; }
+.landing-button-light { border-color: #fff; background: #fff; color: var(--landing-ink); }
+.landing-button-light:hover { background: #eee8f7; }
+.landing-final-panel a { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; font-size: .875rem; color: #ded5ed; }
+.marketing-footer { padding-block: 3rem 1.5rem; border-top: 1px solid var(--border-hairline); background: #fdfcf9; color: var(--text-muted); }
+.marketing-footer-inner { width: min(100% - 4rem, 76rem); margin-inline: auto; }
+.marketing-footer-main { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; padding-bottom: 3rem; }
+.marketing-footer-brand { display: flex; align-items: center; gap: .625rem; color: var(--text-main); font-size: 1.25rem; font-weight: 600; }
+.marketing-footer-brand > svg { padding: .375rem; width: 32px; height: 32px; border-radius: .5rem; color: #fff; background: var(--text-main); }
+.marketing-footer-main p { max-width: 28ch; margin-top: 1rem; font-size: .9375rem; line-height: 1.75; }
+.marketing-footer-main h2 { margin-bottom: .75rem; font-size: .875rem; font-weight: 600; }
+.marketing-footer-main li > a { display: inline-flex; align-items: center; min-height: 40px; font-size: .875rem; }
+.marketing-footer a:hover { color: var(--brand-accent); }
+.marketing-footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--landing-line, rgba(35, 28, 54, .12)); font-size: .75rem; }
+.marketing-footer-socials { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; font-size: .8125rem; }
+@media (max-width: 1023px) {
+  .landing-split, .landing-workflows, .landing-pricing-layout, .landing-faq-layout { gap: 2rem; }
+  .landing-refresh h2 { font-size: 2.5rem; }
+  .landing-wave { display: none; }
+  .landing-final-panel { padding: 3rem; }
+  .landing-final-panel h2 { font-size: 2.25rem; }
+}
+@media (max-width: 767px) {
+  .landing-container, .marketing-footer-inner { width: calc(100% - 3rem); }
+  .landing-section { padding-block: 4rem; }
+  .landing-refresh h2 { font-size: 2.25rem; }
+  .landing-split, .landing-workflows, .landing-pricing-layout, .landing-faq-layout { grid-template-columns: 1fr; }
+  .landing-split { gap: 2.5rem; }
+  .landing-player, .landing-pricing-card, .landing-workflow-detail { padding: 1.5rem; }
+  .landing-player blockquote { min-height: 0; font-size: 1.0625rem; }
+  .landing-section-header { flex-direction: column; align-items: flex-start; gap: 1rem; margin-bottom: 2rem; }
+  .landing-workspace-label { padding: 1rem; }
+  .landing-workspace figcaption { padding: .875rem 1rem; line-height: 1.6; }
+  .landing-benefits, .landing-steps { grid-template-columns: 1fr; gap: 2rem; margin-top: 2rem; }
+  .landing-benefits > div { display: grid; grid-template-columns: 28px 1fr; column-gap: 1rem; }
+  .landing-benefits svg { grid-row: span 2; margin-top: .125rem; }
+  .landing-benefits h3 { margin-top: 0; }
+  .landing-benefits p { grid-column: 2; }
+  .landing-workflows { margin-top: 2rem; gap: 1.5rem; }
+  .landing-workflow-options { gap: .375rem; }
+  .landing-workflow-options > p { display: none; }
+  .landing-workflow-detail > p { min-height: 0; }
+  .landing-integration-note { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.5rem; }
+  .landing-integration-note > div { align-items: flex-start; }
+  .landing-final { padding-top: 0; }
+  .landing-final-panel { flex-direction: column; align-items: flex-start; gap: 2rem; padding: 2rem; }
+  .landing-final-panel h2 { font-size: 2rem; }
+  .marketing-footer-main { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; }
+  .marketing-footer-main > div:first-child { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) { .landing-refresh *, .marketing-footer * { scroll-behavior: auto !important; transition: none !important; } }

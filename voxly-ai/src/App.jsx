@@ -3,17 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { WorkspaceProvider } from './console/context/WorkspaceContext';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
-import { TalkToAiSection } from './components/TalkToAiSection';
-import { HowItWorksSection } from './components/HowItWorksSection';
-import { PhoneChannelsSection } from './components/PhoneChannelsSection';
-import { AiEmployeeSection } from './components/AiEmployeeSection';
-import { CampaignScaleSection } from './components/CampaignScaleSection';
-import { TrainingSection } from './components/TrainingSection';
-import { AnalyticsSection } from './components/AnalyticsSection';
-import { IndustriesSection } from './components/IndustriesSection';
-import { PricingSection } from './components/PricingSection';
-import { FAQSection } from './components/FAQSection';
-import { FinalCTA } from './components/FinalCTA';
+import { LandingSections } from './components/LandingSections';
 import { Footer } from './components/Footer';
 import { WatchDemoModal } from './components/WatchDemoModal';
 import { TalkToMeModal } from './components/TalkToMeModal';
@@ -336,43 +326,10 @@ function AppInner() {
               isModalOpen={isDemoModalOpen || isTalkModalOpen}
             />
 
-            {/* 02: Real voice samples per industry, plus the live-agent entry point */}
-            <TalkToAiSection
-              onOpenTalkModal={() => setIsTalkModalOpen(true)}
+            <LandingSections
               onGetStarted={handleGetStarted}
-            />
-
-            {/* 03: The one onboarding path */}
-            <HowItWorksSection onGetStarted={handleGetStarted} />
-
-            {/* 04: Telephony channels — inbound and outbound */}
-            <PhoneChannelsSection onGetStarted={handleGetStarted} />
-
-            {/* 05: What the employee does on a call */}
-            <AiEmployeeSection onGetStarted={handleGetStarted} />
-
-            {/* 06: Bulk list calling */}
-            <CampaignScaleSection onGetStarted={handleGetStarted} />
-
-            {/* 07: Teach it your business */}
-            <TrainingSection />
-
-            {/* 08: Reporting — the one sample dashboard, labelled as one */}
-            <AnalyticsSection />
-
-            {/* 09: Who it is for */}
-            <IndustriesSection onGetStarted={handleGetStarted} />
-
-            {/* 10: Pricing */}
-            <PricingSection onSelectPlan={handleSelectPlan} />
-
-            {/* 11: FAQ */}
-            <FAQSection />
-
-            {/* 12: Closing call to action */}
-            <FinalCTA
-              onGetStarted={handleGetStarted}
-              onTalkToMe={() => setIsTalkModalOpen(true)}
+              onSelectPlan={handleSelectPlan}
+              onNavigatePage={handleNavigatePage}
             />
           </main>
 
