@@ -30,6 +30,7 @@ export function AgentCallsPanel({
     if (initialPanel === 'settings') return 'inbound';
     return initialPanel || 'inbound';
   });
+  const [historyPhone, setHistoryPhone] = useState('');
 
   useEffect(() => {
     if (initialPanel === 'settings') {
@@ -96,9 +97,10 @@ export function AgentCallsPanel({
             <AgentDialBulkPanel agentId={agentId} agentName={agentName} />
           )}
           {panel === 'history' && (
-            <CallsModule agentId={agentId} agentName={agentName} embedded />
+            <CallsModule agentId={agentId} agentName={agentName} initialSearch={historyPhone} embedded />
           )}
-          {panel === 'leads' && <LeadsModule agentId={agentId} />}
+          {panel === 'leads' && <LeadsModule agentId={agentId} agentName={agentName}
+            onOpenHistory={(lead) => { setHistoryPhone(lead.phone); setPanel('history'); }} />}
         </ErrorBoundary>
       </div>
     </div>

@@ -22,8 +22,7 @@ test('every provider voice reaches the tenant for a supported language without e
   state.profiles[0].voiceInventory = { totalVoices: 12, voicesByLanguage: { 'te-IN': 12 } };
   await page.getByTestId('refresh-voice-stacks-btn').click();
   const summary = page.getByTestId('voice-inventory-summary-low');
-  await expect(summary).toContainText('All 12 Telugu voices are included.');
-  await expect(summary).toContainText('Voice availability depends on the spoken language.');
+  await expect(summary).toContainText('12 Telugu voices match your filters');
   const region = page.getByRole('region', { name: 'Voices for low', exact: true });
   await expect(region.locator('[data-testid^="voice-select-btn-"]')).toHaveCount(12);
   await expect(page.getByTestId('voice-stack-selector')).not.toContainText(/sarvam|bulbul|telnyx|vobiz|nango/i);

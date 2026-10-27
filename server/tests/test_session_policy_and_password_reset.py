@@ -242,9 +242,10 @@ async def test_change_password_enforces_a_minimum_length(harness):
 
 async def test_refresh_refuses_a_token_past_the_idle_bound(harness):
     """The old behaviour kept a 30-day token alive no matter how idle it was."""
+    idle_minutes = get_settings().session_idle_timeout_minutes
     session, _user, _tenant = harness(
-        created_at=_utcnow() - timedelta(hours=6),
-        last_active_at=_utcnow() - timedelta(hours=6),
+        created_at=_utcnow() - timedelta(minutes=idle_minutes + 1),
+        last_active_at=_utcnow() - timedelta(minutes=idle_minutes + 1),
     )
 
     with pytest.raises(ValueError) as excinfo:
@@ -252,6 +253,21 @@ async def test_refresh_refuses_a_token_past_the_idle_bound(harness):
     assert str(excinfo.value) == "session_idle"
     # The whole family is burned, not just the presented token.
     assert session.family_revocations
+
+
+async def test_refresh_allows_a_session_inside_the_six_hour_window(harness):
+    """A tenant who steps away for five hours is still signed in."""
+    idle_minutes = get_settings().session_idle_timeout_minutes
+    assert idle_minutes == 360  # 6-hour tenant idle window
+
+    _session, _user, _tenant = harness(
+        created_at=_utcnow() - timedelta(hours=5),
+        last_active_at=_utcnow() - timedelta(hours=5),
+    )
+
+    payload = await auth_service.refresh("tok")
+
+    assert payload["refreshToken"]
 
 
 async def test_refresh_refuses_a_token_past_the_absolute_ceiling(harness):
@@ -270,7 +286,8 @@ async def test_refresh_refuses_a_token_past_the_absolute_ceiling(harness):
 
 def test_session_policy_exposes_the_bounds_the_client_mirrors():
     policy = auth_service.session_policy()
-    assert policy["idleTimeoutMinutes"] > 0
+    # Tenant console: 6 hours of inactivity before the session is closed.
+    assert policy["idleTimeoutMinutes"] == 360
     assert policy["absoluteMaxHours"] > 0
     assert policy["accessTokenMinutes"] > 0
     # The opt-in "Keep me signed in" bounds are longer than the default pair.
@@ -320,10 +337,11 @@ async def test_first_sign_in_gets_a_fresh_absolute_deadline():
 
 
 async def test_remembered_session_survives_the_short_idle_bound(harness):
-    """Six idle hours end a normal session; an opted-in one is still alive."""
+    """An idle period past the 6-hour normal bound leaves an opted-in session alive."""
+    idle_minutes = get_settings().session_idle_timeout_minutes
     _session, _user, _tenant = harness(
-        created_at=_utcnow() - timedelta(hours=6),
-        last_active_at=_utcnow() - timedelta(hours=6),
+        created_at=_utcnow() - timedelta(minutes=idle_minutes + 60),
+        last_active_at=_utcnow() - timedelta(minutes=idle_minutes + 60),
         remember_me=True,
     )
 

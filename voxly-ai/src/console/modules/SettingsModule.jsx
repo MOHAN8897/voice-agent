@@ -11,6 +11,15 @@ import { analytics } from '../../services/analytics';
 
 const MIN_LENGTH = 8;
 
+function formatIdleWindow(minutes) {
+  const value = Number(minutes) || 0;
+  if (value >= 60 && value % 60 === 0) {
+    const hours = value / 60;
+    return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+  }
+  return `${value} minutes`;
+}
+
 function PasswordField({ id, label, value, onChange, autoComplete, testId, show, onToggle }) {
   return (
     <div>
@@ -219,7 +228,7 @@ export function SettingsModule() {
             <p className="text-[11px] text-[#524E5E] leading-relaxed">
               You are signed out automatically after{' '}
               <strong data-testid="session-idle-minutes">
-                {sessionPolicy?.idleTimeoutMinutes ?? 30} minutes
+                {formatIdleWindow(sessionPolicy?.idleTimeoutMinutes ?? 360)}
               </strong>{' '}
               of inactivity, with a 2-minute countdown so you are never logged out by surprise. A single
               sign-in cannot last longer than {sessionPolicy?.absoluteMaxHours ?? 24} hours.

@@ -2,6 +2,7 @@
  * Map Voxly Agent Studio fields → Business Brain API (draft + publish).
  */
 import { api } from './api';
+import { handlingRuleSections, HANDLING_RULES_METADATA, HANDLING_RULES_TITLE } from '../lib/handlingRules.js';
 import {
   SAAS_CALLING_SCRIPT_TITLE,
   scriptVariablesSection,
@@ -66,16 +67,6 @@ function sectionsFromStudio({
   variableDefinitions,
 }) {
   const guardrails = (boundaries || []).map((b) => `- ${b}`).join('\n');
-  const faq = (objectionRules || [])
-    .map((o, index) => {
-      if (!String(o.trigger || '').trim() || !String(o.response || '').trim()) {
-        throw new Error(`Complete the concern and response in objection rule ${index + 1}, or remove that rule.`);
-      }
-      const intentPart = o.category && o.category !== 'custom' ? `[Intent: ${o.category}]\n` : '';
-      const actionPart = o.action && o.action !== 'continue_script' ? `\nAction: ${o.action}` : '';
-      return `${intentPart}When: ${o.trigger}\nReply: ${o.response}${actionPart}`;
-    })
-    .join('\n\n');
   // Strip any legacy OPENING LINE artifact so it never clashes with CANONICAL OPENING
   let cleanScript = (script || '')
     .replace(/^OPENING LINE\s*\n[^\n]*\n*/i, '')
@@ -136,7 +127,7 @@ function sectionsFromStudio({
       raw_text: guardrails || 'Do not invent prices or policies not in the script.',
       enabled: true,
     },
-    { type: 'faq', title: 'FAQ & Objections', order: 40, raw_text: faq ? `Adapt these replies naturally to the selected call language with everyday English mixing. Respect refusals; these suggestions do not override safety or tool permissions. Actions need an available tool and successful result; never claim a transfer or callback booking without confirmation.\n\n${faq}` : '', enabled: !!faq },
+    ...handlingRuleSections(objectionRules || []),
   ];
   const v = voiceSection(voice, language);
   if (v) sections.push(v);
@@ -153,10 +144,11 @@ export async function loadAgentBrain(agentId) {
 export function mergeStudioSections(existingSections, studioFields) {
   const base = Array.isArray(existingSections) ? existingSections : [];
   const seeds = sectionsFromStudio(studioFields);
-  const metadataTitles = new Set(['saas_voice_config', 'saas_script_variables', 'saas_call_end_policy', 'Voice profile (console)', 'Inbound routing prefs (console)']);
+  const metadataTitles = new Set(['saas_voice_config', 'saas_script_variables', 'saas_call_end_policy', HANDLING_RULES_METADATA, 'Voice profile (console)', 'Inbound routing prefs (console)']);
   const replaced = new Set();
   const merged = seeds.map((seed) => {
     let prev = base.find((s) => s.type === seed.type && s.title === seed.title);
+    if (!prev && seed.title === HANDLING_RULES_TITLE) prev = base.find(s => s.type === 'faq' && s.title === 'FAQ & Objections');
     if (!prev && seed.title === SAAS_CALLING_SCRIPT_TITLE) {
       prev = base.find((s) => s.enabled !== false && s.type === 'facts' && ['Agent script', 'Business Facts'].includes(s.title));
     }
@@ -169,7 +161,7 @@ export function mergeStudioSections(existingSections, studioFields) {
     }
     if (prev?.raw_text && seed.type === 'faq') {
       // Preserve free-form FAQ notes which the concern/response controls cannot edit.
-      const reference = String(prev.raw_text).split(/\n\s*\n/).filter((block) =>
+      const reference = prev.title === HANDLING_RULES_TITLE ? String(prev.raw_text).split('[Configured handling rules]\n')[0].trim() : String(prev.raw_text).split(/\n\s*\n/).filter((block) =>
         !/(?:^|\n)(?:When(?: caller says)?|Reply|Response):/i.test(block) &&
         !block.startsWith('Adapt these replies naturally to the selected call language')).join('\n\n');
       if (reference.trim()) {

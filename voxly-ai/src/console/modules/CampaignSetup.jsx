@@ -20,10 +20,10 @@ function fileData(file) {
   });
 }
 
-export function CampaignSetup({ initialAgentId = '', onComplete, onBusyChange }) {
+export function CampaignSetup({ initialAgentId = '', initialContacts = [], onComplete, onBusyChange }) {
   const { agents, phoneNumbers, outboundFromE164, createCampaign } = useWorkspace();
   const [config, setConfig] = useState({ name: '', description: '', agentId: initialAgentId || agents[0]?.id || '', fromE164: outboundFromE164 || '', defaultCountry: 'IN' });
-  const [source, setSource] = useState('upload');
+  const [source, setSource] = useState(initialContacts.length ? 'leads' : 'upload');
   const [file, setFile] = useState(null);
   const [text, setText] = useState('');
   const [lists, setLists] = useState([]);
@@ -93,7 +93,11 @@ export function CampaignSetup({ initialAgentId = '', onComplete, onBusyChange })
       let data = parsed;
       let selectedMapping = mapping;
       if (!data) {
-        if (source === 'list') {
+        if (source === 'leads') {
+          const headers = ['phone', 'full_name', 'email', 'notes', 'custom_field:lead_id', 'custom_field:lead_stage'];
+          data = { rows: initialContacts, headers, totalRows: initialContacts.length, fileName: 'selected-leads' };
+          selectedMapping = Object.fromEntries(headers.map((key) => [key, key]));
+        } else if (source === 'list') {
           if (!listId) throw new Error('Choose a saved list.');
           const response = await api.contacts.getListContacts(listId);
           const rows = (response.contacts || []).map((c) => ({ ...c, first_name: c.first_name || c.firstName || '',
@@ -157,7 +161,12 @@ export function CampaignSetup({ initialAgentId = '', onComplete, onBusyChange })
         </section>
         <section className="space-y-4 border-t border-[#E4E2EB] pt-5" aria-labelledby="campaign-contacts-heading">
           <div className="flex flex-wrap items-center justify-between gap-2"><h3 id="campaign-contacts-heading" className="text-base font-bold">Contacts</h3><span className="text-xs text-[#645D73]">Up to 10,000 contacts · 5 MB</span></div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Contact source">{[['upload', 'Upload file'], ['paste', 'Paste CSV'], ['list', 'Saved list']].map(([key, label]) => <button key={key} type="button" aria-pressed={source === key} onClick={() => changeSource(key)} className={`min-h-11 rounded-xl border px-4 text-sm font-semibold ${source === key ? 'border-[#6344E7] bg-[#F0EEF6] text-[#5033C6]' : 'border-[#E4E2EB] text-[#524E5E]'}`}>{label}</button>)}</div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Contact source">{[...(initialContacts.length ? [['leads', 'Selected leads']] : []), ['upload', 'Upload file'], ['paste', 'Paste CSV'], ['list', 'Saved list']].map(([key, label]) => <button key={key} type="button" aria-pressed={source === key} onClick={() => changeSource(key)} className={`min-h-11 rounded-xl border px-4 text-sm font-semibold ${source === key ? 'border-[#6344E7] bg-[#F0EEF6] text-[#5033C6]' : 'border-[#E4E2EB] text-[#524E5E]'}`}>{label}</button>)}</div>
+          {source === 'leads' && <div className="rounded-xl border border-[#DCD7EE] bg-[#FAF9FD] p-4 text-sm" data-testid="campaign-selected-leads">
+            <p className="font-semibold">{initialContacts.length} selected {initialContacts.length === 1 ? 'lead' : 'leads'}</p>
+            <p className="mt-1 text-[#524E5E]">Names, phone numbers, email, notes and lead references are carried into this campaign. Validate before saving or launching.</p>
+            <ul className="mt-3 space-y-1">{initialContacts.slice(0, 5).map((contact) => <li key={contact['custom_field:lead_id']}>{contact.full_name} · {contact.phone}</li>)}</ul>
+          </div>}
           {source === 'upload' && <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-[#B9B3CF] bg-[#FAF9FD] p-6 text-center"><UploadCloud className="h-6 w-6 text-[#6344E7]" /><span className="text-sm font-semibold">{file?.name || 'Choose a contact spreadsheet'}</span><span className="text-xs text-[#645D73]">CSV or Excel (.xlsx), with a header row</span><input type="file" accept=".csv,.xlsx" aria-label="Contact spreadsheet" className="max-w-full text-sm" onChange={(e) => { setFile(e.target.files?.[0] || null); setParsed(null); invalidate(); }} /></label>}
           {source === 'paste' && <label className="block text-sm font-medium">CSV contacts<textarea className={`${input} min-h-36 font-mono`} value={text} maxLength={5 * 1024 * 1024} placeholder={'phone,full_name\n+12025550101,Example Contact'} onChange={(e) => { setText(e.target.value); setParsed(null); invalidate(); }} /></label>}
           {source === 'list' && <label className="block text-sm font-medium">Contact list<select className={input} value={listId} onChange={(e) => { setListId(e.target.value); setParsed(null); invalidate(); }}><option value="">Choose a list</option>{lists.map((list) => <option key={list.id} value={list.id}>{list.name} ({list.totalContacts ?? list.total_contacts ?? 0})</option>)}</select>{listError && <span role="status" className="mt-2 block text-xs text-amber-800">{listError}</span>}</label>}

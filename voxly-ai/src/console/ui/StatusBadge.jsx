@@ -11,7 +11,7 @@ export function StatusBadge({ status, size = 'sm', className = '' }) {
   let dotColor = 'bg-[#524E5E]';
   let label = String(status || 'Unknown').replaceAll('_', ' ');
 
-  if (norm === 'active' || norm === 'qualified' || norm === 'meeting booked' || norm === 'resolved') {
+  if (norm === 'active' || norm === 'qualified' || norm === 'converted' || norm === 'meeting booked' || norm === 'resolved') {
     styles = 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]';
     dotColor = 'bg-[#10B981]';
   } else if (norm === 'paused' || norm === 'draft' || norm === 'idle' || norm === 'new' || norm === 'requires_review' || norm === 'blocked') {

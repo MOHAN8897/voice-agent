@@ -1,438 +1,201 @@
-import React, { useState } from 'react';
-import {
-  PhoneCall,
-  LayoutGrid,
-  List
-} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowUpRight, LayoutGrid, List, PhoneCall, Plus, RefreshCw, Search, Users } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
-import { KanbanSkeleton, LeadsTableSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
+import { leadStageToApi } from '../../services/apiNormalize';
 import { CallbackRequests } from './CallbackRequests';
+import { CampaignSetup } from './CampaignSetup';
 
-/**
- * Lead pipeline for the fleet, or for one agent.
- *
- * `agentId` scopes the list to that agent's leads; stage and notes edits still go
- * through `api.leads.updateStage` / `updateNotes` exactly as before, so a stage
- * changed here behaves identically to one changed on the fleet page.
- */
-export function LeadsModule({ agentId = null, agentName = '' }) {
-  const {
-    leads,
-    leadsForAgent,
-    updateLeadStage,
-    updateLeadNotes,
-    triggerCallToLead,
-    createLead,
-    phoneNumbers,
-    outboundFromE164,
-    setPreferredOutboundFrom,
-    isLoading,
-  } = useWorkspace();
-  const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'table'
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedLead, setSelectedLead] = useState(null);
-  const [callNotice, setCallNotice] = useState(null);
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', phone: '', email: '', notes: '' });
-  const [addError, setAddError] = useState(null);
+const STAGES = ['New', 'Contacted', 'Qualified', 'Meeting Booked', 'Converted', 'Unqualified'];
+const PAGE_SIZE = 25;
+const field = 'w-full min-w-0 min-h-11 rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 text-sm text-[#0F0E17] focus:outline-none focus:ring-2 focus:ring-[#6344E7]/30';
+const emptyLead = { name: '', phone: '', email: '', notes: '', agentId: '' };
+const formatDate = (value) => {
+  const date = new Date(value);
+  return value && Number.isFinite(date.getTime()) ? date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not recorded';
+};
 
-  const stages = ['New', 'Contacted', 'Qualified', 'Meeting Booked', 'Unqualified'];
-
-  // Leads carry an owning agent, and the workspace fetches them with a server-side
-  // agentId filter. Inside an agent workspace this shows only that agent's leads;
-  // there is deliberately no fallback to the shared pipeline, because doing that
-  // put one agent's leads in another agent's board.
-  const visibleLeads = leadsForAgent(agentId);
-
-  const filteredLeads = visibleLeads.filter((l) => {
-    const q = searchQuery.toLowerCase();
-    return (
-      (l.name || '').toLowerCase().includes(q) ||
-      (l.company || '').toLowerCase().includes(q) ||
-      (l.intent || '').toLowerCase().includes(q) ||
-      (l.phone || '').includes(searchQuery)
-    );
-  });
-
-  const [callError, setCallError] = useState(null);
-
-  const handleTriggerCall = async (lead) => {
-    setCallError(null);
-    try {
-      await triggerCallToLead(lead.id);
-      setCallNotice(`Outbound call started to ${lead.name} (${lead.phone})`);
-      setTimeout(() => setCallNotice(null), 3500);
-    } catch (e) {
-      setCallError(e.message || 'Could not start call');
-    }
+export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
+  const { user } = useAuth();
+  const readOnly = user?.role === 'customer_viewer' || user?.role === 'viewer';
+  const { agents, createLead, triggerCallToLead, phoneNumbers, outboundFromE164, setPreferredOutboundFrom, setSelectedCallId } = useWorkspace();
+  const [view, setView] = useState('table');
+  const [filters, setFilters] = useState({ search: '', stage: '', owner: '', phone: '', days: '', sort: 'updated' });
+  const [search, setSearch] = useState('');
+  const [offset, setOffset] = useState(0);
+  const [refresh, setRefresh] = useState(0);
+  const [page, setPage] = useState({ leads: [], total: 0, stageCounts: {}, key: '' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [selected, setSelected] = useState([]);
+  const [detail, setDetail] = useState(null);
+  const [draft, setDraft] = useState({ stage: '', notes: '' });
+  const [detailError, setDetailError] = useState('');
+  const [conversionConfirmed, setConversionConfirmed] = useState(false);
+  const [busy, setBusy] = useState('');
+  const operationLock = useRef(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [addForm, setAddForm] = useState(emptyLead);
+  const [addError, setAddError] = useState('');
+  const [campaignLeads, setCampaignLeads] = useState(null);
+  const [campaignBusy, setCampaignBusy] = useState(false);
+  useEffect(() => { const timer = setTimeout(() => setSearch(filters.search.trim()), 250); return () => clearTimeout(timer); }, [filters.search]);
+  const updatedSince = useMemo(() => filters.days ? new Date(Date.now() - Number(filters.days) * 86400000).toISOString() : undefined, [filters.days]);
+  const query = useMemo(() => ({ agentId: agentId || filters.owner || undefined, search,
+    stage: filters.stage || undefined, hasPhone: filters.phone ? filters.phone === 'yes' : undefined,
+    updatedSince, sort: filters.sort, limit: PAGE_SIZE, offset }), [agentId, filters.owner, filters.stage, filters.phone, filters.sort, updatedSince, search, offset]);
+  const key = JSON.stringify(query);
+  useEffect(() => {
+    let active = true;
+    setLoading(true); setError('');
+    api.leads.listPage(query).then((result) => {
+      if (!active) return;
+      if (result.total && offset >= result.total) { setOffset(Math.floor((result.total - 1) / PAGE_SIZE) * PAGE_SIZE); return; }
+      const counts = result.stageCounts || Object.fromEntries(STAGES.map((stage) => [leadStageToApi(stage), result.leads.filter((lead) => lead.stage === stage).length]));
+      setPage({ ...result, stageCounts: counts, key });
+    }).catch((err) => { if (active) setError(err.message || 'Could not load leads. Try again.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [query, key, refresh]);
+  useEffect(() => { setSelected([]); setDetail(null); setNotice(''); }, [agentId]);
+  const rows = page.key === key ? page.leads : [];
+  const total = page.key === key ? page.total : 0;
+  const counts = page.key === key ? page.stageCounts : {};
+  const selectedRows = rows.filter((lead) => selected.includes(lead.id));
+  const callableRows = rows.filter((lead) => Boolean(lead.phone?.trim()));
+  const ownerName = (lead) => agents.find((agent) => agent.id === lead.agentId)?.name || (lead.agentId ? 'Former agent' : 'Unassigned');
+  const changeFilter = (name, value) => { setFilters((current) => ({ ...current, [name]: value })); setOffset(0); setSelected([]); };
+  const openDetail = (lead) => { setDetail(lead); setDraft({ stage: lead.stage, notes: lead.notes || '' }); setDetailError(''); setConversionConfirmed(false); };
+  const detailDirty = detail && (draft.stage !== detail.stage || draft.notes !== (detail.notes || ''));
+  const closeDetail = () => {
+    if (busy) return;
+    if (detailDirty && !window.confirm('Discard the unsaved lead changes?')) return;
+    setDetail(null);
   };
+  async function saveDetail() {
+    if (!detail || operationLock.current || readOnly) return;
+    operationLock.current = true; setBusy('save'); setDetailError('');
+    try {
+      const updated = await api.leads.update(detail.id, { ...draft, expectedUpdatedAt: detail.updatedAt || null, ...(draft.stage === 'Converted' && detail.stage !== 'Converted' ? { confirmConverted: conversionConfirmed } : {}) });
+      setDetail(updated || { ...detail, ...draft }); setRefresh((value) => value + 1);
+      setNotice('Lead changes saved.');
+    } catch (err) { setDetailError(err.message || 'Could not save. Your changes are still here.'); }
+    finally { operationLock.current = false; setBusy(''); }
+  }
+  async function callLead(lead) {
+    if (operationLock.current) return;
+    operationLock.current = true; setBusy(lead.id); setDetailError(''); setError(''); setNotice('');
+    try { await triggerCallToLead(lead, agentId); setNotice(`Call requested for ${lead.name}. Follow its progress in call history.`); }
+    catch (err) { const message = err.message || 'Could not start the call.'; setError(message); if (detail) setDetailError(message); }
+    finally { operationLock.current = false; setBusy(''); }
+  }
+  function openHistory(lead) {
+    if (detailDirty && !window.confirm('Discard the unsaved lead changes and open call history?')) return;
+    setSelectedCallId?.(null);
+    if (onOpenHistory) onOpenHistory(lead);
+    else {
+      sessionStorage.setItem('voxly_calls_search', lead.phone);
+      if (lead.agentId) sessionStorage.setItem('voxly_calls_agent', lead.agentId);
+      window.location.hash = '#dashboard/calls';
+    }
+  }
+  const toggle = (lead) => setSelected((current) => current.includes(lead.id) ? current.filter((id) => id !== lead.id) : [...current, lead.id]);
+  const metrics = [['Matching leads', total], ['New enquiries', counts.new || 0], ['Qualified', counts.qualified || 0], ['Meetings booked', counts.meeting_booked || 0], ['Converted', counts.converted || 0]];
 
   return (
-    <div className="space-y-6">
-      <CallbackRequests agentId={agentId} />
-      {callError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">{callError}</div>
-      )}
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-            {agentId
-              ? `${agentName || 'Agent'} leads (${visibleLeads.length})`
-              : `Autonomous Lead Pipeline (${leads.length})`}
-          </h2>
-          <p className="text-xs text-[#524E5E] mt-0.5">
-            Leads automatically captured, BANT-qualified, and scored by AI voice employees during phone calls.
-          </p>
+    <div className="min-w-0 space-y-5" data-testid="leads-workspace">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div><p className="text-xs font-semibold uppercase tracking-wider text-[#716C7F]">Customer pipeline</p>
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#0F0E17]">{agentId ? `${agentName || 'Agent'} leads` : 'Leads'}</h2>
+          <p className="mt-1 text-sm text-[#524E5E]">Review enquiries, keep a clear next step, and follow up by call or campaign.</p></div>
+        <div className="flex flex-wrap gap-2">
+          <TactileButton variant="secondary" icon={RefreshCw} disabled={loading} onClick={() => setRefresh((value) => value + 1)}>Refresh leads</TactileButton>
+          <TactileButton icon={Plus} disabled={readOnly} onClick={() => { setAddForm({ ...emptyLead, agentId: agentId || '' }); setAddError(''); setAddOpen(true); }}>Add lead</TactileButton>
         </div>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          {phoneNumbers.length > 0 && (
-            <select
-              value={outboundFromE164 || ''}
-              onChange={(e) => setPreferredOutboundFrom(e.target.value)}
-              className="text-base sm:text-xs min-h-[40px] sm:min-h-[34px] border border-[#E4E2EB] rounded-lg px-2.5 py-1.5 bg-white font-medium text-[#0F0E17]"
-              aria-label="Outbound caller ID"
-            >
-              <option value="">Auto-select DID</option>
-              {phoneNumbers.map((n) => (
-                <option key={n.id} value={n.number}>
-                  {n.formatted || n.number}
-                </option>
-              ))}
-            </select>
-          )}
-          <TactileButton variant="primary" size="sm" className="min-h-[40px] sm:min-h-[34px]" onClick={() => setIsAddOpen(true)}>
-            Add lead
-          </TactileButton>
-        </div>
-
-        {/* View Toggle */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center p-1 rounded-xl bg-white border border-[#E4E2EB] shadow-2xs">
-            <button
-              onClick={() => setViewMode('kanban')}
-              className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'kanban' ? 'bg-[#0F0E17] text-white shadow-xs' : 'text-[#524E5E] hover:text-[#0F0E17]'
-              }`}
-              title="Kanban Board View"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg transition-all ${
-                viewMode === 'table' ? 'bg-[#0F0E17] text-white shadow-xs' : 'text-[#524E5E] hover:text-[#0F0E17]'
-              }`}
-              title="Data Table View"
-            >
-              <List className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+      </header>
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-5" aria-label="Lead analytics">
+        {metrics.map(([label, value]) => <SolidCard key={label} padding="p-4"><p className="text-xs text-[#524E5E]">{label}</p><p className="mt-2 text-2xl font-semibold tabular-nums" data-testid={`lead-metric-${label.toLowerCase().replaceAll(' ', '-')}`}>{loading ? '—' : value.toLocaleString()}</p><p className="mt-1 text-[11px] text-[#716C7F]">Across current filters</p></SolidCard>)}
       </div>
-
-      {/* Call Trigger Notification Banner */}
-      {callNotice && (
-        <div className="p-3.5 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] text-xs font-semibold text-[#047857] flex items-center justify-between animate-in fade-in duration-150">
-          <div className="flex items-center gap-2">
-            <PhoneCall className="w-4 h-4 animate-pulse text-[#10B981]" />
-            <span>{callNotice}</span>
-          </div>
-          <span className="text-[10px] font-mono">SIP INVITE Dispatched</span>
+      <SolidCard padding="p-4" className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <label className="block text-xs font-medium sm:col-span-2">Search leads<div className="relative mt-1"><Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-[#716C7F]" /><input type="search" className={`${field} pl-9`} value={filters.search} onChange={(event) => changeFilter('search', event.target.value)} placeholder="Name, phone, email or notes" /></div></label>
+          <label className="block text-xs font-medium">Stage<select className={`${field} mt-1`} value={filters.stage} onChange={(event) => changeFilter('stage', event.target.value)}><option value="">All stages</option>{STAGES.map((stage) => <option key={stage}>{stage}</option>)}</select></label>
+          {!agentId && <label className="block text-xs font-medium">Agent owner<select className={`${field} mt-1`} value={filters.owner} onChange={(event) => changeFilter('owner', event.target.value)}><option value="">All agents</option><option value="unassigned">Unassigned</option>{agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select></label>}
+          <label className="block text-xs font-medium">Contact availability<select className={`${field} mt-1`} value={filters.phone} onChange={(event) => changeFilter('phone', event.target.value)}><option value="">All contacts</option><option value="yes">Has phone number</option><option value="no">Missing phone number</option></select></label>
+          <label className="block text-xs font-medium">Last updated<select className={`${field} mt-1`} value={filters.days} onChange={(event) => changeFilter('days', event.target.value)}><option value="">Any time</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select></label>
+          <label className="block text-xs font-medium">Sort by<select className={`${field} mt-1`} value={filters.sort} onChange={(event) => changeFilter('sort', event.target.value)}><option value="updated">Recently updated</option><option value="created">Newest enquiries</option><option value="name">Name A–Z</option></select></label>
+          <div className="flex items-end"><TactileButton variant="ghost" onClick={() => { setFilters({ search: '', stage: '', owner: '', phone: '', days: '', sort: 'updated' }); setOffset(0); setSelected([]); }}>Clear filters</TactileButton></div>
         </div>
-      )}
-
-      {/* KANBAN PIPELINE VIEW */}
-      {viewMode === 'kanban' && (
-        isLoading && leads.length === 0 ? (
-          <KanbanSkeleton columns={5} />
-        ) : (
-          <div className="flex md:grid md:grid-cols-5 gap-4 overflow-x-auto pb-4 max-w-full scrollbar-none touch-pan-x">
-          {stages.map((stage) => {
-            const stageLeads = filteredLeads.filter((l) => l.stage === stage);
-            return (
-              <div key={stage} className="flex flex-col min-w-[240px] space-y-3">
-                {/* Column Header */}
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#E4E2EB] shadow-2xs">
-                  <span className="text-xs font-bold text-[#0F0E17] truncate">{stage}</span>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#F0EEF6] text-[#524E5E]">
-                    {stageLeads.length}
-                  </span>
-                </div>
-
-                {/* Cards in Column */}
-                <div className="space-y-3 flex-1">
-                  {stageLeads.map((lead) => (
-                    <SolidCard
-                      key={lead.id}
-                      padding="p-3.5"
-                      className="space-y-2.5 hover:border-[#D1CFDB] transition-all cursor-pointer group shadow-craft-xs"
-                      onClick={() => setSelectedLead(lead)}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="text-xs font-bold text-[#0F0E17] group-hover:text-[#6344E7] transition-colors">
-                            {lead.name}
-                          </div>
-                          <div className="text-[11px] text-[#524E5E] truncate">{lead.company}</div>
-                        </div>
-
-                        {/* BANT Score Badge */}
-                        <span
-                          className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${
-                            lead.bantScore >= 80
-                              ? 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]'
-                              : lead.bantScore >= 50
-                              ? 'bg-[#FFFBEB] text-[#92400E] border-[#FDE68A]'
-                              : 'bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]'
-                          }`}
-                        >
-                          BANT {lead.bantScore}
-                        </span>
-                      </div>
-
-                      <div className="text-[11px] text-[#524E5E] line-clamp-1">
-                        🎯 {lead.intent}
-                      </div>
-
-                      {/* Card Bottom: Agent & Quick Call Trigger */}
-                      <div className="flex items-center justify-between pt-2 border-t border-[#E4E2EB] text-[10px] text-[#8C879A]">
-                        <span>{lead.agentName}</span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleTriggerCall(lead);
-                          }}
-                          className="flex items-center gap-1 text-[#6344E7] hover:text-[#5034CE] font-bold"
-                        >
-                          <PhoneCall className="w-3 h-3" />
-                          <span>Call</span>
-                        </button>
-                      </div>
-                    </SolidCard>
-                  ))}
-
-                  {stageLeads.length === 0 && (
-                    <div className="p-6 rounded-xl border border-dashed border-[#E4E2EB] text-center text-[11px] text-[#8C879A]">
-                      No leads in {stage}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+      </SolidCard>
+      {error && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><span>{error}</span><TactileButton variant="secondary" onClick={() => setRefresh((value) => value + 1)}>Retry leads</TactileButton></div>}
+      {notice && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
+      <SolidCard padding="p-0" className="min-w-0 overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E4E2EB] p-4">
+          <div><h3 className="text-sm font-semibold">Your pipeline</h3><p className="mt-1 text-xs text-[#716C7F]">{selectedRows.length ? `${selectedRows.length} selected on this page` : `${total.toLocaleString()} matching leads · select contacts for a campaign`}</p></div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-lg border border-[#E4E2EB] p-1" role="group" aria-label="Lead view">{[['table', 'List view', List], ['board', 'Board view', LayoutGrid]].map(([value, label, Icon]) => <button key={value} type="button" aria-label={label} aria-pressed={view === value} onClick={() => setView(value)} className={`min-h-9 min-w-9 rounded-md p-2 ${view === value ? 'bg-[#0F0E17] text-white' : 'text-[#524E5E]'}`}><Icon className="h-4 w-4" /></button>)}</div>
+            <TactileButton variant="brand" icon={Users} disabled={readOnly || !selectedRows.length || loading} onClick={() => setCampaignLeads(selectedRows)}>Create campaign{selectedRows.length ? ` (${selectedRows.length})` : ''}</TactileButton>
           </div>
-        )
-      )}
-
-      {/* DATA TABLE VIEW */}
-      {viewMode === 'table' && (
-        <SolidCard padding="p-0" className="overflow-hidden">
-          <div className="overflow-x-auto scrollbar-none touch-pan-x">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] font-bold text-[#8C879A] uppercase tracking-wider">
-                  <th className="py-3 px-4">Contact</th>
-                  <th className="py-3 px-3">Company</th>
-                  <th className="py-3 px-3 font-mono">BANT Score</th>
-                  <th className="py-3 px-3">Stage</th>
-                  <th className="py-3 px-3">Intent</th>
-                  <th className="py-3 px-3">Agent</th>
-                  <th className="py-3 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E4E2EB]">
-                {isLoading && leads.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="p-0">
-                      <LeadsTableSkeleton rows={5} />
-                    </td>
-                  </tr>
-                ) : filteredLeads.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-8 px-4 text-center text-[#8C879A]">
-                      No leads match your search criteria.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredLeads.map((lead) => (
-                    <tr
-                      key={lead.id}
-                      onClick={() => setSelectedLead(lead)}
-                      className="hover:bg-[#FAF9FD] transition-colors cursor-pointer"
-                    >
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-[#0F0E17]">{lead.name}</div>
-                        <div className="text-[10px] font-mono text-[#524E5E]">{lead.phone}</div>
-                      </td>
-                      <td className="py-3 px-3 text-[#524E5E] font-medium">{lead.company}</td>
-                      <td className="py-3 px-3 font-mono font-bold text-[#047857]">{lead.bantScore}/100</td>
-                      <td className="py-3 px-3">
-                        <StatusBadge status={lead.stage} size="xs" />
-                      </td>
-                      <td className="py-3 px-3 text-[#524E5E] truncate max-w-[160px]">{lead.intent}</td>
-                      <td className="py-3 px-3 text-[#8C879A]">{lead.agentName}</td>
-                      <td className="py-3 px-4 text-right">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleTriggerCall(lead);
-                          }}
-                          className="text-xs font-semibold text-[#6344E7] hover:underline"
-                        >
-                          Call Now
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </SolidCard>
-      )}
-
-      {/* LEAD DETAIL MODAL */}
-      {selectedLead && (
-        <Modal
-          isOpen={!!selectedLead}
-          onClose={() => setSelectedLead(null)}
-          title={selectedLead.name}
-          subtitle={`Captured by ${selectedLead.agentName} • ${selectedLead.source}`}
-          maxWidth="max-w-xl"
-        >
-          <div className="space-y-4 text-xs">
-            {/* Stage Selector Ribbon */}
-            <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-between">
-              <span className="font-bold text-[#0F0E17]">Pipeline Stage:</span>
-              <select
-                value={selectedLead.stage}
-                onChange={(e) => {
-                  updateLeadStage(selectedLead.id, e.target.value);
-                  setSelectedLead({ ...selectedLead, stage: e.target.value });
-                }}
-                className="bg-white border border-[#E4E2EB] rounded-lg px-2.5 py-1.5 text-base sm:text-xs min-h-[38px] sm:min-h-[32px] text-[#0F0E17] font-semibold focus:outline-none focus:border-[#6344E7] transition-colors"
-              >
-                {stages.map((st) => (
-                  <option key={st} value={st}>
-                    {st}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Contact Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
-              <div>
-                <span className="text-[10px] text-[#8C879A] uppercase block">Phone</span>
-                <span className="font-mono text-[#0F0E17] font-semibold">{selectedLead.phone}</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-[#8C879A] uppercase block">Email</span>
-                <span className="text-[#0F0E17] truncate block">{selectedLead.email || 'None on file'}</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-[#8C879A] uppercase block">Company</span>
-                <span className="text-[#0F0E17] font-semibold">{selectedLead.company}</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-[#8C879A] uppercase block">BANT Score</span>
-                <span className="font-mono font-bold text-[#047857]">{selectedLead.bantScore} / 100</span>
-              </div>
-            </div>
-
-            {/* AI Notes */}
-            <div>
-              <label className="block text-xs font-bold text-[#0F0E17] mb-1">
-                AI Extracted Notes & Summary
-              </label>
-              <textarea
-                rows={3}
-                value={selectedLead.notes}
-                onChange={(e) => {
-                  updateLeadNotes(selectedLead.id, e.target.value);
-                  setSelectedLead({ ...selectedLead, notes: e.target.value });
-                }}
-                className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-3 text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
-              />
-            </div>
-
-            {/* Modal Bottom CTA */}
-            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-[#E4E2EB]">
-              <span className="text-[11px] text-[#8C879A]">Saved to your tenant CRM</span>
-              <TactileButton
-                variant="primary"
-                size="sm"
-                icon={PhoneCall}
-                className="w-full sm:w-auto min-h-[42px] sm:min-h-[36px]"
-                onClick={() => {
-                  handleTriggerCall(selectedLead);
-                  setSelectedLead(null);
-                }}
-              >
-                Trigger Outbound AI Call
-              </TactileButton>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Add lead" maxWidth="max-w-md">
-        <div className="space-y-3">
-          {addError && <p className="text-xs text-red-700">{addError}</p>}
-          <input
-            className="w-full border border-[#E4E2EB] rounded-lg p-2.5 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
-            placeholder="Name"
-            value={addForm.name}
-            onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
-          />
-          <input
-            className="w-full border border-[#E4E2EB] rounded-lg p-2.5 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
-            placeholder="Phone (E.164)"
-            value={addForm.phone}
-            onChange={(e) => setAddForm({ ...addForm, phone: e.target.value })}
-          />
-          <input
-            className="w-full border border-[#E4E2EB] rounded-lg p-2.5 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
-            placeholder="Email"
-            value={addForm.email}
-            onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
-          />
-          <textarea
-            className="w-full border border-[#E4E2EB] rounded-lg p-2.5 text-base sm:text-xs bg-white text-[#0F0E17]"
-            placeholder="Notes"
-            rows={3}
-            value={addForm.notes}
-            onChange={(e) => setAddForm({ ...addForm, notes: e.target.value })}
-          />
-          <TactileButton
-            variant="primary"
-            size="sm"
-            className="w-full sm:w-auto min-h-[42px] sm:min-h-[36px]"
-            onClick={async () => {
-              setAddError(null);
-              try {
-                if (!addForm.name.trim()) throw new Error('Name is required');
-                // Attribute a hand-added lead to the agent whose workspace it was
-                // added in, so it lands on that agent's board and nowhere else.
-                await createLead({ ...addForm, agentId });
-                setIsAddOpen(false);
-                setAddForm({ name: '', phone: '', email: '', notes: '' });
-              } catch (e) {
-                setAddError(e.message || 'Could not create lead');
-              }
-            }}
-          >
-            Save lead
-          </TactileButton>
         </div>
+        {loading ? <p role="status" className="p-8 text-center text-sm text-[#524E5E]">Loading leads…</p> : rows.length === 0 ? <div className="p-10 text-center"><Users className="mx-auto h-8 w-8 text-[#8C879A]" /><h4 className="mt-3 text-sm font-semibold">{error ? 'Leads could not be loaded' : 'No leads match these filters'}</h4><p className="mt-1 text-sm text-[#716C7F]">{error ? 'Retry to load your pipeline.' : 'Clear the filters or add your first enquiry.'}</p></div> : view === 'table' ? <>
+          <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm"><caption className="sr-only">Lead contacts, pipeline stage, owner and last update</caption>
+            <thead className="bg-[#FAF9FD] text-xs text-[#716C7F]"><tr><th className="p-4"><input type="checkbox" aria-label="Select all callable leads on this page" disabled={readOnly || !callableRows.length} checked={Boolean(callableRows.length) && callableRows.every((lead) => selected.includes(lead.id))} onChange={(event) => setSelected(event.target.checked ? callableRows.map((lead) => lead.id) : [])} className="h-4 w-4 accent-[#6344E7]" /></th>{['Contact', 'Stage', 'Agent owner', 'Updated', ''].map((label) => <th key={label} className="px-4 py-3 font-medium">{label}</th>)}</tr></thead>
+            <tbody className="divide-y divide-[#E4E2EB]">{rows.map((lead) => <tr key={lead.id} className="hover:bg-[#FAF9FD]" data-testid={`lead-row-${lead.id}`}>
+              <td className="p-4"><input type="checkbox" aria-label={`Select ${lead.name}`} disabled={readOnly || !lead.phone?.trim()} checked={selected.includes(lead.id)} onChange={() => toggle(lead)} className="h-4 w-4 accent-[#6344E7]" /></td>
+              <td className="max-w-sm p-4"><button type="button" onClick={() => openDetail(lead)} className="font-semibold text-[#0F0E17] hover:text-[#6344E7] hover:underline">{lead.name}</button><p className="mt-1 font-mono text-xs text-[#524E5E]">{lead.phone || 'Phone missing'}</p>{lead.email && <p className="mt-0.5 truncate text-xs text-[#716C7F]">{lead.email}</p>}<p className="mt-1 line-clamp-1 max-w-xs text-xs text-[#716C7F]">{lead.notes || 'Add notes and a next step'}</p></td>
+              <td className="p-4"><StatusBadge status={lead.stage} size="xs" /></td><td className="p-4 text-xs text-[#524E5E]">{ownerName(lead)}</td><td className="whitespace-nowrap p-4 text-xs text-[#716C7F]">{formatDate(lead.updatedAt)}</td>
+              <td className="p-4 text-right"><TactileButton size="sm" variant="secondary" icon={ArrowUpRight} onClick={() => openDetail(lead)} aria-label={`Open ${lead.name}`}>Details</TactileButton></td>
+            </tr>)}</tbody></table></div>
+          <ul className="divide-y divide-[#E4E2EB] md:hidden">{rows.map((lead) => <li key={lead.id} className="space-y-3 p-4"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><input type="checkbox" aria-label={`Select ${lead.name}`} disabled={readOnly || !lead.phone?.trim()} checked={selected.includes(lead.id)} onChange={() => toggle(lead)} className="h-4 w-4 accent-[#6344E7]" /><button type="button" onClick={() => openDetail(lead)} className="truncate text-left text-sm font-semibold">{lead.name}</button></div><StatusBadge status={lead.stage} size="xs" /></div><p className="font-mono text-xs text-[#524E5E]">{lead.phone || 'Phone missing'}</p><p className="line-clamp-2 text-xs text-[#716C7F]">{lead.notes || 'No notes yet'}</p><div className="flex justify-between text-xs text-[#716C7F]"><span>{ownerName(lead)}</span><span>{formatDate(lead.updatedAt)}</span></div><TactileButton variant="secondary" size="sm" onClick={() => openDetail(lead)}>View details</TactileButton></li>)}</ul>
+        </> : <div className="flex gap-4 overflow-x-auto p-4" aria-label="Lead stages on this page">{STAGES.map((stage) => <section key={stage} className="w-64 shrink-0 space-y-3"><h4 className="flex justify-between text-xs font-semibold">{stage}<span>{counts[leadStageToApi(stage)] || 0} total</span></h4>{rows.filter((lead) => lead.stage === stage).map((lead) => <div key={lead.id} className="space-y-3 rounded-xl border border-[#E4E2EB] p-4"><div className="flex items-start gap-2"><input type="checkbox" aria-label={`Select ${lead.name}`} disabled={readOnly || !lead.phone?.trim()} checked={selected.includes(lead.id)} onChange={() => toggle(lead)} className="mt-1 h-4 w-4 accent-[#6344E7]" /><button type="button" onClick={() => openDetail(lead)} className="text-left text-sm font-semibold hover:text-[#6344E7]">{lead.name}</button></div><p className="text-xs text-[#524E5E]">{lead.phone || 'Phone missing'}</p><p className="line-clamp-3 text-xs text-[#716C7F]">{lead.notes || 'No notes yet'}</p><p className="text-xs text-[#716C7F]">{ownerName(lead)} · {formatDate(lead.updatedAt)}</p></div>)}{!rows.some((lead) => lead.stage === stage) && <p className="rounded-xl border border-dashed border-[#E4E2EB] p-4 text-xs text-[#716C7F]">No {stage.toLowerCase()} leads on this page.</p>}</section>)}</div>}
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E4E2EB] px-4 py-3 text-xs text-[#716C7F]"><span>{total ? `${offset + 1}–${Math.min(offset + PAGE_SIZE, total)} of ${total}` : '0 leads'} · {view === 'board' ? 'Board shows this page' : '25 per page'}</span><div className="flex gap-2"><TactileButton variant="secondary" size="sm" disabled={!offset || loading} onClick={() => { setOffset(Math.max(0, offset - PAGE_SIZE)); setSelected([]); }}>Previous leads</TactileButton><TactileButton variant="secondary" size="sm" disabled={offset + PAGE_SIZE >= total || loading} onClick={() => { setOffset(offset + PAGE_SIZE); setSelected([]); }}>Next leads</TactileButton></div></footer>
+      </SolidCard>
+      <CallbackRequests agentId={agentId} readOnly={readOnly} />
+      {readOnly && <p className="text-xs text-[#716C7F]" role="status">Read-only access: you can review leads and call history.</p>}
+      <Modal isOpen={Boolean(detail)} onClose={closeDetail} title={detail?.name || 'Lead details'} subtitle="Contact details, notes and follow-up" maxWidth="max-w-2xl">
+        {detail && <div className="space-y-5">
+          <dl className="grid grid-cols-2 gap-4 rounded-xl bg-[#FAF9FD] p-4 text-sm">{[['Phone', detail.phone || 'Not provided'], ['Email', detail.email || 'Not provided'], ['Agent owner', ownerName(detail)], ['Created', formatDate(detail.createdAt)], ['Last updated', formatDate(detail.updatedAt)]].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-xs text-[#716C7F]">{label}</dt><dd className="mt-1 break-words font-medium">{value}</dd></div>)}</dl>
+          <label className="block text-sm font-medium">Pipeline stage<select className={`${field} mt-1`} value={draft.stage} disabled={readOnly || Boolean(busy)} onChange={(event) => { setDraft((current) => ({ ...current, stage: event.target.value })); setConversionConfirmed(false); }}>{STAGES.map((stage) => <option key={stage}>{stage}</option>)}</select></label>
+          {draft.stage === 'Converted' && detail.stage !== 'Converted' && <label className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900"><input type="checkbox" checked={conversionConfirmed} disabled={readOnly || Boolean(busy)} onChange={(event) => setConversionConfirmed(event.target.checked)} className="mt-1 h-4 w-4 shrink-0" /><span>I confirm this lead became a customer.</span></label>}
+          <label className="block text-sm font-medium">Notes & next step<textarea className={`${field} mt-1 min-h-36 leading-relaxed`} maxLength={20000} value={draft.notes} disabled={readOnly || Boolean(busy)} onChange={(event) => setDraft((current) => ({ ...current, notes: event.target.value }))} placeholder="What they need, what was discussed, and what should happen next." /></label>
+          <p className="text-xs text-[#716C7F]">Notes are saved when you choose Save lead changes.</p>
+          {detailError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{detailError}</p>}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E4E2EB] pt-4"><TactileButton variant="secondary" disabled={!detail.phone || Boolean(busy)} onClick={() => openHistory(detail)}>View recent calls</TactileButton><TactileButton disabled={readOnly || !detailDirty || Boolean(busy) || (draft.stage === 'Converted' && detail.stage !== 'Converted' && !conversionConfirmed)} loading={busy === 'save'} onClick={saveDetail}>Save lead changes</TactileButton></div>
+          <section className="space-y-3 rounded-xl border border-[#E4E2EB] p-4" aria-label="Call this lead"><h3 className="text-sm font-semibold">Follow up by phone</h3>
+            {phoneNumbers.length > 0 && <label className="block text-xs font-medium">Outbound caller ID<select className={`${field} mt-1`} value={outboundFromE164 || ''} onChange={(event) => setPreferredOutboundFrom(event.target.value)}><option value="">Agent’s configured line</option>{phoneNumbers.filter((number) => number.status !== 'released').map((number) => <option key={number.id} value={number.number}>{number.formatted || number.number}</option>)}</select></label>}
+            {!detail.agentId && <p className="text-xs text-[#92400E]">Assign an agent when adding this lead, or select it for a campaign and choose who calls.</p>}
+            <TactileButton icon={PhoneCall} disabled={readOnly || !detail.phone || !detail.agentId || Boolean(busy) || detailDirty} loading={busy === detail.id} onClick={() => callLead(detail)}>Call lead</TactileButton>
+            {detailDirty && <p className="text-xs text-[#716C7F]">Save your notes before starting a call.</p>}
+          </section>
+        </div>}
+      </Modal>
+      <Modal isOpen={addOpen} onClose={() => { if (!busy) setAddOpen(false); }} title="Add lead" subtitle="Capture an enquiry and assign its next conversation." maxWidth="max-w-lg">
+        <form className="space-y-4" onSubmit={async (event) => {
+          event.preventDefault(); if (operationLock.current) return;
+          operationLock.current = true; setBusy('add'); setAddError('');
+          try {
+            if (!addForm.name.trim()) throw new Error('Name is required.');
+            await createLead({ ...addForm, agentId: agentId || addForm.agentId || null });
+            setAddOpen(false); setOffset(0); setRefresh((value) => value + 1); setNotice('Lead added to your pipeline.');
+          } catch (err) { setAddError(err.message || 'Could not create the lead. Your details are still here.'); }
+          finally { operationLock.current = false; setBusy(''); }
+        }}>
+          {['name', 'phone', 'email'].map((name) => <label key={name} className="block text-sm font-medium">{name === 'phone' ? 'Phone (with country code)' : name === 'name' ? 'Name' : 'Email'}<input className={`${field} mt-1`} required={name === 'name'} type={name === 'email' ? 'email' : name === 'phone' ? 'tel' : 'text'} maxLength={name === 'name' ? 255 : name === 'phone' ? 32 : 320} value={addForm[name]} disabled={readOnly || Boolean(busy)} onChange={(event) => setAddForm((current) => ({ ...current, [name]: event.target.value }))} /></label>)}
+          {!agentId && <label className="block text-sm font-medium">Agent owner<select className={`${field} mt-1`} disabled={Boolean(busy)} value={addForm.agentId} onChange={(event) => setAddForm((current) => ({ ...current, agentId: event.target.value }))}><option value="">Unassigned</option>{agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select></label>}
+          <label className="block text-sm font-medium">Notes & next step<textarea className={`${field} mt-1 min-h-24`} maxLength={20000} value={addForm.notes} disabled={readOnly || Boolean(busy)} onChange={(event) => setAddForm((current) => ({ ...current, notes: event.target.value }))} /></label>
+          {addError && <p role="alert" className="text-sm text-red-800">{addError}</p>}
+          <TactileButton type="submit" loading={busy === 'add'} disabled={Boolean(busy)}>Save lead</TactileButton>
+        </form>
+      </Modal>
+      <Modal isOpen={Boolean(campaignLeads)} onClose={() => { if (!campaignBusy) setCampaignLeads(null); }} title="Campaign from selected leads" subtitle="Review contacts, choose an agent, then save a draft or launch." maxWidth="max-w-5xl">
+        {campaignLeads && <CampaignSetup initialAgentId={agentId || ''} initialContacts={campaignLeads.map((lead) => ({ phone: lead.phone, full_name: lead.name, email: lead.email, notes: lead.notes, 'custom_field:lead_id': lead.id, 'custom_field:lead_stage': lead.stage }))}
+          onBusyChange={setCampaignBusy} onComplete={(campaign) => { setCampaignLeads(null); setSelected([]); setNotice(`${campaign.name} ${campaign.status === 'running' ? 'queued' : 'saved as a draft'}. You can manage it in Campaigns.`); }} />}
       </Modal>
     </div>
   );

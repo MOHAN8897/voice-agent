@@ -83,10 +83,10 @@ export async function openRazorpayWalletCheckout({
     const rzp = new Razorpay(options);
     rzp.on('payment.failed', (response) => {
       if (settled) return;
-      settled = true;
       const err = new Error(response.error?.description || 'Payment failed');
       if (onError) onError(err);
-      reject(err);
+      // The same checkout can retry a failed payment. Remain attached until a
+      // successful handler or modal dismissal; otherwise success is discarded.
     });
     rzp.open();
   });

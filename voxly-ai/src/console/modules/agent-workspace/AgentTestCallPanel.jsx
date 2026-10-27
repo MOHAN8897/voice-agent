@@ -29,7 +29,7 @@ function formatElapsed(ms) {
  * Live test call: browser mic or live-number dial.
  * Same AI path as production phone. Call chrome + 3D speaking avatar + timer.
  */
-export function AgentTestCallPanel({ agent, language }) {
+export function AgentTestCallPanel({ agent, language, pricingProfile }) {
   const {
     wallet,
     refreshWallet,
@@ -71,7 +71,7 @@ export function AgentTestCallPanel({ agent, language }) {
 
   const activeRateInr = useMemo(() => {
     if (mode === 'browser') {
-      return Number(wallet?.webRateInrPerMin ?? 3.50);
+      return pricingProfile?.webRetailRate?.inrPaisePerMin != null ? Number(pricingProfile.webRetailRate.inrPaisePerMin) / 100 : Number(wallet?.webTierRates?.[agentTier]?.inrPerMin ?? wallet?.webRateInrPerMin ?? 0);
     }
     const directRate = wallet?.tierRates?.[agentTier]?.inrPerMin;
     if (directRate != null && Number(directRate) > 0) return Number(directRate);
@@ -86,11 +86,11 @@ export function AgentTestCallPanel({ agent, language }) {
     if (parentTier === 'medium' && wallet?.pstnMediumRateInrPerMin) return Number(wallet.pstnMediumRateInrPerMin);
     if (parentTier === 'premium' && wallet?.pstnPremiumRateInrPerMin) return Number(wallet.pstnPremiumRateInrPerMin);
     return Number(wallet?.rateInrPerMin ?? 5.00);
-  }, [mode, agentTier, wallet]);
+  }, [mode, agentTier, wallet, pricingProfile]);
 
   const activeRateUsd = useMemo(() => {
     if (mode === 'browser') {
-      return Number(wallet?.webRateUsdPerMin ?? 0.037);
+      return pricingProfile?.webRetailRate?.usdMicrosPerMin != null ? Number(pricingProfile.webRetailRate.usdMicrosPerMin) / 1000000 : Number(wallet?.webTierRates?.[agentTier]?.usdPerMin ?? wallet?.webRateUsdPerMin ?? 0);
     }
     const directRate = wallet?.tierRates?.[agentTier]?.usdPerMin;
     if (directRate != null && Number(directRate) > 0) return Number(directRate);
@@ -102,7 +102,9 @@ export function AgentTestCallPanel({ agent, language }) {
     const parentRate = wallet?.tierRates?.[parentTier]?.usdPerMin;
     if (parentRate != null && Number(parentRate) > 0) return Number(parentRate);
     return Number(wallet?.rateUsdPerMin ?? 0.053);
-  }, [mode, agentTier, wallet]);
+  }, [mode, agentTier, wallet, pricingProfile]);
+  const rateAvailable = Number.isFinite(activeRateInr) && activeRateInr > 0 && Number.isFinite(activeRateUsd) && activeRateUsd > 0;
+  const remainingMinutes = rateAvailable ? Math.floor(balanceInr > 0 ? balanceInr / activeRateInr : displayUsd / activeRateUsd) : null;
 
   // Find the agent's assigned phone line
   const assignedLine = useMemo(() => {
@@ -442,7 +444,7 @@ export function AgentTestCallPanel({ agent, language }) {
             ) : (
               <strong className="text-[#0F0E17] font-semibold font-mono">${displayUsd.toFixed(2)}</strong>
             )}{' '}
-            · ~{Number(wallet?.remainingMinutes || 0)} min
+            {remainingMinutes !== null ? `· ~${remainingMinutes} min` : ''}
           </span>
         </span>
         {walletEmpty && (
@@ -454,6 +456,11 @@ export function AgentTestCallPanel({ agent, language }) {
             Recharge
           </button>
         )}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-2.5 text-xs" data-testid="test-call-current-rate">
+        <span className="flex items-center gap-1.5 font-medium text-[#524E5E]"><Zap className="w-3.5 h-3.5 text-amber-500" />{mode === 'browser' ? 'Web call rate' : 'Phone call rate'}</span>
+        <span className="font-mono font-semibold text-[#0F0E17]">{rateAvailable ? `₹${activeRateInr.toFixed(2)}/min ($${activeRateUsd.toFixed(3)}/min)` : 'Rate unavailable'}</span>
       </div>
 
       {mode === 'browser' ? (
@@ -566,19 +573,6 @@ export function AgentTestCallPanel({ agent, language }) {
         </SolidCard>
       ) : (
         <SolidCard className="space-y-3.5" data-testid="test-call-live-number">
-          <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] text-xs">
-            <div className="flex items-center gap-1.5 text-[#524E5E]">
-              <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span className="font-medium">Phone call rate</span>
-            </div>
-            <span className="font-mono font-semibold text-[#0F0E17]">
-              ₹{activeRateInr.toFixed(2)}/min
-              <span className="text-[10px] font-normal text-[#8C879A] ml-1">
-                (${activeRateUsd.toFixed(3)}/min)
-              </span>
-            </span>
-          </div>
-
           <p className="text-xs text-[#524E5E] leading-relaxed">
             Your phone will ring. Answer to speak with this agent using its published script.
           </p>

@@ -16,7 +16,7 @@
 import { publishActivity, publishIdleWarning } from './authSessionSync';
 
 /** Defaults only; a real deployment overwrites these from /api/auth/session-policy. */
-export const DEFAULT_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+export const DEFAULT_IDLE_TIMEOUT_MS = 6 * 60 * 60 * 1000;
 export const DEFAULT_WARNING_MS = 2 * 60 * 1000;
 /** Opt-in "Keep me signed in" fallbacks when the server policy has not arrived yet. */
 export const DEFAULT_REMEMBER_IDLE_MINUTES = 2 * 24 * 60;
@@ -79,7 +79,7 @@ function readOverride() {
 }
 
 /**
- * Shorten (never extend) the timer for local/E2E runs. A 30-minute policy cannot
+ * Shorten (never extend) the timer for local/E2E runs. A 6-hour policy cannot
  * be exercised in a test without this; the clamp keeps it from being used to
  * *relax* the policy by accident.
  */

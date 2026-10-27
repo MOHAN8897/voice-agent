@@ -562,7 +562,7 @@ export const api = {
     return { blob: await response.blob(), filename: match?.[1] || null };
   },
 
-  async request(method, endpoint, body = null, customHeaders = {}, { allowMock = false } = {}) {
+  async request(method, endpoint, body = null, customHeaders = {}, { allowMock = false, timeoutMs = 60_000 } = {}) {
     const backendUrl = this.getBackendUrl().replace(/\/$/, '');
     const token = this.getToken();
     const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
@@ -582,6 +582,7 @@ export const api = {
         method,
         headers,
         ...fetchOpts,
+        signal: AbortSignal.timeout(timeoutMs),
         ...(bodyInit !== undefined ? { body: bodyInit } : {}),
       });
 
@@ -634,6 +635,7 @@ export const api = {
           method,
           headers,
           ...fetchOpts,
+          signal: AbortSignal.timeout(timeoutMs),
           ...(bodyInit !== undefined ? { body: bodyInit } : {}),
         });
       }
@@ -1279,6 +1281,20 @@ export const api = {
   },
 
   leads: {
+    async listPage({ agentId, stage, search, hasPhone, updatedSince, sort, limit = 25, offset = 0 } = {}) {
+      const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+      for (const [key, value] of Object.entries({ agentId, stage: stage ? leadStageToApi(stage) : '', search, hasPhone, updatedSince, sort })) {
+        if (value !== undefined && value !== null && value !== '') params.set(key, String(value));
+      }
+      const data = await api.request('GET', `/api/leads?${params}`);
+      const rows = data.leads || [];
+      return { ...data, leads: rows.map(normalizeLead), total: data.total ?? rows.length };
+    },
+    async update(leadId, changes) {
+      const body = { ...changes, ...(changes.stage ? { stage: leadStageToApi(changes.stage) } : {}) };
+      const data = await api.request('PATCH', `/api/leads/${leadId}`, body);
+      return data.lead ? normalizeLead(data.lead) : null;
+    },
     /**
      * `agentId` is sent to the server, which filters on it. Filtering client-side
      * would still ship every agent's leads to every agent's browser.
@@ -1433,8 +1449,8 @@ export const api = {
       return await api.request('POST', '/api/billing/quote', { amount, currency });
     },
     /** `currency` is the account's charge currency (USD when international is on). */
-    async createRazorpayOrder(amount, currency) {
-      return await api.request('POST', '/api/billing/razorpay/create-order', { amount, currency });
+    async createRazorpayOrder(amount, currency, expectedTotalMinor) {
+      return await api.request('POST', '/api/billing/razorpay/create-order', { amount, currency, expectedTotalMinor });
     },
     async verifyRazorpayPayment(payload) {
       return await api.request('POST', '/api/billing/razorpay/verify', payload);

@@ -733,29 +733,17 @@ export function WorkspaceProvider({ children }) {
     // Patch both caches: the workspace pipeline and the scoped agent board.
     const patch = (prev) =>
       prev.map((lead) => (lead.id === leadId ? { ...lead, stage: newStage } : lead));
+    await api.leads.updateStage(leadId, newStage);
     setLeads(patch);
     setAgentLeads(patch);
-
-    try {
-      await api.leads.updateStage(leadId, newStage);
-    } catch (e) {
-      if (authed()) throw e;
-      console.warn('API updateLeadStage error:', e);
-    }
   };
 
   const updateLeadNotes = async (leadId, notes) => {
     const patch = (prev) =>
       prev.map((lead) => (lead.id === leadId ? { ...lead, notes } : lead));
+    await api.leads.updateNotes(leadId, notes);
     setLeads(patch);
     setAgentLeads(patch);
-
-    try {
-      await api.leads.updateNotes(leadId, notes);
-    } catch (e) {
-      if (authed()) throw e;
-      console.warn('API updateLeadNotes error:', e);
-    }
   };
 
   const createLead = async (leadData) => {
@@ -792,11 +780,11 @@ export function WorkspaceProvider({ children }) {
     return result;
   };
 
-  const triggerCallToLead = async (leadId) => {
-    const lead = leads.find((l) => l.id === leadId);
+  const triggerCallToLead = async (leadOrId, chosenAgentId = null) => {
+    const lead = typeof leadOrId === 'object' ? leadOrId : [...agentLeads, ...leads].find((l) => l.id === leadOrId);
     if (!lead) throw new Error('Lead not found');
     if (!lead.phone) throw new Error('Add a phone number to this lead before calling.');
-    const agentId = lead.agentId || agents[0]?.id;
+    const agentId = lead.agentId || chosenAgentId;
     return placeOutboundCall({ agentId, toE164: lead.phone });
   };
 

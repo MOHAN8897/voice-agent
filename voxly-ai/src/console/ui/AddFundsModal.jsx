@@ -71,7 +71,7 @@ function taxLabel(taxKind) {
 }
 
 const CONFIRMING_MESSAGE =
-  'Payment received. The bank has not confirmed it to us yet — the wallet will be credited automatically once it does. Refresh in a minute; no need to pay again.';
+  'Checkout completed. We are checking the payment before crediting your wallet. Use Check payment status; please do not pay again.';
 
 /**
  * Wallet top-up via Razorpay.
@@ -94,6 +94,10 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
   const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState(null);
   const quoteSeq = useRef(0);
+  const pendingPayment = useRef(null);
+  const payLock = useRef(false);
+  const confirmLock = useRef(false);
+  const [quoteRefresh, setQuoteRefresh] = useState(0);
 
   const banner = friendlyReason(reason);
   const chargeCurrency = razorpay.currency || 'USD';
@@ -104,9 +108,9 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
   useEffect(() => {
     if (!isOpen) return;
     setError(null);
-    setConfirming(false);
+    setConfirming(Boolean(pendingPayment.current));
     setDone(null);
-    setQuote(null);
+    setQuote(pendingPayment.current?.quote || null);
     setQuoteError(null);
     let cancelled = false;
     Promise.all([
@@ -120,11 +124,12 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
       if (cancelled) return;
       setCatalog(cat);
       const config = { international: false, currency: 'INR', ...(rz || {}) };
+      if (pendingPayment.current?.quote?.currency) config.currency = pendingPayment.current.quote.currency;
       setRazorpay(config);
       const currency = config.currency || 'INR';
       const minimum = currency === 'INR' ? Number(cat?.topupMinInr) || 100 : Number(cat?.topupMinUsd) || 3;
       const defaultAmount = Number(initialAmount) > 0 ? Number(initialAmount) : Math.max(minimum, currency === 'INR' ? 500 : 10);
-      setAmount(defaultAmount);
+      setAmount(pendingPayment.current?.quote?.amount ?? defaultAmount);
     });
     return () => {
       cancelled = true;
@@ -157,7 +162,8 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
 
   // Server-side quote: the only source of truth for GST and charge totals.
   useEffect(() => {
-    if (!isOpen || !razorpay.enabled) return;
+    if (!isOpen || !razorpay.enabled) { quoteSeq.current += 1; setQuote(null); setQuoteBusy(false); return; }
+    if (pendingPayment.current) { setQuote(pendingPayment.current.quote); setQuoteBusy(false); return; }
     const value = Number(amount);
     if (!Number.isFinite(value) || value <= 0) {
       setQuote(null);
@@ -165,12 +171,13 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
       return;
     }
     const seq = ++quoteSeq.current;
+    setQuote(null);
     setQuoteBusy(true);
     setQuoteError(null);
     const timer = window.setTimeout(() => {
       api.billing.quoteTopup(value, chargeCurrency)
         .then((result) => {
-          if (seq === quoteSeq.current) setQuote(result);
+          if (seq === quoteSeq.current) setQuote({ ...result, quotedAmount: value, quotedCurrency: chargeCurrency });
         })
         .catch((e) => {
           if (seq !== quoteSeq.current) return;
@@ -184,78 +191,62 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
     }, 300);
     return () => {
       window.clearTimeout(timer);
-      if (seq === quoteSeq.current) setQuoteBusy(false);
+      if (seq === quoteSeq.current) { quoteSeq.current += 1; setQuoteBusy(false); }
     };
-  }, [amount, chargeCurrency, isOpen, razorpay.enabled]);
+  }, [amount, chargeCurrency, isOpen, razorpay.enabled, quoteRefresh, confirming]);
 
   const inRange = Number(amount) >= minAmount && Number(amount) <= maxAmount;
-  const canPay = inRange && Number(amount) > 0 && razorpay.enabled && !!quote && !quoteBusy && !busy;
+  const canPay = inRange && Number(amount) > 0 && razorpay.enabled && !!quote && quote.quotedAmount === Number(amount) && quote.quotedCurrency === chargeCurrency && !quoteBusy && !busy && !confirming && !done;
   const totalLabel = quote ? money(quote.total, chargeCurrency) : money(amount, chargeCurrency);
 
-  const pay = useCallback(async () => {
-    if (!canPay || busy) return;
-    setBusy(true);
-    setError(null);
-    setConfirming(false);
+  const confirmPayment = useCallback(async (response, paymentQuote) => {
+    if (confirmLock.current) return;
+    confirmLock.current = true;
+    pendingPayment.current = { response, quote: paymentQuote };
+    setConfirming(true); setBusy(true); setError(null);
     try {
-      if (!razorpay.enabled) {
-        throw new Error('payments_unavailable');
-      }
-      const order = await api.billing.createRazorpayOrder(Number(quote.amount), chargeCurrency);
-      await openRazorpayWalletCheckout({
-        order,
-        keyId: razorpay.keyId,
-        user: { email: user?.email, name: user?.name },
-        hideUpi: isInternational,
-        onSuccess: async (response) => {
-          try {
-            const result = await api.billing.verifyRazorpayPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-            await refreshWallet();
-            const credited = result?.creditedInr != null ? Number(result.creditedInr) : Number(quote.creditInr);
-            setDone({
-              credited,
-              invoiceNumber: result?.invoiceNumber || null,
-            });
-            showToast('Payment received', 'success');
-          } catch (e) {
-            const message = String(e.message || '');
-            if (/verification|confirm|not been captured|not captured|unavailable/i.test(message)) {
-              setConfirming(true);
-            } else {
-              setError(customerPaymentError(message));
-            }
-          }
-        },
-        onError: (e) => {
-          const message = String(e.message || 'Payment cancelled');
-          const friendly = customerPaymentError(message);
-          if (friendly) {
-            setError(
-              /payment cancelled/i.test(message)
-                ? null
-                : `${friendly} No wallet credit was added. You can retry with the same amount.`
-            );
-          }
+      const result = await api.billing.verifyRazorpayPayment(response);
+      if (result?.ok === false) throw new Error('Payment verification is pending.');
+      await refreshWallet().catch(() => null);
+      pendingPayment.current = null;
+      setConfirming(false);
+      setDone({ credited: result?.creditedInr != null ? Number(result.creditedInr) : Number(paymentQuote.creditInr),
+        invoiceNumber: result?.invoiceNumber || null });
+      showToast('Payment received', 'success');
+    } catch (err) {
+      setError(`${customerPaymentError(err.message) || 'Payment confirmation is pending.'} Check payment status before making another payment.`);
+    } finally { confirmLock.current = false; setBusy(false); }
+  }, [refreshWallet]);
+
+  const pay = useCallback(async () => {
+    if (!canPay || payLock.current || pendingPayment.current) return;
+    payLock.current = true; setBusy(true); setError(null);
+    try {
+      const order = await api.billing.createRazorpayOrder(Number(quote.amount), chargeCurrency,
+        quote.totalMinor ?? Math.round(Number(quote.total) * 100));
+      await openRazorpayWalletCheckout({ order, keyId: razorpay.keyId,
+        user: { email: user?.email, name: user?.name }, hideUpi: isInternational,
+        onSuccess: (response) => confirmPayment(response, { ...quote, creditInr: order.creditedInr ?? quote.creditInr }),
+        onError: (err) => {
+          const message = customerPaymentError(err.message);
+          if (message) setError(`${message} No wallet credit was added for this failed attempt. Retry in checkout or close it.`);
         },
       });
-    } catch (e) {
-      const err = customerPaymentError(e.message);
-      if (err) setError(`${err} No wallet credit was added. You can retry with the same amount.`);
-    } finally {
-      setBusy(false);
-    }
-  }, [amount, busy, canPay, chargeCurrency, isInternational, quote, razorpay, refreshWallet, user]);
+    } catch (err) {
+      const message = customerPaymentError(err.message);
+      if (/quote.*changed|tax or charge total changed/i.test(err.message || '')) {
+        setQuote(null); setQuoteRefresh((current) => current + 1);
+      }
+      if (message) setError(message);
+    } finally { payLock.current = false; setBusy(false); }
+  }, [canPay, chargeCurrency, confirmPayment, isInternational, quote, razorpay, user]);
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => { if (!busy) onClose?.(); }}
       title="Add credit to your wallet"
-      subtitle={`Pay by card${isInternational ? ` in ${chargeCurrency}` : ''}. Unused balance never expires.`}
+      subtitle={`Secure checkout in ${chargeCurrency}. Tax and wallet credit are shown separately.`}
       maxWidth="max-w-lg"
     >
       <div data-testid="add-funds-modal" className="space-y-4">
@@ -316,6 +307,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
                 <input
                   id="add-funds-amount"
                   type="number"
+                  disabled={busy || confirming}
                   min={minAmount}
                   max={maxAmount}
                   step={chargeCurrency === 'INR' ? '100' : '1'}
@@ -323,7 +315,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
                   onChange={(e) => {
                     setAmount(Number(e.target.value));
                     setError(null);
-                    setConfirming(false);
+                    setQuote(null);
                   }}
                   data-testid="add-funds-amount"
                   className="flex-1 bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-sm min-h-[42px] sm:min-h-[38px] font-mono text-[#0F0E17]"
@@ -334,10 +326,11 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
                   <button
                     key={p}
                     type="button"
+                    disabled={busy || confirming}
                     onClick={() => {
                       setAmount(p);
                       setError(null);
-                      setConfirming(false);
+                      setQuote(null);
                     }}
                     data-testid={`add-funds-preset-${p}`}
                     className={`min-w-[44px] min-h-[38px] sm:min-h-[34px] px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all flex items-center justify-center ${
@@ -413,6 +406,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
               </div>
             ) : null}
 
+            {quote?.checkoutTerms && <p className="whitespace-pre-wrap text-xs leading-relaxed text-[#524E5E]" data-testid="checkout-tax-terms">{quote.checkoutTerms}</p>}
             {quoteError ? (
               <p className="text-[11px] text-[#B45309]" role="status">
                 {quoteError}
@@ -426,6 +420,8 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
                 className="rounded-xl border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-xs text-[#78350F]"
               >
                 {CONFIRMING_MESSAGE}
+                <TactileButton variant="secondary" size="sm" className="mt-3" disabled={busy || !pendingPayment.current}
+                  onClick={() => { const pending = pendingPayment.current; if (pending) confirmPayment(pending.response, pending.quote); }}>Check payment status</TactileButton>
               </div>
             ) : null}
 

@@ -301,7 +301,7 @@ export function AgentVoicePanel({
   const savedSelectionStateKey = `${selectionKey(savedSelection)}|${savedSelectionRevision}`;
   const isStackOptedIn = agent?.voiceSettings?.stackSelectionVersion === 1;
   const catalogStackProfiles = Array.isArray(voiceStackProfiles)
-    ? voiceStackProfiles.filter((profile) => profile?.tier && profile?.ready && profile?.enabled !== false && !profile?.blockers?.some(b => b.code === 'profile_not_available'))
+    ? voiceStackProfiles.filter((profile) => profile?.tier && profile?.enabled !== false && !profile?.blockers?.some(b => b.code === 'profile_not_available'))
     : [];
   const [isRefreshingVoiceData, setIsRefreshingVoiceData] = useState(false);
 
@@ -1038,14 +1038,13 @@ export function AgentVoicePanel({
                 const gender = ['female', 'male', 'neutral'].includes(tierVoiceGenders[profile.tier])
                   ? tierVoiceGenders[profile.tier]
                   : 'all';
-                const visibleVoices = voices.filter(
-                  (voice) => (!category || voice.category === category) && matchesGender(voice, gender)
-                );
+                const categoryVoices = voices.filter((voice) => !category || voice.category === category);
+                const visibleVoices = categoryVoices.filter((voice) => matchesGender(voice, gender));
                 const genderCounts = {
-                  all: voices.length,
-                  female: voices.filter((voice) => matchesGender(voice, 'female')).length,
-                  male: voices.filter((voice) => matchesGender(voice, 'male')).length,
-                  neutral: voices.filter((voice) => matchesGender(voice, 'neutral')).length,
+                  all: categoryVoices.length,
+                  female: categoryVoices.filter((voice) => matchesGender(voice, 'female')).length,
+                  male: categoryVoices.filter((voice) => matchesGender(voice, 'male')).length,
+                  neutral: categoryVoices.filter((voice) => matchesGender(voice, 'neutral')).length,
                 };
 
                 return (
@@ -1112,8 +1111,9 @@ export function AgentVoicePanel({
                         className="mt-2 text-[11px] text-[#524E5E] font-medium"
                       >
                         {ready
-                          ? `Approved retail rate: ${formatRetailRate(profile.retailRate)}`
+                          ? `Phone calls: ${formatRetailRate(profile.retailRate)}`
                           : 'Unavailable for this language until setup is approved.'}
+                        {ready && profile.webRetailRate?.complete && <span className="mt-1 block">Web calls: {formatRetailRate(profile.webRetailRate)}</span>}
                       </div>
                     </div>
 
@@ -1122,24 +1122,20 @@ export function AgentVoicePanel({
                       <div className="flex items-center justify-between text-[11px] font-semibold text-[#524E5E] mb-2">
                         <span>Voices for {activeLanguage.name}</span>
                         <span className="text-[10px] text-[#8C879A] font-normal">
-                          {visibleVoices.length === voices.length
-                            ? `${voices.length} ${voices.length === 1 ? 'voice' : 'voices'}`
-                            : `${visibleVoices.length} of ${voices.length} voices`}
+                          {visibleVoices.length} {visibleVoices.length === 1 ? 'voice' : 'voices'} available
                         </span>
                       </div>
                       <p className="mb-3 text-[10px] leading-relaxed text-[#716C7F]" data-testid={`voice-inventory-summary-${profile.tier}`}>
-                        All {voices.length} {activeLanguage.name} {voices.length === 1 ? 'voice is' : 'voices are'} included.
-                        {Number.isSafeInteger(profile.voiceInventory?.totalVoices) && profile.voiceInventory.totalVoices > voices.length
-                          ? ` This setup has ${profile.voiceInventory.totalVoices} voices across its supported languages. Change the spoken language above to browse the others.`
-                          : ' Voice availability depends on the spoken language.'}
+                        {visibleVoices.length} {activeLanguage.name} {visibleVoices.length === 1 ? 'voice matches' : 'voices match'} your filters
+                        {category ? ` · ${formatCategory(category)}` : ' · All styles'}.
                       </p>
 
                       {categories.length > 0 && <label className="mb-2 text-[11px] text-[#524E5E]">Voice style
                         <select aria-label={`Voice style for ${profile.label || profile.tier}`} value={category}
                           onChange={(event) => setTierVoiceCategories((previous) => ({ ...previous, [profile.tier]: event.target.value }))}
                           className="mt-1 w-full rounded-md border border-[#E4E2EB] bg-white p-2">
-                          <option value="">All styles</option>
-                          {categories.map((style) => <option key={style} value={style}>{formatCategory(style)}</option>)}
+                          <option value="">All styles ({voices.filter((voice) => matchesGender(voice, gender)).length})</option>
+                          {categories.map((style) => <option key={style} value={style}>{formatCategory(style)} ({voices.filter((voice) => voice.category === style && matchesGender(voice, gender)).length})</option>)}
                         </select>
                       </label>}
                       <div className="mb-2 flex items-center gap-0.5 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] p-0.5" role="group" aria-label={`Voice gender for ${profile.label || profile.tier}`}>
@@ -1172,6 +1168,11 @@ export function AgentVoicePanel({
                         ) : visibleVoices.length === 0 ? (
                           <div className="py-6 text-center text-xs text-[#8C879A] italic">
                             No voices match the selected style and gender.
+                            <button type="button" className="mt-2 block w-full font-semibold not-italic text-[#6344E7]"
+                              onClick={() => {
+                                setTierVoiceCategories((previous) => ({ ...previous, [profile.tier]: '' }));
+                                setTierVoiceGenders((previous) => ({ ...previous, [profile.tier]: 'all' }));
+                              }}>Clear voice filters</button>
                           </div>
                         ) : (
                           visibleVoices.map((v) => {

@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { setupVoiceWorkspace } from './fixtures/voice-setup.js';
 
-test('one test and save action; tier selection saves without a second script publish', async ({ page }) => {
+test('tier selection saves immediately while the script save dock stays hidden without edits', async ({ page }) => {
   const state = await setupVoiceWorkspace(page);
   await expect(page.getByTestId('voice-stack-tier-low')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Test Live Agent', exact: true })).toHaveCount(0);
   await expect(page.getByTestId('agent-test-call')).toBeEnabled();
-  await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Save changes', exact: true })).toHaveCount(0);
   await page.getByTestId('voice-stack-tier-low').check();
   await expect(page.getByTestId('voice-stack-save-status')).toContainText('Voice setup saved');
   await expect(page.getByTestId('agent-test-call')).toBeEnabled();

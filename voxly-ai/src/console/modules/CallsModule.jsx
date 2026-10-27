@@ -276,7 +276,7 @@ function RecordingPlayer({ call }) {
  * callback/transcript/outcome handling. `embedded` drops the page chrome (fleet
  * header, dialer tab) because the workspace supplies its own around it.
  */
-export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = null, agentName = '', embedded = false }) {
+export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = null, agentName = '', embedded = false, initialSearch = '' }) {
   const {
     calls,
     selectedCallId,
@@ -291,7 +291,8 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   const [filterAgentId, setFilterAgentId] = useState('all');
   const [tagFilter, setTagFilter] = useState('');
   const [availableTags, setAvailableTags] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => initialSearch || sessionStorage.getItem('voxly_calls_search') || '');
+  useEffect(() => { sessionStorage.removeItem('voxly_calls_search'); }, []);
   const [toNumber, setToNumber] = useState('');
   const [fromNumber, setFromNumber] = useState('');
   const [agentId, setAgentId] = useState('');
@@ -420,8 +421,12 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
           filterDirection === 'All' ||
           String(call.direction || '').toLowerCase() === filterDirection.toLowerCase();
         const q = searchQuery.trim().toLowerCase();
+        const phoneQuery = q.replace(/\D/g, '');
+        const matchesPhone = phoneQuery.length >= 3 && /^[+\d\s().-]+$/.test(q) &&
+          [call.callerPhone, call.calledPhone].some((phone) => String(phone || '').replace(/\D/g, '').includes(phoneQuery));
         const matchesSearch =
           !q ||
+          matchesPhone ||
           (call.callerName || '').toLowerCase().includes(q) ||
           (call.callerPhone || '').includes(q) ||
           (call.agentName || '').toLowerCase().includes(q) ||

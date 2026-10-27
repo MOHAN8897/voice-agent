@@ -148,6 +148,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
       {/* Primary Vertical Navigation (Responsive Desktop & Mobile Drawer) */}
       <ErrorBoundary title="Sidebar Navigation Unavailable">
         <Sidebar
+          inAgentWorkspace={activeTab === 'employees' && Boolean(employeeFlowStep)}
           activeTab={activeTab}
           onSelectTab={handleSelectTab}
           onOpenCreateAgent={() => setIsCreateAgentOpen(true)}
@@ -188,7 +189,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
 
         {/* Dynamic Viewport */}
         <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 bg-[#FAF9FD]">
-          <div className="max-w-7xl mx-auto pb-12">
+          <div className="w-full max-w-[1680px] mx-auto pb-8 console-workspace">
             <ServiceDegradedBanner />
             <ConsoleSyncBanner />
             <PurchaseProvisioningBanner />

@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Phone, Save, CheckCircle2, RotateCcw } from 'lucide-react';
+import { Phone, LayoutGrid, Users, PhoneCall, ShieldCheck } from 'lucide-react';
 import { SolidCard } from '../../ui/SolidCard';
-import { StatusBadge } from '../../ui/StatusBadge';
 import { TactileButton } from '../../ui/TactileButton';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { showToast } from '../../ui/ToastHost';
 import { LANGUAGE_OPTIONS } from '../../../lib/voicePresets';
 import { api } from '../../../services/api';
 import { TelephonySettingsCard } from '../TelephonySettingsCard';
+import { SectionNav } from './SectionNav';
 
 const DEFAULT_PROFILE = {
   greetingPhrase: '',
@@ -47,9 +47,10 @@ function cleanSnapshot(data) {
  *
  * Holds all configuration sections (Identity, Status, Number, Operating Schedule & Greeting,
  * Call Recording & Disclosure, Compliance) in memory with ZERO database writes until
- * the single primary "Save Agent Settings" button is clicked.
+ * the workspace save dock is used.
  */
 export function AgentSettingsPanel({
+  savingChanges = false,
   agent,
   agentGreeting,
   onGreetingChange,
@@ -60,6 +61,7 @@ export function AgentSettingsPanel({
 }) {
   const { phoneNumbers, agents, assignNumberToAgent, updateAgent } = useWorkspace();
   const agentId = agent?.id;
+  const [category, setCategory] = useState('all');
 
   const assigned = useMemo(
     () => phoneNumbers.find((n) => n.assignedAgentId === agentId),
@@ -90,7 +92,6 @@ export function AgentSettingsPanel({
   const [complianceError, setComplianceError] = useState(null);
 
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
 
   // Keep telephonyProfile.greetingPhrase in sync with universal agentGreeting
@@ -266,8 +267,6 @@ export function AgentSettingsPanel({
       // Update baseline snapshot
       const updatedSnapshot = JSON.stringify(currentSnapshot);
       setInitialSnapshot(updatedSnapshot);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
       showToast('All agent configurations saved successfully', 'success');
 
       onSettingsSaved?.({
@@ -335,7 +334,14 @@ export function AgentSettingsPanel({
   const isActive = status === 'active';
 
   return (
-    <div className="space-y-5 pb-6">
+    <div className="flex flex-col gap-4 pb-6">
+      <SectionNav label="Settings sections" value={category} onChange={setCategory} variant="tiles"
+        items={[
+          ['all', 'All settings', LayoutGrid, 'Review the complete configuration'],
+          ['identity', 'Agent & phone', Users, 'Identity, language, status and number'],
+          ['routing', 'Call handling', PhoneCall, 'Availability, hours and call routing'],
+          ['compliance', 'Recording & compliance', ShieldCheck, 'Disclosure and calling requirements'],
+        ]} />
       {error && (
         <div
           role="alert"
@@ -346,8 +352,9 @@ export function AgentSettingsPanel({
         </div>
       )}
 
-      {/* Card 1: Identity */}
-      <SolidCard>
+      <fieldset disabled={savingChanges || saving} className="console-categories settings-categories grid min-w-0 gap-4 items-start" data-category={category}>
+      <div className="settings-primary flex min-w-0 flex-col gap-4">
+      <div data-section="identity"><SolidCard>
         <h3 className="text-xs font-bold text-[#0F0E17] mb-4">Identity</h3>
         <div className="grid sm:grid-cols-2 gap-4">
           <label className="block">
@@ -379,10 +386,9 @@ export function AgentSettingsPanel({
             </span>
           </label>
         </div>
-      </SolidCard>
+      </SolidCard></div>
 
-      {/* Card 2: Live / Pause Switch */}
-      <SolidCard>
+      <div data-section="identity"><SolidCard>
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="text-xs font-bold text-[#0F0E17]">Live / Pause</h3>
@@ -413,10 +419,9 @@ export function AgentSettingsPanel({
         <p className="mt-2 text-[11px] font-semibold text-[#0F0E17]">
           {isActive ? 'Live — accepting calls' : 'Paused — calls blocked'}
         </p>
-      </SolidCard>
+      </SolidCard></div>
 
-      {/* Card 3: Phone number selection */}
-      <SolidCard>
+      <div data-section="identity"><SolidCard>
         <div className="flex items-center justify-between gap-3 mb-4">
           <div>
             <h3 className="text-xs font-bold text-[#0F0E17]">Phone number</h3>
@@ -454,11 +459,11 @@ export function AgentSettingsPanel({
             );
           })}
         </select>
-      </SolidCard>
+      </SolidCard></div>
 
       {/* Card 4: Operating Schedule & Inbound Routing (Single Controlled Telephony Card) */}
       {agentId && (
-        <div className="space-y-2">
+        <div data-section="routing" className="space-y-2">
           <TelephonySettingsCard
             agentId={agentId}
             profile={telephonyProfile}
@@ -473,8 +478,9 @@ export function AgentSettingsPanel({
         </div>
       )}
 
-      {/* Card 5: Call Recording & Disclosure */}
-      <SolidCard className="space-y-4">
+      </div>
+      <div className="settings-secondary flex min-w-0 flex-col gap-4">
+      <div data-section="compliance"><SolidCard className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="text-xs font-bold text-[#0F0E17]">Call Recording &amp; Disclosure</h3>
@@ -531,10 +537,9 @@ export function AgentSettingsPanel({
             </p>
           </div>
         )}
-      </SolidCard>
+      </SolidCard></div>
 
-      {/* Card 6: India calling-compliance acknowledgements, separate from call controls. */}
-      <SolidCard>
+      <div data-section="compliance"><SolidCard>
         <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
           <div>
             <h3 className="text-xs font-bold text-[#0F0E17]">India calling compliance</h3>
@@ -608,50 +613,10 @@ export function AgentSettingsPanel({
             )}
           </>
         )}
-      </SolidCard>
-
-      {/* SINGLE UNIFIED SAVE BAR FOR ENTIRE SETTINGS PAGE */}
-      <div className="sticky bottom-3 z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-[#E4E2EB] shadow-lg">
-        <div className="flex items-center gap-3">
-          <StatusBadge status={isActive ? 'Active' : 'Paused'} size="xs" />
-          {isDirty ? (
-            <span className="text-xs font-semibold text-[#B45309] flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#B45309] animate-pulse" />
-              Unsaved changes in agent settings
-            </span>
-          ) : (
-            <span className="text-xs text-[#8C879A]">All configurations saved</span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2.5 ml-auto">
-          {isDirty && (
-            <TactileButton
-              variant="secondary"
-              size="sm"
-              icon={RotateCcw}
-              onClick={handleDiscardAll}
-              disabled={saving}
-              data-testid="agent-settings-discard"
-            >
-              Discard changes
-            </TactileButton>
-          )}
-
-          <TactileButton
-            variant="primary"
-            size="sm"
-            icon={saved ? CheckCircle2 : Save}
-            onClick={handleSaveAll}
-            loading={saving}
-            disabled={saving || !isDirty}
-            data-testid="agent-settings-save"
-            className="min-h-[38px] px-5"
-          >
-            {saved ? 'Saved!' : saving ? 'Saving…' : 'Save Agent Settings'}
-          </TactileButton>
-        </div>
+      </SolidCard></div>
       </div>
+      </fieldset>
+
     </div>
   );
 }

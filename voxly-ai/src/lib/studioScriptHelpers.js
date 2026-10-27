@@ -3,6 +3,8 @@
  * dynamic system tokens, sample leads catalog, and objection presets.
  */
 
+import { storedHandlingRules } from './handlingRules.js';
+
 const SCRIPT_VARIABLE_GROUPS = [
   {
     id: 'contact',
@@ -125,7 +127,7 @@ export const OBJECTION_PRESETS = [
     label: '🛑 Not Interested',
     category: 'not_interested',
     trigger: 'Not interested / Please remove me from your list',
-    response: 'Understood. Thank you for your time. Goodbye.',
+    response: 'Understood.',
     action: 'end_call',
   },
 ];
@@ -223,6 +225,8 @@ export function renderScriptPreview(template, contact) {
 
 export function parseObjectionRulesFromSections(sections) {
   if (!Array.isArray(sections)) return [];
+  const stored = storedHandlingRules(sections);
+  if (stored !== null) return stored;
   const faqRow = sections.find(
     (s) => s.enabled !== false && (s.type === 'faq' || s.title === 'FAQ & Objections')
   );

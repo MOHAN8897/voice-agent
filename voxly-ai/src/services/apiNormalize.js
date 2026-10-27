@@ -142,6 +142,8 @@ export function normalizeWallet(apiWallet, fallback) {
 currency: 'USD',
     rateInrPerMin: apiWallet.rateInrPerMin,
     rateUsdPerMin: apiWallet.rateUsdPerMin,
+    tierRates: apiWallet.tierRates,
+    webTierRates: apiWallet.webTierRates,
     webRateInrPerMin: apiWallet.webRateInrPerMin,
     webRateUsdPerMin: apiWallet.webRateUsdPerMin,
     didMonthlyInr: apiWallet.didMonthlyInr,
@@ -156,6 +158,7 @@ const LEAD_STAGE_TO_UI = {
   new: 'New',
   contacted: 'Contacted',
   qualified: 'Qualified',
+  converted: 'Converted',
   meeting_booked: 'Meeting Booked',
   unqualified: 'Unqualified',
 };
@@ -164,6 +167,7 @@ const LEAD_STAGE_TO_API = {
   New: 'new',
   Contacted: 'contacted',
   Qualified: 'qualified',
+  Converted: 'converted',
   'Meeting Booked': 'meeting_booked',
   Unqualified: 'unqualified',
 };

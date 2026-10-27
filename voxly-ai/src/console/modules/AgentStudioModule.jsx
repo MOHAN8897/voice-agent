@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react'
 import {
   FileCode2,
   Volume2,
-  Save,
   Play,
   Square,
   Plus,
@@ -50,6 +49,7 @@ import { AgentOverview } from './agent-workspace/AgentOverview';
 import { AgentCallsPanel } from './agent-workspace/AgentCallsPanel';
 import { AgentSettingsPanel } from './agent-workspace/AgentSettingsPanel';
 import { AgentVoicePanel } from './agent-workspace/AgentVoicePanel';
+import { AgentSaveDock } from './agent-workspace/AgentSaveDock';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { resolveEmployeeStep } from '../employeeFlowHash';
 
@@ -316,14 +316,17 @@ export function AgentStudioModule({
   const [voiceStackCatalogError, setVoiceStackCatalogError] = useState(null);
   const [voiceStackSavedAgents, setVoiceStackSavedAgents] = useState({});
   const voiceStackCatalogRequestRef = useRef(0);
+  const voiceStackCatalogFlightRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
+    let requestId = 0;
     const refreshVoiceCatalog = () => {
+      const currentRequest = ++requestId;
       setVoiceCatalogLoading(true);
       return fetchPhoneVoiceOptions(voiceLanguage)
         .then((o) => {
-          if (!mounted) return;
+          if (!mounted || currentRequest !== requestId) return;
           setPhoneVoices(o.voices || []);
           setActiveVoiceProvider(o.activeVoiceProvider || 'gemini');
           setDefaultVoiceId(o.defaultVoiceId || 'te-in-csagent-5');
@@ -332,12 +335,12 @@ export function AgentStudioModule({
           return { error: false };
         })
         .catch((error) => {
-          if (!mounted) return;
+          if (!mounted || currentRequest !== requestId) return;
           setVoiceCatalogError('Current voice options could not be loaded. Try again.');
           return { error: true };
         })
         .finally(() => {
-          if (mounted) setVoiceCatalogLoading(false);
+          if (mounted && currentRequest === requestId) setVoiceCatalogLoading(false);
         });
     };
     voiceCatalogRefreshRef.current = refreshVoiceCatalog;
@@ -382,10 +385,12 @@ export function AgentStudioModule({
   const [variablePickerOpen, setVariablePickerOpen] = useState(false);
   const [useFallbackSyntax, setUseFallbackSyntax] = useState(true);
   const [variableSuggestionTrigger, setVariableSuggestionTrigger] = useState(null);
+  const [variableSuggestionTop, setVariableSuggestionTop] = useState(0);
   const [selectedVariableSuggestion, setSelectedVariableSuggestion] = useState(0);
   const [scriptPreviewMode, setScriptPreviewMode] = useState(false);
   const [sampleLeadIdx, setSampleLeadIdx] = useState(0);
   const scriptTextareaRef = useRef(null);
+  const workspaceContainerRef = useRef(null);
   const scriptVariableGroups = useMemo(() => getScriptVariableGroups(useFallbackSyntax), [useFallbackSyntax]);
   const variableSuggestions = useMemo(
     () => variableSuggestionTrigger
@@ -395,6 +400,24 @@ export function AgentStudioModule({
   );
 
   const [formData, setFormData] = useState(() => formFromAgent(selectedAgent));
+  // Size to the complete document, including wrapped lines after a sidebar/viewport resize.
+  React.useLayoutEffect(() => {
+    const editor = scriptTextareaRef.current;
+    if (!editor) return;
+    let lastWidth = 0;
+    const fit = () => {
+      if (!editor.clientWidth) return;
+      editor.style.height = 'auto';
+      editor.style.height = `${editor.scrollHeight + 2}px`;
+    };
+    fit();
+    const observer = new ResizeObserver(() => {
+      if (editor.clientWidth !== lastWidth) { lastWidth = editor.clientWidth; fit(); }
+    });
+    observer.observe(editor);
+    return () => observer.disconnect();
+  }, [formData.script, activeTab, scriptPreviewMode, brainLoading]);
+
   const savedVoiceStackAgent = selectedAgent?.id ? voiceStackSavedAgents[selectedAgent.id] : null;
   const voiceStackAgent = savedVoiceStackAgent &&
     (savedVoiceStackAgent.voiceRevision ?? 0) >= (selectedAgent?.voiceRevision ?? 0)
@@ -412,34 +435,52 @@ export function AgentStudioModule({
     (Array.isArray(formData?.languages) ? formData.languages[0] : null) ||
     voiceLanguage;
 
-  const refreshVoiceStackCatalog = useCallback(async () => {
+  const refreshVoiceStackCatalog = useCallback(({ background = false } = {}) => {
+    const flight = voiceStackCatalogFlightRef.current;
+    if (flight?.language === voiceStackLanguage) return flight.promise;
     const requestId = ++voiceStackCatalogRequestRef.current;
-    setVoiceStackCatalogLoading(true);
-    setVoiceStackCatalogError(null);
-    setVoiceStackProfiles([]);
-    try {
+    if (!background) setVoiceStackCatalogLoading(true);
+    const promise = (async () => { try {
       const result = await api.request(
         'GET',
-        `/api/voice-stacks/catalog?language=${encodeURIComponent(voiceStackLanguage)}`
+        `/api/voice-stacks/catalog?language=${encodeURIComponent(voiceStackLanguage)}`,
+        null, {}, { timeoutMs: 15_000 }
       );
       if (requestId !== voiceStackCatalogRequestRef.current) return;
       setVoiceStackProfiles(Array.isArray(result?.profiles) ? result.profiles : []);
+      setVoiceStackCatalogError(null);
       return { error: false };
     } catch {
       if (requestId === voiceStackCatalogRequestRef.current) {
-        setVoiceStackProfiles([]);
         setVoiceStackCatalogError('Approved voice options could not be loaded. Try again.');
       }
       return { error: true };
     } finally {
       if (requestId === voiceStackCatalogRequestRef.current) {
         setVoiceStackCatalogLoading(false);
+        voiceStackCatalogFlightRef.current = null;
       }
-    }
+    } })();
+    voiceStackCatalogFlightRef.current = { language: voiceStackLanguage, promise };
+    return promise;
   }, [voiceStackLanguage]);
 
   useEffect(() => {
+    setVoiceStackProfiles([]);
     refreshVoiceStackCatalog();
+    const refresh = () => {
+      if (document.visibilityState === 'visible') refreshVoiceStackCatalog({ background: true });
+    };
+    const interval = window.setInterval(refresh, 30_000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+      ++voiceStackCatalogRequestRef.current;
+      voiceStackCatalogFlightRef.current = null;
+    };
   }, [refreshVoiceStackCatalog, selectedAgentId]);
 
   const saveVoiceStackSelection = useCallback(async (selection) => {
@@ -622,6 +663,27 @@ export function AgentStudioModule({
   const updateVariableSuggestion = (element) => {
     if (!element) return;
     const trigger = findScriptVariableTrigger(element.value, element.selectionStart);
+    if (trigger) {
+      // A paper-height editor can extend well beyond the viewport. Anchor its
+      // autocomplete near the caret instead of below the entire document.
+      const mirror = document.createElement('div');
+      const style = getComputedStyle(element);
+      for (const property of ['font', 'lineHeight', 'letterSpacing', 'wordSpacing', 'padding', 'textIndent', 'tabSize', 'direction']) {
+        mirror.style[property] = style[property];
+      }
+      Object.assign(mirror.style, { position: 'fixed', left: '-100000px', top: '0', visibility: 'hidden',
+        width: `${element.clientWidth}px`, boxSizing: 'border-box', whiteSpace: 'pre-wrap', overflowWrap: 'break-word' });
+      mirror.textContent = element.value.slice(0, element.selectionStart);
+      const caret = document.createElement('span');
+      caret.textContent = '\u200b';
+      mirror.append(caret);
+      document.body.append(mirror);
+      const caretTop = caret.offsetTop + (parseFloat(style.lineHeight) || 28);
+      const dockHeight = parseFloat(workspaceContainerRef.current?.style.getPropertyValue('--agent-save-dock-height')) || 90;
+      const visibleTop = window.innerHeight - element.getBoundingClientRect().top - 240 - dockHeight;
+      setVariableSuggestionTop(Math.max(0, Math.min(caretTop, visibleTop)));
+      mirror.remove();
+    }
     setVariableSuggestionTrigger(trigger);
     setSelectedVariableSuggestion(0);
   };
@@ -709,6 +771,7 @@ export function AgentStudioModule({
   }, []);
 
   const discardChanges = useCallback(() => {
+    setSaveError(null);
     if (scriptDirty) {
       setFormData(formFromSnapshot(savedSnapshot));
       setSaveError(null);
@@ -833,9 +896,7 @@ export function AgentStudioModule({
           greeting: initialGreeting,
           farewell: studio.farewell || '',
           boundaries: studio.boundaries ?? base.boundaries,
-          objectionRules: studio.objectionRules?.length
-            ? studio.objectionRules
-            : base.objectionRules,
+          objectionRules: studio.objectionRules ?? base.objectionRules,
           variableDefinitions: studio.variableDefinitions?.length
             ? studio.variableDefinitions
             : base.variableDefinitions,
@@ -916,7 +977,10 @@ export function AgentStudioModule({
       }
       if (settingsDirty && settingsSaveRef.current) {
         const ok = await settingsSaveRef.current();
-        if (!ok) success = false;
+        if (!ok) {
+          success = false;
+          setSaveError('Agent settings could not be fully saved. Your edits are kept; review Settings and retry.');
+        }
       }
       if (success) {
         setIsSaved(true);
@@ -943,12 +1007,16 @@ export function AgentStudioModule({
     const newRule = preset
       ? {
           category: preset.category || 'custom',
+          kind: preset.kind || 'objection',
+          enabled: preset.enabled !== false,
           trigger: preset.trigger || '',
           response: preset.response || '',
           action: preset.action || 'continue_script',
         }
       : {
           category: 'custom',
+          kind: 'objection',
+          enabled: true,
           trigger: '',
           response: '',
           action: 'continue_script',
@@ -1087,30 +1155,14 @@ export function AgentStudioModule({
   }
 
   return (
-    <div className="space-y-6">
+    <div ref={workspaceContainerRef} className="space-y-6"
+      style={{ paddingBottom: dirty ? 'calc(var(--agent-save-dock-height, 9rem) + 2rem)' : undefined }}>
       {saveError && (
         <div role="alert" data-testid="agent-save-error" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">{saveError}</div>
       )}
       {/* Unsaved-changes guard. Every leave path (tab, agent switch, back, unload)
           funnels through confirmLeave, so nothing silently discards a script. */}
-      {dirty && (
-        <div
-          data-testid="agent-studio-unsaved"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
-        >
-          <span className="font-semibold">Unsaved changes {settingsDirty && scriptDirty ? '(Script & Settings)' : settingsDirty ? '(Settings)' : '(Script)'}</span>
-          <span className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={discardChanges}
-              data-testid="agent-studio-discard"
-              className="rounded-lg border border-amber-300 px-2.5 py-1 font-semibold hover:bg-amber-100"
-            >
-              Discard
-            </button>
-          </span>
-        </div>
-      )}
+
 
       <Modal
         isOpen={Boolean(pendingLeave)}
@@ -1218,23 +1270,15 @@ export function AgentStudioModule({
             Test call
           </TactileButton>
 
-          <TactileButton
-            variant="primary"
-            size="sm"
-            icon={isSaved ? CheckCircle2 : Save}
-            onClick={handleSave}
-            disabled={saving || brainLoading || !!brainLoadError || !dirty}
-            data-testid="agent-save"
-            className="min-h-[38px]"
-          >
-            {isSaved ? 'Saved!' : saving ? 'Saving…' : 'Save changes'}
-          </TactileButton>
+          <span className="hidden sm:inline text-xs text-[#716C7F]" role="status">
+            {dirty ? 'Changes pending' : isSaved ? 'Changes saved' : 'All changes saved'}
+          </span>
         </div>
       </div>
 
       {/* Tabs Navigation Bar */}
       <div
-        className="flex items-center gap-1 p-1.5 rounded-2xl bg-white border border-[#E4E2EB] overflow-x-auto scrollbar-none touch-pan-x shadow-craft-xs"
+        className="sticky top-0 z-20 flex items-center gap-1 p-1.5 rounded-2xl bg-white border border-[#E4E2EB] overflow-x-auto scrollbar-none touch-pan-x shadow-craft-xs"
         role="tablist"
         aria-label="Agent workspace"
       >
@@ -1284,7 +1328,7 @@ export function AgentStudioModule({
           role="tabpanel"
           id="agent-panel-script"
           aria-labelledby="agent-tab-script"
-          className="space-y-6 animate-in fade-in duration-150"
+          className="flex flex-col gap-4 animate-in fade-in duration-150"
         >
           {generationReport?.status && generationReport.status !== 'ready' ? (
             <div data-testid="agent-script-generation-status" className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] px-4 py-3 text-xs text-[#524E5E]" aria-live="polite">
@@ -1297,41 +1341,9 @@ export function AgentStudioModule({
               {scriptDirty ? <p className="mt-1">This report describes the published script. The current draft has edits.</p> : null}
             </div>
           ) : null}
-          {/* Greeting the caller hears: synced with calling script and acoustic voice preview */}
-          <SolidCard>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-              <div>
-                <h3 className="text-xs font-bold text-[#0F0E17] flex items-center gap-2">
-                  <Volume2 className="w-3.5 h-3.5 text-[#6344E7]" />
-                  <span>Greeting the caller hears</span>
-                </h3>
-                <p className="text-[11px] text-[#524E5E]">
-                  The opening phrase the caller hears when they connect. Directly connected to the script below and the acoustic voice preview.
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]">
-                  {LANGUAGE_OPTIONS.find((l) => l.code === formData.language)?.label || formData.language}
-                </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]">
-                  {/^Voice \d+$/.test(String(formData.voice?.voiceName || '').trim())
-                    ? formData.voice.voiceName
-                    : 'Selected voice'}
-                </span>
-              </div>
-            </div>
-
-            <textarea
-              rows={2}
-              aria-label="Opening greeting"
-              disabled={brainLoading || !!brainLoadError || saving}
-              value={formData.greeting}
-              onChange={(e) => handleGreetingChange(e.target.value)}
-              placeholder="Hi there! Thanks for calling. How can I help you today?"
-              data-testid="agent-studio-greeting"
-              className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-3 text-xs text-[#0F0E17] font-medium leading-relaxed focus:outline-none focus:border-[#6344E7] transition-colors resize-none"
-            />
-          </SolidCard>
+          <div className="console-categories script-categories grid gap-4 items-start" data-category="all">
+          {/* Greeting mechanics stay unchanged; only the surrounding layout changes. */}
+          <div data-section="writing" className="flex flex-col gap-4">
 
           <SolidCard>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
@@ -1505,7 +1517,7 @@ export function AgentStudioModule({
                 <textarea
                   ref={scriptTextareaRef}
                   disabled={brainLoading || !!brainLoadError || saving}
-                  rows={10}
+                  rows={12}
                   value={formData.script}
                   onChange={(event) => {
                     handleScriptChange(event.target.value);
@@ -1526,7 +1538,7 @@ export function AgentStudioModule({
                   aria-activedescendant={variableSuggestions.length
                     ? `script-variable-option-${selectedVariableSuggestion}`
                     : undefined}
-                  className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-4 text-xs text-[#0F0E17] font-mono leading-relaxed focus:outline-none focus:border-[#6344E7] transition-colors"
+                  className="script-paper w-full text-[13px] text-[#0F0E17] leading-6 focus:outline-none focus:ring-2 focus:ring-[#6344E7]/30"
                   data-testid="script-textarea"
                 />
                 {variableSuggestionTrigger && (
@@ -1534,7 +1546,8 @@ export function AgentStudioModule({
                     id="script-variable-suggestions"
                     role="listbox"
                     aria-label="Available script variables"
-                    className="absolute left-0 right-0 top-full z-40 mt-1 max-h-56 overflow-y-auto rounded-xl border border-[#E4E2EB] bg-white p-2 shadow-xl"
+                    className="absolute left-0 right-0 z-40 mt-1 max-h-56 overflow-y-auto rounded-xl border border-[#E4E2EB] bg-white p-2 shadow-xl"
+                    style={{ top: variableSuggestionTop }}
                     data-testid="script-variable-suggestions"
                   >
                     <p className="px-2 py-1 text-[10px] text-[#8C879A]">
@@ -1587,9 +1600,44 @@ export function AgentStudioModule({
                 Test published script
               </button>
             </div>
-          </SolidCard>
+          </SolidCard></div>
 
-          <SolidCard>
+          <div className="script-support flex flex-col gap-4" data-section="support">
+          <div data-section="greeting"><SolidCard>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+              <div>
+                <h3 className="text-xs font-bold text-[#0F0E17] flex items-center gap-2">
+                  <Volume2 className="w-3.5 h-3.5 text-[#6344E7]" />
+                  <span>Greeting the caller hears</span>
+                </h3>
+                <p className="text-[11px] text-[#524E5E]">
+                  The opening phrase the caller hears when they connect. Connected to the calling script and the acoustic voice preview.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]">
+                  {LANGUAGE_OPTIONS.find((l) => l.code === formData.language)?.label || formData.language}
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]">
+                  {/^Voice \d+$/.test(String(formData.voice?.voiceName || '').trim())
+                    ? formData.voice.voiceName
+                    : 'Selected voice'}
+                </span>
+              </div>
+            </div>
+
+            <textarea
+              rows={2}
+              aria-label="Opening greeting"
+              disabled={brainLoading || !!brainLoadError || saving}
+              value={formData.greeting}
+              onChange={(e) => handleGreetingChange(e.target.value)}
+              placeholder="Hi there! Thanks for calling. How can I help you today?"
+              data-testid="agent-studio-greeting"
+              className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-3 text-xs text-[#0F0E17] font-medium leading-relaxed focus:outline-none focus:border-[#6344E7] transition-colors resize-none"
+            />
+          </SolidCard></div>
+          <div data-section="closing"><SolidCard>
             <label htmlFor="agent-farewell" className="block text-sm font-semibold text-[#0F0E17]">
               Farewell the caller hears
             </label>
@@ -1610,32 +1658,33 @@ export function AgentStudioModule({
               className="w-full rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-4 text-sm leading-relaxed text-[#0F0E17] focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-[#6344E7] max-sm:text-base"
             />
             <p className="mt-2 text-right text-xs text-[#524E5E]">{(formData.farewell || '').length}/240 characters</p>
-          </SolidCard>
+          </SolidCard></div>
 
           {/* Objection Handling Rules */}
-          <SolidCard>
-            <fieldset disabled={brainLoading || !!brainLoadError || saving} className="contents" aria-label="Objection rules">
+          <div data-section="objections"><SolidCard>
+            <fieldset disabled={brainLoading || !!brainLoadError || saving} className="contents" aria-label="Objection and objective rules">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-bold text-[#0F0E17]">Objection Handling Rules</h3>
+                  <h3 className="text-xs font-bold text-[#0F0E17]">Objection &amp; Objective Handling</h3>
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FAF5FF] text-[#7E22CE] border border-[#F3E8FF]">
-                    Responses to common concerns
+                    Concerns and conversation goals
                   </span>
                 </div>
                 <p className="text-[11px] text-[#524E5E] mt-0.5">
-                  Suggested replies adapt to the selected language. Actions require an available tool and confirmation.
+                  Configure responses and goals in any language. Save changes to recompile the brain for future calls. Rules respect caller intent and available actions.
                 </p>
               </div>
-              <button
+              <div className="flex flex-wrap gap-3"><button type="button" onClick={() => handleAddObjection({ kind: 'objective' })} className="text-xs font-semibold text-[#6344E7]" data-testid="add-objective-btn">+ Add objective</button><button
                 type="button"
                 onClick={() => handleAddObjection()}
                 className="text-xs font-semibold text-[#6344E7] hover:text-[#5034CE] flex items-center gap-1 self-start sm:self-auto shrink-0"
                 data-testid="add-objection-btn"
               >
                 <Plus className="w-3 h-3" />
-                <span>Add Custom Rule</span>
+                <span>Add objection</span>
               </button>
+              </div>
             </div>
 
             {/* Quick-add industry standard templates bar */}
@@ -1663,9 +1712,9 @@ export function AgentStudioModule({
             <div className="space-y-3">
               {(formData.objectionRules || []).length === 0 ? (
                 <div className="p-4 rounded-xl border border-dashed border-[#D2CEE0] text-center bg-[#FAF9FD]">
-                  <p className="text-xs text-[#524E5E]">No objection rules configured yet.</p>
+                  <p className="text-xs text-[#524E5E]">No handling rules configured yet.</p>
                   <p className="text-[11px] text-[#8C879A] mt-1">
-                    Click any quick-add template above or "Add Custom Rule" to train your agent on handling pushback.
+                    Add a concern or a conversation goal, then configure how the agent should handle it.
                   </p>
                 </div>
               ) : (
@@ -1677,6 +1726,10 @@ export function AgentStudioModule({
                   >
                     <div className="flex items-center justify-between mb-2.5">
                       <div className="flex items-center gap-2">
+                        <select aria-label={`Rule ${idx + 1} type`} value={rule.kind || 'objection'} onChange={(event) => setFormData(previous => ({ ...previous, objectionRules: previous.objectionRules.map((item, index) => index === idx ? { ...item, kind: event.target.value } : item) }))} className="rounded-lg border border-[#E4E2EB] p-1 text-xs">
+                          <option value="objection">Objection</option><option value="objective">Objective</option>
+                        </select>
+                        <label className="flex items-center gap-1 text-xs"><input type="checkbox" aria-label={`Enable rule ${idx + 1}`} checked={rule.enabled !== false} onChange={(event) => setFormData(previous => ({ ...previous, objectionRules: previous.objectionRules.map((item, index) => index === idx ? { ...item, enabled: event.target.checked } : item) }))} />Enabled</label>
                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5FF] text-[#6344E7] border border-[#F3E8FF]">
                           Rule #{idx + 1}
                         </span>
@@ -1701,10 +1754,11 @@ export function AgentStudioModule({
                       {/* Trigger */}
                       <div className="md:col-span-5">
                         <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
-                          When Caller Says / Concern:
+                          {rule.kind === 'objective' ? 'Situation / goal:' : 'Caller concern:'}
                         </span>
                         <input
                           type="text"
+                          aria-label={`Rule ${idx + 1} situation`}
                           value={rule.trigger || ''}
                           placeholder="e.g. Too expensive / Not interested"
                           onChange={(e) => {
@@ -1720,9 +1774,10 @@ export function AgentStudioModule({
                       {/* Response */}
                       <div className="md:col-span-5">
                         <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
-                          Agent Response (Acknowledge &amp; Bridge):
+                          {rule.kind === 'objective' ? 'Guidance to achieve the goal:' : 'Response guidance:'}
                         </span>
                         <textarea
+                          aria-label={`Rule ${idx + 1} guidance`}
                           rows={2}
                           value={rule.response || ''}
                           placeholder="e.g. I understand budget is important... Could I share..."
@@ -1753,7 +1808,7 @@ export function AgentStudioModule({
                         >
                           <option value="continue_script">Continue Script</option>
                           <option value="offer_callback">Offer Callback</option>
-                          <option value="end_call">End Call</option>
+                          <option value="end_call">Request Call Ending</option>
                           <option value="transfer_human">Transfer Human</option>
                         </select>
                       </div>
@@ -1763,7 +1818,9 @@ export function AgentStudioModule({
               )}
             </div>
             </fieldset>
-          </SolidCard>
+          </SolidCard></div>
+          </div>
+          </div>
         </div>
       )}
 
@@ -1834,6 +1891,7 @@ export function AgentStudioModule({
           <ErrorBoundary title="Unable to load agent settings">
             <AgentSettingsPanel
               agent={selectedAgent}
+              savingChanges={saving}
               agentGreeting={formData.greeting}
               onGreetingChange={handleGreetingChange}
               onOpenBuyNumber={onOpenBuyNumber}
@@ -1847,6 +1905,10 @@ export function AgentStudioModule({
           </ErrorBoundary>
         </div>
       )}
+
+      {dirty && <AgentSaveDock containerRef={workspaceContainerRef} scriptDirty={scriptDirty}
+        settingsDirty={settingsDirty} saving={saving} error={saveError} disabled={brainLoading || !!brainLoadError}
+        onSave={handleSave} onDiscard={discardChanges} />}
 
       {/* Test call is a header action, not a tab. Focus returns to the button on close. */}
       {testCallOpen && (
@@ -1864,6 +1926,7 @@ export function AgentStudioModule({
             <ErrorBoundary title="Unable to initialize test call">
                 <AgentTestCallPanel
                   agent={voiceStackAgent}
+                  pricingProfile={voiceStackProfiles.find((profile) => profile.tier === (voiceStackAgent?.defaultTier || voiceStackAgent?.default_tier))}
                   language={formData.language || formData.languages?.[0] || selectedAgent?.languages?.[0] || selectedAgent?.language || 'en-IN'}
                 />
             </ErrorBoundary>

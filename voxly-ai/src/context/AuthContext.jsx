@@ -391,7 +391,7 @@ export function AuthProvider({ children }) {
     });
     idleRef.current = monitor;
     monitor.start();
-    // Exposed so an end-to-end test can shorten the window (a 30-minute policy is
+    // Exposed so an end-to-end test can shorten the window (a 6-hour policy is
     // otherwise untestable) and so support can inspect the live countdown.
     if (typeof window !== 'undefined') window.__voxlyIdle = monitor;
     return () => {
@@ -412,6 +412,17 @@ export function AuthProvider({ children }) {
   const staySignedIn = useCallback(() => {
     idleRef.current?.extend();
     setIdleWarning(null);
+    // The server keeps its own idle window, so an explicit extension has to reach it
+    // too; otherwise the next request can still be refused as `session_idle`.
+    api
+      .refreshAccessToken()
+      .then((ok) => {
+        if (ok || !api._lastRefreshOutcome?.isAuthDead) return;
+        authService.signOut().catch(() => {});
+        setSignOutReason(SIGN_OUT_REASONS.idle);
+        setUser(null);
+      })
+      .catch(() => {});
   }, []);
 
   const loginWithGoogle = async () => {

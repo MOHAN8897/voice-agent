@@ -51,6 +51,7 @@ test('OBJECTION_PRESETS provide compliant behavioral action outcomes', () => {
 
   const notInterestedPreset = OBJECTION_PRESETS.find((p) => p.id === 'not_interested');
   assert.equal(notInterestedPreset.action, 'end_call');
+  assert.equal(/goodbye|farewell/i.test(notInterestedPreset.response), false);
 });
 
 test('parseObjectionRulesFromSections accurately parses structured FAQ sections', () => {

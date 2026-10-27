@@ -4,7 +4,7 @@ const user = { userId: 'routing-user', fullName: 'Routing Tester', email: 'routi
 const b64 = value => Buffer.from(JSON.stringify(value)).toString('base64url');
 const accessToken = `${b64({ alg: 'none' })}.${b64({ sub: user.userId, exp: Math.floor(Date.now() / 1000) + 3600 })}.test`;
 const auth = { user, tenant: { tenantId: 'routing-tenant', name: 'Routing Workspace' }, role: 'owner', accessToken,
-  sessionPolicy: { idleTimeoutMinutes: 30, absoluteMaxHours: 24, accessTokenMinutes: 15 } };
+  sessionPolicy: { idleTimeoutMinutes: 360, absoluteMaxHours: 24, accessTokenMinutes: 15 } };
 
 async function mockAuth(page, { handoffDelay = 0 } = {}) {
   await page.route('**/api/**', async route => {
@@ -44,4 +44,17 @@ test('OAuth handoff waits for authentication before opening the requested consol
   await expect(page).toHaveURL(/#dashboard\/employees/);
   await expect(page.getByRole('button', { name: /Create AI employee/i }).first()).toBeVisible();
   await expect(page.getByTestId('auth-modal')).toHaveCount(0);
+});
+
+test('the session card and idle monitor use the 6-hour window', async ({ page }) => {
+  await mockAuth(page);
+  await page.goto('/#dashboard/employees');
+  await page.getByTestId('auth-modal').getByLabel('Work email').fill(user.email);
+  await page.getByTestId('auth-modal').getByLabel('Password', { exact: true }).fill('test-only-password');
+  await page.getByTestId('auth-modal').getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'AI Employees', exact: true })).toBeVisible();
+  await page.getByTestId('nav-settings').click();
+  await expect(page).toHaveURL(/#dashboard\/settings/);
+  await expect(page.getByTestId('session-idle-minutes')).toHaveText('6 hours');
+  await expect(page.locator('html')).toHaveAttribute('data-voxly-idle-limit-ms', '21600000');
 });

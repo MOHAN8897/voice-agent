@@ -497,9 +497,7 @@ export function BillingModule() {
                 </div>
               </div>
               <p className="text-[11px] text-[#8C879A]">
-                Web test calls billed at ₹
-                {Number(serverWallet?.webRateInrPerMin ?? wallet.webRateInrPerMin ?? 4.50).toFixed(2)}/min ($
-                {Number(serverWallet?.webRateUsdPerMin ?? wallet.webRateUsdPerMin ?? 0.048).toFixed(3)}/min).
+                Web calls use the selected stack’s web price. Each call locks its rate when it starts.
                 Your usage this workspace: ${Number(serverWallet?.myUsageUsd ?? wallet.myUsageUsd ?? 0).toFixed(2)}. Unanswered carrier legs are not billed.
               </p>
             </div>
@@ -857,7 +855,7 @@ export function BillingModule() {
               </span>
             </div>
             <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between items-center">
-              <span className="text-[#524E5E]">Browser test call</span>
+              <span className="text-[#524E5E]">Default web price · stack overrides apply</span>
               <span className="text-[#0F0E17] font-semibold">
                 ₹{Number(serverWallet?.webRateInrPerMin ?? 4.50).toFixed(2)}/min
                 <span className="text-[10px] text-[#8C879A] ml-1 font-normal">
@@ -865,6 +863,7 @@ export function BillingModule() {
                 </span>
               </span>
             </div>
+            {Object.entries(serverWallet?.webTierRates || {}).map(([tier, rate]) => <div key={tier} className="flex justify-between gap-3 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] p-2.5"><span className="text-[#524E5E]">{rate.label || tier} · Web calls</span><span className="font-semibold text-[#0F0E17]">₹{Number(rate.inrPerMin).toFixed(2)}/min <span className="text-[10px] text-[#8C879A]">(${Number(rate.usdPerMin).toFixed(3)})</span></span></div>)}
             <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between items-center">
               <span className="text-[#524E5E]">Phone number rental</span>
               <span className="text-[#0F0E17] font-semibold">

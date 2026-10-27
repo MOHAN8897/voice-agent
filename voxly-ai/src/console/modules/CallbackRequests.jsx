@@ -3,7 +3,7 @@ import { api } from '../../services/api';
 import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
 
-export function CallbackRequests({ agentId = null }) {
+export function CallbackRequests({ agentId = null, readOnly = false }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -79,11 +79,11 @@ export function CallbackRequests({ agentId = null }) {
                 {row.requestText && row.requestText !== row.requestedWhen && <p className="mt-1 break-words text-xs text-[#524E5E]">{row.requestText}</p>}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
-                <TactileButton type="button" size="sm" variant="primary" disabled={busy !== null} onClick={() => callBack(row)}>Call back</TactileButton>
-                <TactileButton type="button" size="sm" variant="secondary" disabled={busy !== null} onClick={() => resolve(row, 'converted')}>
+                <TactileButton type="button" size="sm" variant="primary" disabled={readOnly || busy !== null} onClick={() => callBack(row)}>Call back</TactileButton>
+                <TactileButton type="button" size="sm" variant="secondary" disabled={readOnly || busy !== null} onClick={() => resolve(row, 'converted')}>
                   {busy === row.id ? 'Saving…' : 'Mark converted'}
                 </TactileButton>
-                <TactileButton type="button" size="sm" variant="ghost" disabled={busy !== null} onClick={() => resolve(row, 'dismissed')}>Remove</TactileButton>
+                <TactileButton type="button" size="sm" variant="ghost" disabled={readOnly || busy !== null} onClick={() => resolve(row, 'dismissed')}>Remove</TactileButton>
               </div>
             </li>
           ))}

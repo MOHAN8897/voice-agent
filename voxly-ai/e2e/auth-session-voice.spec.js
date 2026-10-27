@@ -147,14 +147,14 @@ test.describe('session policy is enforced', () => {
     const res = await request.get(`${API}/api/auth/session-policy`);
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
-    expect(body.policy.idleTimeoutMinutes).toBeGreaterThan(0);
+    expect(body.policy.idleTimeoutMinutes).toBe(360);
     expect(body.policy.absoluteMaxHours).toBeGreaterThan(0);
   });
 
   test('an idle session warns before it signs out', async ({ page }) => {
     await signIn(page, EMAIL, NEW_PASSWORD);
 
-    // Shorten the window so a 30-minute policy is observable in a test. The override
+    // Shorten the window so a 6-hour policy is observable in a test. The override
     // can only lower the bound, never raise it. Waiting generates no input events, so
     // the monitor is not reset by the test framework polling the page.
     // Set directly rather than via addInitScript: the idle monitor starts when the

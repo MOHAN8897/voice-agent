@@ -24,6 +24,32 @@ const initialSections = [
   { section_id: 'v', type: 'custom', title: 'saas_voice_config', raw_text: '{"realtimeVoice":"Puck","language":"en-IN"}', enabled: false, order: 5 },
 ];
 
+test('objectives publish, preserve multiline guidance and can be removed without returning on reload', async ({ page }) => {
+  const state = await setup(page);
+  await page.getByTestId('add-objective-btn').click();
+  await expect(page.getByLabel('Rule 1 type')).toHaveValue('objective');
+  await page.getByLabel('Rule 1 situation').fill('After the caller asks about a demo');
+  await page.getByLabel('Rule 1 guidance').fill('Explain the approved service first.\nAsk for the preferred time, without promising availability.');
+  await page.getByTestId('agent-save').click();
+  await expect(page.getByTestId('script-save-status')).toHaveText('Saved for calls');
+  const saved = state.writes.at(-1).sections;
+  const metadata = JSON.parse(saved.find(row => row.title === 'saas_handling_rules').raw_text);
+  expect(metadata.rules[0]).toMatchObject({kind:'objective',enabled:true,response:'Explain the approved service first.\nAsk for the preferred time, without promising availability.'});
+  expect(saved.find(row => row.title === 'Objection & Objective Handling').raw_text).toContain('[Objective]');
+  await page.reload();
+  await page.addStyleTag({ content: '[data-reticle-overlay] { display: none !important; }' });
+  await expect(page.getByLabel('Rule 1 guidance')).toContainText('Ask for the preferred time');
+  await page.getByTestId('remove-objection-0').click();
+  await page.getByTestId('agent-save').click();
+  await expect(page.getByTestId('script-save-status')).toHaveText('Saved for calls');
+  await page.reload();
+  await page.addStyleTag({ content: '[data-reticle-overlay] { display: none !important; }' });
+  await expect(page.getByTestId('objection-rule-0')).toHaveCount(0);
+  expect(state.publishes).toBe(2);
+  expect(JSON.parse(state.writes.at(-1).sections.find(row => row.title === 'saas_handling_rules').raw_text).rules).toEqual([]);
+  expect(state.writes.at(-1).sections.find(row => row.title === 'Objection & Objective Handling').raw_text).toContain('escalation requires consent');
+});
+
 async function setup(page, { failPublish = false, failRead = false, generationReport = null } = {}) {
   if (process.env.RETICLE_VERIFY) {
     // Capture only synthetic fixtures in this isolated browser context. The
@@ -91,6 +117,8 @@ async function setup(page, { failPublish = false, failRead = false, generationRe
     throw new Error(`Workspace failed to render: ${await page.locator('body').innerText()}`);
   }
   await expect(page.getByRole('combobox', { name: 'Calling script' })).toBeVisible();
+  // Hide only the development HUD: it otherwise intercepts app bottom controls.
+  await page.addStyleTag({ content: '[data-reticle-overlay] { display: none !important; }' });
   return state;
 }
 
@@ -141,11 +169,11 @@ test('successful publication preserves extra facts, notes and guardrails', async
   expect(saved.find((row) => row.section_id === 'extra-facts').raw_text).toBe('Additional fact: support closes at 18:15.');
   expect(saved.find((row) => row.title === 'Identity & Purpose').raw_text).toContain('Preserve this identity note.');
   expect(saved.find((row) => row.title === 'Guardrails').raw_text).toContain('Never promise refunds without approval.');
-  expect(saved.find((row) => row.title === 'FAQ & Objections').raw_text).toContain('Unstructured approved FAQ note: escalation requires consent.');
+  expect(saved.find((row) => row.title === 'Objection & Objective Handling').raw_text).toContain('Unstructured approved FAQ note: escalation requires consent.');
   expect(saved.filter((row) => ['saas_voice_config', 'Voice profile (console)'].includes(row.title)).every((row) => row.enabled === false)).toBe(true);
 });
 
-test('farewell below the script persists through publication and reload', async ({ page }) => {
+test('farewell after the script persists through publication and responsive layout', async ({ page }) => {
   const state = await setup(page);
   const farewell = page.getByTestId('agent-studio-farewell');
   const text = 'Thank you for giving us your time. We appreciate your interest. Goodbye.';
@@ -168,7 +196,13 @@ test('farewell below the script persists through publication and reload', async 
   expect(JSON.parse(config.raw_text).farewell).toBe(text);
   const script = await page.getByRole('combobox', { name: 'Calling script' }).boundingBox();
   const closing = await farewell.boundingBox();
-  expect(closing.y).toBeGreaterThan(script.y);
+  // Wide screens put the closing editor alongside the script; mobile keeps
+  // the original top-to-bottom reading order.
+  expect(closing.y > script.y || closing.x > script.x + script.width).toBe(true);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileScript = await page.getByRole('combobox', { name: 'Calling script' }).boundingBox();
+  const mobileClosing = await farewell.boundingBox();
+  expect(mobileClosing.y).toBeGreaterThan(mobileScript.y);
   await page.reload();
   await expect(farewell).toHaveValue(text);
   await expect(page.getByRole('combobox', { name: 'Calling script' })).toHaveValue(original);
@@ -242,7 +276,7 @@ test('failed initial load blocks saving and retry restores the editor', async ({
   const editor = page.getByRole('combobox', { name: 'Calling script' });
   await expect(page.getByTestId('retry-script-load')).toBeVisible();
   await expect(editor).toBeDisabled();
-  await expect(page.getByTestId('agent-save')).toBeDisabled();
+  await expect(page.getByTestId('agent-save')).toHaveCount(0);
   state.failRead = false;
   await page.getByTestId('retry-script-load').click();
   await expect(editor).toBeEnabled();
@@ -253,15 +287,17 @@ test('blank objection rule blocks saving; template stays factual and language aw
   const state = await setup(page);
   await page.getByTestId('add-objection-btn').click();
   await page.getByTestId('agent-save').click();
-  await expect(page.getByTestId('agent-save-error')).toContainText('Complete the concern and response');
+  await expect(page.getByTestId('agent-save-error')).toContainText('Complete the situation and guidance');
   expect(state.writes).toHaveLength(0);
   await page.getByTestId('remove-objection-0').click();
   await page.getByTestId('preset-objection-trust').click();
   await expect(page.getByTestId('objection-response-0')).toHaveValue('Yes, I am an AI assistant representing this business. What would you like to know?');
   await page.getByTestId('agent-save').click();
   await expect(page.getByTestId('script-save-status')).toHaveText('Saved for calls');
-  const faq = state.writes[0].sections.find((row) => row.title === 'FAQ & Objections').raw_text;
+  const faq = state.writes[0].sections.find((row) => row.title === 'Objection & Objective Handling').raw_text;
   expect(faq).toContain('selected call language');
+  expect(faq).toContain('end_call means propose a close for server approval');
+  expect(faq).toContain('future-interest or callback request is not a complete rejection');
   expect(faq).not.toContain('recently engaged');
 });
 

@@ -5,6 +5,7 @@ export function voiceSetupData() {
   const profiles = ['low', 'medium', 'premium', 'custom_voice'].map((tier, index) => ({
     tier, label: tier, ready: true, profileRevision: index + 2,
     retailRate: { complete: true, usdMicrosPerMin: 10000, inrPaisePerMin: 100, fxRateInr: 100, version: 1 },
+    webRetailRate: { complete: true, usdMicrosPerMin: (index + 2) * 10000, inrPaisePerMin: (index + 2) * 100, fxRateInr: 100, version: 1 },
     engines: [{ id: `engine-${tier}`, label: 'Voice engine', models: [{ id: `model-${tier}`, label: 'Speech model', voices: [
       { id: `voice-${tier}`, label: 'Voice one', languages: ['te-IN'], gender: 'female' },
     ] }] }],
@@ -37,7 +38,7 @@ export async function setupVoiceWorkspace(page, { staleSelection = false, failSa
       if (request.method() === 'PATCH') {
         const write = request.postDataJSON(); state.writes.push(write);
         if (failSave) { status = 409; body = { detail: { error: { code: 'profile_revision_conflict', message: 'Voice choices changed. Refresh and choose again.' } } }; }
-        else state.agent = { ...state.agent, defaultTier: write.defaultTier, voiceSettings: write.voiceSettings, voiceRevision: state.agent.voiceRevision + 1 };
+        else state.agent = { ...state.agent, ...write, voiceRevision: state.agent.voiceRevision + 1 };
       }
       if (!failSave || request.method() !== 'PATCH') body = { agent: state.agent };
     }
@@ -49,5 +50,7 @@ export async function setupVoiceWorkspace(page, { staleSelection = false, failSa
     localStorage.setItem('voxly_tour_completed_voice-setup@example.invalid', 'true');
   }, data);
   await page.goto(`/#dashboard/employees?step=voice&agent=${state.agent.id}`);
+  // Hide only the development HUD: it otherwise intercepts app bottom controls.
+  await page.addStyleTag({ content: '[data-reticle-overlay] { display: none !important; }' });
   return state;
 }
