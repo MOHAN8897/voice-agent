@@ -79,12 +79,19 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
             "inrPerMin": round(rates["pstn_premium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_premium_rate_inr_paise_per_min") else round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
         },
     }
+    web_tier_rates = {tier: {"inrPerMin": rates["web_agent_rate_inr_paise_per_min"] / 100,
+        "usdPerMin": rates["web_agent_rate_usd_micros_per_min"] / 1000000} for tier in tier_rates_map}
     try:
         from server.services.dev_runtime import effective_app_environment
-        from server.services.saas.voice_stack_profiles import load_profile_records, _native_tier_retail_rate
+        from server.services.saas.voice_stack_profiles import load_profile_records, _native_tier_retail_rate, _web_tier_retail_rate
         env = effective_app_environment()
         records = await load_profile_records(env, None)
         for t, rec in records.items():
+            web_rate = _web_tier_retail_rate(rates, t, record=rec)
+            if web_rate:
+                web_tier_rates[t] = {"inrPerMin": web_rate["inrPaisePerMin"] / 100,
+                    "usdPerMin": web_rate["usdMicrosPerMin"] / 1000000,
+                    "label": str((rec.get("profile") or {}).get("label") or t)}
             t_rate = _native_tier_retail_rate(rates, t, record=rec)
             if t_rate and t_rate.get("inrPaisePerMin"):
                 tier_rates_map[t] = {
@@ -117,6 +124,7 @@ async def wallet_summary(tenant_id: uuid.UUID, user_id: uuid.UUID | None = None)
         "pstnPremiumRateUsdPerMin": round(rates["pstn_premium_rate_usd_micros_per_min"] / 1_000_000.0, 6) if rates.get("pstn_premium_rate_usd_micros_per_min") else round(rates["pstn_rate_usd_micros_per_min"] / 1_000_000.0, 6),
         "pstnPremiumRateInrPerMin": round(rates["pstn_premium_rate_inr_paise_per_min"] / 100.0, 2) if rates.get("pstn_premium_rate_inr_paise_per_min") else round(rates["pstn_rate_inr_paise_per_min"] / 100.0, 2),
         "tierRates": tier_rates_map,
+        "webTierRates": web_tier_rates,
         "webRateUsdPerMin": round(rates["web_agent_rate_usd_micros_per_min"] / 1_000_000.0, 6),
         "webRateInrPerMin": round(rates["web_agent_rate_inr_paise_per_min"] / 100.0, 2),
         "didMonthlyUsd": round(rates["did_monthly_usd_micros"] / 1_000_000.0, 6),

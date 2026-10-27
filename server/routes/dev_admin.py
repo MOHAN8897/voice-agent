@@ -8,7 +8,7 @@ import uuid
 import wave
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from typing import Any, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from pydantic import BaseModel, Field
@@ -1251,49 +1251,58 @@ async def admin_analytics(days: int = Query(30, ge=1, le=365), session: SessionD
     """
     require_permission(session, "dev.admin.tenants")
     _require_db()
-    since = datetime.now(timezone.utc) - timedelta(days=days)
+    since = (datetime.now(timezone.utc) - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    until = since + timedelta(days=days)
     day0 = since.date().isoformat()
 
     async with get_session_factory()() as db:
         async def scalar(stmt):
             return (await db.execute(stmt)).scalar()
 
-        # Call volume and talk time per day, PSTN only (a browser test is not usage).
+        # Count actual conversations; browser practice sessions are not usage.
+        postgres = db.get_bind().dialect.name == "postgresql"
+        call_day = func.date(func.timezone("UTC", Call.started_at)) if postgres else func.date(Call.started_at)
+        topup_day = func.date(func.timezone("UTC", BillingWalletTransaction.created_at)) if postgres else func.date(BillingWalletTransaction.created_at)
         daily = (
             await db.execute(
                 select(
-                    func.date(Call.started_at).label("d"),
+                    call_day.label("d"),
                     func.count(Call.call_id),
                     func.coalesce(func.sum(Call.duration_sec), 0),
                 )
-                .where(Call.started_at.isnot(None), Call.started_at >= since)
-                .group_by(func.date(Call.started_at))
-                .order_by(func.date(Call.started_at))
+                .where(Call.started_at.isnot(None), Call.started_at >= since, Call.started_at < until, Call.is_test.is_(False))
+                .group_by(call_day)
+                .order_by(call_day)
             )
         ).all()
-        daily_series = [
+        observed_days = [
             {"date": str(r[0]), "calls": int(r[1] or 0), "seconds": int(r[2] or 0)}
             for r in daily
         ]
 
+        day_rows = {item["date"]: item for item in observed_days}
+        daily_series = [day_rows.get((since.date() + timedelta(days=offset)).isoformat(), {
+            "date": (since.date() + timedelta(days=offset)).isoformat(), "calls": 0, "seconds": 0,
+        }) for offset in range(days)]
+
         by_status = (
             await db.execute(
                 select(Call.status, func.count(Call.call_id))
-                .where(Call.started_at >= since)
+                .where(Call.started_at >= since, Call.started_at < until, Call.is_test.is_(False))
                 .group_by(Call.status)
             )
         ).all()
         by_direction = (
             await db.execute(
                 select(Call.direction, func.count(Call.call_id))
-                .where(Call.started_at >= since)
+                .where(Call.started_at >= since, Call.started_at < until, Call.is_test.is_(False))
                 .group_by(Call.direction)
             )
         ).all()
         by_channel = (
             await db.execute(
                 select(Call.channel, func.count(Call.call_id), func.coalesce(func.sum(Call.duration_sec), 0))
-                .where(Call.started_at >= since)
+                .where(Call.started_at >= since, Call.started_at < until, Call.is_test.is_(False))
                 .group_by(Call.channel)
             )
         ).all()
@@ -1303,7 +1312,7 @@ async def admin_analytics(days: int = Query(30, ge=1, le=365), session: SessionD
             await scalar(
                 select(func.count())
                 .select_from(CallAttempt)
-                .where(CallAttempt.started_at >= since, CallAttempt.status.in_(("missed", "no_answer")))
+                .where(CallAttempt.started_at >= since, CallAttempt.started_at < until, CallAttempt.status.in_(("missed", "no_answer")))
             )
             or 0
         )
@@ -1312,16 +1321,17 @@ async def admin_analytics(days: int = Query(30, ge=1, le=365), session: SessionD
         topups = (
             await db.execute(
                 select(
-                    func.date(BillingWalletTransaction.created_at).label("d"),
+                    topup_day.label("d"),
                     func.coalesce(func.sum(BillingWalletTransaction.amount_cents), 0),
                     func.coalesce(func.sum(BillingWalletTransaction.amount_inr_paise), 0),
                 )
                 .where(
                     BillingWalletTransaction.kind.in_(("topup", "top_up", "deposit")),
                     BillingWalletTransaction.created_at >= since,
+                    BillingWalletTransaction.created_at < until,
                 )
-                .group_by(func.date(BillingWalletTransaction.created_at))
-                .order_by(func.date(BillingWalletTransaction.created_at))
+                .group_by(topup_day)
+                .order_by(topup_day)
             )
         ).all()
 
@@ -1357,13 +1367,16 @@ async def admin_analytics(days: int = Query(30, ge=1, le=365), session: SessionD
         balance_cents = int(
             await scalar(select(func.coalesce(func.sum(BillingWallet.balance_cents), 0))) or 0
         )
+        balance_inr_paise = int(
+            await scalar(select(func.coalesce(func.sum(BillingWallet.balance_inr_paise), 0))) or 0
+        )
         top_tenants = (
             await db.execute(
                 select(Tenant.name, func.count(Call.call_id))
                 .select_from(Call)
                 .join(Tenant, Tenant.tenant_id == Call.tenant_id)
-                .where(Call.started_at >= since)
-                .group_by(Tenant.name)
+                .where(Call.started_at >= since, Call.started_at < until, Call.is_test.is_(False))
+                .group_by(Tenant.tenant_id, Tenant.name)
                 .order_by(func.count(Call.call_id).desc())
                 .limit(8)
             )
@@ -1382,6 +1395,7 @@ async def admin_analytics(days: int = Query(30, ge=1, le=365), session: SessionD
             "activeNumbers": numbers_active,
             "failedPurchases": purchases_failed,
             "walletBalanceCents": balance_cents,
+            "walletBalanceInrPaise": balance_inr_paise,
         },
         "callsByDay": daily_series,
         "callsByStatus": {str(k or "unknown"): int(v or 0) for k, v in by_status},
@@ -2697,6 +2711,15 @@ class TaxSettingsBody(BaseModel):
     creditNotePrefix: str = Field("CN", max_length=4)
     lutNumber: Optional[str] = Field(None, max_length=32)
     invoiceTerms: str = Field("", max_length=2000)
+    expectedUpdatedAt: str | None = Field(None, max_length=64)
+
+
+class TaxPreviewBody(BaseModel):
+    settings: TaxSettingsBody
+    amount: float = Field(1000, gt=0, le=1000000)
+    currency: Literal["INR", "USD"] = "INR"
+    buyerCountry: str = Field("IN", min_length=2, max_length=2)
+    buyerState: str = Field("", max_length=4)
 
 
 class RefundBody(BaseModel):
@@ -2837,6 +2860,7 @@ async def put_tax_settings(
     except ValueError as exc:
         code = str(exc)
         messages = {
+            "tax_settings_conflict": "Tax settings changed in another session. Reload before saving.",
             "gstin_invalid_format": "GSTIN must be the 15-character GST format.",
             "gstin_invalid_state": "GSTIN starts with an unknown state code.",
             "gstin_invalid_checksum": "GSTIN check digit is invalid.",
@@ -2860,6 +2884,20 @@ async def put_tax_settings(
         payload={**body.model_dump(), "gstin": body.gstin},
     )
     return {"ok": True, **state}
+
+
+@router.post("/api/dev/admin/payments/tax-preview")
+async def preview_tax_settings(body: TaxPreviewBody, session: Annotated[SessionData, Depends(require_dev_session)]):
+    """Price a draft GST configuration without saving it or contacting payments."""
+    require_permission(session, "dev.admin.billing")
+    from server.services.saas.billing_rates import load_current_rates
+    from server.services.saas.tax_service import compute_tax, config_configured
+    config = body.settings.model_dump()
+    if config.get("enabled") and not config_configured(config):
+        raise HTTPException(status_code=400, detail="Complete the supplier identity before previewing enabled GST")
+    rates = await load_current_rates()
+    return compute_tax(body.amount, body.currency, fx_rate_inr=float(rates["fx_rate_inr"]), config=config,
+        buyer={"countryCode": body.buyerCountry, "stateCode": body.buyerState})
 
 
 @router.get("/api/dev/admin/payments/orders")

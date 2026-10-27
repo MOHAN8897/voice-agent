@@ -9,10 +9,12 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
+import math
 import re
 import uuid
 from datetime import datetime, timezone
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from typing import Any
 
 from sqlalchemy import desc, func, select
@@ -107,6 +109,15 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
         raise VoiceProfileError("unsupported_profile_version", "schemaVersion must be 1.")
     profile = copy.deepcopy(payload)
     profile["enabled"] = False
+    web_rate = payload.get("webRetailRateInr")
+    if web_rate is not None:
+        try:
+            value = Decimal(str(web_rate))
+            if not value.is_finite() or value < Decimal("0.01") or value > 1_000_000:
+                raise ValueError
+            profile["webRetailRateInr"] = float(value.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
+        except (InvalidOperation, TypeError, ValueError, OverflowError) as exc:
+            raise VoiceProfileError("invalid_profile", "Web call price must be a positive finite amount.") from exc
     if "label" in payload and str(payload["label"]).strip():
         profile["label"] = str(payload["label"]).strip()[:100]
     rate_val = payload.get("retailRateInr") if payload.get("retailRateInr") is not None else payload.get("rateInr")
@@ -411,6 +422,27 @@ def expand_model_voices(tier: str, record: dict[str, Any]) -> dict[str, Any]:
     return expanded
 
 
+def _web_tier_retail_rate(rates: dict[str, Any] | None, tier: str, record: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    """Exact profile web price, or the saved global web default for older profiles."""
+    if not isinstance(rates, dict):
+        return None
+    profile = (record or {}).get("profile") or {}
+    if profile.get("webRetailRateInr") is not None:
+        web_record = {**(record or {}), "profile": {"retailRateInr": profile["webRetailRateInr"]}}
+        return _native_tier_retail_rate(rates, tier, record=web_record)
+    try:
+        micros = int(rates["web_agent_rate_usd_micros_per_min"])
+        paise = int(rates["web_agent_rate_inr_paise_per_min"])
+        fx = float(rates["fx_rate_inr"])
+        version = int(rates.get("version") or 1)
+        if micros <= 0 or paise <= 0 or not math.isfinite(fx) or fx <= 0:
+            return None
+        return {"complete": True, "usdMicrosPerMin": micros, "inrPaisePerMin": paise,
+                "fxRateInr": fx, "version": version, "source": "global_web_default"}
+    except (KeyError, TypeError, ValueError, OverflowError):
+        return None
+
+
 def _native_tier_retail_rate(rates: dict[str, Any] | None, tier: str, record: dict[str, Any] | None = None) -> dict[str, Any] | None:
     """Read an approved exact-tier price; never infer a custom tier's parent."""
     if not isinstance(rates, dict):
@@ -566,6 +598,15 @@ def readiness_for_profile(tier: str, record: dict[str, Any] | None, rates: dict[
         "enabled": bool(profile.get("enabled")),
         "blockers": blockers,
     }
+
+
+def profile_runtime_signature(profile: dict[str, Any]) -> str:
+    """Bind evidence to executable tuples, not labels or retail prices."""
+    models = sorted((str(m.get("provider")), str(m.get("model")), str(m.get("apiMode")),
+        sorted((str(v.get("providerVoiceId")), sorted(v.get("languages") or [])) for v in m.get("voices") or []))
+        for e in profile.get("engines") or [] for m in e.get("models") or [])
+    return json.dumps([profile.get("stt"), profile.get("llm"), models,
+                       sorted(profile.get("supportedLanguages") or [])], sort_keys=True)
 
 
 async def validate_agent_voice_selection_async(
@@ -732,6 +773,7 @@ async def profile_view(tier: str, environment: str, *, include_internal: bool = 
         "composedProfile": copy.deepcopy(profile) if isinstance(profile, dict) else None,
         "readiness": readiness,
         "retailRate": _native_tier_retail_rate(rates, tier, record=record),
+        "webRetailRate": _web_tier_retail_rate(rates, tier, record=record),
     }
     if include_internal:
         result["readOnly"] = False
@@ -768,11 +810,24 @@ async def save_composed_profile(
                 "revision_conflict", "This profile changed in another session. Reload it before saving.",
                 status_code=409, details={"currentRevision": current_revision},
             )
+        if previous:
+            # Stale browser drafts cannot erase server verification. A different
+            # executable tuple must obtain fresh evidence.
+            previous_runtime = expand_model_voices(tier, previous)["profile"]
+            same_runtime = profile_runtime_signature(profile) == profile_runtime_signature(previous_runtime)
+            profile["evidence"] = copy.deepcopy(previous["profile"].get("evidence") or {}) if same_runtime else {
+                key: False for key in _EVIDENCE_KEYS}
+        else:
+            # Creating a profile is not a provider check. Only the verification
+            # service may establish readiness for a newly saved runtime.
+            profile["evidence"] = {key: False for key in _EVIDENCE_KEYS}
         next_revision = current_revision + 1
         if payload.get("enabled") is True or (previous and (previous.get("profile") or {}).get("enabled")):
             profile["enabled"] = True
         aliases = _choice_keys(profile, (previous or {}).get("publicAliases"))
         record = {"revision": next_revision, "profile": profile, "publicAliases": aliases}
+        if previous and same_runtime and isinstance(previous.get("verification"), dict):
+            record["verification"] = copy.deepcopy(previous["verification"])
         stt_spec = profile.get("stt") or {}
         llm_spec = profile.get("llm") or {}
         primary_eng = (profile.get("engines") or [{}])[0]
@@ -902,12 +957,7 @@ async def set_profile_enabled(*, environment: str, tier: str, expected_revision:
             raise VoiceProfileError("revision_conflict", "This profile changed in another session. Reload it before activating.", status_code=409, details={"currentRevision": current_revision})
         profile = copy.deepcopy(record["profile"])
         current_enabled = profile.get("enabled") is True
-        if enabled and not current_enabled:
-            # Ensure evidence is satisfied
-            evidence = profile.get("evidence") or {}
-            if any(evidence.get(k) is not True for k in _EVIDENCE_KEYS):
-                profile["evidence"] = {k: True for k in _EVIDENCE_KEYS}
-                record["profile"] = profile
+        if enabled:
             rates = await _rates_for_session(session)
             readiness = readiness_for_profile(tier, record, rates)
             if not readiness["ready"]:
@@ -1073,6 +1123,7 @@ def public_catalog_profile(tier: str, record: dict[str, Any] | None, rates: dict
         "ready": bool(readiness["ready"] and readiness["enabled"]),
         "profileRevision": int((record or {}).get("revision") or 0),
         "retailRate": _native_tier_retail_rate(rates, tier, record=record),
+        "webRetailRate": _web_tier_retail_rate(rates, tier, record=record),
         "engines": engines,
         "blockers": blockers,
     }
@@ -1145,6 +1196,7 @@ async def resolve_agent_selection(
         "modelId": selected["modelId"],
         "voiceId": selected["voiceId"],
         "retailRate": _native_tier_retail_rate(rates, tier_norm, record=record),
+        "webRetailRate": _web_tier_retail_rate(rates, tier_norm, record=record),
     }
     from server.providers.llm_protocol import native_audio_provider
 

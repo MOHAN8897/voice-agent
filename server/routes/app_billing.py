@@ -39,6 +39,7 @@ class RazorpayOrderBody(BaseModel):
 
     amount: float = Field(..., gt=0, le=1_000_000)
     currency: str | None = Field(None, max_length=8)
+    expectedTotalMinor: int | None = Field(None, gt=0)
 
 
 class RazorpayVerifyBody(BaseModel):
@@ -75,6 +76,9 @@ def _topup_message(code: str) -> str:
         "maximum_amount": "That amount is above the maximum single top-up.",
         "razorpay_auth_failed": "Card payments are temporarily unavailable. Please try again later or contact support.",
         "razorpay_order_failed": "Could not start payment. Please try again in a moment.",
+        "quote_changed": "The tax or charge total changed. Review the updated quote before paying.",
+        "tax_configuration_unavailable": "Tax settings could not be loaded. Please retry shortly.",
+        "tax_configuration_incomplete": "Checkout tax settings need attention. Please contact support.",
     }.get(code, code)
 
 
@@ -164,6 +168,7 @@ async def billing_quote(
     quote = priced["quote"]
     return {
         **quote,
+        "checkoutTerms": priced["taxConfig"].get("invoiceTerms") or "",
         "minAmount": priced["floor"],
         "maxAmount": priced["ceiling"],
         "fxRateInr": priced["fxRateInr"],
@@ -284,6 +289,7 @@ async def razorpay_create_order(
             body.amount,
             currency=body.currency,
             buyer_email=principal.email,
+            expected_total_minor=body.expectedTotalMinor,
         )
     except ValueError as e:
         code = str(e)

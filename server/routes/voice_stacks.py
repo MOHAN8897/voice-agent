@@ -1,6 +1,7 @@
 """Tenant-safe catalog for explicitly enabled composed PSTN voice stacks."""
 from __future__ import annotations
 
+import asyncio
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
@@ -38,8 +39,9 @@ async def voice_stack_catalog(
     from server.services.dev_runtime import effective_app_environment
 
     environment = effective_app_environment()
-    records = await load_profile_records(environment, None)
-    rates = await _load_rates_without_fallback()
+    records, rates = await asyncio.gather(
+        load_profile_records(environment, None), _load_rates_without_fallback(),
+    )
 
     import copy
     from server.services.saas.voice_stack_defaults import recommended_composed_profile

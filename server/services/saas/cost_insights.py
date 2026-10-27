@@ -57,10 +57,15 @@ def model_cost(usage: dict) -> tuple[Decimal | None, str]:
 
 
 def _catalog_retail(row: dict, rates: dict, tier_records: dict | None) -> tuple[Any, Any] | None:
-    from server.services.saas.voice_stack_profiles import _native_tier_retail_rate
+    from server.services.saas.voice_stack_profiles import (
+        _native_tier_retail_rate,
+        _web_tier_retail_rate,
+    )
 
     if str(row.get("channel") or "") == "browser":
-        return rates.get("web_agent_rate_inr_paise_per_min"), rates.get("web_agent_rate_usd_micros_per_min")
+        tier = str(row.get("tier") or "medium").lower()
+        resolved = _web_tier_retail_rate(rates, tier, record=(tier_records or {}).get(tier))
+        return (resolved["inrPaisePerMin"], resolved["usdMicrosPerMin"]) if resolved else None
     tier = str(row.get("tier") or "premium").lower()
     record = (tier_records or {}).get(tier)
     resolved = _native_tier_retail_rate(rates, tier, record=record)

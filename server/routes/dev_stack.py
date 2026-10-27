@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -81,6 +81,11 @@ class ComposedVoiceActivationBody(BaseModel):
     expected_revision: int = Field(..., alias="expectedRevision", ge=0)
     enabled: bool
 
+    model_config = {"populate_by_name": True}
+
+
+class ComposedVoiceVerificationBody(BaseModel):
+    expected_revision: int = Field(..., alias="expectedRevision", ge=0)
     model_config = {"populate_by_name": True}
 
 
@@ -329,6 +334,23 @@ async def dev_composed_voice_profile_activation(
             actor=session.subject,
             allow_premium=True,
         )
+    except VoiceProfileError as exc:
+        raise _voice_profile_http_error(exc) from exc
+
+
+@router.post("/api/dev/stack/voice-profiles/{tier}/verify")
+async def dev_composed_voice_profile_verify(
+    tier: str,
+    body: ComposedVoiceVerificationBody,
+    session: Annotated[SessionData, Depends(require_dev_session)],
+):
+    require_permission(session, "dev.stack.write")
+    from server.services.saas.voice_profile_verification import verify_saved_profile
+    from server.services.saas.voice_stack_profiles import VoiceProfileError
+
+    try:
+        return await verify_saved_profile(environment=effective_app_environment(), tier=tier,
+            expected_revision=body.expected_revision, actor=session.subject)
     except VoiceProfileError as exc:
         raise _voice_profile_http_error(exc) from exc
 

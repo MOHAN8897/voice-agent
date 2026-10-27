@@ -1,12 +1,5 @@
-import { DevAgentWorkspaceShell } from "@/components/dev/DevAgentWorkspaceShell";
+import { redirect } from "next/navigation";
 
-export default async function DevAgentLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: Promise<{ id: string }>;
-}) {
-  const resolvedParams = await params;
-  return <DevAgentWorkspaceShell agentId={resolvedParams.id}>{children}</DevAgentWorkspaceShell>;
+export default function RetiredAgentWorkspace() {
+  redirect("/dev");
 }

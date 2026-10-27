@@ -67,6 +67,7 @@ type ComposedProfile = {
   enabled: boolean;
   label?: string;
   retailRateInr?: number | null;
+  webRetailRateInr?: number | null;
   supplierCostInr?: number | null;
   supportedLanguages: string[];
   stt: StageProfile;
@@ -84,6 +85,7 @@ type TierProfileRow = {
   composedProfile: ComposedProfile | null;
   readiness: { ready: boolean; enabled: boolean; blockers: ReadinessBlocker[] };
   retailRate: RetailRate;
+  webRetailRate?: RetailRate;
   readOnly?: boolean;
 };
 type ProfilesResponse = { environment: string; profiles: TierProfileRow[] };
@@ -298,6 +300,7 @@ function normalizeProfile(profile: ComposedProfile | null | undefined, tier: Pro
     schemaVersion: 1,
     enabled: profile.enabled === true,
     label: profile.label || DEFAULT_TIER_LABELS[tier] || tier.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    webRetailRateInr: profile.webRetailRateInr ?? null,
     retailRateInr: profile.retailRateInr !== undefined && profile.retailRateInr !== null ? Number(profile.retailRateInr) : (fallback.retailRateInr ?? null),
     supplierCostInr: profile.supplierCostInr !== undefined && profile.supplierCostInr !== null ? Number(profile.supplierCostInr) : (fallback.supplierCostInr ?? null),
     supportedLanguages: Array.isArray(profile.supportedLanguages) && profile.supportedLanguages.length > 0
@@ -385,6 +388,7 @@ export function PstnVoiceProfileWorkbench() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [verification, setVerification] = useState<Record<string, { passed: boolean; detail: string }> | null>(null);
   const [providers, setProviders] = useState<CatalogProvider[]>([]);
   const [catalogError, setCatalogError] = useState("");
   const [catalogRefreshing, setCatalogRefreshing] = useState(false);
@@ -420,9 +424,6 @@ export function PstnVoiceProfileWorkbench() {
   const [pricesSaving, setPricesSaving] = useState(false);
   const [pricesStatus, setPricesStatus] = useState("");
   const [pricesError, setPricesError] = useState("");
-  const [pstnLowInr, setPstnLowInr] = useState("0");
-  const [pstnMediumInr, setPstnMediumInr] = useState("0");
-  const [pstnPremiumInr, setPstnPremiumInr] = useState("0");
   const [webInr, setWebInr] = useState("0");
   const [numberInr, setNumberInr] = useState("0");
   const [fxRate, setFxRate] = useState("95.64");
@@ -502,9 +503,6 @@ export function PstnVoiceProfileWorkbench() {
       const data = await res.json();
       const r = data.rates;
       if (r) {
-        setPstnLowInr(String(r.pstnLowInrPerMin ?? (r.pstnLowUsdPerMin ? (r.pstnLowUsdPerMin * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
-        setPstnMediumInr(String(r.pstnMediumInrPerMin ?? (r.pstnMediumUsdPerMin ? (r.pstnMediumUsdPerMin * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
-        setPstnPremiumInr(String(r.pstnPremiumInrPerMin ?? (r.pstnPremiumUsdPerMin ? (r.pstnPremiumUsdPerMin * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
         setWebInr(String(r.webInrPerMin ?? (r.webUsdPerMin ? (r.webUsdPerMin * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
         setNumberInr(String(r.numberMonthlyInr ?? (r.numberMonthlyUsd ? (r.numberMonthlyUsd * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
         setFxRate(String(r.fxRateInr ?? "95.64"));
@@ -596,6 +594,8 @@ export function PstnVoiceProfileWorkbench() {
 
   useEffect(() => {
     const row = rows.find((r) => r.tier === selected);
+    // Do not cache an empty startup draft ahead of the saved profile response.
+    if (!row && loading) return;
     const activeRefDraft = draftsByTierRef.current[selected];
     const norm = activeRefDraft || normalizeProfile(row?.composedProfile, selected);
     if ((norm.retailRateInr === null || norm.retailRateInr === undefined) && row?.retailRate?.inrPaisePerMin) {
@@ -617,7 +617,7 @@ export function PstnVoiceProfileWorkbench() {
     supplierInputsByTierRef.current[selected] = supplierVal;
 
     setDirty(false);
-  }, [rows, selected]);
+  }, [rows, selected, loading]);
 
   // STT Options
   const availableSttProviders = useMemo(() => {
@@ -739,6 +739,7 @@ export function PstnVoiceProfileWorkbench() {
       schemaVersion: 1,
       enabled: tierEnabled,
       label: labelVal,
+      webRetailRateInr: activeDraft.webRetailRateInr ?? null,
       retailRateInr: parsedRetail !== null && !isNaN(parsedRetail) ? parsedRetail : null,
       supplierCostInr: parsedSupplier !== null && !isNaN(parsedSupplier) ? parsedSupplier : null,
       supportedLanguages: languages.length > 0 ? languages : ["te-IN", "hi-IN", "en-IN"],
@@ -993,6 +994,17 @@ export function PstnVoiceProfileWorkbench() {
     triggerAutoSave(nextDraft, undefined, 800, selected);
   }
 
+  function handleWebRateChange(val: string) {
+    const value = val === "" ? null : Number(val);
+    const nextDraft = { ...draft, webRetailRateInr: value };
+    setDraft(nextDraft);
+    draftsByTierRef.current[selected] = nextDraft;
+    if (value !== null && (!Number.isFinite(value) || value <= 0)) {
+      setDirty(true); setError("Web call price must be positive."); return;
+    }
+    triggerAutoSave(nextDraft, undefined, 800, selected);
+  }
+
   function handleDynamicsChange(patch: Partial<VoiceDynamics>) {
     const merged: VoiceDynamics = {
       speed: draft.voiceDynamics?.speed ?? 1.0,
@@ -1103,6 +1115,32 @@ export function PstnVoiceProfileWorkbench() {
       setStatus(`Configuration saved for ${tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected}. Applied globally.`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not save tier configuration.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleVerifyReadiness() {
+    if (busy || dirty || selectedRow?.profileRevision == null) return;
+    setBusy(true);
+    setError("");
+    setVerification(null);
+    try {
+      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${selected}/verify`, {
+        method: "POST", body: JSON.stringify({ expectedRevision: selectedRow.profileRevision }),
+      });
+      if (!response.ok) throw new Error(await responseError(response));
+      const result = await response.json();
+      setVerification(result.checks);
+      const verified = result.profile as TierProfileRow;
+      if (verified.composedProfile) {
+        draftsByTierRef.current[selected] = verified.composedProfile;
+        setDraft(verified.composedProfile);
+      }
+      await loadProfiles(false);
+      setStatus(verified.readiness.ready ? "Saved setup verified. Enabled tiers are available to tenants." : "Checks completed. Review the remaining requirements below.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Verification could not finish. Try again.");
     } finally {
       setBusy(false);
     }
@@ -1262,10 +1300,6 @@ export function PstnVoiceProfileWorkbench() {
     try {
       const payload = {
         rateCurrency: "INR",
-        pstnInrPerMin: Number(pstnMediumInr) || 0,
-        pstnLowInrPerMin: Number(pstnLowInr) || 0,
-        pstnMediumInrPerMin: Number(pstnMediumInr) || 0,
-        pstnPremiumInrPerMin: Number(pstnPremiumInr) || 0,
         webInrPerMin: Number(webInr) || 0,
         didMonthlyInr: Number(numberInr) || 0,
         fxRateInr: Number(fxRate) || 95.64,
@@ -1421,7 +1455,7 @@ export function PstnVoiceProfileWorkbench() {
               <span className="mt-1 font-semibold text-sm text-text">{label}</span>
               <div className="mt-2 flex items-center gap-2">
                 <span className={`text-[11px] font-medium ${tierEnabled ? "text-emerald-400" : "text-text-muted"}`}>
-                  {tierEnabled ? "Active / Enabled" : "Disabled"}
+                  {tierEnabled ? (row?.readiness.ready ? "Active / Ready" : "Enabled · verification needed") : "Disabled"}
                 </span>
                 {row?.composedProfile?.retailRateInr ? (
                   <span className="font-mono text-[11px] text-text-subtle">
@@ -1564,7 +1598,7 @@ export function PstnVoiceProfileWorkbench() {
             </div>
             <span className="text-[11px] font-mono text-text-subtle">Direct Platform Economics · Applied Universally</span>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <div>
               <label className="block text-xs font-semibold text-text mb-1">
                 Platform Calling Price (₹/min)
@@ -1585,6 +1619,15 @@ export function PstnVoiceProfileWorkbench() {
               <p className="mt-1 text-[11px] text-text-subtle">
                 Retail price per minute deducted from tenant wallets when placing phone calls on this tier.
               </p>
+            </div>
+
+            <div>
+              <label htmlFor="tier-web-rate" className="block text-xs font-semibold text-text mb-1">Web agent price (₹/min)</label>
+              <input id="tier-web-rate" type="number" min="0.01" step="0.01" value={draft.webRetailRateInr ?? ""}
+                onChange={(event) => handleWebRateChange(event.target.value)}
+                placeholder={selectedRow?.webRetailRate?.inrPaisePerMin ? `${selectedRow.webRetailRate.inrPaisePerMin / 100}` : "Use saved web default"}
+                className="w-full rounded-xl border border-surface-border bg-surface-panel px-3 py-2 text-sm text-text font-mono" />
+              <p className="mt-1 text-[11px] text-text-subtle">Browser and embedded web calls on this stack. Blank uses the saved global web default. Each call locks its price at start.</p>
             </div>
 
             <div>
@@ -2319,6 +2362,19 @@ export function PstnVoiceProfileWorkbench() {
           </div>
         </div>
 
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-border p-4">
+          <p className="max-w-xl text-xs text-text-muted">Verify the saved model, speech, tools, credentials and media path with synthetic provider requests. No phone call is placed. Capacity is a concurrency smoke check, not a peak-load certification.</p>
+          <Button type="button" variant="secondary" disabled={busy || dirty || !selectedRow?.composedProfile || draft.llm.apiMode === "websocket"}
+            onClick={() => void handleVerifyReadiness()} data-testid="verify-profile-readiness">
+            {busy ? "Working…" : "Verify saved setup"}
+          </Button>
+        </div>
+        {verification && <ul className="mt-3 space-y-2 text-xs" aria-label="Verification results">
+          {Object.entries(verification).map(([key, check]) => <li key={key} className={check.passed ? "text-emerald-300" : "text-amber-300"}>
+            {check.passed ? "Passed" : "Needs attention"}: {check.detail}
+          </li>)}
+        </ul>}
+
         {/* Blockers alert if any */}
         {blockers.length > 0 && (
           <div className="mt-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
@@ -2382,7 +2438,7 @@ export function PstnVoiceProfileWorkbench() {
       >
       <DevCard
         title="Platform & Channel Prices (INR)"
-        description="Centralized pricing management for call minutes, channels, and number DID rental in Indian Rupees (INR). Applied globally to tenant balance deduction and billing calculations."
+        description="Web calling, number rental and exchange-rate settings. Phone-call prices are managed once, inside each voice stack."
       >
         {pricesError && (
           <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
@@ -2396,69 +2452,12 @@ export function PstnVoiceProfileWorkbench() {
         )}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Low Tier Rate */}
-          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
-            <label className="block text-xs font-semibold text-text">
-              Economical Tier (Low) Rate
-            </label>
-            <p className="text-[11px] text-text-muted">Direct PSTN calling per minute in ₹ (paise)</p>
-            <div className="relative mt-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={pstnLowInr}
-                onChange={(e) => setPstnLowInr(e.target.value)}
-                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-              />
-            </div>
-          </div>
-
-          {/* Medium Tier Rate */}
-          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
-            <label className="block text-xs font-semibold text-text">
-              Standard Regional Tier (Medium) Rate
-            </label>
-            <p className="text-[11px] text-text-muted">Direct PSTN calling per minute in ₹ (paise)</p>
-            <div className="relative mt-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={pstnMediumInr}
-                onChange={(e) => setPstnMediumInr(e.target.value)}
-                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-              />
-            </div>
-          </div>
-
-          {/* Premium Tier Rate */}
-          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
-            <label className="block text-xs font-semibold text-text">
-              Gemini 3.8 Live (Premium) Rate
-            </label>
-            <p className="text-[11px] text-text-muted">Flagship native live calling per minute in ₹</p>
-            <div className="relative mt-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={pstnPremiumInr}
-                onChange={(e) => setPstnPremiumInr(e.target.value)}
-                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-              />
-            </div>
-          </div>
-
           {/* Web Calling Rate */}
           <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
             <label className="block text-xs font-semibold text-text">
-              Web Agent Calling Rate
+              Default Web Calling Rate
             </label>
-            <p className="text-[11px] text-text-muted">Browser microphone agent calling per minute in ₹</p>
+            <p className="text-[11px] text-text-muted">Used only when the selected stack has no separate web price. Configure overrides in each stack’s pricing section.</p>
             <div className="relative mt-1">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
               <input

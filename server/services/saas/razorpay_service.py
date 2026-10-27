@@ -240,7 +240,10 @@ async def quote_wallet_topup(
         raise ValueError("maximum_amount")
 
     rates = await load_current_rates()
-    tax_config = await load_config()
+    tax_config = await load_config(strict=True)
+    from server.services.saas.tax_service import config_configured
+    if tax_config.get("enabled") and not config_configured(tax_config):
+        raise ValueError("tax_configuration_incomplete")
     buyer = await _tenant_buyer(tenant_id, buyer_email)
     quote = compute_tax(
         amount,
@@ -268,6 +271,7 @@ async def create_wallet_order(
     *,
     currency: str | None = None,
     buyer_email: str | None = None,
+    expected_total_minor: int | None = None,
 ) -> dict:
     """Quote a top-up, persist the tax snapshot, then create the provider order.
 
@@ -285,6 +289,8 @@ async def create_wallet_order(
     currency_code = priced["currency"]
     ceiling = priced["ceiling"]
     minor = int(quote["totalMinor"])
+    if expected_total_minor is not None and minor != expected_total_minor:
+        raise ValueError("quote_changed")
     if minor <= 0:
         raise ValueError("minimum_amount")
     if from_minor(minor, currency_code) > ceiling:
@@ -501,10 +507,20 @@ async def _credit_order_payment(order_id: str, payment_id: str, payment: dict, *
 
     ref_id = f"razorpay:{payment_id}"
     async with factory() as session:
+        row = await session.get(RazorpayOrder, order_id, with_for_update=True)
+        if row is None:
+            raise ValueError("order_not_found")
+        tenant_id = row.tenant_id
+
+        currency = getattr(row, "currency", None) or "INR"
+        gross_minor = int(getattr(row, "gross_minor", None) or row.amount_minor or 0)
+        _validate_payment_details(payment, payment_id=payment_id, order_id=order_id,
+            currency=currency, amount_minor=gross_minor)
         existing_tx = (
             await session.execute(
                 select(BillingWalletTransaction).where(
-                    BillingWalletTransaction.reference_id == ref_id
+                    BillingWalletTransaction.reference_id == ref_id,
+                    BillingWalletTransaction.tenant_id == tenant_id
                 )
             )
         ).scalar_one_or_none()
@@ -516,13 +532,9 @@ async def _credit_order_payment(order_id: str, payment_id: str, payment: dict, *
                 "ok": True,
                 "invoiceId": str(inv.invoice_id) if inv else None,
                 "invoiceNumber": inv.invoice_number if inv else None,
+                "creditedInr": int(existing_tx.amount_inr_paise or 0) / 100.0,
                 "duplicate": True,
             }
-
-        row = await session.get(RazorpayOrder, order_id, with_for_update=True)
-        if row is None:
-            raise ValueError("order_not_found")
-        tenant_id = row.tenant_id
 
         if row.status == "paid":
             inv = await _existing_invoice(
@@ -562,37 +574,26 @@ async def _credit_order_payment(order_id: str, payment_id: str, payment: dict, *
                 "duplicate": True,
             }
 
-        currency = getattr(row, "currency", None) or "INR"
-        gross_minor = int(getattr(row, "gross_minor", None) or row.amount_minor or 0)
-        _validate_payment_details(
-            payment,
-            payment_id=payment_id,
-            order_id=order_id,
-            currency=currency,
-            amount_minor=gross_minor,
-        )
-
         base_amount = payment.get("base_amount")
         international = bool(payment.get("international")) or currency != "INR"
-        credit_paise = int(row.amount_inr_paise or 0)
-        if international:
-            # Razorpay's own conversion is authoritative for the INR proceeds.
-            if base_amount:
-                credit_paise = int(base_amount)
-        elif currency == "INR":
-            credit_paise = int(getattr(row, "taxable_minor", None) or 0) or int(
-                row.amount_inr_paise or 0
-            )
-
-        gross_minor = int(payment.get("amount") or gross_minor)
         taxable_minor = int(getattr(row, "taxable_minor", None) or 0)
         tax_minor = int(getattr(row, "tax_minor", None) or 0)
+        credit_paise = int(row.amount_inr_paise or 0)
+        tax_paise = tax_minor if currency == "INR" else 0
         if currency == "INR":
-            taxable_paise = credit_paise
-            tax_paise = tax_minor
-        else:
-            taxable_paise = credit_paise
-            tax_paise = 0
+            # International cards can pay INR. Their gross settlement still
+            # includes GST; only the snapshotted taxable value is spendable.
+            credit_paise = taxable_minor or credit_paise
+        elif isinstance(base_amount, int) and not isinstance(base_amount, bool) and base_amount > 0:
+            from decimal import ROUND_HALF_UP, Decimal
+            taxable_share = Decimal(taxable_minor or gross_minor - tax_minor) / gross_minor
+            credit_paise = int((Decimal(base_amount) * taxable_share).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+            tax_paise = base_amount - credit_paise
+        elif tax_minor:
+            # Convert the persisted taxable/tax split using its quoted FX.
+            from decimal import ROUND_HALF_UP, Decimal
+            tax_paise = int((Decimal(credit_paise) * tax_minor / taxable_minor).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+        taxable_paise = credit_paise
 
         tax_kind = str(getattr(row, "tax_kind", None) or "none")
         if tax_kind == "cgst_sgst":
@@ -984,18 +985,35 @@ async def apply_refund(
             }
 
         gross_minor = int(invoice.amount_minor or 0) or int(invoice.amount_inr_paise or 0)
-        if gross_minor > 0:
-            ratio = min(1.0, refund_minor / gross_minor)
-        else:
-            ratio = 1.0
-        credit_reversal = int(round(int(invoice.amount_inr_paise or 0) * ratio))
-        tax_reversal = int(round(int(invoice.tax_inr_paise or 0) * ratio))
-        cgst_reversal = int(round(int(invoice.cgst_inr_paise or 0) * ratio))
-        sgst_reversal = int(round(int(invoice.sgst_inr_paise or 0) * ratio))
-        igst_reversal = int(round(int(invoice.igst_inr_paise or 0) * ratio))
+        if str(currency or invoice.currency).upper() != str(invoice.currency or "INR").upper():
+            raise ValueError("refund_currency_mismatch")
+        # Allocate the cumulative refund, then subtract what was already reversed.
+        # Independent rounding of small partial refunds can otherwise debit more
+        # wallet credit or GST than the invoice ever contained.
+        previous = (await session.execute(select(
+            func.coalesce(func.sum(RazorpayRefund.amount_minor), 0),
+            func.coalesce(func.sum(RazorpayRefund.credit_inr_paise), 0),
+            func.coalesce(func.sum(RazorpayRefund.tax_inr_paise), 0),
+            select(func.coalesce(func.sum(CreditNote.cgst_inr_paise), 0)).where(
+                CreditNote.tenant_id == invoice.tenant_id, CreditNote.invoice_id == invoice.invoice_id,
+            ).scalar_subquery(),
+            select(func.coalesce(func.sum(CreditNote.sgst_inr_paise), 0)).where(
+                CreditNote.tenant_id == invoice.tenant_id, CreditNote.invoice_id == invoice.invoice_id,
+            ).scalar_subquery(),
+        ).where(RazorpayRefund.tenant_id == invoice.tenant_id, RazorpayRefund.payment_id == payment_id,
+                RazorpayRefund.status == "processed", RazorpayRefund.refund_id != refund_id))).one()
+        prior_refunded, prior_credit, prior_tax, prior_cgst, _prior_sgst = (int(value or 0) for value in previous)
+        if refund_minor <= 0 or gross_minor <= 0 or prior_refunded + refund_minor > gross_minor:
+            raise ValueError("invalid_refund_amount")
+        from decimal import ROUND_HALF_UP, Decimal
+        ratio = Decimal(prior_refunded + refund_minor) / gross_minor
+        def remaining_share(total, reversed_amount):
+            target = int((Decimal(int(total or 0)) * ratio).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+            return max(0, min(int(total or 0) - reversed_amount, target - reversed_amount))
+        credit_reversal = remaining_share(invoice.amount_inr_paise, prior_credit)
+        tax_reversal = remaining_share(invoice.tax_inr_paise, prior_tax)
         if invoice.tax_kind == "cgst_sgst":
-            # Keep the two halves summing to the full reversal.
-            cgst_reversal = min(cgst_reversal, tax_reversal)
+            cgst_reversal = min(tax_reversal, remaining_share(invoice.cgst_inr_paise, prior_cgst))
             sgst_reversal = tax_reversal - cgst_reversal
             igst_reversal = 0
         elif invoice.tax_kind == "igst":
@@ -1076,17 +1094,6 @@ async def apply_refund(
                 created_at=_utcnow(),
             )
         )
-        # A second partial refund must count the first before deciding whether
-        # the payment is now fully refunded.
-        prior_refunded = (
-            await session.execute(
-                select(func.coalesce(func.sum(RazorpayRefund.amount_minor), 0)).where(
-                    RazorpayRefund.payment_id == payment_id,
-                    RazorpayRefund.status == "processed",
-                    RazorpayRefund.refund_id != refund_id,
-                )
-            )
-        ).scalar_one() or 0
         full = int(prior_refunded) + refund_minor >= gross_minor
         invoice.status = "refunded" if full else "partially_refunded"
         if invoice.razorpay_order_id:

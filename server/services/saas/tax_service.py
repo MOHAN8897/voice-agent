@@ -10,13 +10,14 @@ Three rules drive everything here:
   invoice. A later rate change must never move an amount a customer has
   already paid, so nothing here is re-derived at payment time.
 
-Every amount is an integer in minor units. GST is charged only on INR supplies
-to Indian recipients; foreign-currency checkout is an export by construction.
+Every amount is an integer in minor units. Recipient location and the configured
+export treatment determine GST; currency alone never establishes an export.
 """
 from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta, timezone
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from server.config.env import get_settings
@@ -200,11 +201,13 @@ def _row_to_config(row: Any, fallback: dict[str, Any]) -> dict[str, Any]:
     return config
 
 
-async def load_config() -> dict[str, Any]:
-    """Current tax settings, falling back to env identity when the DB is absent."""
+async def load_config(*, strict: bool = False) -> dict[str, Any]:
+    """Read saved tax settings; strict checkout reads fail when the store is unavailable."""
     fallback = _env_config()
     factory = get_session_factory()
     if factory is None:
+        if strict:
+            raise ValueError("tax_configuration_unavailable")
         return fallback
     from server.db.models.saas_models import PlatformTaxSettings
 
@@ -213,7 +216,9 @@ async def load_config() -> dict[str, Any]:
             row = await session.get(PlatformTaxSettings, 1)
             return _row_to_config(row, fallback) if row else fallback
     except Exception:
-        # A settings read must not take checkout down; env identity still works.
+        if strict:
+            raise ValueError("tax_configuration_unavailable") from None
+        # Non-checkout readers may still use the configured environment identity.
         return fallback
 
 
@@ -277,6 +282,9 @@ async def save_config(payload: dict[str, Any], *, actor: str) -> dict[str, Any]:
 
     async with factory() as session:
         row = await session.get(PlatformTaxSettings, 1, with_for_update=True)
+        expected = payload.get("expectedUpdatedAt")
+        if expected and row is not None and str(expected) != (row.updated_at.isoformat() if row.updated_at else None):
+            raise ValueError("tax_settings_conflict")
         if row is None:
             row = PlatformTaxSettings(id=1)
             session.add(row)
@@ -384,7 +392,7 @@ def compute_tax(
     unit = 100  # every currency offered at checkout uses two decimals
     if currency in ("JPY", "KRW"):
         unit = 1
-    amount_minor = int(round(amount * unit))
+    amount_minor = int((Decimal(str(amount)) * unit).quantize(Decimal(1), rounding=ROUND_HALF_UP))
     fx = float(fx_rate_inr or 95.64) or 95.64
 
     buyer = buyer or {}
@@ -396,9 +404,10 @@ def compute_tax(
 
     configured = config_configured(config)
     enabled = bool(config.get("enabled")) and configured
-    domestic = currency == "INR" and buyer_country == "IN"
+    domestic = buyer_country == "IN"
     export = not domestic
-    rate_bps = int(config.get("defaultRateBps") or 0) if enabled and domestic else 0
+    zero_rated = export and bool(config.get("exportZeroRated", True))
+    rate_bps = int(config.get("defaultRateBps") or 0) if enabled and not zero_rated else 0
     price_includes = bool(config.get("priceIncludesTax"))
 
     tax_minor = 0
@@ -406,12 +415,12 @@ def compute_tax(
     gross_minor = amount_minor
     if rate_bps > 0:
         if price_includes:
-            taxable_minor = int(round(amount_minor * 10_000 / (10_000 + rate_bps)))
+            taxable_minor = int((Decimal(amount_minor) * 10_000 / (10_000 + rate_bps)).quantize(Decimal(1), rounding=ROUND_HALF_UP))
             tax_minor = amount_minor - taxable_minor
             gross_minor = amount_minor
         else:
             taxable_minor = amount_minor
-            tax_minor = int(round(amount_minor * rate_bps / 10_000))
+            tax_minor = int((Decimal(amount_minor) * rate_bps / 10_000).quantize(Decimal(1), rounding=ROUND_HALF_UP))
             gross_minor = taxable_minor + tax_minor
 
     if currency == "INR":
@@ -420,16 +429,16 @@ def compute_tax(
         gross_inr = gross_minor
         credit_paise = taxable_minor
     else:
-        taxable_inr = int(round((taxable_minor / unit) * fx * 100))
-        tax_inr = int(round((tax_minor / unit) * fx * 100))
+        taxable_inr = int((Decimal(taxable_minor) / unit * Decimal(str(fx)) * 100).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+        tax_inr = int((Decimal(tax_minor) / unit * Decimal(str(fx)) * 100).quantize(Decimal(1), rounding=ROUND_HALF_UP))
         # International settlement credits what Razorpay converts; the quote is
         # the contract value and is replaced by `base_amount` on confirmation.
-        gross_inr = int(round((gross_minor / unit) * fx * 100))
+        gross_inr = taxable_inr + tax_inr
         credit_paise = taxable_inr
 
     if rate_bps <= 0:
         tax_kind = "export" if export and config.get("exportZeroRated", True) else "none"
-    elif buyer_state and supplier_state and buyer_state == supplier_state:
+    elif domestic and buyer_state and supplier_state and buyer_state == supplier_state:
         tax_kind = "cgst_sgst"
     else:
         tax_kind = "igst"
@@ -440,7 +449,9 @@ def compute_tax(
     elif tax_kind == "igst":
         igst = tax_inr
 
-    place_state = buyer_state or supplier_state
+    place_state = (buyer_state or supplier_state) if domestic else buyer_country
+    charge_cgst = tax_minor // 2 if tax_kind == "cgst_sgst" else 0
+    charge_sgst = tax_minor - charge_cgst if tax_kind == "cgst_sgst" else 0
     return {
         "currency": currency,
         "amount": amount,
@@ -462,9 +473,9 @@ def compute_tax(
         "cgstInrPaise": cgst,
         "sgstInrPaise": sgst,
         "igstInrPaise": igst,
-        "cgst": round(cgst / 100.0, 2),
-        "sgst": round(sgst / 100.0, 2),
-        "igst": round(igst / 100.0, 2),
+        "cgst": round(charge_cgst / unit, 2),
+        "sgst": round(charge_sgst / unit, 2),
+        "igst": round(tax_minor / unit, 2) if tax_kind == "igst" else 0,
         "priceIncludesTax": price_includes,
         "sacCode": config.get("sacCode") or DEFAULT_SAC_CODE,
         "placeOfSupply": state_name_for(place_state) or place_state,

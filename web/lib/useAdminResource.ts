@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
 
 /**
@@ -65,8 +65,10 @@ export function useAdminResource<T>(path: string | null | undefined, deps: unkno
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(Boolean(path));
+  const generation = useRef(0);
 
   const load = useCallback(async () => {
+    const request = ++generation.current;
     if (!path) {
       setData(null);
       setError(null);
@@ -77,18 +79,20 @@ export function useAdminResource<T>(path: string | null | undefined, deps: unkno
     setError(null);
     try {
       const body = (await devFetch(path)) as T;
-      setData(body);
+      if (request === generation.current) setData(body);
     } catch (e) {
+      if (request !== generation.current) return;
       setError(e instanceof Error ? e.message : `Could not load ${path}`);
       setData(null);
     } finally {
-      setLoading(false);
+      if (request === generation.current) setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path]);
 
   useEffect(() => {
     void load();
+    return () => { ++generation.current; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load, ...deps]);
 

@@ -13,10 +13,11 @@ import {
   formatDay,
   formatMinutes,
   formatUsd,
+  formatInr,
   formatWhen,
   useAdminResource,
 } from "@/lib/useAdminResource";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Analytics = {
   windowDays: number;
@@ -31,10 +32,12 @@ type Analytics = {
     activeNumbers: number;
     failedPurchases: number;
     walletBalanceCents: number;
+    walletBalanceInrPaise?: number;
   };
   callsByDay: Array<{ date: string; calls: number; seconds: number }>;
   callsByStatus: Record<string, number>;
   callsByDirection: Record<string, number>;
+  callsByChannel?: Record<string, { calls: number; seconds: number }>;
   topUpsByDay: Array<{ date: string; cents: number; inrPaise: number }>;
   topTenantsByCalls: Array<{ name: string; calls: number }>;
 };
@@ -59,10 +62,10 @@ function CallsByDay({ series }: { series: Analytics["callsByDay"] }) {
     <div>
       <div className="flex h-40 items-end gap-1" role="img" aria-label="Calls per day">
         {series.map((d) => (
-          <div key={d.date} className="group relative flex-1" title={`${d.date}: ${d.calls} calls, ${formatMinutes(d.seconds)}`}>
+          <div key={d.date} className="group relative flex h-full flex-1 items-end" title={`${d.date}: ${d.calls} calls, ${formatMinutes(d.seconds)}`}>
             <div
-              className="w-full rounded-t bg-accent-primary/70 transition-colors group-hover:bg-accent-primary"
-              style={{ height: `${Math.max(3, (d.calls / max) * 100)}%` }}
+              className="w-full rounded-t bg-accent-primary opacity-70 transition-opacity group-hover:opacity-100"
+              style={{ height: `${d.calls > 0 ? Math.max(3, (d.calls / max) * 100) : 0}%` }}
             />
           </div>
         ))}
@@ -89,6 +92,15 @@ export function AdminOverviewPage() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const failed = (purchases.data?.purchases ?? []).filter((p) => p.status === "failed");
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      void Promise.all([reload(), purchases.reload()]);
+    };
+    const timer = window.setInterval(refresh, 60_000);
+    window.addEventListener("focus", refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", refresh); };
+  }, [reload, purchases.reload]);
 
   async function retry(purchaseId: string) {
     setBusy(purchaseId);
@@ -108,9 +120,11 @@ export function AdminOverviewPage() {
     <div className="space-y-6 p-6">
       <AdminPageHeader
         title="SaaS overview"
-        description="Live operational numbers, aggregated from the real call, wallet, and tenant tables."
+        description="Actual conversations and account activity. Practice calls are excluded; daily call counts use UTC."
         actions={
           <div className="flex items-center gap-1">
+            <button type="button" onClick={() => void Promise.all([reload(), purchases.reload()])}
+              disabled={loading || purchases.loading} className="rounded-lg border border-surface-border px-3 py-1 text-xs disabled:opacity-50">Refresh overview</button>
             {WINDOWS.map((w) => (
               <button
                 key={w}
@@ -154,7 +168,7 @@ export function AdminOverviewPage() {
             />
             <AdminStat
               label="Wallet balance"
-              value={formatUsd(data.totals.walletBalanceCents)}
+              value={<>{formatUsd(data.totals.walletBalanceCents)}{data.totals.walletBalanceInrPaise != null && <span className="block text-base">{formatInr(data.totals.walletBalanceInrPaise)}</span>}</>}
               hint="across all tenants"
             />
           </div>
@@ -179,9 +193,22 @@ export function AdminOverviewPage() {
             <CallsByDay series={data.callsByDay} />
           </DevCard>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <AdminStat label={`Wallet top-ups (${days}d)`}
+              value={<>{formatUsd(data.topUpsByDay.reduce((sum, row) => sum + row.cents, 0))}<span className="block text-base">{formatInr(data.topUpsByDay.reduce((sum, row) => sum + row.inrPaise, 0))}</span></>}
+              hint="Customer deposits, shown in their original currencies" />
+            <DevCard title="Call channels">
+              {Object.entries(data.callsByChannel || {}).map(([channel, row]) => <p key={channel} className="flex justify-between gap-3 py-1 text-sm">
+                <span>{["pstn", "phone", "vobiz", "telnyx"].includes(channel) ? "Phone" : channel === "browser" ? "Browser" : channel}</span>
+                <span>{row.calls.toLocaleString()} calls · {formatMinutes(row.seconds)}</span>
+              </p>)}
+              {!Object.keys(data.callsByChannel || {}).length && <p className="text-sm text-text-muted">No channel activity in this window.</p>}
+            </DevCard>
+          </div>
+
           <div className="grid gap-4 lg:grid-cols-2">
             <DevCard title="Calls by status" delayMs={80}>
-              <SkeuoTable>
+              <SkeuoTable className="[&_table]:min-w-0">
                 <SkeuoTableHead>
                   <SkeuoTh>Status</SkeuoTh>
                   <SkeuoTh className="text-right">Calls</SkeuoTh>
@@ -209,14 +236,14 @@ export function AdminOverviewPage() {
             </DevCard>
 
             <DevCard title="Busiest tenants" delayMs={100}>
-              <SkeuoTable>
+              <SkeuoTable className="[&_table]:min-w-0">
                 <SkeuoTableHead>
                   <SkeuoTh>Tenant</SkeuoTh>
                   <SkeuoTh className="text-right">Calls</SkeuoTh>
                 </SkeuoTableHead>
                 <SkeuoTableBody>
-                  {data.topTenantsByCalls.map((t) => (
-                    <SkeuoTableRow key={t.name}>
+                  {data.topTenantsByCalls.map((t, index) => (
+                    <SkeuoTableRow key={`${t.name}-${index}`}>
                       <SkeuoTd>{t.name}</SkeuoTd>
                       <SkeuoTd className="text-right font-mono">{t.calls}</SkeuoTd>
                     </SkeuoTableRow>

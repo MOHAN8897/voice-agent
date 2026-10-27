@@ -294,7 +294,9 @@ class Settings(BaseSettings):
     jwt_refresh_ttl_days: int = Field(30, alias="JWT_REFRESH_TTL_DAYS")
     # Server-side session policy. `0` disables the check (legacy behaviour: a refresh
     # token is good for its whole 30-day lifetime no matter how idle the account was).
-    session_idle_timeout_minutes: int = Field(30, alias="SESSION_IDLE_TIMEOUT_MINUTES")
+    # Tenant console default is 6 hours — long enough for a working day with breaks,
+    # short enough that an unattended machine does not stay signed in overnight.
+    session_idle_timeout_minutes: int = Field(360, alias="SESSION_IDLE_TIMEOUT_MINUTES")
     session_absolute_max_hours: int = Field(24, alias="SESSION_ABSOLUTE_MAX_HOURS")
     # Opt-in "Keep me signed in" bounds. They only apply to sessions whose sign-in
     # explicitly requested it; the flag is bound to the refresh-token family server

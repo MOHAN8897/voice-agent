@@ -114,6 +114,7 @@ def test_analytics_returns_only_real_columns():
         "activeNumbers",
         "failedPurchases",
         "walletBalanceCents",
+        "walletBalanceInrPaise",
     } == set(out["totals"])
     for d in out["callsByDay"]:
         assert {"date", "calls", "seconds"} == set(d)

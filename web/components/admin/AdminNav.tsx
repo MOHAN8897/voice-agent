@@ -11,7 +11,6 @@ import {
   IconMic,
   IconOverview,
   IconPhone,
-  IconRack,
   IconSettings,
 } from "@/components/ui/skeuo/icons";
 
@@ -35,15 +34,10 @@ const ADMIN_GROUPS: Array<{
   label: string;
   items: Array<{ href: string; label: string; icon: ReactNode; live?: boolean }>;
 }> = [
+  { label: "Workspace", items: [{ href: "/dev", label: "Overview", icon: <IconOverview className="h-4 w-4" /> }] },
   {
     label: "Product",
     items: [
-      { href: "/dev/agents", label: "Agents & brain", icon: <IconAgents className="h-4 w-4" /> },
-      {
-        href: "/dev/saas-phone-stack",
-        label: "SaaS phone AI",
-        icon: <IconRack className="h-4 w-4" />,
-      },
       { href: "/dev/stack", label: "Stack & tiers", icon: <IconChart className="h-4 w-4" /> },
     ],
   },
@@ -62,11 +56,6 @@ const ADMIN_GROUPS: Array<{
     label: "SaaS admin",
     items: [
       {
-        href: "/dev/admin",
-        label: "Overview",
-        icon: <IconOverview className="h-4 w-4" />,
-      },
-      {
         href: "/dev/admin/calls",
         label: "Global calls & costs",
         icon: <IconPhone className="h-4 w-4" />,
@@ -78,12 +67,7 @@ const ADMIN_GROUPS: Array<{
       },
       {
         href: "/dev/admin/tenants",
-        label: "Tenants",
-        icon: <IconAgents className="h-4 w-4" />,
-      },
-      {
-        href: "/dev/admin/users",
-        label: "Users",
+        label: "Tenants & users",
         icon: <IconAgents className="h-4 w-4" />,
       },
       {
@@ -147,8 +131,8 @@ export function AdminNav() {
           <ul className="space-y-1">
             {group.items.map((item) => {
               const active =
-                item.href === "/dev/admin"
-                  ? pathname === "/dev/admin"
+                item.href === "/dev"
+                  ? pathname === "/dev" || pathname === "/dev/admin"
                   : pathname.startsWith(item.href);
               return (
                 <SkeuoNavItem

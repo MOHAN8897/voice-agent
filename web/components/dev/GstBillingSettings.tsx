@@ -159,33 +159,32 @@ function Field({
 export function GstBillingSettings() {
   const settings = useAdminResource<TaxSettings>("/api/dev/admin/payments/tax-settings");
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [loadedSettings, setLoadedSettings] = useState<TaxSettings | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{total: number; subtotal: number; tax: number; creditInr: number; currency: string; taxKind: string} | null>(null);
+  const [previewBusy, setPreviewBusy] = useState(false);
+  const [previewAmount, setPreviewAmount] = useState("1000");
+  const [previewCurrency, setPreviewCurrency] = useState("INR");
+  const [previewBuyer, setPreviewBuyer] = useState("same");
 
   useEffect(() => {
-    if (settings.data) setForm(toForm(settings.data));
+    if (settings.data) {
+      setForm(toForm(settings.data));
+      setLoadedSettings(settings.data);
+    }
   }, [settings.data]);
 
   const stateOptions = settings.data?.stateOptions ?? [];
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
+    setPreview(null);
   }
 
-  function save() {
-    const rate = Number(form.ratePercent);
-    if (!Number.isFinite(rate) || rate < 0 || rate > 50) {
-      setError("GST rate must be between 0% and 50%.");
-      return;
-    }
-    const stateName = stateOptions.find((s) => s.code === form.stateCode)?.name || "";
-    setBusy(true);
-    setError(null);
-    setSavedAt(null);
-    void adminAction("/api/dev/admin/payments/tax-settings", {
-      method: "PUT",
-      body: {
+  function payload() {
+    return {
         enabled: form.enabled,
         legalName: form.legalName,
         tradeName: form.tradeName,
@@ -195,20 +194,48 @@ export function GstBillingSettings() {
         addressLine2: form.addressLine2,
         city: form.city,
         stateCode: form.stateCode,
-        stateName,
+        stateName: stateOptions.find((item) => item.code === form.stateCode)?.name || "",
         postalCode: form.postalCode,
         countryCode: "IN",
         supportEmail: form.supportEmail,
         supportPhone: form.supportPhone,
         sacCode: form.sacCode,
-        defaultRateBps: Math.round(rate * 100),
+        defaultRateBps: Math.round(Number(form.ratePercent) * 100),
         priceIncludesTax: form.priceIncludesTax,
         exportZeroRated: form.exportZeroRated,
         invoicePrefix: form.invoicePrefix,
         creditNotePrefix: form.creditNotePrefix,
         lutNumber: form.lutNumber.trim() || null,
         invoiceTerms: form.invoiceTerms,
-      },
+        expectedUpdatedAt: settings.data?.updatedAt || null,
+      };
+  }
+
+  async function previewCheckout() {
+    setPreviewBusy(true); setError(null); setPreview(null);
+    try {
+      const result = await adminAction("/api/dev/admin/payments/tax-preview", { method: "POST", body: {
+        settings: payload(), amount: Number(previewAmount), currency: previewCurrency,
+        buyerCountry: previewBuyer === "export" ? "US" : "IN",
+        buyerState: previewBuyer === "same" ? form.stateCode : (form.stateCode === "27" ? "36" : "27"),
+      } });
+      setPreview(result as {total: number; subtotal: number; tax: number; creditInr: number; currency: string; taxKind: string});
+    } catch (err) { setError(err instanceof Error ? err.message : "Could not preview checkout."); }
+    finally { setPreviewBusy(false); }
+  }
+
+  function save() {
+    const rate = Number(form.ratePercent);
+    if (!Number.isFinite(rate) || rate < 0 || rate > 50) {
+      setError("GST rate must be between 0% and 50%.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setSavedAt(null);
+    void adminAction("/api/dev/admin/payments/tax-settings", {
+      method: "PUT",
+      body: payload(),
     })
       .then(async (result) => {
         setSavedAt(new Date().toISOString());
@@ -241,7 +268,7 @@ export function GstBillingSettings() {
           />
           <StatusPill
             ok={Boolean(data?.webhookConfigured)}
-            label={data?.webhookConfigured ? "Webhook verified" : "Webhook secret missing"}
+            label={data?.webhookConfigured ? "Webhook configured" : "Webhook secret missing"}
             hint="Without the Razorpay webhook secret, payments are only confirmed by the browser callback."
           />
           <StatusPill
@@ -252,7 +279,7 @@ export function GstBillingSettings() {
         </div>
       }
     >
-      <div id="gst-billing" className="space-y-5 pt-1">
+      <fieldset id="gst-billing" disabled={busy || settings.loading || !settings.data || loadedSettings !== settings.data} className="min-w-0 space-y-5 pt-1">
         <div className="grid gap-4 rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-4 text-xs sm:grid-cols-3">
           <div>
             <span className="block text-text-muted">Current financial year</span>
@@ -353,6 +380,7 @@ export function GstBillingSettings() {
           >
             <SkeuoInput
               value={form.ratePercent}
+              aria-label="GST rate (%)"
               onChange={(e) => update("ratePercent", e.target.value)}
               inputMode="decimal"
               className="font-mono"
@@ -477,20 +505,33 @@ export function GstBillingSettings() {
                 <span className="block font-semibold text-text">Zero-rate export of services</span>
                 <span className="block text-text-muted">
                   Applies when the buyer is outside India and the place of supply is outside India.
-                  Keep on under LUT; reverse charge wording is printed on the invoice.
+                  Enable only for eligible exports covered by your tax policy. Off charges configured IGST. Payment currency alone does not qualify a supply as an export.
                 </span>
               </span>
             </label>
           </div>
-          <Field label="Invoice terms / footer" hint="Printed at the bottom of every invoice PDF.">
+          <Field label="Invoice and checkout terms" hint="Shown before payment and printed on invoice PDFs. Use this for your tax policy and customer-facing GST terms.">
             <SkeuoTextarea
               rows={4}
               value={form.invoiceTerms}
+              aria-label="Invoice and checkout terms"
               onChange={(e) => update("invoiceTerms", e.target.value)}
               placeholder="Payment received. This is a computer-generated invoice."
             />
           </Field>
         </div>
+
+        <section className="space-y-3 rounded-xl border border-surface-border-subtle p-4" aria-label="GST checkout preview">
+          <h3 className="text-sm font-semibold">Preview checkout charges</h3>
+          <p className="text-xs text-text-muted">Uses this draft’s rules. Preview does not save settings or create a payment.</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label="Preview amount"><SkeuoInput type="number" min="0.01" value={previewAmount} onChange={(event) => { setPreviewAmount(event.target.value); setPreview(null); }} /></Field>
+            <Field label="Payment currency"><select className="mt-2 w-full rounded-lg border p-2" value={previewCurrency} onChange={(event) => { setPreviewCurrency(event.target.value); setPreview(null); }}><option>INR</option><option>USD</option></select></Field>
+            <Field label="Customer location"><select className="mt-2 w-full rounded-lg border p-2" value={previewBuyer} onChange={(event) => { setPreviewBuyer(event.target.value); setPreview(null); }}><option value="same">Same Indian state</option><option value="different">Different Indian state</option><option value="export">Eligible export customer</option></select></Field>
+          </div>
+          <SkeuoButton type="button" disabled={previewBusy} onClick={() => void previewCheckout()}>{previewBusy ? "Calculating…" : "Preview checkout"}</SkeuoButton>
+          {preview && <dl data-testid="admin-gst-preview" className="grid gap-3 text-sm sm:grid-cols-4">{[["Taxable value", `${preview.currency} ${preview.subtotal.toFixed(2)}`], ["GST", `${preview.currency} ${preview.tax.toFixed(2)} · ${preview.taxKind}`], ["Total payable", `${preview.currency} ${preview.total.toFixed(2)}`], ["Wallet credit", `INR ${preview.creditInr.toFixed(2)}`]].map(([label, value]) => <div key={label}><dt className="text-xs text-text-muted">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div>)}</dl>}
+        </section>
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-surface-border-subtle pt-4">
           <p className="max-w-xl text-[11px] text-text-subtle">
@@ -513,7 +554,7 @@ export function GstBillingSettings() {
             {settings.error}
           </p>
         ) : null}
-      </div>
+      </fieldset>
     </DevCard>
   );
 }

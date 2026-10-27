@@ -355,6 +355,9 @@ class _Result:
     def scalar_one(self):
         return self.value
 
+    def one(self):
+        return self.value if isinstance(self.value, tuple) else (self.value,) * 5
+
 
 class _CreditSession:
     def __init__(self, order, wallet):

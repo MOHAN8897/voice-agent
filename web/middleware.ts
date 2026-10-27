@@ -56,7 +56,7 @@ async function requireSession(
     });
     if (res.status === 401) {
       const login = new URL(loginPath, request.url);
-      login.searchParams.set("next", request.nextUrl.pathname);
+      login.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
       return NextResponse.redirect(login);
     }
     // If backend reports 5xx or server-side error but user has cookie, do not kick them out

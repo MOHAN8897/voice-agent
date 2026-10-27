@@ -13,12 +13,11 @@ import { AdminVerificationPage } from "@/components/admin/panels/VerificationPan
 export type AdminView = "overview" | "analytics" | "users" | "verification" | "tenants" | "numbers";
 
 const GROUPS: Array<{ label: string; views: Array<{ id: AdminView; label: string; href: string }> }> = [
-  { label: "Workspace", views: [{ id: "overview", label: "Overview", href: "/dev/admin" }] },
+  { label: "Workspace", views: [{ id: "overview", label: "Overview", href: "/dev" }] },
   {
     label: "Customer operations",
     views: [
-      { id: "tenants", label: "Tenants", href: "/dev/admin/tenants" },
-      { id: "users", label: "Users", href: "/dev/admin/users" },
+      { id: "tenants", label: "Tenants & users", href: "/dev/admin/tenants" },
       { id: "numbers", label: "Phone numbers", href: "/dev/admin/numbers" },
     ],
   },
@@ -37,7 +36,9 @@ const PANELS: Record<AdminView, ComponentType> = {
 
 export function AdminWorkspace({ view }: { view: AdminView }) {
   const searchParams = useSearchParams();
-  const Panel = PANELS[view] ?? AdminOverviewPage;
+  const customers = view === "tenants" || view === "users";
+  const userSection = view === "users" || searchParams.get("section") === "users";
+  const Panel = customers ? (userSection ? AdminUsersPage : AdminTenantsPage) : PANELS[view] ?? AdminOverviewPage;
   const tenantId = searchParams.get("tenantId");
 
   return (
@@ -57,7 +58,7 @@ export function AdminWorkspace({ view }: { view: AdminView }) {
                   const href = tenantId && ["tenants", "users", "numbers"].includes(item.id)
                     ? `${item.href}?tenantId=${encodeURIComponent(tenantId)}`
                     : item.href;
-                  const active = view === item.id;
+                  const active = view === item.id || (customers && item.id === "tenants");
                   return (
                     <li key={item.id}>
                       <Link
@@ -80,6 +81,18 @@ export function AdminWorkspace({ view }: { view: AdminView }) {
         </div>
       </nav>
 
+      {customers && <nav aria-label="Customer sections" className="flex gap-2 px-6">
+        {[{ id: "tenants", label: "Workspaces" }, { id: "users", label: "Users & memberships" }].map(item => {
+          const params = new URLSearchParams(searchParams.toString());
+          params.set("section", item.id);
+          const active = (userSection ? "users" : "tenants") === item.id;
+          return <Link key={item.id} href={`/dev/admin/tenants?${params}`}
+            aria-current={active ? "page" : undefined}
+            className={`rounded-lg px-4 py-2 text-sm ${active ? "bg-accent-primary text-white" : "bg-surface-panel text-text-muted"}`}>
+            {item.label}
+          </Link>;
+        })}
+      </nav>}
       <Panel />
     </div>
   );
