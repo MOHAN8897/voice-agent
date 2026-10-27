@@ -308,7 +308,8 @@ async def list_calls(
         tags=[tag for tag in (tags or "").split(",") if tag.strip()],
         tag_match=tag_match,
     )
-    enriched = [_enrich_timeline_item(item) for item in items]
+    # Ledger/outcome enrichment reads local files; keep it off the event loop.
+    enriched = await asyncio.to_thread(lambda: [_enrich_timeline_item(item) for item in items])
     await _attach_tenant_wallet_charges(enriched, scoped_tenant)
     return {
         "calls": enriched,
@@ -446,6 +447,12 @@ def _enrich_timeline_item(item: dict) -> dict:
         }
     )
     out = dict(item)
+    meta = call_ledger.read_meta(str(item.get("call_id") or "")) or {}
+    # Only copy contact fields from a ledger belonging to the indexed tenant.
+    # Attempts already carry their numbers; connected rows previously lost both.
+    if str(meta.get("tenant_id") or "") == str(item.get("tenant_id") or "") and item.get("tenant_id"):
+        out["caller_phone"] = meta.get("caller_id") or meta.get("from_number") or out.get("caller_phone")
+        out["called_phone"] = meta.get("callee_e164") or meta.get("to_number") or out.get("called_phone")
     for key in ("summary", "customer", "pipeline", "has_recording"):
         if key in enriched:
             out[key] = enriched[key]

@@ -225,7 +225,11 @@ class CallLifecycleService:
                 status_code=409,
             )
         if composed_snapshot is not None:
-            locked_rate = composed_snapshot.get("retailRate") if composed_snapshot else None
+            locked_rate = composed_snapshot.get("webRetailRate" if channel == "browser" else "retailRate")
+            if channel == "browser" and locked_rate is None and (composed_snapshot.get("retailRate") or {}).get("complete") is True:
+                from server.services.saas.billing_rates import load_current_rates
+                from server.services.saas.voice_stack_profiles import _web_tier_retail_rate
+                locked_rate = _web_tier_retail_rate(await load_current_rates(), str(effective_tier))
             if (
                 not isinstance(locked_rate, dict)
                 or locked_rate.get("complete") is not True
@@ -398,7 +402,7 @@ class CallLifecycleService:
 
         # Snapshot authoritative billing rate at call start (immutable lock against future rate changes)
         if composed_snapshot is not None:
-            native_rate = composed_snapshot["retailRate"]
+            native_rate = locked_rate
             snap_rate_micros = int(native_rate["usdMicrosPerMin"])
             snap_rate_cents = (snap_rate_micros + 5_000) // 10_000
             snap_rate_inr_paise = int(native_rate["inrPaisePerMin"])
@@ -410,9 +414,13 @@ class CallLifecycleService:
 
                 cur_rates = await load_current_rates()
                 tier_slug = str(stack.tier or effective_tier or "medium").lower()
-                from server.services.saas.voice_stack_profiles import load_profile_records, _native_tier_retail_rate
+                from server.services.saas.voice_stack_profiles import (
+                    _native_tier_retail_rate,
+                    _web_tier_retail_rate,
+                    load_profile_records,
+                )
                 tier_rec = (await load_profile_records(env, (tier_slug,))).get(tier_slug)
-                custom_rate = _native_tier_retail_rate(cur_rates, tier_slug, record=tier_rec)
+                custom_rate = (_web_tier_retail_rate if channel == "browser" else _native_tier_retail_rate)(cur_rates, tier_slug, record=tier_rec)
                 if channel == "pstn" and custom_rate is None:
                     raise AppError(ErrorCode.VALIDATION_ERROR,
                         message="The selected voice tier has no complete approved rate", status_code=409)
@@ -429,23 +437,23 @@ class CallLifecycleService:
                 snap_rate_cents = int(
                     (tier_rate_cents if tier_rate_cents else cur_rates["pstn_rate_usd_cents_per_min"])
                     if channel == "pstn"
-                    else cur_rates["web_agent_rate_usd_cents_per_min"]
+                    else ((int(custom_rate["usdMicrosPerMin"]) + 5_000) // 10_000 if custom_rate else cur_rates["web_agent_rate_usd_cents_per_min"])
                 )
                 snap_rate_micros = int(
                     (tier_rate_micros if tier_rate_micros else cur_rates["pstn_rate_usd_micros_per_min"])
                     if channel == "pstn"
-                    else cur_rates["web_agent_rate_usd_micros_per_min"]
+                    else (custom_rate["usdMicrosPerMin"] if custom_rate else cur_rates["web_agent_rate_usd_micros_per_min"])
                 )
                 snap_rate_inr_paise = int(
                     (tier_rate_inr if tier_rate_inr else cur_rates["pstn_rate_inr_paise_per_min"])
                     if channel == "pstn"
-                    else cur_rates["web_agent_rate_inr_paise_per_min"]
+                    else (custom_rate["inrPaisePerMin"] if custom_rate else cur_rates["web_agent_rate_inr_paise_per_min"])
                 )
                 snap_fx = float(cur_rates.get("fx_rate_inr") or 0)
                 if snap_fx <= 0:
                     raise ValueError("A positive INR per USD rate is required to price the call")
                 snap_ver = int(cur_rates.get("version") or 1)
-                if custom_rate and channel == "pstn":
+                if custom_rate:
                     snap_fx = float(custom_rate["fxRateInr"])
                     snap_ver = int(custom_rate["version"])
             except AppError:

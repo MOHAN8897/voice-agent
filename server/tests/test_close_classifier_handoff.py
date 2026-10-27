@@ -187,7 +187,7 @@ async def test_incomplete_address_waits_without_speaking_or_hanging_up(monkeypat
     assert result["hangup_commands"] == 0
 
 
-async def run_voice_simulation(monkeypatch, language, user, closing, *, adapter=None, retry_attempt=False):
+async def run_voice_simulation(monkeypatch, language, user, closing, *, adapter=None, retry_attempt=False, empty_speech=False, recovered_text=""):
     """Real gate, voice loop, executor and lifecycle; substitute speech and carrier."""
     from server.call import call_context
     from server.call.call_ledger import call_ledger
@@ -232,6 +232,7 @@ async def run_voice_simulation(monkeypatch, language, user, closing, *, adapter=
     monkeypatch.setattr(live_turn_orchestrator, "_memory_blocks", AsyncMock(return_value=(None, None)))
     monkeypatch.setattr(live_turn_orchestrator, "_maybe_build_live_input", lambda **_: [])
     monkeypatch.setattr(live_turn_orchestrator, "_after_assistant", AsyncMock())
+    monkeypatch.setattr("server.call.speech_recovery.recover_empty_speech", AsyncMock(return_value=recovered_text))
     previous = {
         "te-IN": ("మీ ప్రశ్నలన్నిటికీ సమాధానం ఇచ్చాను. ఇంకేమైనా వివరాలు కావాలా అండి?", "ఒక్కో సందర్శనకు ధర ఐదు వందల రూపాయలు."),
         "en-IN": ("All your questions have been answered. Is there anything else you need?", "The service costs 500 rupees per visit."),
@@ -242,6 +243,9 @@ async def run_voice_simulation(monkeypatch, language, user, closing, *, adapter=
     monkeypatch.setattr(close_classifier, "previous_agent_line", lambda _: previous)
 
     async def speech(**_kwargs):
+        if empty_speech:
+            yield {"done": True, "text": "", "empty_provider_response": True, "response_contract": "speech_text", "finish_reason": "empty_provider_response"}
+            return
         text = "Is there anything else I can help you with?"
         yield {"delta": text}
         yield {"done": True, "text": text, "finish_reason": "stop"}

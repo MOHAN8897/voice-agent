@@ -52,7 +52,9 @@ def test_selected_locale_and_tts_model_are_compiled_together(locale, provider, m
     assert ctx.compiled_brain_text == original
     if supports_inline_audio_tags(provider, model):
         assert "[Gnani Audio Tags Expressive Guidelines]" in prompt
-        assert "<pauses>" in prompt and "at most one tag" in prompt
+        assert all(f"<{tag}>" in prompt for tag in GNANI_V3_TAGS)
+        assert "never force a cue into every reply" in prompt
+        assert "at most one tag" not in prompt
         assert "no closing tag" in prompt
     else:
         assert "[Gnani Audio Tags Expressive Guidelines]" not in prompt

@@ -112,7 +112,7 @@ async def test_the_release_survives_the_rollback_of_a_failed_delete():
         ("callback_required", "contacted"),
         ("qualified", "qualified"),
         ("converted", "qualified"),
-        ("site_visit_planned", "meeting_booked"),
+        ("site_visit_planned", "qualified"),
         ("not_interested", "unqualified"),
         ("wrong_number", "unqualified"),
         ("no_outcome", "new"),

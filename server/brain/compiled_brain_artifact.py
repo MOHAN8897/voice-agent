@@ -105,7 +105,7 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
             footer = re.search(r"(?m)^Language:\s*", old)
             suffix = old[footer.start():] if footer else ""
             previous_language = re.match(r"Language:\s*([^\s.]+)", suffix)
-            if previous_language and normalize_compile_language(previous_language.group(1)) != normalize_compile_language(language):
+            if locale_changed or (previous_language and normalize_compile_language(previous_language.group(1)) != normalize_compile_language(language)):
                 suffix = re.sub(r"^Language:[^\n]*", lambda _: language_runtime_footer(
                     language, style_for_language(None, language), include_language_lock=False,
                 ), suffix, count=1)

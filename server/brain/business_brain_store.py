@@ -95,7 +95,7 @@ _LEGACY_DEFAULT_TEXTS: dict[str, tuple[str, ...]] = {
 def assemble_raw_business_prompt(sections: list[dict[str, Any]]) -> tuple[str, str]:
     # Legacy console saves marked technical configuration as enabled. These rows
     # configure the runtime; they are never spoken instructions or business facts.
-    metadata_titles = {"saas_voice_config", "saas_script_variables", "saas_call_end_policy", "Voice profile (console)", "Inbound routing prefs (console)"}
+    metadata_titles = {"saas_voice_config", "saas_script_variables", "saas_call_end_policy", "saas_handling_rules", "Voice profile (console)", "Inbound routing prefs (console)"}
     enabled = sorted([s for s in sections if s.get("enabled", True) and s.get("title") not in metadata_titles], key=lambda x: int(x.get("order", 0)))
     parts: list[str] = []
     for s in enabled:

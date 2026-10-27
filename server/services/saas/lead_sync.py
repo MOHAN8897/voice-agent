@@ -23,8 +23,8 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-#: The five CRM stages the console renders, ordered so progress is comparable.
-STAGE_ORDER: tuple[str, ...] = ("new", "contacted", "qualified", "meeting_booked", "unqualified")
+# Conversion is tenant-confirmed. An LLM disposition alone is not proof of a sale.
+STAGE_ORDER: tuple[str, ...] = ("new", "contacted", "qualified", "meeting_booked", "converted", "unqualified")
 
 #: The LLM's nine dispositions collapsed onto those five. `unqualified` is last in
 #: STAGE_ORDER but must never be *advanced into* from a qualified lead, so
@@ -35,7 +35,9 @@ DISPOSITION_TO_STAGE: dict[str, str] = {
     "callback_required": "contacted",
     "qualified": "qualified",
     "converted": "qualified",
-    "site_visit_planned": "meeting_booked",
+    # An expressed visit plan is interest, not evidence of a calendar booking.
+    # Tenants can confirm a booked meeting through the existing lead editor.
+    "site_visit_planned": "qualified",
     "not_interested": "unqualified",
     "wrong_number": "unqualified",
     "no_outcome": "new",
@@ -64,6 +66,8 @@ def stage_rank(stage: str | None) -> int:
 
 def should_advance(new_stage: str, current_stage: str | None) -> bool:
     """Only move a lead forward, so re-calls cannot devalue it."""
+    if current_stage in {"converted", "unqualified"} or new_stage in {"converted", "unqualified"}:
+        return False
     return stage_rank(new_stage) > stage_rank(current_stage)
 
 
@@ -114,12 +118,13 @@ def _phone_key(raw: str) -> str:
 def _extract_phone(facts: dict[str, str], meta: dict[str, Any]) -> str:
     """The number to key the lead on, falling back to the call's own parties."""
     from_facts = _clean(_first_fact(facts, _PHONE_KEYS), 32)
-    if from_facts:
+    if 7 <= len(_phone_key(from_facts)) <= 15:
         return from_facts
     direction = str(meta.get("direction") or "").lower()
     outbound = direction in ("outbound", "outgoing", "outbound-api")
     candidate = meta.get("callee_e164") if outbound else meta.get("caller_id")
-    return _clean(candidate, 32)
+    candidate = _clean(candidate, 32)
+    return candidate if 7 <= len(_phone_key(candidate)) <= 15 else ""
 
 
 async def sync_outcome_to_lead(
@@ -145,6 +150,9 @@ async def sync_outcome_to_lead(
     email = _clean(facts.get("email"), 320) or None
     stage = stage_for_disposition(disposition)
     notes = _notes_from_outcome(outcome)
+    call_marker = f"[Call reference: {call_id}]" if call_id else ""
+    if call_marker:
+        notes = f"{call_marker}\n{notes}".strip()
 
     factory = _session_factory()
     if factory is None:
@@ -161,25 +169,36 @@ async def sync_outcome_to_lead(
         async with factory() as session:
             from sqlalchemy import select
 
+            from server.db.models.entities import Tenant
             from server.db.models.saas_models import Lead
 
+            # Serialise automatic upserts within this tenant. Two simultaneous
+            # post-call jobs must not both decide that the same contact is new.
+            await session.execute(select(Tenant.tenant_id).where(Tenant.tenant_id == tenant_uuid).with_for_update())
+
             stmt = select(Lead).where(Lead.tenant_id == tenant_uuid)
-            if agent_str:
-                stmt = stmt.where(Lead.agent_id == agent_str)
+            stmt = stmt.where(Lead.agent_id == agent_str if agent_str else Lead.agent_id.is_(None))
             if phone:
                 # Match on digits so formatting differences do not fork a lead.
                 digits = _phone_key(phone)
-                rows = (await session.execute(stmt)).scalars().all()
-                row = next((r for r in rows if _phone_key(r.phone) == digits), None)
+                if getattr(getattr(session.bind, "dialect", None), "name", "") == "postgresql":
+                    from sqlalchemy import func
+
+                    row = (await session.execute(stmt.where(func.regexp_replace(Lead.phone, r"\D", "", "g") == digits)
+                        .order_by(Lead.created_at, Lead.lead_id).limit(1).with_for_update())).scalars().first()
+                else:
+                    rows = (await session.execute(stmt.with_for_update())).scalars().all()
+                    row = next((r for r in rows if _phone_key(r.phone) == digits), None)
+            elif email:
+                from sqlalchemy import func
+
+                row = (await session.execute(stmt.where(func.lower(Lead.email) == email.lower())
+                    .order_by(Lead.created_at, Lead.lead_id).limit(1).with_for_update())).scalars().first()
             else:
-                # Without a number there is nothing stable to match on; only the
-                # most recent lead for this agent can be safely reused.
-                recent = (
-                    await session.execute(
-                        stmt.order_by(Lead.updated_at.desc()).limit(1)
-                    )
-                ).scalars().first()
-                row = recent
+                # Never merge unrelated unidentified callers. Only a replay of
+                # this exact call may reuse an identity-less lead.
+                row = (await session.execute(stmt.where(Lead.notes.contains(call_marker, autoescape=True))
+                    .limit(1).with_for_update())).scalars().first() if call_marker else None
 
             now = datetime.now(timezone.utc)
             if row is None:
@@ -200,8 +219,9 @@ async def sync_outcome_to_lead(
                 action = "advanced" if should_advance(stage, row.stage) else "unchanged"
                 if action == "advanced":
                     row.stage = stage
-                # A later call knows the caller's name better than the first one.
-                if name != "New lead":
+                # Enrich blanks; an unverified later call must not overwrite a
+                # contact identity already maintained in the tenant's CRM.
+                if name != "New lead" and (not row.name or row.name == "New lead"):
                     row.name = name
                 if email and not row.email:
                     row.email = email
@@ -209,7 +229,7 @@ async def sync_outcome_to_lead(
                     row.phone = phone
                 if notes:
                     previous = (row.notes or "").strip()
-                    if call_id and call_id not in previous:
+                    if call_marker and call_marker not in previous:
                         row.notes = f"{previous}\n\n---\n{notes}".strip() if previous else notes
                     elif not previous:
                         row.notes = notes

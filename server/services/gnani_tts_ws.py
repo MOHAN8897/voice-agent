@@ -40,10 +40,8 @@ def _gnani_language_code(language_code: str | None, *, model: str | None = None)
     from server.providers.voice_inventory import voices_for_model
 
     lang = str(language_code or "te-IN").strip()
-    if lang == "auto":
+    if lang in {"auto", "hi-en"}:
         return lang
-    if lang == "hi-en":
-        lang = "hi-IN"
     from server.config.constants import normalize_supported_language
 
     lang = normalize_supported_language(lang)
@@ -91,6 +89,11 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
             self._eos_sent = False
             self._closed = False
             self._stripped_header = False
+            self._send_lock = asyncio.Lock()
+            self._request_done = asyncio.Event()
+            self._request_done.set()
+            self._reader_ended = False
+            self._audio_progress = 0
             self._reader_task = asyncio.create_task(self._reader_loop())
 
         async def send(self, payload: str) -> None:
@@ -129,24 +132,36 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                 text = sanitize_tts_tags(text, provider="gnani", model=self._model)
                 if not text.strip():
                     return
-                if self._flush_received or self._eos_sent:
-                    self._flush_received = False
-                    self._eos_sent = False
-                    self._requests_sent = 0
-                    self._requests_completed = 0
-                    while not self._queue.empty():
-                        try:
-                            self._queue.get_nowait()
-                        except (asyncio.QueueEmpty, Exception):
-                            break
-                self._requests_sent += 1
-                await self._send_chunk(text)
+                # The provider accepts one synthesis request at a time. Keep
+                # consuming audio in the reader while a later sentence waits.
+                async with self._send_lock:
+                    await self._wait_for_request()
+                    if self._closed or self._reader_ended:
+                        raise RuntimeError("Speech stream closed before synthesis completed")
+                    if self._flush_received or self._eos_sent:
+                        self._flush_received = False
+                        self._eos_sent = False
+                    self._request_done.clear()
+                    self._requests_sent += 1
+                    await self._send_chunk(text)
                 return
             if mtype == "flush":
                 self._flush_received = True
                 if not self._eos_sent and self._requests_completed >= self._requests_sent:
                     self._eos_sent = True
                     await self._queue.put(json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}}))
+
+        async def _wait_for_request(self) -> None:
+            # Bound a stalled request, while allowing long synthesis that keeps
+            # producing audio. The call watchdog still bounds total call time.
+            timeout = max(0.1, settings.request_timeout_ms / 1000)
+            while not self._request_done.is_set():
+                progress = self._audio_progress
+                try:
+                    await asyncio.wait_for(self._request_done.wait(), timeout=timeout)
+                except asyncio.TimeoutError:
+                    if progress == self._audio_progress:
+                        raise
 
         async def _send_chunk(self, text: str) -> None:
             from server.providers.voice_inventory import provider_language
@@ -189,6 +204,7 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                         break
 
                     if isinstance(raw, bytes):
+                        self._audio_progress += 1
                         # Raw PCM/WAV binary frame
                         data_bytes = raw
                         if not self._stripped_header and len(data_bytes) >= 44 and data_bytes[:4] == b"RIFF":
@@ -216,29 +232,28 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                         continue
 
                     mtype = str(data.get("type") or "").lower()
-                    if "error" in data or "errors" in data or data.get("status") in (401, 402, 429) or mtype == "error":
+                    if data.get("error") or data.get("errors") or data.get("status") in (401, 402, 403, 429) or mtype == "error":
                         err_msg = str(data.get("message") or data.get("error") or "Gnani TTS error")
                         is_credit = any(k in err_msg.lower() for k in ("credit", "balance", "quota", "payment", "unauthorized"))
+                        fatal = is_credit or data.get("status") in (401, 402, 403) or data.get("fatal") is True or data.get("recoverable") is False
                         await self._queue.put(
                             json.dumps(
                                 {
                                     "type": "error",
                                     "code": "credits_exhausted" if is_credit else "gnani_error",
                                     "message": err_msg,
+                                    "recoverable": not fatal,
                                 }
                             )
                         )
-                        break
-
-                    is_final = bool((data.get("data") if isinstance(data.get("data"), dict) else {}).get("is_final") or data.get("is_final"))
-                    if mtype in ("complete", "end", "done") or is_final or data.get("done"):
-                        if is_final:
+                        if fatal:
+                            break
+                        if not self._request_done.is_set():
                             self._requests_completed += 1
-                        if not self._eos_sent and self._flush_received and self._requests_completed >= self._requests_sent:
-                            self._eos_sent = True
-                            await self._queue.put(json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}}))
+                            self._request_done.set()
                         continue
 
+                    is_final = bool((data.get("data") if isinstance(data.get("data"), dict) else {}).get("is_final") or data.get("is_final"))
                     inner = data.get("data") if isinstance(data.get("data"), dict) else {}
                     audio_b64 = (
                         data.get("audio")
@@ -246,6 +261,7 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                         or (data.get("data") if isinstance(data.get("data"), str) else None)
                     )
                     if audio_b64 and isinstance(audio_b64, str):
+                        self._audio_progress += 1
                         try:
                             raw_bytes = base64.b64decode(audio_b64)
                             if not self._stripped_header and len(raw_bytes) >= 44 and raw_bytes[:4] == b"RIFF":
@@ -268,9 +284,20 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
                                 }
                             )
                         )
+                    # A final audio message may still contain the last PCM
+                    # bytes. Deliver them before releasing the next request.
+                    if mtype in ("complete", "end", "done") or is_final or data.get("done"):
+                        if not self._request_done.is_set():
+                            self._requests_completed += 1
+                            self._request_done.set()
+                        if not self._eos_sent and self._flush_received and self._requests_completed >= self._requests_sent:
+                            self._eos_sent = True
+                            await self._queue.put(json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}}))
             except asyncio.CancelledError:
                 pass
             finally:
+                self._reader_ended = True
+                self._request_done.set()
                 if not self._eos_sent:
                     self._eos_sent = True
                     await self._queue.put(json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}}))
@@ -284,6 +311,7 @@ def connect_gnani_tts_ws(model: str | None = None, **_: Any):
 
         async def close(self) -> None:
             self._closed = True
+            self._request_done.set()
             if hasattr(self, "_reader_task") and self._reader_task is not None:
                 self._reader_task.cancel()
             try:

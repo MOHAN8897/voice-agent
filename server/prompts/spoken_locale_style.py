@@ -14,7 +14,7 @@ class SpokenLocale:
 
 
 SPOKEN_LOCALES = {
-    "te-IN": SpokenLocale("Telugu", "Telugu", "Use everyday Telugu-English speech with Telugu sentence structure. Prefer చెప్పండి / కావాలా / అవుతుంది; use అండి where it fits, not on every phrase. Avoid గ్రహించలేకపోయాను and ఏ విధముగా సహాయపడగలను.", "ఏ details కావాలి అండి?", "ఆ విషయం నాకు తెలియదు అండి."),
+    "te-IN": SpokenLocale("Telugu", "Telugu", "Use everyday Telugu-English speech with Telugu sentence structure. Respect comes from మీరు and natural polite verbs such as చెప్పండి / చెప్తారా; prefer కావాలా / అవుతుంది. Do not add standalone అండి as filler in ordinary replies. Never attach it to statements, prices or English words. Keep natural polite verb endings. Answer directly without an acknowledgement on every turn. Avoid గ్రహించలేకపోయాను and ఏ విధముగా సహాయపడగలను.", "మీకు ఏ details కావాలి?", "ఆ విషయం నాకు తెలియదు."),
     "hi-IN": SpokenLocale("Hindi", "Devanagari", "Use everyday Hinglish with aap, not tum. Prefer बताइए / चाहिए / हो जाएगा; avoid कृपया अवगत कराएं and repeating जी or बिल्कुल each turn.", "आपको कौन सी details चाहिए?", "इसकी जानकारी मेरे पास नहीं है।"),
     "ta-IN": SpokenLocale("Tamil", "Tamil", "Use spoken Tamil-English (Tanglish), respectful நீங்க / சொல்லுங்க. Prefer இருக்கு / வேணுமா / பண்றோம் rather than literary இருக்கிறது / வேண்டுமா / செய்கின்றோம். Do not append ங்க to every word.", "உங்களுக்கு என்ன details வேணும்?", "அந்த விவரம் எனக்குத் தெரியலைங்க."),
     "kn-IN": SpokenLocale("Kannada", "Kannada", "Use everyday Kannada-English with respectful ನೀವು / ಹೇಳಿ. Prefer ಬೇಕಾ / ಆಗುತ್ತೆ / ಹೇಳ್ತೀನಿ over ಬೇಕಾಗಿದೆಯೇ / ಆಗುತ್ತದೆ / ತಿಳಿಸುತ್ತೇನೆ. Do not force ರೀ into each phrase.", "ನಿಮಗೆ ಯಾವ details ಬೇಕು?", "ಆ ಮಾಹಿತಿ ನನ್ನ ಬಳಿ ಇಲ್ಲ."),

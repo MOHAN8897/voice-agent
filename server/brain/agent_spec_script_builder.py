@@ -99,9 +99,10 @@ def generate_deterministic_script_from_spec(
     # Section 6: WHEN YOU DO NOT KNOW
     dont_know = (
         "--- WHEN YOU DO NOT KNOW SOMETHING ---\n"
-        "Say plainly that you do not have that detail, and offer to have someone confirm it.\n"
+        "Say plainly that you do not have that detail. Offer verification only through an available action; never promise future team work.\n"
         "Never invent a price, discount, start date, policy, or outcome. Never claim a booking was made unless confirmed.\n"
-        "If they ask about something outside this business, give one brief honest line and steer back to what you can help with."
+        "For unrelated harmless questions, give one brief honest line and offer relevant help only when useful. "
+        "For harmful requests, refuse briefly without a sales pitch or another question."
     )
 
     # Section 7: WHAT TO REMEMBER

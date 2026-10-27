@@ -67,6 +67,26 @@ def test_sarvam_tools_wrap_internal_flat_declarations_and_preserve_chat_declarat
         sarvam_llm._chat_tools([{"parameters": {}}])
 
 
+async def test_incomplete_sse_keeps_terminal_usage_including_reasoning(monkeypatch):
+    from server.providers.llm_protocol import IncompleteTurnError
+
+    requests = _mock_http(monkeypatch, [
+        {"choices": [{"delta": {"content": "Unfinished"}, "finish_reason": "length"}]},
+        {"choices": [], "usage": {"prompt_tokens": 99, "completion_tokens": 80,
+            "completion_tokens_details": {"reasoning_tokens": 70}}},
+    ])
+    with pytest.raises(IncompleteTurnError) as raised:
+        async for _ in sarvam_llm.SarvamLLMAdapter(api_key="unit-key").stream_live_turn(
+            model="sarvam-105b-conversations", api_mode="chat_completions_v1",
+            input_messages=[{"role": "user", "content": "Question"}]):
+            pass
+    assert len(requests) == 1
+    assert raised.value.finish_reason == "length"
+    assert raised.value.partial_text == "Unfinished"
+    assert raised.value.usage["output_tokens"] == 80
+    assert raised.value.usage["reasoning_tokens"] == 70
+
+
 @pytest.mark.asyncio
 async def test_plain_phone_delivery_rejects_json_before_releasing_buffered_speech(monkeypatch):
     from server.providers.llm_protocol import IncompleteTurnError

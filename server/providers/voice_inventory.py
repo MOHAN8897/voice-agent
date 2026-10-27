@@ -483,5 +483,8 @@ def _persist(path: Path, data: dict[str, Any]) -> None:
 
 def provider_language(provider: str, model: str, voice_id: str, language: str) -> str:
     """Translate an application locale only when the supplier documents an alias."""
+    if provider == "gnani" and language == "hi-en":
+        validate_voice(provider, model, voice_id, "hi-IN")
+        return language
     voice = validate_voice(provider, model, voice_id, None if language == "auto" else language)
     return voice.get("providerLanguageMap", {}).get(language, language)

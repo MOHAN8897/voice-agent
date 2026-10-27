@@ -3,37 +3,52 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt
 from server.db.connection import get_session_factory
+from server.db.models.entities import Agent
 from server.db.models.saas_models import Lead
 from server.services.saas.tenant_guard import SubscriberPrincipal, require_subscriber_permission
 
 router = APIRouter()
+LeadStage = Literal["new", "contacted", "qualified", "meeting_booked", "converted", "unqualified"]
 
 
 class LeadCreate(BaseModel):
-    name: str = Field(..., min_length=1)
-    phone: str | None = None
-    email: str | None = None
-    stage: str = "new"
-    notes: str | None = None
+    name: str = Field(..., min_length=1, max_length=255)
+    phone: str | None = Field(None, max_length=32)
+    email: str | None = Field(None, max_length=320)
+    stage: LeadStage = "new"
+    confirmConverted: bool = False
+    notes: str | None = Field(None, max_length=20000)
     #: Which AI employee owns this lead. Optional — a hand-created CRM lead may
     #: belong to the workspace rather than to one agent.
     agentId: str | None = Field(None, max_length=36)
 
 
 class LeadStagePatch(BaseModel):
-    stage: str = Field(..., min_length=1)
+    stage: LeadStage
+    confirmConverted: bool = False
+    expectedUpdatedAt: datetime | None = None
 
 
 class LeadNotesPatch(BaseModel):
-    notes: str | None = None
+    notes: str | None = Field(None, max_length=20000)
+    stage: LeadStage | None = None
+    confirmConverted: bool = False
     agentId: str | None = Field(None, max_length=36)
+    expectedUpdatedAt: datetime | None = None
+
+
+def _check_revision(row: Lead, expected: datetime | None) -> None:
+    current = row.updated_at if row.updated_at.tzinfo else row.updated_at.replace(tzinfo=timezone.utc)
+    if expected is not None and current != (expected if expected.tzinfo else expected.replace(tzinfo=timezone.utc)):
+        raise HTTPException(status_code=409, detail="This lead changed. Reload it before saving; your edits have been kept.")
 
 
 def _lead_dict(row: Lead) -> dict:
@@ -53,12 +68,34 @@ def _lead_dict(row: Lead) -> dict:
     }
 
 
+def _lead_uuid(value: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(value)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Lead not found") from None
+
+
+async def _check_agent(session, agent_id: str | None, tenant_id) -> None:
+    if not agent_id:
+        return
+    agent = await session.scalar(select(Agent.agent_id).where(
+        Agent.agent_id == _lead_uuid(agent_id), Agent.tenant_id == tenant_id,
+    ))
+    if agent is None:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+
 @router.get("/api/leads")
 async def list_leads(
-    agentId: str | None = Query(None, alias="agentId", max_length=36),
-    limit: int = Query(100, ge=1, le=500),
-    offset: int = Query(0, ge=0),
-    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+    principal: Annotated[SubscriberPrincipal, Depends(require_subscriber_jwt)],
+    agentId: Annotated[str | None, Query(alias="agentId", max_length=36)] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    stage: Annotated[LeadStage | None, Query()] = None,
+    search: Annotated[str, Query(max_length=200)] = "",
+    hasPhone: Annotated[bool | None, Query()] = None,
+    updatedSince: Annotated[datetime | None, Query()] = None,
+    sort: Annotated[Literal["updated", "created", "name"], Query()] = "updated",
 ):
     """Leads for the workspace, or for one agent when `agentId` is given.
 
@@ -68,23 +105,46 @@ async def list_leads(
     require_subscriber_permission(principal, "app.calls.read")
     factory = get_session_factory()
     if factory is None:
-        return {"leads": []}
+        return {"leads": [], "total": 0, "stageCounts": {}, "limit": limit, "offset": offset}
     async with factory() as session:
         stmt = select(Lead).where(Lead.tenant_id == principal.tenant_id)
-        if agentId:
+        if agentId == "unassigned":
+            stmt = stmt.where(Lead.agent_id.is_(None))
+        elif agentId:
             stmt = stmt.where(Lead.agent_id == agentId)
-        result = await session.execute(stmt.order_by(Lead.updated_at.desc()).limit(limit).offset(offset))
-        return {"leads": [_lead_dict(r) for r in result.scalars()]}
+        if stage:
+            stmt = stmt.where(Lead.stage == stage)
+        if search.strip():
+            stmt = stmt.where(or_(*(column.icontains(search.strip(), autoescape=True)
+                for column in (Lead.name, Lead.phone, Lead.email, Lead.notes))))
+        phone_present = func.length(func.trim(func.coalesce(Lead.phone, ""))) > 0
+        if hasPhone is not None:
+            stmt = stmt.where(phone_present if hasPhone else ~phone_present)
+        if updatedSince:
+            stmt = stmt.where(Lead.updated_at >= updatedSince)
+        # Counts use the same tenant and filters as the paginated data.
+        counts = (await session.execute(stmt.with_only_columns(Lead.stage, func.count())
+            .group_by(Lead.stage))).all()
+        stage_counts = dict(counts)
+        ordering = {"updated": Lead.updated_at.desc(), "created": Lead.created_at.desc(), "name": Lead.name.asc()}[sort]
+        result = await session.execute(stmt.order_by(ordering, Lead.lead_id).limit(limit).offset(offset))
+        return {"leads": [_lead_dict(r) for r in result.scalars()], "total": sum(stage_counts.values()),
+            "stageCounts": stage_counts, "limit": limit, "offset": offset}
 
 
 @router.post("/api/leads")
-async def create_lead(body: LeadCreate, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
-    require_subscriber_permission(principal, "app.calls.read")
+async def create_lead(body: LeadCreate, principal: Annotated[SubscriberPrincipal, Depends(require_subscriber_jwt)]):
+    require_subscriber_permission(principal, "app.telephony.write")
     factory = get_session_factory()
     if factory is None:
         raise HTTPException(status_code=503, detail="Database required")
     now = datetime.now(timezone.utc)
     async with factory() as session:
+        if not body.name.strip():
+            raise HTTPException(status_code=422, detail="Name is required")
+        if body.stage == "converted" and not body.confirmConverted:
+            raise HTTPException(status_code=409, detail="Confirm conversion before creating a converted lead")
+        await _check_agent(session, body.agentId, principal.tenant_id)
         row = Lead(
             tenant_id=principal.tenant_id,
             agent_id=(body.agentId or None),
@@ -106,16 +166,19 @@ async def create_lead(body: LeadCreate, principal: SubscriberPrincipal = Depends
 async def patch_lead_stage(
     lead_id: str,
     body: LeadStagePatch,
-    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+    principal: Annotated[SubscriberPrincipal, Depends(require_subscriber_jwt)],
 ):
-    require_subscriber_permission(principal, "app.calls.read")
+    require_subscriber_permission(principal, "app.telephony.write")
     factory = get_session_factory()
     if factory is None:
         raise HTTPException(status_code=503, detail="Database required")
     async with factory() as session:
-        row = await session.get(Lead, uuid.UUID(lead_id))
-        if row is None or row.tenant_id != principal.tenant_id:
+        row = await session.scalar(select(Lead).where(Lead.lead_id == _lead_uuid(lead_id), Lead.tenant_id == principal.tenant_id).with_for_update())
+        if row is None:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
+        _check_revision(row, body.expectedUpdatedAt)
+        if body.stage == "converted" and row.stage != "converted" and not body.confirmConverted:
+            raise HTTPException(status_code=409, detail="Confirm that this lead became a customer before marking Converted")
         row.stage = body.stage
         row.updated_at = datetime.now(timezone.utc)
         await session.commit()
@@ -126,20 +189,26 @@ async def patch_lead_stage(
 async def patch_lead(
     lead_id: str,
     body: LeadNotesPatch,
-    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
+    principal: Annotated[SubscriberPrincipal, Depends(require_subscriber_jwt)],
 ):
-    require_subscriber_permission(principal, "app.calls.read")
+    require_subscriber_permission(principal, "app.telephony.write")
     factory = get_session_factory()
     if factory is None:
         raise HTTPException(status_code=503, detail="Database required")
     async with factory() as session:
-        row = await session.get(Lead, uuid.UUID(lead_id))
-        if row is None or row.tenant_id != principal.tenant_id:
+        row = await session.scalar(select(Lead).where(Lead.lead_id == _lead_uuid(lead_id), Lead.tenant_id == principal.tenant_id).with_for_update())
+        if row is None:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
-        if body.notes is not None:
+        _check_revision(row, body.expectedUpdatedAt)
+        if "notes" in body.model_fields_set:
             row.notes = body.notes
-        if body.agentId is not None:
+        if "agentId" in body.model_fields_set:
+            await _check_agent(session, body.agentId, principal.tenant_id)
             row.agent_id = body.agentId or None
+        if body.stage is not None:
+            if body.stage == "converted" and row.stage != "converted" and not body.confirmConverted:
+                raise HTTPException(status_code=409, detail="Confirm that this lead became a customer before marking Converted")
+            row.stage = body.stage
         row.updated_at = datetime.now(timezone.utc)
         await session.commit()
     return {"ok": True, "lead": _lead_dict(row)}

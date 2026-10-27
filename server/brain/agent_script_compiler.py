@@ -1546,7 +1546,7 @@ def _conversation_plan(
     if re.search(r"\b(fee|fees|price|cost|afford|cheap|discount|fee structure)\b", scope, re.I):
         beats.append(
             "Fees come up early on a call like this. State only the figures that appear in COMPANY & OFFER, "
-            "and say the team will confirm the exact current number if they ask for something not written there."
+            "and say when a requested figure is unavailable. Offer verification only through an available action; do not promise future team work."
         )
     if role == "follow_up":
         beats.append(
@@ -1555,12 +1555,13 @@ def _conversation_plan(
         )
     if re.search(r"\b(enquir|inquir|question|doubt|ask|explain|tell me)\b", scope, re.I):
         beats.append(
-            "Expect questions rather than objections. Answer in plain words, one idea per sentence, and check "
-            "they followed before moving on."
+            "Expect questions rather than objections. Answer in plain words, one idea per sentence. "
+            "An answered information question needs no extra question or pitch. Clarify only genuinely missing information."
         )
     if re.search(r"\b(busy|not interested|no need|don't call|do not call)\b", scope, re.I):
         beats.append(
-            "A refusal ends the pitch, not the politeness. Thank them once, do not re-offer, and close."
+            "A clear refusal ends the pitch. Do not re-offer. A deferral or future interest is not a refusal; "
+            "follow the caller's requested next step and let the server approve an ending."
         )
     beats.append(
         "If an applicable next step was agreed, briefly confirm only that step. "
@@ -1604,8 +1605,8 @@ def _when_you_dont_know(brief: str, *, company_name: str, role: str) -> str:
         "and the runtime can perform it. Do not promise a callback or handoff without that permission.\n"
         "Never invent a price, a discount, a start date, a seat count, a policy, or an outcome. "
         "Never claim a booking, a payment, or a message was sent unless a tool actually confirmed it.\n"
-        "If they ask about something outside this business, give one brief honest line and steer "
-        "back to what you can actually help with."
+        "For unrelated harmless questions, give one brief honest line and offer relevant help only when useful. "
+        "For harmful requests, refuse briefly without adding a sales pitch, discovery question or topic invitation."
     )
 
 
@@ -1882,7 +1883,8 @@ def _platform_call_rules(
         f"--- PROFESSIONAL CLOSE ---\n"
         f"Follow CALL END POLICY for refusal, confirmed endings and completed next steps. "
         f"Bare okay/thanks is not a hangup. Make the close decision only when the caller is finished, "
-        f"clearly refuses all help, or asks to end; on that turn leave spoken_response empty and never speak a farewell. "
+        f"clearly refuses all help, or asks to end. In JSON sessions leave spoken_response empty when proposing a close; "
+        f"in speech-text sessions a brief acknowledgement is allowed. Never speak a farewell. "
         f"The platform speaks the approved farewell and disconnects when playback finishes.\n\n"
         f"--- OBJECTION HANDLING ---\n"
         f"Acknowledge the concern in one sentence; do not restart the full pitch. "

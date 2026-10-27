@@ -66,6 +66,8 @@ async def test_composed_lifecycle_preserves_selected_stages_on_each_channel(comp
         "complete": True, "usdMicrosPerMin": 10000, "inrPaisePerMin": 95,
         "fxRateInr": 95.5, "version": 1,
     }}
+    snapshot["webRetailRate"] = {"complete": True, "usdMicrosPerMin": 20000,
+        "inrPaisePerMin": 191, "fxRateInr": 95.5, "version": 3}
     override = {**stack.to_safe_dict(), "pipeline": "composed_voice", "voice_flow": "composed_stages", "_voice_stack_snapshot": snapshot}
     monkeypatch.setattr(service, "_resolve_locked_stack", Mock(return_value=stack))
 
@@ -79,6 +81,10 @@ async def test_composed_lifecycle_preserves_selected_stages_on_each_channel(comp
     assert ctx.channel == channel
     assert ctx.tier == tier
     assert call_ledger.read_meta(started["call_id"])["voice_stack_snapshot"] == snapshot
+    price = call_ledger.read_meta(started["call_id"])["rate_snapshot"]
+    assert price["inrPaisePerMin"] == (191 if channel == "browser" else 95)
+    snapshot["webRetailRate"]["inrPaisePerMin"] = 99999
+    assert call_ledger.read_meta(started["call_id"])["rate_snapshot"] == price
     text_create.assert_not_awaited()
     voice_create.assert_not_awaited()
 

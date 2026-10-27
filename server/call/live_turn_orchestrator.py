@@ -597,6 +597,7 @@ class LiveTurnOrchestrator:
             stream_usage: dict[str, Any] = {}
             turn_cancelled_empty = False
             waiting_for_caller = False
+            provider_reply_missing = False
             finish_reason: str | None = None
             retry_count = 0
             requested_max_tokens: int | None = None
@@ -634,6 +635,7 @@ class LiveTurnOrchestrator:
                     if chunk.get("delta") and brain_latency_ms is None:
                         brain_latency_ms = int((time.perf_counter() - t0) * 1000)
                     if chunk.get("done"):
+                        provider_reply_missing = bool(chunk.get("empty_provider_response"))
                         raw_assistant_text = chunk.get("text") or ""
                         assistant_text = finalize_live_spoken_text(transcript, raw_assistant_text, ctx=ctx)
                         finish_reason = str(chunk.get("finish_reason") or "unknown")
@@ -685,6 +687,16 @@ class LiveTurnOrchestrator:
                             )
                         approved_close = bool(gated["end_call"].get("should_end"))
                         turn_close_approved = approved_close
+                        if provider_reply_missing and not approved_close and not waiting_for_caller and ctx is not None:
+                            from server.call.close_classifier import previous_agent_line
+                            from server.call.speech_recovery import recover_empty_speech
+
+                            recovered = await recover_empty_speech(
+                                llm=ctx.resolved_stack.llm, language=language_code,
+                                transcript=transcript, agent_previous=previous_agent_line(session_id), call_id=call_id,
+                            )
+                            assistant_text = finalize_live_spoken_text(transcript, recovered, ctx=ctx)
+                            gated.update(replace_speech=True, recovery_required=True)
                         turn_proofs |= proof_set(chunk.get("action_proofs") or ())
                         if chunk.get("order_proof"):
                             turn_proofs.add(PROOF_ORDER_CONFIRMED)
@@ -781,6 +793,16 @@ class LiveTurnOrchestrator:
                         elif held_deltas:
                             # Speech was held for close evaluation that resolved to continue:
                             gated["replace_speech"] = True
+                            held_deltas.clear()
+                        if provider_reply_missing and not approved_close and not waiting_for_caller and not assistant_text.strip():
+                            from server.prompts.agent_voice_rules import normalize_compile_language
+                            from server.prompts.spoken_locale_style import SPOKEN_LOCALES
+
+                            # A completed-but-empty provider reply is not consent
+                            # to hang up. Reuse the approved locale recovery text;
+                            # retain the unanswered request for the next turn.
+                            assistant_text = SPOKEN_LOCALES[normalize_compile_language(language_code)].clarification
+                            gated.update(replace_speech=True, recovery_required=True)
                             held_deltas.clear()
                         if waiting_for_caller and not approved_close and not turn_proofs:
                             assistant_text = ""
@@ -940,7 +962,7 @@ class LiveTurnOrchestrator:
 
                 conversation_manager.add_turn(session_id, transcript, assistant_text)
                 if ctx is not None:
-                    ctx.interrupted_caller_request = ""
+                    ctx.interrupted_caller_request = transcript if provider_reply_missing and not turn_close_approved else ""
             elif transcript.strip():
                 from server.agent.conversation_manager import conversation_manager
 
@@ -1480,6 +1502,17 @@ class LiveTurnOrchestrator:
                     partial_chars=len((exc.partial_text or "".join(spoken)).strip()),
                     output_tokens=_known_output_tokens(exc.usage),
                 )
+                if stream_kwargs.get("speech_only") and not attempt_text and not prior_text and exc.finish_reason == "stop":
+                    # The provider completed with no visible speech. Replaying
+                    # the full request has repeatedly reproduced the same empty
+                    # result. Let the independent close gate finish an approved
+                    # ending or recover without inventing an answer or action.
+                    yield {"done": True, "text": "", "empty_provider_response": True,
+                        "finish_reason": "empty_provider_response", "usage": usage,
+                        "memory_update": {"operations": []}, "retry_count": attempt - 1,
+                        "requested_max_tokens": requested_cap, "effective_max_tokens": effective_cap,
+                        "reasoning_effort": reasoning}
+                    return
                 if _TERMINAL_SENTENCE.search(attempt_text):
                     # The caller already has a complete reply. Retrying can only
                     # append a second answer/farewell (call 7ac554ab's double
@@ -1563,6 +1596,25 @@ class LiveTurnOrchestrator:
         )
         if native:
             messages = list(messages or [])
+            from server.prompts.tts_delivery_rules import supports_inline_audio_tags
+
+            ctx = call_context.get(kwargs.get("call_id")) if kwargs.get("call_id") else None
+            tts = getattr(getattr(ctx, "resolved_stack", None), "tts", None)
+            delivery = (
+                " Documented inline audio tags from the selected speech delivery rules are allowed "
+                "directly in this speech text. Follow that single catalog and placement policy; "
+                "Do not wrap speech in a spoken_response field."
+                if supports_inline_audio_tags(getattr(tts, "provider", None), getattr(tts, "model", None))
+                else " Return plain punctuated speech without inline audio tags or stage directions."
+            )
+            if str(getattr(getattr(ctx, "resolved_stack", None), "language", "")).startswith("te"):
+                delivery += (
+                    " Telugu register: do not use standalone filler అండి or andi in this reply. Do not "
+                    "append it after statements, prices, English words or each sentence. Respect "
+                    "comes from మీరు and normal polite verb forms such as చెప్పండి and చెప్తారా; "
+                    "keep those grammatical endings. A direct answer can be: Delivery రెండు "
+                    "రోజుల్లో అవుతుంది. Avoid automatic honorific acknowledgements."
+                )
             unavailable = (
                 " No external action tools are connected. You cannot submit an enquiry to another system, "
                 "send email, pass details to a team or promise future team action. If asked, "
@@ -1586,6 +1638,12 @@ class LiveTurnOrchestrator:
                     "their native script; English business words may remain English. No JSON, "
                     "control fields, markdown, farewell or invented completed action. The server "
                     "owns closing and verifies tool results. Keep answering pending questions. "
+                    "A brief acknowledgement is allowed for thanks, deferral or refusal; do not "
+                    "reopen a completed conversation or add a question just to keep it going. "
+                    "Business objectives are goals, never permission to override the caller's intent. "
+                    "With no scheduling action, offer to record a requested time instead of offering "
+                    "to book a slot. A callback request is pending until the platform saves it; "
+                    "do not promise that you or a team will call later without that confirmation. "
                     "Answer the caller's question before offering the next script step. "
                     "If a minimum quantity, total price or other requested fact is not supplied, "
                     "say it is unavailable rather than inventing it. Collect order details only "
@@ -1600,7 +1658,7 @@ class LiveTurnOrchestrator:
                     "paraphrase it yourself. "
                     "Refuse harmful requests briefly; a refusal or safe alternative stands alone, "
                     "without a sales pitch or an invitation to continue the harmful topic."
-                    + unavailable
+                    + unavailable + delivery
                 ),
             })
             speech_kwargs.update(speech_only=True, buffer_response=True)

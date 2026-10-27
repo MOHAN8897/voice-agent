@@ -476,20 +476,9 @@ class SarvamLLMAdapter:
                             finish_reason = stop_reason
                             if stop_reason in {"stop", "tool_calls"}:
                                 completed = True
-                            else:
-                                # Read the final chunk's content before raising so
-                                # a stop reason can never discard spoken text.
-                                raise IncompleteTurnError(
-                                    provider=self.provider_id,
-                                    finish_reason=stop_reason,
-                                    raw_finish_reason=stop_reason,
-                                    partial_text=(
-                                        extractor.spoken_text
-                                        if extractor is not None
-                                        else "".join(plain_parts)
-                                    ),
-                                    usage=usage,
-                                )
+                            # Read through the terminal usage chunk even after
+                            # length/content-filter stops. Raising here loses
+                            # the provider's billed reasoning/completion tokens.
             except asyncio.CancelledError:
                 raise
             except httpx.TimeoutException as exc:
@@ -501,6 +490,9 @@ class SarvamLLMAdapter:
             extractor.spoken_text.strip() if extractor is not None else "".join(plain_parts).strip()
         )
         completed_tool_calls = [tool_calls[index] for index in sorted(tool_calls)]
+        if finish_reason and finish_reason not in {"stop", "tool_calls", "whitespace_tail"}:
+            raise IncompleteTurnError(provider=self.provider_id, finish_reason=finish_reason,
+                raw_finish_reason=finish_reason, partial_text=full_text, usage=usage)
         if kwargs.get("speech_only") and full_text.lstrip().startswith(("{", "[", "```")):
             # The delivery contract forbids control data. It was buffered, so
             # none reached TTS and the bounded reply recovery can restart clean.

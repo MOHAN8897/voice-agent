@@ -64,11 +64,17 @@ def test_legacy_preamble_and_authored_voice_examples_are_preserved():
     assert "Use this approved local phrasing." in runtime
 
 
-@pytest.mark.parametrize("model", [None, "", "invalid-model", "gemini-3.8-live"])
+@pytest.mark.parametrize("model", ["gemini-3.8-live"])
 def test_explicit_gemini_stack_never_becomes_secondary(model):
     provider, selected = realtime_voice_llm_provider(stack_override={"llm": {"provider": "gemini", "model": model}})
     assert provider == "gemini"
     assert "live" in selected
+
+
+@pytest.mark.parametrize("model", [None, "", "invalid-model"])
+def test_invalid_explicit_native_model_is_rejected_without_fallback(model):
+    with pytest.raises(ValueError, match="native audio socket"):
+        realtime_voice_llm_provider(stack_override={"llm": {"provider": "gemini", "model": model}})
 
 
 @pytest.mark.asyncio
@@ -239,6 +245,29 @@ async def test_publish_preserves_authored_text_without_generation(monkeypatch):
     assert snap["compiled_text"].count("--- STATIC OUTPUT RULES ---") == 1
     assert snap["compiled_text"].count("--- SPOKEN LANGUAGE (") == 1
     llm.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("language", list(SPOKEN_PACKS))
+async def test_objection_rules_survive_publish_and_call_prompt(language):
+    from server.brain.agent_service import agent_service
+    from server.providers.base import StageSelection
+    from server.services.composed_voice_session import composed_system_prompt
+
+    agent = await agent_service.create_agent(name="Objection flow", languages=[language])
+    aid = agent["agent_id"]
+    faq = "[Intent: timing]\nWhen: Interested next month\nReply: Which day suits you?\nAction: offer_callback"
+    draft = sections("Approved price: 25 rupees. Answer the caller's question.")
+    draft.append({"section_id": "faq", "type": "faq", "title": "FAQ & Objections", "enabled": True,
+                  "raw_text": faq, "order": 40})
+    await business_brain_store.save_draft_sections(aid, draft)
+    snapshot = await compiled_brain_service.publish_agent_brain(aid)
+    ctx = SimpleNamespace(compiled_brain_text=snapshot["compiled_text"],
+        compiled_brain_version=snapshot["compiled_version"],
+        resolved_stack=SimpleNamespace(language=language, llm=StageSelection("sarvam", "test", {}),
+                                       tts=StageSelection("gnani", "timbre-v3.0", {})))
+    assert faq in snapshot["compiled_text"]
+    assert faq in composed_system_prompt(ctx)
 
 
 @pytest.mark.asyncio

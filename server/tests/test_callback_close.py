@@ -21,7 +21,9 @@ def test_simple_callback_is_ready_to_close():
     assert state.missing is None
     assert state.when.lower() == "tomorrow"
     assert "reason=goal_complete" in (state.hint or "")
-    assert "decision close" in (state.hint or "")
+    assert "Propose a close" in (state.hint or "")
+    assert "before the platform confirms persistence" in state.hint
+    assert "Never speak a farewell" in state.hint
 
 
 def test_junk_stt_name_and_ani_are_not_lead_details():

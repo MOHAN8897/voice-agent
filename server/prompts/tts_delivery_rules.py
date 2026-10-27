@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import re
 
-from server.prompts.spoken_locale_style import SPOKEN_LOCALES
-
 GNANI_V3_TAGS = frozenset({
     "laugh", "giggle", "sigh", "exhales", "sniffles", "yawns", "coughs",
     "clears throat", "whispers", "shouting", "excited", "slow", "pauses",
@@ -52,20 +50,24 @@ def tts_delivery_rules(provider: str | None, model: str | None, locale: str) -> 
     model = str(model or "").strip().lower()
     head = "[Selected speech delivery]\n"
     if supports_inline_audio_tags(provider, model):
-        example = SPOKEN_LOCALES[locale].clarification
+        tags = ", ".join(f"<{tag}>" for tag in sorted(GNANI_V3_TAGS))
         return head + (
             "[Gnani Audio Tags Expressive Guidelines]\n"
-            "The admitted speech model is Timbre v3.0. Plain speech is the default; audio tags are optional. "
-            "Use at most one tag in a turn, only when it helps: <pauses> for a real thought boundary, "
-            "<slow> when the caller needs slower delivery, or <excited> for genuinely positive context. "
+            "The admitted speech model is Timbre v3.0. Untagged text is neutral. "
+            f"Supported expression catalog: {tags}. "
+            "Choose delivery from the caller's intent and the business's handling guidance. "
+            "Use excitement for genuine positive context, slower delivery for a requested explanation, "
+            "and laughter or other nonverbal effects only when context or explicit delivery guidance calls for them. "
+            "Routine factual answers can remain neutral; never force a cue into every reply. "
+            "A <pauses> cue can produce noticeable silence; prefer punctuation for ordinary short pauses. "
             "Put the cue before the phrase it modifies, with whitespace around it, at a clause or sentence boundary. "
             "Tags are case-sensitive, use angle brackets and have no closing tag; a delivery cue lasts until "
             "the next cue or the end of this synthesis input, not across later TTS requests. "
             "Do not send tags alone or at the end of a sentence with no following speech. "
-            "Do not add performative laughter, giggles, sighs, coughing, throat-clearing, whispering or shouting "
-            "to ordinary business calls. Do not add a pause before every number. Never invent good news or approvals. "
-            f"Only if asked to slow down, a {locale} delivery example is: <slow> {example} "
-            "This is a style example, not a question you must ask. Tags belong only in spoken_response, "
+            "For <slow>, put a brief natural lead-in before the cue and the explanation after it; "
+            "a cue at the very start may not change delivery. Do not add a pause before every number. "
+            "Never invent good news, approvals or symptoms to justify an effect. Put tags directly in the speech text "
+            "(or spoken_response when using structured output), "
             "never in facts, memory updates or tool arguments."
         )
     detail = (

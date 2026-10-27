@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Any
 
 DISPOSITIONS = frozenset(
@@ -208,7 +209,9 @@ def normalize_model_tags(raw: Any) -> list[str]:
 
 
 def _slug(value: Any) -> str:
-    text = re.sub(r"[^a-z0-9]+", "-", str(value or "").strip().lower()).strip("-")
+    normalized = unicodedata.normalize("NFKC", str(value or "")).strip().casefold()
+    text = "".join(char if unicodedata.category(char)[0] in {"L", "M", "N"} else "-" for char in normalized)
+    text = re.sub(r"-+", "-", text).strip("-")
     return text[:28].strip("-")
 
 
@@ -220,6 +223,9 @@ def normalize_custom_tags(raw: Any) -> list[str]:
         return []
     out: list[str] = []
     for item in raw:
+        if not isinstance(item, str) or re.search(r"@|https?://|[<>]|(?:\d[\s+().-]*){7,}", item, re.IGNORECASE):
+            continue
+        item = item.removeprefix(CUSTOM_TAG_PREFIX)
         slug = _slug(item)
         if len(slug) < 2 or any(blocked in slug for blocked in _CUSTOM_TAG_BLOCKED):
             continue
@@ -278,7 +284,13 @@ def derive_status_tags(
         tags.add("compliance:disclosure_missing")
 
     ordered = [tag for tag in sorted(tags) if tag in STATUS_TAGS]
-    for tag in normalize_model_tags(model_tags):
+    model_choices = normalize_model_tags(model_tags)
+    sentiments = {tag for tag in model_choices if tag.startswith("sentiment:")}
+    if len(sentiments) > 1:
+        model_choices = [tag for tag in model_choices if not tag.startswith("sentiment:")]
+    if normalized in {"not_interested", "wrong_number", "no_outcome"}:
+        model_choices = [tag for tag in model_choices if tag != "signal:ready_to_buy"]
+    for tag in model_choices:
         if len(ordered) >= STATUS_TAG_LIMIT:
             break
         if tag not in ordered:
@@ -288,6 +300,8 @@ def derive_status_tags(
             break
         if tag not in ordered:
             ordered.append(tag)
+    if "signal:do_not_call" in ordered or normalized == "wrong_number":
+        ordered = [tag for tag in ordered if not tag.startswith(("followup:", "action:"))]
     return sorted(ordered)
 
 

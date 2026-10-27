@@ -56,8 +56,9 @@ def hint_for_phase(phase: str, missing: str | None = None) -> str | None:
         )
     if phase == PHASE_CLOSING_ALLOWED:
         return (
-            "[Internal] Caller already asked to be contacted later. Confirm the callback in one "
-            "short sentence and close the call with decision close and reason=goal_complete. "
+            "[Internal] Caller already asked to be contacted later. Propose a close with "
+            "reason=goal_complete so the platform can save the request and confirm it. "
+            "Do not claim that a callback is arranged or saved before the platform confirms persistence. "
             "Never speak a farewell; the platform does on approval. Do not pitch or ask another question."
         )
     return None
@@ -65,27 +66,9 @@ def hint_for_phase(phase: str, missing: str | None = None) -> str | None:
 
 def spoken_collect_instruction(field: str, language: str = "en-IN") -> str:
     """Instruction injected when the model pitches instead of collecting a field."""
-    lang_key = "te" if (language or "").lower().startswith("te") else (
-        "hi" if (language or "").lower().startswith("hi") else "en"
-    )
-    prompts = {
-        "phone": {
-            "en": "Acknowledge the callback request warmly, then ask only for the best phone number. Do not say goodbye.",
-            "te": "Callback request ni warmly acknowledge chesi, best phone number మాత్రమే అడుగు. Goodbye చెప్పవద్దు.",
-            "hi": "Callback request ko warmly acknowledge karke sirf best phone number poochho. Goodbye mat kaho.",
-        },
-        "name": {
-            "en": "Say: Certainly, I can arrange that. May I have your name before I let you go?",
-            "te": "Say: తప్పకుండా, callback arrange చేస్తాను. మీరు వెళ్లే ముందు మీ పేరు చెప్పగలరా?",
-            "hi": "Say: Zaroor, main callback arrange kar deta hoon. Jaane se pehle aapka naam bata denge?",
-        },
-        "timing": {
-            "en": "Acknowledge briefly, then ask only what day or time works best for the callback. Do not say goodbye.",
-            "te": "Brief ga acknowledge chesi, callback కి ఏ రోజు లేదా సమయం బాగుంటుందో మాత్రమే అడుగు. Goodbye చెప్పవద్దు.",
-            "hi": "Briefly acknowledge karke sirf callback ka din ya samay poochho. Goodbye mat kaho.",
-        },
-    }
-    return prompts.get(field, prompts["name"])[lang_key]
+    requested = {"phone": "the best phone number", "name": "the caller's name", "timing": "the preferred callback day or time"}.get(field, "the caller's name")
+    return (f"In the selected call language ({language}), acknowledge the callback request and ask only for {requested}. "
+        "Do not pitch or say goodbye. The request is pending: never say it is arranged, saved or scheduled before platform confirmation.")
 
 
 def _persist(ctx: Any, state: CallbackCloseState) -> None:

@@ -74,6 +74,13 @@ Rules:
   * Questions or asking for more (e.g. "thanks, but one more question", "what is the price?") -> "continue".
   * If the caller still wants or asks anything at all -> "continue".
 - "evidence" must be a short quote copied from the caller's last turn.
+- First classify intent independently: question, interested, defer, refusal,
+  opt_out, done, goodbye, abuse, or other. Defer includes being busy or wanting
+  contact in the future; it must return continue, never refusal or close.
+- Choose the close reason by meaning: satisfied completion is goal_complete; an
+  end-of-conversation request is goodbye; not_interested is an actual refusal of
+  the offer; firm_refusal requires an explicit stop-contact request. Being busy,
+  deferring, or being satisfied with information is never rejection of the service.
 - Set explicit_end=true only when the caller clearly asks to finish, says goodbye,
   refuses, or says nothing else is needed. Acknowledging details with okay/thanks
   is explicit_end=false. If unfinished_request=true, only an explicit end can close.
@@ -82,7 +89,7 @@ Rules:
   unfinished task. Missing details must never veto their clear choice to finish.
 
 Return one JSON object only:
-{"decision":"continue|clarify|close","reason":"done|goodbye|refused|stop_contact|abuse|unclear|question|wants_more|none","evidence":"exact caller words","explicit_end":false}"""
+{"intent":"question|interested|defer|refusal|opt_out|done|goodbye|abuse|other","decision":"continue|clarify|close","reason":"done|goodbye|refused|stop_contact|abuse|unclear|question|wants_more|none","evidence":"exact caller words","explicit_end":false}"""
 
 _MEMORY_INSTRUCTION = """
 Also extract up to 8 useful caller facts in memory_operations. This is a separate
@@ -169,12 +176,20 @@ def parse_classifier_output(raw: Any, transcript: str, *, unfinished_request: bo
         return None
     if str(raw.get("decision") or "").strip().lower() != "close":
         return None
+    intent = raw.get("intent")
+    intent_reasons = {"refusal": "not_interested", "opt_out": "firm_refusal", "done": "goal_complete", "goodbye": "goodbye", "abuse": "abuse"}
+    if intent is not None and (not isinstance(intent, str) or intent not in intent_reasons):
+        return None
+    if "explicit_end" in raw and raw["explicit_end"] is not True:
+        return None
     if unfinished_request and raw.get("explicit_end") is not True:
         return None
     raw_reason = str(raw.get("reason") or "").strip().lower()
     reason = _REASON_MAP.get(raw_reason)
     if reason is None:
         return None
+    if intent in intent_reasons:
+        reason = intent_reasons[intent]
     evidence = re.sub(r"\s+", " ", str(raw.get("evidence") or "")).strip()[:200]
     if not evidence_matches(evidence, transcript):
         # A paraphrase is not evidence; an invented close must never end a call.

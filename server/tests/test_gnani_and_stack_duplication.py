@@ -68,7 +68,8 @@ def test_gnani_audio_tags_injected_in_composed_prompt():
     )
     prompt_gnani = composed_voice_session.composed_system_prompt(ctx_gnani)
     assert "[Gnani Audio Tags Expressive Guidelines]" in prompt_gnani
-    assert "<laugh>" not in prompt_gnani  # no forced laughter on ordinary business calls
+    assert "<laugh>" in prompt_gnani  # Available without forcing laughter on ordinary calls.
+    assert "only when context or explicit delivery guidance calls for them" in prompt_gnani
     assert "<pauses>" in prompt_gnani
     assert "<excited>" in prompt_gnani
 
