@@ -180,8 +180,13 @@ async def timeline_stats(
     agent_id: str | None = None,
     since: str | None = None,
     until: str | None = None,
+    include_attempts: bool = True,
 ) -> dict[str, Any]:
     """Counts and totals for the whole window, for the console's summary row."""
+    from server.db.connection import get_session_factory
+    if get_session_factory() is not None:
+        from server.services.saas.agent_performance import performance
+        return await performance(tenant_id, agent_id, since, until, include_attempts)
     items, _total = await list_timeline(
         tenant_id=tenant_id,
         agent_id=agent_id,

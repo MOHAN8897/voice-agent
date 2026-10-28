@@ -8,6 +8,7 @@ from server.db.models.integration_models import (
     ToolExecution,
 )
 from server.db.models.phase5_models import Campaign, DncEntry
+from server.db.models.followup_models import AgentFollowUpPolicy, FollowUpJob, LeadAssessment
 from server.db.models.saas_models import User, UserOnboardingSurvey, VobizSubaccount
 
 __all__ = [

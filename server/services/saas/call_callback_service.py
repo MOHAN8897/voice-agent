@@ -16,6 +16,7 @@ from typing import Any
 
 from fastapi import HTTPException
 from sqlalchemy import or_, select
+from sqlalchemy.exc import IntegrityError
 
 from server.db.connection import get_session_factory
 from server.db.models.entities import Call, CallAttempt, CallCallback
@@ -59,9 +60,6 @@ async def _resolve_target(
     ledger, its outcome facts, or its stored attempt.
     """
     explicit = normalize_e164(to_e164)
-    if explicit:
-        return explicit, None, "client"
-
     try:
         cid = uuid.UUID(str(call_id))
     except (ValueError, TypeError):
@@ -76,12 +74,13 @@ async def _resolve_target(
 
     stored: Call | None = None
     attempt: CallAttempt | None = None
+    workspace_tid = subscriber_workspace_tenant_id(principal)
     async with factory() as session:
-        stored = await session.get(Call, cid)
+        stored = await session.scalar(select(Call).where(Call.call_id == cid, Call.tenant_id == workspace_tid))
         if stored is None:
             attempt = (
                 await session.execute(
-                    select(CallAttempt).where(CallAttempt.attempt_id == cid)
+                    select(CallAttempt).where(CallAttempt.attempt_id == cid, CallAttempt.tenant_id == workspace_tid)
                 )
             ).scalar_one_or_none()
 
@@ -91,6 +90,8 @@ async def _resolve_target(
         if str(stored.tenant_id) not in (str(principal.tenant_id), str(workspace_tid)):
             raise _err(404, "not_found", "Call not found")
         # An inbound call is called back at the caller; an outbound one at the callee.
+        if explicit:
+            return explicit, str(stored.agent_id), "call"
         if stored.direction == "outbound":
             target = _from_ledger(call_ledger, str(stored.call_id), "callee_e164")
         else:
@@ -108,7 +109,7 @@ async def _resolve_target(
     if attempt is not None:
         if str(attempt.tenant_id) not in (str(principal.tenant_id), str(workspace_tid)):
             raise _err(404, "not_found", "Call not found")
-        target = normalize_e164(attempt.from_number if attempt.direction != "outbound" else attempt.to_number)
+        target = explicit or normalize_e164(attempt.from_number if attempt.direction != "outbound" else attempt.to_number)
         if not target:
             raise _err(
                 400,
@@ -189,6 +190,9 @@ async def request_callback(
     if existing is not None:
         return existing
 
+    if normalized_mode != "scheduled":
+        await _cancel_queued_followups(workspace_tid, call_id)
+
     callback_row = await _create_callback_row(
         principal,
         call_id=call_id,
@@ -199,6 +203,11 @@ async def request_callback(
         mode=normalized_mode,
         original_call_id=call_id if source == "call" else None,
     )
+    if callback_row is None:
+        replay = await _existing_callback(request_id, principal.tenant_id)
+        if replay is None:
+            raise _err(503, "callback_storage_unavailable", "The callback could not be recorded. No new call was placed.")
+        return replay
 
     result = await subscriber_outbound(
         principal,
@@ -211,6 +220,7 @@ async def request_callback(
     ok = bool(result.get("ok"))
     await _finish_callback_row(
         callback_row,
+        tenant_id=principal.tenant_id,
         status="dialed" if ok else "failed",
         provider=result.get("provider"),
         control_id=result.get("call_control_id"),
@@ -228,6 +238,28 @@ async def request_callback(
         "error": result.get("error"),
         "code": result.get("code"),
     }
+
+
+async def _cancel_queued_followups(tenant_id: uuid.UUID, call_id: str) -> None:
+    """Manual Call back replaces pending automation, but cannot duplicate an active dial."""
+    from server.db.models.followup_models import FollowUpJob
+    from sqlalchemy.exc import ProgrammingError, OperationalError
+    factory = get_session_factory()
+    if factory is None:
+        return
+    try:
+        async with factory() as session:
+            rows = (await session.scalars(select(FollowUpJob).where(FollowUpJob.tenant_id == tenant_id,
+                FollowUpJob.source_id == call_id, FollowUpJob.status.in_(("planning", "resolving", "needs_review", "scheduled", "dispatching", "dialed"))).with_for_update())).all()
+            if any(r.status in ("dispatching", "dialed") for r in rows):
+                raise _err(409, "callback_already_dispatched", "A follow-up call is already being placed. Review it before calling again.")
+            for row in rows:
+                row.status, row.reason = "cancelled", "replaced_by_manual_callback"
+                row.lease_token, row.lease_until = None, None
+            await session.commit()
+    except (ProgrammingError, OperationalError):
+        # Existing manual callback installations remain usable before migration.
+        return
 
 
 async def _existing_callback(dial_request_id: str, tenant_id: uuid.UUID) -> dict[str, Any] | None:
@@ -269,13 +301,14 @@ async def _create_callback_row(
     from_e164: str | None,
     mode: str,
     original_call_id: str | None,
-) -> str:
+) -> str | None:
     factory = get_session_factory()
     if factory is None:
         return request_id
     try:
-        cb_uuid = uuid.UUID(str(call_id))
-        attempt_uuid = None if original_call_id else cb_uuid
+        origin_uuid = uuid.UUID(str(call_id))
+        cb_uuid = origin_uuid if original_call_id else None
+        attempt_uuid = None if original_call_id else origin_uuid
     except (ValueError, TypeError):
         cb_uuid = None
         attempt_uuid = None
@@ -296,14 +329,19 @@ async def _create_callback_row(
         session.add(row)
         try:
             await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            return None
         except Exception:
             await session.rollback()
+            raise _err(503, "callback_storage_unavailable", "The callback could not be recorded. No new call was placed.") from None
         return request_id
 
 
 async def _finish_callback_row(
     request_id: str,
     *,
+    tenant_id: uuid.UUID,
     status: str,
     provider: str | None = None,
     control_id: str | None = None,
@@ -315,7 +353,7 @@ async def _finish_callback_row(
     async with factory() as session:
         row = (
             await session.execute(
-                select(CallCallback).where(CallCallback.dial_request_id == request_id)
+                select(CallCallback).where(CallCallback.dial_request_id == request_id, CallCallback.tenant_id == tenant_id)
             )
         ).scalar_one_or_none()
         if row is None:

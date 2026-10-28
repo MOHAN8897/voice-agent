@@ -40,6 +40,7 @@ from server.routes.app_telephony import router as app_telephony_router
 from server.routes.app_agents import router as app_agents_router
 from server.routes.app_kyc import router as app_kyc_router
 from server.routes.app_agent_telephony import router as app_agent_telephony_router
+from server.routes.app_followups import router as app_followups_router
 from server.routes.stripe_webhook import router as stripe_webhook_router
 from server.routes.razorpay_webhook import router as razorpay_webhook_router
 from server.routes.dev_admin import router as dev_admin_router
@@ -292,7 +293,16 @@ async def lifespan(app: FastAPI):
                 )
         except Exception as billing_err:
             logger.warning(f"[VOICE] Billing reconciliation not started: {billing_err}")
+    from server.db.connection import get_session_factory as _followup_factory
+    import asyncio
+    if _followup_factory() is not None:
+        from server.services.saas.followup_service import worker_loop
+        app.state.followup_task = asyncio.create_task(worker_loop())
     yield
+    followup_task = getattr(app.state, "followup_task", None)
+    if followup_task:
+        followup_task.cancel()
+        await asyncio.gather(followup_task, return_exceptions=True)
     import asyncio
     from server.services.saas.campaign_runner import stop_campaign_runners
     campaign_task = getattr(app.state, "campaign_recovery_task", None)
@@ -592,6 +602,7 @@ app.include_router(app_telephony_router)
 app.include_router(app_agents_router)
 app.include_router(app_kyc_router)
 app.include_router(app_agent_telephony_router)
+app.include_router(app_followups_router)
 app.include_router(stripe_webhook_router)
 app.include_router(razorpay_webhook_router)
 app.include_router(dev_admin_router)

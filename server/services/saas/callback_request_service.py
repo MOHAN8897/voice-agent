@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -17,6 +18,23 @@ from server.services.saas.call_callback_service import normalize_e164
 from server.services.saas.tenant_guard import subscriber_workspace_tenant_id
 
 REQUEST_MODE = "requested"
+logger = logging.getLogger(__name__)
+
+
+def _timing_context(call_id: str, request_text: str, requested_when: str) -> list[dict[str, str]]:
+    """Small, timestamped transcript context for short answers to a timing question."""
+    rows = [r for r in call_ledger.read_lines(call_id)
+            if r.get("role") in ("user", "assistant") and not r.get("partial") and str(r.get("text") or "").strip()]
+    selected = set(range(max(0, len(rows) - 8), len(rows)))
+    for phrase in (request_text, requested_when):
+        if not phrase.strip():
+            continue
+        match = next((i for i in range(len(rows) - 1, -1, -1)
+                      if rows[i]["role"] == "user" and phrase.casefold() in str(rows[i]["text"]).casefold()), None)
+        if match is not None:
+            selected.add(match)
+    return [{"role": rows[i]["role"], "text": str(rows[i]["text"])[:500], "at": str(rows[i].get("ts") or "")}
+            for i in sorted(selected)]
 
 
 async def prepare_callback_close(ctx: Any, decision: dict[str, Any], language: str, user_text: str) -> dict[str, Any]:
@@ -91,6 +109,22 @@ async def record_callback_request(ctx: Any, request_text: str) -> dict[str, Any]
             )
             session.add(row)
             try:
+                await session.flush()
+                # Optional new storage stays in a savepoint so older installations
+                # retain the durable manual request until their migration is applied.
+                try:
+                    from server.services.saas.followup_service import capture_request
+                    from server.services.saas.followup_policy import timing_model_snapshot
+                    selected = getattr(getattr(ctx, "resolved_stack", None), "llm", None)
+                    llm = timing_model_snapshot(selected)
+                    requested_when = str(getattr(ctx, "callback_when", "") or "")[:400]
+                    recent_turns = await asyncio.to_thread(_timing_context, str(call_id), request_text, requested_when)
+                    async with session.begin_nested():
+                        await capture_request(session, row, request_text=request_text, llm=llm,
+                                              requested_when=requested_when, recent_turns=recent_turns)
+                        await session.flush()
+                except Exception as exc:
+                    logger.warning("callback.scheduling_unavailable kind=%s", type(exc).__name__)
                 await session.commit()
             except IntegrityError:
                 await session.rollback()
@@ -143,4 +177,11 @@ async def update_callback_request(principal: Any, callback_id: uuid.UUID, status
         row.status = status
         row.updated_at = datetime.now(timezone.utc)
         await session.commit()
-        return {"id": str(row.callback_id), "status": row.status}
+        result = {"id": str(row.callback_id), "status": row.status}
+    try:
+        from server.services.saas.followup_service import suppress_jobs
+        await suppress_jobs(subscriber_workspace_tenant_id(principal), callback_id=str(callback_id), reason="request_closed")
+    except Exception as exc:
+        # Dispatch also rechecks the committed request status before dialing.
+        logger.warning("callback.cancel_queue_failed kind=%s", type(exc).__name__)
+    return result

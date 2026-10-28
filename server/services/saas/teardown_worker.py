@@ -388,6 +388,8 @@ async def _stage_database(factory, tenant_id: _uuid_mod.UUID) -> None:
     """
     settings = get_settings()
     salt = settings.hmac_phone_salt.encode()
+    from server.services.saas.followup_retention import purge_followup_data
+    await purge_followup_data(tenant_id)
 
     def _anonymize_phone(phone: str | None) -> str | None:
         if not phone:

@@ -247,6 +247,7 @@ def derive_status_tags(
     custom_tags: Any = None,
     disclosure_status: str | None = None,
     agent_failure: bool = False,
+    contact_preference: str | None = None,
 ) -> list[str]:
     """Merge server-derived truth with the model's bounded tag choices.
 
@@ -256,6 +257,8 @@ def derive_status_tags(
     """
     normalized = validate_disposition(disposition)
     tags = {f"outcome:{normalized}"}
+    if contact_preference == "do_not_call":
+        tags.add("signal:do_not_call")
     normalized_facts = {str(k).lower(): str(v).strip() for k, v in (facts or {}).items() if str(v).strip()}
     if any(k in normalized_facts for k in ("name", "caller_name", "customer_name", "full_name")):
         tags.add("contact:name_known")
@@ -284,11 +287,11 @@ def derive_status_tags(
         tags.add("compliance:disclosure_missing")
 
     ordered = [tag for tag in sorted(tags) if tag in STATUS_TAGS]
-    model_choices = normalize_model_tags(model_tags)
+    model_choices = [tag for tag in normalize_model_tags(model_tags) if tag != "signal:do_not_call"]
     sentiments = {tag for tag in model_choices if tag.startswith("sentiment:")}
     if len(sentiments) > 1:
         model_choices = [tag for tag in model_choices if not tag.startswith("sentiment:")]
-    if normalized in {"not_interested", "wrong_number", "no_outcome"}:
+    if normalized in {"not_interested", "wrong_number", "no_outcome"} or contact_preference == "do_not_call":
         model_choices = [tag for tag in model_choices if tag != "signal:ready_to_buy"]
     for tag in model_choices:
         if len(ordered) >= STATUS_TAG_LIMIT:

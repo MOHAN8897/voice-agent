@@ -288,7 +288,7 @@ async def subscriber_outbound(
                 await session.execute(
                     select(DncEntry.id)
                     .where(
-                        DncEntry.tenant_id == principal.tenant_id,
+                        DncEntry.tenant_id == workspace_tid,
                         DncEntry.phone_e164 == to_number,
                         DncEntry.active.is_(True),
                     )
@@ -301,7 +301,7 @@ async def subscriber_outbound(
                     await session.execute(
                         select(DncEntry.id)
                         .where(
-                            DncEntry.tenant_id == principal.tenant_id,
+                            DncEntry.tenant_id == workspace_tid,
                             DncEntry.phone_e164 == alt,
                             DncEntry.active.is_(True),
                         )

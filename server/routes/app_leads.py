@@ -14,6 +14,7 @@ from server.db.connection import get_session_factory
 from server.db.models.entities import Agent
 from server.db.models.saas_models import Lead
 from server.services.saas.tenant_guard import SubscriberPrincipal, require_subscriber_permission
+from server.services.saas.lead_scoring import enrich_leads, retire_converted_followups
 
 router = APIRouter()
 LeadStage = Literal["new", "contacted", "qualified", "meeting_booked", "converted", "unqualified"]
@@ -128,7 +129,8 @@ async def list_leads(
         stage_counts = dict(counts)
         ordering = {"updated": Lead.updated_at.desc(), "created": Lead.created_at.desc(), "name": Lead.name.asc()}[sort]
         result = await session.execute(stmt.order_by(ordering, Lead.lead_id).limit(limit).offset(offset))
-        return {"leads": [_lead_dict(r) for r in result.scalars()], "total": sum(stage_counts.values()),
+        items = [_lead_dict(r) for r in result.scalars()]
+        return {"leads": await enrich_leads(items, principal.tenant_id), "total": sum(stage_counts.values()),
             "stageCounts": stage_counts, "limit": limit, "offset": offset}
 
 
@@ -159,7 +161,7 @@ async def create_lead(body: LeadCreate, principal: Annotated[SubscriberPrincipal
         session.add(row)
         await session.commit()
         await session.refresh(row)
-    return {"ok": True, "lead": _lead_dict(row)}
+    return {"ok": True, "lead": (await enrich_leads([_lead_dict(row)], principal.tenant_id))[0]}
 
 
 @router.patch("/api/leads/{lead_id}/stage")
@@ -182,6 +184,8 @@ async def patch_lead_stage(
         row.stage = body.stage
         row.updated_at = datetime.now(timezone.utc)
         await session.commit()
+    if row.stage == "converted":
+        await retire_converted_followups(principal.tenant_id, row.phone)
     return {"ok": True}
 
 
@@ -211,4 +215,6 @@ async def patch_lead(
             row.stage = body.stage
         row.updated_at = datetime.now(timezone.utc)
         await session.commit()
-    return {"ok": True, "lead": _lead_dict(row)}
+    if row.stage == "converted":
+        await retire_converted_followups(principal.tenant_id, row.phone)
+    return {"ok": True, "lead": (await enrich_leads([_lead_dict(row)], principal.tenant_id))[0]}

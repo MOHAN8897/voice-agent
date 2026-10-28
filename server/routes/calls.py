@@ -423,6 +423,7 @@ async def calls_stats(
         agent_id=agent_id,
         since=since,
         until=until,
+        include_attempts=include_attempts,
     )
 
 

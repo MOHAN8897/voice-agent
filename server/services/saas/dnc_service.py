@@ -19,13 +19,12 @@ async def auto_enroll_dnc_opt_out(tenant_id: uuid.UUID | str, phone: str) -> boo
     """
     from server.db.connection import get_session_factory
     from server.db.models.phase5_models import DncEntry
-    from server.services.saas.contact_import_service import normalize_e164_phone
+    from server.services.saas.call_callback_service import normalize_e164
 
     clean_phone = str(phone or "").strip()
     if not clean_phone:
         return False
-    norm, _ = normalize_e164_phone(clean_phone, "US")
-    normalized_phone = norm or clean_phone
+    normalized_phone = normalize_e164(clean_phone)
     if not normalized_phone:
         return False
 
@@ -101,8 +100,13 @@ async def auto_enroll_dnc_opt_out(tenant_id: uuid.UUID | str, phone: str) -> boo
                     )
                 )
         await session.commit()
-        logger.info("[DNC] Tenant-wide auto-enrollment for %s (tenant %s) on verbal opt-out", normalized_phone, tid)
-        return True
+    try:
+        from server.services.saas.followup_service import suppress_jobs
+        await suppress_jobs(tid, phone=normalized_phone)
+    except Exception as exc:
+        logger.warning("dnc.queue_suppression_pending kind=%s", type(exc).__name__)
+    logger.info("[DNC] Live opt-out persisted")
+    return True
 
 
 async def handle_call_opt_out(

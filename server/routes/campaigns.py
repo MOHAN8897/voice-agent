@@ -723,11 +723,12 @@ async def add_dnc(body: DncBody, ctx: ApiTenantContext = Depends(require_api_ten
     factory = get_session_factory()
     if factory is None:
         return {"ok": False}
-    from server.services.saas.contact_import_service import normalize_e164_phone
+    from server.services.saas.call_callback_service import normalize_e164
 
     phone = (body.phone_e164 or "").strip()
-    norm_phone, _ = normalize_e164_phone(phone, "US")
-    norm_phone = norm_phone or phone
+    norm_phone = normalize_e164(phone)
+    if not norm_phone:
+        raise HTTPException(422, "Enter a valid phone number, preferably with its country code")
     tenant_id = ctx.workspace_tenant_id
     user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
 
@@ -770,20 +771,18 @@ async def bulk_add_dnc(body: DncBulkBody, ctx: ApiTenantContext = Depends(requir
     factory = get_session_factory()
     if factory is None:
         return {"ok": False, "added": 0}
-    from server.services.saas.contact_import_service import normalize_e164_phone
+    from server.services.saas.call_callback_service import normalize_e164
 
     tenant_id = ctx.workspace_tenant_id
     user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
     count = 0
     now = datetime.now(timezone.utc)
+    normalized = {normalize_e164(str(p or "").strip()) for p in body.phones}
+    if None in normalized:
+        raise HTTPException(422, "Every DND entry must be a valid phone number; no changes were saved")
 
     async with factory() as db:
-        for p in body.phones:
-            raw = str(p or "").strip()
-            if not raw:
-                continue
-            norm, _ = normalize_e164_phone(raw, "US")
-            norm = norm or raw
+        for norm in normalized:
             existing = await db.execute(
                 select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == norm)
             )

@@ -178,7 +178,7 @@ def test_custom_tags_are_multilingual_idempotent_and_exclude_contact_data():
 
 
 def test_tag_conflicts_cannot_prompt_followups_for_an_opt_out():
-    tags = derive_status_tags("not_interested", {}, next_action="Remove from callback list", model_tags=[
+    tags = derive_status_tags("not_interested", {}, contact_preference="do_not_call", next_action="Remove from callback list", model_tags=[
         "signal:do_not_call", "signal:ready_to_buy", "followup:callback", "sentiment:positive", "sentiment:negative"])
     assert "outcome:not_interested" in tags and "signal:do_not_call" in tags
     assert not any(tag.startswith(("followup:", "action:", "sentiment:")) for tag in tags)

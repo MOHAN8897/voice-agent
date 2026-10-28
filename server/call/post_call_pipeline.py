@@ -205,6 +205,7 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
             "so it was not marked as converted."
         ).strip()
     payload["disclosure_status"] = _detect_disclosure_delivery(transcript, meta)
+    payload["contact_preference"] = (call_ledger.read_meta(call_id) or {}).get("contact_preference", "none")
     payload["status_tags"] = derive_status_tags(
         payload.get("disposition"),
         facts,
@@ -214,6 +215,7 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
         custom_tags=payload.get("custom_tags"),
         disclosure_status=payload.get("disclosure_status"),
         agent_failure=bool(call_ledger.read_failed_turns(call_id)),
+        contact_preference=payload["contact_preference"],
     )
     outcome_path(call_id).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     _write_call_summary(call_id, payload)
@@ -226,6 +228,15 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     # agent that took the call. Runs last so a lead write can never invalidate the
     # outcome the console reads, and swallows its own errors for the same reason.
     payload["lead"] = await _sync_lead(call_id, payload, meta)
+    if payload.get("lead"):
+        from server.services.saas.lead_scoring import assessment_time, persist_assessment
+        payload["lead_assessment"] = await persist_assessment(
+            str(meta.get("tenant_id") or ""), str(meta.get("agent_id") or ""),
+            payload["lead"]["leadId"], call_id, payload, at=assessment_time(meta),
+        )
+    else:
+        from server.services.saas.lead_scoring import assess_existing_contact
+        payload["lead_assessment"] = await assess_existing_contact(meta, call_id, payload)
     try:
         await reconcile_and_dispatch_post_call(call_id, payload)
     except Exception as exc:

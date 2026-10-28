@@ -233,6 +233,8 @@ async def _build_export_zip(tenant_id: uuid.UUID) -> bytes:
 
         billing_data = {"invoices": invoices_data, "wallet": wallet_data}
         zf.writestr("billing_summary.json", json.dumps(billing_data, indent=2, default=str))
+        from server.services.saas.followup_retention import export_followup_data
+        zf.writestr("followups.json", json.dumps(await export_followup_data(tenant_id), indent=2, default=str))
 
         # --- README ---
         zf.writestr(
@@ -246,6 +248,7 @@ async def _build_export_zip(tenant_id: uuid.UUID) -> bytes:
             "  contacts.csv         — Telephony contacts and leads\n"
             "  agent_prompts.json   — Voice agent configurations\n"
             "  billing_summary.json — Invoice and wallet history\n\n"
+            "  followups.json       — Callback policies, jobs and lead assessments\n\n"
             f"Generated: {_utcnow().isoformat()}\n",
         )
 
