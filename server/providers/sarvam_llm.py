@@ -579,9 +579,9 @@ class SarvamLLMAdapter:
             raise ValueError("Sarvam LLM requires the model selected in the resolved stack")
         messages = _chat_messages(input_messages, None)
         kwargs: dict[str, Any] = {"max_output_tokens": max_output_tokens, "api_mode": api_mode}
-        url = self._url(model, kwargs)
         if config is not None:
             kwargs["config"] = config
+        url = self._url(model, kwargs)
         body = self._request_body(
             model=model,
             messages=messages,

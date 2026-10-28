@@ -123,7 +123,8 @@ async def test_v1_rejects_wrong_transport_and_model_before_http(monkeypatch, mod
 
 
 @pytest.mark.asyncio
-async def test_v1_structured_completion_preserves_schema_and_explicit_api_mode(monkeypatch):
+@pytest.mark.parametrize("api_mode", [None, "chat_completions_v1"])
+async def test_v1_structured_completion_preserves_schema_and_selected_transport(monkeypatch, api_mode):
     requests = _mock_http(monkeypatch, {"choices": [{"message": {"content": '{"ok":true}'}}]}, stream=False)
     from server.providers.base import LLMConfig
 
@@ -131,7 +132,7 @@ async def test_v1_structured_completion_preserves_schema_and_explicit_api_mode(m
         input_messages=[{"role": "user", "content": "Return a connectivity result."}],
         schema={"type": "object", "properties": {"ok": {"type": "boolean"}}},
         config=LLMConfig(provider="sarvam", model="sarvam-105b-conversations", max_tokens=32),
-        api_mode="chat_completions_v1",
+        api_mode=api_mode,
     )
     assert result == {"ok": True}
     assert requests[0].url.path == "/v1/chat/completions"
