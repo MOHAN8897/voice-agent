@@ -1,0 +1,36 @@
+{
+  "intents": {
+    "flow:drive-tenants-explicitly-approve-callback-automation-a": {
+      "binding": {
+        "flow": "drive-tenants-explicitly-approve-callback-automation-a"
+      },
+      "declaredAt": 1793198364437,
+      "id": "flow:drive-tenants-explicitly-approve-callback-automation-a",
+      "state": "bound",
+      "statement": "Tenants explicitly approve callback automation and charges, review unclear callback times, and manage caller opt-outs before follow-up calls can run.",
+      "status": "proposed",
+      "subject": "drive-tenants-explicitly-approve-callbac",
+      "surface": {
+        "flow": "drive-tenants-explicitly-approve-callback-automation-a"
+      },
+      "updatedAt": 1793198532122
+    },
+    "flow:drive-tenants-explicitly-approve-callback-automation-a-f0a778": {
+      "binding": {
+        "flow": "drive-tenants-explicitly-approve-callback-automation-a-f0a778"
+      },
+      "declaredAt": 1793206010688,
+      "id": "flow:drive-tenants-explicitly-approve-callback-automation-a-f0a778",
+      "state": "bound",
+      "statement": "Tenants explicitly approve callback automation and charges, review unclear callback times, and manage caller opt-outs before follow-up calls can run.",
+      "status": "proposed",
+      "subject": "drive-tenants-explicitly-approve-callbac",
+      "surface": {
+        "flow": "drive-tenants-explicitly-approve-callback-automation-a-f0a778"
+      },
+      "updatedAt": 1793206010739
+    }
+  },
+  "subject": "drive-tenants-explicitly-approve-callbac",
+  "version": 1
+}

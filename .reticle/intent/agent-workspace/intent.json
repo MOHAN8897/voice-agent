@@ -25,6 +25,44 @@
       },
       "updatedAt": 1793112114231
     },
+    "inline:tenants-explicitly-approve-callback-automation-a-527478e7": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "add-dnc-button"
+            },
+            "state": "visible"
+          },
+          {
+            "kind": "net",
+            "method": "GET",
+            "status": 200,
+            "urlContains": "/api/dnc"
+          }
+        ]
+      },
+      "declaredAt": 1793198225636,
+      "id": "inline:tenants-explicitly-approve-callback-automation-a-527478e7",
+      "provenBy": {
+        "at": 1793206016574,
+        "grade": "net",
+        "runId": "drive-a54a9e84cec3c600",
+        "verdictId": "reticle_act_and_wait:1793206016574"
+      },
+      "state": "proved",
+      "statement": "Tenants explicitly approve callback automation and charges, review unclear callback times, and manage caller opt-outs before follow-up calls can run.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/FollowUpSettingsCard.jsx"
+        ]
+      },
+      "updatedAt": 1793206016597
+    },
     "inline:the-farewell-category-exposes-its-editor-directl-7eee2c31": {
       "binding": {
         "kind": "element",

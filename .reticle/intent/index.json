@@ -7,6 +7,12 @@
       "subject": "agent-workspace"
     },
     {
+      "id": "inline:tenants-explicitly-approve-callback-automation-a-527478e7",
+      "statement": "Tenants explicitly approve callback automation and charges, review uncl…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
       "id": "inline:the-farewell-category-exposes-its-editor-directl-7eee2c31",
       "statement": "The Farewell category exposes its editor directly while retaining other…",
       "status": "proved",
@@ -257,6 +263,18 @@
       "statement": "Talk to AI opens Live Mic without requesting microphone on open.",
       "status": "proposed",
       "subject": "drive-talk-to-ai-opens-live-mic-without"
+    },
+    {
+      "id": "flow:drive-tenants-explicitly-approve-callback-automation-a",
+      "statement": "Tenants explicitly approve callback automation and charges, review uncl…",
+      "status": "proposed",
+      "subject": "drive-tenants-explicitly-approve-callbac"
+    },
+    {
+      "id": "flow:drive-tenants-explicitly-approve-callback-automation-a-f0a778",
+      "statement": "Tenants explicitly approve callback automation and charges, review uncl…",
+      "status": "proposed",
+      "subject": "drive-tenants-explicitly-approve-callbac"
     },
     {
       "id": "flow:drive-when-identity-is-not-approved-buy-number-shows-o",

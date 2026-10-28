@@ -100,3 +100,12 @@ dump.rdb
 
 # Local browser authentication state
 web/e2e/.auth/
+
+# Local verification captures; keep reproducible helpers and written reports.
+/.reticle/capsules/
+/artifacts/followup-workflows-20261028/*.json
+/artifacts/followup-workflows-20261028/*.png
+/artifacts/followup-workflows-20261028/*.sql
+/artifacts/followups-mobile.png
+/artifacts/usage-calculator-features/
+/artifacts/usage-calculator-phone-only/
