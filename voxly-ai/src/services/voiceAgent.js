@@ -240,7 +240,7 @@ class VoiceAgentAdapter {
 
       const lower = userText.toLowerCase();
       if (lower.includes('price') || lower.includes('cost')) {
-        response = "We charge a simple flat rate of 9.5 cents per minute with pure per-second metering. Unanswered rings and busy signals are always completely free.";
+        response = "We bill per connected second at the rate published on the pricing page, and each call locks that rate when it starts. Your wallet and call history show the exact charges for each call.";
       } else if (lower.includes('transfer') || lower.includes('human')) {
         response = "I immediately perform warm transfers to your human team members, passing a full live audio transcript so they have complete context.";
       } else if (lower.includes('crm') || lower.includes('integrate') || lower.includes('salesforce') || lower.includes('hubspot')) {

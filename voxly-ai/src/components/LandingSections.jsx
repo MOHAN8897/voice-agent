@@ -147,7 +147,7 @@ export function LandingSections({ onGetStarted, onSelectPlan, onNavigatePage }) 
     <section id="pricing" className="landing-section landing-pricing">
       <div className="landing-container">
         <div className="landing-section-header">
-          <SectionIntro eyebrow="Room to start. Room to grow." title="Choose the voice. See the cost.">These are the published rates right now. Fund your wallet, choose an available voice tier, and review the exact rate for your channel before calling.</SectionIntro>
+          <SectionIntro eyebrow="Room to start. Room to grow." title="Choose the voice. See the cost.">These are the published rates right now. Fund your wallet, choose an available voice tier, and review the exact per-minute phone rate before calling.</SectionIntro>
           <a className="landing-text-link" href="#usage-calculator">Estimate your usage <ArrowDown size={17} aria-hidden="true" /></a>
         </div>
         <PricingCards
@@ -157,19 +157,20 @@ export function LandingSections({ onGetStarted, onSelectPlan, onNavigatePage }) 
           onRetry={pricing.reload}
           onSelectPlan={onSelectPlan}
         />
-        <p className="landing-caption landing-pricing-note">Rates are per minute and exclude GST. Each call locks its rate when it starts, and checkout confirms the applicable tax before payment. Available tiers depend on your workspace.</p>
+        <p className="landing-caption landing-pricing-note">Rates are per minute. Each call locks its rate when it starts, and checkout confirms the applicable tax before payment. Available tiers depend on your workspace.</p>
       </div>
     </section>
 
     <section id="usage-calculator" className="landing-section landing-calculator">
       <div className="landing-container">
-        <SectionIntro eyebrow="Plan before you dial" title="Estimate a month of conversations.">Pick a voice tier, set your expected call volume, and see what a typical month could cost. The estimate follows the same published rates shown above.</SectionIntro>
+        <SectionIntro eyebrow="Plan before you dial" title="Estimate a month of phone calls.">Pick a voice tier, then set your volume by calls or by talk time. The estimate applies the same published per-minute rate shown above, and you can compare every published tier at that volume.</SectionIntro>
         <UsageCalculator
           catalog={pricing.data}
           loading={pricing.loading}
           error={pricing.error}
           onRetry={pricing.reload}
           onSelectPlan={onSelectPlan}
+          syncUrl
         />
       </div>
     </section>

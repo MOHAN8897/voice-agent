@@ -103,7 +103,6 @@
 .landing-price-tags li[data-tone="accent"]::before { background: #6344e7; opacity: 1; }
 .landing-price-tags li[data-tone="success"]::before { background: #2f8a5b; opacity: 1; }
 .landing-price-tags li[data-tone="warning"]::before { background: #b7791f; opacity: 1; }
-.landing-price-note { min-height: 3.1rem; margin: .875rem 0 0; color: var(--landing-muted); font-size: .9375rem; line-height: 1.6; }
 .landing-price-rate { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem; margin-top: 1.5rem; }
 .landing-price-value { font-size: 2.5rem; font-weight: 600; letter-spacing: -.045em; line-height: 1; font-variant-numeric: tabular-nums; }
 .landing-price-unit { color: var(--landing-muted); font-size: .8125rem; }
@@ -112,7 +111,6 @@
 .landing-price-channels { display: grid; gap: .45rem; margin: 1rem 0 1.75rem; padding-top: 1rem; border-top: 1px solid var(--landing-line); color: var(--landing-muted); font-size: .8125rem; }
 .landing-price-channels strong { color: var(--landing-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .landing-price-action { width: 100%; margin-top: auto; }
-.landing-price-card.is-featured .landing-price-note,
 .landing-price-card.is-featured .landing-price-unit,
 .landing-price-card.is-featured .landing-price-usd,
 .landing-price-card.is-featured .landing-price-unavailable,
@@ -167,7 +165,6 @@
 @media (max-width: 1023px) {
   .landing-split, .landing-workflows, .landing-faq-layout { gap: 2rem; }
   .landing-price-grid { grid-template-columns: 1fr; max-width: 32rem; }
-  .landing-price-note { min-height: 0; }
   .landing-refresh h2 { font-size: 2.5rem; }
   .landing-wave { display: none; }
   .landing-final-panel { padding: 3rem; }

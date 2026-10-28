@@ -14,8 +14,8 @@ export function UsageCalculatorModule() {
           Usage calculator
         </h2>
         <p className="text-xs text-[#524E5E] mt-0.5">
-          Estimate a month of calls against the published rates. The wallet and invoices stay the
-          source of truth for what was actually charged.
+          Estimate a month of phone calls against the published per-minute rate, by calls or by talk
+          time. The wallet and invoices stay the source of truth for what was actually charged.
         </p>
       </div>
 
@@ -33,8 +33,8 @@ export function UsageCalculatorModule() {
       </SolidCard>
 
       <p className="text-[11px] text-[#8C879A]">
-        Estimates exclude GST and any promotional credit. Each call locks its rate when it starts,
-        and the wallet records the exact amount charged.
+        Estimates apply the published per-minute phone rate; GST is shown when tax is configured.
+        Each call locks its rate when it starts, and the wallet records the exact amount charged.
       </p>
     </div>
   );

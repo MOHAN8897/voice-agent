@@ -7,12 +7,6 @@ import {
   pricedTiers,
 } from '../lib/usePricingCatalog';
 
-const TIER_NOTES = {
-  low: 'Efficient conversations for high call volumes.',
-  medium: 'Balanced quality for regional-language calling.',
-  premium: 'The flagship voice experience.',
-};
-
 function tiltMove(event) {
   if (typeof window === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const rect = event.currentTarget.getBoundingClientRect();
@@ -33,7 +27,6 @@ function TierCard({ tier, index, numberMonthly, featuredStyle, onSelectPlan }) {
   const featured = tier.featured === true;
   const tags = Array.isArray(tier.tags) ? tier.tags : [];
   const pstn = tier.pstn;
-  const web = tier.web;
 
   return (
     <div className="landing-price-reveal" style={{ '--card-index': index }}>
@@ -58,8 +51,6 @@ function TierCard({ tier, index, numberMonthly, featuredStyle, onSelectPlan }) {
           )}
         </div>
 
-        <p className="landing-price-note">{TIER_NOTES[tier.id] || 'A voice option for your workflow.'}</p>
-
         <div className="landing-price-rate">
           {pstn ? (
             <>
@@ -73,16 +64,6 @@ function TierCard({ tier, index, numberMonthly, featuredStyle, onSelectPlan }) {
         </div>
 
         <div className="landing-price-channels">
-          <span>
-            Browser agent{' '}
-            {web ? (
-              <>
-                <strong>{formatInrAmount(web.inrPerMin)}</strong>/min
-              </>
-            ) : (
-              'rate in workspace'
-            )}
-          </span>
           <span>
             Phone number rental{' '}
             {numberMonthly.inr != null ? (

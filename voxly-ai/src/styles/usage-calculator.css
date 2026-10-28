@@ -1,5 +1,9 @@
 /* Shared by the marketing page and the tenant workspace. Uses global tokens so it
    inherits either surface without a theme wrapper. */
+.usage-calculator-shell {
+  display: grid;
+  gap: 1rem;
+}
 .usage-calculator {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
@@ -15,8 +19,7 @@
   padding: clamp(1.25rem, 3vw, 2rem);
 }
 .usage-field label,
-.usage-control-head label,
-.usage-channel legend {
+.usage-control-head label {
   display: block;
   margin-bottom: .45rem;
   color: var(--text-muted);
@@ -36,11 +39,24 @@
 }
 .usage-field select:focus-visible,
 .usage-presets button:focus-visible,
-.usage-channel-options button:focus-visible,
-.usage-stepper button:focus-visible,
-.usage-secondary-button:focus-visible {
+.usage-secondary-button:focus-visible,
+.usage-mode button:focus-visible {
   outline: 2px solid var(--brand-accent);
   outline-offset: 1px;
+}
+.usage-tier-rate {
+  display: flex;
+  align-items: baseline;
+  gap: .35rem;
+  margin: .55rem 0 0;
+  color: var(--text-muted);
+  font-size: .75rem;
+}
+.usage-tier-rate strong {
+  color: var(--text-main);
+  font-size: .8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 .usage-tier-tags {
   display: flex;
@@ -133,90 +149,32 @@
   color: var(--brand-accent);
 }
 
-.usage-channel {
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-.usage-channel-options {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .4rem;
-  margin-bottom: .5rem;
-}
-.usage-channel-options button {
+.usage-mode {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: .4rem;
-  min-height: 40px;
+  gap: .2rem;
+  justify-self: start;
+  padding: .22rem;
   border: 1px solid var(--border-hairline);
-  border-radius: .75rem;
-  padding: .45rem .5rem;
-  background: var(--bg-surface);
-  color: var(--text-muted);
-  font: inherit;
-  font-size: .8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color .15s ease, color .15s ease, background-color .15s ease;
-}
-.usage-channel-options button:hover { border-color: var(--brand-accent); color: var(--brand-accent); }
-.usage-channel-options button[aria-pressed="true"] {
-  border-color: var(--brand-accent);
-  background: color-mix(in srgb, var(--brand-accent) 12%, transparent);
-  color: var(--brand-accent);
-}
-.usage-control--inline { margin-top: .5rem; }
-
-.usage-number-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: .85rem 0 0;
-  border-top: 1px solid var(--border-hairline);
-}
-.usage-number-label {
-  display: block;
-  color: var(--text-main);
-  font-size: .875rem;
-  font-weight: 600;
-}
-.usage-stepper {
-  display: inline-flex;
-  align-items: center;
-  gap: .15rem;
-  border: 1px solid var(--border-hairline);
-  border-radius: .75rem;
-  padding: .2rem;
+  border-radius: 999px;
   background: var(--bg-surface);
 }
-.usage-stepper button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
+.usage-mode button {
+  min-height: 32px;
   border: 0;
-  border-radius: .55rem;
+  border-radius: 999px;
+  padding: .25rem .85rem;
   background: transparent;
   color: var(--text-muted);
+  font: inherit;
+  font-size: .75rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: color .15s ease, background-color .15s ease;
 }
-.usage-stepper button:hover:not(:disabled) {
+.usage-mode button[aria-pressed="true"] {
   background: color-mix(in srgb, var(--brand-accent) 12%, transparent);
   color: var(--brand-accent);
-}
-.usage-stepper button:disabled { opacity: .4; cursor: default; }
-.usage-stepper output {
-  min-width: 2rem;
-  color: var(--text-main);
-  font-size: .875rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-accent) 35%, transparent);
 }
 
 .usage-hint {
@@ -226,7 +184,7 @@
   font-size: .75rem;
   line-height: 1.6;
 }
-.usage-number-label + .usage-hint { margin-top: .15rem; }
+.usage-hint strong { color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .usage-result {
   display: flex;
@@ -243,6 +201,52 @@
   letter-spacing: .08em;
   text-transform: uppercase;
 }
+.usage-result-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .6rem 1rem;
+}
+.usage-gst-toggle {
+  display: inline-flex;
+  gap: .2rem;
+  padding: .2rem;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: .7rem;
+}
+.usage-gst-toggle button {
+  border: 0;
+  border-radius: .5rem;
+  padding: .35rem .55rem;
+  background: transparent;
+  color: #c9bedc;
+  font: inherit;
+  font-size: .6875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: background-color .15s ease, color .15s ease;
+}
+.usage-gst-toggle button span {
+  display: block;
+  color: #9c8fb8;
+  font-size: .5625rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.usage-gst-toggle button[aria-pressed="true"] {
+  background: rgba(255, 255, 255, .13);
+  color: #fff;
+}
+.usage-gst-toggle button[aria-pressed="true"] span { color: #cbb9f7; }
+.usage-gst-toggle button:focus-visible {
+  outline: 2px solid #cbb9f7;
+  outline-offset: 1px;
+}
 .usage-total {
   margin: .6rem 0 0;
   font-size: clamp(2rem, 4vw, 2.75rem);
@@ -251,10 +255,11 @@
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
-.usage-total-usd {
+.usage-total-formula {
   margin: .35rem 0 0;
   color: #b8accd;
   font-size: .8125rem;
+  font-variant-numeric: tabular-nums;
 }
 .usage-breakdown {
   display: grid;
@@ -289,6 +294,49 @@
   border-top: 1px dashed rgba(255, 255, 255, .16);
 }
 .usage-breakdown-total dt { font-weight: 600; }
+.usage-share {
+  display: grid;
+  gap: .45rem;
+  margin-top: 1rem;
+}
+.usage-share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  justify-self: start;
+  min-height: 38px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: .6rem;
+  padding: .4rem .8rem;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: .8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color .15s ease, color .15s ease;
+}
+.usage-share-button:hover { border-color: #cbb9f7; color: #cbb9f7; }
+.usage-share-button:focus-visible {
+  outline: 2px solid #cbb9f7;
+  outline-offset: 2px;
+}
+.usage-share-status {
+  margin: 0;
+  color: #b8accd;
+  font-size: .6875rem;
+  line-height: 1.5;
+}
+.usage-share-input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: .5rem;
+  padding: .45rem .6rem;
+  background: rgba(255, 255, 255, .06);
+  color: #fff;
+  font: inherit;
+  font-size: .75rem;
+}
 .usage-unavailable {
   margin: 1rem 0 0;
   padding: .875rem 1rem;
@@ -327,6 +375,69 @@
   cursor: pointer;
 }
 .usage-secondary-button:hover { border-color: var(--brand-accent); color: var(--brand-accent); }
+
+.usage-compare {
+  display: grid;
+  gap: .9rem;
+  padding: clamp(1rem, 2.5vw, 1.4rem);
+  border: 1px solid var(--border-hairline);
+  border-radius: 1.25rem;
+  background: var(--bg-surface);
+}
+.usage-compare-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .35rem 1rem;
+}
+.usage-compare-head h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: .9375rem;
+  font-weight: 600;
+}
+.usage-compare-head p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+}
+.usage-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: .6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.usage-compare-card {
+  display: grid;
+  gap: .2rem;
+  justify-items: start;
+  min-height: 84px;
+  border: 1px solid var(--border-hairline);
+  border-radius: .875rem;
+  padding: .7rem .85rem;
+  background: var(--bg-surface);
+  color: var(--text-main);
+  text-align: left;
+}
+.usage-compare-label {
+  font-size: .8125rem;
+  font-weight: 600;
+}
+.usage-compare-rate {
+  color: var(--text-muted);
+  font-size: .6875rem;
+  font-variant-numeric: tabular-nums;
+}
+.usage-compare-card strong {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
 .usage-calculator.is-error {
   display: flex;
   align-items: center;
@@ -348,8 +459,6 @@
   .usage-calculator,
   .usage-calculator.is-loading { grid-template-columns: 1fr; }
   .usage-calculator.is-loading .usage-skeleton { min-height: 12rem; }
-  .usage-channel-options { grid-template-columns: 1fr; }
-  .usage-channel-options button { justify-content: flex-start; padding-inline: .85rem; }
   .usage-calculator.is-error { flex-direction: column; align-items: flex-start; }
 }
 @keyframes usage-shimmer {
@@ -360,5 +469,8 @@
   .usage-skeleton { animation: none; }
   .usage-result-action,
   .usage-presets button,
-  .usage-channel-options button { transition: none; }
+  .usage-mode button,
+  .usage-gst-toggle button,
+  .usage-share-button,
+  .usage-compare-card { transition: none; }
 }
