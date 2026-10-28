@@ -1,0 +1,881 @@
+--- baseline/server/tests/test_agent_scoped_leads.py
++++ server/tests/test_agent_scoped_leads.py
+@@ -112,7 +112,7 @@
+         ("callback_required", "contacted"),
+         ("qualified", "qualified"),
+         ("converted", "qualified"),
+-        ("site_visit_planned", "meeting_booked"),
++        ("site_visit_planned", "qualified"),
+         ("not_interested", "unqualified"),
+         ("wrong_number", "unqualified"),
+         ("no_outcome", "new"),
+--- baseline/server/tests/test_callback_close.py
++++ server/tests/test_callback_close.py
+@@ -21,7 +21,9 @@
+     assert state.missing is None
+     assert state.when.lower() == "tomorrow"
+     assert "reason=goal_complete" in (state.hint or "")
+-    assert "decision close" in (state.hint or "")
++    assert "Propose a close" in (state.hint or "")
++    assert "before the platform confirms persistence" in state.hint
++    assert "Never speak a farewell" in state.hint
+ 
+ 
+ def test_junk_stt_name_and_ani_are_not_lead_details():
+--- baseline/server/brain/agent_script_compiler.py
++++ server/brain/agent_script_compiler.py
+@@ -1546,7 +1546,7 @@
+     if re.search(r"\b(fee|fees|price|cost|afford|cheap|discount|fee structure)\b", scope, re.I):
+         beats.append(
+             "Fees come up early on a call like this. State only the figures that appear in COMPANY & OFFER, "
+-            "and say the team will confirm the exact current number if they ask for something not written there."
++            "and say when a requested figure is unavailable. Offer verification only through an available action; do not promise future team work."
+         )
+     if role == "follow_up":
+         beats.append(
+@@ -1555,12 +1555,13 @@
+         )
+     if re.search(r"\b(enquir|inquir|question|doubt|ask|explain|tell me)\b", scope, re.I):
+         beats.append(
+-            "Expect questions rather than objections. Answer in plain words, one idea per sentence, and check "
+-            "they followed before moving on."
++            "Expect questions rather than objections. Answer in plain words, one idea per sentence. "
++            "An answered information question needs no extra question or pitch. Clarify only genuinely missing information."
+         )
+     if re.search(r"\b(busy|not interested|no need|don't call|do not call)\b", scope, re.I):
+         beats.append(
+-            "A refusal ends the pitch, not the politeness. Thank them once, do not re-offer, and close."
++            "A clear refusal ends the pitch. Do not re-offer. A deferral or future interest is not a refusal; "
++            "follow the caller's requested next step and let the server approve an ending."
+         )
+     beats.append(
+         "If an applicable next step was agreed, briefly confirm only that step. "
+@@ -1604,8 +1605,8 @@
+         "and the runtime can perform it. Do not promise a callback or handoff without that permission.\n"
+         "Never invent a price, a discount, a start date, a seat count, a policy, or an outcome. "
+         "Never claim a booking, a payment, or a message was sent unless a tool actually confirmed it.\n"
+-        "If they ask about something outside this business, give one brief honest line and steer "
+-        "back to what you can actually help with."
++        "For unrelated harmless questions, give one brief honest line and offer relevant help only when useful. "
++        "For harmful requests, refuse briefly without adding a sales pitch, discovery question or topic invitation."
+     )
+ 
+ 
+@@ -1882,7 +1883,8 @@
+         f"--- PROFESSIONAL CLOSE ---\n"
+         f"Follow CALL END POLICY for refusal, confirmed endings and completed next steps. "
+         f"Bare okay/thanks is not a hangup. Make the close decision only when the caller is finished, "
+-        f"clearly refuses all help, or asks to end; on that turn leave spoken_response empty and never speak a farewell. "
++        f"clearly refuses all help, or asks to end. In JSON sessions leave spoken_response empty when proposing a close; "
++        f"in speech-text sessions a brief acknowledgement is allowed. Never speak a farewell. "
+         f"The platform speaks the approved farewell and disconnects when playback finishes.\n\n"
+         f"--- OBJECTION HANDLING ---\n"
+         f"Acknowledge the concern in one sentence; do not restart the full pitch. "
+--- baseline/server/brain/agent_spec_script_builder.py
++++ server/brain/agent_spec_script_builder.py
+@@ -99,9 +99,10 @@
+     # Section 6: WHEN YOU DO NOT KNOW
+     dont_know = (
+         "--- WHEN YOU DO NOT KNOW SOMETHING ---\n"
+-        "Say plainly that you do not have that detail, and offer to have someone confirm it.\n"
++        "Say plainly that you do not have that detail. Offer verification only through an available action; never promise future team work.\n"
+         "Never invent a price, discount, start date, policy, or outcome. Never claim a booking was made unless confirmed.\n"
+-        "If they ask about something outside this business, give one brief honest line and steer back to what you can help with."
++        "For unrelated harmless questions, give one brief honest line and offer relevant help only when useful. "
++        "For harmful requests, refuse briefly without a sales pitch or another question."
+     )
+ 
+     # Section 7: WHAT TO REMEMBER
+--- baseline/server/call/call_end_policy.py
++++ server/call/call_end_policy.py
+@@ -177,7 +177,8 @@
+         f"Allowed close reasons for this agent: {reasons}. "
+         "On an approved close the platform speaks the configured farewell below. "
+         "There is one farewell owner: never speak a goodbye or this line yourself. "
+-        "On a close turn the platform speaks, so leave spoken_response empty. "
++        "For JSON sessions proposing a close, leave spoken_response empty. "
++        "For speech-text sessions, a brief acknowledgement is allowed; never write a farewell. "
+         "The platform can save a caller-requested callback for the business even without external integrations. "
+         "Gather any required details and requested timing before proposing that close. "
+         "The platform confirms saving only after persistence succeeds; never promise an automatically scheduled call.\n"
+--- baseline/server/call/close_classifier.py
++++ server/call/close_classifier.py
+@@ -74,6 +74,13 @@
+   * Questions or asking for more (e.g. "thanks, but one more question", "what is the price?") -> "continue".
+   * If the caller still wants or asks anything at all -> "continue".
+ - "evidence" must be a short quote copied from the caller's last turn.
++- First classify intent independently: question, interested, defer, refusal,
++  opt_out, done, goodbye, abuse, or other. Defer includes being busy or wanting
++  contact in the future; it must return continue, never refusal or close.
++- Choose the close reason by meaning: satisfied completion is goal_complete; an
++  end-of-conversation request is goodbye; not_interested is an actual refusal of
++  the offer; firm_refusal requires an explicit stop-contact request. Being busy,
++  deferring, or being satisfied with information is never rejection of the service.
+ - Set explicit_end=true only when the caller clearly asks to finish, says goodbye,
+   refuses, or says nothing else is needed. Acknowledging details with okay/thanks
+   is explicit_end=false. If unfinished_request=true, only an explicit end can close.
+@@ -82,7 +89,7 @@
+   unfinished task. Missing details must never veto their clear choice to finish.
+ 
+ Return one JSON object only:
+-{"decision":"continue|clarify|close","reason":"done|goodbye|refused|stop_contact|abuse|unclear|question|wants_more|none","evidence":"exact caller words","explicit_end":false}"""
++{"intent":"question|interested|defer|refusal|opt_out|done|goodbye|abuse|other","decision":"continue|clarify|close","reason":"done|goodbye|refused|stop_contact|abuse|unclear|question|wants_more|none","evidence":"exact caller words","explicit_end":false}"""
+ 
+ _MEMORY_INSTRUCTION = """
+ Also extract up to 8 useful caller facts in memory_operations. This is a separate
+@@ -169,12 +176,20 @@
+         return None
+     if str(raw.get("decision") or "").strip().lower() != "close":
+         return None
++    intent = raw.get("intent")
++    intent_reasons = {"refusal": "not_interested", "opt_out": "firm_refusal", "done": "goal_complete", "goodbye": "goodbye", "abuse": "abuse"}
++    if intent is not None and (not isinstance(intent, str) or intent not in intent_reasons):
++        return None
++    if "explicit_end" in raw and raw["explicit_end"] is not True:
++        return None
+     if unfinished_request and raw.get("explicit_end") is not True:
+         return None
+     raw_reason = str(raw.get("reason") or "").strip().lower()
+     reason = _REASON_MAP.get(raw_reason)
+     if reason is None:
+         return None
++    if intent in intent_reasons:
++        reason = intent_reasons[intent]
+     evidence = re.sub(r"\s+", " ", str(raw.get("evidence") or "")).strip()[:200]
+     if not evidence_matches(evidence, transcript):
+         # A paraphrase is not evidence; an invented close must never end a call.
+--- baseline/server/call/live_turn_orchestrator.py
++++ server/call/live_turn_orchestrator.py
+@@ -597,6 +597,7 @@
+             stream_usage: dict[str, Any] = {}
+             turn_cancelled_empty = False
+             waiting_for_caller = False
++            provider_reply_missing = False
+             finish_reason: str | None = None
+             retry_count = 0
+             requested_max_tokens: int | None = None
+@@ -634,6 +635,7 @@
+                     if chunk.get("delta") and brain_latency_ms is None:
+                         brain_latency_ms = int((time.perf_counter() - t0) * 1000)
+                     if chunk.get("done"):
++                        provider_reply_missing = bool(chunk.get("empty_provider_response"))
+                         raw_assistant_text = chunk.get("text") or ""
+                         assistant_text = finalize_live_spoken_text(transcript, raw_assistant_text, ctx=ctx)
+                         finish_reason = str(chunk.get("finish_reason") or "unknown")
+@@ -685,6 +687,16 @@
+                             )
+                         approved_close = bool(gated["end_call"].get("should_end"))
+                         turn_close_approved = approved_close
++                        if provider_reply_missing and not approved_close and not waiting_for_caller and ctx is not None:
++                            from server.call.close_classifier import previous_agent_line
++                            from server.call.speech_recovery import recover_empty_speech
++
++                            recovered = await recover_empty_speech(
++                                llm=ctx.resolved_stack.llm, language=language_code,
++                                transcript=transcript, agent_previous=previous_agent_line(session_id), call_id=call_id,
++                            )
++                            assistant_text = finalize_live_spoken_text(transcript, recovered, ctx=ctx)
++                            gated.update(replace_speech=True, recovery_required=True)
+                         turn_proofs |= proof_set(chunk.get("action_proofs") or ())
+                         if chunk.get("order_proof"):
+                             turn_proofs.add(PROOF_ORDER_CONFIRMED)
+@@ -781,6 +793,16 @@
+                         elif held_deltas:
+                             # Speech was held for close evaluation that resolved to continue:
+                             gated["replace_speech"] = True
++                            held_deltas.clear()
++                        if provider_reply_missing and not approved_close and not waiting_for_caller and not assistant_text.strip():
++                            from server.prompts.agent_voice_rules import normalize_compile_language
++                            from server.prompts.spoken_locale_style import SPOKEN_LOCALES
++
++                            # A completed-but-empty provider reply is not consent
++                            # to hang up. Reuse the approved locale recovery text;
++                            # retain the unanswered request for the next turn.
++                            assistant_text = SPOKEN_LOCALES[normalize_compile_language(language_code)].clarification
++                            gated.update(replace_speech=True, recovery_required=True)
+                             held_deltas.clear()
+                         if waiting_for_caller and not approved_close and not turn_proofs:
+                             assistant_text = ""
+@@ -940,7 +962,7 @@
+ 
+                 conversation_manager.add_turn(session_id, transcript, assistant_text)
+                 if ctx is not None:
+-                    ctx.interrupted_caller_request = ""
++                    ctx.interrupted_caller_request = transcript if provider_reply_missing and not turn_close_approved else ""
+             elif transcript.strip():
+                 from server.agent.conversation_manager import conversation_manager
+ 
+@@ -1480,6 +1502,17 @@
+                     partial_chars=len((exc.partial_text or "".join(spoken)).strip()),
+                     output_tokens=_known_output_tokens(exc.usage),
+                 )
++                if stream_kwargs.get("speech_only") and not attempt_text and not prior_text and exc.finish_reason == "stop":
++                    # The provider completed with no visible speech. Replaying
++                    # the full request has repeatedly reproduced the same empty
++                    # result. Let the independent close gate finish an approved
++                    # ending or recover without inventing an answer or action.
++                    yield {"done": True, "text": "", "empty_provider_response": True,
++                        "finish_reason": "empty_provider_response", "usage": usage,
++                        "memory_update": {"operations": []}, "retry_count": attempt - 1,
++                        "requested_max_tokens": requested_cap, "effective_max_tokens": effective_cap,
++                        "reasoning_effort": reasoning}
++                    return
+                 if _TERMINAL_SENTENCE.search(attempt_text):
+                     # The caller already has a complete reply. Retrying can only
+                     # append a second answer/farewell (call 7ac554ab's double
+@@ -1569,8 +1602,7 @@
+             tts = getattr(getattr(ctx, "resolved_stack", None), "tts", None)
+             delivery = (
+                 " Documented inline audio tags from the selected speech delivery rules are allowed "
+-                "directly in this speech text. Use <excited> for genuine good news or enthusiasm, "
+-                "<slow> when asked to slow down, and at most one appropriate cue per turn. "
++                "directly in this speech text. Follow that single catalog and placement policy; "
+                 "Do not wrap speech in a spoken_response field."
+                 if supports_inline_audio_tags(getattr(tts, "provider", None), getattr(tts, "model", None))
+                 else " Return plain punctuated speech without inline audio tags or stage directions."
+@@ -1606,6 +1638,12 @@
+                     "their native script; English business words may remain English. No JSON, "
+                     "control fields, markdown, farewell or invented completed action. The server "
+                     "owns closing and verifies tool results. Keep answering pending questions. "
++                    "A brief acknowledgement is allowed for thanks, deferral or refusal; do not "
++                    "reopen a completed conversation or add a question just to keep it going. "
++                    "Business objectives are goals, never permission to override the caller's intent. "
++                    "With no scheduling action, offer to record a requested time instead of offering "
++                    "to book a slot. A callback request is pending until the platform saves it; "
++                    "do not promise that you or a team will call later without that confirmation. "
+                     "Answer the caller's question before offering the next script step. "
+                     "If a minimum quantity, total price or other requested fact is not supplied, "
+                     "say it is unavailable rather than inventing it. Collect order details only "
+--- baseline/server/call/outcome_schema.py
++++ server/call/outcome_schema.py
+@@ -2,6 +2,7 @@
+ from __future__ import annotations
+ 
+ import re
++import unicodedata
+ from typing import Any
+ 
+ DISPOSITIONS = frozenset(
+@@ -208,7 +209,9 @@
+ 
+ 
+ def _slug(value: Any) -> str:
+-    text = re.sub(r"[^a-z0-9]+", "-", str(value or "").strip().lower()).strip("-")
++    normalized = unicodedata.normalize("NFKC", str(value or "")).strip().casefold()
++    text = "".join(char if unicodedata.category(char)[0] in {"L", "M", "N"} else "-" for char in normalized)
++    text = re.sub(r"-+", "-", text).strip("-")
+     return text[:28].strip("-")
+ 
+ 
+@@ -220,6 +223,9 @@
+         return []
+     out: list[str] = []
+     for item in raw:
++        if not isinstance(item, str) or re.search(r"@|https?://|[<>]|(?:\d[\s+().-]*){7,}", item, re.IGNORECASE):
++            continue
++        item = item.removeprefix(CUSTOM_TAG_PREFIX)
+         slug = _slug(item)
+         if len(slug) < 2 or any(blocked in slug for blocked in _CUSTOM_TAG_BLOCKED):
+             continue
+@@ -278,7 +284,13 @@
+         tags.add("compliance:disclosure_missing")
+ 
+     ordered = [tag for tag in sorted(tags) if tag in STATUS_TAGS]
+-    for tag in normalize_model_tags(model_tags):
++    model_choices = normalize_model_tags(model_tags)
++    sentiments = {tag for tag in model_choices if tag.startswith("sentiment:")}
++    if len(sentiments) > 1:
++        model_choices = [tag for tag in model_choices if not tag.startswith("sentiment:")]
++    if normalized in {"not_interested", "wrong_number", "no_outcome"}:
++        model_choices = [tag for tag in model_choices if tag != "signal:ready_to_buy"]
++    for tag in model_choices:
+         if len(ordered) >= STATUS_TAG_LIMIT:
+             break
+         if tag not in ordered:
+@@ -288,6 +300,8 @@
+             break
+         if tag not in ordered:
+             ordered.append(tag)
++    if "signal:do_not_call" in ordered or normalized == "wrong_number":
++        ordered = [tag for tag in ordered if not tag.startswith(("followup:", "action:"))]
+     return sorted(ordered)
+ 
+ 
+--- baseline/server/prompts/tts_delivery_rules.py
++++ server/prompts/tts_delivery_rules.py
+@@ -8,8 +8,6 @@
+ from __future__ import annotations
+ 
+ import re
+-
+-from server.prompts.spoken_locale_style import SPOKEN_LOCALES
+ 
+ GNANI_V3_TAGS = frozenset({
+     "laugh", "giggle", "sigh", "exhales", "sniffles", "yawns", "coughs",
+@@ -52,23 +50,23 @@
+     model = str(model or "").strip().lower()
+     head = "[Selected speech delivery]\n"
+     if supports_inline_audio_tags(provider, model):
+-        example = SPOKEN_LOCALES[locale].clarification
++        tags = ", ".join(f"<{tag}>" for tag in sorted(GNANI_V3_TAGS))
+         return head + (
+             "[Gnani Audio Tags Expressive Guidelines]\n"
+             "The admitted speech model is Timbre v3.0. Untagged text is neutral. "
+-            "Choose delivery from the caller's intent: use <excited> before a genuinely positive response "
+-            "to good news or clear enthusiasm, and <slow> before an explanation when asked to slow down. "
+-            "Routine factual answers can remain neutral; never force an expression into every reply. "
+-            "Use at most one tag in a turn, only when it helps: <pauses> for a real thought boundary, "
+-            "<slow> when the caller needs slower delivery, or <excited> for genuinely positive context. "
++            f"Supported expression catalog: {tags}. "
++            "Choose delivery from the caller's intent and the business's handling guidance. "
++            "Use excitement for genuine positive context, slower delivery for a requested explanation, "
++            "and laughter or other nonverbal effects only when context or explicit delivery guidance calls for them. "
++            "Routine factual answers can remain neutral; never force a cue into every reply. "
++            "A <pauses> cue can produce noticeable silence; prefer punctuation for ordinary short pauses. "
+             "Put the cue before the phrase it modifies, with whitespace around it, at a clause or sentence boundary. "
+             "Tags are case-sensitive, use angle brackets and have no closing tag; a delivery cue lasts until "
+             "the next cue or the end of this synthesis input, not across later TTS requests. "
+             "Do not send tags alone or at the end of a sentence with no following speech. "
+-            "Do not add performative laughter, giggles, sighs, coughing, throat-clearing, whispering or shouting "
+-            "to ordinary business calls. Do not add a pause before every number. Never invent good news or approvals. "
+-            f"Only if asked to slow down, a {locale} delivery example is: <slow> {example} "
+-            "This is a style example, not a question you must ask. Put tags directly in the speech text "
++            "For <slow>, put a brief natural lead-in before the cue and the explanation after it; "
++            "a cue at the very start may not change delivery. Do not add a pause before every number. "
++            "Never invent good news, approvals or symptoms to justify an effect. Put tags directly in the speech text "
+             "(or spoken_response when using structured output), "
+             "never in facts, memory updates or tool arguments."
+         )
+--- baseline/server/providers/sarvam_llm.py
++++ server/providers/sarvam_llm.py
+@@ -476,20 +476,9 @@
+                             finish_reason = stop_reason
+                             if stop_reason in {"stop", "tool_calls"}:
+                                 completed = True
+-                            else:
+-                                # Read the final chunk's content before raising so
+-                                # a stop reason can never discard spoken text.
+-                                raise IncompleteTurnError(
+-                                    provider=self.provider_id,
+-                                    finish_reason=stop_reason,
+-                                    raw_finish_reason=stop_reason,
+-                                    partial_text=(
+-                                        extractor.spoken_text
+-                                        if extractor is not None
+-                                        else "".join(plain_parts)
+-                                    ),
+-                                    usage=usage,
+-                                )
++                            # Read through the terminal usage chunk even after
++                            # length/content-filter stops. Raising here loses
++                            # the provider's billed reasoning/completion tokens.
+             except asyncio.CancelledError:
+                 raise
+             except httpx.TimeoutException as exc:
+@@ -501,6 +490,9 @@
+             extractor.spoken_text.strip() if extractor is not None else "".join(plain_parts).strip()
+         )
+         completed_tool_calls = [tool_calls[index] for index in sorted(tool_calls)]
++        if finish_reason and finish_reason not in {"stop", "tool_calls", "whitespace_tail"}:
++            raise IncompleteTurnError(provider=self.provider_id, finish_reason=finish_reason,
++                raw_finish_reason=finish_reason, partial_text=full_text, usage=usage)
+         if kwargs.get("speech_only") and full_text.lstrip().startswith(("{", "[", "```")):
+             # The delivery contract forbids control data. It was buffered, so
+             # none reached TTS and the bounded reply recovery can restart clean.
+--- baseline/server/routes/app_leads.py
++++ server/routes/app_leads.py
+@@ -34,6 +34,7 @@
+ class LeadStagePatch(BaseModel):
+     stage: LeadStage
+     confirmConverted: bool = False
++    expectedUpdatedAt: datetime | None = None
+ 
+ 
+ class LeadNotesPatch(BaseModel):
+@@ -41,6 +42,13 @@
+     stage: LeadStage | None = None
+     confirmConverted: bool = False
+     agentId: str | None = Field(None, max_length=36)
++    expectedUpdatedAt: datetime | None = None
++
++
++def _check_revision(row: Lead, expected: datetime | None) -> None:
++    current = row.updated_at if row.updated_at.tzinfo else row.updated_at.replace(tzinfo=timezone.utc)
++    if expected is not None and current != (expected if expected.tzinfo else expected.replace(tzinfo=timezone.utc)):
++        raise HTTPException(status_code=409, detail="This lead changed. Reload it before saving; your edits have been kept.")
+ 
+ 
+ def _lead_dict(row: Lead) -> dict:
+@@ -126,7 +134,7 @@
+ 
+ @router.post("/api/leads")
+ async def create_lead(body: LeadCreate, principal: Annotated[SubscriberPrincipal, Depends(require_subscriber_jwt)]):
+-    require_subscriber_permission(principal, "app.calls.read")
++    require_subscriber_permission(principal, "app.telephony.write")
+     factory = get_session_factory()
+     if factory is None:
+         raise HTTPException(status_code=503, detail="Database required")
+@@ -160,14 +168,15 @@
+     body: LeadStagePatch,
+     principal: Annotated[SubscriberPrincipal, Depends(require_subscriber_jwt)],
+ ):
+-    require_subscriber_permission(principal, "app.calls.read")
++    require_subscriber_permission(principal, "app.telephony.write")
+     factory = get_session_factory()
+     if factory is None:
+         raise HTTPException(status_code=503, detail="Database required")
+     async with factory() as session:
+-        row = await session.scalar(select(Lead).where(Lead.lead_id == _lead_uuid(lead_id), Lead.tenant_id == principal.tenant_id))
++        row = await session.scalar(select(Lead).where(Lead.lead_id == _lead_uuid(lead_id), Lead.tenant_id == principal.tenant_id).with_for_update())
+         if row is None:
+             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
++        _check_revision(row, body.expectedUpdatedAt)
+         if body.stage == "converted" and row.stage != "converted" and not body.confirmConverted:
+             raise HTTPException(status_code=409, detail="Confirm that this lead became a customer before marking Converted")
+         row.stage = body.stage
+@@ -182,17 +191,18 @@
+     body: LeadNotesPatch,
+     principal: Annotated[SubscriberPrincipal, Depends(require_subscriber_jwt)],
+ ):
+-    require_subscriber_permission(principal, "app.calls.read")
++    require_subscriber_permission(principal, "app.telephony.write")
+     factory = get_session_factory()
+     if factory is None:
+         raise HTTPException(status_code=503, detail="Database required")
+     async with factory() as session:
+-        row = await session.scalar(select(Lead).where(Lead.lead_id == _lead_uuid(lead_id), Lead.tenant_id == principal.tenant_id))
++        row = await session.scalar(select(Lead).where(Lead.lead_id == _lead_uuid(lead_id), Lead.tenant_id == principal.tenant_id).with_for_update())
+         if row is None:
+             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
+-        if body.notes is not None:
++        _check_revision(row, body.expectedUpdatedAt)
++        if "notes" in body.model_fields_set:
+             row.notes = body.notes
+-        if body.agentId is not None:
++        if "agentId" in body.model_fields_set:
+             await _check_agent(session, body.agentId, principal.tenant_id)
+             row.agent_id = body.agentId or None
+         if body.stage is not None:
+--- baseline/server/services/gnani_tts_ws.py
++++ server/services/gnani_tts_ws.py
+@@ -40,10 +40,8 @@
+     from server.providers.voice_inventory import voices_for_model
+ 
+     lang = str(language_code or "te-IN").strip()
+-    if lang == "auto":
++    if lang in {"auto", "hi-en"}:
+         return lang
+-    if lang == "hi-en":
+-        lang = "hi-IN"
+     from server.config.constants import normalize_supported_language
+ 
+     lang = normalize_supported_language(lang)
+@@ -95,6 +93,7 @@
+             self._request_done = asyncio.Event()
+             self._request_done.set()
+             self._reader_ended = False
++            self._audio_progress = 0
+             self._reader_task = asyncio.create_task(self._reader_loop())
+ 
+         async def send(self, payload: str) -> None:
+@@ -133,22 +132,15 @@
+                 text = sanitize_tts_tags(text, provider="gnani", model=self._model)
+                 if not text.strip():
+                     return
+-                if self._flush_received or self._eos_sent:
+-                    self._flush_received = False
+-                    self._eos_sent = False
+-                    self._requests_sent = 0
+-                    self._requests_completed = 0
+-                    while not self._queue.empty():
+-                        try:
+-                            self._queue.get_nowait()
+-                        except (asyncio.QueueEmpty, Exception):
+-                            break
+                 # The provider accepts one synthesis request at a time. Keep
+                 # consuming audio in the reader while a later sentence waits.
+                 async with self._send_lock:
+-                    await asyncio.wait_for(self._request_done.wait(), timeout=20.0)
++                    await self._wait_for_request()
+                     if self._closed or self._reader_ended:
+                         raise RuntimeError("Speech stream closed before synthesis completed")
++                    if self._flush_received or self._eos_sent:
++                        self._flush_received = False
++                        self._eos_sent = False
+                     self._request_done.clear()
+                     self._requests_sent += 1
+                     await self._send_chunk(text)
+@@ -158,6 +150,18 @@
+                 if not self._eos_sent and self._requests_completed >= self._requests_sent:
+                     self._eos_sent = True
+                     await self._queue.put(json.dumps({"type": "end_of_stream", "data": {"event_type": "final"}}))
++
++        async def _wait_for_request(self) -> None:
++            # Bound a stalled request, while allowing long synthesis that keeps
++            # producing audio. The call watchdog still bounds total call time.
++            timeout = max(0.1, settings.request_timeout_ms / 1000)
++            while not self._request_done.is_set():
++                progress = self._audio_progress
++                try:
++                    await asyncio.wait_for(self._request_done.wait(), timeout=timeout)
++                except asyncio.TimeoutError:
++                    if progress == self._audio_progress:
++                        raise
+ 
+         async def _send_chunk(self, text: str) -> None:
+             from server.providers.voice_inventory import provider_language
+@@ -200,6 +204,7 @@
+                         break
+ 
+                     if isinstance(raw, bytes):
++                        self._audio_progress += 1
+                         # Raw PCM/WAV binary frame
+                         data_bytes = raw
+                         if not self._stripped_header and len(data_bytes) >= 44 and data_bytes[:4] == b"RIFF":
+@@ -227,19 +232,26 @@
+                         continue
+ 
+                     mtype = str(data.get("type") or "").lower()
+-                    if "error" in data or "errors" in data or data.get("status") in (401, 402, 429) or mtype == "error":
++                    if data.get("error") or data.get("errors") or data.get("status") in (401, 402, 403, 429) or mtype == "error":
+                         err_msg = str(data.get("message") or data.get("error") or "Gnani TTS error")
+                         is_credit = any(k in err_msg.lower() for k in ("credit", "balance", "quota", "payment", "unauthorized"))
++                        fatal = is_credit or data.get("status") in (401, 402, 403) or data.get("fatal") is True or data.get("recoverable") is False
+                         await self._queue.put(
+                             json.dumps(
+                                 {
+                                     "type": "error",
+                                     "code": "credits_exhausted" if is_credit else "gnani_error",
+                                     "message": err_msg,
++                                    "recoverable": not fatal,
+                                 }
+                             )
+                         )
+-                        break
++                        if fatal:
++                            break
++                        if not self._request_done.is_set():
++                            self._requests_completed += 1
++                            self._request_done.set()
++                        continue
+ 
+                     is_final = bool((data.get("data") if isinstance(data.get("data"), dict) else {}).get("is_final") or data.get("is_final"))
+                     inner = data.get("data") if isinstance(data.get("data"), dict) else {}
+@@ -249,6 +261,7 @@
+                         or (data.get("data") if isinstance(data.get("data"), str) else None)
+                     )
+                     if audio_b64 and isinstance(audio_b64, str):
++                        self._audio_progress += 1
+                         try:
+                             raw_bytes = base64.b64decode(audio_b64)
+                             if not self._stripped_header and len(raw_bytes) >= 44 and raw_bytes[:4] == b"RIFF":
+--- baseline/server/services/saas/lead_sync.py
++++ server/services/saas/lead_sync.py
+@@ -35,7 +35,9 @@
+     "callback_required": "contacted",
+     "qualified": "qualified",
+     "converted": "qualified",
+-    "site_visit_planned": "meeting_booked",
++    # An expressed visit plan is interest, not evidence of a calendar booking.
++    # Tenants can confirm a booked meeting through the existing lead editor.
++    "site_visit_planned": "qualified",
+     "not_interested": "unqualified",
+     "wrong_number": "unqualified",
+     "no_outcome": "new",
+@@ -116,12 +118,13 @@
+ def _extract_phone(facts: dict[str, str], meta: dict[str, Any]) -> str:
+     """The number to key the lead on, falling back to the call's own parties."""
+     from_facts = _clean(_first_fact(facts, _PHONE_KEYS), 32)
+-    if from_facts:
++    if 7 <= len(_phone_key(from_facts)) <= 15:
+         return from_facts
+     direction = str(meta.get("direction") or "").lower()
+     outbound = direction in ("outbound", "outgoing", "outbound-api")
+     candidate = meta.get("callee_e164") if outbound else meta.get("caller_id")
+-    return _clean(candidate, 32)
++    candidate = _clean(candidate, 32)
++    return candidate if 7 <= len(_phone_key(candidate)) <= 15 else ""
+ 
+ 
+ async def sync_outcome_to_lead(
+@@ -147,6 +150,9 @@
+     email = _clean(facts.get("email"), 320) or None
+     stage = stage_for_disposition(disposition)
+     notes = _notes_from_outcome(outcome)
++    call_marker = f"[Call reference: {call_id}]" if call_id else ""
++    if call_marker:
++        notes = f"{call_marker}\n{notes}".strip()
+ 
+     factory = _session_factory()
+     if factory is None:
+@@ -163,25 +169,36 @@
+         async with factory() as session:
+             from sqlalchemy import select
+ 
++            from server.db.models.entities import Tenant
+             from server.db.models.saas_models import Lead
+ 
++            # Serialise automatic upserts within this tenant. Two simultaneous
++            # post-call jobs must not both decide that the same contact is new.
++            await session.execute(select(Tenant.tenant_id).where(Tenant.tenant_id == tenant_uuid).with_for_update())
++
+             stmt = select(Lead).where(Lead.tenant_id == tenant_uuid)
+-            if agent_str:
+-                stmt = stmt.where(Lead.agent_id == agent_str)
++            stmt = stmt.where(Lead.agent_id == agent_str if agent_str else Lead.agent_id.is_(None))
+             if phone:
+                 # Match on digits so formatting differences do not fork a lead.
+                 digits = _phone_key(phone)
+-                rows = (await session.execute(stmt)).scalars().all()
+-                row = next((r for r in rows if _phone_key(r.phone) == digits), None)
++                if getattr(getattr(session.bind, "dialect", None), "name", "") == "postgresql":
++                    from sqlalchemy import func
++
++                    row = (await session.execute(stmt.where(func.regexp_replace(Lead.phone, r"\D", "", "g") == digits)
++                        .order_by(Lead.created_at, Lead.lead_id).limit(1).with_for_update())).scalars().first()
++                else:
++                    rows = (await session.execute(stmt.with_for_update())).scalars().all()
++                    row = next((r for r in rows if _phone_key(r.phone) == digits), None)
++            elif email:
++                from sqlalchemy import func
++
++                row = (await session.execute(stmt.where(func.lower(Lead.email) == email.lower())
++                    .order_by(Lead.created_at, Lead.lead_id).limit(1).with_for_update())).scalars().first()
+             else:
+-                # Without a number there is nothing stable to match on; only the
+-                # most recent lead for this agent can be safely reused.
+-                recent = (
+-                    await session.execute(
+-                        stmt.order_by(Lead.updated_at.desc()).limit(1)
+-                    )
+-                ).scalars().first()
+-                row = recent
++                # Never merge unrelated unidentified callers. Only a replay of
++                # this exact call may reuse an identity-less lead.
++                row = (await session.execute(stmt.where(Lead.notes.contains(call_marker, autoescape=True))
++                    .limit(1).with_for_update())).scalars().first() if call_marker else None
+ 
+             now = datetime.now(timezone.utc)
+             if row is None:
+@@ -202,8 +219,9 @@
+                 action = "advanced" if should_advance(stage, row.stage) else "unchanged"
+                 if action == "advanced":
+                     row.stage = stage
+-                # A later call knows the caller's name better than the first one.
+-                if name != "New lead":
++                # Enrich blanks; an unverified later call must not overwrite a
++                # contact identity already maintained in the tenant's CRM.
++                if name != "New lead" and (not row.name or row.name == "New lead"):
+                     row.name = name
+                 if email and not row.email:
+                     row.email = email
+@@ -211,7 +229,7 @@
+                     row.phone = phone
+                 if notes:
+                     previous = (row.notes or "").strip()
+-                    if call_id and call_id not in previous:
++                    if call_marker and call_marker not in previous:
+                         row.notes = f"{previous}\n\n---\n{notes}".strip() if previous else notes
+                     elif not previous:
+                         row.notes = notes
+--- baseline/voxly-ai/src/lib/studioScriptHelpers.js
++++ voxly-ai/src/lib/studioScriptHelpers.js
+@@ -2,6 +2,8 @@
+  * Studio Script Helpers — Variable interpolation with fallback syntax,
+  * dynamic system tokens, sample leads catalog, and objection presets.
+  */
++
++import { storedHandlingRules } from './handlingRules.js';
+ 
+ const SCRIPT_VARIABLE_GROUPS = [
+   {
+@@ -223,6 +225,8 @@
+ 
+ export function parseObjectionRulesFromSections(sections) {
+   if (!Array.isArray(sections)) return [];
++  const stored = storedHandlingRules(sections);
++  if (stored !== null) return stored;
+   const faqRow = sections.find(
+     (s) => s.enabled !== false && (s.type === 'faq' || s.title === 'FAQ & Objections')
+   );
+--- baseline/voxly-ai/src/services/agentBrain.js
++++ voxly-ai/src/services/agentBrain.js
+@@ -2,6 +2,7 @@
+  * Map Voxly Agent Studio fields → Business Brain API (draft + publish).
+  */
+ import { api } from './api';
++import { handlingRuleSections, HANDLING_RULES_METADATA, HANDLING_RULES_TITLE } from '../lib/handlingRules.js';
+ import {
+   SAAS_CALLING_SCRIPT_TITLE,
+   scriptVariablesSection,
+@@ -66,16 +67,6 @@
+   variableDefinitions,
+ }) {
+   const guardrails = (boundaries || []).map((b) => `- ${b}`).join('\n');
+-  const faq = (objectionRules || [])
+-    .map((o, index) => {
+-      if (!String(o.trigger || '').trim() || !String(o.response || '').trim()) {
+-        throw new Error(`Complete the concern and response in objection rule ${index + 1}, or remove that rule.`);
+-      }
+-      const intentPart = o.category && o.category !== 'custom' ? `[Intent: ${o.category}]\n` : '';
+-      const actionPart = o.action && o.action !== 'continue_script' ? `\nAction: ${o.action}` : '';
+-      return `${intentPart}When: ${o.trigger}\nReply: ${o.response}${actionPart}`;
+-    })
+-    .join('\n\n');
+   // Strip any legacy OPENING LINE artifact so it never clashes with CANONICAL OPENING
+   let cleanScript = (script || '')
+     .replace(/^OPENING LINE\s*\n[^\n]*\n*/i, '')
+@@ -136,7 +127,7 @@
+       raw_text: guardrails || 'Do not invent prices or policies not in the script.',
+       enabled: true,
+     },
+-    { type: 'faq', title: 'FAQ & Objections', order: 40, raw_text: faq ? `Adapt these replies naturally to the selected call language with everyday English mixing. Respect refusals; these suggestions do not override safety or tool permissions. Actions need an available tool and successful result; never claim a transfer or callback booking without confirmation. Action end_call means propose a close for server approval, never execute a hangup tool or speak a farewell yourself. The server owns the configured farewell. A future-interest or callback request is not a complete rejection; finish the requested callback flow before proposing a close.\n\n${faq}` : '', enabled: !!faq },
++    ...handlingRuleSections(objectionRules || []),
+   ];
+   const v = voiceSection(voice, language);
+   if (v) sections.push(v);
+@@ -153,10 +144,11 @@
+ export function mergeStudioSections(existingSections, studioFields) {
+   const base = Array.isArray(existingSections) ? existingSections : [];
+   const seeds = sectionsFromStudio(studioFields);
+-  const metadataTitles = new Set(['saas_voice_config', 'saas_script_variables', 'saas_call_end_policy', 'Voice profile (console)', 'Inbound routing prefs (console)']);
++  const metadataTitles = new Set(['saas_voice_config', 'saas_script_variables', 'saas_call_end_policy', HANDLING_RULES_METADATA, 'Voice profile (console)', 'Inbound routing prefs (console)']);
+   const replaced = new Set();
+   const merged = seeds.map((seed) => {
+     let prev = base.find((s) => s.type === seed.type && s.title === seed.title);
++    if (!prev && seed.title === HANDLING_RULES_TITLE) prev = base.find(s => s.type === 'faq' && s.title === 'FAQ & Objections');
+     if (!prev && seed.title === SAAS_CALLING_SCRIPT_TITLE) {
+       prev = base.find((s) => s.enabled !== false && s.type === 'facts' && ['Agent script', 'Business Facts'].includes(s.title));
+     }
+@@ -169,7 +161,7 @@
+     }
+     if (prev?.raw_text && seed.type === 'faq') {
+       // Preserve free-form FAQ notes which the concern/response controls cannot edit.
+-      const reference = String(prev.raw_text).split(/\n\s*\n/).filter((block) =>
++      const reference = prev.title === HANDLING_RULES_TITLE ? String(prev.raw_text).split('[Configured handling rules]\n')[0].trim() : String(prev.raw_text).split(/\n\s*\n/).filter((block) =>
+         !/(?:^|\n)(?:When(?: caller says)?|Reply|Response):/i.test(block) &&
+         !block.startsWith('Adapt these replies naturally to the selected call language')).join('\n\n');
+       if (reference.trim()) {
+--- baseline/voxly-ai/src/console/modules/AgentStudioModule.jsx
++++ voxly-ai/src/console/modules/AgentStudioModule.jsx
+@@ -896,9 +896,7 @@
+           greeting: initialGreeting,
+           farewell: studio.farewell || '',
+           boundaries: studio.boundaries ?? base.boundaries,
+-          objectionRules: studio.objectionRules?.length
+-            ? studio.objectionRules
+-            : base.objectionRules,
++          objectionRules: studio.objectionRules ?? base.objectionRules,
+           variableDefinitions: studio.variableDefinitions?.length
+             ? studio.variableDefinitions
+             : base.variableDefinitions,
+@@ -1009,12 +1007,16 @@
+     const newRule = preset
+       ? {
+           category: preset.category || 'custom',
++          kind: preset.kind || 'objection',
++          enabled: preset.enabled !== false,
+           trigger: preset.trigger || '',
+           response: preset.response || '',
+           action: preset.action || 'continue_script',
+         }
+       : {
+           category: 'custom',
++          kind: 'objection',
++          enabled: true,
+           trigger: '',
+           response: '',
+           action: 'continue_script',
+@@ -1660,28 +1662,29 @@
+ 
+           {/* Objection Handling Rules */}
+           <div data-section="objections"><SolidCard>
+-            <fieldset disabled={brainLoading || !!brainLoadError || saving} className="contents" aria-label="Objection rules">
++            <fieldset disabled={brainLoading || !!brainLoadError || saving} className="contents" aria-label="Objection and objective rules">
+             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+               <div>
+                 <div className="flex items-center gap-2">
+-                  <h3 className="text-xs font-bold text-[#0F0E17]">Objection Handling Rules</h3>
++                  <h3 className="text-xs font-bold text-[#0F0E17]">Objection &amp; Objective Handling</h3>
+                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FAF5FF] text-[#7E22CE] border border-[#F3E8FF]">
+-                    Responses to common concerns
++                    Concerns and conversation goals
+                   </span>
+                 </div>
+                 <p className="text-[11px] text-[#524E5E] mt-0.5">
+-                  Suggested replies adapt to the selected language. Actions require an available tool and confirmation.
++                  Configure responses and goals in any language. Save changes to recompile the brain for future calls. Rules respect caller intent and available actions.
+                 </p>
+               </div>
+-              <button
++              <div className="flex flex-wrap gap-3"><button type="button" onClick={() => handleAddObjection({ kind: 'objective' })} className="text-xs font-semibold text-[#6344E7]" data-testid="add-objective-btn">+ Add objective</button><button
+                 type="button"
+                 onClick={() => handleAddObjection()}
+                 className="text-xs font-semibold text-[#6344E7] hover:text-[#5034CE] flex items-center gap-1 self-start sm:self-auto shrink-0"
+                 data-testid="add-objection-btn"
+               >
+                 <Plus className="w-3 h-3" />
+-                <span>Add Custom Rule</span>
++                <span>Add objection</span>
+               </button>
++              </div>
+             </div>
+ 
+             {/* Quick-add industry standard templates bar */}
+@@ -1709,9 +1712,9 @@
+             <div className="space-y-3">
+               {(formData.objectionRules || []).length === 0 ? (
+                 <div className="p-4 rounded-xl border border-dashed border-[#D2CEE0] text-center bg-[#FAF9FD]">
+-                  <p className="text-xs text-[#524E5E]">No objection rules configured yet.</p>
++                  <p className="text-xs text-[#524E5E]">No handling rules configured yet.</p>
+                   <p className="text-[11px] text-[#8C879A] mt-1">
+-                    Click any quick-add template above or "Add Custom Rule" to train your agent on handling pushback.
++                    Add a concern or a conversation goal, then configure how the agent should handle it.
+                   </p>
+                 </div>
+               ) : (
+@@ -1723,6 +1726,10 @@
+                   >
+                     <div className="flex items-center justify-between mb-2.5">
+                       <div className="flex items-center gap-2">
++                        <select aria-label={`Rule ${idx + 1} type`} value={rule.kind || 'objection'} onChange={(event) => setFormData(previous => ({ ...previous, objectionRules: previous.objectionRules.map((item, index) => index === idx ? { ...item, kind: event.target.value } : item) }))} className="rounded-lg border border-[#E4E2EB] p-1 text-xs">
++                          <option value="objection">Objection</option><option value="objective">Objective</option>
++                        </select>
++                        <label className="flex items-center gap-1 text-xs"><input type="checkbox" aria-label={`Enable rule ${idx + 1}`} checked={rule.enabled !== false} onChange={(event) => setFormData(previous => ({ ...previous, objectionRules: previous.objectionRules.map((item, index) => index === idx ? { ...item, enabled: event.target.checked } : item) }))} />Enabled</label>
+                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5FF] text-[#6344E7] border border-[#F3E8FF]">
+                           Rule #{idx + 1}
+                         </span>
+@@ -1747,10 +1754,11 @@
+                       {/* Trigger */}
+                       <div className="md:col-span-5">
+                         <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
+-                          When Caller Says / Concern:
++                          {rule.kind === 'objective' ? 'Situation / goal:' : 'Caller concern:'}
+                         </span>
+                         <input
+                           type="text"
++                          aria-label={`Rule ${idx + 1} situation`}
+                           value={rule.trigger || ''}
+                           placeholder="e.g. Too expensive / Not interested"
+                           onChange={(e) => {
+@@ -1766,9 +1774,10 @@
+                       {/* Response */}
+                       <div className="md:col-span-5">
+                         <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
+-                          Agent Response (Acknowledge &amp; Bridge):
++                          {rule.kind === 'objective' ? 'Guidance to achieve the goal:' : 'Response guidance:'}
+                         </span>
+                         <textarea
++                          aria-label={`Rule ${idx + 1} guidance`}
+                           rows={2}
+                           value={rule.response || ''}
+                           placeholder="e.g. I understand budget is important... Could I share..."
+@@ -1799,7 +1808,7 @@
+                         >
+                           <option value="continue_script">Continue Script</option>
+                           <option value="offer_callback">Offer Callback</option>
+-                          <option value="end_call">End Call</option>
++                          <option value="end_call">Request Call Ending</option>
+                           <option value="transfer_human">Transfer Human</option>
+                         </select>
+                       </div>

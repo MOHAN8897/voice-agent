@@ -1,0 +1,40 @@
+{
+  "intents": {
+    "inline:changing-a-stack-s-browser-rate-saves-its-exact-33a80725": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "PUT",
+            "status": 200,
+            "urlContains": "/voice-profiles/low"
+          },
+          {
+            "contains": "Auto-saved & applied globally",
+            "kind": "text",
+            "visible": true
+          }
+        ]
+      },
+      "declaredAt": 1793111868601,
+      "id": "inline:changing-a-stack-s-browser-rate-saves-its-exact-33a80725",
+      "provenBy": {
+        "at": 1793112062526,
+        "grade": "net",
+        "runId": "drive-18b0ca116baadda4",
+        "verdictId": "reticle_act_and_wait:1793112062526"
+      },
+      "state": "proved",
+      "statement": "Changing a stack’s browser rate saves its exact profile override independently of phone pricing.",
+      "status": "proved",
+      "subject": "voice-profiles",
+      "surface": {
+        "route": "/dev/stack"
+      },
+      "updatedAt": 1793112062544
+    }
+  },
+  "subject": "voice-profiles",
+  "version": 1
+}

@@ -1,0 +1,53 @@
+[
+  {
+    "language": "te-IN",
+    "caller": "నేను బిజీగా ఉన్నాను. తర్వాత మాట్లాడదాం.",
+    "recovery_model": "sarvam-105b-conversations",
+    "live_recovery": [
+      "సరే, అర్థమైంది. మీకు ఏ రోజు, ఏ సమయానికి కాల్ చేయమంటారు?"
+    ],
+    "reply": "సరే, అర్థమైంది. మీకు ఏ రోజు, ఏ సమయానికి కాల్ చేయమంటారు?",
+    "close": {
+      "should_end": false,
+      "reason": "none",
+      "farewell": "",
+      "contact_preference": "none",
+      "reject_code": null
+    },
+    "recovery_required": true
+  },
+  {
+    "language": "en-IN",
+    "caller": "I am still enquiring. Could you repeat that?",
+    "recovery_model": "sarvam-105b-conversations",
+    "live_recovery": [
+      "Sorry, I missed that. Could you please clarify what you need?"
+    ],
+    "reply": "Sorry, I missed that. Could you please clarify what you need?",
+    "close": {
+      "should_end": false,
+      "reason": "none",
+      "farewell": "",
+      "contact_preference": "none",
+      "reject_code": null
+    },
+    "recovery_required": true
+  },
+  {
+    "language": "hi-IN",
+    "caller": "मुझे एक बात समझ नहीं आई, फिर से बताएँ।",
+    "recovery_model": "sarvam-105b-conversations",
+    "live_recovery": [
+      "ठीक है, मैं फिर से बता देता हूँ। कृपया अपनी बात स्पष्ट करें।"
+    ],
+    "reply": "ठीक है, मैं फिर से बता देता हूँ। कृपया अपनी बात स्पष्ट करें।",
+    "close": {
+      "should_end": false,
+      "reason": "none",
+      "farewell": "",
+      "contact_preference": "none",
+      "reject_code": null
+    },
+    "recovery_required": true
+  }
+]

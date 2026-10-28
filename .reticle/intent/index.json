@@ -1,6 +1,36 @@
 {
   "entries": [
     {
+      "id": "inline:empty-voice-filter-combinations-display-zero-ava-a9cbb92f",
+      "statement": "Empty voice filter combinations display zero availability without chang…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:the-farewell-category-exposes-its-editor-directl-7eee2c31",
+      "statement": "The Farewell category exposes its editor directly while retaining other…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:the-recording-compliance-category-exposes-its-ed-24538ee1",
+      "statement": "The Recording & compliance category exposes its editor directly while r…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:voice-gender-counts-reflect-the-selected-voice-s-aa052cdb",
+      "statement": "Voice gender counts reflect the selected voice style, including zero av…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:overview-window-selection-reloads-real-server-an-21d1cf4d",
+      "statement": "Overview window selection reloads real server analytics for the chosen…",
+      "status": "proved",
+      "subject": "analytics"
+    },
+    {
       "id": "inline:converted-callback-requests-leave-the-pending-qu-854ff231",
       "statement": "Converted callback requests leave the pending queue only after a succes…",
       "status": "proved",
@@ -19,16 +49,130 @@
       "subject": "console"
     },
     {
+      "id": "inline:a-single-floating-save-action-appears-only-for-u-17fb888a",
+      "statement": "A single floating save action appears only for unsaved agent edits, and…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:agent-workspace-navigation-exposes-expansion-and-8bd1fe5a",
+      "statement": "Agent workspace navigation exposes expansion and the settings save acti…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:clearing-lead-filters-restores-contacts-without-9467ccf0",
+      "statement": "Clearing lead filters restores contacts without changing their pipeline…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:closing-campaign-setup-returns-to-the-lead-pipel-9f4a587e",
+      "statement": "Closing campaign setup returns to the lead pipeline.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:closing-details-returns-to-the-pipeline-2b396ca9",
+      "statement": "Closing details returns to the pipeline.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:collapsing-navigation-frees-workspace-width-whil-7cfac69e",
+      "statement": "Collapsing navigation frees workspace width while preserving accessible…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:confirmed-conversions-can-be-saved-60656ddf",
+      "statement": "Confirmed conversions can be saved.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:conversion-requires-tenant-confirmation-before-s-02f8b2a3",
+      "statement": "Conversion requires tenant confirmation before saving.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:handling-rules-publish-through-the-real-editor-r-b60839f7",
+      "statement": "Handling rules publish through the real editor; read-only tenants can i…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
       "id": "inline:indian-tenants-see-indian-consent-and-privacy-gu-6d37e14a",
       "statement": "Indian tenants see Indian consent and privacy guidance and do not see i…",
       "status": "proved",
       "subject": "console"
     },
     {
+      "id": "inline:lead-details-expose-the-current-pipeline-stage-99e69a06",
+      "statement": "Lead details expose the current pipeline stage.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:lead-search-filters-the-server-backed-pipeline-a-ded48eec",
+      "statement": "Lead search filters the server-backed pipeline and exposes a clear empt…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:saved-conversion-becomes-the-lead-s-persisted-pi-9fc69722",
+      "statement": "Saved conversion becomes the lead’s persisted pipeline stage.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:selected-leads-open-the-existing-campaign-review-c35caae9",
+      "statement": "Selected leads open the existing campaign review with their contact met…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:selecting-callable-leads-makes-them-available-fo-27fb3d5f",
+      "statement": "Selecting callable leads makes them available for campaign setup.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:the-voice-catalog-remains-available-after-lead-w-92e948fa",
+      "statement": "The voice catalog remains available after lead work.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:wallet-checkout-displays-the-configured-tax-term-6807c222",
+      "statement": "Wallet checkout displays the configured tax terms and credits only the…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:admin-previews-edited-gst-rules-without-saving-t-f4e359ad",
+      "statement": "Admin previews edited GST rules without saving them or creating a payme…",
+      "status": "proved",
+      "subject": "dev"
+    },
+    {
       "id": "inline:platform-admins-can-inspect-each-pstn-tier-s-sav-26368601",
       "statement": "Platform admins can inspect each PSTN tier’s saved profile and readines…",
       "status": "proved",
       "subject": "dev"
+    },
+    {
+      "id": "flow:drive-a-single-floating-save-action-appears-only-for-u",
+      "statement": "A single floating save action appears only for unsaved agent edits, and…",
+      "status": "proposed",
+      "subject": "drive-a-single-floating-save-action-appe"
+    },
+    {
+      "id": "flow:drive-agent-workspace-navigation-exposes-expansion-and",
+      "statement": "Agent workspace navigation exposes expansion and the settings save acti…",
+      "status": "proposed",
+      "subject": "drive-agent-workspace-navigation-exposes"
     },
     {
       "id": "flow:drive-buy-modal-quotes-the-same-4-00-month-platform-di",
@@ -43,6 +187,18 @@
       "subject": "drive-buy-number-modal-skips-kyc-card-wh"
     },
     {
+      "id": "flow:drive-changing-a-stack-s-browser-rate-saves-its-exact",
+      "statement": "Changing a stack’s browser rate saves its exact profile override indepe…",
+      "status": "proposed",
+      "subject": "drive-changing-a-stack-s-browser-rate-sa"
+    },
+    {
+      "id": "flow:drive-changing-a-stack-s-browser-rate-saves-its-exact-987ba7",
+      "statement": "Changing a stack’s browser rate saves its exact profile override indepe…",
+      "status": "proposed",
+      "subject": "drive-changing-a-stack-s-browser-rate-sa"
+    },
+    {
       "id": "flow:drive-console-entry-is-reachable-from-landing-so-kyc-s",
       "statement": "Console entry is reachable from landing so KYC settings can be opened a…",
       "status": "proposed",
@@ -55,10 +211,34 @@
       "subject": "drive-console-entry-is-reachable-so-bill"
     },
     {
+      "id": "flow:drive-handling-rules-publish-through-the-real-editor-r",
+      "statement": "Handling rules publish through the real editor; read-only tenants can i…",
+      "status": "proposed",
+      "subject": "drive-handling-rules-publish-through-the"
+    },
+    {
+      "id": "flow:drive-handling-rules-publish-through-the-real-editor-r-e8e16e",
+      "statement": "Handling rules publish through the real editor; read-only tenants can i…",
+      "status": "proposed",
+      "subject": "drive-handling-rules-publish-through-the"
+    },
+    {
+      "id": "flow:drive-marketing-visitors-can-inspect-relevant-calling",
+      "statement": "Marketing visitors can inspect relevant calling workflows, understand f…",
+      "status": "proposed",
+      "subject": "drive-marketing-visitors-can-inspect-rel"
+    },
+    {
       "id": "flow:drive-opening-talk-to-ai-shows-live-mic-modal-without",
       "statement": "Opening Talk to AI shows Live Mic modal without requesting microphone u…",
       "status": "proposed",
       "subject": "drive-opening-talk-to-ai-shows-live-mic"
+    },
+    {
+      "id": "flow:drive-overview-window-selection-reloads-real-server-an",
+      "statement": "Overview window selection reloads real server analytics for the chosen…",
+      "status": "proposed",
+      "subject": "drive-overview-window-selection-reloads"
     },
     {
       "id": "flow:drive-platform-admins-can-inspect-each-pstn-tier-s-sav",
@@ -217,6 +397,12 @@
       "subject": "unsorted"
     },
     {
+      "id": "inline:marketing-visitors-can-inspect-relevant-calling-11d7a177",
+      "statement": "Marketing visitors can inspect relevant calling workflows, understand f…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
       "id": "inline:no-react-hooks-crash-on-employees-after-the-earl-373a2153",
       "statement": "No React hooks crash on Employees after the early-return fix",
       "status": "proposed",
@@ -317,6 +503,12 @@
       "statement": "Choosing a voice tier saves its exact model and voice selection before…",
       "status": "proposed",
       "subject": "unsorted"
+    },
+    {
+      "id": "inline:changing-a-stack-s-browser-rate-saves-its-exact-33a80725",
+      "statement": "Changing a stack’s browser rate saves its exact profile override indepe…",
+      "status": "proved",
+      "subject": "voice-profiles"
     }
   ],
   "version": 1

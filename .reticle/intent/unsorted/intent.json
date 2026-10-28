@@ -663,6 +663,28 @@
       "subject": "unsorted",
       "updatedAt": 1790928068464
     },
+    "inline:marketing-visitors-can-inspect-relevant-calling-11d7a177": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "auth-modal"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793129259249,
+      "id": "inline:marketing-visitors-can-inspect-relevant-calling-11d7a177",
+      "provenBy": {
+        "at": 1793129863298,
+        "grade": "presence",
+        "runId": "drive-f0fc46cfbabec0e3",
+        "verdictId": "reticle_act_and_wait:1793129863298"
+      },
+      "state": "proved",
+      "statement": "Marketing visitors can inspect relevant calling workflows, understand follow-up limits, and enter workspace pricing through sign-in on desktop and mobile.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1793129863309
+    },
     "inline:no-react-hooks-crash-on-employees-after-the-earl-373a2153": {
       "binding": {
         "absent": true,

@@ -1,0 +1,144 @@
+{
+  "summary": {
+    "base": {
+      "trials": 8,
+      "empty": 8,
+      "empty_rate": 1.0
+    },
+    "non_empty_rule": {
+      "trials": 8,
+      "empty": 7,
+      "empty_rate": 0.875
+    }
+  },
+  "rows": [
+    {
+      "variant": "base",
+      "trial": 0,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 38,
+      "text": ""
+    },
+    {
+      "variant": "base",
+      "trial": 1,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 25,
+      "text": ""
+    },
+    {
+      "variant": "base",
+      "trial": 2,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 38,
+      "text": ""
+    },
+    {
+      "variant": "base",
+      "trial": 3,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 38,
+      "text": ""
+    },
+    {
+      "variant": "base",
+      "trial": 4,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 38,
+      "text": ""
+    },
+    {
+      "variant": "base",
+      "trial": 5,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 38,
+      "text": ""
+    },
+    {
+      "variant": "base",
+      "trial": 6,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 38,
+      "text": ""
+    },
+    {
+      "variant": "base",
+      "trial": 7,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 25,
+      "text": ""
+    },
+    {
+      "variant": "non_empty_rule",
+      "trial": 0,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 38,
+      "text": ""
+    },
+    {
+      "variant": "non_empty_rule",
+      "trial": 1,
+      "chars": 99,
+      "finish": "stop",
+      "output_tokens": 25,
+      "text": "No problem, I understand you are busy right now. When would be a good time for me to call you back?"
+    },
+    {
+      "variant": "non_empty_rule",
+      "trial": 2,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 38,
+      "text": ""
+    },
+    {
+      "variant": "non_empty_rule",
+      "trial": 3,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 39,
+      "text": ""
+    },
+    {
+      "variant": "non_empty_rule",
+      "trial": 4,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 39,
+      "text": ""
+    },
+    {
+      "variant": "non_empty_rule",
+      "trial": 5,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 38,
+      "text": ""
+    },
+    {
+      "variant": "non_empty_rule",
+      "trial": 6,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 29,
+      "text": ""
+    },
+    {
+      "variant": "non_empty_rule",
+      "trial": 7,
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 27,
+      "text": ""
+    }
+  ]
+}

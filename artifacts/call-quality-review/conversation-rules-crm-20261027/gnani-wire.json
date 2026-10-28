@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-10-27T18:39:23.550841+00:00",
+  "rows": [
+    {
+      "case": "A_neutral_run2",
+      "text": "Great news, your trial class is free.",
+      "bytes": 87040,
+      "duration_s": 2.72,
+      "rms": 2326.6,
+      "sha256": "d1102fd87556bfbd",
+      "transcript": ""
+    },
+    {
+      "case": "B_excited_run2",
+      "text": "<excited> Great news, your trial class is free.",
+      "bytes": 89600,
+      "duration_s": 2.8,
+      "rms": 2090.5,
+      "sha256": "960904642cd5a7dd",
+      "transcript": ""
+    },
+    {
+      "case": "H_control_secret",
+      "text": "I have something to tell you.",
+      "bytes": 56320,
+      "duration_s": 1.76,
+      "rms": 1900.1,
+      "sha256": "1d6ffb7de9cbbe59",
+      "transcript": ""
+    },
+    {
+      "case": "I_whispers",
+      "text": "<whispers> I have something to tell you.",
+      "bytes": 56320,
+      "duration_s": 1.76,
+      "rms": 689.7,
+      "sha256": "7d33c22da218241d",
+      "transcript": ""
+    },
+    {
+      "case": "J_control_price",
+      "text": "The course costs eight thousand rupees.",
+      "bytes": 79360,
+      "duration_s": 2.48,
+      "rms": 1840.9,
+      "sha256": "91e2ca3a36d77e51",
+      "transcript": ""
+    },
+    {
+      "case": "K_slow_mid",
+      "text": "The course costs <slow> eight thousand rupees.",
+      "bytes": 86230,
+      "duration_s": 2.695,
+      "rms": 2133.1,
+      "sha256": "60c100b6c1533843",
+      "transcript": ""
+    }
+  ],
+  "ratios": {
+    "I_whispers_vs_H_control_secret": {
+      "duration": 1.0,
+      "rms": 0.363
+    },
+    "K_slow_mid_vs_J_control_price": {
+      "duration": 1.087,
+      "rms": 1.159
+    }
+  }
+}

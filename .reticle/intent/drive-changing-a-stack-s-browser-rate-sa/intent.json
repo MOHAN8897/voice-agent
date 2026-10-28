@@ -1,0 +1,36 @@
+{
+  "intents": {
+    "flow:drive-changing-a-stack-s-browser-rate-saves-its-exact": {
+      "binding": {
+        "flow": "drive-changing-a-stack-s-browser-rate-saves-its-exact"
+      },
+      "declaredAt": 1793111871793,
+      "id": "flow:drive-changing-a-stack-s-browser-rate-saves-its-exact",
+      "state": "bound",
+      "statement": "Changing a stack’s browser rate saves its exact profile override independently of phone pricing.",
+      "status": "proposed",
+      "subject": "drive-changing-a-stack-s-browser-rate-sa",
+      "surface": {
+        "flow": "drive-changing-a-stack-s-browser-rate-saves-its-exact"
+      },
+      "updatedAt": 1793111871850
+    },
+    "flow:drive-changing-a-stack-s-browser-rate-saves-its-exact-987ba7": {
+      "binding": {
+        "flow": "drive-changing-a-stack-s-browser-rate-saves-its-exact-987ba7"
+      },
+      "declaredAt": 1793112063637,
+      "id": "flow:drive-changing-a-stack-s-browser-rate-saves-its-exact-987ba7",
+      "state": "bound",
+      "statement": "Changing a stack’s browser rate saves its exact profile override independently of phone pricing.",
+      "status": "proposed",
+      "subject": "drive-changing-a-stack-s-browser-rate-sa",
+      "surface": {
+        "flow": "drive-changing-a-stack-s-browser-rate-saves-its-exact-987ba7"
+      },
+      "updatedAt": 1793112063693
+    }
+  },
+  "subject": "drive-changing-a-stack-s-browser-rate-sa",
+  "version": 1
+}

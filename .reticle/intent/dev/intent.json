@@ -1,5 +1,28 @@
 {
   "intents": {
+    "inline:admin-previews-edited-gst-rules-without-saving-t-f4e359ad": {
+      "binding": {
+        "contains": "INR 1200.00",
+        "kind": "text",
+        "visible": true
+      },
+      "declaredAt": 1793111871197,
+      "id": "inline:admin-previews-edited-gst-rules-without-saving-t-f4e359ad",
+      "provenBy": {
+        "at": 1793112063434,
+        "grade": "presence",
+        "runId": "drive-18b0ca116baadda4",
+        "verdictId": "reticle_act_and_wait:1793112063434"
+      },
+      "state": "proved",
+      "statement": "Admin previews edited GST rules without saving them or creating a payment.",
+      "status": "proved",
+      "subject": "dev",
+      "surface": {
+        "route": "/dev/stack"
+      },
+      "updatedAt": 1793112063474
+    },
     "inline:platform-admins-can-inspect-each-pstn-tier-s-sav-26368601": {
       "binding": {
         "kind": "allOf",

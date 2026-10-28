@@ -1,0 +1,136 @@
+{
+  "summary": {
+    "D_ack_sanctioned": {
+      "trials": 8,
+      "empty": 8,
+      "empty_rate": 1.0
+    },
+    "E_plain_model": {
+      "trials": 4,
+      "empty": 1,
+      "empty_rate": 0.25
+    }
+  },
+  "rows": [
+    {
+      "variant": "D_ack_sanctioned",
+      "trial": 0,
+      "model": "sarvam-105b-conversations",
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 33,
+      "cached_tokens": 4448,
+      "text": ""
+    },
+    {
+      "variant": "D_ack_sanctioned",
+      "trial": 1,
+      "model": "sarvam-105b-conversations",
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 29,
+      "cached_tokens": 4448,
+      "text": ""
+    },
+    {
+      "variant": "D_ack_sanctioned",
+      "trial": 2,
+      "model": "sarvam-105b-conversations",
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 33,
+      "cached_tokens": 5056,
+      "text": ""
+    },
+    {
+      "variant": "D_ack_sanctioned",
+      "trial": 3,
+      "model": "sarvam-105b-conversations",
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 29,
+      "cached_tokens": 4448,
+      "text": ""
+    },
+    {
+      "variant": "D_ack_sanctioned",
+      "trial": 4,
+      "model": "sarvam-105b-conversations",
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 29,
+      "cached_tokens": 5056,
+      "text": ""
+    },
+    {
+      "variant": "D_ack_sanctioned",
+      "trial": 5,
+      "model": "sarvam-105b-conversations",
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 32,
+      "cached_tokens": 5056,
+      "text": ""
+    },
+    {
+      "variant": "D_ack_sanctioned",
+      "trial": 6,
+      "model": "sarvam-105b-conversations",
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 38,
+      "cached_tokens": 5056,
+      "text": ""
+    },
+    {
+      "variant": "D_ack_sanctioned",
+      "trial": 7,
+      "model": "sarvam-105b-conversations",
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 38,
+      "cached_tokens": 5056,
+      "text": ""
+    },
+    {
+      "variant": "E_plain_model",
+      "trial": 0,
+      "model": "sarvam-105b",
+      "chars": 0,
+      "finish": "stop",
+      "output_tokens": 32,
+      "cached_tokens": 0,
+      "text": ""
+    },
+    {
+      "variant": "E_plain_model",
+      "trial": 1,
+      "model": "sarvam-105b",
+      "chars": 116,
+      "finish": "stop",
+      "output_tokens": 27,
+      "cached_tokens": 5024,
+      "text": "I understand you are busy right now. I can arrange a callback later if you would like. What time works best for you?"
+    },
+    {
+      "variant": "E_plain_model",
+      "trial": 2,
+      "model": "sarvam-105b",
+      "chars": 134,
+      "finish": "stop",
+      "output_tokens": 32,
+      "cached_tokens": 0,
+      "text": "I understand you are busy right now. I can arrange a callback later if that works for you. When would be a good time to call you back?"
+    },
+    {
+      "variant": "E_plain_model",
+      "trial": 3,
+      "model": "sarvam-105b",
+      "chars": 90,
+      "finish": "stop",
+      "output_tokens": 22,
+      "cached_tokens": 5024,
+      "text": "I understand you are busy. I can try calling you back later, what time works best for you?"
+    }
+  ]
+}

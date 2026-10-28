@@ -1,0 +1,168 @@
+[
+  {
+    "flow": "admin_stack_loaded",
+    "next": "Record what the user asked, once per task, verbatim: reticle_run { tool: \"reticle_intent\", args: { action: \"declare\", request: \"<their words>\" } }. It travels with every run.",
+    "verified": "yes",
+    "verifiedReason": "proved",
+    "because": "assertion held at presence grade with no channel disagreeing, but coverage was PARTIAL \u2014 see `coverage` for what went unobserved",
+    "pass": true,
+    "evidence": [
+      {
+        "ref": "e3",
+        "role": "spinbutton",
+        "name": "Web agent price (\u20b9/min)",
+        "visible": true,
+        "value": "3",
+        "states": [
+          "present",
+          "visible",
+          "enabled"
+        ]
+      }
+    ],
+    "screenshot": {
+      "path": "D:\\voice agent\\.reticle\\visual\\runs\\drive-18b0ca116baadda4\\0001-assert.jpg"
+    },
+    "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell.",
+    "notices": [
+      "Tell the user, once, in one line after your answer: this result is only on this machine; `reticle connect` saves it to the Reticle dashboard and lets Reticle Harness test the whole app \u2014 a new account gets free credits to start.",
+      "When you stop driving, call reticle_session {action:\"yield\", mode:\"waiting\"|\"ask\"}. The panel reads \"live\" until you do. {action:\"end\"} only when the task is done: it is final."
+    ]
+  },
+  {
+    "flow": "admin_web_rate_save_mocked",
+    "verified": "yes",
+    "verifiedReason": "proved",
+    "because": "assertion held at net grade with no channel disagreeing, but coverage was PARTIAL \u2014 see `coverage` for what went unobserved",
+    "effect": {
+      "effect": {
+        "valueChanged": true,
+        "domMutatedWithin": 38,
+        "appeared": "Typing\u2026"
+      }
+    },
+    "verdict": {
+      "pass": true,
+      "evidence": [
+        {
+          "id": "n13",
+          "method": "PUT",
+          "url": "/api/dev/stack/voice-profiles/low",
+          "status": 200,
+          "ok": true
+        },
+        [
+          {
+            "ref": "e35",
+            "role": "generic",
+            "name": "",
+            "visible": true,
+            "text": "\u2713 Auto-saved & applied globally",
+            "states": [
+              "present",
+              "visible",
+              "enabled"
+            ]
+          }
+        ]
+      ]
+    },
+    "summary": {
+      "stateUnwatched": true
+    },
+    "instrumentationGaps": [
+      {
+        "kind": "intent-undischarged",
+        "missing": "this verdict passed, and 5 intent(s) declared in this run are still unproved",
+        "cost": "a green settles what it asserted, not what the run set out to do \u2014 reporting done here rests on the change looking right rather than on anything having checked it",
+        "fix": "draw a verdict whose `until` asserts the intent itself, then it discharges \u2014 or call reticle_run({ tool: \"reticle_context\" }) to see exactly what is still owed"
+      }
+    ],
+    "engineBlindSpots": [
+      {
+        "kind": "claim-arithmetic-unchecked",
+        "detail": "the claim \"Buy modal quotes the same $4.00/month platform DID rate as list rows and blocks purchase when the wallet cannot cover it.\" states an amount, and no verdict ran a computed comparison against it"
+      }
+    ],
+    "honesty": {
+      "grade": "net",
+      "coverage": {
+        "partial": true,
+        "note": "partial \u2014 fetch was already wrapped before Reticle, so recorded requests may differ from what was sent, no subscribable store is registered, so NO state change is observed \u2014 an empty stateDiffs here means unwatched, not unchanged (import { registerStore } from '@reticlehq/browser' and call registerStore(name, store) with a subscribable store; for component-local React state, import { useReticleStore } from '@reticlehq/react/store' and call useReticleStore(name, value), or inspect it with reticle_look { action: 'state', ref: '...' })"
+      },
+      "integrity": {
+        "clean": true,
+        "issues": []
+      }
+    },
+    "blastRadius": [
+      "net GET /api/auth/dev-me",
+      "net GET /api/dev/stack/voice-profiles",
+      "net GET /api/dev/admin/billing-rates"
+    ],
+    "since": 2218,
+    "screenshot": {
+      "path": "D:\\voice agent\\.reticle\\visual\\runs\\drive-18b0ca116baadda4\\0003-act_and_wait.jpg"
+    },
+    "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell.",
+    "ref": "e3",
+    "changed": "PUT /api/dev/stack/voice-profiles/low 200, GET /api/auth/dev-me 200, GET /api/dev/stack/voice-profiles 200, GET /api/dev/admin/billing-rates 200 \u00b7 fields Web agent price (\u20b9/min)"
+  },
+  {
+    "flow": "admin_tax_draft_preview_mocked",
+    "next": "Done driving? reticle_session { action: \"yield\" } hands the tab back.",
+    "verified": "yes",
+    "verifiedReason": "proved",
+    "because": "assertion held at presence grade with no channel disagreeing, but coverage was PARTIAL \u2014 see `coverage` for what went unobserved",
+    "effect": {
+      "performed": true,
+      "inputMode": "real"
+    },
+    "verdict": {
+      "pass": true,
+      "evidence": [
+        {
+          "ref": "e40",
+          "role": "generic",
+          "name": "",
+          "visible": true,
+          "text": "INR 1200.00",
+          "states": [
+            "present",
+            "visible",
+            "enabled"
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "stateUnwatched": true
+    },
+    "engineBlindSpots": [
+      {
+        "kind": "claim-arithmetic-unchecked",
+        "detail": "the claim \"Buy modal quotes the same $4.00/month platform DID rate as list rows and blocks purchase when the wallet cannot cover it.\" states an amount, and no verdict ran a computed comparison against it"
+      }
+    ],
+    "honesty": {
+      "grade": "presence",
+      "coverage": {
+        "partial": true,
+        "note": "partial \u2014 fetch was already wrapped before Reticle, so recorded requests may differ from what was sent, no subscribable store is registered, so NO state change is observed \u2014 an empty stateDiffs here means unwatched, not unchanged (import { registerStore } from '@reticlehq/browser' and call registerStore(name, store) with a subscribable store; for component-local React state, import { useReticleStore } from '@reticlehq/react/store' and call useReticleStore(name, value), or inspect it with reticle_look { action: 'state', ref: '...' }), 1 virtualized unmounted row unobserved"
+      },
+      "integrity": {
+        "clean": true,
+        "issues": []
+      }
+    },
+    "blastRadius": [
+      "net POST /api/dev/admin/payments/tax-preview"
+    ],
+    "since": 4478,
+    "screenshot": {
+      "path": "D:\\voice agent\\.reticle\\visual\\runs\\drive-18b0ca116baadda4\\0007-act_and_wait.jpg"
+    },
+    "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell.",
+    "changed": "POST /api/dev/admin/payments/tax-preview 200"
+  }
+]

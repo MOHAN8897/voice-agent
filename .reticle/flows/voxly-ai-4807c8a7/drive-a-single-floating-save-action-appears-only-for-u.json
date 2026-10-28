@@ -1,0 +1,615 @@
+{
+  "version": 2,
+  "name": "drive-a-single-floating-save-action-appears-only-for-u",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1793112116952,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "script-textarea",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1538,
+          "column": 17
+        }
+      },
+      "args": {
+        "value": "Hello, how can I help?\nApproved script edit. @cont"
+      },
+      "action": "fill",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-save"
+            },
+            "state": "visible"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "script-variable-suggestions"
+            },
+            "state": "visible"
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-discard",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-save"
+        },
+        "absent": true
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-settings",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1308,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-settings-name"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-settings-name",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentSettingsPanel.jsx",
+          "line": 381,
+          "column": 13
+        }
+      },
+      "args": {
+        "value": "Revised agent name"
+      },
+      "action": "fill",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-save"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-discard",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-save"
+        },
+        "absent": true
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-calls",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1308,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-calls-panel-tab-leads"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-calls-panel-tab-leads",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentCallsPanel.jsx",
+          "line": 74,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "lead-row-fixture-lead"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "searchbox",
+        "name": "Search leads"
+      },
+      "args": {
+        "value": "missing"
+      },
+      "action": "fill",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 143
+      },
+      "expect": {
+        "kind": "text",
+        "contains": "No leads match these filters",
+        "visible": true
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Clear filters"
+      },
+      "args": {},
+      "action": "click",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "lead-row-fixture-lead"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "Select Example Enquiry",
+        "nth": 0,
+        "of": 2
+      },
+      "args": {},
+      "action": "check",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 166
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "button",
+          "name": "Create campaign (1)"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Create campaign (1)"
+      },
+      "args": {},
+      "action": "click",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "campaign-selected-leads"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {},
+      "action": "click",
+      "source": {
+        "file": "src/console/ui/Modal.jsx",
+        "line": 98
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "campaign-selected-leads"
+        },
+        "absent": true
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Example Enquiry",
+        "nth": 0,
+        "of": 2
+      },
+      "args": {},
+      "action": "click",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 167
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "label": "Pipeline stage"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "combobox",
+        "name": "Pipeline stage New Contacted Qualified Meeting Booked Converted Unqualified"
+      },
+      "args": {
+        "value": "Converted"
+      },
+      "action": "select",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 179
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "checkbox",
+          "name": "I confirm this lead became a customer."
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "I confirm this lead became a customer."
+      },
+      "args": {},
+      "action": "check",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 180
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "button",
+          "name": "Save lead changes"
+        },
+        "state": "enabled"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Save lead changes"
+      },
+      "args": {},
+      "action": "click",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "checkbox",
+          "name": "I confirm this lead became a customer."
+        },
+        "absent": true
+      },
+      "timeoutMs": 15000,
+      "page": "/",
+      "writes": true
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {},
+      "action": "click",
+      "source": {
+        "file": "src/console/ui/Modal.jsx",
+        "line": 98
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "dialog"
+        },
+        "absent": true
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-voice",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1308,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "voice-stack-selector"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "combobox",
+        "name": "Voice style for Economical"
+      },
+      "args": {
+        "value": "Conversational"
+      },
+      "action": "select",
+      "source": {
+        "file": "src/console/modules/agent-workspace/AgentVoicePanel.jsx",
+        "line": 1153
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "button",
+          "name": "Male (0)"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Male (0)"
+      },
+      "args": {},
+      "action": "click",
+      "source": {
+        "file": "src/console/modules/agent-workspace/AgentVoicePanel.jsx",
+        "line": 1167
+      },
+      "expect": {
+        "kind": "text",
+        "visible": true,
+        "contains": "Telugu voices match your filters",
+        "satisfies": {
+          "property": "matchesPattern",
+          "pattern": "\\d[\\d,.]* Telugu voices match your filters"
+        }
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "sidebar-wallet-pill",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 384,
+          "column": 9
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Configured GST checkout terms.",
+        "visible": true
+      },
+      "timeoutMs": 15000,
+      "page": "/",
+      "writes": true
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "add-funds-submit",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "visible": true,
+        "contains": "added to your wallet.",
+        "satisfies": {
+          "property": "matchesPattern",
+          "pattern": "₹\\d[\\d,.]* added to your wallet\\."
+        }
+      },
+      "timeoutMs": 15000,
+      "page": "/",
+      "writes": true
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Done"
+      },
+      "args": {},
+      "action": "click",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "add-funds-modal"
+        },
+        "absent": true
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-test-call",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "visible": true,
+        "contains": "/min",
+        "satisfies": {
+          "property": "matchesPattern",
+          "pattern": "₹\\d[\\d,.]*/min"
+        }
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "A single floating save action appears only for unsaved agent edits, and discard restores the saved configuration.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "mcp",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-a-single-floating-save-action-appears-only-for-u"
+}

@@ -1,0 +1,22 @@
+{
+  "intents": {
+    "inline:marketing-visitors-can-inspect-relevant-calling-11d7a177": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "auth-modal"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793129197390,
+      "id": "inline:marketing-visitors-can-inspect-relevant-calling-11d7a177",
+      "state": "bound",
+      "statement": "Marketing visitors can inspect relevant calling workflows, understand follow-up limits, and enter workspace pricing through sign-in on desktop and mobile.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1793129211195
+    }
+  },
+  "subject": "unsorted",
+  "version": 1
+}

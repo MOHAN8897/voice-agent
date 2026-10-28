@@ -1,0 +1,40 @@
+{
+  "intents": {
+    "inline:overview-window-selection-reloads-real-server-an-21d1cf4d": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "GET",
+            "status": 200,
+            "urlContains": "/analytics?days=7"
+          },
+          {
+            "contains": "Calls (7d)",
+            "kind": "text",
+            "visible": true
+          }
+        ]
+      },
+      "declaredAt": 1793086899751,
+      "id": "inline:overview-window-selection-reloads-real-server-an-21d1cf4d",
+      "provenBy": {
+        "at": 1793088067201,
+        "grade": "net",
+        "runId": "drive-d841e050b01ce26a",
+        "verdictId": "reticle_act_and_wait:1793088067201"
+      },
+      "state": "proved",
+      "statement": "Overview window selection reloads real server analytics for the chosen date range.",
+      "status": "proved",
+      "subject": "analytics",
+      "surface": {
+        "route": "/dev"
+      },
+      "updatedAt": 1793088067246
+    }
+  },
+  "subject": "analytics",
+  "version": 1
+}

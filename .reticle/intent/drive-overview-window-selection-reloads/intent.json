@@ -1,0 +1,21 @@
+{
+  "intents": {
+    "flow:drive-overview-window-selection-reloads-real-server-an": {
+      "binding": {
+        "flow": "drive-overview-window-selection-reloads-real-server-an"
+      },
+      "declaredAt": 1793086901081,
+      "id": "flow:drive-overview-window-selection-reloads-real-server-an",
+      "state": "bound",
+      "statement": "Overview window selection reloads real server analytics for the chosen date range.",
+      "status": "proposed",
+      "subject": "drive-overview-window-selection-reloads",
+      "surface": {
+        "flow": "drive-overview-window-selection-reloads-real-server-an"
+      },
+      "updatedAt": 1793086901232
+    }
+  },
+  "subject": "drive-overview-window-selection-reloads",
+  "version": 1
+}

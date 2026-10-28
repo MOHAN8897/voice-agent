@@ -14,6 +14,251 @@
       },
       "updatedAt": 1792865702098
     },
+    "inline:a-single-floating-save-action-appears-only-for-u-17fb888a": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "lead-row-fixture-lead"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793105598133,
+      "id": "inline:a-single-floating-save-action-appears-only-for-u-17fb888a",
+      "provenBy": {
+        "at": 1793112107874,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112107874"
+      },
+      "state": "proved",
+      "statement": "A single floating save action appears only for unsaved agent edits, and discard restores the saved configuration.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1793112107893
+    },
+    "inline:agent-workspace-navigation-exposes-expansion-and-8bd1fe5a": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-settings-save-bar"
+        }
+      },
+      "declaredAt": 1793087435060,
+      "id": "inline:agent-workspace-navigation-exposes-expansion-and-8bd1fe5a",
+      "provenBy": {
+        "at": 1793088072378,
+        "grade": "presence",
+        "runId": "drive-2d4ef5bc6cafed5e",
+        "verdictId": "reticle_act_and_wait:1793088072378"
+      },
+      "state": "proved",
+      "statement": "Agent workspace navigation exposes expansion and the settings save action without losing the editor.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1793088072423
+    },
+    "inline:clearing-lead-filters-restores-contacts-without-9467ccf0": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "lead-row-fixture-lead"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793106311071,
+      "id": "inline:clearing-lead-filters-restores-contacts-without-9467ccf0",
+      "provenBy": {
+        "at": 1793112108900,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112108900"
+      },
+      "state": "proved",
+      "statement": "Clearing lead filters restores contacts without changing their pipeline metadata.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1793112108922
+    },
+    "inline:closing-campaign-setup-returns-to-the-lead-pipel-9f4a587e": {
+      "binding": {
+        "absent": true,
+        "kind": "element",
+        "query": {
+          "testid": "campaign-selected-leads"
+        }
+      },
+      "declaredAt": 1793106311803,
+      "id": "inline:closing-campaign-setup-returns-to-the-lead-pipel-9f4a587e",
+      "provenBy": {
+        "at": 1793112110532,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112110532"
+      },
+      "state": "proved",
+      "statement": "Closing campaign setup returns to the lead pipeline.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/Modal.jsx"
+        ]
+      },
+      "updatedAt": 1793112110549
+    },
+    "inline:closing-details-returns-to-the-pipeline-2b396ca9": {
+      "binding": {
+        "absent": true,
+        "kind": "element",
+        "query": {
+          "role": "dialog"
+        }
+      },
+      "declaredAt": 1793111013552,
+      "id": "inline:closing-details-returns-to-the-pipeline-2b396ca9",
+      "provenBy": {
+        "at": 1793112113728,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112113728"
+      },
+      "state": "proved",
+      "statement": "Closing details returns to the pipeline.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/Modal.jsx"
+        ]
+      },
+      "updatedAt": 1793112113746
+    },
+    "inline:collapsing-navigation-frees-workspace-width-whil-7cfac69e": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "name": "Expand sidebar",
+          "role": "button"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793040930532,
+      "id": "inline:collapsing-navigation-frees-workspace-width-whil-7cfac69e",
+      "provenBy": {
+        "at": 1793044260264,
+        "grade": "presence",
+        "runId": "drive-sf4355e3b-d812-4cbf-a821-a60deee20eb9",
+        "verdictId": "reticle_act_and_wait:1793044260264"
+      },
+      "state": "proved",
+      "statement": "Collapsing navigation frees workspace width while preserving accessible navigation.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1793044260292
+    },
+    "inline:confirmed-conversions-can-be-saved-60656ddf": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "name": "Save lead changes",
+          "role": "button"
+        },
+        "state": "enabled"
+      },
+      "declaredAt": 1793111011797,
+      "id": "inline:confirmed-conversions-can-be-saved-60656ddf",
+      "provenBy": {
+        "at": 1793112110982,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112110982"
+      },
+      "state": "proved",
+      "statement": "Confirmed conversions can be saved.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/LeadsModule.jsx"
+        ]
+      },
+      "updatedAt": 1793112111007
+    },
+    "inline:conversion-requires-tenant-confirmation-before-s-02f8b2a3": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "name": "I confirm this lead became a customer.",
+          "role": "checkbox"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793111011626,
+      "id": "inline:conversion-requires-tenant-confirmation-before-s-02f8b2a3",
+      "provenBy": {
+        "at": 1793112110851,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112110851"
+      },
+      "state": "proved",
+      "statement": "Conversion requires tenant confirmation before saving.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/LeadsModule.jsx"
+        ]
+      },
+      "updatedAt": 1793112110871
+    },
+    "inline:handling-rules-publish-through-the-real-editor-r-b60839f7": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "label": "Pipeline stage"
+        },
+        "state": "disabled"
+      },
+      "declaredAt": 1793126968483,
+      "id": "inline:handling-rules-publish-through-the-real-editor-r-b60839f7",
+      "provenBy": {
+        "at": 1793127181003,
+        "grade": "presence",
+        "runId": "drive-48bcd2b3d9cb583d",
+        "verdictId": "reticle_act_and_wait:1793127181003"
+      },
+      "state": "proved",
+      "statement": "Handling rules publish through the real editor; read-only tenants can inspect CRM contacts without mutation controls.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/AgentStudioModule.jsx"
+        ]
+      },
+      "updatedAt": 1793127181025
+    },
     "inline:indian-tenants-see-indian-consent-and-privacy-gu-6d37e14a": {
       "binding": {
         "kind": "allOf",
@@ -51,6 +296,193 @@
         ]
       },
       "updatedAt": 1792865692913
+    },
+    "inline:lead-details-expose-the-current-pipeline-stage-99e69a06": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "label": "Pipeline stage"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793111011475,
+      "id": "inline:lead-details-expose-the-current-pipeline-stage-99e69a06",
+      "provenBy": {
+        "at": 1793112110659,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112110659"
+      },
+      "state": "proved",
+      "statement": "Lead details expose the current pipeline stage.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/LeadsModule.jsx"
+        ]
+      },
+      "updatedAt": 1793112110683
+    },
+    "inline:lead-search-filters-the-server-backed-pipeline-a-ded48eec": {
+      "binding": {
+        "contains": "No leads match these filters",
+        "kind": "text",
+        "visible": true
+      },
+      "declaredAt": 1793106310404,
+      "id": "inline:lead-search-filters-the-server-backed-pipeline-a-ded48eec",
+      "provenBy": {
+        "at": 1793112108475,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112108475"
+      },
+      "state": "proved",
+      "statement": "Lead search filters the server-backed pipeline and exposes a clear empty state.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/LeadsModule.jsx"
+        ]
+      },
+      "updatedAt": 1793112108496
+    },
+    "inline:saved-conversion-becomes-the-lead-s-persisted-pi-9fc69722": {
+      "binding": {
+        "absent": true,
+        "kind": "element",
+        "query": {
+          "name": "I confirm this lead became a customer.",
+          "role": "checkbox"
+        }
+      },
+      "declaredAt": 1793111011946,
+      "id": "inline:saved-conversion-becomes-the-lead-s-persisted-pi-9fc69722",
+      "provenBy": {
+        "at": 1793112112554,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112112554"
+      },
+      "state": "proved",
+      "statement": "Saved conversion becomes the lead’s persisted pipeline stage.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1793112112576
+    },
+    "inline:selected-leads-open-the-existing-campaign-review-c35caae9": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "campaign-selected-leads"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793106311617,
+      "id": "inline:selected-leads-open-the-existing-campaign-review-c35caae9",
+      "provenBy": {
+        "at": 1793112109169,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112109169"
+      },
+      "state": "proved",
+      "statement": "Selected leads open the existing campaign review with their contact metadata intact.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1793112109190
+    },
+    "inline:selecting-callable-leads-makes-them-available-fo-27fb3d5f": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "name": "Create campaign (1)",
+          "role": "button"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793106311489,
+      "id": "inline:selecting-callable-leads-makes-them-available-fo-27fb3d5f",
+      "provenBy": {
+        "at": 1793112109033,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112109033"
+      },
+      "state": "proved",
+      "statement": "Selecting callable leads makes them available for campaign setup.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/LeadsModule.jsx"
+        ]
+      },
+      "updatedAt": 1793112109051
+    },
+    "inline:the-voice-catalog-remains-available-after-lead-w-92e948fa": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "voice-stack-selector"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793106312976,
+      "id": "inline:the-voice-catalog-remains-available-after-lead-w-92e948fa",
+      "provenBy": {
+        "at": 1793112113889,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112113889"
+      },
+      "state": "proved",
+      "statement": "The voice catalog remains available after lead work.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/modules/AgentStudioModule.jsx"
+        ]
+      },
+      "updatedAt": 1793112113908
+    },
+    "inline:wallet-checkout-displays-the-configured-tax-term-6807c222": {
+      "binding": {
+        "contains": "₹3.00/min",
+        "kind": "text",
+        "visible": true
+      },
+      "declaredAt": 1793111015175,
+      "id": "inline:wallet-checkout-displays-the-configured-tax-term-6807c222",
+      "provenBy": {
+        "at": 1793112116846,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112116846"
+      },
+      "state": "proved",
+      "statement": "Wallet checkout displays the configured tax terms and credits only the verified taxable amount.",
+      "status": "proved",
+      "subject": "console",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ]
+      },
+      "updatedAt": 1793112116895
     }
   },
   "subject": "console",

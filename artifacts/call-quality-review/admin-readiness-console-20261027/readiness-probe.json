@@ -1,0 +1,33 @@
+{
+  "revision": 43,
+  "checks": {
+    "sarvamModelAccess": {
+      "passed": true,
+      "detail": "Two completed text responses from the exact saved model."
+    },
+    "sttVerified": {
+      "passed": true,
+      "detail": "Streaming recognition returned a final transcript for synthesized test speech."
+    },
+    "ttsCatalogVerified": {
+      "passed": true,
+      "detail": "All model/voice/locale mappings checked; each speech model returned PCM."
+    },
+    "toolsVerified": {
+      "passed": true,
+      "detail": "Native tool name and arguments decoded; no tool was executed."
+    },
+    "capacityVerified": {
+      "passed": true,
+      "detail": "Two concurrent synthetic text turns passed; server call limit is 20. This is a smoke check, not a peak-load certification."
+    },
+    "mediaFormatsVerified": {
+      "passed": true,
+      "detail": "Synthesized 16 kHz PCM encoded to 8 kHz G.711 and decoded successfully. No carrier call made."
+    },
+    "credentialRefConfigured": {
+      "passed": true,
+      "detail": "Configured server credential references and approved stage tuples checked."
+    }
+  }
+}

@@ -1,0 +1,35 @@
+[
+  {
+    "flow": "overview_loaded",
+    "verified": "yes",
+    "reason": "proved"
+  },
+  {
+    "flow": "overview_window",
+    "verified": "yes",
+    "pass": true,
+    "reason": "proved",
+    "error": null
+  },
+  {
+    "flow": "workspace_auto_collapse",
+    "verified": "yes",
+    "fixtures": true
+  },
+  {
+    "flow": "workspace_expand",
+    "verified": "yes",
+    "pass": true,
+    "version_skew": null,
+    "fixtures": true,
+    "error": null
+  },
+  {
+    "flow": "workspace_settings",
+    "verified": "yes",
+    "pass": true,
+    "version_skew": null,
+    "fixtures": true,
+    "error": null
+  }
+]

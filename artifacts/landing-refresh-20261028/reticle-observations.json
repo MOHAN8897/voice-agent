@@ -1,0 +1,252 @@
+[
+  {
+    "viewport": "desktop",
+    "channel": "network",
+    "result": {
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_step1.mp3",
+          "status": 206,
+          "ms": 6
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_step2.mp3",
+          "status": 206,
+          "ms": 6
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_step3.mp3",
+          "status": 206,
+          "ms": 6
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_think.mp3",
+          "status": 206,
+          "ms": 6
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_step4.mp3",
+          "status": 206,
+          "ms": 6
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_celebrate.mp3",
+          "status": 206,
+          "ms": 6
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_dance.mp3",
+          "status": 206,
+          "ms": 10
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_step5.mp3",
+          "status": 206,
+          "ms": 10
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_double_wave.mp3",
+          "status": 206,
+          "ms": 10
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_surprise.mp3",
+          "status": 206,
+          "ms": 10
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_wave.mp3",
+          "status": 206,
+          "ms": 14
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_pouty.mp3",
+          "status": 206,
+          "ms": 19
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_roll.mp3",
+          "status": 206,
+          "ms": 19
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/api/auth/google/config",
+          "status": 200,
+          "contentType": "application/json",
+          "ms": 25
+        }
+      ],
+      "total": 94,
+      "droppedOldest": 64,
+      "assetsFolded": {
+        "count": 16,
+        "bytes": 1787,
+        "sample": [
+          "http://127.0.0.1:5173/src/lib/studioScriptHelpers.js?t=1793126909025",
+          "http://127.0.0.1:5173/images/Dialtact_call_assistant_fallback.png",
+          "http://127.0.0.1:5173/images/landing/workspace-preview.png"
+        ],
+        "why": "successful GETs of build output (modules, styles, maps, Vite plumbing). They carry no verdict \u2014 this is the bundler talking to itself, not the app under test.",
+        "how": "pass assets:true to list them, or name what you mean with urlContains / method / status."
+      },
+      "cost": {
+        "bytes": 1923,
+        "tokens": 481
+      },
+      "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell."
+    }
+  },
+  {
+    "viewport": "desktop",
+    "channel": "console",
+    "result": {
+      "logs": [],
+      "observed": true,
+      "note": "no console lines; the observation ran and found none, which is a result, not a missing reading \u2014 this window starts where the SDK attached, and the console channel does not exist until then \u2014 anything logged during first render (or before a dynamically-imported connect ran) was never captured, so a clean read here cannot tell a silent page apart from one that logged before anything was watching; drive the page and re-check, or assert on what the error produces",
+      "cost": {
+        "bytes": 505,
+        "tokens": 126
+      },
+      "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell."
+    }
+  },
+  {
+    "viewport": "mobile",
+    "channel": "network",
+    "result": {
+      "calls": [
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_step1.mp3",
+          "status": 206,
+          "ms": 7
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_step2.mp3",
+          "status": 206,
+          "ms": 7
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_step3.mp3",
+          "status": 206,
+          "ms": 7
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_think.mp3",
+          "status": 206,
+          "ms": 6
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_step4.mp3",
+          "status": 206,
+          "ms": 6
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_celebrate.mp3",
+          "status": 206,
+          "ms": 6
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_dance.mp3",
+          "status": 206,
+          "ms": 13
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_step5.mp3",
+          "status": 206,
+          "ms": 13
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_double_wave.mp3",
+          "status": 206,
+          "ms": 12
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_surprise.mp3",
+          "status": 206,
+          "ms": 12
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_wave.mp3",
+          "status": 206,
+          "ms": 18
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_pouty.mp3",
+          "status": 206,
+          "ms": 24
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/audio/voxly/hero_roll.mp3",
+          "status": 206,
+          "ms": 23
+        },
+        {
+          "method": "GET",
+          "url": "http://127.0.0.1:5173/api/auth/google/config",
+          "status": 200,
+          "contentType": "application/json",
+          "ms": 14
+        }
+      ],
+      "total": 94,
+      "droppedOldest": 64,
+      "assetsFolded": {
+        "count": 16,
+        "bytes": 1793,
+        "sample": [
+          "http://127.0.0.1:5173/src/lib/studioScriptHelpers.js?t=1793126909025",
+          "http://127.0.0.1:5173/images/Dialtact_call_assistant_fallback.png",
+          "http://127.0.0.1:5173/src/three/VoxlyScene.jsx"
+        ],
+        "why": "successful GETs of build output (modules, styles, maps, Vite plumbing). They carry no verdict \u2014 this is the bundler talking to itself, not the app under test.",
+        "how": "pass assets:true to list them, or name what you mean with urlContains / method / status."
+      },
+      "cost": {
+        "bytes": 1911,
+        "tokens": 478
+      },
+      "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell."
+    }
+  },
+  {
+    "viewport": "mobile",
+    "channel": "console",
+    "result": {
+      "logs": [],
+      "observed": true,
+      "note": "no console lines; the observation ran and found none, which is a result, not a missing reading \u2014 this window starts where the SDK attached, and the console channel does not exist until then \u2014 anything logged during first render (or before a dynamically-imported connect ran) was never captured, so a clean read here cannot tell a silent page apart from one that logged before anything was watching; drive the page and re-check, or assert on what the error produces",
+      "cost": {
+        "bytes": 505,
+        "tokens": 126
+      },
+      "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell."
+    }
+  }
+]

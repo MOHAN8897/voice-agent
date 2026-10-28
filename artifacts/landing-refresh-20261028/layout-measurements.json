@@ -1,0 +1,47 @@
+{
+  "sections": [
+    {
+      "id": "talk-to-ai",
+      "x": 0,
+      "y": 80,
+      "width": 1440,
+      "height": 730.5
+    },
+    {
+      "id": "capabilities",
+      "x": 0,
+      "y": 79.5,
+      "width": 1440,
+      "height": 1480.9375
+    },
+    {
+      "id": "industries",
+      "x": 0,
+      "y": 80.4375,
+      "width": 1440,
+      "height": 958.203125
+    },
+    {
+      "id": "how-it-works",
+      "x": 0,
+      "y": 79.640625,
+      "width": 1440,
+      "height": 778.796875
+    },
+    {
+      "id": "pricing",
+      "x": 0,
+      "y": 80.4375,
+      "width": 1440,
+      "height": 634.078125
+    },
+    {
+      "id": "faq",
+      "x": 0,
+      "y": 79.515625,
+      "width": 1440,
+      "height": 631
+    }
+  ],
+  "overflow": 0
+}

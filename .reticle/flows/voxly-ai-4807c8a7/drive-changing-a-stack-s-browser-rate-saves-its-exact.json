@@ -1,0 +1,95 @@
+{
+  "version": 2,
+  "name": "drive-changing-a-stack-s-browser-rate-saves-its-exact",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1793111961944,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "spinbutton",
+        "name": "Web agent price (₹/min)"
+      },
+      "args": {
+        "value": "4"
+      },
+      "action": "fill",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "PUT",
+            "urlContains": "/voice-profiles/low",
+            "status": 200
+          },
+          {
+            "kind": "text",
+            "contains": "Auto-saved & applied globally",
+            "visible": true
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/dev/stack",
+      "writes": true
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "GST rate (%)"
+      },
+      "args": {
+        "value": "20"
+      },
+      "action": "fill",
+      "page": "/dev/stack"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Preview checkout"
+      },
+      "args": {},
+      "action": "scrollIntoView",
+      "page": "/dev/stack"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Preview checkout"
+      },
+      "args": {},
+      "action": "click",
+      "timeoutMs": 15000,
+      "page": "/dev/stack",
+      "writes": true
+    }
+  ],
+  "startPath": "/dev/stack",
+  "intent": "Changing a stack’s browser rate saves its exact profile override independently of phone pricing.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/dev/stack"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/dev/stack"
+    }
+  ],
+  "author": {
+    "agent": "mcp",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-changing-a-stack-s-browser-rate-saves-its-exact"
+}

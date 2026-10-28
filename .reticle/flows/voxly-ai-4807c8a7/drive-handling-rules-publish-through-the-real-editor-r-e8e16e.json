@@ -1,0 +1,52 @@
+{
+  "version": 2,
+  "name": "drive-handling-rules-publish-through-the-real-editor-r-e8e16e",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1793127097499,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Example Enquiry",
+        "nth": 0,
+        "of": 2
+      },
+      "args": {},
+      "action": "click",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 170
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "label": "Pipeline stage"
+        },
+        "state": "disabled"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Handling rules publish through the real editor; read-only tenants can inspect CRM contacts without mutation controls.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "mcp",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-handling-rules-publish-through-the-real-editor-r-e8e16e"
+}
