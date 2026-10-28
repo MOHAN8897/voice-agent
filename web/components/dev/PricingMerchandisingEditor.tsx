@@ -19,7 +19,13 @@ type MerchandisedTier = {
   featured: boolean;
   visible: boolean;
   pstnInrPerMin: number | null;
-  webInrPerMin: number | null;
+};
+
+type CalculatorFlags = {
+  allowMinuteInput: boolean;
+  compareTiers: boolean;
+  shareableEstimate: boolean;
+  showGstToggle: boolean;
 };
 
 type MerchandisingPayload = {
@@ -28,7 +34,15 @@ type MerchandisingPayload = {
   updatedBy: string | null;
   featuredStyle: FeaturedStyle;
   featuredStyles: string[];
+  calculator?: Partial<CalculatorFlags>;
   tiers: MerchandisedTier[];
+};
+
+type TaxSettingsSummary = {
+  enabled: boolean;
+  configured: boolean;
+  ratePercent: number;
+  priceIncludesTax: boolean;
 };
 
 type StylePalette = {
@@ -67,6 +81,49 @@ const TONE_CHIP: Record<Tone, string> = {
 
 const MAX_TAGS = 3;
 const MAX_TAG_LENGTH = 32;
+
+const DEFAULT_CALCULATOR: CalculatorFlags = {
+  allowMinuteInput: true,
+  compareTiers: true,
+  shareableEstimate: true,
+  showGstToggle: true,
+};
+
+const CALCULATOR_CONTROLS: {
+  key: keyof CalculatorFlags;
+  label: string;
+  description: string;
+}[] = [
+  {
+    key: "allowMinuteInput",
+    label: "Calls or minutes toggle",
+    description: "Let visitors enter monthly talk time instead of a call count.",
+  },
+  {
+    key: "compareTiers",
+    label: "Compare every tier",
+    description: "Show each published tier's cost at the same monthly volume.",
+  },
+  {
+    key: "shareableEstimate",
+    label: "Shareable estimate link",
+    description: "Adds a copy-link action that reopens the exact scenario.",
+  },
+  {
+    key: "showGstToggle",
+    label: "GST view",
+    description: "Show ex-GST and incl-GST totals while tax is configured.",
+  },
+];
+
+function normaliseCalculator(raw: Partial<CalculatorFlags> | undefined): CalculatorFlags {
+  return {
+    allowMinuteInput: raw?.allowMinuteInput !== false,
+    compareTiers: raw?.compareTiers !== false,
+    shareableEstimate: raw?.shareableEstimate !== false,
+    showGstToggle: raw?.showGstToggle !== false,
+  };
+}
 
 // Palette values mirror .landing-price-card.is-featured presets in voxly-ai/src/styles/landing.css.
 const FEATURED_STYLE_OPTIONS: FeaturedStyleOption[] = [
@@ -147,7 +204,6 @@ function toDrafts(payload: MerchandisingPayload | null): MerchandisedTier[] {
     active: tier.active === true,
     tags: tier.tags.map((tag) => ({ label: tag.label, tone: tag.tone })),
     pstnInrPerMin: typeof tier.pstnInrPerMin === "number" ? tier.pstnInrPerMin : null,
-    webInrPerMin: typeof tier.webInrPerMin === "number" ? tier.webInrPerMin : null,
   }));
 }
 
@@ -160,21 +216,18 @@ function FeaturedCardPreview({
   label,
   tags,
   pstnInrPerMin,
-  webInrPerMin,
   note,
 }: {
   style: FeaturedStyle;
   label: string;
   tags: TierTag[];
   pstnInrPerMin: number | null;
-  webInrPerMin: number | null;
   note: string | null;
 }) {
   const option =
     FEATURED_STYLE_OPTIONS.find((item) => item.id === style) ?? FEATURED_STYLE_OPTIONS[0];
   const palette = option.palette;
   const rate = inr(pstnInrPerMin);
-  const webRate = inr(webInrPerMin);
 
   return (
     <div aria-label="Featured card preview" className="min-w-0">
@@ -233,13 +286,6 @@ function FeaturedCardPreview({
           className="mt-3 grid gap-1 border-t pt-3 text-xs"
           style={{ borderColor: palette.ring, color: palette.muted }}
         >
-          <span>
-            Browser agent{" "}
-            <strong className="font-semibold" style={{ color: palette.strong }}>
-              {webRate ?? "in workspace"}
-            </strong>
-            {webRate ? "/min" : null}
-          </span>
           <span>Phone number rental billed monthly</span>
         </div>
 
@@ -258,8 +304,24 @@ export function PricingMerchandisingEditor() {
   const resource = useAdminResource<MerchandisingPayload>(
     "/api/dev/admin/pricing-merchandising"
   );
+  const taxSettings = useAdminResource<TaxSettingsSummary>(
+    "/api/dev/admin/payments/tax-settings"
+  );
+  const tax = taxSettings.data;
+  const gstPublishable = Boolean(tax?.enabled && tax?.configured && Number(tax?.ratePercent) > 0);
+  const gstBlocked = Boolean(tax) && !gstPublishable;
+  const gstStatus = tax
+    ? gstPublishable
+      ? `GST ${tax.ratePercent}% · ${tax.priceIncludesTax ? "shelf prices include GST" : "shelf prices exclude GST"}`
+      : tax.enabled
+        ? "GST is on, but the invoice identity is incomplete. Checkout and the calculator stay without GST until it is complete."
+        : "GST is off, so the calculator hides its GST view. Enable charging and complete the invoice identity to publish it."
+    : taxSettings.loading
+      ? "Checking the GST settings…"
+      : "GST settings could not be loaded.";
   const [drafts, setDrafts] = useState<MerchandisedTier[]>([]);
   const [featuredStyle, setFeaturedStyle] = useState<FeaturedStyle>("graphite");
+  const [calculator, setCalculator] = useState<CalculatorFlags>(DEFAULT_CALCULATOR);
   const [tagInputs, setTagInputs] = useState<Record<string, { label: string; tone: Tone }>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -269,6 +331,7 @@ export function PricingMerchandisingEditor() {
     if (resource.data) {
       setDrafts(toDrafts(resource.data));
       setFeaturedStyle(resource.data.featuredStyle ?? "graphite");
+      setCalculator(normaliseCalculator(resource.data.calculator));
       setTagInputs({});
       setError(null);
     }
@@ -276,9 +339,16 @@ export function PricingMerchandisingEditor() {
 
   const serverDrafts = useMemo(() => toDrafts(resource.data), [resource.data]);
   const serverStyle = resource.data?.featuredStyle ?? "graphite";
+  const serverCalculator = useMemo(
+    () => normaliseCalculator(resource.data?.calculator),
+    [resource.data]
+  );
   const dirty = useMemo(
-    () => serverStyle !== featuredStyle || JSON.stringify(serverDrafts) !== JSON.stringify(drafts),
-    [serverStyle, featuredStyle, serverDrafts, drafts]
+    () =>
+      serverStyle !== featuredStyle ||
+      JSON.stringify(serverCalculator) !== JSON.stringify(calculator) ||
+      JSON.stringify(serverDrafts) !== JSON.stringify(drafts),
+    [serverStyle, featuredStyle, serverCalculator, calculator, serverDrafts, drafts]
   );
 
   function updateTier(id: string, patch: Partial<MerchandisedTier>) {
@@ -367,12 +437,13 @@ export function PricingMerchandisingEditor() {
     }
     void adminAction<MerchandisingPayload>("/api/dev/admin/pricing-merchandising", {
       method: "PUT",
-      body: { expectedVersion: resource.data.version, featuredStyle, tiers },
+      body: { expectedVersion: resource.data.version, featuredStyle, calculator, tiers },
     })
       .then(async (result) => {
         setSavedAt(new Date().toISOString());
         setDrafts(toDrafts(result));
         setFeaturedStyle(result.featuredStyle ?? "graphite");
+        setCalculator(normaliseCalculator(result.calculator));
         await resource.reload();
       })
       .catch(async (e: unknown) => {
@@ -387,7 +458,7 @@ export function PricingMerchandisingEditor() {
   const featuredTier = drafts.find((tier) => tier.featured) ?? null;
   const previewTags = featuredTier
     ? featuredTier.tags
-    : [{ label: "Most chosen", tone: "neutral" as Tone }];
+    : [{ label: "Example tag", tone: "neutral" as Tone }];
   const previewNote = featuredTier
     ? featuredTier.active
       ? null
@@ -397,7 +468,7 @@ export function PricingMerchandisingEditor() {
   return (
     <DevCard
       title="Pricing tags, featured tier & card style"
-      description="Badges shown beside each tier on the marketing pricing cards and the workspace calculator, plus the treatment of the highlighted card with a live preview. Prices themselves come from the rate tables above, so editing a rate updates the public page without touching this card."
+      description="Badges shown beside each tier on the marketing pricing cards and the workspace calculator, the treatment of the highlighted card with a live preview, and which controls the usage calculator offers. Prices themselves come from the rate tables above, so editing a rate updates the public page without touching this card."
       actions={
         <div className="flex flex-wrap items-center justify-end gap-2 text-[11px] text-text-subtle">
           <span className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel px-2.5 py-1 font-mono">
@@ -437,6 +508,63 @@ export function PricingMerchandisingEditor() {
             tier only while it is enabled and ready for tenants; inactive tiers keep their saved tags until
             then.
           </p>
+
+          <div className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-4">
+            <h3 className="text-sm font-semibold text-text">Usage calculator controls</h3>
+            <p className="mt-1 text-xs text-text-muted">
+              Choose which controls the usage calculator offers on the marketing page and in the
+              workspace. Rates and tags come from the pricing tables above; the GST rate comes from
+              GST &amp; invoicing below.
+            </p>
+            <div
+              className={`mt-3 flex flex-wrap items-center justify-between gap-2 rounded-skeuo-sm border p-2.5 text-[11px] ${
+                gstPublishable
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  : "border-amber-200 bg-amber-50 text-amber-800"
+              }`}
+            >
+              <span>{gstStatus}</span>
+              <a
+                href="#gst-billing-heading"
+                className="font-semibold underline underline-offset-2"
+              >
+                Open GST settings
+              </a>
+            </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {CALCULATOR_CONTROLS.map((control) => {
+                const locked = control.key === "showGstToggle" && gstBlocked;
+                return (
+                  <label
+                    key={control.key}
+                    className={`flex items-start gap-2 rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel p-2.5 text-xs ${
+                      locked ? "opacity-70" : ""
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={calculator[control.key]}
+                      disabled={locked}
+                      onChange={(event) => {
+                        const checked = event.target.checked;
+                        setCalculator((current) => ({ ...current, [control.key]: checked }));
+                        setSavedAt(null);
+                      }}
+                    />
+                    <span>
+                      <span className="block font-semibold text-text">{control.label}</span>
+                      <span className="mt-0.5 block text-[11px] leading-snug text-text-subtle">
+                        {locked
+                          ? "Hidden on the public calculator until GST is enabled and the invoice identity is complete."
+                          : control.description}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="grid gap-4 rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-raised p-4 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="min-w-0" role="group" aria-labelledby="featured-style-heading">
@@ -492,7 +620,6 @@ export function PricingMerchandisingEditor() {
               label={featuredTier?.label ?? "Your featured tier"}
               tags={previewTags}
               pstnInrPerMin={featuredTier?.pstnInrPerMin ?? null}
-              webInrPerMin={featuredTier?.webInrPerMin ?? null}
               note={previewNote}
             />
           </div>
@@ -646,6 +773,7 @@ export function PricingMerchandisingEditor() {
                 onClick={() => {
                   setDrafts(serverDrafts);
                   setFeaturedStyle(serverStyle);
+                  setCalculator(serverCalculator);
                   setTagInputs({});
                   setError(null);
                   setSavedAt(null);

@@ -30,6 +30,14 @@ FEATURED_STYLES = ("graphite", "ivory", "forest", "midnight")
 DEFAULT_FEATURED_STYLE = "graphite"
 MAX_TAGS_PER_TIER = 3
 MAX_TAG_LENGTH = 32
+# Presentation features the public usage calculator may offer; operators hide
+# any of them without touching marketing code.
+CALCULATOR_FEATURES = {
+    "allowMinuteInput": True,
+    "compareTiers": True,
+    "shareableEstimate": True,
+    "showGstToggle": True,
+}
 _CACHE_TTL_SEC = 5.0
 _WRITE_LOCK = asyncio.Lock()
 _cache: tuple[float, dict[str, Any]] | None = None
@@ -47,11 +55,16 @@ def _default_tier() -> dict[str, Any]:
     return {"tags": [], "featured": False, "visible": True}
 
 
+def default_calculator() -> dict[str, bool]:
+    return dict(CALCULATOR_FEATURES)
+
+
 def default_merchandising() -> dict[str, Any]:
     return {
         "version": 0,
         "featuredStyle": DEFAULT_FEATURED_STYLE,
         "tiers": {tier: _default_tier() for tier in PUBLIC_TIERS},
+        "calculator": default_calculator(),
         "updatedAt": None,
         "updatedBy": None,
     }
@@ -140,6 +153,33 @@ def validate_featured_style(raw: Any) -> str:
     return raw
 
 
+def validate_calculator(raw: Any) -> dict[str, bool]:
+    if raw is None:
+        return default_calculator()
+    if not isinstance(raw, dict):
+        raise MerchandisingError("invalid_calculator", "calculator must be an object of feature switches.")
+    unknown = set(raw) - set(CALCULATOR_FEATURES)
+    if unknown:
+        raise MerchandisingError("invalid_calculator", "Unknown calculator feature switches were sent.")
+    flags = default_calculator()
+    for key, value in raw.items():
+        if not isinstance(value, bool):
+            raise MerchandisingError("invalid_calculator", "Calculator feature switches must be booleans.")
+        flags[key] = value
+    return flags
+
+
+def calculator_flags(view: dict[str, Any] | None) -> dict[str, bool]:
+    """Saved switches, with any missing key falling back to the enabled default."""
+    flags = default_calculator()
+    raw = view.get("calculator") if isinstance(view, dict) else None
+    if isinstance(raw, dict):
+        for key in flags:
+            if isinstance(raw.get(key), bool):
+                flags[key] = raw[key]
+    return flags
+
+
 def _from_row(row: ConfigVersion) -> dict[str, Any]:
     payload = row.payload or {}
     stored = payload.get("tiers") if isinstance(payload.get("tiers"), dict) else {}
@@ -150,6 +190,7 @@ def _from_row(row: ConfigVersion) -> dict[str, Any]:
     view["featuredStyle"] = stored_style if stored_style in FEATURED_STYLES else DEFAULT_FEATURED_STYLE
     view["updatedAt"] = payload.get("savedAt") or (row.created_at.isoformat() if row.created_at else None)
     view["updatedBy"] = payload.get("actor")
+    view["calculator"] = calculator_flags(payload)
     for tier, entry in stored.items():
         if isinstance(entry, dict):
             view["tiers"][tier] = {
@@ -196,10 +237,13 @@ async def save_tier_merchandising(
     actor: str,
     allowed_tiers: Iterable[str] | None = None,
     featured_style: Any = None,
+    calculator: Any = None,
 ) -> dict[str, Any]:
     global _cache
     cleaned = validate_merchandising(tiers, allowed_tiers=allowed_tiers)
     requested_style = validate_featured_style(featured_style) if featured_style is not None else None
+    # A caller that does not send switches keeps the saved ones.
+    requested_calculator = validate_calculator(calculator) if calculator is not None else None
     if isinstance(expected_version, bool) or not isinstance(expected_version, int) or expected_version < 0:
         raise MerchandisingError("invalid_version", "expectedVersion must be a nonnegative integer.")
     factory = get_session_factory()
@@ -242,6 +286,8 @@ async def save_tier_merchandising(
                     # A caller that does not choose a style keeps the saved treatment.
                     "featuredStyle": requested_style
                     or (_from_row(latest)["featuredStyle"] if latest is not None else DEFAULT_FEATURED_STYLE),
+                    "calculator": requested_calculator
+                    or (calculator_flags(_from_row(latest)) if latest is not None else default_calculator()),
                     "savedAt": saved_at,
                     "actor": actor,
                 },

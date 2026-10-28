@@ -159,6 +159,7 @@ async def billing_catalog():
     from server.services.saas.billing_rates import load_current_rates
     from server.services.saas.pricing_merchandising import (
         DEFAULT_FEATURED_STYLE,
+        calculator_flags,
         load_tier_merchandising,
     )
 
@@ -202,6 +203,8 @@ async def billing_catalog():
         "pricingVersion": int(rates.get("version") or 1),
         "merchandisingVersion": int(merchandising.get("version") or 0),
         "featuredStyle": merchandising.get("featuredStyle") or DEFAULT_FEATURED_STYLE,
+        # Operators choose which calculator controls the public page offers.
+        "calculator": calculator_flags(merchandising),
         "tiers": await _public_tier_prices(rates, merchandising),
     }
 

@@ -2601,11 +2601,17 @@ class TierMerchandisingBody(BaseModel):
 
     expectedVersion: int = Field(ge=0, strict=True)
     featuredStyle: str | None = None
+    calculator: dict[str, Any] | None = None
     tiers: dict[str, Any]
 
 
 def _merchandising_response(view: dict[str, Any], tiers: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-    from server.services.saas.pricing_merchandising import FEATURED_STYLES, default_merchandising
+    from server.services.saas.pricing_merchandising import (
+        CALCULATOR_FEATURES,
+        FEATURED_STYLES,
+        calculator_flags,
+        default_merchandising,
+    )
     from server.services.saas.voice_stack_profiles import TIER_LABELS
 
     defaults_merchandising = default_merchandising()
@@ -2621,6 +2627,8 @@ def _merchandising_response(view: dict[str, Any], tiers: list[dict[str, Any]] | 
         "updatedBy": view["updatedBy"],
         "featuredStyle": view.get("featuredStyle") or defaults_merchandising["featuredStyle"],
         "featuredStyles": list(FEATURED_STYLES),
+        "calculator": calculator_flags(view),
+        "calculatorFeatures": list(CALCULATOR_FEATURES),
         "tiers": [
             {
                 "id": row["id"],
@@ -2708,6 +2716,7 @@ async def put_pricing_merchandising(
             actor=session.subject,
             allowed_tiers=[row["id"] for row in tiers] or list(PUBLIC_TIERS),
             featured_style=body.featuredStyle,
+            calculator=body.calculator,
         )
     except MerchandisingError as exc:
         raise HTTPException(
@@ -2723,6 +2732,7 @@ async def put_pricing_merchandising(
             "expectedVersion": body.expectedVersion,
             "version": view["version"],
             "featuredStyle": view["featuredStyle"],
+            "calculator": view["calculator"],
             "tiers": body.tiers,
         },
     )

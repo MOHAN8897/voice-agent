@@ -113,6 +113,40 @@ def test_stored_rows_without_a_style_use_the_default():
     assert merchandising._from_row(stale_style)["featuredStyle"] == "graphite"
 
 
+def test_calculator_switches_default_on_and_require_booleans():
+    assert merchandising.default_merchandising()["calculator"] == {
+        "allowMinuteInput": True,
+        "compareTiers": True,
+        "shareableEstimate": True,
+        "showGstToggle": True,
+    }
+    cleaned = merchandising.validate_calculator({"compareTiers": False, "showGstToggle": False})
+    assert cleaned["compareTiers"] is False
+    assert cleaned["showGstToggle"] is False
+    assert cleaned["allowMinuteInput"] is True
+    for raw in ({"compareTiers": "no"}, {"unknownToggle": True}, ["compareTiers"]):
+        with pytest.raises(merchandising.MerchandisingError) as exc:
+            merchandising.validate_calculator(raw)
+        assert exc.value.code == "invalid_calculator"
+        assert exc.value.status_code == 422
+
+
+def test_stored_rows_without_calculator_switches_use_enabled_defaults():
+    row = SimpleNamespace(payload={"tiers": {}, "calculator": {"compareTiers": False}}, version=2, created_at=None)
+    view = merchandising._from_row(row)
+    assert view["calculator"]["compareTiers"] is False
+    assert view["calculator"]["allowMinuteInput"] is True
+
+    stale = SimpleNamespace(
+        payload={"tiers": {}, "calculator": {"compareTiers": "off", "shareableEstimate": False}},
+        version=3,
+        created_at=None,
+    )
+    tolerance = merchandising._from_row(stale)
+    assert tolerance["calculator"]["compareTiers"] is True
+    assert tolerance["calculator"]["shareableEstimate"] is False
+
+
 async def test_save_rejects_unknown_featured_style_before_touching_storage(monkeypatch):
     monkeypatch.setattr(merchandising, "get_session_factory", lambda: None)
     with pytest.raises(merchandising.MerchandisingError) as exc:
@@ -135,6 +169,48 @@ async def test_save_requires_durable_store(monkeypatch):
         await merchandising.save_tier_merchandising(tiers=_tiers(), expected_version=0, actor="admin")
     assert exc.value.code == "durable_store_unavailable"
     assert exc.value.status_code == 503
+
+
+async def test_public_tax_summary_matches_the_saved_tax_settings(monkeypatch):
+    from server.routes import app_billing
+    from server.services.saas import tax_service
+
+    config = {
+        "enabled": True,
+        "legalName": "Acme Voice Pvt Ltd",
+        "addressLine1": "1 MG Road",
+        "city": "Mumbai",
+        "stateCode": "27",
+        "gstin": "27AAPFU0939F1ZV",
+        "countryCode": "IN",
+        "defaultRateBps": 1800,
+        "priceIncludesTax": False,
+    }
+    monkeypatch.setattr(tax_service, "load_config", AsyncMock(return_value=config))
+    assert await app_billing._public_tax_summary() == {
+        "enabled": True,
+        "ratePercent": 18.0,
+        "priceIncludesTax": False,
+        "countryCode": "IN",
+    }
+
+    monkeypatch.setattr(
+        tax_service,
+        "load_config",
+        AsyncMock(return_value={**config, "priceIncludesTax": True}),
+    )
+    assert (await app_billing._public_tax_summary())["priceIncludesTax"] is True
+
+    # An enabled switch without the invoice identity never publishes GST: checkout
+    # cannot charge it, so the calculator must not quote it either.
+    monkeypatch.setattr(
+        tax_service,
+        "load_config",
+        AsyncMock(return_value={**config, "legalName": ""}),
+    )
+    summary = await app_billing._public_tax_summary()
+    assert summary["enabled"] is False
+    assert summary["ratePercent"] == 18.0
 
 
 async def test_public_catalog_exposes_tier_prices_tags_and_no_vendors(monkeypatch):
@@ -186,6 +262,12 @@ async def test_public_catalog_exposes_tier_prices_tags_and_no_vendors(monkeypatc
         "featuredStyle": "forest",
         "updatedAt": "2026-10-28T00:00:00+00:00",
         "updatedBy": "admin",
+        "calculator": {
+            "allowMinuteInput": False,
+            "compareTiers": True,
+            "shareableEstimate": False,
+            "showGstToggle": True,
+        },
         "tiers": {
             "low": {"tags": [{"label": "Best value", "tone": "success"}], "featured": True, "visible": True},
             "medium": {"tags": [], "featured": False, "visible": True},
@@ -205,6 +287,19 @@ async def test_public_catalog_exposes_tier_prices_tags_and_no_vendors(monkeypatc
     assert result["pricingVersion"] == 9
     assert result["merchandisingVersion"] == 4
     assert result["featuredStyle"] == "forest"
+    assert result["calculator"] == {
+        "allowMinuteInput": False,
+        "compareTiers": True,
+        "shareableEstimate": False,
+        "showGstToggle": True,
+    }
+    # The catalog quotes GST from the same saved settings checkout uses.
+    assert result["tax"] == {
+        "enabled": False,
+        "ratePercent": 0.0,
+        "priceIncludesTax": False,
+        "countryCode": "IN",
+    }
     # Disabled and unverified tiers never reach the public shelf; custom stacks do.
     assert [tier["id"] for tier in result["tiers"]] == ["low", "medium", "medium_copy_1"]
     assert [tier["label"] for tier in result["tiers"]] == ["Economical", "Standard Regional", "premium"]
@@ -233,6 +328,7 @@ async def test_admin_merchandising_endpoints_enforce_permission_and_validation(m
         "featuredStyle": "midnight",
         "updatedAt": "2026-10-28T00:00:00+00:00",
         "updatedBy": "fixture",
+        "calculator": merchandising.default_calculator(),
         "tiers": merchandising.default_merchandising()["tiers"],
     }
     load = AsyncMock(return_value=view)
@@ -253,14 +349,22 @@ async def test_admin_merchandising_endpoints_enforce_permission_and_validation(m
         assert [tier["id"] for tier in response.json()["tiers"]] == ["low", "medium", "premium"]
         assert response.json()["featuredStyle"] == "midnight"
         assert response.json()["featuredStyles"] == list(merchandising.FEATURED_STYLES)
+        assert response.json()["calculator"] == merchandising.default_calculator()
+        assert response.json()["calculatorFeatures"] == list(merchandising.CALCULATOR_FEATURES)
 
         response = await client.put(
             "/api/dev/admin/pricing-merchandising",
-            json={"expectedVersion": 0, "featuredStyle": "ivory", "tiers": {"low": {"featured": True}}},
+            json={
+                "expectedVersion": 0,
+                "featuredStyle": "ivory",
+                "calculator": {"compareTiers": False},
+                "tiers": {"low": {"featured": True}},
+            },
         )
         assert response.status_code == 200
         save.assert_awaited_once()
         assert save.await_args.kwargs["featured_style"] == "ivory"
+        assert save.await_args.kwargs["calculator"] == {"compareTiers": False}
 
         save.side_effect = merchandising.MerchandisingError(
             "invalid_featured_style", "Choose one of the available featured card styles."
