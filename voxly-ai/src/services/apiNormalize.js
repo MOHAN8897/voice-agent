@@ -196,6 +196,8 @@ export function normalizeLead(row) {
     intent: row.intent || row.notes || 'Inbound',
     stage,
     notes: row.notes || '',
+      assessment: row.assessment || null,
+      doNotCall: row.doNotCall === true,
     createdAt: row.createdAt || row.created_at,
     updatedAt: row.updatedAt || row.updated_at,
   };

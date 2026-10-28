@@ -61,7 +61,7 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-[#0F0E17]">Callback requests</h3>
-          <p className="mt-1 text-xs text-[#524E5E]">People who asked to be contacted later. Review their requested time before calling. Calls start only when you choose Call back.</p>
+          <p className="mt-1 text-xs text-[#524E5E]">Saved caller requests. Review automatic jobs in Callbacks &amp; missed calls. Call back replaces pending automation; a call already dispatched cannot be duplicated.</p>
         </div>
         <TactileButton type="button" variant="secondary" size="sm" onClick={load} disabled={loading || busy !== null}>Refresh</TactileButton>
       </div>

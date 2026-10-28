@@ -24,7 +24,7 @@ import { api } from '../../services/api';
  * Tenant-wide Do Not Call registry management with compliance audit log.
  * Authoritatively blocks dials across all agents and requires explicit re-consent for deactivation.
  */
-export function DncRegistryPanel() {
+export function DncRegistryPanel({ readOnly = false }) {
   const [subTab, setSubTab] = useState('active'); // 'active' | 'deactivated'
   const [entries, setEntries] = useState([]);
   const [total, setTotal] = useState(0);
@@ -71,6 +71,7 @@ export function DncRegistryPanel() {
   // Handle Add Entry
   const handleAdd = async (e) => {
     e.preventDefault();
+    if (readOnly || addBusy) return;
     setAddBusy(true);
     try {
       if (addMode === 'single') {
@@ -108,7 +109,7 @@ export function DncRegistryPanel() {
 
   // Handle Deactivate with Mandatory Audit Re-consent
   const handleDeactivate = async () => {
-    if (!deactivateTarget || !removalReason.trim() || !reconsentConfirmed || deactivateBusy) return;
+    if (readOnly || !deactivateTarget || !removalReason.trim() || !reconsentConfirmed || deactivateBusy) return;
     setDeactivateBusy(true);
     try {
       const phone = deactivateTarget.phoneE164 || deactivateTarget.phone_e164;
@@ -188,6 +189,7 @@ export function DncRegistryPanel() {
 
         {/* Action button */}
         <TactileButton
+          disabled={readOnly}
           onClick={() => setIsAddOpen(true)}
           variant="primary"
           icon={Plus}
@@ -294,10 +296,12 @@ export function DncRegistryPanel() {
                           <button
                             type="button"
                             onClick={() => {
+                              if (readOnly) return;
                               setDeactivateTarget(item);
                               setRemovalReason('');
                               setReconsentConfirmed(false);
                             }}
+                            disabled={readOnly}
                             data-testid={`deactivate-dnc-${phone}`}
                             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
                           >
@@ -469,7 +473,7 @@ export function DncRegistryPanel() {
               type="button"
               variant="primary"
               size="sm"
-              disabled={removalReason.trim().length < 5 || !reconsentConfirmed || deactivateBusy}
+              disabled={readOnly || removalReason.trim().length < 5 || !reconsentConfirmed || deactivateBusy}
               loading={deactivateBusy}
               onClick={handleDeactivate}
               data-testid="dnc-deactivate-confirm-btn"

@@ -3,7 +3,7 @@ import React from 'react';
 /** Local categories preserve mounted form state when switching sections. */
 export function SectionNav({ label, items, value, onChange, variant = 'tabs' }) {
   if (variant === 'tiles') return (
-    <nav aria-label={label} className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+    <nav aria-label={label} className={`grid grid-cols-2 gap-3 ${items.length === 5 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
       {items.map(([id, title, Icon, description]) => (
         <button key={id} type="button" aria-pressed={value === id} aria-label={title}
           onClick={() => onChange(id)} className={`min-w-0 rounded-2xl border p-4 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#6344E7] ${value === id ? 'border-[#6344E7] bg-[#F0EEF6]' : 'border-[#E4E2EB] bg-white hover:bg-[#FAF9FD]'}`}>

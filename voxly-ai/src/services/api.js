@@ -218,6 +218,12 @@ function preferSameOriginApi() {
 }
 
 export const api = {
+  followups: {
+    policy: (agentId) => api.request('GET', `/api/agents/${agentId}/follow-up-policy`),
+    savePolicy: (agentId, body) => api.request('PUT', `/api/agents/${agentId}/follow-up-policy`, body),
+    list: (params = {}) => api.request('GET', `/api/follow-ups?${new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== ''))}`),
+    update: (id, body) => api.request('PATCH', `/api/follow-ups/${id}`, body),
+  },
   getBackendUrl() {
     // On local Vite, ignore stale localStorage pointing at :8000 without /api (or with CORS
     // mismatches between localhost vs 127.0.0.1). The Vite proxy is the source of truth.

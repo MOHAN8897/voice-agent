@@ -78,7 +78,7 @@ test('script stays on one page and settings categories preserve edits on desktop
   await page.getByTestId('agent-studio-discard').click();
   await page.getByTestId('agent-tab-settings').click();
   const nav = page.getByRole('navigation', { name: 'Settings sections' });
-  await expect(nav.locator('button svg')).toHaveCount(4);
+  await expect(nav.locator('button svg')).toHaveCount(5);
   expect(await nav.evaluate(element => getComputedStyle(element).display)).toBe('grid');
   await nav.scrollIntoViewIfNeeded();
   await page.screenshot({ path: '../artifacts/console-settings-desktop.png' });

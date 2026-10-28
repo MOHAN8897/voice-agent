@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Phone, LayoutGrid, Users, PhoneCall, ShieldCheck } from 'lucide-react';
 import { SolidCard } from '../../ui/SolidCard';
 import { TactileButton } from '../../ui/TactileButton';
@@ -8,12 +8,14 @@ import { LANGUAGE_OPTIONS } from '../../../lib/voicePresets';
 import { api } from '../../../services/api';
 import { TelephonySettingsCard } from '../TelephonySettingsCard';
 import { SectionNav } from './SectionNav';
+import { FollowUpSettingsCard } from './FollowUpSettingsCard';
+import { useAuth } from '../../../context/AuthContext';
 
 const DEFAULT_PROFILE = {
   greetingPhrase: '',
   businessHours: {},
   closedDates: [],
-  timezone: 'America/New_York',
+  timezone: 'Asia/Kolkata',
   afterHoursAction: 'voicemail',
   transferNumber: '',
   inboundEnabled: true,
@@ -32,13 +34,14 @@ function cleanSnapshot(data) {
       greetingPhrase: (data?.telephonyProfile?.greetingPhrase || '').trim(),
       businessHours: data?.telephonyProfile?.businessHours || {},
       closedDates: Array.isArray(data?.telephonyProfile?.closedDates) ? data.telephonyProfile.closedDates : [],
-      timezone: data?.telephonyProfile?.timezone || 'America/New_York',
+      timezone: data?.telephonyProfile?.timezone || 'Asia/Kolkata',
       afterHoursAction: data?.telephonyProfile?.afterHoursAction || 'voicemail',
       transferNumber: (data?.telephonyProfile?.transferNumber || '').trim(),
       inboundEnabled: data?.telephonyProfile?.inboundEnabled !== false,
       outboundEnabled: data?.telephonyProfile?.outboundEnabled !== false,
     },
     compliance: data?.compliance || {},
+    followup: data?.followup || null,
   };
 }
 
@@ -59,6 +62,8 @@ export function AgentSettingsPanel({
   registerSaveHandler,
   onSettingsSaved,
 }) {
+  const { user } = useAuth();
+  const readOnly = user?.role === 'customer_viewer' || user?.role === 'viewer';
   const { phoneNumbers, agents, assignNumberToAgent, updateAgent } = useWorkspace();
   const agentId = agent?.id;
   const [category, setCategory] = useState('all');
@@ -86,12 +91,17 @@ export function AgentSettingsPanel({
     ...DEFAULT_PROFILE,
     greetingPhrase: agentGreeting || '',
   }));
+  const [followup, setFollowup] = useState(null);
+  const [followupRevision, setFollowupRevision] = useState(0);
+  const [followupError, setFollowupError] = useState('');
+  const [followupAcknowledged, setFollowupAcknowledged] = useState(false);
   const [compliance, setCompliance] = useState({});
   const [complianceSummary, setComplianceSummary] = useState(null);
   const [complianceLoading, setComplianceLoading] = useState(false);
   const [complianceError, setComplianceError] = useState(null);
 
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [error, setError] = useState(null);
 
   // Keep telephonyProfile.greetingPhrase in sync with universal agentGreeting
@@ -109,7 +119,7 @@ export function AgentSettingsPanel({
 
   // Seed on agent selection or change
   useEffect(() => {
-    if (!agentId) return;
+    if (!agentId || savingRef.current) return;
 
     setName(agent?.name || '');
     setLanguage((agent?.languages && agent.languages[0]) || agent?.language || 'en-IN');
@@ -121,6 +131,7 @@ export function AgentSettingsPanel({
     );
     let cancelled = false;
     setComplianceLoading(true);
+    setFollowup(null); setFollowupError(''); setFollowupAcknowledged(false);
 
     Promise.all([
       api.telephony.getAgentCompliance(agentId).catch((e) => {
@@ -128,7 +139,8 @@ export function AgentSettingsPanel({
         return null;
       }),
       api.agents.getTelephonyProfile(agentId).catch(() => ({ profile: {} })),
-    ]).then(([compData, profData]) => {
+      api.followups.policy(agentId).catch((e) => { if (!cancelled) setFollowupError(e.message || 'Follow-up scheduling could not be loaded. Reload to retry.'); return null; }),
+    ]).then(([compData, profData, followupData]) => {
       if (cancelled) return;
       const loadedComp = compData?.acknowledged || {};
       const rawProf = profData?.profile || {};
@@ -138,6 +150,8 @@ export function AgentSettingsPanel({
         greetingPhrase: agentGreeting !== undefined && agentGreeting !== '' ? agentGreeting : (rawProf.greetingPhrase || ''),
       };
 
+      setFollowup(followupData?.config || null);
+      setFollowupRevision(followupData?.revision || 0);
       setCompliance(loadedComp);
       setComplianceSummary(compData || null);
       setTelephonyProfile(loadedProf);
@@ -153,6 +167,7 @@ export function AgentSettingsPanel({
           agent?.recordingDisclosureText || 'This call may be recorded for quality and training purposes.',
         telephonyProfile: loadedProf,
         compliance: loadedComp,
+        followup: followupData?.config || null,
       });
       setInitialSnapshot(JSON.stringify(snap));
     });
@@ -173,8 +188,9 @@ export function AgentSettingsPanel({
       recordingDisclosureText,
       telephonyProfile,
       compliance,
+      followup,
     });
-  }, [name, language, status, numberId, recordingDisclosureEnabled, recordingDisclosureText, telephonyProfile, compliance]);
+  }, [name, language, status, numberId, recordingDisclosureEnabled, recordingDisclosureText, telephonyProfile, compliance, followup]);
 
   const isDirty = useMemo(() => {
     if (!initialSnapshot) return false;
@@ -198,6 +214,7 @@ export function AgentSettingsPanel({
       setRecordingDisclosureText(restored.recordingDisclosureText);
       setTelephonyProfile(restored.telephonyProfile);
       setCompliance(restored.compliance);
+      setFollowup(restored.followup); setFollowupAcknowledged(false);
       setError(null);
       showToast('Settings changes discarded', 'info');
     } catch {
@@ -206,12 +223,17 @@ export function AgentSettingsPanel({
   }, [initialSnapshot]);
 
   const handleSaveAll = useCallback(async () => {
-    if (!agentId || saving) return false;
+    if (!agentId || savingRef.current) return false;
+    savingRef.current = true;
     setSaving(true);
     setError(null);
 
     try {
       const baseSnapshot = initialSnapshot ? JSON.parse(initialSnapshot) : {};
+      const needsConsent = followup?.enabled && (!baseSnapshot.followup?.enabled ||
+        (followup.callbackMode === 'automatic' && baseSnapshot.followup?.callbackMode !== 'automatic') ||
+        (followup.missedMode === 'automatic' && baseSnapshot.followup?.missedMode !== 'automatic'));
+      if (needsConsent && !followupAcknowledged) throw new Error('Confirm follow-up call permission and wallet charges before saving.');
 
       // 1. Update Agent identity, status, and recording disclosures in a single call
       await updateAgent(agentId, {
@@ -264,6 +286,11 @@ export function AgentSettingsPanel({
         /* Language still applies via agent row */
       }
 
+      if (followup && JSON.stringify(followup) !== JSON.stringify(baseSnapshot.followup)) {
+        const saved = await api.followups.savePolicy(agentId, { config: followup, revision: followupRevision, acknowledgeCharges: followupAcknowledged });
+        setFollowupRevision(saved.revision); setFollowupAcknowledged(false);
+      }
+
       // Update baseline snapshot
       const updatedSnapshot = JSON.stringify(currentSnapshot);
       setInitialSnapshot(updatedSnapshot);
@@ -286,6 +313,7 @@ export function AgentSettingsPanel({
       showToast(e.message || 'Could not save agent configurations', 'error');
       return false;
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }, [
@@ -302,6 +330,7 @@ export function AgentSettingsPanel({
     telephonyProfile,
     compliance,
     currentSnapshot,
+    followup, followupRevision, followupAcknowledged,
     updateAgent,
     assignNumberToAgent,
     onSettingsSaved,
@@ -340,6 +369,7 @@ export function AgentSettingsPanel({
           ['all', 'All settings', LayoutGrid, 'Review the complete configuration'],
           ['identity', 'Agent & phone', Users, 'Identity, language, status and number'],
           ['routing', 'Call handling', PhoneCall, 'Availability, hours and call routing'],
+          ['followups', 'Follow-ups & scoring', PhoneCall, 'Callback permission, schedules and lead priority'],
           ['compliance', 'Recording & compliance', ShieldCheck, 'Disclosure and calling requirements'],
         ]} />
       {error && (
@@ -616,7 +646,7 @@ export function AgentSettingsPanel({
       </SolidCard></div>
       </div>
       </fieldset>
-
+      {['all', 'followups'].includes(category) && <fieldset disabled={readOnly || savingChanges || saving}><FollowUpSettingsCard config={followup} onChange={setFollowup} acknowledged={followupAcknowledged} onAcknowledge={setFollowupAcknowledged} needsConsent={Boolean(followup?.enabled && (!JSON.parse(initialSnapshot || '{}').followup?.enabled || (followup.callbackMode === 'automatic' && JSON.parse(initialSnapshot || '{}').followup?.callbackMode !== 'automatic') || (followup.missedMode === 'automatic' && JSON.parse(initialSnapshot || '{}').followup?.missedMode !== 'automatic')))} error={followupError} /></fieldset>}
     </div>
   );
 }

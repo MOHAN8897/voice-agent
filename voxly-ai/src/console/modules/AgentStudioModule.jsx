@@ -843,8 +843,9 @@ export function AgentStudioModule({
   );
 
   const selectTab = useMemo(
-    () => guardedAction((id) => {
+    () => guardedAction((id, panel) => {
       setActiveTab(id);
+      if (id === 'calls' && ['inbound', 'outbound', 'history', 'leads'].includes(panel)) setCallPanel(panel);
       onFlowStepChange?.(id);
     }),
     [guardedAction, onFlowStepChange]

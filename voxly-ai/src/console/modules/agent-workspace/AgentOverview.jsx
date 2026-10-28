@@ -1,16 +1,17 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PhoneCall, TrendingUp, PhoneOff, Clock, Users, ArrowRight } from 'lucide-react';
 import { SolidCard } from '../../ui/SolidCard';
 import { StatusBadge } from '../../ui/StatusBadge';
 import { TactileButton } from '../../ui/TactileButton';
-import { useWorkspace } from '../../context/WorkspaceContext';
 import { api } from '../../../services/api';
 import { callStatus, statusLabel } from '../../../lib/callStatus';
 
 const RANGE_DAYS = { Today: 1, '7 days': 7, '30 days': 30 };
 
 function formatMinutes(seconds) {
-  const mins = Math.round((Number(seconds) || 0) / 60);
+  const value = Math.max(0, Math.round(Number(seconds) || 0));
+  if (value < 60) return `${value}s`;
+  const mins = Math.floor(value / 60);
   if (mins < 60) return `${mins}m`;
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
@@ -38,7 +39,7 @@ function KpiCard({ icon: Icon, label, value, hint }) {
  * history says so rather than showing zeroes that look like a failed call.
  */
 export function AgentOverview({ agent, onOpenTab }) {
-  const { leads, leadsForAgent } = useWorkspace();
+  const loadSequence = useRef(0);
   const [range, setRange] = useState('7 days');
   const [stats, setStats] = useState(null);
   const [recent, setRecent] = useState([]);
@@ -47,33 +48,33 @@ export function AgentOverview({ agent, onOpenTab }) {
 
   const agentId = agent?.id;
   const days = RANGE_DAYS[range] ?? 7;
-  const since = useMemo(() => new Date(Date.now() - days * 864e5).toISOString(), [days]);
+  const since = useMemo(() => { const date = new Date(); if (range === 'Today') date.setHours(0, 0, 0, 0); else date.setTime(date.getTime() - days * 864e5); return date.toISOString(); }, [range, days]);
 
   const load = useCallback(async () => {
     if (!agentId) return;
+    const request = ++loadSequence.current;
     setLoading(true);
     setError(null);
     try {
       const [statsRes, callRows] = await Promise.all([
         api.calls.stats({ agentId, since }),
-        api.calls.list({ agentId, limit: 25 }),
+        api.calls.list({ agentId, since, limit: 25 }),
       ]);
+      if (request !== loadSequence.current) return;
       setStats(statsRes);
       setRecent(callRows || []);
     } catch (e) {
+      if (request !== loadSequence.current) return;
       setError(e.message || 'Could not load call history');
     } finally {
-      setLoading(false);
+      if (request === loadSequence.current) setLoading(false);
     }
   }, [agentId, since]);
 
   useEffect(() => {
     load();
+    return () => { loadSequence.current += 1; };
   }, [load]);
-
-  // Server-filtered for this agent, not filtered here — the workspace-wide list
-// would otherwise have to be downloaded to render one agent's pipeline.
-const agentLeads = useMemo(() => leadsForAgent(agentId), [leadsForAgent, agentId]);
 
   if (error) {
     return (
@@ -142,24 +143,31 @@ const agentLeads = useMemo(() => leadsForAgent(agentId), [leadsForAgent, agentId
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard icon={PhoneCall} label="Calls" value={total} hint={`last ${days} day${days === 1 ? '' : 's'}`} />
-          <KpiCard icon={TrendingUp} label="Connected" value={connected} hint="answered or reached" />
+          <KpiCard icon={TrendingUp} label="Connect rate" value={stats?.connectRate != null ? `${stats.connectRate}%` : total ? `${Math.round(connected * 100 / total)}%` : '—'} hint={`${connected} connected / ${total} attempts · may include voicemail`} />
           <KpiCard icon={PhoneOff} label="Missed" value={missed} hint="not answered" />
           <KpiCard
             icon={Clock}
             label="Avg duration"
             value={formatMinutes(stats?.avgDurationSec)}
-            hint={`${formatMinutes(stats?.totalDurationSec)} total`}
+            hint={`${stats?.completedConnected ?? connected} completed connections`}
           />
         </div>
       )}
 
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="agent-conversion-metrics">
+        <KpiCard icon={Users} label="New leads" value={stats?.leadCount ?? '—'} hint="Created in this period" />
+        <KpiCard icon={TrendingUp} label="Lead conversion" value={stats?.conversionRate != null ? `${stats.conversionRate}%` : '—'} hint={`${stats?.convertedLeads ?? 0} tenant-confirmed / ${stats?.leadCount ?? 0} period leads`} />
+        <KpiCard icon={TrendingUp} label="Cost per lead" value={stats?.cost?.costPerLead != null ? new Intl.NumberFormat(undefined, { style: 'currency', currency: stats.cost.currency }).format(stats.cost.costPerLead) : '—'} hint={stats?.cost?.complete === false ? 'Waiting for settled call charges' : 'Period call charges / new leads'} />
+        <KpiCard icon={Clock} label="Settled call spend" value={stats?.cost ? new Intl.NumberFormat(undefined, { style: 'currency', currency: stats.cost.currency }).format(stats.cost.settledSpend) : '—'} hint={stats?.cost?.complete === false ? 'Partial · some charges are pending' : 'Actual wallet charges in this call cohort'} />
+      </div>
+      <p className="text-xs leading-relaxed text-[#716C7F]">Test calls are excluded. Connected means an answered connection, which can include voicemail. Conversion uses leads created in this period and their current tenant-confirmed status. {range === 'Today' ? `Today starts at midnight in ${Intl.DateTimeFormat().resolvedOptions().timeZone}.` : ''}</p>
       <div className="grid lg:grid-cols-2 gap-4">
         <SolidCard>
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-xs font-bold text-[#0F0E17]">Recent calls</h4>
             <button
               type="button"
-              onClick={() => onOpenTab?.('calls')}
+              onClick={() => onOpenTab?.('calls', 'history')}
               className="text-[11px] font-semibold text-[#5034CE] hover:underline inline-flex items-center gap-1"
             >
               All calls <ArrowRight className="w-3 h-3" />
@@ -191,37 +199,14 @@ const agentLeads = useMemo(() => leadsForAgent(agentId), [leadsForAgent, agentId
             <h4 className="text-xs font-bold text-[#0F0E17]">Leads from this agent</h4>
             <button
               type="button"
-              onClick={() => onOpenTab?.('calls')}
+              onClick={() => onOpenTab?.('calls', 'leads')}
               className="text-[11px] font-semibold text-[#5034CE] hover:underline inline-flex items-center gap-1"
             >
               Pipeline <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-          {agentLeads.length === 0 ? (
-            <p className="text-xs text-[#8C879A] py-4 text-center" data-testid="agent-overview-no-leads">
-              This agent has no leads yet. Leads are created automatically from its
-              calls, or added by hand.
-            </p>
-          ) : (
-            <>
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="w-4 h-4 text-[#6344E7]" />
-                <span className="text-2xl font-bold text-[#0F0E17] tabular-nums">
-                  {agentLeads.length}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {agentLeads.slice(0, 8).map((l) => (
-                  <span
-                    key={l.id}
-                    className="text-[10px] px-2 py-0.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] text-[#524E5E]"
-                  >
-                    {l.name} · {l.stage}
-                  </span>
-                ))}
-              </div>
-            </>
-          )}
+          {!stats?.leadCount ? <p className="py-4 text-center text-xs text-[#8C879A]" data-testid="agent-overview-no-leads">No new leads recorded in this period.</p> : <><p className="mb-3 text-2xl font-bold">{stats.leadCount} <span className="text-xs font-normal text-[#716C7F]">new leads in this period</span></p><div className="flex flex-wrap gap-2">{Object.entries(stats.leadStageCounts || {}).map(([stage, count]) => <span key={stage} className="rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] px-3 py-2 text-xs capitalize">{stage.replace(/_/g, ' ')} · {count}</span>)}</div></>}
+
         </SolidCard>
       </div>
     </div>
