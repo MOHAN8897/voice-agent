@@ -82,13 +82,60 @@
 .landing-integration-note span { display: block; margin-top: .375rem; color: var(--landing-muted); font-size: .875rem; line-height: 1.6; }
 .landing-integration-note button { flex-shrink: 0; }
 .landing-pricing { border-block: 1px solid var(--landing-line); background: #f6f3ed; }
-.landing-pricing-layout { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 4rem; }
-.landing-pricing-card { padding: 2.5rem; border: 1px solid var(--landing-line); border-radius: 1.5rem; background: #fff; }
-.landing-tier-labels { display: flex; flex-wrap: wrap; gap: .5rem; }
-.landing-tier-labels span { padding: .375rem .625rem; border: 1px solid var(--landing-line); border-radius: .5rem; font-size: .75rem; }
-.landing-pricing-card h3 { margin-top: 1.75rem; font-size: 2rem; line-height: 1.2; }
-.landing-pricing-card > p { margin-block: 1.25rem 1.75rem; color: var(--landing-muted); font-size: 1rem; line-height: 1.75; }
-.landing-pricing-card .landing-caption { margin-top: 1rem; }
+.landing-pricing .landing-section-header { margin-bottom: 2.5rem; }
+.landing-price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1.25rem; perspective: 1400px; }
+.landing-price-reveal { height: 100%; animation: landing-card-in .6s cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(var(--card-index, 0) * 90ms); }
+.landing-price-card { position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 1.75rem; border: 1px solid var(--landing-line); border-radius: 1.5rem; background: #fff; box-shadow: 0 1px 2px rgba(27, 19, 45, .04); transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)); transform-style: preserve-3d; transition: transform .3s cubic-bezier(.22, 1, .36, 1), box-shadow .3s, border-color .3s; will-change: transform; }
+.landing-price-card:hover { transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateY(-6px); box-shadow: 0 26px 60px -28px rgba(35, 28, 54, .35); }
+.landing-price-card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .35s; background: radial-gradient(420px circle at var(--glow-x, 50%) var(--glow-y, 0%), rgba(99, 68, 231, .1), transparent 60%); }
+.landing-price-card:hover::after { opacity: 1; }
+.landing-price-card.is-featured { --feat-bg: linear-gradient(168deg, #2d2f35 0%, #22242a 52%, #191a1f 100%); --feat-border: rgba(255, 255, 255, .16); --feat-ring: rgba(255, 255, 255, .2); --feat-text: #fff; --feat-muted: #b8b3aa; --feat-strong: #fff; --feat-accent: #e7d0a1; --feat-btn-bg: #e7d0a1; --feat-btn-text: #1f1b14; --feat-btn-hover: #f1e0bb; --feat-glow: rgba(231, 208, 161, .12); --feat-shadow: 0 30px 70px -34px rgba(0, 0, 0, .62); --feat-ring-anim: none; border-color: var(--feat-border); background: var(--feat-bg); color: var(--feat-text); box-shadow: var(--feat-shadow); }
+.landing-price-card.is-featured[data-featured-style="ivory"] { --feat-bg: linear-gradient(160deg, #fdfaf2 0%, #f5ecdb 100%); --feat-border: rgba(158, 124, 55, .42); --feat-ring: rgba(158, 124, 55, .26); --feat-text: #2c2216; --feat-muted: #7c6b52; --feat-strong: #2c2216; --feat-accent: #8a6621; --feat-btn-bg: #2c2216; --feat-btn-text: #fdf7ea; --feat-btn-hover: #46372a; --feat-glow: rgba(150, 112, 43, .12); --feat-shadow: 0 30px 70px -36px rgba(112, 84, 30, .42); }
+.landing-price-card.is-featured[data-featured-style="forest"] { --feat-bg: linear-gradient(165deg, #152e23 0%, #0f231a 58%, #0b1b14 100%); --feat-border: rgba(190, 209, 174, .28); --feat-ring: rgba(206, 224, 190, .24); --feat-text: #f6f3e9; --feat-muted: #b6c1ad; --feat-strong: #fff; --feat-accent: #dfcb9a; --feat-btn-bg: #dfcb9a; --feat-btn-text: #152017; --feat-btn-hover: #ecdcb5; --feat-glow: rgba(223, 203, 154, .12); --feat-shadow: 0 30px 70px -34px rgba(7, 31, 20, .7); }
+.landing-price-card.is-featured[data-featured-style="midnight"] { --feat-bg: radial-gradient(120% 100% at 15% 0%, #322a52 0%, #221c36 55%, #1b1628 100%); --feat-border: rgba(165, 137, 255, .45); --feat-ring: rgba(196, 177, 255, .35); --feat-text: #fff; --feat-muted: #c9bedc; --feat-strong: #fff; --feat-accent: #c9b8ff; --feat-btn-bg: #fff; --feat-btn-text: var(--landing-ink); --feat-btn-hover: #ece5fb; --feat-glow: rgba(99, 68, 231, .18); --feat-shadow: 0 30px 70px -34px rgba(72, 45, 155, .65); --feat-ring-anim: landing-featured-pulse 4.5s ease-in-out infinite; }
+.landing-price-card.is-featured::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 1px var(--feat-ring); animation: var(--feat-ring-anim); }
+.landing-price-card.is-featured::after { background: radial-gradient(420px circle at var(--glow-x, 50%) var(--glow-y, 0%), var(--feat-glow), transparent 60%); }
+.landing-price-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .75rem; min-height: 2rem; }
+.landing-price-label { margin: 0; font-size: .8125rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.landing-price-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.landing-price-tags li { display: inline-flex; align-items: center; gap: .4rem; padding: .32rem .62rem; border-radius: 999px; background: #f2eee6; color: var(--landing-ink); font-size: .625rem; font-weight: 600; letter-spacing: .055em; line-height: 1.2; text-transform: uppercase; white-space: nowrap; }
+.landing-price-tags li::before { content: ""; flex: none; width: .375rem; height: .375rem; border-radius: 999px; background: var(--landing-ink); opacity: .38; }
+.landing-price-tags li[data-tone="accent"]::before { background: #6344e7; opacity: 1; }
+.landing-price-tags li[data-tone="success"]::before { background: #2f8a5b; opacity: 1; }
+.landing-price-tags li[data-tone="warning"]::before { background: #b7791f; opacity: 1; }
+.landing-price-note { min-height: 3.1rem; margin: .875rem 0 0; color: var(--landing-muted); font-size: .9375rem; line-height: 1.6; }
+.landing-price-rate { display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem; margin-top: 1.5rem; }
+.landing-price-value { font-size: 2.5rem; font-weight: 600; letter-spacing: -.045em; line-height: 1; font-variant-numeric: tabular-nums; }
+.landing-price-unit { color: var(--landing-muted); font-size: .8125rem; }
+.landing-price-usd { flex-basis: 100%; color: var(--landing-muted); font-size: .75rem; font-variant-numeric: tabular-nums; }
+.landing-price-unavailable { color: var(--landing-muted); font-size: .875rem; font-weight: 600; line-height: 1.5; }
+.landing-price-channels { display: grid; gap: .45rem; margin: 1rem 0 1.75rem; padding-top: 1rem; border-top: 1px solid var(--landing-line); color: var(--landing-muted); font-size: .8125rem; }
+.landing-price-channels strong { color: var(--landing-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.landing-price-action { width: 100%; margin-top: auto; }
+.landing-price-card.is-featured .landing-price-note,
+.landing-price-card.is-featured .landing-price-unit,
+.landing-price-card.is-featured .landing-price-usd,
+.landing-price-card.is-featured .landing-price-unavailable,
+.landing-price-card.is-featured .landing-price-channels { color: var(--feat-muted); }
+.landing-price-card.is-featured .landing-price-channels { border-top-color: color-mix(in srgb, var(--feat-muted) 32%, transparent); }
+.landing-price-card.is-featured .landing-price-channels strong { color: var(--feat-strong); }
+.landing-price-card.is-featured .landing-price-tags li { padding: 0; gap: .5rem; background: none; color: var(--feat-accent); letter-spacing: .09em; }
+.landing-price-card.is-featured .landing-price-tags li::before { width: 1.1rem; height: 1px; border-radius: 0; background: currentColor; opacity: .75; }
+/* The global heading color would otherwise override the inherited featured-card text. */
+.landing-price-card.is-featured .landing-price-label { color: var(--feat-text); }
+.landing-price-card.is-featured .landing-price-action { border-color: var(--feat-btn-bg); background: var(--feat-btn-bg); color: var(--feat-btn-text); }
+.landing-price-card.is-featured .landing-price-action:hover { border-color: var(--feat-btn-hover); background: var(--feat-btn-hover); }
+.landing-pricing-note { margin-top: 1.5rem; }
+.landing-price-skeleton { min-height: 24rem; border: 1px solid var(--landing-line); border-radius: 1.5rem; background: linear-gradient(100deg, #fff 30%, #efece5 50%, #fff 70%); background-size: 220% 100%; animation: landing-shimmer 1.4s linear infinite; }
+.landing-price-state { padding: 2rem; border: 1px solid var(--landing-line); border-radius: 1.5rem; background: #fff; }
+.landing-price-state h3 { margin: 0; font-size: 1.25rem; }
+.landing-price-state p { max-width: 52ch; margin: .75rem 0 0; color: var(--landing-muted); font-size: .9375rem; line-height: 1.7; }
+.landing-price-state-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+.landing-calculator { background: #fff; }
+.landing-calculator .usage-calculator { margin-top: 2.5rem; box-shadow: 0 20px 60px -40px rgba(27, 19, 45, .3); }
+@keyframes landing-card-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes landing-featured-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes landing-shimmer { from { background-position: 140% 0; } to { background-position: -40% 0; } }
 .landing-faq { background: #fff; }
 .landing-faq-layout { display: grid; grid-template-columns: .9fr 1.2fr; gap: 4rem; }
 .landing-faq details { border-bottom: 1px solid var(--landing-line); }
@@ -118,7 +165,9 @@
 .marketing-footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--landing-line, rgba(35, 28, 54, .12)); font-size: .75rem; }
 .marketing-footer-socials { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; font-size: .8125rem; }
 @media (max-width: 1023px) {
-  .landing-split, .landing-workflows, .landing-pricing-layout, .landing-faq-layout { gap: 2rem; }
+  .landing-split, .landing-workflows, .landing-faq-layout { gap: 2rem; }
+  .landing-price-grid { grid-template-columns: 1fr; max-width: 32rem; }
+  .landing-price-note { min-height: 0; }
   .landing-refresh h2 { font-size: 2.5rem; }
   .landing-wave { display: none; }
   .landing-final-panel { padding: 3rem; }
@@ -128,9 +177,10 @@
   .landing-container, .marketing-footer-inner { width: calc(100% - 3rem); }
   .landing-section { padding-block: 4rem; }
   .landing-refresh h2 { font-size: 2.25rem; }
-  .landing-split, .landing-workflows, .landing-pricing-layout, .landing-faq-layout { grid-template-columns: 1fr; }
+  .landing-split, .landing-workflows, .landing-faq-layout { grid-template-columns: 1fr; }
   .landing-split { gap: 2.5rem; }
-  .landing-player, .landing-pricing-card, .landing-workflow-detail { padding: 1.5rem; }
+  .landing-player, .landing-price-card, .landing-workflow-detail { padding: 1.5rem; }
+  .landing-price-grid { max-width: none; }
   .landing-player blockquote { min-height: 0; font-size: 1.0625rem; }
   .landing-section-header { flex-direction: column; align-items: flex-start; gap: 1rem; margin-bottom: 2rem; }
   .landing-workspace-label { padding: 1rem; }
@@ -152,4 +202,4 @@
   .marketing-footer-main { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; }
   .marketing-footer-main > div:first-child { grid-column: 1 / -1; }
 }
-@media (prefers-reduced-motion: reduce) { .landing-refresh *, .marketing-footer * { scroll-behavior: auto !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .landing-refresh *, .marketing-footer * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }

@@ -7,6 +7,7 @@ import {
   Users,
   Megaphone,
   CreditCard,
+  Calculator,
   Settings,
   Plus,
   ArrowRight,
@@ -52,6 +53,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate }) {
     { label: 'Inspect Call Transcripts', category: 'Navigation', icon: PhoneCall, action: () => onNavigate('calls') },
     { label: 'View Lead Pipeline', category: 'Navigation', icon: Users, action: () => onNavigate('leads') },
     { label: 'Top-up Balance & Invoices', category: 'Billing', icon: CreditCard, action: () => onNavigate('billing') },
+    { label: 'Estimate Monthly Usage', category: 'Billing', icon: Calculator, action: () => onNavigate('calculator') },
     { label: 'Workspace Settings & API Keys', category: 'Settings', icon: Settings, action: () => onNavigate('settings') },
     ...(isPlatformAdmin
       ? [{ label: 'Platform admin', category: 'Admin', icon: Shield, action: () => onNavigate('admin') }]

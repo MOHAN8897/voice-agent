@@ -14,6 +14,7 @@ from server.services.saas.voice_stack_profiles import (
     _load_rates_without_fallback,
     _native_tier_retail_rate,
     load_profile_records,
+    ordered_stack_tier_ids,
     public_catalog_profile,
 )
 
@@ -46,9 +47,8 @@ async def voice_stack_catalog(
     import copy
     from server.services.saas.voice_stack_defaults import recommended_composed_profile
 
-    standard_tiers = ["low", "medium"]
-    custom_tiers = [t for t in sorted(records.keys()) if t not in ("low", "medium", "premium")]
-    ordered_tiers = [t for t in standard_tiers if t in records or t in ("low", "medium")] + custom_tiers
+    # Premium is appended below so an older record can borrow the recommended profile.
+    ordered_tiers = [tier for tier in ordered_stack_tier_ids(records) if tier != "premium"]
 
     active_ordered_tiers = [
         tier for tier in ordered_tiers

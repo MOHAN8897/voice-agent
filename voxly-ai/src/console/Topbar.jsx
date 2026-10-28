@@ -67,6 +67,7 @@ export function Topbar({
     leads: 'Leads',
     campaigns: 'Outbound campaigns',
     billing: 'Billing & usage',
+    calculator: 'Usage calculator',
     integrations: 'Integrations',
     settings: 'Settings',
     admin: 'Platform admin',

@@ -400,6 +400,15 @@ async def load_profile_records(environment: str, tiers: tuple[str, ...] | list[s
         return loaded
 
 
+def ordered_stack_tier_ids(records: dict[str, dict[str, Any]]) -> list[str]:
+    """Tenant-catalog order: standard tiers, operator-created stacks, then premium."""
+    ordered = [tier for tier in ("low", "medium") if tier in records]
+    ordered += [tier for tier in sorted(records) if tier not in ("low", "medium", "premium")]
+    if "premium" in records:
+        ordered.append("premium")
+    return ordered
+
+
 def expand_model_voices(tier: str, record: dict[str, Any]) -> dict[str, Any]:
     """Read-through provider inventory; never rewrite saved tiers or revisions."""
     from server.providers.voice_inventory import profile_voice_rows
@@ -598,6 +607,18 @@ def readiness_for_profile(tier: str, record: dict[str, Any] | None, rates: dict[
         "enabled": bool(profile.get("enabled")),
         "blockers": blockers,
     }
+
+
+def tier_is_public(tier: str, record: dict[str, Any] | None, rates: dict[str, Any] | None) -> bool:
+    """Published shelf gate: the operator enabled it and it is verified ready.
+
+    Matches the tenant voice catalog so marketing never advertises a stack the
+    workspace would refuse to select.
+    """
+    profile = record.get("profile") if isinstance(record, dict) else None
+    if not isinstance(profile, dict) or profile.get("enabled") is not True:
+        return False
+    return readiness_for_profile(tier, record, rates).get("ready") is True
 
 
 def profile_runtime_signature(profile: dict[str, Any]) -> str:

@@ -85,7 +85,7 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
     if (parentTier === 'low' && wallet?.pstnLowRateInrPerMin) return Number(wallet.pstnLowRateInrPerMin);
     if (parentTier === 'medium' && wallet?.pstnMediumRateInrPerMin) return Number(wallet.pstnMediumRateInrPerMin);
     if (parentTier === 'premium' && wallet?.pstnPremiumRateInrPerMin) return Number(wallet.pstnPremiumRateInrPerMin);
-    return Number(wallet?.rateInrPerMin ?? 5.00);
+    return Number(wallet?.rateInrPerMin ?? 0);
   }, [mode, agentTier, wallet, pricingProfile]);
 
   const activeRateUsd = useMemo(() => {
@@ -101,7 +101,7 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
       : 'medium';
     const parentRate = wallet?.tierRates?.[parentTier]?.usdPerMin;
     if (parentRate != null && Number(parentRate) > 0) return Number(parentRate);
-    return Number(wallet?.rateUsdPerMin ?? 0.053);
+    return Number(wallet?.rateUsdPerMin ?? 0);
   }, [mode, agentTier, wallet, pricingProfile]);
   const rateAvailable = Number.isFinite(activeRateInr) && activeRateInr > 0 && Number.isFinite(activeRateUsd) && activeRateUsd > 0;
   const remainingMinutes = rateAvailable ? Math.floor(balanceInr > 0 ? balanceInr / activeRateInr : displayUsd / activeRateUsd) : null;

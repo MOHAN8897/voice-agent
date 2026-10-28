@@ -94,17 +94,77 @@ async def _public_tax_summary() -> dict:
     }
 
 
+async def _public_tier_prices(rates: dict, merchandising: dict) -> list[dict]:
+    """Per-tier shelf prices with operator tags, sourced from the same rate tables."""
+    from server.services.dev_runtime import effective_app_environment
+    from server.services.saas.voice_stack_profiles import (
+        TIER_LABELS,
+        _native_tier_retail_rate,
+        _public_label,
+        _web_tier_retail_rate,
+        load_profile_records,
+        ordered_stack_tier_ids,
+        tier_is_public,
+    )
+
+    try:
+        records = await load_profile_records(effective_app_environment(), None)
+    except Exception:
+        records = {}
+
+    def _pstn_view(micros: int, paise: int) -> dict:
+        return {"usdPerMin": round(micros / 1_000_000.0, 6), "inrPerMin": round(paise / 100.0, 2)}
+
+    tiers = []
+    merchandised = merchandising.get("tiers") if isinstance(merchandising, dict) else {}
+    for tier in ordered_stack_tier_ids(records):
+        record = records.get(tier)
+        profile = record.get("profile") if isinstance(record, dict) else None
+        # Same gate as the tenant voice catalog: enabled and verified ready.
+        if not isinstance(profile, dict) or not tier_is_public(tier, record, rates):
+            continue
+        pstn_rate = _native_tier_retail_rate(rates, tier, record=record)
+        web_rate = _web_tier_retail_rate(rates, tier, record=record)
+        entry = {
+            "id": tier,
+            "label": _public_label(profile.get("label"), TIER_LABELS.get(tier, tier.title())),
+            "featured": False,
+            "visible": True,
+            "tags": [],
+            "pstn": _pstn_view(pstn_rate["usdMicrosPerMin"], pstn_rate["inrPaisePerMin"]) if pstn_rate else None,
+            "web": _pstn_view(web_rate["usdMicrosPerMin"], web_rate["inrPaisePerMin"]) if web_rate else None,
+        }
+        stored = merchandised.get(tier) if isinstance(merchandised, dict) else None
+        if isinstance(stored, dict):
+            entry["featured"] = stored.get("featured") is True
+            entry["visible"] = stored.get("visible") is not False
+            entry["tags"] = [
+                {"label": tag["label"], "tone": tag.get("tone") or "neutral"}
+                for tag in stored.get("tags") or []
+                if isinstance(tag, dict) and isinstance(tag.get("label"), str)
+            ]
+        tiers.append(entry)
+    return tiers
+
+
 @router.get("/api/billing/catalog")
 async def billing_catalog():
     """Prices the console displays. The server is the only source of truth for these.
 
     USD and INR values come from the same versioned price configuration. The
     configured INR rate is preserved when it was entered directly in rupees.
+    Tier shelf prices follow admin edits in the rate tables; merchandising tags
+    are stored separately so marketing never hardcodes a price or a badge.
     """
     from server.services.saas.billing_rates import load_current_rates
+    from server.services.saas.pricing_merchandising import (
+        DEFAULT_FEATURED_STYLE,
+        load_tier_merchandising,
+    )
 
     settings = get_settings()
     rates = await load_current_rates()
+    merchandising = await load_tier_merchandising()
     return {
         "currency": "USD",
         "plans": [
@@ -139,6 +199,10 @@ async def billing_catalog():
         # GST applies to INR supplies to Indian recipients. The exact split is
         # quoted per account in POST /api/billing/quote.
         "tax": await _public_tax_summary(),
+        "pricingVersion": int(rates.get("version") or 1),
+        "merchandisingVersion": int(merchandising.get("version") or 0),
+        "featuredStyle": merchandising.get("featuredStyle") or DEFAULT_FEATURED_STYLE,
+        "tiers": await _public_tier_prices(rates, merchandising),
     }
 
 

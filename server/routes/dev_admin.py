@@ -2595,6 +2595,140 @@ async def put_billing_rates(body: BillingRatesBody, session: SessionData = Depen
     )
     return {"ok": True, "currency": "USD", "rates": _rates_payload(r)}
 
+
+class TierMerchandisingBody(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    expectedVersion: int = Field(ge=0, strict=True)
+    featuredStyle: str | None = None
+    tiers: dict[str, Any]
+
+
+def _merchandising_response(view: dict[str, Any], tiers: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+    from server.services.saas.pricing_merchandising import FEATURED_STYLES, default_merchandising
+    from server.services.saas.voice_stack_profiles import TIER_LABELS
+
+    defaults_merchandising = default_merchandising()
+    defaults = defaults_merchandising["tiers"]["low"]
+    if not tiers:
+        tiers = [
+            {"id": tier, "label": label, "active": False}
+            for tier, label in TIER_LABELS.items()
+        ]
+    return {
+        "version": view["version"],
+        "updatedAt": view["updatedAt"],
+        "updatedBy": view["updatedBy"],
+        "featuredStyle": view.get("featuredStyle") or defaults_merchandising["featuredStyle"],
+        "featuredStyles": list(FEATURED_STYLES),
+        "tiers": [
+            {
+                "id": row["id"],
+                "label": row["label"],
+                **{**defaults, **view["tiers"].get(row["id"], {})},
+                "active": row["active"],
+                "pstnInrPerMin": row.get("pstnInrPerMin"),
+                "webInrPerMin": row.get("webInrPerMin"),
+            }
+            for row in tiers
+        ],
+    }
+
+
+async def _tier_activation() -> list[dict[str, Any]]:
+    """Every configured stack with its public-shelf status, in tenant-catalog order."""
+    from server.services.dev_runtime import effective_app_environment
+    from server.services.saas.voice_stack_profiles import (
+        TIER_LABELS,
+        _load_rates_without_fallback,
+        _native_tier_retail_rate,
+        _public_label,
+        _web_tier_retail_rate,
+        load_profile_records,
+        ordered_stack_tier_ids,
+        tier_is_public,
+    )
+
+    try:
+        records = await load_profile_records(effective_app_environment(), None)
+    except Exception:
+        records = {}
+    try:
+        rates = await _load_rates_without_fallback()
+    except Exception:
+        rates = None
+    tiers = []
+    for tier in ordered_stack_tier_ids(records):
+        record = records.get(tier)
+        profile = record.get("profile") if isinstance(record, dict) else None
+        pstn_rate = _native_tier_retail_rate(rates, tier, record=record)
+        web_rate = _web_tier_retail_rate(rates, tier, record=record)
+        tiers.append(
+            {
+                "id": tier,
+                "label": _public_label(
+                    profile.get("label") if isinstance(profile, dict) else None,
+                    TIER_LABELS.get(tier, tier.title()),
+                ),
+                "active": tier_is_public(tier, record, rates),
+                # Shelf prices for the admin preview; the marketing page shows the same numbers.
+                "pstnInrPerMin": round(pstn_rate["inrPaisePerMin"] / 100.0, 2) if pstn_rate else None,
+                "webInrPerMin": round(web_rate["inrPaisePerMin"] / 100.0, 2) if web_rate else None,
+            }
+        )
+    return tiers
+
+
+@router.get("/api/dev/admin/pricing-merchandising")
+async def get_pricing_merchandising(session: SessionData = Depends(require_dev_session)):
+    require_permission(session, "dev.admin.billing")
+    from server.services.saas.pricing_merchandising import load_tier_merchandising
+
+    view = await load_tier_merchandising(force=True)
+    return _merchandising_response(view, await _tier_activation())
+
+
+@router.put("/api/dev/admin/pricing-merchandising")
+async def put_pricing_merchandising(
+    body: TierMerchandisingBody,
+    session: SessionData = Depends(require_dev_session),
+):
+    require_permission(session, "dev.admin.billing")
+    from server.services.saas.pricing_merchandising import (
+        PUBLIC_TIERS,
+        MerchandisingError,
+        save_tier_merchandising,
+    )
+
+    tiers = await _tier_activation()
+    try:
+        view = await save_tier_merchandising(
+            tiers=body.tiers,
+            expected_version=body.expectedVersion,
+            actor=session.subject,
+            allowed_tiers=[row["id"] for row in tiers] or list(PUBLIC_TIERS),
+            featured_style=body.featuredStyle,
+        )
+    except MerchandisingError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail={"error": {"code": exc.code, "message": str(exc)}},
+        ) from exc
+    await record_admin_action(
+        actor=session.subject,
+        action="billing.merchandising",
+        resource_type="platform",
+        resource_id="tier_merchandising",
+        payload={
+            "expectedVersion": body.expectedVersion,
+            "version": view["version"],
+            "featuredStyle": view["featuredStyle"],
+            "tiers": body.tiers,
+        },
+    )
+    return _merchandising_response(view, tiers)
+
+
 class ProviderCostsBody(BaseModel):
     model_config = {"extra": "forbid"}
 

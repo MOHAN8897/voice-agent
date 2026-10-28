@@ -7,6 +7,7 @@ import {
   Megaphone,
   Users,
   CreditCard,
+  Calculator,
   Blocks,
   Settings,
   ExternalLink,
@@ -126,6 +127,7 @@ export function Sidebar({
       group: 'WORKSPACE',
       items: [
         { id: 'billing', label: 'Billing & Usage', icon: CreditCard },
+        { id: 'calculator', label: 'Usage calculator', icon: Calculator },
         { id: 'integrations', label: 'Integrations', icon: Blocks },
         { id: 'settings', label: 'Settings', icon: Settings },
       ]

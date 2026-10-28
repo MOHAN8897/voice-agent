@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowRight, AudioLines, Check, ChevronDown, Globe2, Headphones, MessageSquare, PhoneOutgoing, Play, ShieldCheck, Square, Workflow } from 'lucide-react';
 import { VOICE_SAMPLES, sampleDurationLabel } from '../services/marketingVoice';
 import { voiceAgent } from '../services/voiceAgent';
+import { usePricingCatalog } from '../lib/usePricingCatalog';
+import { PricingCards } from './PricingCards';
+import { UsageCalculator } from './UsageCalculator';
 import '../styles/landing.css';
 
 const WORKFLOWS = [
@@ -95,6 +98,7 @@ function VoicePreview({ onGetStarted }) {
 export function LandingSections({ onGetStarted, onSelectPlan, onNavigatePage }) {
   const [workflowId, setWorkflowId] = useState('sales');
   const workflow = WORKFLOWS.find(item => item.id === workflowId);
+  const pricing = usePricingCatalog();
 
   return <div className="landing-refresh" data-testid="landing-refresh">
     <VoicePreview onGetStarted={onGetStarted} />
@@ -141,9 +145,32 @@ export function LandingSections({ onGetStarted, onSelectPlan, onNavigatePage }) 
     </section>
 
     <section id="pricing" className="landing-section landing-pricing">
-      <div className="landing-container landing-pricing-layout">
-        <SectionIntro eyebrow="Room to start. Room to grow." title="Choose the voice. See the cost.">Fund your wallet and choose an available voice tier for your workflow. Review the applicable rates in your workspace before calling.</SectionIntro>
-        <div className="landing-pricing-card"><div className="landing-tier-labels"><span>Economical</span><span>Standard</span><span>Premium</span></div><h3>One wallet.<br />A choice of voice tiers.</h3><p>Phone and browser-agent rates are shown separately. Your checkout shows applicable taxes, and your usage stays visible in the workspace.</p><button className="landing-button" onClick={onSelectPlan}>Explore workspace pricing <ArrowRight size={18} aria-hidden="true" /></button><span className="landing-caption">Available tiers depend on your workspace.</span></div>
+      <div className="landing-container">
+        <div className="landing-section-header">
+          <SectionIntro eyebrow="Room to start. Room to grow." title="Choose the voice. See the cost.">These are the published rates right now. Fund your wallet, choose an available voice tier, and review the exact rate for your channel before calling.</SectionIntro>
+          <a className="landing-text-link" href="#usage-calculator">Estimate your usage <ArrowDown size={17} aria-hidden="true" /></a>
+        </div>
+        <PricingCards
+          catalog={pricing.data}
+          loading={pricing.loading}
+          error={pricing.error}
+          onRetry={pricing.reload}
+          onSelectPlan={onSelectPlan}
+        />
+        <p className="landing-caption landing-pricing-note">Rates are per minute and exclude GST. Each call locks its rate when it starts, and checkout confirms the applicable tax before payment. Available tiers depend on your workspace.</p>
+      </div>
+    </section>
+
+    <section id="usage-calculator" className="landing-section landing-calculator">
+      <div className="landing-container">
+        <SectionIntro eyebrow="Plan before you dial" title="Estimate a month of conversations.">Pick a voice tier, set your expected call volume, and see what a typical month could cost. The estimate follows the same published rates shown above.</SectionIntro>
+        <UsageCalculator
+          catalog={pricing.data}
+          loading={pricing.loading}
+          error={pricing.error}
+          onRetry={pricing.reload}
+          onSelectPlan={onSelectPlan}
+        />
       </div>
     </section>
 

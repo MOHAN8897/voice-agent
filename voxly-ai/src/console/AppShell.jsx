@@ -19,6 +19,7 @@ import { CallsModule } from './modules/CallsModule';
 import { LeadsModule } from './modules/LeadsModule';
 import { CampaignsModule } from './modules/CampaignsModule';
 import { BillingModule } from './modules/BillingModule';
+import { UsageCalculatorModule } from './modules/UsageCalculatorModule';
 import { IntegrationsModule } from './modules/IntegrationsModule';
 import { SettingsModule } from './modules/SettingsModule';
 import { useAuth } from '../context/AuthContext';
@@ -241,6 +242,8 @@ export function AppShell({ onBackToLanding, onSignOut }) {
               {activeTab === 'campaigns' && <CampaignsModule />}
 
               {activeTab === 'billing' && <BillingModule />}
+
+              {activeTab === 'calculator' && <UsageCalculatorModule />}
 
               {activeTab === 'integrations' && <IntegrationsModule />}
 

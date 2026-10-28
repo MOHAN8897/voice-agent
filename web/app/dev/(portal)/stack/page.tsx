@@ -1,4 +1,5 @@
 import { PstnVoiceProfileWorkbench } from "@/components/dev/PstnVoiceProfileWorkbench";
+import { PricingMerchandisingEditor } from "@/components/dev/PricingMerchandisingEditor";
 import { GstBillingSettings } from "@/components/dev/GstBillingSettings";
 import { PageHeader } from "@/components/console/PageHeader";
 
@@ -13,6 +14,21 @@ export default function DevStackPage() {
       <div className="mt-6">
         <PstnVoiceProfileWorkbench />
       </div>
+      <section className="mt-10 space-y-4" aria-labelledby="pricing-tags-heading">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-subtle">
+            Public pricing
+          </p>
+          <h2 id="pricing-tags-heading" className="mt-1 text-xl font-semibold text-text">
+            Marketing tags &amp; featured tier
+          </h2>
+          <p className="mt-1 max-w-3xl text-sm text-text-muted">
+            Badges and the highlighted tier on the public pricing cards and usage calculator.
+            Shelf prices come from the retail rates configured above.
+          </p>
+        </div>
+        <PricingMerchandisingEditor />
+      </section>
       <section className="mt-10 space-y-4" aria-labelledby="gst-billing-heading">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-text-subtle">

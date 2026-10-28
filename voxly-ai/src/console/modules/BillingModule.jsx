@@ -45,6 +45,12 @@ const CHARGE_PRESETS = {
   USD: [5, 10, 25, 50],
 };
 
+const BILLING_TIERS = [
+  { id: 'low', label: 'Economical (Low)' },
+  { id: 'medium', label: 'Standard Regional' },
+  { id: 'premium', label: 'Flagship Live (Premium)' },
+];
+
 const FIELD_CLASS =
   'w-full min-h-[40px] rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7]';
 
@@ -61,6 +67,44 @@ function symbolFor(currency) {
   if (currency === 'INR') return '₹';
   if (currency === 'USD') return '$';
   return `${currency} `;
+}
+
+/** Server-published PSTN rates only; a missing rate stays unavailable rather than guessed. */
+function pstnTierRate(wallet, tier) {
+  const [inrField, usdField] = {
+    low: ['pstnLowRateInrPerMin', 'pstnLowRateUsdPerMin'],
+    medium: ['pstnMediumRateInrPerMin', 'pstnMediumRateUsdPerMin'],
+    premium: ['pstnPremiumRateInrPerMin', 'pstnPremiumRateUsdPerMin'],
+  }[tier];
+  const inrSource = wallet?.[inrField] ?? wallet?.tierRates?.[tier]?.inrPerMin;
+  const usdSource = wallet?.[usdField] ?? wallet?.tierRates?.[tier]?.usdPerMin;
+  const inr = Number(inrSource);
+  const usd = Number(usdSource);
+  return {
+    inr: inrSource != null && Number.isFinite(inr) ? inr : null,
+    usd: usdSource != null && Number.isFinite(usd) ? usd : null,
+  };
+}
+
+/** Renders a server-published rate, or says it is unavailable instead of inventing one. */
+function DualRate({ inr, usd, per = 'min', usdDigits = 3 }) {
+  const inrValue = Number(inr);
+  const usdValue = Number(usd);
+  const hasInr = inr != null && Number.isFinite(inrValue);
+  const hasUsd = usd != null && Number.isFinite(usdValue);
+  if (!hasInr && !hasUsd) {
+    return <span className="text-[11px] text-[#8C879A] font-medium">Rate unavailable</span>;
+  }
+  return (
+    <span className="text-[#0F0E17] font-semibold">
+      {hasInr && `₹${inrValue.toFixed(2)}/${per}`}
+      {hasUsd && (
+        <span className="text-[10px] text-[#8C879A] ml-1 font-normal">
+          (${usdValue.toFixed(usdDigits)}{hasInr ? '' : `/${per}`})
+        </span>
+      )}
+    </span>
+  );
 }
 
 function formatDate(value, { withTime = false } = {}) {
@@ -468,33 +512,31 @@ export function BillingModule() {
                 Voice stacks meter by the second based on the agent's selected voice tier:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 pb-1">
-                <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
-                  <span className="block text-[11px] font-semibold text-[#0F0E17]">Economical (Low)</span>
-                  <span className="text-xs font-mono font-bold text-[#6344E7]">
-                    ₹{Number(serverWallet?.pstnLowRateInrPerMin ?? serverWallet?.tierRates?.low?.inrPerMin ?? 4.70).toFixed(2)}/min
-                  </span>{' '}
-                  <span className="text-[10px] text-[#8C879A] font-mono">
-                    (${Number(serverWallet?.pstnLowRateUsdPerMin ?? serverWallet?.tierRates?.low?.usdPerMin ?? 0.05).toFixed(3)}/min)
-                  </span>
-                </div>
-                <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
-                  <span className="block text-[11px] font-semibold text-[#0F0E17]">Standard Regional</span>
-                  <span className="text-xs font-mono font-bold text-[#6344E7]">
-                    ₹{Number(serverWallet?.pstnMediumRateInrPerMin ?? serverWallet?.tierRates?.medium?.inrPerMin ?? 8.46).toFixed(2)}/min
-                  </span>{' '}
-                  <span className="text-[10px] text-[#8C879A] font-mono">
-                    (${Number(serverWallet?.pstnMediumRateUsdPerMin ?? serverWallet?.tierRates?.medium?.usdPerMin ?? 0.09).toFixed(3)}/min)
-                  </span>
-                </div>
-                <div className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
-                  <span className="block text-[11px] font-semibold text-[#0F0E17]">Flagship Live (Premium)</span>
-                  <span className="text-xs font-mono font-bold text-[#6344E7]">
-                    ₹{Number(serverWallet?.pstnPremiumRateInrPerMin ?? serverWallet?.tierRates?.premium?.inrPerMin ?? 14.10).toFixed(2)}/min
-                  </span>{' '}
-                  <span className="text-[10px] text-[#8C879A] font-mono">
-                    (${Number(serverWallet?.pstnPremiumRateUsdPerMin ?? serverWallet?.tierRates?.premium?.usdPerMin ?? 0.15).toFixed(3)}/min)
-                  </span>
-                </div>
+                {BILLING_TIERS.map((tier) => {
+                  const rate = pstnTierRate(serverWallet, tier.id);
+                  return (
+                    <div key={tier.id} className="p-2 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB]">
+                      <span className="block text-[11px] font-semibold text-[#0F0E17]">{tier.label}</span>
+                      {rate.inr != null ? (
+                        <>
+                          <span className="text-xs font-mono font-bold text-[#6344E7]">
+                            ₹{rate.inr.toFixed(2)}/min
+                          </span>
+                          {rate.usd != null && (
+                            <>
+                              {' '}
+                              <span className="text-[10px] text-[#8C879A] font-mono">
+                                (${rate.usd.toFixed(3)}/min)
+                              </span>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-[11px] text-[#8C879A]">Rate unavailable</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <p className="text-[11px] text-[#8C879A]">
                 Web calls use the selected stack’s web price. Each call locks its rate when it starts.
@@ -847,31 +889,16 @@ export function BillingModule() {
           <div className="space-y-2 text-xs font-mono">
             <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between items-center">
               <span className="text-[#524E5E]">Phone call (PSTN voice)</span>
-              <span className="text-[#0F0E17] font-semibold">
-                ₹{Number(serverWallet?.rateInrPerMin ?? 5.00).toFixed(2)}/min
-                <span className="text-[10px] text-[#8C879A] ml-1 font-normal">
-                  (${Number(serverWallet?.rateUsdPerMin ?? 0.053).toFixed(3)})
-                </span>
-              </span>
+              <DualRate inr={serverWallet?.rateInrPerMin} usd={serverWallet?.rateUsdPerMin} />
             </div>
             <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between items-center">
               <span className="text-[#524E5E]">Default web price · stack overrides apply</span>
-              <span className="text-[#0F0E17] font-semibold">
-                ₹{Number(serverWallet?.webRateInrPerMin ?? 4.50).toFixed(2)}/min
-                <span className="text-[10px] text-[#8C879A] ml-1 font-normal">
-                  (${Number(serverWallet?.webRateUsdPerMin ?? 0.048).toFixed(3)})
-                </span>
-              </span>
+              <DualRate inr={serverWallet?.webRateInrPerMin} usd={serverWallet?.webRateUsdPerMin} />
             </div>
-            {Object.entries(serverWallet?.webTierRates || {}).map(([tier, rate]) => <div key={tier} className="flex justify-between gap-3 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] p-2.5"><span className="text-[#524E5E]">{rate.label || tier} · Web calls</span><span className="font-semibold text-[#0F0E17]">₹{Number(rate.inrPerMin).toFixed(2)}/min <span className="text-[10px] text-[#8C879A]">(${Number(rate.usdPerMin).toFixed(3)})</span></span></div>)}
+            {Object.entries(serverWallet?.webTierRates || {}).map(([tier, rate]) => <div key={tier} className="flex justify-between gap-3 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] p-2.5"><span className="text-[#524E5E]">{rate.label || tier} · Web calls</span><DualRate inr={rate.inrPerMin} usd={rate.usdPerMin} /></div>)}
             <div className="p-2.5 rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] flex justify-between items-center">
               <span className="text-[#524E5E]">Phone number rental</span>
-              <span className="text-[#0F0E17] font-semibold">
-                ₹{Number(serverWallet?.didMonthlyInr ?? 564.00).toFixed(2)}/mo
-                <span className="text-[10px] text-[#8C879A] ml-1 font-normal">
-                  (${Number(serverWallet?.didMonthlyUsd ?? 6.00).toFixed(2)})
-                </span>
-              </span>
+              <DualRate inr={serverWallet?.didMonthlyInr} usd={serverWallet?.didMonthlyUsd} per="mo" usdDigits={2} />
             </div>
           </div>
 
