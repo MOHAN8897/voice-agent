@@ -109,3 +109,5 @@ web/e2e/.auth/
 /artifacts/followups-mobile.png
 /artifacts/usage-calculator-features/
 /artifacts/usage-calculator-phone-only/
+/artifacts/workflow-consistency-20261029/*.json
+/artifacts/workflow-consistency-20261029/*.png

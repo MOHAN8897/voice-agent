@@ -1,0 +1,674 @@
+{
+  "version": 2,
+  "name": "drive-the-navigation-lead-management-is-visible-then-t",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1793250723227,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-calls-panel-tab-leads",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentCallsPanel.jsx",
+          "line": 74,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "focus",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-calls-panel-tab-leads",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentCallsPanel.jsx",
+          "line": 74,
+          "column": 13
+        }
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "navigation",
+          "name": "Lead management"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Callbacks & missed calls"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 134
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Callbacks & missed calls"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 134
+      },
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "followup-queue"
+            },
+            "state": "visible"
+          },
+          {
+            "kind": "net",
+            "method": "GET",
+            "urlContains": "/api/follow-ups",
+            "status": 200
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Create follow-up campaign"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Create follow-up campaign"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "campaign-followup-audience"
+            },
+            "state": "visible"
+          },
+          {
+            "kind": "net",
+            "method": "GET",
+            "urlContains": "/api/campaigns/audience/follow-ups",
+            "status": 200
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "Select follow-up +12025550123"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/modules/CampaignSetup.jsx",
+        "line": 230
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "Select follow-up +12025550123"
+      },
+      "args": {
+        "text": "Space"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/modules/CampaignSetup.jsx",
+        "line": 230
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "text": "1 selected · showing 1 of 1 available"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Campaign name"
+      },
+      "args": {
+        "value": "Reviewed callback campaign"
+      },
+      "action": "fill",
+      "source": {
+        "file": "src/console/modules/CampaignSetup.jsx",
+        "line": 215
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Validate contacts"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Validate contacts"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "urlContains": "/api/contacts/normalize-preview",
+            "status": 200
+          },
+          {
+            "kind": "element",
+            "query": {
+              "text": "1 ready · 0 invalid · 0 duplicates"
+            },
+            "state": "visible"
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/",
+      "writes": true
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "I confirm I have authorization and required consent to call these contacts, approve wallet charges, and accept responsibility for the campaign’s purpose, content and legality."
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/modules/CampaignSetup.jsx",
+        "line": 268
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "I confirm I have authorization and required consent to call these contacts, approve wallet charges, and accept responsibility for the campaign’s purpose, content and legality."
+      },
+      "args": {
+        "text": "Space"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/modules/CampaignSetup.jsx",
+        "line": 268
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "button",
+          "name": "Save as draft"
+        },
+        "state": "enabled"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Save as draft"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Save as draft"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "urlContains": "/api/campaigns",
+            "status": 200
+          },
+          {
+            "kind": "element",
+            "query": {
+              "role": "dialog"
+            },
+            "state": "visible",
+            "absent": true
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/",
+      "writes": true
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Import earlier calls for review"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Import earlier calls for review"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "label": "Earlier call type"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Import for review"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Import for review"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "urlContains": "/follow-ups/import-review",
+            "status": 200
+          },
+          {
+            "kind": "element",
+            "query": {
+              "role": "dialog"
+            },
+            "state": "visible",
+            "absent": true
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/",
+      "writes": true
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Do not call"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 134
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Do not call"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 134
+      },
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "GET",
+            "urlContains": "/api/dnc",
+            "status": 200
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "add-dnc-button"
+            },
+            "state": "visible"
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "deactivate-dnc-+12025550123",
+        "source": {
+          "file": "src/console/modules/DncRegistryPanel.jsx",
+          "line": 323,
+          "column": 27
+        }
+      },
+      "args": {},
+      "action": "focus",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "deactivate-dnc-+12025550123",
+        "source": {
+          "file": "src/console/modules/DncRegistryPanel.jsx",
+          "line": 323,
+          "column": 27
+        }
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "dnc-deactivate-confirm-btn"
+        },
+        "state": "disabled"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "dnc-deactivate-reason-input",
+        "source": {
+          "file": "src/console/modules/DncRegistryPanel.jsx",
+          "line": 467,
+          "column": 13
+        }
+      },
+      "args": {
+        "value": "Caller explicitly renewed permission in writing"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "dnc-reconsent-checkbox",
+        "source": {
+          "file": "src/console/modules/DncRegistryPanel.jsx",
+          "line": 480,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "focus",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "dnc-reconsent-checkbox",
+        "source": {
+          "file": "src/console/modules/DncRegistryPanel.jsx",
+          "line": 480,
+          "column": 13
+        }
+      },
+      "args": {
+        "text": "Space"
+      },
+      "action": "press",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "dnc-deactivate-confirm-btn"
+        },
+        "state": "enabled"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "dnc-deactivate-confirm-btn",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "focus",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "dnc-deactivate-confirm-btn",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "urlContains": "/deactivate",
+            "status": 200
+          },
+          {
+            "kind": "element",
+            "query": {
+              "text": "No active Do Not Call numbers"
+            },
+            "state": "visible"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "role": "dialog"
+            },
+            "state": "visible",
+            "absent": true
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/",
+      "writes": true
+    }
+  ],
+  "startPath": "/",
+  "intent": "The navigation \"Lead management\" is visible, then the element marked \"followup-queue\" is visible and a GET request to /api/follow-ups is made",
+  "intentDerived": true,
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "mcp",
+    "person": "mohansaiteja.99@gmail.com"
+  }
+}
