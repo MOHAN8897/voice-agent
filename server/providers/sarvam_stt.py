@@ -15,8 +15,11 @@ class SarvamSTTAdapter:
         return list(constants.SUPPORTED_LANGUAGES.keys())
 
     async def transcribe_rest(self, audio: bytes, config: STTConfig) -> TranscriptResult:
-        text = await sarvam_stt_service.transcribe_audio(audio, language_code=provider_language_code(config.language, provider="sarvam", stage="stt"))
-        return TranscriptResult(text=text or "", language=config.language, is_final=True)
+        # REST takes the batch model, never the realtime variant the stack names.
+        model = (config.model or "").removesuffix("-realtime") or None
+        result = await sarvam_stt_service.transcribe(
+            audio, language_code=provider_language_code(config.language, provider="sarvam", stage="stt"), model=model)
+        return TranscriptResult(text=str(result.get("transcript") or ""), language=config.language, is_final=True)
 
     def connect_realtime(self, config: STTConfig):
         vad = sarvam_vad_config(config.vad_config)

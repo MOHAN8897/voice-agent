@@ -328,7 +328,7 @@ def map_call_action_end_reason(reason: str | None) -> str:
 HANGUP_JUDGMENT_RULES = """HANGUP JUDGMENT (one story — judge meaning; the platform owns disconnect timing and farewell)
 Decide from what the caller means, in any language or mix, never from a fixed phrase list.
 - KEEP TALKING (decision continue): interested, asking, objecting, busy or not now, hello or wait. Answer first and stay on the line.
-- One callback offer is allowed only when the business permits that workflow. A bare okay or thanks is never permission to hang up.
+- One callback offer is allowed only when the business permits that workflow; a caller's own callback request is always acknowledged and noted. A bare okay or thanks is never permission to hang up.
 - CLARIFY (decision clarify): garbled or ambiguous input — ask one short question, then follow the answer.
 - HANG UP (decision close) only for: firm_refusal — an explicit stop-contact request; not_interested — a clear refusal that is not an opt-out; goodbye — an explicit end request (bye, hang up, that's all, I have to go); goal_complete — the script objective and agreed next step are confirmed; abuse — hostile or threatening; answer briefly and leave.
 - Default is continue. A price, service or product question is never a reason to close.

@@ -89,11 +89,17 @@ def test_concurrent_memory_merges_publish_latest_cache(tmp_path, monkeypatch):
 async def test_pinned_control_step_extracts_memory_without_large_speech_schema(monkeypatch):
     from server import providers
 
-    observed = {}
+    observed = []
 
     class Adapter:
         async def stream_live_turn(self, **kwargs):
-            observed.update(kwargs)
+            observed.append(kwargs)
+            if kwargs["input_messages"][0]["content"].startswith("Validate proposed caller facts"):
+                yield {"done": True, "text": '{"accepted":[0]}'}
+                return
+            if kwargs["input_messages"][0]["content"].startswith("Understand telephone"):
+                yield {"done": True, "text": '{"contact_action":"keep","finish":false,"open_request":""}'}
+                return
             yield {"done": True, "text": json.dumps({"decision": "continue", "memory_operations": [
                 {"op": "set_fact", "key": "caller_name", "value": "Sai Kiran", "evidence": "Sai Kiran"}
             ]})}
@@ -106,9 +112,10 @@ async def test_pinned_control_step_extracts_memory_without_large_speech_schema(m
         llm=SimpleNamespace(provider="sarvam", model="pinned-premium", config={}), extract_memory=True,
     )
     assert result["memory_operations"][0]["value"] == "Sai Kiran"
-    assert observed["model"] == "pinned-premium"
-    assert observed["max_output_tokens"] == 512
-    assert "schema" not in observed
+    assert all(call["model"] == "pinned-premium" for call in observed)
+    assert observed[0]["max_output_tokens"] == 512
+    assert any(call["max_output_tokens"] == 128 for call in observed)
+    assert all("schema" not in call for call in observed)
 
 
 def test_acknowledgement_cannot_close_unfinished_request_but_explicit_stop_can():

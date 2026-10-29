@@ -1,6 +1,7 @@
 """Three offline compiled-brain, prewarm, and hangup checks for each supported locale."""
 from __future__ import annotations
 
+import asyncio
 import json
 from unittest.mock import AsyncMock, patch
 
@@ -95,6 +96,8 @@ async def test_mocked_integration_talks_and_hangs_up_after_farewell_audio(locale
                     "arguments": json.dumps({"date": "2030-01-02"}),
                 }
             )
+            if loop._integration_tool_tasks:
+                await asyncio.gather(*loop._integration_tool_tasks)
 
         route.assert_awaited_once_with(
             tenant_id="tenant-test",

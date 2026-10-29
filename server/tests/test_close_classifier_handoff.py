@@ -180,7 +180,10 @@ async def test_incomplete_address_waits_without_speaking_or_hanging_up(monkeypat
         uses_plain_live_speech = True
 
         async def stream_live_turn(self, **_kwargs):
-            yield {"done": True, "text": json.dumps({"decision": "continue", "wait_for_caller": True, "memory_operations": []})}
+            if _kwargs["input_messages"][0]["content"].startswith("Understand telephone"):
+                yield {"done": True, "text": '{"contact_action":"keep","finish":false,"open_request":""}'}
+                return
+            yield {"done": True, "text": json.dumps({"decision": "continue", "wait_for_caller": True, "wait_evidence": "మాది", "memory_operations": []})}
 
     result = await run_voice_simulation(monkeypatch, "te-IN", "మాది", False, adapter=FragmentAdapter())
     assert result["spoken"] == []
@@ -218,6 +221,10 @@ async def run_voice_simulation(monkeypatch, language, user, closing, *, adapter=
 
         async def stream_live_turn(self, **_kwargs):
             await asyncio.sleep(0)
+            if _kwargs["input_messages"][0]["content"].startswith("Understand telephone"):
+                yield {"done": True, "text": json.dumps({"contact_action": "keep", "finish": closing,
+                    "finish_evidence": user if closing else "", "open_request": ""})}
+                return
             yield {"done": True, "text": json.dumps({
                 "decision": "close" if closing else "continue",
                 "reason": "done" if closing else "none", "evidence": user,

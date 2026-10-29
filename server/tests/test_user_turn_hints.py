@@ -19,11 +19,11 @@ def test_anti_repeat_hint_after_first_turn():
     hint = live_turn_orchestrator._maybe_anti_repeat_hint(session_id)
     assert hint is not None
     assert "fifty lakhs" in hint.lower()
-    assert "do not repeat" in hint.lower()
+    assert "unsolicited" in hint.lower()
 
 
 def test_slow_down_hint_once_per_call():
-    ctx = SimpleNamespace(slow_down_nudged=False)
+    ctx = SimpleNamespace(slow_down_nudged=False, interruption_nudge_pending=True)
     long_text = " ".join(["detail"] * 42)
     first = live_turn_orchestrator._maybe_slow_down_hint(
         long_text,
@@ -31,6 +31,9 @@ def test_slow_down_hint_once_per_call():
         call_id=None,
         ctx=ctx,
     )
+    # The flag is committed only after the request is delivered, so a
+    # cancelled generation cannot consume the one permitted nudge.
+    ctx.slow_down_nudged = True
     second = live_turn_orchestrator._maybe_slow_down_hint(
         long_text,
         language_code="en-IN",

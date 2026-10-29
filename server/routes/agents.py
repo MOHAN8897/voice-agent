@@ -1,7 +1,7 @@
 """Agent workspace routes — Phase 2."""
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
@@ -41,8 +41,9 @@ def _disclosure_text(enabled: bool, text: str | None) -> str:
 class PatchAgentBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    name: Optional[str] = None
-    status: Optional[str] = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=80)
+    # Archiving goes through delete; the console only toggles live/paused here.
+    status: Optional[Literal["active", "paused"]] = None
     defaultTier: Optional[str] = None
     expectedVoiceRevision: Optional[int] = Field(default=None, ge=0)
     expected_voice_revision: Optional[int] = Field(default=None, ge=0)
@@ -164,7 +165,13 @@ async def patch_agent(
                 detail={"error": {"code": exc.code, "message": str(exc)}},
             ) from exc
     if body.languages is not None:
-        patch["languages"] = body.languages
+        from server.config.constants import constants, normalize_supported_language
+
+        languages = [normalize_supported_language(code) for code in body.languages]
+        if not languages or any(code not in constants.SUPPORTED_LANGUAGES for code in languages):
+            raise HTTPException(status_code=422, detail={"error": {
+                "code": "unsupported_language", "message": "Choose a supported spoken language."}})
+        patch["languages"] = list(dict.fromkeys(languages))
     if body.memorySchema is not None:
         patch["memory_schema"] = body.memorySchema
     vs = body.voiceSettings if body.voiceSettings is not None else body.voice_settings

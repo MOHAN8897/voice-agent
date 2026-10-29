@@ -11,6 +11,8 @@ export const LANGUAGE_OPTIONS = [
   { label: 'Hindi', code: 'hi-IN' },
   { label: 'Tamil', code: 'ta-IN' },
   { label: 'Kannada', code: 'kn-IN' },
+  { label: 'Gujarati', code: 'gu-IN' },
+  { label: 'Malayalam', code: 'ml-IN' },
 ];
 
 export function voiceFromPreset(presetId, agentName = '') {

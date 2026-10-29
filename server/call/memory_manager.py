@@ -55,6 +55,9 @@ class MemoryManager:
         self._lock = threading.RLock()
         self._state: dict[str, dict[str, Any]] = {}
         self._events: dict[str, list[dict[str, Any]]] = {}
+        self._write_seq: dict[str, int] = {}
+        self._latest_disk_seq: dict[str, int] = {}
+        self._persist_locks: dict[str, threading.Lock] = {}
 
     def events_path(self, call_id: str):
         return call_dir(call_id) / "memory_events.jsonl"
@@ -232,20 +235,26 @@ class MemoryManager:
             event["applied"] = bool(accepted)
             if accepted:
                 self._apply_ops_to(snap, accepted)
-            # Serialize event and snapshot writes with the state update. Previously
-            # an older merge could replace a newer snapshot outside the lock.
-            self._append_event(call_id, event)
-            self._write_snapshot(call_id, snap)
             self._state[call_id] = snap
             self._events.setdefault(call_id, []).append(event)
-            # This method runs in the memory worker. Serialize the optional cache
-            # write too: an older worker must not publish a stale cold-start view.
-            try:
-                from server.call.redis_memory_cache import set_snapshot as redis_set_snapshot
+            seq = self._write_seq.get(call_id, 0) + 1
+            self._write_seq[call_id] = seq
+            snap_to_write = _copy_snapshot(snap)
+            event_to_write = dict(event)
+            persist_lock = self._persist_locks.setdefault(call_id, threading.Lock())
+        # Disk and cache I/O happen outside self._lock so active-call peek_snapshot is never blocked.
+        # Monotonic sequence check guarantees out-of-order writes cannot overwrite newer state.
+        with persist_lock:
+            self._append_event(call_id, event_to_write)
+            if seq >= self._latest_disk_seq.get(call_id, 0):
+                self._write_snapshot(call_id, snap_to_write)
+                try:
+                    from server.call.redis_memory_cache import set_snapshot as redis_set_snapshot
 
-                redis_set_snapshot(call_id, snap)
-            except Exception:
-                pass
+                    redis_set_snapshot(call_id, snap_to_write)
+                except Exception:
+                    pass
+                self._latest_disk_seq[call_id] = seq
         if errors:
             logger.info(f"[MEMORY] rejected ops call={call_id} turn={turn_seq} errors={errors[:4]}")
         return {"snapshot": _copy_snapshot(snap), "event": event}
@@ -360,6 +369,9 @@ class MemoryManager:
         with self._lock:
             self._state.clear()
             self._events.clear()
+            self._write_seq.clear()
+            self._latest_disk_seq.clear()
+            self._persist_locks.clear()
 
 
 memory_manager = MemoryManager()

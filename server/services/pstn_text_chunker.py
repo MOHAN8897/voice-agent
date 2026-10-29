@@ -228,7 +228,12 @@ def enrich_outbound_spoken_intro(
     # second permission question to a custom opening.
     template = opening_line_for(language, agent_name=name, company_name=company,
                                 work_scope="", direction="outbound")
-    intro = template.split(". ", 1)[0].rstrip(".") + "."
+    if ". " in template:
+        intro = template.split(". ", 1)[0].rstrip(".") + "."
+    elif "। " in template:
+        intro = template.split("। ", 1)[0].rstrip("।") + "।"
+    else:
+        intro = template
     # If the line already introduces the agent, prepending a second intro doubles it
     # ("Hi, this is Priya calling from X. Hi, this is Priya. Do you have a moment?").
     # Length was not part of that question: any self-introduction counts.
@@ -246,6 +251,8 @@ def enrich_outbound_spoken_intro(
             # rather than a second full intro.
             if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", spoken, re.IGNORECASE):
                 first, sep, rest = spoken.partition(". ")
+                if not sep and "। " in spoken:
+                    first, sep, rest = spoken.partition("। ")
                 if sep:
                     return _limit_spoken_greeting(f"{intro} {rest}")
         return _limit_spoken_greeting(spoken)
@@ -431,27 +438,27 @@ def _default_greeting(language: str, *, direction: str | None = None) -> str:
     language = normalize_compile_language(language)
     outbound = str(direction or "outbound").strip().lower() not in ("inbound", "incoming")
     local = {
-        "ta-IN": ("வணக்கம்! ஒரு நிமிடம் பேசலாமா?", "வணக்கம்! உங்களுக்கு எப்படி உதவலாம்?"),
-        "kn-IN": ("ನಮಸ್ಕಾರ! ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದೇ?", "ನಮಸ್ಕಾರ! ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"),
-        "ml-IN": ("നമസ്കാരം! ഒരു മിനിറ്റ് സംസാരിക്കാമോ?", "നമസ്കാരം! എങ്ങനെ സഹായിക്കാം?"),
-        "mr-IN": ("नमस्कार! एक मिनिट बोलू शकतो का?", "नमस्कार! मी आपली कशी मदत करू?"),
-        "bn-IN": ("নমস্কার! এক মিনিট কথা বলা যাবে?", "নমস্কার! কীভাবে সাহায্য করতে পারি?"),
-        "gu-IN": ("નમસ્તે! એક મિનિટ વાત થઈ શકે?", "નમસ્તે! હું આપને કેવી રીતે મદદ કરી શકું?"),
-        "pa-IN": ("ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਇੱਕ ਮਿੰਟ ਗੱਲ ਹੋ ਸਕਦੀ ਹੈ?", "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਤੁਹਾਡੀ ਕੀ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?"),
+        "ta-IN": ("வணக்கம்! ஒரு நிமிஷம் பேசலாமா?", "வணக்கம்! சொல்லுங்க, உங்களுக்கு என்ன உதவி வேணும்?"),
+        "kn-IN": ("ನಮಸ್ಕಾರ! ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?", "ನಮಸ್ಕಾರ! ಹೇಳಿ, ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?"),
+        "ml-IN": ("നമസ്കാരം! ഒരു മിനിറ്റ് സംസാരിക്കാമോ?", "നമസ്കാരം! പറയൂ, എങ്ങനെ സഹായിക്കണം?"),
+        "mr-IN": ("नमस्कार! एक मिनिट बोलू शकता का?", "नमस्कार! बोला, कशी मदत करू?"),
+        "bn-IN": ("নমস্কার! এক মিনিট কথা বলা যাবে?", "নমস্কার! বলুন, কীভাবে সাহায্য করতে পারি?"),
+        "gu-IN": ("નમસ્તે! એક મિનિટ વાત થઈ શકે?", "નમસ્તે! કહો, હું આપને કેવી રીતે મદદ કરી શકું?"),
+        "pa-IN": ("ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਇੱਕ ਮਿੰਟ ਗੱਲ ਹੋ ਸਕਦੀ ਹੈ?", "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਦੱਸੋ, ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰਾਂ?"),
     }.get(language)
     if local:
         return local[0 if outbound else 1]
     if language.startswith("te"):
         return (
-            "Hi, konchem time unda?"
+            "హలో! మాట్లాడటానికి ఒక moment ఉంటుందా?"
             if outbound
-            else "నమస్కారం! నేను మీకు సహాయం చేస్తాను. మీకు ఎలా సహాయం కావాలి?"
+            else "నమస్తే! చెప్పండి, నేను మీకు ఎలా సహాయపడగలను?"
         )
     if language.startswith("hi"):
         return (
-            "Hi, kya aapke paas ek minute hai?"
+            "नमस्ते! क्या अभी बात करने के लिए एक मिनट मिल सकता है?"
             if outbound
-            else "Namaste! Main aapki madad ke liye yahan hoon. Main aapki kaise madad karun?"
+            else "नमस्ते! बताइए, मैं आपकी कैसे मदद करूँ?"
         )
     if outbound:
         return "Hi, this is a courtesy call. Do you have a moment?"

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 
 from server.call.call_ledger import call_ledger
@@ -75,6 +75,9 @@ def _public(row: CallCallback) -> dict[str, Any]:
 
 async def recover_interrupted_callback(ctx: Any) -> dict[str, Any] | None:
     """Keep an unfinished explicit request for human review after a disconnect."""
+    if ctx is not None and getattr(ctx, "callback_withdrawal_pending", False):
+        await withdraw_callback_request(ctx)
+        return None
     if (ctx is None or getattr(ctx, "contact_preference", "") == "do_not_call"
             or getattr(ctx, "callback_close_phase", "idle") == "idle"):
         return None
@@ -100,7 +103,8 @@ async def record_callback_request(ctx: Any, request_text: str, *, review_only: b
     )
     if not target:
         return None
-    key = f"requested:{call_id}"
+    generation = int(getattr(ctx, "callback_generation", 0) or meta.get("callback_generation") or 0)
+    key = f"requested:{call_id}" + (f":{generation}" if generation else "")
     async with factory() as session:
         call = (await session.execute(select(Call).where(
             Call.call_id == call_id, Call.tenant_id == tenant_id,
@@ -151,8 +155,74 @@ async def record_callback_request(ctx: Any, request_text: str, *, review_only: b
         "requestedWhen": str(getattr(ctx, "callback_when", "") or request_text)[:400],
         "requestText": request_text[:800],
     }
+    meta.update(callback_cancelled=False, callback_withdrawal_pending=False)
     call_ledger.write_meta(str(call_id), meta)
     return {"id": callback_id, "status": status}
+
+
+async def withdraw_callback_request(ctx: Any) -> bool:
+    try:
+        async with asyncio.timeout(2.5):
+            return await _withdraw_callback_request(ctx)
+    except Exception as exc:
+        ctx.callback_withdrawal_pending = True
+        logger.warning("callback.withdrawal_pending kind=%s", type(exc).__name__)
+        return False
+
+
+async def _withdraw_callback_request(ctx: Any) -> bool:
+    """Withdraw only this call's requests; preserve other tenants/calls and DND."""
+    factory = get_session_factory()
+    try:
+        tenant_id, call_id, agent_id = (uuid.UUID(str(getattr(ctx, key))) for key in ("tenant_id", "call_id", "agent_id"))
+    except (ValueError, TypeError, AttributeError):
+        return False
+    if not getattr(ctx, "callback_withdrawal_pending", False):
+        meta = await asyncio.to_thread(call_ledger.read_meta, str(call_id))
+        if ((meta.get("tenant_id") and meta["tenant_id"] != str(tenant_id))
+                or (meta.get("agent_id") and meta["agent_id"] != str(agent_id))):
+            return False
+        ctx.callback_generation = int(meta.get("callback_generation") or 0) + 1
+        meta.update(callback_cancelled=True, callback_withdrawal_pending=True,
+                    callback_generation=ctx.callback_generation)
+        await asyncio.to_thread(call_ledger.write_meta, str(call_id), meta)
+    ctx.callback_withdrawal_pending = True
+    if factory is None:
+        return False
+    try:
+        async with asyncio.timeout(1.5), factory() as session:
+            async with session.begin():
+                owner = await session.scalar(select(Call).where(Call.call_id == call_id,
+                    Call.tenant_id == tenant_id, Call.agent_id == agent_id))
+                if owner is None:
+                    return False
+                rows = (await session.scalars(select(CallCallback).where(
+                    CallCallback.tenant_id == tenant_id, CallCallback.agent_id == str(agent_id),
+                    CallCallback.original_call_id == call_id, CallCallback.mode == REQUEST_MODE,
+                    CallCallback.status == "requested").with_for_update())).all()
+                moment = datetime.now(timezone.utc)
+                for row in rows:
+                    row.status, row.updated_at = "dismissed", moment
+                # Optional queue tables may not exist before migration 047.
+                try:
+                    from server.db.models.followup_models import FollowUpJob
+                    async with session.begin_nested():
+                        await session.execute(update(FollowUpJob).where(
+                            FollowUpJob.tenant_id == tenant_id, FollowUpJob.agent_id == agent_id,
+                            FollowUpJob.source_id == str(call_id), FollowUpJob.kind == "callback",
+                            FollowUpJob.status.in_(("planning", "resolving", "needs_review", "scheduled", "dispatching")),
+                        ).values(status="cancelled", reason="caller_withdrew_callback", lease_token=None,
+                                 lease_until=None, updated_at=moment))
+                except Exception as exc:
+                    logger.warning("callback.withdraw_queue_unavailable kind=%s", type(exc).__name__)
+        ctx.callback_withdrawal_pending = False
+        meta = await asyncio.to_thread(call_ledger.read_meta, str(call_id))
+        meta["callback_withdrawal_pending"] = False
+        await asyncio.to_thread(call_ledger.write_meta, str(call_id), meta)
+        return True
+    except Exception as exc:
+        logger.warning("callback.withdrawal_unconfirmed kind=%s", type(exc).__name__)
+        return False
 
 
 async def list_callback_requests(principal: Any, *, agent_id: str | None = None, status: str = "requested") -> list[dict[str, Any]]:

@@ -22,7 +22,8 @@ MAX_BUSINESS_INSTRUCTIONS = MAX_BUSINESS_CHARS
 LIVE_TURN_DISCIPLINE = (
     "[This turn — listen]\n"
     "Answer first if they asked a question. Use known facts — never re-ask. "
-    "At most ONE new question, and only if it changes the recommendation or next step. "
+    "After an answer, stop: no generic 'anything else?' and no booking offer unless they asked to proceed. "
+    "Ask ONE question only when you need a missing detail for what they asked. "
     "If they dumped several facts or asked to send details / check later, acknowledge and progress — no checklist.\n"
     "Caller: "
 )

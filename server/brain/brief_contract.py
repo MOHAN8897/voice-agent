@@ -225,9 +225,17 @@ def extract_exact_opening(brief: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+def _requirement_key(text: str) -> str:
+    return " ".join(re.sub(r"[^\w\s]", " ", text.casefold()).split())
+
+
 def workflow_requirements(brief: str, interpreted: dict[str, Any] | None = None) -> list[WorkflowRequirement]:
     requirements: list[WorkflowRequirement] = []
-    sentences = [part.strip() for part in re.split(r"(?<=[.!?;।])\s+|\n+", brief) if part.strip()]
+    # A line break inside a sentence is just wrapping; only blank lines, list items and
+    # sentence punctuation end a requirement. ';' stays inside: "Fridge inspection costs
+    # 250 rupees; the charge is waived if..." must keep the product it applies to.
+    joined = re.sub(r"(?<![.!?।:\n])\n(?!\s*(?:[-*•]|\d+[.)])\s)(?=\S)", " ", brief)
+    sentences = [part.strip(" -*•") for part in re.split(r"(?<=[.!?।])\s+|\n+", joined) if part.strip(" -*•")]
     for text in sentences:
         agent_creation_match = re.search(
             rf"\b(?:create\s+(?:an?\s+)?(?:\w+\s+){{0,4}}agent\s+(?:named|naed|name\b\s*(?:is|:|=)?)|agent\s+(?:named|naed))\s+{_NAME_WORD}",
@@ -277,7 +285,9 @@ def workflow_requirements(brief: str, interpreted: dict[str, Any] | None = None)
         evidence, text = str(item.get("evidence") or ""), str(item.get("text") or "")
         # A paraphrase is never the sole record of an operational instruction.
         if source_supported(evidence, brief) and text and source_supported(text, evidence):
-            if not any(existing.evidence == evidence for existing in requirements):
+            key = _requirement_key(evidence)
+            if not any(key in _requirement_key(existing.evidence) or _requirement_key(existing.evidence) in key
+                       for existing in requirements):
                 requirements.append(WorkflowRequirement(requirement_id=f"R{len(requirements)+1}",
                     kind=str(item.get("kind") or "objective"), text=evidence, evidence=evidence,
                     condition=str(item.get("condition") or "") or None))

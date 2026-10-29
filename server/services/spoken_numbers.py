@@ -28,7 +28,8 @@ _ONES = (
 _TENS = ("", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety")
 
 _MOBILE = re.compile(r"(?<!\d)(?:\+91[-\s]?)?(\d{10})(?!\d)")
-_CURRENCY_PREFIX = re.compile(r"(?:₹|rs\.?|inr)\s*(\d[\d,]*(?:\.\d+)?)", re.I)
+_CURRENCY_PREFIX = re.compile(r"(?:₹|(?<!\w)(?:rs\.?|inr|రూ\.?))\s*(\d[\d,]*(?:\.\d+)?)", re.I)
+_CURRENCY_SUFFIX = re.compile(r"(?<!\d)(\d[\d,]*(?:\.\d+)?)\s*(?:/[-–—]|రూపాయలు|రూ\b)", re.I)
 _USD_PREFIX = re.compile(r"\$\s*(\d[\d,]*(?:\.\d+)?)")
 _LAKH_CRORE = re.compile(
     r"(?<!\d)(\d[\d,]*(?:\.\d+)?)\s*(lakh|lakhs|crore|crores)\b",
@@ -42,7 +43,7 @@ _OTP_NEAR = re.compile(
     r"(otp|pin|cvv|passcode|code)\b[^0-9]{0,16}(\d{4,6})(?!\d)",
     re.I,
 )
-_CLOCK = re.compile(r"\b(\d{1,2}):(\d{2})\s*(am|pm)?\b", re.I)
+_CLOCK = re.compile(r"(?<!\d)([01]?\d|2[0-3]):([0-5]\d)(?:[ \t]*(am|pm)(?![a-z]))?(?!\d)", re.I)
 _YEAR = re.compile(r"\b((?:19|20)\d{2})\b")
 _LONG_ID = re.compile(r"(?<!\d)(\d{7,9})(?!\d)")
 _CARDINAL_RUN = re.compile(r"(?<!\d)(\d{3,6})(?!\d)")
@@ -140,16 +141,13 @@ def _year_words(year: int) -> str:
 
 
 def _clock_words(hour: int, minute: int, ampm: str) -> str:
-    hour = hour % 24
-    if not ampm:
-        ampm = "AM" if hour < 12 else "PM"
-        hour12 = hour % 12 or 12
-    else:
-        hour12 = hour % 12 or 12
-        ampm = ampm.upper()
+    # A bare 8:00 does not specify morning. Preserve that ambiguity; only
+    # unmistakable 24-hour values or an explicit suffix determine AM/PM.
+    ampm = ampm.upper() or ("PM" if hour > 12 else "AM" if hour == 0 else "")
+    hour12 = hour % 12 or 12
     if minute == 0:
-        return f"{cardinal_words(hour12)} {ampm}"
-    return f"{cardinal_words(hour12)} {cardinal_words(minute)} {ampm}"
+        return f"{cardinal_words(hour12)} {ampm}".strip()
+    return f"{cardinal_words(hour12)} {cardinal_words(minute)} {ampm}".strip()
 
 
 def strip_spoken_phone_numbers(text: str) -> str:
@@ -171,6 +169,7 @@ def expand_spoken_numbers(text: str) -> str:
 
     out = _USD_PREFIX.sub(lambda m: f"dollars {_decimal_words(m.group(1))}", text)
     out = _CURRENCY_PREFIX.sub(lambda m: f"rupees {_decimal_words(m.group(1))}", out)
+    out = _CURRENCY_SUFFIX.sub(lambda m: f"{_decimal_words(m.group(1))} rupees", out)
     out = _LAKH_CRORE.sub(
         lambda m: f"{_decimal_words(m.group(1))} {'lakh' if m.group(2).lower().startswith('lakh') else 'crore'}",
         out,
@@ -178,7 +177,8 @@ def expand_spoken_numbers(text: str) -> str:
     out = _OTP_NEAR.sub(lambda m: f"{m.group(1)} {digit_words(m.group(2))}", out)
     out = _UNIT_AMOUNT.sub(lambda m: f"{_decimal_words(m.group(1))} {m.group(2)}", out)
     out = _CLOCK.sub(
-        lambda m: _clock_words(int(m.group(1)), int(m.group(2)), m.group(3) or ""),
+        lambda m: _clock_words(int(m.group(1)), int(m.group(2)), m.group(3) or "")
+        + (" " if m.end() < len(out) and out[m.end()].isalpha() else ""),
         out,
     )
     out = _YEAR.sub(lambda m: _year_words(int(m.group(1))), out)
@@ -196,7 +196,7 @@ def expand_spoken_numbers(text: str) -> str:
     return _CARDINAL_RUN.sub(_cardinal_run, out)
 
 
-def sanitize_tts_punctuation(text: str, *, ensure_terminal: bool = True) -> str:
+def sanitize_tts_punctuation(text: str, *, ensure_terminal: bool = True, expand_decimals: bool = True) -> str:
     """
     Prep text for Cartesia Sonic + Sarvam Bulbul.
 
@@ -209,7 +209,8 @@ def sanitize_tts_punctuation(text: str, *, ensure_terminal: bool = True) -> str:
     out = _ELLIPSIS.sub(",", text)
     for pat, repl in _ABBREV_DOTS:
         out = pat.sub(repl, out)
-    out = _BARE_DECIMAL.sub(lambda m: _decimal_words(f"{m.group(1)}.{m.group(2)}"), out)
+    if expand_decimals:
+        out = _BARE_DECIMAL.sub(lambda m: _decimal_words(f"{m.group(1)}.{m.group(2)}"), out)
     out = _INITIALISM_DOTS.sub(" ", out)
     out = re.sub(r"\s{2,}", " ", out)
     out = re.sub(r"\s+([,.!?।])", r"\1", out)
@@ -230,20 +231,52 @@ def ensure_terminal_punctuation(text: str) -> str:
     return cleaned + "."
 
 
+def provider_normalizes_numbers(provider: str | None, model: str | None) -> bool:
+    """Engines that read digits, currency and clock times in the call language themselves.
+
+    Sarvam Bulbul v3/v4 always preprocess numbers and their guide says not to hand-expand
+    them; Gemini TTS and Cartesia Sonic (normalization "auto") read digits in-language too.
+    """
+    provider = str(provider or "").strip().lower()
+    model = str(model or "").strip().lower()
+    if provider == "sarvam":
+        return model.startswith(("bulbul:v3", "bulbul:v4"))
+    return provider in {"gemini", "cartesia"}
+
+
+def _space_id_digits(text: str) -> str:
+    """OTPs and long reference ids are read digit by digit, never as one big amount."""
+    out = _OTP_NEAR.sub(lambda m: f"{m.group(1)} {' '.join(m.group(2))}", text)
+    return _LONG_ID.sub(lambda m: " ".join(m.group(1)), out)
+
+
 def prepare_spoken_reply(
     text: str,
     *,
     provider: str | None = None,
     model: str | None = None,
+    language: str | None = None,
     ensure_terminal: bool = True,
 ) -> str:
     """
-    Final pass before TTS: strip phones, expand Indian amounts, keep grammar punctuation.
+    Final pass before TTS: strip phones, then make numbers speakable, keep grammar punctuation.
 
-    Only documented cues for an explicitly selected Gnani v3 model may survive.
+    English number words are only inserted where nothing better reads them: an engine
+    that normalizes digits gets digits, and an Indic call never gets English words
+    spliced into its sentence. Only documented cues for Gnani v3 may survive.
     """
     from server.prompts.tts_delivery_rules import sanitize_tts_tags
 
     cleaned = sanitize_tts_tags(strip_spoken_phone_numbers(text or ""), provider=provider, model=model)
+    indic_call = bool(language) and not str(language).lower().startswith("en")
+    if provider_normalizes_numbers(provider, model) or (provider and indic_call):
+        # "Rs.599" would otherwise become "rupees599" once the abbreviation is spelled out.
+        prepared = re.sub(r"\bRs\.?\s*(?=\d)", "₹", cleaned, flags=re.I)
+        if indic_call:
+            # "599 rupees" makes an Indic voice say the number natively and "rupees" in English;
+            # ₹599 is read entirely in the call language.
+            prepared = re.sub(r"(?<![\d₹])(\d[\d,]*(?:\.\d+)?)\s*(?:rupees?|rs\b|inr\b)", r"₹\1", prepared, flags=re.I)
+        prepared = _space_id_digits(prepared)
+        return sanitize_tts_punctuation(prepared, ensure_terminal=ensure_terminal, expand_decimals=False)
     expanded = expand_spoken_numbers(cleaned)
     return sanitize_tts_punctuation(expanded, ensure_terminal=ensure_terminal)

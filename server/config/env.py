@@ -81,8 +81,8 @@ class Settings(BaseSettings):
     voice_http_tts_fallback: bool = Field(False, alias="VOICE_HTTP_TTS_FALLBACK")
     max_response_length: int = Field(320, alias="MAX_RESPONSE_LENGTH")
     max_context_messages: int = Field(4, alias="MAX_CONTEXT_MESSAGES")
-    max_history_assistant_chars: int = Field(120, alias="MAX_HISTORY_ASSISTANT_CHARS")
-    max_history_user_chars: int = Field(300, alias="MAX_HISTORY_USER_CHARS")
+    max_history_assistant_chars: int = Field(1600, alias="MAX_HISTORY_ASSISTANT_CHARS")
+    max_history_user_chars: int = Field(1600, alias="MAX_HISTORY_USER_CHARS")
     request_timeout_ms: int = Field(15000, alias="REQUEST_TIMEOUT_MS")
     max_retries: int = Field(2, alias="MAX_RETRIES")
     # A structured turn carries the close decision plus up to three memory ops;

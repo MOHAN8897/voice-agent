@@ -30,7 +30,9 @@ EXPECTED_SECTIONS = (
 # carries them. Reaching materially below this would mean dropping a rule the
 # model needs (caller details, grammar, or the hangup policy), so this is the
 # floor, not a soft target.
-COMPILED_BRAIN_TOKEN_CEILING = 3_000
+# 2026-10-30: raised to 3_100 (approved by the owner) for the live-tested rules on
+# number format, answer-then-stop, language lock and caller-requested callbacks.
+COMPILED_BRAIN_TOKEN_CEILING = 3_100
 
 SCRIPT = """--- ENTITY TAGS ---
 @agent_name: Alex

@@ -288,6 +288,8 @@ async def test_live_turn_simulation_telugu_ending_replaces_speech_with_server_fa
         "decision": "close",
         "reason": "goal_complete",
         "evidence": "అంతే అంతే థ్యాంక్ యూ",
+        "close_verified": True,
+        "contact_verified": True,
     }
 
     async def fake_stream_llm(**_kwargs):
@@ -345,6 +347,8 @@ async def test_live_turn_simulation_english_ending_replaces_speech_with_server_f
         "decision": "close",
         "reason": "goal_complete",
         "evidence": "that's all I needed",
+        "close_verified": True,
+        "contact_verified": True,
     }
 
     async def fake_stream_llm(**_kwargs):

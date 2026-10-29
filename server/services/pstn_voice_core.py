@@ -222,6 +222,7 @@ class PstnVoiceLoop:
         self._background_hangup_task: asyncio.Task | None = None
         self._technical_fallback_played = False
         self._technical_fallback_active = False
+        self._consecutive_reply_failures = 0
         self._turn_audio_delivered = False
         self._tts_retry_used_for_turn = False
         self._turn_tool_wait = False
@@ -738,6 +739,34 @@ class PstnVoiceLoop:
             except Exception as exc:
                 log_pstn("turn.close.ledger_failed", call_id=self.call_id, error_type=type(exc).__name__)
         await self._finish_agent_hangup(reason=reason, revocable=False)
+
+    async def _recover_reply_failure(self, session: Any) -> None:
+        """A transient model failure does not imply the caller finished."""
+        self._consecutive_reply_failures += 1
+        if self._consecutive_reply_failures >= 2:
+            await self._close_after_non_tts_failure(reason="technical_failure", session=session, technical=True)
+            return
+        from server.prompts.agent_voice_rules import MODEL_RECOVERY, normalize_compile_language
+        text = MODEL_RECOVERY[normalize_compile_language(self._resolve_language())]
+        await self._recover_tts_after_failure(session)
+        frames_before = self._wire_frames_out
+        try:
+            await self.speak(text, language_code=self._resolve_language())
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            log_pstn("turn.recovery.tts_failed", call_id=self.call_id, error_type=type(exc).__name__)
+        if self._wire_frames_out == frames_before:
+            await self._close_after_tts_failure(defect="recovery_empty_audio", session=self._last_tts_session,
+                                               trigger="tts_failure", reason="technical_failure")
+            return
+        if self.call_id:
+            from server.call.call_ledger import call_ledger
+            try:
+                await call_ledger.append_assistant_turn(self.call_id, text)
+            except Exception as exc:
+                log_pstn("turn.recovery.ledger_failed", call_id=self.call_id, error_type=type(exc).__name__)
+        log_pstn("turn.recovery.listening", call_id=self.call_id, consecutive_failures=self._consecutive_reply_failures)
 
     async def _play_technical_fallback_and_hangup(self, *, trigger: str) -> None:
         """Play a pre-recorded apology in the call language, then close the line.
@@ -1433,6 +1462,22 @@ class PstnVoiceLoop:
                 await session.close()
                 self._backchannel_task = None
 
+    def _is_composed_call(self) -> bool:
+        """Composed STT/LLM/TTS call, from the dial-time override or the admitted call context.
+
+        A reply failure on a composed call gets one "please repeat" recovery; treating it
+        as a non-composed call instead plays a normal goodbye and hangs up.
+        """
+        if self.stack_override.get("pipeline") == "composed_voice":
+            return True
+        try:
+            from server.call.call_context import get as get_ctx
+
+            ctx = get_ctx(self.call_id) if self.call_id else None
+            return getattr(ctx, "pipeline", None) == "composed_voice"
+        except Exception:
+            return False
+
     def _tts_provider_name(self) -> str | None:
         try:
             from server.call.call_context import get as get_ctx
@@ -1455,6 +1500,7 @@ class PstnVoiceLoop:
             text or "",
             provider=self._tts_provider_name(),
             model=getattr(selection, "model", None),
+            language=getattr(getattr(ctx, "resolved_stack", None), "language", None),
             ensure_terminal=ensure_terminal,
         )
         expanded, self._turn_tts_accum = spoken_delta_after_collapse(self._turn_tts_accum, expanded)
@@ -2799,8 +2845,12 @@ class PstnVoiceLoop:
                                     spoke_from_stream = True
                         elif chunk.get("done"):
                             turn_completed = True
+                            self._consecutive_reply_failures = 0
                             if chunk.get("cancelled"):
                                 turn_cancelled = True
+                            if chunk.get("replace_speech") and spoke_from_stream:
+                                await self.interrupt_tts()
+                                spoke_from_stream = False
                             tail = (
                                 (chunk.get("text") or "").strip()
                                 if chunk.get("replace_speech")
@@ -2913,7 +2963,7 @@ class PstnVoiceLoop:
             # Partial audio from an early stop is exactly the dead air the
             # outage apology exists to replace.
             delivered = bool(turn_completed and (self._turn_audio_delivered or tts_audio_emitted))
-            if self.stack_override.get("pipeline") == "composed_voice":
+            if self._is_composed_call():
                 from server.services.saas.session_failure_log import record_session_failure
 
                 record_session_failure(
@@ -2942,25 +2992,15 @@ class PstnVoiceLoop:
                     if accepted_end_call and not turn_cancelled and not self.emission_blocked():
                         await self._finish_agent_hangup(reason=hangup_reason)
                 else:
-                    from server.call.end_call_validate import caller_close_reason
-
-                    caller_reason = caller_close_reason(text)
-                    reason = caller_reason or "agent_hangup"
                     if getattr(tts_session, "had_error", False):
                         await self._close_after_tts_failure(
                             defect="tts_provider_error",
                             session=tts_session,
                             trigger="tts_failure",
-                            reason=reason,
+                            reason="technical_failure",
                         )
                     else:
-                        # No caller close + no delivered reply = the model stopped
-                        # early. Say the honest technical line, not a goodbye.
-                        await self._close_after_non_tts_failure(
-                            reason=reason,
-                            session=tts_session,
-                            technical=caller_reason is None,
-                        )
+                        await self._recover_reply_failure(tts_session)
             elif not spoke_from_stream and not delivered and self._phase != PHASE_ENDED and not self._closed:
                 await self._close_after_non_tts_failure(session=tts_session)
             if self.call_id:

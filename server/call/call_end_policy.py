@@ -88,6 +88,9 @@ def server_farewell_for(
     if contact_preference == "callback":
         acknowledgement = callback_acknowledgement_for(language)
         return f"{acknowledgement} {farewell}"
+    if contact_preference == "do_not_call":
+        # An opt-out is confirmed out loud, so the caller knows it was heard.
+        return f"{do_not_call_acknowledgement_for(language)} {farewell}"
     return farewell
 
 
@@ -98,7 +101,27 @@ def callback_acknowledgement_for(language: str | None) -> str:
         "hi-IN": "आपकी जानकारी और दोबारा कॉल करने का अनुरोध दर्ज कर लिया है।",
         "ta-IN": "உங்கள் விவரங்களையும் மீண்டும் அழைக்க வேண்டிய கோரிக்கையையும் பதிவு செய்துள்ளேன்.",
         "kn-IN": "ನಿಮ್ಮ ವಿವರಗಳನ್ನು ಮತ್ತು ಮತ್ತೆ ಕರೆ ಮಾಡುವ ವಿನಂತಿಯನ್ನು ದಾಖಲಿಸಿದ್ದೇನೆ.",
+        "ml-IN": "നിങ്ങളുടെ വിവരങ്ങളും തിരികെ വിളിക്കാനുള്ള അഭ്യർത്ഥനയും രേഖപ്പെടുത്തിയിട്ടുണ്ട്.",
+        "gu-IN": "તમારી વિગતો અને ફરીથી કૉલ કરવાની વિનંતી નોંધી લીધી છે.",
+        "mr-IN": "तुमची माहिती आणि परत कॉल करण्याची विनंती नोंदवली आहे.",
+        "bn-IN": "আপনার তথ্য আর আবার কল করার অনুরোধ লিখে রেখেছি।",
+        "pa-IN": "ਤੁਹਾਡੀ ਜਾਣਕਾਰੀ ਅਤੇ ਦੁਬਾਰਾ ਕਾਲ ਕਰਨ ਦੀ ਬੇਨਤੀ ਦਰਜ ਕਰ ਲਈ ਹੈ।",
     }.get(lang, "I've saved your details and your request for a follow-up call.")
+
+
+def do_not_call_acknowledgement_for(language: str | None) -> str:
+    """Spoken confirmation that the caller's opt-out was recorded."""
+    return {
+        "te-IN": "సరే, ఈ నంబర్‌కి మళ్లీ కాల్ చేయము.",
+        "hi-IN": "ठीक है, इस नंबर पर अब दोबारा कॉल नहीं करेंगे।",
+        "ta-IN": "சரி, இந்த எண்ணுக்கு இனி அழைக்க மாட்டோம்.",
+        "kn-IN": "ಸರಿ, ಈ ನಂಬರ್‌ಗೆ ಮತ್ತೆ ಕಾಲ್ ಮಾಡಲ್ಲ.",
+        "ml-IN": "ശരി, ഈ നമ്പറിലേക്ക് ഇനി വിളിക്കില്ല.",
+        "gu-IN": "ઠીક છે, આ નંબર પર હવે ફરી કૉલ નહીં કરીએ.",
+        "mr-IN": "ठीक आहे, या नंबरवर पुन्हा कॉल करणार नाही.",
+        "bn-IN": "ঠিক আছে, এই নম্বরে আর কল করব না।",
+        "pa-IN": "ਠੀਕ ਹੈ, ਇਸ ਨੰਬਰ 'ਤੇ ਦੁਬਾਰਾ ਕਾਲ ਨਹੀਂ ਕਰਾਂਗੇ।",
+    }.get(normalize_compile_language(language), "Understood, we won't call this number again.")
 
 
 def callback_save_failed_for(language: str | None) -> str:
@@ -107,6 +130,11 @@ def callback_save_failed_for(language: str | None) -> str:
         "hi-IN": "माफ़ कीजिए, आपका दोबारा कॉल करने का अनुरोध सेव नहीं हो सका। कृपया व्यवसाय से सीधे संपर्क करें।",
         "ta-IN": "மன்னிக்கவும், மீண்டும் அழைக்கும் கோரிக்கையைச் சேமிக்க முடியவில்லை. தயவுசெய்து நிறுவனத்தை நேரடியாகத் தொடர்புகொள்ளுங்கள்.",
         "kn-IN": "ಕ್ಷಮಿಸಿ, ಮತ್ತೆ ಕರೆ ಮಾಡುವ ವಿನಂತಿಯನ್ನು ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಸಂಸ್ಥೆಯನ್ನು ನೇರವಾಗಿ ಸಂಪರ್ಕಿಸಿ.",
+        "ml-IN": "ക്ഷമിക്കണം, തിരികെ വിളിക്കാനുള്ള അഭ്യർത്ഥന സേവ് ചെയ്യാൻ കഴിഞ്ഞില്ല. ദയവായി സ്ഥാപനവുമായി നേരിട്ട് ബന്ധപ്പെടുക.",
+        "gu-IN": "માફ કરશો, ફરીથી કૉલ કરવાની વિનંતી સેવ થઈ શકી નહીં. કૃપા કરીને સીધો સંપર્ક કરો.",
+        "mr-IN": "माफ करा, परत कॉल करण्याची विनंती सेव्ह होऊ शकली नाही. कृपया थेट संपर्क करा.",
+        "bn-IN": "দুঃখিত, আবার কল করার অনুরোধটি সেভ করা গেল না। অনুগ্রহ করে সরাসরি যোগাযোগ করুন।",
+        "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਦੁਬਾਰਾ ਕਾਲ ਦੀ ਬੇਨਤੀ ਸੇਵ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਸਿੱਧਾ ਸੰਪਰਕ ਕਰੋ।",
     }.get(normalize_compile_language(language), "I'm sorry, I couldn't save your callback request. Please contact the business directly.")
 
 

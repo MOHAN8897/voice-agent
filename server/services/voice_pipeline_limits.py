@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
 MIN_CHUNK_CHARS = 14
 FIRST_CHUNK_MIN_CHARS = 18
@@ -38,14 +39,15 @@ _INCOMPLETE_TAIL = re.compile(
     r"(?:do|does|did|have|has|had|is|are|was|were|will|would|can|could)[\s,;.]*$",
     re.I,
 )
-_GLUED_SENTENCE = re.compile(r"([.!?।])(?=[A-Za-z\u0C00-\u0C7F\u0900-\u097F])")
+# Latin plus every Indic block a supported locale writes in (Devanagari through Malayalam).
+_GLUED_SENTENCE = re.compile(r"([.!?।])(?=[A-Za-zऀ-ൿ])")
 _GREETING_START = re.compile(
     r"^(?:hi|hello|hey|namaste|namaskar)\b.{0,80}?\b(?:this is|nenu|main)\b",
     re.I,
 )
 _VALID_SHORT_REPLY = re.compile(
     r"^(?:ok|okay|yes|no|sure|thanks|thank you|got it|noted|hello|hi|bye|goodbye|"
-    r"sare|hmm|mm|aha|అవును|సరే|ठीक|हाँ)\.?$",
+    r"sare|hmm|mm|aha|అవును|సరే|అలాగే|ఓకే|हाँ|ठीक|ठीक है|जी|जी हाँ|बिल्कुल|ओके|சரி|ஆமாம்|சரிங்க|கண்டிப்பா|ಹೌದು|ಸರಿ|ಖಂಡಿತ|ಆಯ್ತು|അതെ|ശരി|തീർച്ചയായും|ഓക്കേ|हो|होय|ठीक आहे|नक्कीच|হ্যাঁ|ঠিক আছে|নিশ্চয়ই|আচ্ছা|હા|બરાબર|સારું|ચોક્કસ|ਹਾਂ|ਹਾਂਜੀ|ਠੀਕ|ਠੀਕ ਹੈ|ਜ਼ਰੂਰ)\.?$",
     re.I,
 )
 _MIDWORD_STUMP = re.compile(
@@ -181,6 +183,55 @@ def collapse_repeated_spoken_reply(text: str) -> str:
     return cleaned
 
 
+# Reflexive "anything else?" closers, per supported language. Live probes showed the model
+# appending them to most answers despite prompt rules; native-speaker review rated them robotic.
+_GENERIC_CHECK_IN = re.compile(
+    r"(?:anything else|something else|any other (?:question|detail|help)|"
+    r"ఇంకా ఏమైనా|ఇంకా ఏదైనా|వేరే ఏమైనా|వేరే ఏదైనా|ఇంకేమైనా|ఇంకా ఏం|"
+    r"और कुछ|कुछ और|"
+    r"வேற ஏதாவது|வேற ஏதாச்சும்|வேறு ஏதாவது|"
+    r"ಬೇರೆ ಏನಾದ್ರೂ|ಬೇರೆ ಏನಾದರೂ|ಇನ್ನೇನಾದ್ರೂ|ಇನ್ನೇನಾದರೂ|"
+    r"വേറെ എന്തെങ്കിലും|ഇനി എന്തെങ്കിലും|മറ്റെന്തെങ്കിലും|"
+    r"બીજું કંઈ|બીજું કઈ|બીજુ કંઈ|બીજુ કઈ|બીજી કોઈ|બીજું કશું)",
+    re.I,
+)
+_LAST_SENTENCE = re.compile(r"(?s)^(.*[.!?।])\s+([^.!?।]+\?)\s*$")
+
+
+def drop_generic_check_in(text: str) -> str:
+    """Remove only a short trailing generic check-in question after a real answer.
+
+    A question that asks for a missing detail ("which area?") is never touched. After
+    a short acknowledgement ("You're welcome.") the check-in is the natural way to keep
+    the call open, so it stays; it only goes after a substantive answer.
+    """
+    match = _LAST_SENTENCE.match((text or "").strip())
+    if not match:
+        return text
+    answer, last = match.group(1).strip(), match.group(2).strip()
+    if len(last) <= 90 and _GENERIC_CHECK_IN.search(last) and len(answer) >= 25:
+        return answer
+    return text
+
+
+_SPOKEN_SENTENCE = re.compile(r"[^.!?।]+[.!?।]+(?:\s+|$)")
+
+
+def cap_spoken_sentences(text: str, *, keep: int = 2) -> str:
+    """Phone replies are one or two sentences; past three, keep the first two and a final question.
+
+    The closing question is usually the caller's next step, so it is never the part dropped.
+    """
+    cleaned = (text or "").strip()
+    parts = [p.strip() for p in _SPOKEN_SENTENCE.findall(cleaned)]
+    if len(parts) <= 3 or "".join(parts).replace(" ", "") != cleaned.replace(" ", ""):
+        return cleaned
+    kept = parts[:keep]
+    if parts[-1].endswith("?") and parts[-1] not in kept:
+        kept.append(parts[-1])
+    return " ".join(kept)
+
+
 def clamp_live_spoken_reply(text: str, *, max_chars: int | None = None) -> str:
     """Hard safety trim at a sentence/word boundary — never leave a dangling mid-clause."""
     limit = int(max_chars or LIVE_REPLY_MAX_CHARS)
@@ -223,6 +274,8 @@ def _is_indic_combining(ch: str) -> bool:
     """True for virama / vowel signs that must not start a clipped tail alone."""
     if not ch:
         return False
+    if unicodedata.category(ch) in {"Mn", "Mc", "Me"}:
+        return True
     o = ord(ch)
     # Telugu vowel signs / virama, Devanagari vowel signs / virama (common live-call scripts).
     return (

@@ -45,10 +45,18 @@ def sanitize_tts_tags(text: str, *, provider: str | None = None, model: str | No
     return re.sub(r"\s+([,.!?।])", r"\1", re.sub(r"\s{2,}", " ", cleaned)).strip()
 
 
+# Gnani's guide: raw numbers, IDs, dates or currency are mispronounced; it does not normalize them.
+GNANI_NUMBER_WORDS = (
+    "This voice does not read digits reliably, so this overrides any digit guidance above: write prices, "
+    "counts, dates and times as spoken words in the call language, for example the local words for "
+    "five hundred ninety-nine rupees, never `₹599` or `10:30 AM`.\n"
+)
+
+
 def tts_delivery_rules(provider: str | None, model: str | None, locale: str) -> str:
     provider = str(provider or "").strip().lower()
     model = str(model or "").strip().lower()
-    head = "[Selected speech delivery]\n"
+    head = "[Selected speech delivery]\n" + (GNANI_NUMBER_WORDS if provider == "gnani" else "")
     if supports_inline_audio_tags(provider, model):
         tags = ", ".join(f"<{tag}>" for tag in sorted(GNANI_V3_TAGS))
         return head + (
@@ -72,9 +80,10 @@ def tts_delivery_rules(provider: str | None, model: str | None, locale: str) -> 
         )
     detail = (
         "Gemini TTS receives a plain transcript; voice and delivery metadata control sound. " if provider == "gemini" else
-        "Sarvam Bulbul v4 Flash uses native-script mixed text and punctuation; API pace, pitch and loudness control delivery. " if provider == "sarvam" and model == "bulbul:v4-flash" else
-        "Sarvam Bulbul v3 uses native-script mixed text and punctuation; API pace and temperature control delivery. " if provider == "sarvam" else
+        f"Sarvam Bulbul {'v4 Flash' if model == 'bulbul:v4-flash' else 'v3'} uses native-script mixed text and punctuation "
+        "and reads digits, currency and times itself; API pace and temperature control delivery. " if provider == "sarvam" else
         "Gnani Timbre v2.5 uses plain punctuated text and does not support v3 audio tags. " if provider == "gnani" and model == "timbre-v2.5" else
+        "Cartesia Sonic reads digits, currency and times itself; keep normal written numbers. " if provider == "cartesia" else
         "Use the selected voice's plain punctuated speech format. "
     )
     return head + detail + (

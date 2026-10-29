@@ -24,9 +24,9 @@ SUPPORTED_LANGUAGES = constants.SUPPORTED_LANGUAGES
 _LOCK = threading.Lock()
 _cache: dict[str, Any] | None = None
 
-#: Shipped default. The site is for English-speaking countries, so only English
-#: variants are offered until an operator enables more from the admin panel.
-DEFAULT_ENABLED: tuple[str, ...] = ("en-IN", "te-IN", "hi-IN", "ta-IN", "kn-IN")
+#: Shipped default: the languages whose spoken packs, Sarvam STT/TTS and tier stacks
+#: are verified end to end. Operators can narrow or extend this from the admin panel.
+DEFAULT_ENABLED: tuple[str, ...] = ("en-IN", "te-IN", "hi-IN", "ta-IN", "kn-IN", "gu-IN", "ml-IN")
 
 
 def _path() -> Path:

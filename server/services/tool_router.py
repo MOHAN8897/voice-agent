@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import re
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -143,11 +144,27 @@ class VoxlyToolRouter:
             return result
 
     def _get_action_metadata(self, action_name: str) -> dict[str, str]:
-        verbs = {"CREATE", "UPDATE", "DELETE", "CANCEL", "RESCHEDULE", "SEND", "BOOK", "INSERT", "ADD"}
+        verbs = {"CREATE", "UPDATE", "DELETE", "CANCEL", "RESCHEDULE", "SEND", "BOOK", "INSERT", "ADD", "SAVE", "CONFIRM"}
         return {"type": "write" if verbs.intersection(action_name.upper().split("_")) else "read"}
 
     def _generate_idempotency_key(self, tenant_id: str, call_id: str, tool_name: str, args: dict[str, Any]) -> str:
-        digest = hashlib.sha256(json.dumps([tenant_id, call_id, tool_name, args], sort_keys=True).encode()).hexdigest()
+        identity = args
+        # Creating the same contact twice in one call remains the same action
+        # even when optional name/company fields change. Corrections belong to
+        # UPDATE, not another CREATE. Other actions retain full argument keys.
+        if tool_name.upper().endswith("CREATE_CONTACT"):
+            email = str(args.get("email") or "").strip().casefold()
+            if not email and "@" in str(args.get("lastname") or ""):
+                email = str(args["lastname"]).strip().casefold()
+            phone = re.sub(r"[^\d+]", "", str(args.get("phone") or ""))
+            if email:
+                identity = {"email": email}
+            elif phone:
+                identity = {"phone": phone}
+        elif tool_name.upper().endswith("CREATE_EVENT"):
+            identity = {key: args.get(key) for key in ("start", "end")}
+            identity["calendar_id"] = args.get("calendar_id") or "primary"
+        digest = hashlib.sha256(json.dumps([tenant_id, call_id, tool_name, identity], sort_keys=True).encode()).hexdigest()
         return f"tool:{digest}"
 
     async def _has_uncertain_prior_write(

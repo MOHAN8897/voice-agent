@@ -10,6 +10,54 @@ import re
 from typing import Any
 
 
+_QUESTION_INQUIRY = re.compile(
+    r"\?|"
+    r"\b(?:when|where|what|how\s+much|how\s+many|why|who|is\s+it|can\s+you|will\s+you|could\s+you|is\s+there|available\?)\b|"
+    r"(?:ఎప్పుడు|ఎప్పటికి|ఎంత|ఎక్కడ|ఏమిటి|ఏంటి|ఎందుకు|ఎవరు|ఉందా|ఉన్నాయా|అవుతుందా|చేస్తారా|చేస్తారా\?|తీసుకుంటారా|పంపుతారా|చెప్తారా)|"
+    r"\b(?:enta|entha|ekkada|emiti|enti|enduku|evaru|unda|unnaya|avutunda|chestaara|chestara|cheptara|tisukuntara)\b|"
+    r"(?:कब|कहाँ|कहा|कितना|कितने|क्यों|क्या|होगी|होगा|मिलेगा)|"
+    r"(?:எப்போது|எங்கு|எவ்வளவு|என்ன|ஏன்|இருக்கா)",
+    re.I,
+)
+
+
+_COMPARISON_WORDS = re.compile(
+    r"\b(?:better|vs|versus|difference|compared|which\s+is\s+better|or)\b|"
+    r"\b(?:kante|kanna|leda|leka|teda|edi\s+manchidi)\b|"
+    r"(?:కంటే|కన్నా|లేదా|లేక|తేడా|ఏది\s*మంచిది)|"
+    r"(?:से\s*बेहतर|या|अंतर)",
+    re.I,
+)
+_CORRECTION_WORDS = re.compile(
+    r"\b(?:not|instead\s+of|change\s+to|actually|i\s+mean|rather)\b|"
+    r"\b(?:kaadu|vaddu|badulu|maarustunna|asalu)\b|"
+    r"(?:కాదు|వద్దు|బదులు|మారుస్తున్నా|అసలు)|"
+    r"(?:नहीं|बदले|बदलना)",
+    re.I,
+)
+
+
+def _is_question_or_inquiry(value: str, quote: str) -> bool:
+    from server.call.end_call_validate import looks_like_question
+
+    if looks_like_question(quote) or looks_like_question(value):
+        return True
+    return bool(_QUESTION_INQUIRY.search(quote) or _QUESTION_INQUIRY.search(value))
+
+
+def classify_statement_modality(quote: str, value: str) -> str:
+    """Label statement as asserted, asked, compared, or corrected."""
+    if _CORRECTION_WORDS.search(quote) or _CORRECTION_WORDS.search(value):
+        # Legacy untyped proposals cannot establish which option was negated.
+        # Require a semantic assertion for corrections rather than guessing.
+        return "corrected"
+    if _COMPARISON_WORDS.search(quote) or _COMPARISON_WORDS.search(value):
+        return "compared"
+    if _is_question_or_inquiry(value, quote):
+        return "asked"
+    return "asserted"
+
+
 def grounded_turn_operations(raw: Any, caller_text: str) -> list[dict[str, str]]:
     """Accept only bounded facts quoted from this caller turn, never instructions."""
     from server.call.close_decision import evidence_matches
@@ -29,7 +77,15 @@ def grounded_turn_operations(raw: Any, caller_text: str) -> list[dict[str, str]]
             continue
         if not evidence_matches(value, quote):
             continue
-        result.append({"op": item["op"], "key": key, "value": value})
+        semantic = item.get("assertion")
+        modality = classify_statement_modality(quote, value)
+        if semantic is not None:
+            if semantic != "caller_asserted" or item.get("polarity") != "positive":
+                continue
+        elif modality in {"asked", "compared", "corrected"}:
+            continue
+        operation = "set_fact" if key in {"caller_name", "product", "quantity", "email", "requested_time", "budget", "delivery_locality", "delivery_address"} else item["op"]
+        result.append({"op": operation, "key": key, "value": value})
     return sanitize_model_operations(result)[0]
 
 # Judgment about this call's intent/outcome. Allowed only on a gate-approved

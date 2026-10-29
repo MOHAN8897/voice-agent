@@ -232,10 +232,29 @@ def opt_out_evidence(text: str) -> bool:
     "Call cut చేయకండి" and "call करने के लिए नहीं कह रहा" contain a call word
     next to a negative but ask the opposite; they are not opt-outs.
     """
-    from server.call.caller_intent import caller_revoked_callback, is_negated_end
+    from server.call.caller_intent import (
+        _FINAL_OPT_OUT,
+        callback_scope_only,
+        caller_declined_callback,
+        caller_revoked_callback,
+        is_negated_end,
+    )
 
     raw = text or ""
-    if is_negated_end(raw) or caller_revoked_callback(raw):
+    if is_negated_end(raw):
+        return False
+    # A request to call back at a future time (e.g. "don't call now, call again tomorrow")
+    # is a scheduling request, not permanent DND, unless accompanied by permanent removal words.
+    if re.search(r"(?:రేపు|తర్వాత|సాయంత్రం|ఉదయం|మధ్యాహ్నం|tomorrow|later|evening|morning).{0,24}(?:మళ్లీ|మళ్ళీ|again)?.{0,24}(?:కాల్|ఫోన్|చేయండి|మాట్లాడండి|చేయగలరు|\bcall\b)", raw, re.I):
+        if not re.search(r"\b(?:never|remove\s+me|permanently)\b|ఎప్పటికీ|ఎప్పుడూ|లిస్ట్\s*నుండి\s*తీసేయండి", raw, re.I):
+            return False
+    if _FINAL_OPT_OUT.search(raw):
+        return bool(_OPT_OUT_EVIDENCE.search(raw.casefold()))
+    if (
+        caller_revoked_callback(raw)
+        or callback_scope_only(raw)
+        or caller_declined_callback(raw)
+    ):
         return False
     return bool(_OPT_OUT_EVIDENCE.search(raw.casefold()))
 

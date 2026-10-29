@@ -161,16 +161,29 @@ def _catalog_app(app_id: str) -> str:
     return app
 
 
+def _trusted_console_origins() -> set[tuple[str, str]]:
+    """Every origin the console is deliberately served from, never a wildcard."""
+    from urllib.parse import urlsplit
+    settings = get_settings()
+    configured = [settings.voxly_frontend_url, getattr(settings, "public_app_url", None)]
+    configured += [o for o in (getattr(settings, "cors_origins", "") or "").split(",") if o.strip() != "*"]
+    origins = set()
+    for raw in configured:
+        parts = urlsplit((raw or "").strip())
+        if parts.scheme in {"http", "https"} and parts.netloc:
+            origins.add((parts.scheme, parts.netloc.lower()))
+    return origins
+
+
 def _validate_redirect(value: str) -> None:
     from urllib.parse import urlsplit
     settings = get_settings()
     candidate = urlsplit(value)
-    configured = urlsplit(settings.voxly_frontend_url)
     local = settings.app_environment not in {"production", "staging"} and candidate.hostname in {"localhost", "127.0.0.1"}
     if candidate.scheme not in {"http", "https"} or candidate.username or candidate.password or (
-        not local and (candidate.scheme, candidate.netloc) != (configured.scheme, configured.netloc)
+        not local and (candidate.scheme, candidate.netloc.lower()) not in _trusted_console_origins()
     ):
-        raise HTTPException(status_code=400, detail="Invalid connection return URL")
+        raise HTTPException(status_code=400, detail="This console address is not allowed to connect integrations. Contact your administrator.")
 
 
 
@@ -208,13 +221,8 @@ async def get_integrations_catalog(
     annotated = []
     for item in items:
         p_key = nango_service.get_provider_key(item.get("id", "")).lower()
-        is_ready = (
-            p_key in configured_providers
-            or f"{p_key}-api-key" in configured_providers
-            or f"{p_key}-v2" in configured_providers
-            or f"{p_key}-business" in configured_providers
-            or f"{p_key}-bot" in configured_providers
-        )
+        # Connect sends exactly this key, so readiness must not accept look-alike variants.
+        is_ready = p_key in configured_providers
         annotated.append({
             **item,
             "oauth_ready": is_ready,

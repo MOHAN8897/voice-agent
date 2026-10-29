@@ -26,7 +26,7 @@ def test_live_policy_replaces_stale_platform_spoken_pack(language):
 def test_hindi_personal_inbound_opening_does_not_use_telugu():
     opening = _personal_opening_line(agent_name="Priya", callee_name="", language="hi-IN", direction="inbound", is_test=True)
     assert "Nenu" not in opening and "Idi" not in opening
-    assert "kaise madad" in opening and "test call" in opening
+    assert ("kaise madad" in opening or "कैसे मदद" in opening) and ("test call" in opening or "टेस्ट" in opening)
 
 
 @pytest.mark.parametrize("language", list(LANGUAGE_LOCK))

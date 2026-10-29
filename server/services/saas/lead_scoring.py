@@ -42,9 +42,20 @@ def score_outcome(outcome: dict, config: FollowUpConfig | None = None) -> dict:
     if not isinstance(facts, dict):
         facts = {}
     normalized = {str(k).lower(): str(v).strip() for k, v in facts.items() if v is not None and str(v).strip()}
+    selected_offer = any(normalized.get(key) for key in ("product", "service", "selected_product", "course"))
+    contextual_requirement = any(normalized.get(key.strip().lower()) for key in cfg.scoreFactKeys["requirements"]
+                                 if key.strip().lower() not in {"product", "service", "product_interest", "selected_product", "course"})
     components = []
     for key, weight in cfg.scoreWeights.items():
-        evidence = disposition if key == "interest" and disposition in ("interested", "qualified", "callback_required", "site_visit_planned", "converted") else ""
+        evidence = (
+            disposition
+            if key == "interest"
+            and (
+                disposition in ("interested", "qualified", "site_visit_planned", "converted", "order_requested")
+                or (selected_offer and contextual_requirement)
+            )
+            else ""
+        )
         if key != "interest":
             evidence = next((name for name in cfg.scoreFactKeys[key] if normalized.get(name.strip().lower())), "")
         components.append({"signal": key, "points": weight if evidence else 0, "max": weight, "evidence": evidence or "not recorded"})

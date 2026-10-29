@@ -318,17 +318,31 @@ async def analyze_employee_brief(*, brief: str, language: str,
         correlation_id=correlation_id)
     if config.get("employeeName"):
         extracted.agent_name = config["employeeName"]
-    facts = [*extracted.facts, *extracted.workflow, *extracted.permitted_next_steps, *extracted.forbidden_actions]
-    if extracted.primary_goal:
-        facts.append(extracted.primary_goal)
     normalized_source = " ".join(source.casefold().split())
-    for fact in facts:
-        if (" ".join(fact.evidence.casefold().split()) not in normalized_source
+    for repair_attempt in range(2):
+        facts = [*extracted.facts, *extracted.workflow, *extracted.permitted_next_steps, *extracted.forbidden_actions]
+        if extracted.primary_goal:
+            facts.append(extracted.primary_goal)
+        unsupported = [index for index, fact in enumerate(facts) if (
+                " ".join(fact.evidence.casefold().split()) not in normalized_source
                 or not _numbers(fact.text).issubset(_numbers(fact.evidence))
-                or not _links(fact.text).issubset(_links(fact.evidence))):
+                or not _links(fact.text).issubset(_links(fact.evidence)))]
+        if not unsupported:
+            break
+        if repair_attempt:
             raise GenerationStageError(
                 "extract", transient=False, correlation_id=correlation_id, reason="ungrounded",
             )
+        # One corrective request, carrying the failed extraction and exact
+        # validation feedback. Never silently publish unsupported details.
+        extracted = await _completion("employee_brief_extract", EXTRACTION_RULES,
+            {"brief": brief, "selected_language": language, "settings": config,
+             "answers": [item.model_dump() for item in answers],
+             "previous_extraction": extracted.model_dump(), "unsupported_fact_indexes": unsupported,
+             "repair": "Copy evidence verbatim from the supplied source. Preserve every original condition, number and prohibition; correct paraphrased evidence and unsupported numeric/link transformations. Do not invent facts or drop important facts to pass validation."},
+            ExtractedBrief, temperature=0, tokens=6500, correlation_id=correlation_id)
+        if config.get("employeeName"):
+            extracted.agent_name = config["employeeName"]
     for name in (extracted.agent_name, extracted.company_name):
         if name and not source_supported(name, source + "\n" + config.get("employeeName", "")):
             raise GenerationStageError(

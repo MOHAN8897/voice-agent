@@ -104,6 +104,23 @@ async def test_keys_and_foreign_redirects_never_create_connections(client, monke
     start.assert_not_awaited()
 
 
+async def test_every_configured_console_origin_can_open_the_connection_form(client, monkeypatch):
+    # The console is served from more than one deliberate origin; a wildcard never qualifies.
+    monkeypatch.setattr(routes, "get_settings", lambda: SimpleNamespace(
+        voxly_frontend_url="https://console.example.test", public_app_url="https://app.example.test",
+        cors_origins="*,https://alt.example.test", app_environment="production"))
+    start = AsyncMock(return_value={"status": "INITIATED", "session_token": "tok"})
+    monkeypatch.setattr(routes.nango_service, "initiate_connection", start)
+    headers = {"authorization": "Bearer test-session"}
+    for origin in ("https://app.example.test", "https://alt.example.test", "https://ALT.example.test"):
+        response = await client.post("/api/integrations/SLACK/connect", headers=headers,
+                                     json={"base_redirect_uri": f"{origin}/api/integrations/callback"})
+        assert response.status_code == 200, origin
+    response = await client.post("/api/integrations/SLACK/connect", headers=headers,
+                                 json={"base_redirect_uri": "http://alt.example.test/api/integrations/callback"})
+    assert response.status_code == 400
+
+
 async def test_webhook_signature_unknown_event_and_stale_replay(client, db, monkeypatch):
     assert (await client.post("/api/integrations/nango-webhook", json={})).status_code == 401
     raw, headers = signed({"type": "sync", "success": True})

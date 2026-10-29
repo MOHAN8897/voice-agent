@@ -10,8 +10,8 @@ import uuid
 
 Message = dict  # {role: "user"|"assistant", content: str}
 
-DEFAULT_MAX_ASSISTANT_CHARS = 120
-DEFAULT_MAX_USER_CHARS = 300
+DEFAULT_MAX_ASSISTANT_CHARS = 1600
+DEFAULT_MAX_USER_CHARS = 1600
 
 
 class ConversationManager:
@@ -44,7 +44,10 @@ class ConversationManager:
         text = text.strip()
         if len(text) <= cap:
             return text
-        return text[:cap] + "…"
+        # Keep complete recent utterances. A word boundary can still bisect a
+        # multiword price or correction. The full text remains in the ledger;
+        # older/oversize context is represented by verified facts and summary.
+        return "[Message omitted from short context; use verified memory.]"
 
     def get_history(self, session_id: str) -> list[Message]:
         sess = self._ensure(session_id)

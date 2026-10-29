@@ -21,6 +21,7 @@ from server.call.call_end_policy import (
 )
 from server.db.models.entities import Call, CallCallback
 from server.db.models.saas_models import Lead
+from server.db.models.followup_models import FollowUpJob
 from server.services.saas import callback_request_service as svc
 from server.services.saas.tenant_guard import SubscriberPrincipal
 
@@ -54,6 +55,7 @@ async def callback_db(monkeypatch, tmp_path):
             await conn.run_sync(lambda sync: Call.__table__.create(sync))
             await conn.run_sync(lambda sync: CallCallback.__table__.create(sync))
             await conn.run_sync(lambda sync: Lead.__table__.create(sync))
+            await conn.run_sync(lambda sync: FollowUpJob.__table__.create(sync))
         factory = async_sessionmaker(engine, expire_on_commit=False)
         monkeypatch.setattr(svc, "get_session_factory", lambda: factory)
         principal = SubscriberPrincipal(user_id=uuid.uuid4(), tenant_id=uuid.uuid4(), role="customer_admin", email="test@example.invalid")
@@ -82,6 +84,55 @@ async def test_requested_callback_is_durable_idempotent_and_does_not_dial(callba
     assert items[0]["requestedWhen"] == "next month"
     assert items[0]["requestText"] == ctx.callback_request_text
     assert await svc.list_callback_requests(principal, agent_id="different") == []
+
+
+async def test_saved_callback_withdrawal_is_scoped_and_can_be_requested_again(callback_db):
+    from datetime import datetime, timedelta, timezone
+    factory, principal, ctx = callback_db
+    saved = await svc.record_callback_request(ctx, ctx.callback_request_text)
+    async with factory() as session:
+        unrelated = CallCallback(callback_id=uuid.uuid4(), tenant_id=principal.tenant_id,
+            original_call_id=uuid.uuid4(), agent_id=ctx.agent_id, to_e164=ctx.callback_phone,
+            dial_request_id='another-call', mode='requested', status='requested')
+        session.add(unrelated)
+        own_job = FollowUpJob(tenant_id=principal.tenant_id, agent_id=uuid.UUID(ctx.agent_id),
+            origin_key='own-request', source_id=ctx.call_id, kind='callback', phone=ctx.callback_phone,
+            status='scheduled', due_at=datetime.now(timezone.utc) + timedelta(hours=6),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=2))
+        other_job = FollowUpJob(tenant_id=principal.tenant_id, agent_id=uuid.UUID(ctx.agent_id),
+            origin_key='another-request', source_id=str(unrelated.original_call_id), kind='callback', phone=ctx.callback_phone,
+            status='scheduled', due_at=datetime.now(timezone.utc) + timedelta(hours=6),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=2))
+        session.add_all([own_job, other_job])
+        await session.commit()
+    assert await svc.withdraw_callback_request(ctx)
+    assert not ctx.callback_withdrawal_pending
+    async with factory() as session:
+        previous = await session.get(CallCallback, uuid.UUID(saved['id']))
+        assert previous.status == 'dismissed'
+        assert (await session.get(CallCallback, unrelated.callback_id)).status == 'requested'
+        assert (await session.get(FollowUpJob, own_job.id)).status == 'cancelled'
+        assert (await session.get(FollowUpJob, other_job.id)).status == 'scheduled'
+    renewed = await svc.record_callback_request(ctx, 'Actually, please call tomorrow')
+    assert renewed['id'] != saved['id']
+    assert renewed == await svc.record_callback_request(ctx, 'Actually, please call tomorrow')
+
+
+async def test_callback_withdrawal_rejects_another_tenants_call(callback_db):
+    factory, _, ctx = callback_db
+    saved = await svc.record_callback_request(ctx, ctx.callback_request_text)
+    ctx.tenant_id = str(uuid.uuid4())
+    assert not await svc.withdraw_callback_request(ctx)
+    async with factory() as session:
+        assert (await session.get(CallCallback, uuid.UUID(saved['id']))).status == 'requested'
+
+
+async def test_callback_withdrawal_storage_failure_is_pending_not_fatal(callback_db, monkeypatch):
+    _, _, ctx = callback_db
+    await svc.record_callback_request(ctx, ctx.callback_request_text)
+    monkeypatch.setattr(svc, 'get_session_factory', lambda: None)
+    assert not await svc.withdraw_callback_request(ctx)
+    assert ctx.callback_withdrawal_pending
 
 
 @pytest.mark.parametrize("status", ["converted", "dismissed"])

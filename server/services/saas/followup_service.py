@@ -253,10 +253,15 @@ async def _capture_missed(session, policy: AgentFollowUpPolicy, cfg: FollowUpCon
         phone = normalize_e164(attempt.from_number)
         delay = utc(attempt.ended_at) + timedelta(minutes=cfg.missedDelayMinutes)
         automatic = cfg.missedMode == "automatic"
+        # An opted-out number never appears as a pending follow-up, not even until dispatch.
+        opted_out = bool(phone) and bool(await session.scalar(select(DncEntry.id).where(
+            DncEntry.tenant_id == policy.tenant_id, DncEntry.phone_e164 == phone, DncEntry.active.is_(True))))
+        status = "suppressed" if not phone or opted_out else ("scheduled" if automatic else "needs_review")
+        reason = ("caller_number_unavailable" if not phone else "do_not_call" if opted_out
+                  else "missed_call" if automatic else "approval_required")
         session.add(FollowUpJob(tenant_id=policy.tenant_id, agent_id=policy.agent_id,
             origin_key=f"missed:{attempt.attempt_id}", source_id=str(attempt.attempt_id), kind="missed", phone=phone or "",
-            status=("scheduled" if automatic else "needs_review") if phone else "suppressed",
-            reason=("missed_call" if automatic else "approval_required") if phone else "caller_number_unavailable",
+            status=status, reason=reason,
             payload={"timezone": cfg.timezone}, due_at=delay, expires_at=utc(attempt.ended_at) + timedelta(days=cfg.expiryDays),
             authorized_by=policy.authorized_by, billing_tenant_id=policy.billing_tenant_id))
 
@@ -337,6 +342,10 @@ async def _block_reason(session, row: FollowUpJob, policy, cfg: FollowUpConfig) 
         return "lead_converted"
     callback_id = (row.payload or {}).get("callbackId")
     if callback_id:
+        from server.call.call_ledger import call_ledger
+        source_meta = await asyncio.to_thread(call_ledger.read_meta, str(row.source_id))
+        if source_meta.get("callback_cancelled") is True:
+            return "caller_withdrew_callback"
         request = await session.scalar(select(CallCallback).where(CallCallback.tenant_id == row.tenant_id,
             CallCallback.callback_id == uuid.UUID(callback_id)))
         if request is None or request.status != "requested":

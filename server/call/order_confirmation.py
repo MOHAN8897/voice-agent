@@ -21,6 +21,8 @@ CONFIRM_ORDER_TOOL: dict[str, Any] = {
     "description": (
         "Record an order the caller has explicitly confirmed. Collect the quantity, "
         "the caller's name and the full delivery address first; never guess a value. "
+        "Before calling this, read the product, quantity, total and address back once and "
+        "wait for the caller's yes; supplying an address alone is not that confirmation. "
         "Do not tell the caller the order is confirmed until this returns status ok. "
         "The server carries the successful receipt; never invent a confirmation."
     ),

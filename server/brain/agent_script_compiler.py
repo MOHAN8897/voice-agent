@@ -1005,7 +1005,11 @@ def work_scope_from_brief(brief: str, company: str, *, max_chars: int | None = 3
         flags=re.I,
     )
     text = re.sub(r"where\s+(?:he|she|they)\s+is\s+(?:an?\s+)?", "", text, flags=re.I)
-    text = re.sub(r"company(?:\s*name)?\s*(?:is|:)?\s*[^\n.]{2,50}", "", text, flags=re.I)
+    # Strip only the company label and the identified name. A fixed-width grab used to
+    # eat the following business description ("..., home appliance repai" -> "r in Hyderabad").
+    if company:
+        text = re.sub(rf"\bcompany(?:\s*name)?\s*(?:is|:)?\s*{re.escape(company)}\s*[.,;:]?\s*", "", text, flags=re.I)
+    text = re.sub(r"\bcompany(?:\s*name)?\s*(?:is|:)\s*[^\n.,;]{2,50}[.,;]?\s*", "", text, flags=re.I)
     if max_chars is not None:
         text = re.sub(r"never invent[^.]*\.?", "", text, flags=re.I)
         text = re.sub(r"do not sell[^.]*\.?", "", text, flags=re.I)
@@ -1067,43 +1071,36 @@ def _personal_opening_line(
 ) -> str:
     lang = normalize_compile_language(language)
     outbound = str(direction or "outbound").strip().lower() not in ("inbound", "incoming")
-    if lang not in ("te-IN", "hi-IN", "en-IN", "en-US"):
-        opening = opening_line_for(lang, agent_name=agent_name, company_name='',
-                                   work_scope='', direction=direction)
-        test_notice = {
-            "ta-IN": "இது ஒரு சோதனை அழைப்பு.",
-            "kn-IN": "ಇದು ಒಂದು ಪರೀಕ್ಷಾ ಕರೆ.",
-            "ml-IN": "ഇതൊരു പരീക്ഷണ കോളാണ്.",
-            "mr-IN": "हा एक चाचणी कॉल आहे.",
-            "bn-IN": "এটি একটি পরীক্ষামূলক কল।",
-            "gu-IN": "આ એક પરીક્ષણ કૉલ છે.",
-            "pa-IN": "ਇਹ ਇੱਕ ਟੈਸਟ ਕਾਲ ਹੈ।",
-        }
-        prefix = f"{callee_name.strip()}, " if callee_name.strip() else ""
-        notice = f"{test_notice[lang]} " if is_test else ""
-        return f"{prefix}{notice}{opening}"
     english = is_native_english(lang) or lang == "en-IN"
-    closer = (
-        "Do you have a minute?"
-        if lang == "en-US"
-        else "Do you have a moment?"
-        if english
-        else "Meeku oka moment unda?"
-        if lang == "te-IN"
-        else "Kya aap free hain — ek minute mil sakta hai?"
-    )
-    if not outbound:
-        closer = "How can I help?" if english else ("Nenu ela sahayam cheyagalanu?" if lang == "te-IN" else "Main aapki kaise madad kar sakti hoon?")
-    who = callee_name.strip()
-    test_bit = " This is a test call." if is_test and english else ((" Idi oka test call." if lang == "te-IN" else " Yeh ek test call hai.") if is_test else "")
     if english:
+        closer = (
+            "Do you have a minute?"
+            if lang == "en-US"
+            else "Do you have a moment?"
+        )
+        if not outbound:
+            closer = "How can I help you today?" if lang == "en-IN" else "How can I help you?"
+        who = callee_name.strip()
+        test_bit = " This is a test call." if is_test else ""
         greet = f"Hi {who}," if who else "Hi,"
         return f"{greet} this is {agent_name}.{test_bit} {closer}".replace("  ", " ").strip()
-    if lang == "te-IN":
-        greet = f"Hi {who}," if who else "Hi,"
-        return f"{greet} nenu {agent_name}.{test_bit} {closer}".replace("  ", " ").strip()
-    greet = f"Namaste {who}," if who else "Namaste,"
-    return f"{greet} main {agent_name} bol rahi hoon.{test_bit} {closer}".replace("  ", " ").strip()
+
+    opening = opening_line_for(lang, agent_name=agent_name, company_name='',
+                               work_scope='', direction=direction)
+    test_notice = {
+        "te-IN": "ఇది ఒక టెస్ట్ కాల్.",
+        "hi-IN": "यह एक टेस्ट कॉल है।",
+        "ta-IN": "இது ஒரு சோதனை அழைப்பு.",
+        "kn-IN": "ಇದು ಒಂದು ಪರೀಕ್ಷಾ ಕರೆ.",
+        "ml-IN": "ഇതൊരു പരീക്ഷണ കോളാണ്.",
+        "mr-IN": "हा एक चाचणी कॉल आहे.",
+        "bn-IN": "এটি একটি পরীক্ষামূলক কল।",
+        "gu-IN": "આ એક પરીક્ષણ કૉલ છે.",
+        "pa-IN": "ਇਹ ਇੱਕ ਟੈਸਟ ਕਾਲ ਹੈ।",
+    }
+    prefix = f"{callee_name.strip()}, " if callee_name.strip() else ""
+    notice = f"{test_notice.get(lang, '')} " if is_test and lang in test_notice else ""
+    return f"{prefix}{notice}{opening}".replace("  ", " ").strip()
 
 
 def build_opening_line(
@@ -1609,7 +1606,8 @@ def _when_you_dont_know(brief: str, *, company_name: str, role: str) -> str:
     return (
         "--- WHEN YOU DO NOT KNOW SOMETHING ---\n"
         "Say plainly that you do not have that detail. Offer a further action only if the business permits it "
-        "and the runtime can perform it. Do not promise a callback or handoff without that permission.\n"
+        "and the runtime can perform it. Do not volunteer a callback or handoff without that permission; "
+        "a caller's own request to be called back is always noted for the platform to save.\n"
         "Never invent a price, a discount, a start date, a seat count, a policy, or an outcome. "
         "Never claim a booking, a payment, or a message was sent unless a tool actually confirmed it.\n"
         "For unrelated harmless questions, give one brief honest line and offer relevant help only when useful. "
@@ -1884,7 +1882,7 @@ def _platform_call_rules(
         f"Speak naturally as the named AI assistant; answer honestly if asked whether you are AI.\n\n"
         f"--- TURN DISCIPLINE ---\n"
         f"Professional and concise: one or two short sentences per turn, then stop and listen.\n"
-        f"Answer their last point first, then resume the next open script step. No monologues, repeated pitch, or brochure dumps.\n"
+        f"Answer their last point first, then stop; resume an open script step only when the caller is ready for it. No monologues, repeated pitch, or brochure dumps.\n"
         f"Do not talk continuously — end each turn when the point is made.\n\n"
         f"{lead_capture}"
         f"--- PROFESSIONAL CLOSE ---\n"

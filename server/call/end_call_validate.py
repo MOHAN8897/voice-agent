@@ -9,7 +9,10 @@ from typing import Any
 from server.call.call_end_policy import HANGUP_REASONS as POLICY_REASONS
 from server.call.call_end_policy import allowed_reasons_for
 from server.call.caller_intent import (
+    callback_scope_only,
+    caller_declined_callback,
     caller_revoked_callback,
+    caller_will_contact,
     has_future_interest,
     is_negated_end,
     is_wait_or_continue,
@@ -43,10 +46,13 @@ _QUESTION_RE = re.compile(
     r"(\?|^(what|why|how|when|where|who|which|can you|could you|would you|"
     r"please tell|tell me|will you|do you|does|did you|are you|is there|"
     r"was there|were you|have you|has your|am i|may i|should i)\b"
+    r"|\b(what|why|how|when|where|who|which|price|cost|charges?|fees?)\b"
     r"|^(?:do|does|did|are|is|was|were|will|would|could|should|can|have|has|"
     r"am|may|might)\s+(?:you|your|i|we|they|there|it|this|that|he|she|the|any)\b"
     r"|ఏమిటి|ఎలా|ఎందుకు|కదా\s*\?|ఎంత|ధర|ప్రైసింగ్|ఉన్నాయా|ఉందా|"
-    r"చేస్తారా|ఇస్తారా|అవుతుందా|చెప్పగలరా|क्या|कैसे|क्यों|कितना|कीमत"
+    r"చేస్తారా|ఇస్తారా|అవుతుందా|చెప్పగలరా|ఏంటి|ఎప్పుడు|ఎక్కడ|ఎవరు|తీసుకుంటారా|పంపుతారా|చెప్తారా|"
+    r"\b(?:enta|entha|ekkada|emiti|enti|enduku|evaru|unda|unnaya|avutunda|chestaara|chestara|cheptara|cheppagalara|tisukuntara)\b|"
+    r"क्या|कैसे|क्यों|कितना|कीमत"
     r"|என்ன(?![\u0BBE-\u0BCD])|எப்படி|ஏன்|எப்போது|எங்கே|யார்|எவ்வளவு|"
     r"வேண்டுமா|தெரியுமா|விலை|செய்வீர்களா|உண்டா)",
     re.I,
@@ -54,9 +60,11 @@ _QUESTION_RE = re.compile(
 _GOODBYE = re.compile(
     r"\b(bye|goodbye|good night|hang up|hangup|stop calling|"
     r"stop the calls|alvida|call cheyoddu|call cheyaku|call cheyakandi|"
+    r"sare\s+unta(?:nu)?|untan(?:u|andi)|unta|"
     r"குட்\s*பை|விடைபெறுகிறேன்|போய்\s*வருகிறேன்|போகிறேன்)\b|"
-    r"వద్దు\s*call|కాల్\s*చేయొద్దు|call\s*చేయక|(?:இனி|மீண்டும்).{0,12}(?:அழைக்க|தொடர்பு).{0,12}வேண்டாம்|"
-    r"மீண்டும்\s*அழைக்காதீர்கள்|இனி\s*அழைக்காதீர்கள்|இனிமேல்\s*அழைக்காதீர்கள்|இனி\s*call|చేయకండి|"
+    r"సరే\s*ఉంటాన(?:ు|ండి)|సరే\s*ఉంటా|ఉంటాన(?:ు|ండి)|ఉంటా\b|"
+    r"వద్దు\s*call|కాల్\s*చేయొద్దు|call\s*చేయక|(?:இனி|மீண்டும்).{0,12}(?:அழைக்க|தொடர்பு).{0,12}వేண்டாம்|"
+    r"மீண்டும்\s*அழைக்காதீர்கள்|இனி\s*அழைக்காதீர்கள்|இனிமேல்\s*அழைக்காதீர்கள்|இனி\s*call|"
     r"బై(?!క)|బాయ్",  # transliterated bye; never the "బైక్" (bike) prefix
     re.I,
 )
@@ -182,6 +190,10 @@ _OPT_OUT = re.compile(
     r"stop calling|stop the calls|never (?:call|contact)|please stop calling|"
     r"\b(?:you\s+)?(?:don['’]?t|do not)\s+(?:have|need)\s+to\s+(?:call|contact)\s+me\b|"
     r"\b(?:cancel|forget)\s+(?:the |my |that )?callback\b|"
+    r"(?:ఈ\s+)?(?:నంబర్|నెంబర్|నంబరు|నెంబరు)(?:కి|కు)?\s*(?:మళ్లీ|మళ్ళీ)?\s*(?:కాల్|ఫోన్)\s*(?:చేయకండి|చేయొద్దు|చేయవద్దు)|"
+    r"(?:మళ్లీ|మళ్ళీ|ఇకపై|ఇకమీదట)\s*(?:కాల్|ఫోన్)\s*(?:చేయకండి|చేయొద్దు|చేయవద్దు)|"
+    r"(?:నా\s+)?(?:నంబర్|నెంబర్|వివరాలు).{0,20}(?:తీసేయండి|డిలీట్\s*చేయండి|లిస్ట్\s*నుండి\s*తీసేయండి)|"
+    r"(?:నన్ను\s+)?(?:మళ్లీ|మళ్ళీ)\s*సంప్రదించ(?:కండి|వద్దు)|"
     r"இனி.{0,16}(?:அழைக்க|தொடர்பு).{0,16}வேண்டாம்|"
     r"(?:இனி|மீண்டும்)\s*அழைக்காதீர்கள்",
     re.I,
@@ -207,9 +219,10 @@ _END_REQUEST = re.compile(
     r"काट\s*(?:दीजिए|दें|दो)|खत्म\s*(?:कीजिए|करें|करो))|"
     r"\bcall\b.{0,20}(?:முடிச்சிடுங்க|முடிக்கவும்|முடியுங்க|நிறுத்துங்க|நிறுத்து|முடி)|"
     r"\bcall\b.{0,20}(?:ಮುಗಿಸಿ|ಮುಗಿಸುವುದು|ನಿಲ್ಲಿಸಿ|ಕಡಿತ\s*ಮಾಡಿ|ಮುಗಿಸು)|"
-    r"(?:కాల్\s*)?కట్\s*(?:చేయండి|చేసెయ్యండి|చేయి|చెయ్|చేస్తారా|చేస్తావా)(?:\s*కాల్)?|"
+    r"(?:కాల్|ఫోన్)\s*కట్\s*(?:చేయండి|చేసెయ్యండి|చేయి|చెయ్|చేస్తారా|చేస్తావా)|కట్\s*(?:చేయండి|చేసెయ్యండి|చేయి|చెయ్|చేస్తారా|చేస్తావా)\s*(?:కాల్|ఫోన్)|"
+    r"(?<!సోది\s)(?<!మాటలు\s)(?:కట్\s*(?:చేయండి|చేసెయ్యండి|చేయి|చెయ్|చేస్తారా|చేస్తావా))|"
     r"(?:కాల్|ఫోన్)\s*.{0,16}(?:కట్|ఆపండి|ఆపేయండి|ముగించండి|ముగించు|పెట్టేయండి)|"
-    r"ఫోన్\s*పెట్టేయండి|పెట్టేయండి|కాల్\s*ఆపేయండి|ఆపేయండి|"
+    r"ఫోన్\s*పెట్టేయండి|కాల్\s*పెట్టేయండి|కాల్\s*ఆపేయండి|ఫోన్\s*ఆపేయండి|"
     r"(?:कॉल|फोन)\s*.{0,16}(?:काट|बंद|समाप्त|खत्म\s*कर)|"
     r"(?:कॉल|फोन)\s*.{0,12}(?:समाप्त|खत्म|बंद\s*कर)|"
     r"அழைப்பை\s*.{0,16}(?:முடி|முடிக்கவும்|முடியுங்கள்|முடிங்க|நிறுத்து|நிறுத்தவும்|நிறுத்துங்கள்|நிறுத்துங்க|துண்டிக்கவும்)|"
@@ -244,8 +257,8 @@ _CALLBACK_REQUEST = re.compile(
     r"\bget\s+back\s+to\s+me\b|"
     r"\bfollow\s+up\b(?:\s+with\s+me)?(?:\s+(?:later|tomorrow|next|please))?"
     r"|\bcallback\b(?:\s+(?:later|tomorrow|please|me))?"
-    r"|\b(?:repu|tarvata|malli)\s+(?:naaku\s+)?call\b|"
-    r"(?:రేపు|తర్వాత|మళ్ళీ|మళ్లీ|సాయంత్రం|ఉదయం|మధ్యాహ్నం|రాత్రి).{0,24}(?:కాల్|call|contact)|"
+    r"|\b(?:repu|tarvata|malli)\b.{0,24}\b(?:call|phone|cheyandi|matladandi)\b|"
+    r"(?:రేపు|తర్వాత|మళ్ళీ|మళ్లీ|సాయంత్రం|ఉదయం|మధ్యాహ్నం|రాత్రి).{0,24}(?:కాల్|call|contact|చేయండి|మాట్లాడండి)|"
     r"(?:కాల్|call).{0,24}(?:సాయంత్రం|ఉదయం|మధ్యాహ్నం|రాత్రి)|"
     r"\b(?:saayantram|sayantram|evening|tonight)\s+(?:call|phone)\b|"
     r"(?:कल|बाद में).{0,16}(?:कॉल|फोन|संपर्क)|"
@@ -260,6 +273,10 @@ _NEGATED_CALLBACK = re.compile(
     r"\bwhat(?:'s| is)\s+(?:your|the)\s+contact\b|"
     r"\b(?:if|whether)\s+you\s+(?:can\s+)?(?:call|contact)\s+me|"
     r"\b(?:before|first).{0,20}(?:tell|explain|answer)|\b(?:tell|explain|answer).{0,30}\bfirst\b|"
+    r"(?:callback|call\s*back|కాల్\s*బ్యాక్|కాల్బ్యాక్)\s*(?:వద్దు|వద్దండి|అవసరం\s*లేదు|చేయొద్దు|చేయవద్దు|చేయకండి|అక్కర్లేదు|కాదు)|"
+    r"(?:వద్దు|వద్దండి|అవసరం\s*లేదు|అక్కర్లేదు).{0,20}(?:callback|call\s*back|కాల్\s*బ్యాక్|కాల్బ్యాక్)|"
+    r"(?:నేను|నేనే|మేము|మేమే).{0,30}(?:call|కాల్|ఫోన్).{0,20}(?:చేస్తాను|చేస్తాం|చేస్తాము|చేసుకుంటాను)|"
+    r"(?:ఇది\s+|idi\s+)?(?:callback|కాల్\s*బ్యాక్).{0,20}(?:కాదు|అడగడం\s*లేదు|అడగటం\s*లేదు|అడగడం\s*కాదు|అడగట్లేదు|kaadu|adagadam\s*kaadu)|"
     r"(?:அழைக்க|தொடர்பு\s*கொள்ள).{0,12}வேண்டாம்|அழைக்காதீர்கள்|தொடர்பு\s*கொள்ளாதீர்கள்",
     re.I,
 )
@@ -394,7 +411,13 @@ def callback_ready_to_close(
 def caller_requested_callback(user_text: str) -> bool:
     """A direct request to move this conversation to a later call, not a question about callbacks."""
     text = user_text or ""
-    if caller_revoked_callback(text) or is_negated_end(text):
+    if (
+        caller_revoked_callback(text)
+        or is_negated_end(text)
+        or caller_declined_callback(text)
+        or callback_scope_only(text)
+        or caller_will_contact(text)
+    ):
         return False
     if _NEGATED_CALLBACK.search(text) or opt_out_evidence(text):
         return False
@@ -479,6 +502,27 @@ _SUBSTANTIVE_Q = re.compile(
     r"\b(how|what|when|where|why|which|who|price|cost|much)\b",
     re.I,
 )
+
+
+_CB_FULL_REGEX = re.compile(
+    r"\b(?:can|could|would|will)\s+you\s+(?:please\s+)?(?:call|phone|ring|contact)(?:\s+me)?(?:\s+back)?(?:\s+(?:again|later|tomorrow|tonight|today|next\s+\w+))?\b|"
+    r"\b(?:please\s+)?(?:call|phone|ring|contact|reach\s+out\s+to)\s+me(?:\s+back)?(?:\s+(?:again|later|tomorrow|after|next\b|at\s+\d))?\b|"
+    r"(?:రేపు|తర్వాత|మళ్ళీ|మళ్లీ|సాయంత్రం|ఉదయం|నెక్స్ట్\s*(?:మంత్|వీక్)).{0,30}"
+    r"(?:కాల్|call|ఫోన్)\s*(?:చేయండి|చేస్తారా|చేస్తావా|చేయగలరా|చేయవచ్చా|చేయొచ్చా|contact)?|"
+    r"(?:కాల్|call|ఫోన్)\s*(?:చేస్తారా|చేస్తావా|చేయగలరా|చేయవచ్చా|చేయొచ్చా|చేయండి)|"
+    r"\b(?:repu|tarvata|malli)\b.{0,30}\b(?:call|phone|cheyandi|matladandi|chestaara|chestara|cheyagalara)\b|"
+    r"\b(?:call|phone|ring)\s+(?:me\s+)?(?:back\s+)?(?:again|later|tomorrow)?\b",
+    re.I,
+)
+
+
+def _caller_has_non_callback_question(text: str) -> bool:
+    if not looks_like_question(text):
+        return False
+    stripped = _CB_FULL_REGEX.sub("", text)
+    if not re.search(r"\w", stripped):
+        return False
+    return looks_like_question(stripped)
 
 
 def _substantive_user_question(text: str) -> bool:
@@ -780,6 +824,7 @@ def validate_end_call(
     agent_farewell_ends_call: bool = False,
     classifier_sourced: bool = False,
     pending_tool_result: bool = False,
+    action_outcome_unconfirmed: bool = False,
 ) -> EndCallDecision:
     parsed = parse_end_call_payload(raw)
     user = user_text or ""
@@ -828,6 +873,11 @@ def validate_end_call(
         return EndCallDecision(
             False, False, "none", parsed.get("farewell") or "", "tool_result_pending", evidence_valid=quoted
         )
+    if parsed["should_end"] and parsed.get("reason") == "goal_complete" and action_outcome_unconfirmed and not hard_end:
+        logger.info("[END_CALL] rejected code=action_unconfirmed")
+        return EndCallDecision(
+            False, False, "none", parsed.get("farewell") or "", "action_unconfirmed", evidence_valid=quoted
+        )
 
     # True when the server, not the model, established this close from the
     # caller's own words. Those closes need no model evidence span.
@@ -872,8 +922,13 @@ def validate_end_call(
                     False, False, "none", parsed.get("farewell") or "", "lead_details_missing", evidence_valid=quoted
                 )
         elif callback_close_phase == "closing_allowed" or callback_ready_to_close(user, memory_snapshot):
-            parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang, parsed)
-            server_forced = True
+            if (
+                not _caller_has_non_callback_question(user)
+                and not meaningful_remaining_request(parsed.get("remaining_request") or "")
+                and not caller_wants_to_continue(user)
+            ):
+                parsed = _force_end("goal_complete", parsed.get("farewell") or "", spoken, lang, parsed)
+                server_forced = True
         elif parsed["should_end"] and caller_asked_to_record_details(user):
             logger.info("[END_CALL] rejected code=lead_details_missing")
             return EndCallDecision(
@@ -960,9 +1015,10 @@ def validate_end_call(
         skip_question = (
             agent_concluded
             or (tool_sourced and reason == "goal_complete" and agent_spoke_disqualification_close(spoken))
+            or (caller_requested_callback(user) and not _caller_has_non_callback_question(user))
         )
         if not skip_question and not (_OPT_OUT.search(user) or _CALLER_DONE.search(user)
-                or caller_explicit_end_request(user) or caller_requested_callback(user)
+                or caller_explicit_end_request(user)
                 or caller_unavailable_now(user)):
             return _reject("user_asked_question")
     if (

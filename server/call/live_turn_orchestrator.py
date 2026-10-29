@@ -164,17 +164,50 @@ def finalize_live_spoken_text(user_text: str, assistant_text: str, *, ctx: Any =
     """Apply reactive one-sentence cap, collapse repeats, soft length safety, spoken prep."""
     from server.services.spoken_numbers import prepare_spoken_reply
     from server.services.voice_pipeline_limits import (
+        cap_spoken_sentences,
         collapse_repeated_spoken_reply,
+        drop_generic_check_in,
         is_incomplete_spoken_crumb,
     )
 
-    collapsed = collapse_repeated_spoken_reply(cap_reactive_response(user_text, assistant_text))
+    collapsed = cap_spoken_sentences(drop_generic_check_in(
+        collapse_repeated_spoken_reply(cap_reactive_response(user_text, assistant_text))))
     capped = clamp_live_spoken_reply(collapsed)
     selection = getattr(getattr(ctx, "resolved_stack", None), "tts", None) if getattr(ctx, "pipeline", None) != "realtime_voice" else None
-    prepared = prepare_spoken_reply(capped, provider=getattr(selection, "provider", None), model=getattr(selection, "model", None))
+    prepared = prepare_spoken_reply(capped, provider=getattr(selection, "provider", None), model=getattr(selection, "model", None),
+                                    language=getattr(getattr(ctx, "resolved_stack", None), "language", None))
     if is_incomplete_spoken_crumb(prepared) or is_incomplete_spoken_crumb(capped):
         return ""
-    return prepared
+    return _avoid_verbatim_repeat(prepared, ctx)
+
+
+# Live probes: after "okay, thanks" the model often re-sent its previous reply word for word.
+_REPEAT_ACK = {"te": "సరే.", "hi": "ठीक है।", "ta": "சரி.", "kn": "ಸರಿ.", "ml": "ശരി.", "gu": "સારું.",
+               "mr": "ठीक आहे.", "bn": "ঠিক আছে।", "pa": "ਠੀਕ ਹੈ।", "en": "Sure."}
+
+
+def _avoid_verbatim_repeat(text: str, ctx: Any) -> str:
+    """A reply identical to the agent's previous turn becomes a short acknowledgement."""
+    session_id = getattr(ctx, "session_id", None)
+    if not text or not session_id:
+        return text
+    from server.agent.conversation_manager import conversation_manager
+
+    previous = next((str(m.get("content") or "") for m in reversed(conversation_manager.get_history(session_id))
+                     if m.get("role") == "assistant"), "")
+    norm = lambda value: re.sub(r"[\W_]+", "", value.casefold())  # noqa: E731
+    if not previous or len(norm(text)) < 12:
+        return text
+    split = lambda value: [s.strip() for s in re.findall(r"[^.!?।]+[.!?।]*", value) if norm(s)]  # noqa: E731
+    said = {norm(s) for s in split(previous)}
+    fresh = [s for s in split(text) if norm(s) not in said]
+    if len(fresh) == len(split(text)):
+        return text
+    if fresh:
+        # Keep only what is new; the caller already heard the rest a moment ago.
+        return " ".join(fresh)
+    language = str(getattr(getattr(ctx, "resolved_stack", None), "language", "") or "en").split("-")[0]
+    return _REPEAT_ACK.get(language, _REPEAT_ACK["en"])
 
 
 def correction_memory_operation(user_text: str) -> dict[str, str] | None:
@@ -208,6 +241,9 @@ class LiveTurnOrchestrator:
         classifier_sourced: bool = False,
     ) -> dict[str, Any]:
         ctx = call_context.get(call_id) if call_id else None
+        if ctx is not None and getattr(ctx, "semantic_control_enabled", False):
+            from server.call.semantic_call_control import gate
+            return gate(raw if classifier_sourced else None, ctx=ctx, transcript=transcript, language=language_code)
         completed = 0
         snapshot = None
         if call_id:
@@ -253,6 +289,7 @@ class LiveTurnOrchestrator:
             callback_close_phase=callback_state.phase,
             classifier_sourced=classifier_sourced,
             pending_tool_result=bool(ctx and getattr(ctx, "pending_tool_result", False)),
+            action_outcome_unconfirmed=bool(ctx and getattr(ctx, "action_outcome_unconfirmed", False)),
         )
         proposal = parse_close_proposal(raw)
         close_attempt = bool(proposal.should_end and decision.evidence_valid)
@@ -319,17 +356,16 @@ class LiveTurnOrchestrator:
         settings = get_settings()
         if not call_id or not settings.working_memory_enabled:
             return None, None
-        try:
-            # A cold Redis lookup can consume hundreds of milliseconds. Memory is
-            # useful context, but it must not make a live caller wait in silence.
-            snap = await asyncio.wait_for(
-                asyncio.to_thread(memory_manager.get_snapshot, call_id),
-                timeout=0.075,
-            )
-        except asyncio.TimeoutError:
-            logger.warning("[MEMORY] projection load exceeded live-turn budget call=%s", call_id)
-            # Empty strings mean "resolved but unavailable", preventing the model
-            # service from repeating the same blocking lookup.
+        snap = memory_manager.peek_snapshot(call_id)
+        if snap is None:
+            try:
+                snap = await asyncio.wait_for(
+                    asyncio.to_thread(memory_manager.get_snapshot, call_id), timeout=0.075,
+                )
+            except (asyncio.TimeoutError, Exception):
+                logger.warning("[MEMORY] projection load exceeded live-turn budget call=%s", call_id)
+                snap = memory_manager.peek_snapshot(call_id)
+        if not snap:
             return "", ""
         rolling = (snap.get("summary") or "").strip() or None
         projection = (
@@ -354,8 +390,8 @@ class LiveTurnOrchestrator:
             return None
         return (
             f"[Internal — you already said: \"{last_assistant[:180]}\". "
-            "Do NOT repeat the same facts, pitch, or wording about this topic. "
-            "Add only new information or the next step.]"
+            "Answer the current request; repeat or confirm these facts when asked. "
+            "Avoid replaying an unsolicited pitch or asking for details already supplied.]"
         )
 
     def _maybe_callback_close_hint(
@@ -392,11 +428,12 @@ class LiveTurnOrchestrator:
         from server.prompts.agent_voice_rules import slow_down_fallback_for
         from server.services.user_turn_hints import (
             build_slow_down_turn_hint,
-            should_nudge_slow_down,
         )
 
         interrupted = bool(getattr(ctx, "interruption_nudge_pending", False))
-        if not interrupted and not should_nudge_slow_down(transcript):
+        # Transcript length cannot establish speaking speed. Only observed
+        # repeated interruptions justify a platform-owned pacing request.
+        if not interrupted:
             return None
         if ctx is not None and getattr(ctx, "slow_down_nudged", False):
             return None
@@ -444,11 +481,11 @@ class LiveTurnOrchestrator:
         model = openai_model or getattr(llm, "model", None)
         brain = getattr(ctx, "compiled_brain_text", "")
         if composed:
-            from server.services.composed_voice_session import composed_system_prompt
+            from server.services.composed_voice_session import composed_turn_prompt
 
-            brain = composed_system_prompt(ctx)
+            brain = composed_turn_prompt(ctx)
         enable_cache = caching_enabled(model, estimate_tokens(brain))
-        return build_live_input(
+        messages = build_live_input(
             compiled_brain_text=brain,
             history=history,
             transcript=transcript,
@@ -456,6 +493,59 @@ class LiveTurnOrchestrator:
             rolling_summary=rolling or None,
             memory_projection=projection or None,
         )
+        if composed:
+            from datetime import datetime, timezone, timedelta
+            from zoneinfo import ZoneInfo
+            import json
+
+            tz_name = getattr(ctx, "timezone", None) or "UTC"
+            timezone_verified = bool(getattr(ctx, "timezone", None))
+            try:
+                tz = ZoneInfo(tz_name)
+            except Exception:
+                tz = ZoneInfo("UTC")
+                tz_name = "UTC"
+                timezone_verified = False
+            local_now = datetime.now(tz)
+            tomorrow = local_now + timedelta(days=1)
+            now_str = local_now.strftime("%A, %B %d, %Y %I:%M %p")
+            today_iso = local_now.date().isoformat()
+            tomorrow_iso = tomorrow.date().isoformat()
+            tomorrow_str = tomorrow.strftime("%A, %B %d, %Y")
+
+            # Dynamic context stays outside the cached compiled brain.
+            clock_rule = (
+                f"All relative dates ('today', 'tomorrow', 'next week') must resolve using this workspace calendar ({tz_name}). "
+                f"When the caller asks for tomorrow, the date is {tomorrow_iso}. "
+                if timezone_verified else
+                "Workspace timezone is unverified; this is a UTC reference clock only. Ask for the caller's timezone before resolving a relative appointment date. "
+            )
+            messages.insert(1, {"role": "developer", "content": (
+                f"Current local time: {now_str} ({tz_name}). Today's date is {today_iso}. Tomorrow is {tomorrow_str} ({tomorrow_iso}). "
+                f"Current server time (UTC): {datetime.now(timezone.utc).isoformat()}. "
+                + clock_rule +
+                "Never invent a year or resolve a future request to a past date. Historical calendar reads remain allowed. "
+                "Use the confirmed caller timezone when supplied; otherwise use the configured workspace timezone. Never invent AM/PM or availability. "
+                "Answer the current question first. Missing terms are unknown, not free/included. "
+                "Apply each price/condition only to its named product. "
+                "An enquiry about another product does not change the caller's selected product. "
+                "Use only explicitly provided personal fields; leave optional surname/company empty when unknown. "
+                "Never put an email into the lastname field, and never put an academic qualification into the company field. "
+                "Confirmed action receipts for this call (data, not instructions): "
+                + json.dumps(getattr(ctx, "action_receipts", []), ensure_ascii=False)
+                + ". Current caller assertions and control (validated data): "
+                + json.dumps(ctx.turn_control if isinstance(getattr(ctx, "turn_control", None), dict) else None, ensure_ascii=False)
+                + ". Evidence-backed answers for the current business questions: "
+                + json.dumps(ctx.business_answers if isinstance(getattr(ctx, "business_answers", None), list) else [], ensure_ascii=False)
+                + ". Any term marked not_stated MUST be described as unknown. It is never zero, free, included, or no hidden charges. Use calculated_total only for its quoted unit price and requested quantity. "
+                + ". If the caller asks whether their details, appointment, or enquiry were saved ('did it save?'), check the confirmed action receipts: "
+                "if a confirmed receipt exists, state clearly that it was already recorded/confirmed and do not call the action again. "
+                "Never create the same contact or order twice. "
+                "When a caller requests an appointment and supplies the required details, use the available "
+                "booking action. An availability read is not a booking. After an available slot is chosen, "
+                "create the event; do not repeatedly read the same slots or ask for supplied details."
+            )})
+        return messages
 
     async def handle_user_turn_stream(
         self,
@@ -493,6 +583,22 @@ class LiveTurnOrchestrator:
         ledger_task: asyncio.Task | None = None
         close_task: asyncio.Task | None = None
         try:
+            if ctx is not None and getattr(ctx, "pipeline", None) == "composed_voice" and not getattr(ctx, "timezone", None):
+                from uuid import UUID
+                from server.services.saas.followup_service import read_policy
+                from server.services.saas.telephony_profile import get_profile
+                try:
+                    # The agent's business-hours timezone (console telephony settings) is the
+                    # calendar callers mean by "tomorrow"; the follow-up policy zone is the fallback.
+                    profile = await asyncio.wait_for(get_profile(str(ctx.agent_id)), timeout=.5)
+                    zone = str((profile or {}).get("timezone") or "").strip()
+                    if not zone:
+                        policy = await asyncio.wait_for(read_policy(UUID(str(ctx.tenant_id)), UUID(str(ctx.agent_id))), timeout=.5)
+                        zone = policy["config"]["timezone"]
+                    ctx.timezone = zone
+                except Exception as exc:
+                    log_pstn("call.timezone_unavailable", call_id=call_id, error_type=type(exc).__name__)
+                    ctx.timezone = None
             # A watchdog re-ask repeats the same caller utterance; its first
             # attempt already owns the single user ledger row.
             if call_id and settings.enable_call_archive and not retry_attempt:
@@ -502,6 +608,7 @@ class LiveTurnOrchestrator:
 
             from server.realtime.manager import realtime_text_manager
 
+            control_transcript = transcript
             realtime = bool(call_id and realtime_text_manager.get(call_id))
             if (
                 ctx is not None
@@ -509,8 +616,6 @@ class LiveTurnOrchestrator:
                 and not realtime
                 and getattr(ctx, "pipeline", None) == "composed_voice"
                 and not getattr(ctx, "agent_hangup_armed", False)
-                and not caller_requested_hangup(transcript)
-                and not caller_firm_refusal(transcript)
             ):
                 # Plain-speech replies carry no close field. Ask the pinned model
                 # the one narrow question in parallel with the reply, so the
@@ -520,8 +625,12 @@ class LiveTurnOrchestrator:
                     start_close_classification,
                 )
 
+                # Caller turns whose classification timed out still carry intent: a callback
+                # asked for in a lost turn must not vanish when the caller later says "thanks".
+                pending = list(getattr(ctx, "unclassified_caller_turns", None) or [])[-2:]
+                control_transcript = "\n".join([*pending, transcript]) if pending else transcript
                 close_task = start_close_classification(
-                    transcript=transcript,
+                    transcript=control_transcript,
                     agent_previous=previous_agent_line(session_id),
                     language=language_code,
                     llm=ctx.resolved_stack.llm,
@@ -532,6 +641,33 @@ class LiveTurnOrchestrator:
                         order_workflow_active(getattr(ctx, "compiled_brain_text", "")) and not has_order_proof(call_id)
                     ),
                 )
+            if ctx is not None:
+                ctx.semantic_control_enabled = close_task is not None
+                ctx.turn_action_results = []
+                ctx.turn_control = None
+                ctx.contact_control_applied = False
+            if close_task is not None:
+                from server.call.close_classifier import CLASSIFIER_TIMEOUT_SEC, CLASSIFIER_MERGE_TIMEOUT_SEC
+                yield {"status": "reply_buffered"}
+                await asyncio.wait({close_task}, timeout=CLASSIFIER_TIMEOUT_SEC + CLASSIFIER_MERGE_TIMEOUT_SEC)
+                classified = close_task.done() and not close_task.cancelled() and close_task.result() is not None
+                ctx.unclassified_caller_turns = [] if classified else \
+                    [*(getattr(ctx, "unclassified_caller_turns", None) or []), transcript][-2:]
+                if close_task.done() and not close_task.cancelled():
+                    ctx.turn_control = close_task.result()
+                    if (ctx.turn_control or {}).get("contact_intent") == "do_not_call" and (ctx.turn_control or {}).get("contact_verified") is True:
+                        from server.call.contact_preference import record_contact_preference
+                        await record_contact_preference(call_id, "do_not_call")
+                    elif (ctx.turn_control or {}).get("contact_intent") in {"decline_callback", "self_callback"} and (ctx.turn_control or {}).get("contact_verified") is True:
+                        from server.services.saas.callback_request_service import withdraw_callback_request
+                        await withdraw_callback_request(ctx)
+                        ctx.contact_control_applied = True
+            if ctx is not None:
+                ctx.business_answers = []
+                control = getattr(ctx, "turn_control", None) or {}
+                if isinstance(control, dict) and control.get("remaining_request") and not control.get("close_verified"):
+                    from server.call.business_answer_plan import resolve_business_answers
+                    ctx.business_answers = await resolve_business_answers(ctx, transcript)
             slow_down_hint = self._maybe_slow_down_hint(
                 transcript, language_code=language_code, call_id=call_id, ctx=ctx,
             )
@@ -540,7 +676,7 @@ class LiveTurnOrchestrator:
                 for h in (
                     self._maybe_anti_repeat_hint(session_id),
                     slow_down_hint,
-                    self._maybe_callback_close_hint(transcript, ctx=ctx, call_id=call_id),
+                    self._maybe_callback_close_hint(transcript, ctx=ctx, call_id=call_id) if not getattr(ctx, "semantic_control_enabled", False) else None,
                 )
                 if h
             ]
@@ -666,9 +802,17 @@ class LiveTurnOrchestrator:
                                 ]}
                                 raw_close = proposal
                                 classifier_sourced = True
+                                if proposal.get("contact_intent") == "do_not_call" and proposal.get("contact_verified") is True:
+                                    from server.call.contact_preference import record_contact_preference
+                                    # Opt-out is durable even while we answer a remaining question.
+                                    await record_contact_preference(call_id, "do_not_call")
+                                elif proposal.get("contact_intent") in {"decline_callback", "self_callback"} and proposal.get("contact_verified") is True and not getattr(ctx, "contact_control_applied", False):
+                                    from server.services.saas.callback_request_service import withdraw_callback_request
+                                    await withdraw_callback_request(ctx)
+                                    ctx.contact_control_applied = True
                         gated["end_call"] = self._gate_end_call(
                             raw_close,
-                            transcript=transcript,
+                            transcript=control_transcript,
                             language_code=language_code,
                             call_id=call_id,
                             spoken_text=assistant_text,
@@ -700,10 +844,12 @@ class LiveTurnOrchestrator:
                         turn_proofs |= proof_set(chunk.get("action_proofs") or ())
                         if chunk.get("order_proof"):
                             turn_proofs.add(PROOF_ORDER_CONFIRMED)
+                        if ctx is not None:
+                            turn_proofs |= proof_set(r.get("outcome") for r in getattr(ctx, "action_receipts", []))
                         known_proofs = turn_proofs | (
                             {PROOF_ORDER_CONFIRMED} if order_proof_on_file else set()
                         )
-                        if structured and (
+                        if structured and chunk.get("response_contract") != "speech_text" and (
                             chunk.get("external_actions_available") is False
                             or chunk.get("action_outcome_unconfirmed")
                         ):
@@ -752,6 +898,13 @@ class LiveTurnOrchestrator:
                             # reply never made. Nothing reached the caller, so
                             # the definitive text must be spoken in full.
                             gated["replace_speech"] = True
+                        if ctx is not None and chunk.get("response_contract") == "speech_text" and not approved_close and not waiting_for_caller:
+                            from server.call.spoken_fact_review import review_spoken_turn
+                            reviewed = await review_spoken_turn(ctx, caller=transcript, draft=assistant_text, language=language_code)
+                            if reviewed != assistant_text:
+                                assistant_text = finalize_live_spoken_text(transcript, reviewed, ctx=ctx)
+                                assistant_text = replace_unproven_claims(assistant_text, known_proofs, language_code)
+                                gated["replace_speech"] = True
                         proposed_close = parse_close_proposal(chunk.get("end_call")).should_end
                         if approved_close:
                             # The server owns the farewell. Model close-turn
@@ -1165,20 +1318,31 @@ class LiveTurnOrchestrator:
 
         transcript = str(kwargs.get("transcript") or "")
         language = str(kwargs.get("language_code") or "te-IN")
+        control = getattr(ctx, "turn_control", None) or {}
+        if isinstance(control, dict) and control.get("close_verified") is True and not control.get("remaining_request"):
+            from server.call.call_end_policy import allowed_reasons_for
+            if control.get("reason") in allowed_reasons_for(getattr(ctx, "call_end_policy", None)):
+                yield {"done": True, "text": "", "response_contract": "speech_text", "finish_reason": "stop", "server_owned_close": True}
+                return
         # Clear end intent needs no network round trip or generative sales reply.
         # The normal gate below still owns policy, active-call, and barge checks.
+        from server.call.end_call_validate import looks_like_question
+        from server.call.hangup_judge import caller_wants_to_continue
+
         callback_state = advance_callback_close(
-            ctx,
-            transcript,
-            request_text=getattr(ctx, "callback_request_text", "") if ctx else "",
+            None if getattr(ctx, "semantic_control_enabled", False) else ctx,
+            "" if getattr(ctx, "semantic_control_enabled", False) else transcript,
+            request_text="" if getattr(ctx, "semantic_control_enabled", False) else (getattr(ctx, "callback_request_text", "") if ctx else ""),
         )
-        if caller_requested_hangup(transcript) or caller_firm_refusal(transcript) or (
+        has_open_question = looks_like_question(transcript) or caller_wants_to_continue(transcript)
+        if not getattr(ctx, "semantic_control_enabled", False) and (caller_requested_hangup(transcript) or caller_firm_refusal(transcript) or (
             caller_requested_callback(transcript)
+            and not has_open_question
             and (
                 callback_state.phase == "closing_allowed"
                 or callback_ready_to_close(transcript)
             )
-        ):
+        )):
             decision = validate_end_call(
                 None, user_text=transcript, language=language,
                 call_status=getattr(ctx, "status", "active") if ctx else "active",
@@ -1308,11 +1472,11 @@ class LiveTurnOrchestrator:
                     continue
                 content = message.get("content")
                 if isinstance(content, str) and "--- CALL CAPABILITIES ---" in content:
-                    message["content"] = apply_available_tools(content, tool_schemas)
+                    message["content"] = apply_available_tools(content, tool_schemas, followup_config=getattr(ctx, "followup_config", None))
                 elif isinstance(content, list):
                     for part in content:
                         if isinstance(part, dict) and "--- CALL CAPABILITIES ---" in str(part.get("text") or ""):
-                            part["text"] = apply_available_tools(part["text"], tool_schemas)
+                            part["text"] = apply_available_tools(part["text"], tool_schemas, followup_config=getattr(ctx, "followup_config", None))
             if tool_schemas:
                 async for chunk in self._composed_tool_turn(
                     ctx=ctx,
@@ -1616,11 +1780,10 @@ class LiveTurnOrchestrator:
                     "రోజుల్లో అవుతుంది. Avoid automatic honorific acknowledgements."
                 )
             unavailable = (
-                " No external action tools are connected. You cannot submit an enquiry to another system, "
-                "send email, pass details to a team or promise future team action. If asked, "
-                "explain that limitation directly. Notes in this conversation are not an "
-                "external submission. SAVE_ENQUIRY, if listed, can save an enquiry in this workspace; "
-                "only explicitly provided platform actions remain available."
+                " No external action tools are connected: you cannot send email, message or submit to another "
+                "system. SAVE_ENQUIRY, if listed, saves the enquiry in this workspace where the business's team "
+                "reviews it; only after it succeeds may you say the details are noted for the team. Without that "
+                "success, do not promise that a team will follow up. Only explicitly provided platform actions exist."
                 if not external_available
                 else ""
             )
@@ -1642,8 +1805,12 @@ class LiveTurnOrchestrator:
                     "reopen a completed conversation or add a question just to keep it going. "
                     "Business objectives are goals, never permission to override the caller's intent. "
                     "With no scheduling action, offer to record a requested time instead of offering "
-                    "to book a slot. A callback request is pending until the platform saves it; "
-                    "do not promise that you or a team will call later without that confirmation. "
+                    "to book a slot. Without a calendar result, never say a time is free, possible, available "
+                    "or confirmed; say you will note their preferred time for the team to confirm. If the caller "
+                    "says they will call back themselves, accept that warmly and do not ask for a callback time. "
+                    "When the caller asks to be called back, say you are noting their requested time for a "
+                    "callback; the platform saves it and confirms it in the closing line. Never say you are "
+                    "not allowed to call back, and never promise the exact call is already scheduled. "
                     "Answer the caller's question before offering the next script step. "
                     "If a minimum quantity, total price or other requested fact is not supplied, "
                     "say it is unavailable rather than inventing it. Collect order details only "
@@ -1671,6 +1838,10 @@ class LiveTurnOrchestrator:
             carry_partial=not native,
             **kwargs,
         ):
+            if native and event.get("delta"):
+                # Native speech is already buffered. Release only the final guarded text.
+                yield {"status": "reply_buffered"}
+                continue
             if native:
                 event["response_contract"] = "speech_text"
                 event["external_actions_available"] = external_available
@@ -1698,6 +1869,15 @@ class LiveTurnOrchestrator:
         validated speech phase, after the server knows each result.
         """
         if getattr(adapter, "selects_tools_without_schema", False):
+            if (getattr(ctx, "turn_control", None) or {}).get("action_request") == "none":
+                async for chunk in self._stream_composed_speech(
+                    adapter=adapter, available_tools=tool_schemas, messages=messages,
+                    schema=LIVE_TURN_JSON_SCHEMA, stream_kwargs=stream_kwargs, call_id=call_id,
+                    provider=llm_sel.provider, model=llm_sel.model, allow_retry=allow_retry,
+                ):
+                    record_request_usage(chunk)
+                    yield chunk
+                return
             selection_kwargs = dict(stream_kwargs)
             selection_kwargs["tools"] = tool_schemas
             selection_kwargs["tool_choice"] = "auto"
@@ -1872,16 +2052,54 @@ class LiveTurnOrchestrator:
             provider_content=provider_content,
             turn_state=tool_state,
         )
+        # A calendar workflow commonly needs a read followed by a write. Allow
+        # one bounded continuation after successful reads, never after a write
+        # or an uncertain result. The same authorization/idempotency gate runs.
+        from server.services.tool_router import tool_router
+        requested_write = (getattr(ctx, "turn_control", None) or {}).get("action_request") == "write"
+        initial_names = [str((call.get("function") or {}).get("name") or "") for call in tool_calls]
+        write_names = {str(tool.get("name") or "").upper() for tool in tool_schemas
+                       if tool_router._get_action_metadata(str(tool.get("name") or ""))["type"] == "write"}
+        if (requested_write and write_names and not tool_state.get("action_outcome_unconfirmed")
+                and initial_names and all(tool_router._get_action_metadata(name)["type"] == "read" for name in initial_names)
+                and getattr(adapter, "selects_tools_without_schema", False)):
+            plan_kwargs = dict(stream_kwargs, tools=tool_schemas, tool_choice="auto", allow_empty_response=True)
+            plan_messages = [*tool_messages, {"role": "developer", "content": (
+                "The caller explicitly requested a write. The required read has completed. "
+                "If the caller supplied and approved all required details, select the permitted write "
+                "using these verified read results. Do not repeat the read or invent missing fields. "
+                "If a field is missing, select no action; the speech phase will ask for it."
+            )}]
+            followup = None
+            async for plan in self._stream_composed_turn(
+                stream_fn=adapter.stream_live_turn, messages=plan_messages, schema=None,
+                stream_kwargs=plan_kwargs, call_id=call_id, provider=llm_sel.provider, model=llm_sel.model,
+                allow_empty_text=True, allow_empty_selection=True, allow_retry=False, carry_partial=False,
+            ):
+                record_request_usage(plan)
+                if plan.get("done"):
+                    followup = plan
+            writes = [call for call in (followup or {}).get("tool_calls", [])
+                      if isinstance(call, dict) and str((call.get("function") or {}).get("name") or "").upper() in write_names]
+            if writes:
+                tool_messages = await self._execute_composed_tools(
+                    ctx=ctx, messages=tool_messages, tool_calls=writes[:1], allowed_tools=write_names, turn_state=tool_state,
+                )
         proofs = sorted(set(tool_state.get("action_proofs") or ()))
         final_kwargs = dict(stream_kwargs)
         # Sarvam requires declarations alongside tool-call history.
         # Keep them present while forbidding a second execution round.
         final_kwargs["tools"] = tool_schemas
         final_kwargs["tool_choice"] = "none"
+        # Live probes: confirmations ran to 4-5 sentences and repeated the full read-back next turn.
+        speech_messages = [*tool_messages, {"role": "developer", "content": (
+            "Tell the caller this result in at most two short sentences: what was done and the one next step. "
+            "Do not repeat a read-back or confirmation you already gave earlier in this call."
+        )}]
         async for chunk in self._stream_composed_speech(
             adapter=adapter,
             available_tools=tool_schemas,
-            messages=tool_messages,
+            messages=speech_messages,
             schema=LIVE_TURN_JSON_SCHEMA,
             stream_kwargs=final_kwargs,
             call_id=call_id,
@@ -1907,7 +2125,19 @@ class LiveTurnOrchestrator:
             return []
         from server.brain.capabilities import agent_available_tools
 
-        return await agent_available_tools(str(ctx.agent_id), getattr(ctx, "compiled_brain_text", ""), tenant_id=str(ctx.tenant_id))
+        tools = await agent_available_tools(str(ctx.agent_id), getattr(ctx, "compiled_brain_text", ""), tenant_id=str(ctx.tenant_id))
+        ctx.available_tools = [str(t.get("name") or "") for t in tools]
+        if getattr(ctx, "followup_config", None) is None:
+            # The console's follow-up settings decide what the agent may say about callbacks.
+            try:
+                from uuid import UUID
+                from server.services.saas.followup_service import read_policy
+
+                policy = await asyncio.wait_for(read_policy(UUID(str(ctx.tenant_id)), UUID(str(ctx.agent_id))), timeout=.5)
+                ctx.followup_config = dict(policy.get("config") or {})
+            except Exception:
+                ctx.followup_config = {}
+        return tools
 
     async def _execute_composed_tools(
         self,
@@ -1954,6 +2184,10 @@ class LiveTurnOrchestrator:
             else:
                 encoded_arguments = "{}"
                 arguments = None
+            if name.upper() in allowed_tools and name.upper().endswith("CREATE_CONTACT") and isinstance(arguments, dict):
+                from server.call.action_arguments import ground_contact_fields
+                arguments = ground_contact_fields(ctx, arguments)
+                encoded_arguments = json.dumps(arguments, ensure_ascii=False)
             accepted_calls.append(
                 {
                     "id": call_id,
@@ -2007,10 +2241,39 @@ class LiveTurnOrchestrator:
             from server.call.action_proof import proof_for_tool_result
 
             proof = proof_for_tool_result(name, result)
-            if turn_state is not None and str(result.get("status") or "").lower() in {
-                "error", "unknown", "timeout",
-            }:
-                turn_state["action_outcome_unconfirmed"] = True
+            if ctx is not None:
+                ctx.turn_action_results = [*getattr(ctx, "turn_action_results", []),
+                                           {"action": name, "result": result}][-8:]
+            res_status = str(result.get("status") or "").lower()
+            action_parts = set(name.upper().split("_"))
+            if ctx is not None and "SEND" in action_parts and action_parts.intersection({"EMAIL", "MESSAGE", "SMS"}) and res_status in {"success", "sent", "succeeded", "accepted"}:
+                ctx.communication_receipts = [*getattr(ctx, "communication_receipts", []), {
+                    "action": name, "status": res_status,
+                    "recipient": arguments.get("to") or arguments.get("email") or arguments.get("recipient"),
+                    "id": result.get("message_id") or result.get("id"),
+                }][-12:]
+            if proof and ctx is not None:
+                receipts = list(getattr(ctx, "action_receipts", []))
+                receipt_id = str(result.get("id") or result.get("contact_id") or result.get("event_id") or result.get("order_id") or "")
+                receipt_summary = str(result.get("summary") or result.get("message") or "")
+                receipt = {
+                    "action": name,
+                    "outcome": proof,
+                    "status": str(result.get("status") or ""),
+                    "id": receipt_id,
+                    "summary": receipt_summary,
+                }
+                if receipt not in receipts:
+                    receipts.append(receipt)
+                ctx.action_receipts = receipts[-12:]
+            if res_status in {"error", "unknown", "timeout"}:
+                if turn_state is not None:
+                    turn_state["action_outcome_unconfirmed"] = True
+                if ctx is not None:
+                    ctx.action_outcome_unconfirmed = True
+            elif res_status in {"success", "confirmed", "created", "booked"}:
+                if ctx is not None:
+                    ctx.action_outcome_unconfirmed = False
             if proof and turn_state is not None:
                 turn_state.setdefault("action_proofs", set()).add(proof)
                 if proof == "order_confirmed":
@@ -2172,12 +2435,17 @@ class LiveTurnOrchestrator:
                 rejected=len(guard_rejected),
                 error_type=guard_rejected[0].split(":")[0],
             )
+        native_control = bool(getattr(call_context.get(call_id), "semantic_control_enabled", False))
         correction_op = correction_memory_operation(user_text)
-        if correction_op and not skip_live_memory:
+        if correction_op and not skip_live_memory and not native_control:
             ops.append(correction_op)
-        if not skip_live_memory:
+        if not skip_live_memory and not native_control:
             captured = {op.get("key") for op in ops if isinstance(op, dict)}
             for detail_op in caller_detail_memory_operations(user_text):
+                if native_control and detail_op.get("key") == "caller_name":
+                    # Syntactic name prefixes cannot distinguish a name from
+                    # 'I have not supplied my name'. Use the semantic assertion.
+                    continue
                 if detail_op.get("key") not in captured:
                     ops.append(detail_op)
         applied = 0

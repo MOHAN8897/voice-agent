@@ -233,7 +233,7 @@ async def test_memory_merge_does_not_block_first_delta(monkeypatch, tmp_path):
         assert first_ms < 100, f"first delta waited {first_ms:.0f}ms on memory merge"
         await asyncio.sleep(0.35)
         assert applied["n"] >= 1
-        assert memory_manager.get_snapshot("mem-hot")["facts"].get("name") == "Ravi"
+    assert memory_manager.get_snapshot("mem-hot")["facts"].get("caller_name") == "రవి"
 
     call_ledger.reset_for_tests()
     memory_manager.reset_for_tests()

@@ -119,7 +119,7 @@ async def test_silent_first_attempt_is_reasked_once_and_recovers(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_second_silent_attempt_falls_back_through_the_normal_goodbye(monkeypatch):
+async def test_failed_reply_keeps_listening_then_repeated_outage_closes_honestly(monkeypatch):
     calls: list[dict] = []
 
     async def fake_stream(**kwargs):
@@ -139,9 +139,13 @@ async def test_second_silent_attempt_falls_back_through_the_normal_goodbye(monke
 
     assert len(calls) == 2
     fallback.assert_not_awaited()
-    loop._finish_agent_hangup.assert_awaited_once_with(reason="agent_hangup", revocable=False)
+    loop._finish_agent_hangup.assert_not_awaited()
+    assert loop._phase == pstn_voice_core.PHASE_LISTENING
+    assert loop._consecutive_reply_failures == 1
     assert any(phase == "turn.watchdog" and kw.get("event") == "gave_up" for phase, kw in events)
     assert failures and failures[0]["error_type"] == "TimeoutError"
     assert failures[0]["watchdog_retry"] is True
     assert failures[0]["delivered"] is False
+    await loop._run_turn("Please answer my price question")
+    loop._finish_agent_hangup.assert_awaited_once_with(reason="technical_failure", revocable=False)
     await loop.close()

@@ -85,8 +85,12 @@ _CALLBACK_REVOKED = re.compile(
     r"\b(?:not|no)\s+(?:a\s+)?callback\b|"
     r"\b(?:don'?t|do\s+not|didn'?t|never)\s+(?:book|schedule|arrange|set\s*up)\s+(?:a\s+)?callback\b|"
     r"\b(?:i(?:'ll| will| can| may)\s+(?:call|phone|contact)\s+(?:you|back)|i(?:'ll| will)\s+call\s+(?:you\s+)?later)\b|"
+    r"(?:callback|call\s*back|కాల్\s*బ్యాక్|కాల్బ్యాక్)\s*(?:వద్దు|వద్దండి|అవసరం\s*లేదు|చేయొద్దు|చేయవద్దు|చేయకండి|అక్కర్లేదు|కాదు)|"
+    r"(?:కాల్|call)\s*(?:వద్దు|వద్దండి|అవసరం\s*లేదు|అక్కర్లేదు)|"
+    r"(?:వద్దు|వద్దండి|అవసరం\s*లేదు|అక్కర్లేదు).{0,20}(?:callback|call\s*back|కాల్\s*బ్యాక్|కాల్బ్యాక్|కాల్|call)|"
     r"(?i:call|కాల్|कॉल|फोन|கால்|கூப்பிட|ಕರೆ|ಫೋನ್).{0,40}"
-    r"(?:అడగడం\s*లేదు|అడగలేదు|అడగటం\s*లేదు|అడుగుట\s*లేదు|"
+    r"(?:అడగడం\s*లేదు|అడగడం\s*కాదు|అడగటం\s*లేదు|అడగటం\s*కాదు|అడిగేది\s*కాదు|"
+    r"అడగలేదు|అడుగుట\s*లేదు|"
     r"नहीं\s*कह\s*रह[ाीे]*|नहीं\s*कहा|नहीं\s*मांग|नहीं\s*चाहता|नहीं\s*चाहती|"
     r"சொல்லவில்லை|கேட்கவில்லை|கேட்கல|சொல்லல|"
     r"ಕೇಳುತ್ತಿಲ್ಲ|ಕೇಳಿಲ್ಲ|ಹೇಳುತ್ತಿಲ್ಲ|ಹೇಳಿಲ್ಲ)|"
@@ -154,11 +158,75 @@ def is_wait_or_continue(text: str) -> bool:
 
 
 def caller_revoked_callback(text: str) -> bool:
-    return bool(_CALLBACK_REVOKED.search(normalize_caller_text(text)))
+    norm = normalize_caller_text(text)
+    return bool(_CALLBACK_REVOKED.search(norm) or _CALLBACK_DECLINED.search(norm))
 
 
 def has_future_interest(text: str) -> bool:
     return bool(_FUTURE_INTEREST.search(normalize_caller_text(text)))
+
+
+# A callback noun names a different act than "the business calling until I say
+# stop". Consent and opt-out checks must scope the negative to that noun first,
+# or "callback వద్దు" reads as a permanent do-not-call request.
+_CALLBACK_NOUN = (
+    r"(?:callback|call\s*back|కాల్\s*బ్యాక్|కాల్బ్యాక్|कॉल\s*बैक|कालबैक|"
+    r"கால்\s*பேக்|கால்பேக்|ಕಾಲ್\s*ಬ್ಯಾಕ್|ಕಾಲ್ಬ್ಯಾಕ್)"
+)
+_CALLBACK_DECLINED = re.compile(
+    _CALLBACK_NOUN + r".{0,32}?"
+    r"(?:వద్దు|వద్దండి|అవసరం\s*లేదు|అక్కర్లేదు|"
+    r"नहीं|मत|न\s*करें|नको|"
+    r"வேண்டாம்|கூடாது|"
+    r"ಬೇಡ|ಬೇಡಿ|"
+    r"not\s+(?:needed|required|necessary)|no\s+need|don'?t\s+need)|"
+    r"\b(?:no|not|don'?t|do\s+not|without|skip|decline)\s+"
+    r"(?:a\s+|the\s+|any\s+)?(?:callback|call\s*back)\b",
+    re.I | re.S,
+)
+# "నేను తర్వాత call చేస్తాను", "I'll call you later" — the caller owns the next
+# step. That is not consent for the business to call and not an opt-out.
+_WILL_CONTACT = re.compile(
+    r"\bi(?:'ll| will| can| may| would)\s+(?:call|phone|contact|reach\s+out\s+to)\s+"
+    r"(?:you|the\s+(?:office|team|business|company)|back|later|tomorrow)\b|"
+    r"\b(?:i|we)\s+(?:am|are)\s+going\s+to\s+(?:call|phone|contact)\s+you\b|"
+    r"(?:నేను|నేనే|మేము|మేమే|nenu|nene|memu).{0,40}(?:call|కాల్|ఫోన్|సంప్రదించ\w*).{0,20}"
+    r"(?:చేస్తాను|చేస్తాం|చేస్తాము|చేయగలను|చేసుకుంటాను|చేసుకుంటాం|chestanu|chestam)|"
+    r"(?:मैं|हम).{0,40}(?:कॉल|फोन|संपर्क).{0,20}(?:करूंगा|करूँगा|करूँगी|करेंगे)|"
+    r"(?:நான்|நாங்கள்).{0,40}(?:கால்|அழைக்க|தொடர்பு).{0,20}"
+    r"(?:செய்வேன்|செய்கிறேன்|செய்வோம்)|"
+    r"(?:ನಾನು|ನಾವು).{0,40}(?:ಕರೆ|ಫೋನ್|ಸಂಪರ್ಕ).{0,20}(?:ಮಾಡುತ್ತೇನೆ|ಮಾಡುತ್ತೇವೆ)",
+    re.I | re.S,
+)
+# Final words that make a stop-contact request permanent regardless of a
+# callback decline in the same turn ("don't call me again; I'll call you").
+_FINAL_OPT_OUT = re.compile(
+    r"\b(?:again|anymore|ever|never|permanently|at\s+all)\b|"
+    r"ఎప్పటికీ|ఎప్పుడూ|మళ్ళీ|మళ్లీ|ఇక\s*మీరు|"
+    r"दोबारा|फिर\s*कभी|कभी\s*नहीं|हमेशा\s*के\s*लिए|"
+    r"மீண்டும்|இனி|எப்போதும்|"
+    r"ಮತ್ತೆ|ಇನ್ನು|ಯಾವತ್ತೂ",
+    re.I,
+)
+
+
+def caller_declined_callback(text: str) -> bool:
+    """The current words decline a callback, not future business contact."""
+    norm = normalize_caller_text(text)
+    return bool(_CALLBACK_DECLINED.search(norm) and not _FINAL_OPT_OUT.search(norm))
+
+
+def caller_will_contact(text: str) -> bool:
+    """The caller says they will contact the business themselves."""
+    return bool(_WILL_CONTACT.search(normalize_caller_text(text)))
+
+
+def callback_scope_only(text: str) -> bool:
+    """A callback decline with no independent permanent opt-out in the turn."""
+    raw = text or ""
+    return caller_declined_callback(raw) or (
+        caller_will_contact(raw) and not _FINAL_OPT_OUT.search(normalize_caller_text(raw))
+    )
 
 
 def disconnect_act(text: str) -> bool:

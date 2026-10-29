@@ -204,8 +204,26 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
             + "\n\nServer check: no confirmed order was recorded for this call, "
             "so it was not marked as converted."
         ).strip()
+    # Server records outrank a model reading of the transcript, in both directions.
+    if order_proof and str(order_proof.get("status") or "") == "confirmed" and payload.get("disposition") != "converted":
+        payload["disposition"] = "converted"
+        payload["next_action"] = payload.get("next_action") or "Fulfil the confirmed order recorded on this call."
+    saved_callback = meta.get("callback_request") if isinstance(meta.get("callback_request"), dict) else None
+    if saved_callback and not meta.get("callback_cancelled") \
+            and str(saved_callback.get("status") or "requested") in {"requested", "saved", "scheduled"} \
+            and payload.get("disposition") in {None, "no_outcome", "new_lead", "interested"}:
+        payload["disposition"] = "callback_required"
+        facts["callback_requested"] = "true"
     payload["disclosure_status"] = _detect_disclosure_delivery(transcript, meta)
-    payload["contact_preference"] = (call_ledger.read_meta(call_id) or {}).get("contact_preference", "none")
+    stored_pref = str((call_ledger.read_meta(call_id) or {}).get("contact_preference") or meta.get("contact_preference") or "none").strip().lower()
+    payload["contact_preference"] = stored_pref
+    if stored_pref == "do_not_call":
+        # Consent is authoritative server state, not a sales-model judgement.
+        # Do not surface an actionable callback alongside a permanent opt-out.
+        payload["disposition"] = "not_interested"
+        payload["next_action"] = "Do not contact this number. The caller opted out."
+        for key in ("callback_requested", "callback_time", "requested_time", "callback_phone"):
+            facts.pop(key, None)
     payload["status_tags"] = derive_status_tags(
         payload.get("disposition"),
         facts,
@@ -269,6 +287,28 @@ async def _sync_lead(
     )
 
 
+def _outcome_models(meta: dict[str, Any], *, openai_model: str) -> list[tuple[str, str, str | None]]:
+    """The call's own text LLM first, then OpenAI; one provider outage must not blank every outcome.
+
+    Calls on a Sarvam stack were marked no_outcome whenever the separate OpenAI account
+    was exhausted, although the model that ran the conversation was available.
+    """
+    from server.providers import get_provider_registry
+
+    registry = get_provider_registry()
+    llm = ((meta.get("resolved_stack") or {}).get("llm") or {}) if isinstance(meta.get("resolved_stack"), dict) else {}
+    candidates: list[tuple[str, str, str | None]] = []
+    provider, call_model = str(llm.get("provider") or ""), str(llm.get("model") or "")
+    if provider and provider != "openai" and call_model and not is_realtime_llm_model(call_model):
+        try:
+            if registry.is_provider_enabled(provider, "llm") and registry.is_model_allowed(provider, "llm", call_model):
+                candidates.append((provider, call_model, (llm.get("config") or {}).get("api_mode")))
+        except Exception:
+            pass
+    candidates.append(("openai", openai_model, None))
+    return candidates
+
+
 async def _generate_outcome(
     transcript: list[dict[str, Any]],
     snapshot: dict[str, Any],
@@ -293,6 +333,10 @@ async def _generate_outcome(
                 "Summaries must cover the entire call chronologically: caller intent, facts shared, "
                 "agent response, objections, agreed next step, and how the call ended. "
                 "Never claim an action was completed unless the transcript confirms it. "
+                "A caller requesting an order or discussing buying details is interested, not merely new_lead. "
+                "A callback is the business calling the caller; I will call you is not callback_required. "
+                "Refusing a callback or one product is not refusing all contact. "
+                "Do not treat an agent's unsupported promise as proof of success. "
                 "extracted_fields must be an array of {key, value} strings "
                 "(name, budget, slot, etc). Use [] if nothing was captured. "
                 "Disposition rubric: new_lead (first contact/info captured), interested "
@@ -332,25 +376,26 @@ async def _generate_outcome(
 
     last_error: str | None = None
     retries = max(1, settings.post_call_max_retries)
-    provider_id = "openai"
     locked_model = http_openai_model(settings)
-    if is_realtime_llm_model(model):
-        locked_model = http_openai_model(settings)
-    elif model and not is_realtime_llm_model(model):
+    if model and not is_realtime_llm_model(model):
         locked_model = model
-    for attempt in range(retries):
+    candidates = _outcome_models(meta, openai_model=locked_model)
+    for attempt in range(retries * len(candidates)):
+        provider_id, candidate_model, api_mode = candidates[attempt % len(candidates)]
         try:
             from server.providers import get_provider_registry
             from server.providers.base import LLMConfig
 
             registry = get_provider_registry()
             adapter = registry.get_llm(provider_id)
+            extra = {"api_mode": api_mode} if api_mode else {}
             payload = await adapter.structured_completion(
                 messages,
                 OUTCOME_JSON_SCHEMA,
-                LLMConfig(provider=provider_id, model=locked_model),
+                LLMConfig(provider=provider_id, model=candidate_model),
                 schema_name="call_outcome",
                 max_output_tokens=1200,
+                **extra,
             )
             if not isinstance(payload, dict):
                 raise ValueError("outcome payload is not an object")
@@ -362,6 +407,7 @@ async def _generate_outcome(
             payload.setdefault("summary_te", "")
             payload.setdefault("summary_en", "")
             payload.setdefault("disposition_confidence", 0.0)
+            payload["outcome_provider"] = provider_id
             return payload, None
         except Exception as e:
             last_error = str(e)[:240]

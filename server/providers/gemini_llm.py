@@ -535,7 +535,9 @@ class GeminiLLMAdapter:
         if system_instruction:
             body["systemInstruction"] = {"parts": [{"text": system_instruction}]}
         url = f"{_GEMINI_BASE}/{model}:generateContent"
-        timeout = max(15.0, settings.request_timeout_ms / 1000)
+        # Background structured generation is allowed 45s by its caller.
+        # A 15s transport read timeout prematurely exhausted both attempts.
+        timeout = max(40.0, settings.request_timeout_ms / 1000)
         async with httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=10.0)) as client:
             resp = await client.post(
                 url,

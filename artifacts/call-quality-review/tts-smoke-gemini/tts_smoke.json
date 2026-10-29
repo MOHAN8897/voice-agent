@@ -1,0 +1,20 @@
+[
+  {
+    "provider": "gemini",
+    "model": "gemini-3.8-flash-tts",
+    "voice": "Kore",
+    "language": "gu-IN",
+    "text": "Split AC servicing નો ચાર્જ ₹599 છે, technician કાલે 10:30 AM આવશે.",
+    "error": "RuntimeError: Gemini TTS HTTP 429",
+    "variant": "raw_digits"
+  },
+  {
+    "provider": "gemini",
+    "model": "gemini-3.8-flash-tts",
+    "voice": "Kore",
+    "language": "ml-IN",
+    "text": "Split AC servicing-ന് ₹599 ആകും, technician നാളെ 10:30 AM വരും.",
+    "error": "RuntimeError: Gemini TTS HTTP 429",
+    "variant": "raw_digits"
+  }
+]

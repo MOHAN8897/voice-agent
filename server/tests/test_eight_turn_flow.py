@@ -125,11 +125,11 @@ async def test_eight_turn_script_cache_and_memory(client, monkeypatch):
     def _memory_ops(transcript: str) -> list[dict]:
         ops: list[dict] = []
         if "రాము" in transcript:
-            ops.append({"op": "set_fact", "key": "caller_name", "value": "Ramu"})
+            ops.append({"op": "set_fact", "key": "caller_name", "value": "రాము", "evidence": "రాము"})
         if "లక్ష" in transcript:
-            ops.append({"op": "set_fact", "key": "budget", "value": "5 lakhs"})
+            ops.append({"op": "set_fact", "key": "budget", "value": "ఐదు లక్షలు", "evidence": "ఐదు లక్షలు"})
         if "హైదరాబాద్" in transcript:
-            ops.append({"op": "set_fact", "key": "location", "value": "Hyderabad"})
+            ops.append({"op": "set_fact", "key": "location", "value": "హైదరాబాద్", "evidence": "హైదరాబాద్"})
         if "ఫ్లాట్" in transcript:
             ops.append({"op": "append_context", "value": "Interested in flat"})
         return ops
@@ -198,7 +198,7 @@ async def test_eight_turn_script_cache_and_memory(client, monkeypatch):
     # overriding the mock model's Latin transliteration.
     assert facts.get("caller_name") == "రాము"
     assert "budget" in facts
-    assert facts.get("location") == "Hyderabad"
+    assert facts.get("location") == "హైదరాబాద్"
 
     events = client.get(f"/api/call/{call_id}/memory/events").json().get("events") or []
     assert len(events) >= 3

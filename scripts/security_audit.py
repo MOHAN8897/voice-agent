@@ -16,8 +16,9 @@ BLOCKED = 3
 
 def run_cmd(cmd: list[str], description: str, *, timeout: int = 900) -> int:
     print(f"[+] {description}", flush=True)
+    env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
     try:
-        result = subprocess.run(cmd, cwd=ROOT, timeout=timeout, check=False)
+        result = subprocess.run(cmd, cwd=ROOT, timeout=timeout, env=env, check=False)
     except FileNotFoundError:
         print(f"[BLOCKED] Required executable is unavailable: {cmd[0]}", flush=True)
         return BLOCKED

@@ -56,7 +56,7 @@ export const LANGUAGE_LABELS = {
  * default calling tier can actually serve, so an offline picker never offers a
  * locale that creation would reject.
  */
-export const DEFAULT_ENABLED_LANGUAGE_CODES = ['en-IN', 'te-IN', 'hi-IN', 'ta-IN', 'kn-IN'];
+export const DEFAULT_ENABLED_LANGUAGE_CODES = ['en-IN', 'te-IN', 'hi-IN', 'ta-IN', 'kn-IN', 'gu-IN', 'ml-IN'];
 
 export function describeLanguage(code) {
   return LANGUAGE_LABELS[code] || { label: code, sub: code };

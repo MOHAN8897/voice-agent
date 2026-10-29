@@ -32,6 +32,7 @@ class CallContext:
     ws_clients: int = 0
     end_reason: str | None = None
     contact_preference: str = "none"
+    timezone: str | None = None
     agent_hangup_armed: bool = False
     #: Set only when the server issues the provider command, after playback and vetoes.
     agent_hangup_reason: str | None = None

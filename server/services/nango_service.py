@@ -728,9 +728,16 @@ class NangoService:
 
             elif action_name == "HUBSPOT_CREATE_CONTACT":
                 props = {}
+                clean_params = dict(params or {})
+                raw_lastname = str(clean_params.get("lastname") or "").strip()
+                if "@" in raw_lastname:
+                    if not clean_params.get("email"):
+                        clean_params["email"] = raw_lastname
+                    clean_params["lastname"] = ""
                 for field in ("firstname", "lastname", "email", "phone", "company"):
-                    if params.get(field):
-                        props[field] = str(params[field])
+                    val = str(clean_params.get(field) or "").strip()
+                    if val:
+                        props[field] = val
                 resp = await client.post(
                     f"{self.base_url}/proxy/crm/v3/objects/contacts",
                     headers=headers,

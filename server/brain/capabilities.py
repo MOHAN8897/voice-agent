@@ -123,7 +123,8 @@ def apply_available_tools(text: str, tools: list[dict], *, followup_config: dict
     mode = str((followup_config or {}).get("callbackMode") or "review") if enabled else "manual_only"
     rows.extend([f"callback_dispatch: {mode}",
                  f"missed_call_dispatch: {(followup_config or {}).get('missedMode', 'off') if enabled else 'off'}",
-                 "Collect the caller's desired callback time, including short answers to your timing question. Never turn a future-interest request into a rejection or permanent opt-out."])
+                 "Collect the caller's desired callback time, including short answers to your timing question. Never turn a future-interest request into a rejection or permanent opt-out.",
+                 "When the caller asks to be called back, acknowledge naturally that you are noting their callback request and time; the platform saves it as the call closes. Never say you cannot note or arrange a callback."])
     if mode == "automatic":
         rows.append("The tenant permits automatic callbacks after the server resolves timing and passes calling-window, DND and account checks. A saved request is not a confirmed call time; do not promise an exact dial or claim a schedule succeeded without a server result.")
     else:

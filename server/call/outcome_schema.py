@@ -256,6 +256,8 @@ def derive_status_tags(
     categories, and custom tags are sanitised slugs.
     """
     normalized = validate_disposition(disposition)
+    if contact_preference == "do_not_call" and normalized == "callback_required":
+        normalized = "not_interested"
     tags = {f"outcome:{normalized}"}
     if contact_preference == "do_not_call":
         tags.add("signal:do_not_call")
@@ -269,7 +271,7 @@ def derive_status_tags(
     if any(k in normalized_facts for k in ("language", "preferred_language", "caller_language")):
         tags.add("contact:preferred_language")
     action = str(next_action or "").lower()
-    if contact_preference == "callback" or normalized == "callback_required" or "callback" in action or "call back" in action:
+    if contact_preference != "do_not_call" and (contact_preference == "callback" or normalized == "callback_required" or "callback" in action or "call back" in action):
         tags.add("followup:callback")
     if normalized == "site_visit_planned" or "site visit" in action or "appointment" in action:
         tags.add("followup:site_visit")

@@ -156,7 +156,13 @@ _ORDER_CLAIM = re.compile(
     r"(?:ऑर्डर)[^.!?]{0,40}(?:पुष्टि|पूरा)|"
     r"(?:ஆர்டர்)[^.!?]{0,40}(?:உறுதி|முடிந்த)|"
     r"(?:ಆರ್ಡರ್)[^.!?]{0,40}(?:ದೃಢೀಕರಿಸ|ಪೂರ್ಣಗೊಂಡ)|"
-    r"(?:ഓർഡർ)[^.!?]{0,40}(?:സ്ഥിരീകരിച്ച|പൂർത്തിയായ)",
+    r"(?:ഓർഡർ)[^.!?]{0,40}(?:സ്ഥിരീകരിച്ച|പൂർത്തിയായ)|"
+    r"(?:ઓર્ડર)[^.!?]{0,40}(?:પુષ્ટિ|કન્ફર્મ|પૂર્ણ|મૂકી)|"
+    # The English loanword "confirm" written in each script, followed by a done/doing verb.
+    r"(?:order|ఆర్డర్|ऑर्डर|ஆர்டர்|ಆರ್ಡರ್|ഓർഡർ|ઓર્ડર)[^.!?]{0,40}"
+    r"(?:confirm|కన్ఫర్మ్|कन्फर्म|கன்ஃபார்ம்|கன்பார்ம்|ಕನ್ಫರ್ಮ್|കൺഫേം|કન્ફર્મ)[^.!?]{0,20}"
+    r"(?:చేస్తున్న|చేశా|అయింది|అయ్యింది|कर\s*(?:दिया|रहा|रही|दी)|हो\s*गया|பண்ணிட்ட|பண்றேன்|ஆயிடுச்சு|"
+    r"ಮಾಡ್ತೀನಿ|ಮಾಡಿದ್ದೀನಿ|ಆಯ್ತು|ചെയ്തു|ചെയ്യുന്നു|આવી\s*ગયો|કરી\s*દીધો|કરું\s*છું|ing\b|ed\b)",
     re.I,
 )
 _APPOINTMENT_CLAIM = re.compile(
@@ -164,11 +170,12 @@ _APPOINTMENT_CLAIM = re.compile(
     r"\b(?:confirmed|booked|placed|scheduled|reserved|fixed)\b|"
     r"\b(?:confirmed|booked|placed|scheduled|reserved)\b[^.!?]{0,40}"
     r"\b(?:appointment|booking|slot|visit|meeting|reservation)\b|"
-    r"(?:అపాయింట్‌మెంట్|బుకింగ్|విజిట్)[^.!?]{0,40}(?:నిర్ధార|బుక్|షెడ్యూల్)|"
+    r"(?:అపాయింట్\u200cమెంట్|బుకింగ్|స్లాట్)[^.!?]{0,40}(?:నిర్ధార|బుక్|షెడ్యూల్)|"
+    r"(?<!ఛార్జ్\s)(?<!ఛార్జీ\s)(?<!ఫీజు\s)(?<!ఖర్చు\s)విజిట్[^.!?]{0,40}(?:నిర్ధార|షెడ్యూల్)|"
     r"(?:अपॉइंटमेंट|बुकिंग|विज़िट)[^.!?]{0,40}(?:पुष्टि|बुक|निर्धारित)|"
     r"(?:அப்பாயின்ட்மென்ட்|புக்கிங்|விஜிட்)[^.!?]{0,40}(?:உறுதி|புக்|திட்டமிட)|"
-    r"(?:ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್|ಬುಕಿಂಗ್|ವಿಜಿಟ್)[^.!?]{0,40}(?:ದೃಢೀಕರಿಸ|ಬುಕ್|ನಿಗದಿ)|"
-    r"(?:അപ്പോയിന്റ്മെന്റ്|ബുക്കിംഗ്)[^.!?]{0,40}(?:സ്ഥിരീകരിച്ച|ബുക്ക്|ക്രമീകരിച്ച)",
+    r"(?:ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್|ಬುಕಿಂಗ್|ವಿಜಿಟ್)[^.!?]{0,40}(?:ದೃಢೀಕರಿಸ|ಬುಕ್|ನಿಗದಿ)|"
+    r"(?:അപ്പോയിന്റ്മെന്റ്|ബുക്കിംഗ്)[^.!?]{0,40}(?:സ്ഥിരീകരിച്ച|ಬುക്ക്|ക്രമീകരിച്ച)",
     re.I,
 )
 _RECORDED_CLAIM = re.compile(
@@ -203,7 +210,25 @@ _NEGATED_TAIL = re.compile(
 )
 
 
+_PROPOSAL_QUESTION = re.compile(
+    r"\?|"
+    r"(?:చేయమంటారా|చేయాలా|చేద్దామా|బుక్\s*చేయనా|షెడ్యూల్\s*చేయనా|బుక్\s*చేస్తారా|"
+    r"\bshall\s+i\b|\bshould\s+i\b|\bwould\s+you\s+like\s+to\b|\bwant\s+me\s+to\b|"
+    r"\bdo\s+you\s+want\s+to\b|\bcan\s+we\s+book\b)",
+    re.I,
+)
+_FEE_OR_CHARGE = re.compile(
+    r"(?:విజిట్\s*(?:ఛార్జ్|ఛార్జీ|ఫీజు|ఖర్చు)|visit\s*(?:fee|charge|cost)|inspection\s*(?:fee|charge))",
+    re.I,
+)
+
+
 def _claim_is_negated(text: str, match: re.Match[str]) -> bool:
+    clause = text[max(0, match.start() - 40) : min(len(text), match.end() + 40)]
+    if _FEE_OR_CHARGE.search(clause):
+        return True
+    if _PROPOSAL_QUESTION.search(clause) or _PROPOSAL_QUESTION.search(text[match.start() : min(len(text), match.end() + 30)]):
+        return True
     if _NEGATORS.search(match.group(0)):
         return True
     prefix = text[max(0, match.start() - 40) : match.start()]

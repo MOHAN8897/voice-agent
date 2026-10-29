@@ -41,6 +41,8 @@ async def execute_calendar_action(client: httpx.AsyncClient, base: str, headers:
             metadata.raise_for_status()
             zone = ZoneInfo(metadata.json()["timeZone"])
             target = date.fromisoformat(str(params.get("date") or ""))
+            if action != "GOOGLECALENDAR_LIST_EVENTS" and target < datetime.now(zone).date():
+                raise ValueError("Choose a current or future date")
             start = datetime.combine(target, time.min, zone)
             end = start + timedelta(days=1)
             if action == "GOOGLECALENDAR_LIST_EVENTS":

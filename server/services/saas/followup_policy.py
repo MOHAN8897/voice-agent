@@ -132,7 +132,10 @@ def within_profile_hours(at: datetime, hours: dict, zone_name: str) -> bool:
 def extracted_due(payload: dict, request_text: str, requested_at: datetime, config: FollowUpConfig) -> datetime | None:
     """Only a grounded, explicit timing proposal may enter the automatic queue."""
     evidence = str(payload.get("evidence") or "").strip()
-    if not evidence or evidence not in request_text:
+    if not evidence:
+        return None
+    from server.call.close_decision import evidence_matches
+    if not evidence_matches(evidence, request_text):
         return None
     try:
         if payload.get("kind") == "relative":

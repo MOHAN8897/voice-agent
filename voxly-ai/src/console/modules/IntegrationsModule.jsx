@@ -84,6 +84,19 @@ export function normalizeAppKey(key) {
   return clean;
 }
 
+// The server explains why a connection form cannot open; a generic line hides the fix.
+export function connectFailureMessage(error) {
+  const status = error?.status;
+  if (status === 429) return 'Too many connection attempts. Wait a few minutes and try again.';
+  if (status === 403) return 'Your role cannot connect integrations. Ask a workspace owner or admin.';
+  if (status === 401) return 'Your session expired. Sign in again to connect.';
+  if (status === 0) return 'Could not reach the server. Check your connection and retry.';
+  if ([400, 404, 503].includes(status) && error?.message && !/^HTTP \d+$/.test(error.message)) {
+    return error.message;
+  }
+  return 'Could not open the secure connection form. Please retry or contact your administrator.';
+}
+
 export function IntegrationsModule() {
   const [catalog, setCatalog] = useState([]);
   const [connections, setConnections] = useState([]);
@@ -236,8 +249,8 @@ export function IntegrationsModule() {
           }
         },
       });
-    } catch {
-      setConnectionError('Could not open the secure connection form. Please retry or contact your administrator.');
+    } catch (error) {
+      setConnectionError(connectFailureMessage(error));
       setConnecting(null);
     }
   };
@@ -690,6 +703,14 @@ export function IntegrationsModule() {
                           >
                             Disconnect
                           </button>
+                        ) : app.oauth_ready === false ? (
+                          <span
+                            data-testid={`not-ready-${app.id.toLowerCase()}`}
+                            className="px-2.5 py-1 text-[11px] font-semibold text-[#524E5E] bg-slate-100 rounded-lg"
+                            title="Your administrator has not enabled this integration yet."
+                          >
+                            Not available yet
+                          </span>
                         ) : (
                           <button
                             onClick={() => openConnectDialog(app)}
@@ -938,7 +959,7 @@ export function IntegrationsModule() {
                 <div>
                   <h3 className="font-extrabold text-[#0F0E17] text-sm">{selectedAppModal.name}</h3>
                   <div className="flex items-center space-x-1.5 text-xs text-[#524E5E]">
-                    <span className="font-semibold text-emerald-600">{selectedAppModal.oauth_ready ? '⚡ 1-Click OAuth' : '🔑 API Key Auth'}</span>
+                    <span className="font-semibold text-emerald-600">{selectedAppModal.auth_type === 'api_key' ? '🔑 API Key Auth' : '⚡ 1-Click OAuth'}</span>
                     <span>•</span>
                     <span className={selectedAppModal.timing === 'in_call' ? 'text-amber-600 font-bold' : 'text-indigo-600 font-bold'}>
                       {selectedAppModal.timing_label || (selectedAppModal.timing === 'in_call' ? 'Live In-Call (<1.5s)' : 'Async Post-Call')}

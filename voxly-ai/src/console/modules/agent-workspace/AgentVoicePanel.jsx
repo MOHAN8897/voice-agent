@@ -229,6 +229,20 @@ export const EXTENDED_LANGUAGES = [
     badge: 'Multilingual Voice',
   },
   {
+    code: 'gu-IN',
+    name: 'Gujarati',
+    nativeName: 'ગુજરાતી',
+    flag: '🇮🇳',
+    badge: 'Regional Voices',
+  },
+  {
+    code: 'ml-IN',
+    name: 'Malayalam',
+    nativeName: 'മലയാളം',
+    flag: '🇮🇳',
+    badge: 'Regional Dravidian',
+  },
+  {
     code: 'en-US',
     name: 'English (US)',
     nativeName: 'American English',

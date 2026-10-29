@@ -67,7 +67,8 @@ async def synthesize_via_registry(
         # arguments and mutable session controls must not replace that snapshot.
         model = stack.tts.model
         speaker = pace = temperature = pitch = volume = None
-    text = prepare_spoken_reply((text or "").strip(), provider=provider_id, model=model or stack.tts.model)
+    text = prepare_spoken_reply((text or "").strip(), provider=provider_id, model=model or stack.tts.model,
+                                language=getattr(stack, "language", None) or language_code)
     if not text:
         raise AppError(ErrorCode.VALIDATION_ERROR, "Text is required for TTS", status_code=400)
 

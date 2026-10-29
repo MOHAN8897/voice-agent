@@ -24,6 +24,7 @@ from server.services.voice_pipeline_limits import (
     LIVE_REPLY_NORMAL_MAX,
     LIVE_REPLY_OBJECTION_MAX,
     LIVE_REPLY_SIMPLE_MAX,
+    LIVE_REPLY_SOFT_MAX_CHARS,
 )
 
 # Compact pointer — full HUMAN_CALL lives as CONVERSATION_INTELLIGENCE for tests/judges;
@@ -44,11 +45,9 @@ CONVERSATION_CONTINUITY_RULES = """CONVERSATION CONTINUITY
 
 
 NUMBER_RULES = """NUMBERS (speak them — TTS must sound human)
-- Speak Indian amounts naturally: `fifty lakh rupees`, `five hundred rupees`, `fifteen paise`. Use the exact amount and currency in the business facts; never invent a currency or convert it.
-- Counts, years, clock times: English cardinal words (`five thousand`, `ten AM`).
-- Large Western numbers left as digits need commas (`10,000`) — never a bare 5+ digit run.
-- Never ask for or repeat passwords, OTPs, PINs or CVVs.
-- Speak numbers clearly; in English, use English cardinal words."""
+- Write amounts as digits with the business currency (`₹599`, `₹50 lakh`); the voice reads them naturally. Use the exact amount and currency in the business facts; never invent a currency or convert it.
+- Counts, years and clock times as digits (`2 ACs`, `10 AM`); large numbers with Indian commas (`1,50,000`).
+- Never ask for or repeat passwords, OTPs, PINs or CVVs."""
 
 NUMBER_RULES_NATIVE = """NUMBERS (speak them — TTS must sound human)
 - Use only the currency already in the brief. Say `forty-nine dollars` or `ninety-nine pounds` naturally; preserve the exact amount.
@@ -59,9 +58,8 @@ NUMBER_RULES_NATIVE = """NUMBERS (speak them — TTS must sound human)
 - Speak numbers clearly in the brief's currency."""
 
 NUMBER_RULES_INDIC = """NUMBERS (speak them — natural and human in the call language)
-- Speak amounts, counts, years and clock times naturally in the selected language. Familiar English number words are fine when natural in a mixed-language sentence.
-- Preserve the exact amount, units and currency in the supplied business facts. Never convert or invent currency.
-- Use natural local number phrasing; never force English numeral grammar into an Indic sentence.
+- Use natural local number phrasing: `₹599`, digits for counts, clock times the local spoken way (not `10:30 AM`). No English number words or `rupees` in an Indic sentence.
+- Preserve the exact amount, units and currency in the supplied business facts. Never convert or invent currency. Add totals exactly; if unsure, give per-item prices.
 - Large numbers left as digits need commas (`10,000`) — never a bare 5+ digit run.
 - Never ask for or repeat passwords, OTPs, PINs or CVVs."""
 
@@ -148,31 +146,45 @@ def normalize_compile_language(code: str | None) -> str:
 
 
 UNCLEAR_FALLBACK: dict[str, str] = {
-    "te-IN": "చివరి మాట వినిపించలేదు అండి, మళ్లీ చెప్తారా?",
+    "te-IN": "చివరి మాట వినిపించలేదు. మళ్లీ చెప్తారా?",
     "en-IN": "Sorry, I missed the last part. Could you repeat it?",
     "en-US": "Sorry, I missed the last part. Could you repeat it?",
     "hi-IN": "माफ़ कीजिए, आख़िरी बात साफ़ सुनाई नहीं दी। दोबारा बताएँगे?",
-    "ta-IN": "மன்னிக்கவும், கடைசியா சொன்னது தெளிவாகக் கேட்கவில்லை. மறுபடியும் சொல்ல முடியுமா?",
-    "kn-IN": "ಕ್ಷಮಿಸಿ, ಕೊನೆಯ ಮಾತು ಸ್ಪಷ್ಟವಾಗಿ ಕೇಳಿಸಲಿಲ್ಲ. ಮತ್ತೊಮ್ಮೆ ಹೇಳುತ್ತೀರಾ?",
-    "ml-IN": "ക്ഷമിക്കണം, അവസാനം പറഞ്ഞത് വ്യക്തമായി കേട്ടില്ല. ഒന്നുകൂടി പറയാമോ?",
-    "mr-IN": "माफ करा, शेवटचं नीट ऐकू आलं नाही. पुन्हा सांगाल का?",
-    "bn-IN": "মাফ করবেন, শেষ কথাটা পরিষ্কার শুনতে পাইনি। আরেকবার বলবেন?",
-    "gu-IN": "માફ કરશો, છેલ્લી વાત સ્પષ્ટ સંભળાઈ નહીં. ફરી કહેશો?",
-    "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਆਖ਼ਰੀ ਗੱਲ ਸਾਫ਼ ਨਹੀਂ ਸੁਣੀ। ਦੁਬਾਰਾ ਦੱਸੋਗੇ?",
+    "ta-IN": "மன்னிக்கவும், கடைசியா சொன்னது சரியா கேட்கல. இன்னொரு முறை சொல்றீங்களா?",
+    "kn-IN": "ಕ್ಷಮಿಸಿ, ಕೊನೆ ಮಾತು ಸರಿಯಾಗಿ ಕೇಳಿಸಲಿಲ್ಲ. ಇನ್ನೊಮ್ಮೆ ಹೇಳ್ತೀರಾ?",
+    "ml-IN": "ക്ഷമിക്കണം, അവസാനം പറഞ്ഞത് വ്യക്തമായില്ല. ഒന്നുകൂടി പറയാമോ?",
+    "mr-IN": "माफ करा, शेवटचं नीट ऐकू आलं नाही. परत सांगाल का?",
+    "bn-IN": "মাফ করবেন, শেষ কথাটা ঠিক শুনতে পাইনি। আর একবার বলবেন কি?",
+    "gu-IN": "માફ કરશો, છેલ્લી વાત બરાબર સંભળાઈ નહીં. ફરી કહેશો?",
+    "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਆਖ਼ਰੀ ਗੱਲ ਸਾਫ਼ ਨਹੀਂ ਸੁਣਾਈ ਦਿੱਤੀ। ਦੁਬਾਰਾ ਦੱਸੋਗੇ?",
+}
+
+MODEL_RECOVERY: dict[str, str] = {
+    "te-IN": "క్షమించండి, సమాధానం చెప్పడంలో తాత్కాలిక సమస్య వచ్చింది. మీ ప్రశ్నను మరోసారి చెప్తారా?",
+    "en-IN": "Sorry, I had a temporary problem replying. Could you ask your question again?",
+    "en-US": "Sorry, I had a temporary problem replying. Could you ask your question again?",
+    "hi-IN": "माफ़ कीजिए, जवाब देने में अस्थायी समस्या हुई। क्या आप अपना सवाल फिर से बताएँगे?",
+    "ta-IN": "மன்னிக்கவும், பதில் சொல்ல தற்காலிகச் சிக்கல் ஏற்பட்டது. உங்கள் கேள்வியை மீண்டும் சொல்வீர்களா?",
+    "kn-IN": "ಕ್ಷಮಿಸಿ, ಉತ್ತರಿಸಲು ತಾತ್ಕಾಲಿಕ ತೊಂದರೆಯಾಯಿತು. ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಮತ್ತೊಮ್ಮೆ ಹೇಳುತ್ತೀರಾ?",
+    "ml-IN": "ക്ഷമിക്കണം, മറുപടി പറയുന്നതിൽ താൽക്കാലിക പ്രശ്നമുണ്ടായി. ചോദ്യം ഒന്നുകൂടി പറയാമോ?",
+    "mr-IN": "माफ करा, उत्तर देताना तात्पुरती अडचण आली. तुमचा प्रश्न पुन्हा सांगाल का?",
+    "bn-IN": "দুঃখিত, উত্তর দিতে সাময়িক সমস্যা হয়েছে। আপনার প্রশ্নটি আবার বলবেন?",
+    "gu-IN": "માફ કરશો, જવાબ આપવામાં થોડી મુશ્કેલી આવી. તમારો પ્રશ્ન ફરી કહેશો?",
+    "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਜਵਾਬ ਦੇਣ ਵਿੱਚ ਅਸਥਾਈ ਸਮੱਸਿਆ ਆਈ। ਆਪਣਾ ਸਵਾਲ ਦੁਬਾਰਾ ਦੱਸੋਗੇ?",
 }
 
 SLOW_DOWN_FALLBACK: dict[str, str] = {
-    "te-IN": "కొంచెం నెమ్మదిగా చెప్తారా అండి?",
+    "te-IN": "కొంచెం నెమ్మదిగా చెప్తారా?",
     "en-IN": "Could you say that a bit more slowly?",
     "en-US": "Could you say that a bit more slowly?",
-    "hi-IN": "कृपया थोड़ा धीरे बोलिए, ताकि साफ़ सुनाई दे।",
-    "ta-IN": "கொஞ்சம் மெதுவா சொல்லுங்க, தெளிவா கேட்கறதுக்கு.",
-    "kn-IN": "ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ನಿಧಾನವಾಗಿ ಹೇಳಿ, ಸ್ಪಷ್ಟವಾಗಿ ಕೇಳಿಸಲು.",
-    "ml-IN": "ദയവായി കുറച്ചു പതുക്കെ പറയാമോ, വ്യക്തമായി കേൾക്കാൻ.",
-    "mr-IN": "कृपया थोडं हळू बोला, व्यवस्थित ऐकू येईल.",
-    "bn-IN": "একটু আস্তে বলবেন কি, পরিষ্কার শুনতে পাবো।",
-    "gu-IN": "કૃપા કરીને થોડું ધીમેથી બોલો, સારી રીતે સંભળાય.",
-    "pa-IN": "ਕਿਰਪਾ ਕਰਕੇ ਥੋੜ੍ਹਾ ਹੌਲੀ ਬੋਲੋ, ਤਾਂ ਜੋ ਸਾਫ਼ ਸੁਣ ਸਕੇ।",
+    "hi-IN": "कृपया थोड़ा धीरे बोलेंगे?",
+    "ta-IN": "கொஞ்சம் மெதுவா சொல்றீங்களா?",
+    "kn-IN": "ಸ್ವಲ್ಪ ನಿಧಾನವಾಗಿ ಹೇಳ್ತೀರಾ?",
+    "ml-IN": "കുറച്ചു പതുക്കെ പറയാമോ?",
+    "mr-IN": "कृपया थोडं हळू बोलाल का?",
+    "bn-IN": "একটু আস্তে বলবেন কি?",
+    "gu-IN": "જરા ધીમેથી બોલશો?",
+    "pa-IN": "ਥੋੜ੍ਹਾ ਹੌਲੀ ਦੱਸੋਗੇ?",
 }
 
 LANGUAGE_MISMATCH_FALLBACK: dict[str, str] = {
@@ -215,9 +227,9 @@ Language: {lang}
 - {mirror}
 - If you understand the caller, answer in the configured language without a language reminder. Accents, loanwords and short replies are not a barrier.
 - Only for a genuine language barrier: say once: "{mismatch}" — then wait.
-- Garbled audio (not language change): "{unclear}" then wait for clarification; preserve the conversation context.
-- Caller speaks at length very quickly in one breath and you cannot follow: "{slow_down}" once, then continue naturally. Never lecture or say they talk too much.
-- If the caller asks for OUR contact, office, or WhatsApp number: "{phone_ask}" — do not read any digits aloud.
+- Garbled audio (not language change): use a brief natural repair like "{unclear}" (or ask to repeat only the missed phrase), then wait for clarification; preserve the conversation context.
+- Caller speaks at length very quickly in one breath and you cannot follow: use "{slow_down}" once (or ask politely to speak a little slower), then continue naturally. Never lecture or say they talk too much.
+- If the caller asks for OUR contact, office, or WhatsApp number: "{phone_ask}" — do not read any digits aloud; offer to help directly or arrange a callback if permitted.
 - If the caller gives details, acknowledge them naturally. Claim they were saved or sent only after tool confirmation. Confirm only the uncertain part once; do not recite the dialed number.
 - Follow CALL END POLICY already in this session. Do not invent a second hangup policy.
 - Use only reasons allowed by CALL END POLICY: a confirmed end request, firm refusal, confirmed callback, or completed script objective with the agreed next step confirmed; handle abuse only as that policy permits. Never hang up on okay/thanks alone. After an approved close, stop; the platform speaks the farewell and disconnects promptly.
@@ -418,7 +430,7 @@ You are on a live phone call. Speak natural Hinglish: conversational Hindi Unico
 If the caller speaks Telugu, English-only, or another language you cannot follow: use the language-mismatch line once, then wait.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["hi-IN"]}`
 {SOFT_BREVITY}
-Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with हाँ जी / ठीक है / जी बिल्कुल / ओके). Answer directly and politely.
+Filler bans: acknowledge when helpful (हाँ, ठीक है, ओके); answer directly without starting every reply with an acknowledgment prefix. Avoid repeating 'जी' or honorifics mechanically.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["hi-IN"]}`
 Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["hi-IN"]}` then wait for clarification; do not restart the conversation. Do not treat road noise as a new intent.
 {NUMBER_RULES_INDIC}
@@ -471,7 +483,7 @@ You are on a live phone call. Speak natural Tamil (conversational Tamil Unicode 
 If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["ta-IN"]}`
 {SOFT_BREVITY}
-Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with சரிங்க / ஆமாம் / கண்டிப்பா / ஓகே). Answer directly and politely.
+Filler bans: acknowledge when useful (சரி, கண்டிப்பா, ஓகே); answer directly without prefixing an acknowledgment on every turn. Do not append ங்க to every word mechanically.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["ta-IN"]}`
 Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["ta-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
 {NUMBER_RULES_INDIC}
@@ -487,7 +499,9 @@ GOOD: propose the close (reason not_interested) using their words as evidence; n
 User: நாளை மீண்டும் அழைக்கவும்
 GOOD: confirm the callback in Tamil; keep the line open for any missing required detail, then close with `request_end_call`.
 User: இதன் விலை என்ன? / இன்னும் சொல்லுங்கள்
-GOOD: answer or continue the conversation. Do not hang up.
+GOOD: தெரிஞ்ச விவரத்தை நேரடியா சொல்லுங்க. தேவையில்லாத கேள்வி கேட்காதீங்க.
+User: தப்பான தகவல்
+GOOD: மன்னிக்கவும், மாத்திக்கிறேன். சரியான தகவலை வெச்சு பேசுங்க.
 User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["ta-IN"]}`
 User: my number is 9840123456
@@ -504,7 +518,7 @@ You are on a live phone call. Speak natural Kannada (conversational Kannada Unic
 If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["kn-IN"]}`
 {SOFT_BREVITY}
-Filler bans: do not repeat the exact same acknowledgment every turn (vary naturally with ಹೌದು / ಸರಿ / ಖಂಡಿತ / ಓಕೆ). Answer directly and politely.
+Filler bans: acknowledge when useful (ಹೌದು, ಸರಿ, ಖಂಡಿತ, ಓಕೆ); answer directly without prefixing an acknowledgment on every turn. Do not force ರೀ into each phrase; keep acknowledgments optional.
 Slow-down (once): `{SLOW_DOWN_FALLBACK["kn-IN"]}`
 Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["kn-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
 {NUMBER_RULES_INDIC}
@@ -521,6 +535,10 @@ User: contact number / office number
 GOOD: `{PHONE_ASK_FALLBACK["kn-IN"]}`
 User: my number is 9845012345
 GOOD: ಸರಿ, ಧನ್ಯವಾದಗಳು. Claim saving or follow-up only after the permitted workflow and tool confirmation.
+User: ಬೆಲೆ ಎಷ್ಟು? / details ತಿಳಿಸಿ
+GOOD: ಲಭ್ಯವಿರುವ ಮಾಹಿತಿ ನೇರವಾಗಿ ತಿಳಿಸಿ. ಒಂದೇ ಪ್ರಶ್ನೆ ಅಥವಾ ವಿವರ, ಹೆಚ್ಚುವರಿ ಒತ್ತಾಯವಿಲ್ಲ.
+User: ಆ ಮಾಹಿತಿ ತಪ್ಪಾಗಿದೆ
+GOOD: ಕ್ಷಮಿಸಿ, ಸರಿಪಡಿಸಿಕೊಂಡೆ. ಸರಿಯಾದ ಮಾಹಿತಿ ಬಳಸಿ ಮುಂದುವರಿಯಿರಿ.
 
 PHONE CALL
 - Sound human on a live call — not a chatbot. Follow them immediately after barge-in.
@@ -558,115 +576,115 @@ CALL_END_FAREWELLS.update({
 })
 
 OPENING_WITH_COMPANY: dict[str, str] = {
-    "te-IN": "Namaste! Nenu {name}, {company} nundi matladutunnanu. Meeru ela sahayam kavali?",
+    "te-IN": "నమస్తే! నేను {company} నుండి {name}. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
     "en-IN": "Hi, this is {name} calling from {company}. How can I help you today?",
     "en-US": "Hi, this is {name} from {company}. How can I help you today?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se. Main aapki kaise madad karun?",
-    "ta-IN": "Vanakkam! Naan {name}, {company}-la irundhu pesuren. Ungalukku enna help venum?",
-    "kn-IN": "Namaskara! Naanu {name}, {company} inda matladuttiddene. Nimge hege sahayavagali?",
-    "ml-IN": "Namaskaram! Njan {name}, {company}-il ninnanu samsarikkunnu. Engane sahayikkanam?",
-    "mr-IN": "Namaskar! Mi {name}, {company} madhun bolat aahe. Kashi madat karu shakto?",
-    "bn-IN": "Nomoshkar! Ami {name}, {company} theke bolchi. Apnake ki bhabe sahajjo korte pari?",
-    "gu-IN": "Namaste! Hu {name}, {company} maathi bolu chu. Hu tamne kevi rite madad kari shaku?",
-    "pa-IN": "Sat sri akaal! Main {name}, {company} ton bol rahi haan. Tuhadi ki madad kar sakdi haan?",
+    "hi-IN": "नमस्ते! मैं {company} से {name}। बताइए, आज आपकी कैसे मदद करूँ?",
+    "ta-IN": "வணக்கம்! நான் {company}-ல இருந்து {name} பேசுறேன். உங்களுக்கு எப்படி உதவலாம்?",
+    "kn-IN": "ನಮಸ್ಕಾರ! ನಾನು {company} ಇಂದ {name}. ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+    "ml-IN": "നമസ്കാരം! ഞാൻ {company}-ൽ നിന്ന് {name}. പറയൂ, എങ്ങനെ സഹായിക്കണം?",
+    "mr-IN": "नमस्कार! मी {company} मधून {name}. बोला, कशी मदत करू?",
+    "bn-IN": "নমস্কার! আমি {company} থেকে {name}। বলুন, কীভাবে সাহায্য করতে পারি?",
+    "gu-IN": "નમસ્તે! હું {company} માંથી {name}. કહો, હું આપને કેવી રીતે મદદ કરી શકું?",
+    "pa-IN": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ {company} ਤੋਂ {name}। ਦੱਸੋ, ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰਾਂ?",
 }
 
 OPENING_OUTBOUND_WITH_COMPANY: dict[str, str] = {
-    "te-IN": "Hi, nenu {name}, {company} nundi matladutunnanu. Meeku oka moment unda?",
+    "te-IN": "హలో, నేను {company} నుండి {name}. మాట్లాడటానికి ఒక moment ఉంటుందా?",
     "en-IN": "Hi, this is {name} calling from {company}. Do you have a moment?",
     "en-US": "Hi, this is {name} from {company}. Do you have a minute?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se. Kya aap free hain — ek minute mil sakta hai?",
-    "ta-IN": "Hi, naan {name}, {company}-la irundhu pesuren. Oru nimisham pesalaama?",
-    "kn-IN": "Hi, naanu {name}, {company} inda. Ondu nimisha matladabahuda?",
-    "ml-IN": "Hi, njan {name}, {company} il ninnanu. Oru nimisham samsarikkamo?",
-    "mr-IN": "Namaskar, mi {name}, {company} madhun bolto aahe. Ek minute bolu shakta ka?",
-    "bn-IN": "Namaskar, ami {name}, {company} theke. Ek minute kotha bolte pari?",
-    "gu-IN": "Namaste, hu {name}, {company} maathi. Ek minute vaat kar shakay?",
-    "pa-IN": "Sat sri akaal, main {name}, {company} ton. Ik minute gall kar sakde ho?",
+    "hi-IN": "नमस्ते, मैं {company} से {name}. क्या अभी एक मिनट बात हो सकती है?",
+    "ta-IN": "வணக்கம், நான் {company}-ல இருந்து {name}. ஒரு நிமிஷம் பேசலாமா?",
+    "kn-IN": "ನಮಸ್ಕಾರ, ನಾನು {company} ಇಂದ {name}. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+    "ml-IN": "നമസ്കാരം, ഞാൻ {company}-ൽ നിന്ന് {name}. ഒരു മിനിറ്റ് സംസാരിക്കാമോ?",
+    "mr-IN": "नमस्कार, मी {company} मधून {name}. एक मिनिट बोलू शकता का?",
+    "bn-IN": "নমস্কার, আমি {company} থেকে {name}. এক মিনিট কথা বলা যাবে?",
+    "gu-IN": "નમસ્તે, હું {company} માંથી {name}. એક મિનિટ વાત થઈ શકે?",
+    "pa-IN": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ, ਮੈਂ {company} ਤੋਂ {name}. ਕੀ ਇੱਕ ਮਿੰਟ ਗੱਲ ਹੋ ਸਕਦੀ ਹੈ?",
 }
 
 OPENING_WITH_COMPANY_PURPOSE: dict[str, str] = {
-    "te-IN": "Namaste! Nenu {name}, {company} nundi {purpose} gurinchi matladutunnanu. Meeru ela sahayam kavali?",
+    "te-IN": "నమస్తే! నేను {company} నుండి {name}. {purpose} గురించి మాట్లాడుతున్నాను. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
     "en-IN": "Hi, this is {name} calling from {company} about {purpose}. How can I help you today?",
     "en-US": "Hi, this is {name} from {company}. How can I help you today?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Main aapki kaise madad karun?",
-    "ta-IN": "Vanakkam! Naan {name}, {company}-la irundhu {purpose} pathi pesuren. Ungalukku enna help venum?",
-    "kn-IN": "Namaskara! Naanu {name}, {company} inda {purpose} bagge matladuttiddene. Nimge hege sahayavagali?",
-    "ml-IN": "Namaskaram! Njan {name}, {company}-il ninnanu. {purpose} sambandhichu engane sahayikkanam?",
-    "mr-IN": "Namaskar! Mi {name}, {company} madhun bolat aahe. {purpose} babat kashi madat karu?",
-    "bn-IN": "Nomoshkar! Ami {name}, {company} theke bolchi. {purpose} niye ki bhabe sahajjo korte pari?",
-    "gu-IN": "Namaste! Hu {name}, {company} maathi bolu chu. {purpose} baabat kevi rite madad kari shaku?",
-    "pa-IN": "Sat sri akaal! Main {name}, {company} ton. {purpose} baare tuhadi ki madad kar sakdi haan?",
+    "hi-IN": "नमस्ते! मैं {company} से {name}। {purpose} के बारे में बताइए, आज आपकी कैसे मदद करूँ?",
+    "ta-IN": "வணக்கம்! நான் {company}-ல இருந்து {name}. {purpose} பத்தி பேசுறேன். உங்களுக்கு எப்படி உதவலாம்?",
+    "kn-IN": "ನಮಸ್ಕಾರ! ನಾನು {company} ಇಂದ {name}. {purpose} ಬಗ್ಗೆ, ಹೇಳಿ ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+    "ml-IN": "നമസ്കാരം! ഞാൻ {company}-ൽ നിന്ന് {name}. {purpose} കുറിച്ച്, പറയൂ എങ്ങനെ സഹായിക്കണം?",
+    "mr-IN": "नमस्कार! मी {company} मधून {name}. {purpose} बद्दल बोला, कशी मदत करू?",
+    "bn-IN": "নমস্কার! আমি {company} থেকে {name}। {purpose} নিয়ে বলুন, কীভাবে সাহায্য করতে পারি?",
+    "gu-IN": "નમસ્તે! હું {company} માંથી {name}. {purpose} માટે કહો, હું આપને કેવી રીતે મદદ કરી શકું?",
+    "pa-IN": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ {company} ਤੋਂ {name}। {purpose} ਬਾਰੇ ਦੱਸੋ, ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰਾਂ?",
 }
 
 OPENING_OUTBOUND_WITH_COMPANY_PURPOSE: dict[str, str] = {
-    "te-IN": "Hi, nenu {name}, {company} nundi {purpose} gurinchi matladutunnanu. Meeru free unnara — oka moment unda?",
+    "te-IN": "హలో, నేను {company} నుండి {name}. {purpose} గురించి మాట్లాడటానికి ఒక moment ఉంటుందా?",
     "en-IN": "Hi, this is {name} calling from {company} about {purpose}. Do you have a moment?",
     "en-US": "Hi, this is {name} from {company}, calling about {purpose}. Do you have a minute?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon, {company} se, {purpose} ke baare mein. Kya aap free hain — ek minute?",
-    "ta-IN": "Hi, naan {name}, {company}-la irundhu {purpose} pathi. Oru nimisham pesalaama?",
-    "kn-IN": "Hi, naanu {name}, {company} inda {purpose} bagge. Ondu nimisha matladabahuda?",
-    "ml-IN": "Hi, njan {name}, {company} il ninnanu {purpose} kurichu. Oru nimisham samsarikkamo?",
-    "mr-IN": "Namaskar, mi {name}, {company} madhun {purpose} sathi. Ek minute bolu shakta ka?",
-    "bn-IN": "Namaskar, ami {name}, {company} theke {purpose} niye. Ek minute bolte pari?",
-    "gu-IN": "Namaste, hu {name}, {company} maathi {purpose} mate. Ek minute vaat kar shakay?",
-    "pa-IN": "Sat sri akaal, main {name}, {company} ton {purpose} lai. Ik minute gall kar sakde ho?",
+    "hi-IN": "नमस्ते, मैं {company} से {name}. {purpose} के बारे में एक मिनट बात हो सकती है?",
+    "ta-IN": "வணக்கம், நான் {company}-ல இருந்து {name}. {purpose} பத்தி ஒரு நிமிஷம் பேசலாமா?",
+    "kn-IN": "ನಮಸ್ಕಾರ, ನಾನು {company} ಇಂದ {name}. {purpose} ಬಗ್ಗೆ ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+    "ml-IN": "നമസ്കാരം, ഞാൻ {company}-ൽ നിന്ന് {name}. {purpose} കുറിച്ച് ഒരു മിനിറ്റ് സംസാരിക്കാമോ?",
+    "mr-IN": "नमस्कार, मी {company} मधून {name}. {purpose} बद्दल एक मिनिट बोलू शकता का?",
+    "bn-IN": "নমস্কার, আমি {company} থেকে {name}. {purpose} নিয়ে এক মিনিট কথা বলা যাবে?",
+    "gu-IN": "નમસ્તે, હું {company} માંથી {name}. {purpose} માટે એક મિનિટ વાત થઈ શકે?",
+    "pa-IN": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ, ਮੈਂ {company} ਤੋਂ {name}. {purpose} ਬਾਰੇ ਇੱਕ ਮਿੰਟ ਗੱਲ ਹੋ ਸਕਦੀ ਹੈ?",
 }
 
 OPENING_NO_COMPANY: dict[str, str] = {
-    "te-IN": "Namaste! Nenu {name}. {work} ki related ga meeku help chestunnanu. Meeru ela sahayam kavali?",
-    "en-IN": "Hi, this is {name}. I'm calling about {work}. How can I help you?",
-    "en-US": "Hi, this is {name}. How can I help you?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon. {work} ke baare mein help karungi. Main aapki kaise madad karun?",
-    "ta-IN": "Vanakkam! Naan {name}. {work} pathi pesuren. Ungalukku enna help venum?",
-    "kn-IN": "Namaskara! Naanu {name}. {work} bagge help maadalu matladuttiddene. Nimge hege sahayavagali?",
-    "ml-IN": "Namaskaram! Njan {name}. {work} sambhandhichu sahayikkan samsarikkunnu. Engane sahayikkanam?",
-    "mr-IN": "Namaskar! Mi {name}. {work} babat madat karanyasathi bolat aahe. Kashi madat karu?",
-    "bn-IN": "Nomoshkar! Ami {name}. {work} niye sahajjo korte call korechi. Apnake ki bhabe sahajjo korte pari?",
-    "gu-IN": "Namaste! Hu {name}. {work} baabat madad karva maate vaat karu chu. Hu tamne kevi rite madad kari shaku?",
-    "pa-IN": "Sat sri akaal! Main {name}. {work} baare madad karan layi call kiti hai. Tuhadi ki madad kar sakdi haan?",
+    "te-IN": "నమస్తే! నేను {name}. {work} గురించి మాట్లాడుతున్నాను. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
+    "en-IN": "Hi, this is {name}. I'm reaching out about {work}. How can I help you today?",
+    "en-US": "Hi, this is {name}. I'm reaching out about {work}. How can I help you today?",
+    "hi-IN": "नमस्ते! मैं {name}। {work} के बारे में बताइए, आपकी कैसे मदद करूँ?",
+    "ta-IN": "வணக்கம்! நான் {name}. {work} பத்தி பேசுறேன். சொல்லுங்க, உங்களுக்கு என்ன உதவி வேணும்?",
+    "kn-IN": "ನಮಸ್ಕಾರ! ನಾನು {name}. {work} ಬಗ್ಗೆ, ಹೇಳಿ ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+    "ml-IN": "നമസ്കാരം! ഞാൻ {name}. {work} കുറിച്ച്, പറയൂ എങ്ങനെ സഹായിക്കണം?",
+    "mr-IN": "नमस्कार! मी {name}. {work} बद्दल बोला, कशी मदत करू?",
+    "bn-IN": "নমস্কার! আমি {name}। বলুন, কীভাবে সাহায্য করতে পারি?",
+    "gu-IN": "નમસ્તે! હું {name}. {work} માટે કહો, હું આપને કેવી રીતે મદદ કરી શકું?",
+    "pa-IN": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ {name}। {work} ਬਾਰੇ ਦੱਸੋ, ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰਾਂ?",
 }
 
 OPENING_OUTBOUND_NO_COMPANY: dict[str, str] = {
-    "te-IN": "Hi, nenu {name}. {work} gurinchi matladutunnanu. Meeku oka moment unda?",
+    "te-IN": "హలో, నేను {name}. {work} గురించి మాట్లాడటానికి ఒక moment ఉంటుందా?",
     "en-IN": "Hi, this is {name}. I'm calling about {work}. Do you have a moment?",
     "en-US": "Hi, this is {name}. I'm calling about {work}. Do you have a minute?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon. {work} ke baare mein. Kya aap free hain?",
-    "ta-IN": "Hi, naan {name}. {work} pathi pesuren. Oru nimisham pesalaama?",
-    "kn-IN": "Hi, naanu {name}. {work} bagge. Ondu nimisha matladabahuda?",
-    "ml-IN": "Hi, njan {name}. {work} kurichu. Oru nimisham samsarikkamo?",
-    "mr-IN": "Namaskar, mi {name}. {work} sathi. Ek minute bolu shakta ka?",
-    "bn-IN": "Namaskar, ami {name}. {work} niye. Ek minute bolte pari?",
-    "gu-IN": "Namaste, hu {name}. {work} mate. Ek minute vaat kar shakay?",
-    "pa-IN": "Sat sri akaal, main {name}. {work} lai. Ik minute gall kar sakde ho?",
+    "hi-IN": "नमस्ते, मैं {name}. {work} के बारे में एक मिनट बात हो सकती है?",
+    "ta-IN": "வணக்கம், நான் {name}. {work} பத்தி ஒரு நிமிஷம் பேசலாமா?",
+    "kn-IN": "ನಮಸ್ಕಾರ, ನಾನು {name}. {work} ಬಗ್ಗೆ ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+    "ml-IN": "നമസ്കാരം, ഞാൻ {name}. {work} കുറിച്ച് ഒരു മിനിറ്റ് സംസാരിക്കാമോ?",
+    "mr-IN": "नमस्कार, मी {name}. {work} बद्दल एक मिनिट बोलू शकता का?",
+    "bn-IN": "নমস্কার, আমি {name}. {work} নিয়ে এক মিনিট কথা বলা যাবে?",
+    "gu-IN": "નમસ્તે, હું {name}. {work} માટે એક મિનિટ વાત થઈ શકે?",
+    "pa-IN": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ, ਮੈਂ {name}. {work} ਬਾਰੇ ਇੱਕ ਮਿੰਟ ਗੱਲ ਹੋ ਸਕਦੀ ਹੈ?",
 }
 
 OPENING_NAME_ONLY: dict[str, str] = {
-    "te-IN": "Namaste! Nenu {name}. Meeru ela sahayam kavali?",
+    "te-IN": "నమస్తే! నేను {name}. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
     "en-IN": "Hi, this is {name}. How can I help you?",
     "en-US": "Hi, this is {name}. How can I help you?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon. Main aapki kaise madad karun?",
-    "ta-IN": "Vanakkam! Naan {name}. Ungalukku enna help venum?",
-    "kn-IN": "Namaskara! Naanu {name}. Nimge hege sahayavagali?",
-    "ml-IN": "Namaskaram! Njan {name}. Engane sahayikkanam?",
-    "mr-IN": "Namaskar! Mi {name}. Kashi madat karu?",
-    "bn-IN": "Nomoshkar! Ami {name}. Apnake ki bhabe sahajjo korte pari?",
-    "gu-IN": "Namaste! Hu {name}. Hu tamne kevi rite madad kari shaku?",
-    "pa-IN": "Sat sri akaal! Main {name}. Tuhadi ki madad kar sakdi haan?",
+    "hi-IN": "नमस्ते! मैं {name}। बताइए, आपकी कैसे मदद करूँ?",
+    "ta-IN": "வணக்கம்! நான் {name}. சொல்லுங்க, உங்களுக்கு என்ன உதவி வேணும்?",
+    "kn-IN": "ನಮಸ್ಕಾರ! ನಾನು {name}. ಹೇಳಿ, ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+    "ml-IN": "നമസ്കാരം! ഞാൻ {name}. പറയൂ, എങ്ങനെ സഹായിക്കണം?",
+    "mr-IN": "नमस्कार! मी {name}. बोला, कशी मदत करू?",
+    "bn-IN": "নমস্কার! আমি {name}। বলুন, কীভাবে সাহায্য করতে পারি?",
+    "gu-IN": "નમસ્તે! હું {name}. કહો, હું આપને કેવી રીતે મદદ કરી શકું?",
+    "pa-IN": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ {name}। ਦੱਸੋ, ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰਾਂ?",
 }
 
 OPENING_OUTBOUND_NAME_ONLY: dict[str, str] = {
-    "te-IN": "Hi, nenu {name}. Meeru free unnara — oka moment unda?",
+    "te-IN": "హలో, నేను {name}. మాట్లాడటానికి ఒక moment ఉంటుందా?",
     "en-IN": "Hi, this is {name}. Do you have a moment?",
     "en-US": "Hi, this is {name}. Do you have a minute?",
-    "hi-IN": "Namaste, main {name} bol rahi hoon. Kya aap free hain — ek minute?",
-    "ta-IN": "Hi, naan {name}. Oru nimisham pesalaama?",
-    "kn-IN": "Hi, naanu {name}. Ondu nimisha matladabahuda?",
-    "ml-IN": "Hi, njan {name}. Oru nimisham samsarikkamo?",
-    "mr-IN": "Namaskar, mi {name}. Ek minute bolu shakta ka?",
-    "bn-IN": "Namaskar, ami {name}. Ek minute bolte pari?",
-    "gu-IN": "Namaste, hu {name}. Ek minute vaat kar shakay?",
-    "pa-IN": "Sat sri akaal, main {name}. Ik minute gall kar sakde ho?",
+    "hi-IN": "नमस्ते, मैं {name}. क्या अभी एक मिनट बात हो सकती है?",
+    "ta-IN": "வணக்கம், நான் {name}. ஒரு நிமிஷம் பேசலாமா?",
+    "kn-IN": "ನಮಸ್ಕಾರ, ನಾನು {name}. ಒಂದು ನಿಮಿಷ ಮಾತನಾಡಬಹುದಾ?",
+    "ml-IN": "നമസ്കാരം, ഞാൻ {name}. ഒരു മിനിറ്റ് സംസാരിക്കാമോ?",
+    "mr-IN": "नमस्कार, मी {name}. एक मिनिट बोलू शकता का?",
+    "bn-IN": "নমস্কার, আমি {name}. এক মিনিট কথা বলা যাবে?",
+    "gu-IN": "નમસ્તે, હું {name}. એક મિનિટ વાત થઈ શકે?",
+    "pa-IN": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ, ਮੈਂ {name}. ਕੀ ਇੱਕ ਮਿੰਟ ਗੱਲ ਹੋ ਸਕਦੀ ਹੈ?",
 }
 
 _WORK_SENTENCE_START = re.compile(
@@ -1133,12 +1151,9 @@ def script_writer_system(*, language: str | None, budget_tokens: int) -> str:
         "- Plain text only — no markdown, no bullet symbols, no numbered lists.\n"
         "- NEVER invent prices, discounts, inventory, policies, salaries, or capabilities not in the brief.\n"
         f"- {voice_locale} "
-        f"Platform LENGTH bands are injected by the server "
-        f"(simple {LIVE_REPLY_MIN_CHARS}–{LIVE_REPLY_SIMPLE_MAX}, "
-        f"normal 30–{LIVE_REPLY_NORMAL_MAX}, "
-        f"objection 30–{LIVE_REPLY_OBJECTION_MAX}, "
-        f"complex 70–{LIVE_REPLY_COMPLEX_MAX}, "
-        f"ceiling {LIVE_REPLY_MAX_CHARS}) — do NOT invent different numbers, "
+        f"Platform speech length target is 1–2 conversational sentences "
+        f"(soft target {LIVE_REPLY_SOFT_MAX_CHARS}, hard ceiling {LIVE_REPLY_MAX_CHARS} characters; "
+        "short natural acknowledgments require no minimum length or padding) — do NOT invent different numbers, "
         "and do NOT paste the full LENGTH table into agent_script.\n"
         "- Do NOT include language-policy dumps, number pronunciation, filler bans, or barge-in. "
         "The server writes those into the brain prompt.\n"

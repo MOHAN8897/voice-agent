@@ -40,7 +40,7 @@ def test_legacy_writer_accepts_every_supported_locale(locale):
     assert f'selected language {locale}' in prompt
 
 
-@pytest.mark.parametrize('locale', ['ta-IN', 'kn-IN', 'ml-IN', 'mr-IN', 'bn-IN', 'gu-IN', 'pa-IN'])
+@pytest.mark.parametrize('locale', ['te-IN', 'hi-IN', 'ta-IN', 'kn-IN', 'ml-IN', 'mr-IN', 'bn-IN', 'gu-IN', 'pa-IN'])
 @pytest.mark.parametrize('direction', ['inbound', 'outbound'])
 def test_personal_opening_does_not_fall_back_to_hindi_or_telugu(locale, direction):
     line = build_opening_line(agent_name='Sam', company_name='', work_scope='',

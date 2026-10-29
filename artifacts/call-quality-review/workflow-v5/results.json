@@ -1,0 +1,3569 @@
+[
+  {
+    "id": "en-IN/callback/realestate",
+    "scenario": "callback",
+    "language": "en-IN",
+    "business": "realestate",
+    "tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+    "agent_id": "8c6e2822-4a48-4795-aba3-9c97f636d251",
+    "call_id": "4ee1279a-3af6-487a-9fce-0ac8cb9327c1",
+    "phone": "+919876500013",
+    "opening": "Hi, this is Ravi calling from Green Acres Realty. Do you have a moment?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+        "caller_en": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+        "reply": "",
+        "farewell": "I've saved your details and your request for a follow-up call. Thank you for your time. Goodbye.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "I've saved your details and your request for a follow-up call. Thank you for your time. Goodbye.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:callback_required",
+        "sentiment:neutral",
+        "signal:objection"
+      ],
+      "facts": {
+        "callback_time": "tomorrow at 6 in the evening",
+        "phone": "+919876500013"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "4ee1279a-3af6-487a-9fce-0ac8cb9327c1",
+          "tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+          "agent_id": "8c6e2822-4a48-4795-aba3-9c97f636d251",
+          "session_id": "wf-c3fe2a0f5f7846f18e11dd03eb88ce78",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_7d309f1eb22948ea",
+          "started_at": "2026-10-29 20:56:42.478216+00:00",
+          "ended_at": "2026-10-29 20:56:45.035117+00:00",
+          "duration_sec": 2,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/4ee1279a-3af6-487a-9fce-0ac8cb9327c1/",
+          "end_reason": "goal_complete",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "followup:callback",
+            "outcome:callback_required",
+            "sentiment:neutral",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:56:42.478216+00:00",
+          "created_at": "2026-10-29 20:56:42.478216+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "ee27ea75-ca8e-47c2-9ee4-1b9e09739775",
+          "tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+          "user_id": null,
+          "original_call_id": "4ee1279a-3af6-487a-9fce-0ac8cb9327c1",
+          "original_attempt_id": null,
+          "agent_id": "8c6e2822-4a48-4795-aba3-9c97f636d251",
+          "to_e164": "+919876500013",
+          "from_e164": null,
+          "dial_request_id": "requested:4ee1279a-3af6-487a-9fce-0ac8cb9327c1",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-29 20:56:43.919603+00:00",
+          "updated_at": "2026-10-29 20:56:43.919603+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "7423cbd8-6f8e-463a-a36f-aa5008e8a0f6",
+          "tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+          "agent_id": "8c6e2822-4a48-4795-aba3-9c97f636d251",
+          "origin_key": "callback:ee27ea75-ca8e-47c2-9ee4-1b9e09739775",
+          "source_id": "4ee1279a-3af6-487a-9fce-0ac8cb9327c1",
+          "kind": "callback",
+          "phone": "+919876500013",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+            "requestedWhen": "tomorrow at 6 in the evening",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+                "at": "2026-10-29T20:56:42.503556Z"
+              }
+            ],
+            "callbackId": "ee27ea75-ca8e-47c2-9ee4-1b9e09739775",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:56:43.919603+00:00"
+          },
+          "due_at": "2026-10-29 20:56:43.919603+00:00",
+          "expires_at": "2026-11-05 20:56:43.919603+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "469d304a-611e-462b-923f-9a77d9a392fb",
+          "billing_tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+          "created_at": "2026-10-29 20:56:43.931458+00:00",
+          "updated_at": "2026-10-29 20:56:43.931458+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "b8aa5f24-16e7-40e9-b5a4-2ef11168dc1a",
+          "tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+          "agent_id": "8c6e2822-4a48-4795-aba3-9c97f636d251",
+          "name": "New lead",
+          "phone": "+919876500013",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 4ee1279a-3af6-487a-9fce-0ac8cb9327c1]\nThe caller initiated the call but stated they were busy and requested a callback for the following day at 6:00 PM. The agent acknowledged the request, saved the details, and concluded the call.\n\nNext step: Call the caller back tomorrow at 6:00 PM.\n\nObjections: Caller was busy and unavailable to continue the conversation.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-29 20:56:46.023948+00:00",
+          "updated_at": "2026-10-29 20:56:46.023948+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "callback_request": {
+        "id": "ee27ea75-ca8e-47c2-9ee4-1b9e09739775",
+        "status": "requested",
+        "requestedWhen": "tomorrow at 6 in the evening",
+        "requestText": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?"
+      },
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    }
+  },
+  {
+    "id": "en-IN/dnd/realestate",
+    "scenario": "dnd",
+    "language": "en-IN",
+    "business": "realestate",
+    "tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+    "agent_id": "8c6e2822-4a48-4795-aba3-9c97f636d251",
+    "call_id": "b3dad857-b593-47d2-9d9b-85bda7d6b6a9",
+    "phone": "+919876500014",
+    "opening": "Hi, this is Ravi calling from Green Acres Realty. Do you have a moment?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "Please don't call this number ever again. Remove my number from your list.",
+        "caller_en": "Please don't call this number ever again. Remove my number from your list.",
+        "reply": "",
+        "farewell": "Understood, we won't call this number again. Thank you for your time. Goodbye.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "Understood, we won't call this number again. Thank you for your time. Goodbye.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "do_not_call",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "do_not_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "outcome:not_interested",
+        "sentiment:neutral",
+        "signal:do_not_call",
+        "signal:objection"
+      ],
+      "facts": {
+        "phone": "+919876500014"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "b3dad857-b593-47d2-9d9b-85bda7d6b6a9",
+          "tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+          "agent_id": "8c6e2822-4a48-4795-aba3-9c97f636d251",
+          "session_id": "wf-e8c5368f15fc463d89bb856909cef410",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_7d309f1eb22948ea",
+          "started_at": "2026-10-29 20:56:46.368366+00:00",
+          "ended_at": "2026-10-29 20:56:49.073628+00:00",
+          "duration_sec": 2,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/b3dad857-b593-47d2-9d9b-85bda7d6b6a9/",
+          "end_reason": "firm_refusal",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "contact:phone_known",
+            "outcome:not_interested",
+            "sentiment:neutral",
+            "signal:do_not_call",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:56:46.368366+00:00",
+          "created_at": "2026-10-29 20:56:46.380652+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [
+        {
+          "id": "7423cbd8-6f8e-463a-a36f-aa5008e8a0f6",
+          "tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+          "agent_id": "8c6e2822-4a48-4795-aba3-9c97f636d251",
+          "origin_key": "callback:ee27ea75-ca8e-47c2-9ee4-1b9e09739775",
+          "source_id": "4ee1279a-3af6-487a-9fce-0ac8cb9327c1",
+          "kind": "callback",
+          "phone": "+919876500013",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+            "requestedWhen": "tomorrow at 6 in the evening",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+                "at": "2026-10-29T20:56:42.503556Z"
+              }
+            ],
+            "callbackId": "ee27ea75-ca8e-47c2-9ee4-1b9e09739775",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:56:43.919603+00:00"
+          },
+          "due_at": "2026-10-29 20:56:43.919603+00:00",
+          "expires_at": "2026-11-05 20:56:43.919603+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "469d304a-611e-462b-923f-9a77d9a392fb",
+          "billing_tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+          "created_at": "2026-10-29 20:56:43.931458+00:00",
+          "updated_at": "2026-10-29 20:56:43.931458+00:00"
+        }
+      ],
+      "dnd": [
+        {
+          "id": "fdfa78dc-3e91-4987-861a-5d823af2d32b",
+          "tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+          "phone_e164": "+919876500014",
+          "reason": "verbal_opt_out_live_call",
+          "added_at": "2026-10-29 20:56:50.008608+00:00",
+          "active": true,
+          "source": "live_call_opt_out",
+          "added_by_user_id": null,
+          "removed_at": null,
+          "removed_by_user_id": null,
+          "removal_reason": null,
+          "reconsent_confirmed": false
+        }
+      ],
+      "leads": [
+        {
+          "lead_id": "b8aa5f24-16e7-40e9-b5a4-2ef11168dc1a",
+          "tenant_id": "309e9058-606f-4fbb-a321-241b0d2a8818",
+          "agent_id": "8c6e2822-4a48-4795-aba3-9c97f636d251",
+          "name": "New lead",
+          "phone": "+919876500013",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 4ee1279a-3af6-487a-9fce-0ac8cb9327c1]\nThe caller initiated the call but stated they were busy and requested a callback for the following day at 6:00 PM. The agent acknowledged the request, saved the details, and concluded the call.\n\nNext step: Call the caller back tomorrow at 6:00 PM.\n\nObjections: Caller was busy and unavailable to continue the conversation.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-29 20:56:46.023948+00:00",
+          "updated_at": "2026-10-29 20:56:46.023948+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "do_not_call",
+      "end_reason": "firm_refusal"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "not_interested"
+    }
+  },
+  {
+    "id": "en-IN/end_no_dnd/printing",
+    "scenario": "end_no_dnd",
+    "language": "en-IN",
+    "business": "printing",
+    "tenant_id": "90ffebb7-c56a-4478-8315-2837aba2543e",
+    "agent_id": "cd35f130-121c-4f4a-8713-e5e8eeef5bfe",
+    "call_id": "fd4258b2-f0bf-4349-ac78-a57c8f741f75",
+    "phone": "+919876500015",
+    "opening": "Hi, this is Kavitha calling from Sri Krishna Digital Prints. How can I help you today?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "What is the price of matte visiting cards?",
+        "caller_en": "What is the price of matte visiting cards?",
+        "reply": "Matte finish visiting cards cost 350 rupees per 100 cards. The minimum order is 100 cards.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "Okay, that's all I needed. Thanks, bye.",
+        "caller_en": "Okay, that's all I needed. Thanks, bye.",
+        "reply": "",
+        "farewell": "Thank you for your time. Goodbye.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "Matte finish visiting cards cost 350 rupees per 100 cards. The minimum order is 100 cards.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "Thank you for your time. Goodbye.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "interested",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "custom:visiting-cards",
+        "intent:pricing",
+        "outcome:interested",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "minimum_order": "100 cards",
+        "phone": "+919876500015",
+        "price": "350 rupees per 100 cards",
+        "product": "matte visiting cards"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "fd4258b2-f0bf-4349-ac78-a57c8f741f75",
+          "tenant_id": "90ffebb7-c56a-4478-8315-2837aba2543e",
+          "agent_id": "cd35f130-121c-4f4a-8713-e5e8eeef5bfe",
+          "session_id": "wf-e8a61e7aa535497fb036c7135386ba31",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_8d673f8e69f34684",
+          "started_at": "2026-10-29 20:56:50.118390+00:00",
+          "ended_at": "2026-10-29 20:56:54.947238+00:00",
+          "duration_sec": 4,
+          "disposition": "interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/fd4258b2-f0bf-4349-ac78-a57c8f741f75/",
+          "end_reason": "goodbye",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "contact:phone_known",
+            "custom:visiting-cards",
+            "intent:pricing",
+            "outcome:interested",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:56:50.118390+00:00",
+          "created_at": "2026-10-29 20:56:50.118390+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "de6b2e64-f25b-468d-a66f-9d11fb9fdaa1",
+          "tenant_id": "90ffebb7-c56a-4478-8315-2837aba2543e",
+          "agent_id": "cd35f130-121c-4f4a-8713-e5e8eeef5bfe",
+          "name": "New lead",
+          "phone": "+919876500015",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: fd4258b2-f0bf-4349-ac78-a57c8f741f75]\nThe caller initiated the call to inquire about the price of matte visiting cards. The agent responded by stating that matte finish visiting cards cost 350 rupees per 100 cards, with a minimum order quantity of 100 cards. The caller acknowledged this information, indicated they had everything they needed, and concluded the call by saying goodbye.\n\nCall outcome: interested (90% confidence)",
+          "created_at": "2026-10-29 20:56:55.914838+00:00",
+          "updated_at": "2026-10-29 20:56:55.914838+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "interested"
+    }
+  },
+  {
+    "id": "gu-IN/callback/academy",
+    "scenario": "callback",
+    "language": "gu-IN",
+    "business": "academy",
+    "tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+    "agent_id": "6ae59878-5e47-4f61-865b-a240e649a04b",
+    "call_id": "e1640c67-3e22-46e7-9d61-e360d1f3be4e",
+    "phone": "+919876500016",
+    "opening": "નમસ્તે! હું Teja Data Academy માંથી Madhavi. કહો, હું આપને કેવી રીતે મદદ કરી શકું?",
+    "turn_index": 3,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "હું અત્યારે busy છું. તમે મને કાલે સાંજે 6 વાગ્યે call કરી શકશો?",
+        "caller_en": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+        "reply": "હું સમજી શકું છું કે તમે અત્યારે busy છો. મેં કાલે સાંજે 6 વાગ્યાની તમારી callback request નોંધી લીધી છે. અમારી team તમને ત્યારે call કરશે.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "હા, આ જ number પર. મારું નામ Kiran છે.",
+        "caller_en": "Yes, on this same number. My name is Kiran.",
+        "reply": "ઠીક છે Kiran ભાઈ, મેં તમારો number અને કાલે સાંજે 6 વાગ્યાનો time નોંધી લીધો છે. અમારી team તમને ત્યારે જ call કરશે.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "ઠીક છે, આભાર.",
+        "caller_en": "Okay, thank you.",
+        "reply": "",
+        "farewell": "તમારી વિગતો અને ફરીથી કૉલ કરવાની વિનંતી નોંધી લીધી છે. તમારા સમય માટે આભાર. આવજો.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "હું સમજી શકું છું કે તમે અત્યારે busy છો. મેં કાલે સાંજે 6 વાગ્યાની તમારી callback request નોંધી લીધી છે. અમારી team તમને ત્યારે call કરશે.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "ઠીક છે Kiran ભાઈ, મેં તમારો number અને કાલે સાંજે 6 વાગ્યાનો time નોંધી લીધો છે. અમારી team તમને ત્યારે જ call કરશે.",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "તમારી વિગતો અને ફરીથી કૉલ કરવાની વિનંતી નોંધી લીધી છે. તમારા સમય માટે આભાર. આવજો.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 3
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:callback_required",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "callback_time": "Tomorrow at 6 PM",
+        "caller_name": "Kiran",
+        "name": "Kiran",
+        "phone": "+919876500016"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "e1640c67-3e22-46e7-9d61-e360d1f3be4e",
+          "tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+          "agent_id": "6ae59878-5e47-4f61-865b-a240e649a04b",
+          "session_id": "wf-663ab4bf25e44d5eb7ab9526544de1fe",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_c07598d324a444b5",
+          "started_at": "2026-10-29 20:56:56.001234+00:00",
+          "ended_at": "2026-10-29 20:57:03.109012+00:00",
+          "duration_sec": 7,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/e1640c67-3e22-46e7-9d61-e360d1f3be4e/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "followup:callback",
+            "outcome:callback_required",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:56:56.001234+00:00",
+          "created_at": "2026-10-29 20:56:56.002239+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "c665366a-c1c6-4c1d-b48c-21f5a42c24e6",
+          "tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+          "user_id": null,
+          "original_call_id": "e1640c67-3e22-46e7-9d61-e360d1f3be4e",
+          "original_attempt_id": null,
+          "agent_id": "6ae59878-5e47-4f61-865b-a240e649a04b",
+          "to_e164": "+919876500016",
+          "from_e164": null,
+          "dial_request_id": "requested:e1640c67-3e22-46e7-9d61-e360d1f3be4e",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-29 20:57:02.031851+00:00",
+          "updated_at": "2026-10-29 20:57:02.031851+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "54c4a3dd-7c60-4fc5-ad62-1d4e1a1cd2fb",
+          "tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+          "agent_id": "6ae59878-5e47-4f61-865b-a240e649a04b",
+          "origin_key": "callback:c665366a-c1c6-4c1d-b48c-21f5a42c24e6",
+          "source_id": "e1640c67-3e22-46e7-9d61-e360d1f3be4e",
+          "kind": "callback",
+          "phone": "+919876500016",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "હું અત્યારે busy છું. તમે મને કાલે સાંજે 6 વાગ્યે call કરી શકશો?",
+            "requestedWhen": "કાલે સાંજે 6 વાગ્યે",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "હું અત્યારે busy છું. તમે મને કાલે સાંજે 6 વાગ્યે call કરી શકશો?",
+                "at": "2026-10-29T20:56:56.024298Z"
+              },
+              {
+                "role": "assistant",
+                "text": "હું સમજી શકું છું કે તમે અત્યારે busy છો. મેં કાલે સાંજે 6 વાગ્યાની તમારી callback request નોંધી લીધી છે. અમારી team તમને ત્યારે call કરશે.",
+                "at": "2026-10-29T20:56:58.638494Z"
+              },
+              {
+                "role": "user",
+                "text": "હા, આ જ number પર. મારું નામ Kiran છે.",
+                "at": "2026-10-29T20:56:58.655076Z"
+              },
+              {
+                "role": "assistant",
+                "text": "ઠીક છે Kiran ભાઈ, મેં તમારો number અને કાલે સાંજે 6 વાગ્યાનો time નોંધી લીધો છે. અમારી team તમને ત્યારે જ call કરશે.",
+                "at": "2026-10-29T20:57:00.951835Z"
+              },
+              {
+                "role": "user",
+                "text": "ઠીક છે, આભાર.",
+                "at": "2026-10-29T20:57:00.958355Z"
+              }
+            ],
+            "callbackId": "c665366a-c1c6-4c1d-b48c-21f5a42c24e6",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:57:02.039712+00:00"
+          },
+          "due_at": "2026-10-29 20:57:02.039712+00:00",
+          "expires_at": "2026-11-05 20:57:02.039712+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "c4fa2a0a-f75e-4eed-b2c0-b44531c348b2",
+          "billing_tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+          "created_at": "2026-10-29 20:57:02.049316+00:00",
+          "updated_at": "2026-10-29 20:57:02.049316+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "4b1f55ba-0e57-403f-b557-bbe6ce75ffcc",
+          "tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+          "agent_id": "6ae59878-5e47-4f61-865b-a240e649a04b",
+          "name": "Kiran",
+          "phone": "+919876500016",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: e1640c67-3e22-46e7-9d61-e360d1f3be4e]\nThe caller, Kiran, stated they were busy and requested a callback for the following evening at 6 PM on the same number. The agent acknowledged the request, confirmed that the details and callback time were noted, and assured the caller that the team would contact them at the scheduled time. The caller agreed, thanked the agent, and the call was concluded.\n\nNext step: Callback team to contact Kiran at 6 PM tomorrow.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-29 20:57:04.227916+00:00",
+          "updated_at": "2026-10-29 20:57:04.227916+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "callback_request": {
+        "id": "c665366a-c1c6-4c1d-b48c-21f5a42c24e6",
+        "status": "requested",
+        "requestedWhen": "કાલે સાંજે 6 વાગ્યે",
+        "requestText": "હું અત્યારે busy છું. તમે મને કાલે સાંજે 6 વાગ્યે call કરી શકશો?"
+      },
+      "contact_preference": "callback",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    }
+  },
+  {
+    "id": "gu-IN/dnd/printing",
+    "scenario": "dnd",
+    "language": "gu-IN",
+    "business": "printing",
+    "tenant_id": "62d16ef3-08bd-4c36-889d-9454628ab99b",
+    "agent_id": "2336f75e-bba3-4cb7-a7bd-9031b6746a14",
+    "call_id": "ae95489e-c2c1-4f68-b9fa-07cc14d7793d",
+    "phone": "+919876500017",
+    "opening": "નમસ્તે! હું Sri Krishna Digital Prints માંથી Kavitha. કહો, હું આપને કેવી રીતે મદદ કરી શકું?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "પ્લીઝ હવે ક્યારેય આ number પર call ના કરતા. તમારા list માંથી મારો number કાઢી નાખજો.",
+        "caller_en": "Please don't call this number ever again. Remove my number from your list.",
+        "reply": "",
+        "farewell": "ઠીક છે, આ નંબર પર હવે ફરી કૉલ નહીં કરીએ. તમારા સમય માટે આભાર. આવજો.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "ઠીક છે, આ નંબર પર હવે ફરી કૉલ નહીં કરીએ. તમારા સમય માટે આભાર. આવજો.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "do_not_call",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "do_not_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "outcome:not_interested",
+        "sentiment:negative",
+        "signal:do_not_call",
+        "signal:objection"
+      ],
+      "facts": {
+        "phone": "+919876500017"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "ae95489e-c2c1-4f68-b9fa-07cc14d7793d",
+          "tenant_id": "62d16ef3-08bd-4c36-889d-9454628ab99b",
+          "agent_id": "2336f75e-bba3-4cb7-a7bd-9031b6746a14",
+          "session_id": "wf-d994dd0892f845b490ee3a785e19b381",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_d20771cee81f43f1",
+          "started_at": "2026-10-29 20:57:04.446139+00:00",
+          "ended_at": "2026-10-29 20:57:07.525103+00:00",
+          "duration_sec": 3,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/ae95489e-c2c1-4f68-b9fa-07cc14d7793d/",
+          "end_reason": "firm_refusal",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "contact:phone_known",
+            "outcome:not_interested",
+            "sentiment:negative",
+            "signal:do_not_call",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:57:04.446139+00:00",
+          "created_at": "2026-10-29 20:57:04.446139+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [
+        {
+          "id": "376ba128-0b47-4836-b8a7-680b8ba1e536",
+          "tenant_id": "62d16ef3-08bd-4c36-889d-9454628ab99b",
+          "phone_e164": "+919876500017",
+          "reason": "verbal_opt_out_live_call",
+          "added_at": "2026-10-29 20:57:08.465252+00:00",
+          "active": true,
+          "source": "live_call_opt_out",
+          "added_by_user_id": null,
+          "removed_at": null,
+          "removed_by_user_id": null,
+          "removal_reason": null,
+          "reconsent_confirmed": false
+        }
+      ],
+      "leads": []
+    },
+    "meta": {
+      "contact_preference": "do_not_call",
+      "end_reason": "firm_refusal"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "not_interested"
+    }
+  },
+  {
+    "id": "gu-IN/end_no_dnd/academy",
+    "scenario": "end_no_dnd",
+    "language": "gu-IN",
+    "business": "academy",
+    "tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+    "agent_id": "6ae59878-5e47-4f61-865b-a240e649a04b",
+    "call_id": "04570013-0fe4-4a15-83ad-6890930d13e3",
+    "phone": "+919876500018",
+    "opening": "નમસ્તે! હું Teja Data Academy માંથી Madhavi. કહો, હું આપને કેવી રીતે મદદ કરી શકું?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "Course fee કેટલી છે અને weekend batch છે ખરી?",
+        "caller_en": "What is the course fee and is there a weekend batch?",
+        "reply": "Course ની fee ₹8,999 છે અને હા, weekend batch છે, જે સવારે 10 થી 1 વાગ્યા સુધી ચાલે છે.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "ઠીક છે, મારે બસ આટલું જ જોઈતું હતું. આભાર, આવજો.",
+        "caller_en": "Okay, that's all I needed. Thanks, bye.",
+        "reply": "",
+        "farewell": "તમારા સમય માટે આભાર. આવજો.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "Course ની fee ₹8,999 છે અને હા, weekend batch છે, જે સવારે 10 થી 1 વાગ્યા સુધી ચાલે છે.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "તમારા સમય માટે આભાર. આવજો.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "interested",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "custom:course-fee",
+        "custom:weekend-batch",
+        "followup:send_info",
+        "intent:information",
+        "intent:purchase",
+        "outcome:interested",
+        "sentiment:neutral",
+        "signal:price_sensitive"
+      ],
+      "facts": {
+        "budget": "₹8,999",
+        "phone": "+919876500018",
+        "slot": "weekend batch, 10:00 AM to 1:00 PM"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "04570013-0fe4-4a15-83ad-6890930d13e3",
+          "tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+          "agent_id": "6ae59878-5e47-4f61-865b-a240e649a04b",
+          "session_id": "wf-cf9215e4708141649ef5a7602ff03473",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_c07598d324a444b5",
+          "started_at": "2026-10-29 20:57:08.547062+00:00",
+          "ended_at": "2026-10-29 20:57:13.674837+00:00",
+          "duration_sec": 5,
+          "disposition": "interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/04570013-0fe4-4a15-83ad-6890930d13e3/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "custom:course-fee",
+            "custom:weekend-batch",
+            "followup:send_info",
+            "intent:information",
+            "intent:purchase",
+            "outcome:interested",
+            "sentiment:neutral",
+            "signal:price_sensitive"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:57:08.547062+00:00",
+          "created_at": "2026-10-29 20:57:08.547062+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [
+        {
+          "id": "54c4a3dd-7c60-4fc5-ad62-1d4e1a1cd2fb",
+          "tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+          "agent_id": "6ae59878-5e47-4f61-865b-a240e649a04b",
+          "origin_key": "callback:c665366a-c1c6-4c1d-b48c-21f5a42c24e6",
+          "source_id": "e1640c67-3e22-46e7-9d61-e360d1f3be4e",
+          "kind": "callback",
+          "phone": "+919876500016",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "હું અત્યારે busy છું. તમે મને કાલે સાંજે 6 વાગ્યે call કરી શકશો?",
+            "requestedWhen": "કાલે સાંજે 6 વાગ્યે",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "હું અત્યારે busy છું. તમે મને કાલે સાંજે 6 વાગ્યે call કરી શકશો?",
+                "at": "2026-10-29T20:56:56.024298Z"
+              },
+              {
+                "role": "assistant",
+                "text": "હું સમજી શકું છું કે તમે અત્યારે busy છો. મેં કાલે સાંજે 6 વાગ્યાની તમારી callback request નોંધી લીધી છે. અમારી team તમને ત્યારે call કરશે.",
+                "at": "2026-10-29T20:56:58.638494Z"
+              },
+              {
+                "role": "user",
+                "text": "હા, આ જ number પર. મારું નામ Kiran છે.",
+                "at": "2026-10-29T20:56:58.655076Z"
+              },
+              {
+                "role": "assistant",
+                "text": "ઠીક છે Kiran ભાઈ, મેં તમારો number અને કાલે સાંજે 6 વાગ્યાનો time નોંધી લીધો છે. અમારી team તમને ત્યારે જ call કરશે.",
+                "at": "2026-10-29T20:57:00.951835Z"
+              },
+              {
+                "role": "user",
+                "text": "ઠીક છે, આભાર.",
+                "at": "2026-10-29T20:57:00.958355Z"
+              }
+            ],
+            "callbackId": "c665366a-c1c6-4c1d-b48c-21f5a42c24e6",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:57:02.039712+00:00"
+          },
+          "due_at": "2026-10-29 20:57:02.039712+00:00",
+          "expires_at": "2026-11-05 20:57:02.039712+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "c4fa2a0a-f75e-4eed-b2c0-b44531c348b2",
+          "billing_tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+          "created_at": "2026-10-29 20:57:02.049316+00:00",
+          "updated_at": "2026-10-29 20:57:02.049316+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "4b1f55ba-0e57-403f-b557-bbe6ce75ffcc",
+          "tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+          "agent_id": "6ae59878-5e47-4f61-865b-a240e649a04b",
+          "name": "Kiran",
+          "phone": "+919876500016",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: e1640c67-3e22-46e7-9d61-e360d1f3be4e]\nThe caller, Kiran, stated they were busy and requested a callback for the following evening at 6 PM on the same number. The agent acknowledged the request, confirmed that the details and callback time were noted, and assured the caller that the team would contact them at the scheduled time. The caller agreed, thanked the agent, and the call was concluded.\n\nNext step: Callback team to contact Kiran at 6 PM tomorrow.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-29 20:57:04.227916+00:00",
+          "updated_at": "2026-10-29 20:57:04.227916+00:00"
+        },
+        {
+          "lead_id": "1ea414e9-c996-4c1d-95a2-50e220d7f868",
+          "tenant_id": "5dda8643-f283-4e89-900d-884f502a3107",
+          "agent_id": "6ae59878-5e47-4f61-865b-a240e649a04b",
+          "name": "New lead",
+          "phone": "+919876500018",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 04570013-0fe4-4a15-83ad-6890930d13e3]\nThe caller inquired about the course fee and whether a weekend batch was available. The agent confirmed that the fee is ₹8,999 and that the weekend batch runs from 10:00 AM to 1:00 PM. The caller expressed satisfaction with this information, thanked the agent, and ended the call.\n\nCall outcome: interested (85% confidence)",
+          "created_at": "2026-10-29 20:57:14.743692+00:00",
+          "updated_at": "2026-10-29 20:57:14.743692+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "interested"
+    }
+  },
+  {
+    "id": "hi-IN/callback/academy",
+    "scenario": "callback",
+    "language": "hi-IN",
+    "business": "academy",
+    "tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+    "agent_id": "66c32566-5c8f-4528-84f0-9f9128ab978b",
+    "call_id": "28cbf811-09b3-46ee-ad42-b8ac7af9d3d5",
+    "phone": "+919876500004",
+    "opening": "नमस्ते! मैं Teja Data Academy से Madhavi। बताइए, आज आपकी कैसे मदद करूँ?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "मैं अभी busy हूँ। क्या आप मुझे कल शाम 6 बजे call कर सकते हो?",
+        "caller_en": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+        "reply": "",
+        "farewell": "आपकी जानकारी और दोबारा कॉल करने का अनुरोध दर्ज कर लिया है। समय देने के लिए धन्यवाद। नमस्कार।",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "आपकी जानकारी और दोबारा कॉल करने का अनुरोध दर्ज कर लिया है। समय देने के लिए धन्यवाद। नमस्कार।",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:callback_required",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "callback_time": "Tomorrow at 6 PM",
+        "phone": "+919876500004"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "28cbf811-09b3-46ee-ad42-b8ac7af9d3d5",
+          "tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+          "agent_id": "66c32566-5c8f-4528-84f0-9f9128ab978b",
+          "session_id": "wf-af06f390ca3245f798de1d1129c72e80",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_5a8c71c5e4d64b89",
+          "started_at": "2026-10-29 20:55:54.330975+00:00",
+          "ended_at": "2026-10-29 20:55:56.631521+00:00",
+          "duration_sec": 2,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/28cbf811-09b3-46ee-ad42-b8ac7af9d3d5/",
+          "end_reason": "goal_complete",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "followup:callback",
+            "outcome:callback_required",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:55:54.330975+00:00",
+          "created_at": "2026-10-29 20:55:54.334503+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "ef828937-80fd-4172-bf7c-0058b2bdfb28",
+          "tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+          "user_id": null,
+          "original_call_id": "28cbf811-09b3-46ee-ad42-b8ac7af9d3d5",
+          "original_attempt_id": null,
+          "agent_id": "66c32566-5c8f-4528-84f0-9f9128ab978b",
+          "to_e164": "+919876500004",
+          "from_e164": null,
+          "dial_request_id": "requested:28cbf811-09b3-46ee-ad42-b8ac7af9d3d5",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-29 20:55:55.532672+00:00",
+          "updated_at": "2026-10-29 20:55:55.532672+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "626e67df-a082-4273-99c4-e419b1c0e53c",
+          "tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+          "agent_id": "66c32566-5c8f-4528-84f0-9f9128ab978b",
+          "origin_key": "callback:ef828937-80fd-4172-bf7c-0058b2bdfb28",
+          "source_id": "28cbf811-09b3-46ee-ad42-b8ac7af9d3d5",
+          "kind": "callback",
+          "phone": "+919876500004",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "मैं अभी busy हूँ। क्या आप मुझे कल शाम 6 बजे call कर सकते हो?",
+            "requestedWhen": "कल शाम 6 बजे",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "मैं अभी busy हूँ। क्या आप मुझे कल शाम 6 बजे call कर सकते हो?",
+                "at": "2026-10-29T20:55:54.373965Z"
+              }
+            ],
+            "callbackId": "ef828937-80fd-4172-bf7c-0058b2bdfb28",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:55:55.546052+00:00"
+          },
+          "due_at": "2026-10-29 20:55:55.546052+00:00",
+          "expires_at": "2026-11-05 20:55:55.546052+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "f502bb9a-3b99-46af-aa6b-ea60b6bd9994",
+          "billing_tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+          "created_at": "2026-10-29 20:55:55.546052+00:00",
+          "updated_at": "2026-10-29 20:55:55.546052+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "1f4f8ed8-fecb-4704-a587-bd18ae5665cd",
+          "tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+          "agent_id": "66c32566-5c8f-4528-84f0-9f9128ab978b",
+          "name": "New lead",
+          "phone": "+919876500004",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 28cbf811-09b3-46ee-ad42-b8ac7af9d3d5]\nThe caller stated that they were currently busy and requested a callback the following day at 6 PM. The agent acknowledged the request, logged the callback details, and concluded the call.\n\nNext step: Call the caller back at 6 PM the next day.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-29 20:55:57.572002+00:00",
+          "updated_at": "2026-10-29 20:55:57.572002+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "callback_request": {
+        "id": "ef828937-80fd-4172-bf7c-0058b2bdfb28",
+        "status": "requested",
+        "requestedWhen": "कल शाम 6 बजे",
+        "requestText": "मैं अभी busy हूँ। क्या आप मुझे कल शाम 6 बजे call कर सकते हो?"
+      },
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    }
+  },
+  {
+    "id": "hi-IN/dnd/realestate",
+    "scenario": "dnd",
+    "language": "hi-IN",
+    "business": "realestate",
+    "tenant_id": "aca0ecdc-b5fd-4454-903f-235d8463afe6",
+    "agent_id": "532307ab-adc7-4231-b99d-522d0f31b405",
+    "call_id": "90a90f72-0bb6-49a8-8587-03c583401b98",
+    "phone": "+919876500005",
+    "opening": "नमस्ते, मैं Green Acres Realty से Ravi. क्या अभी एक मिनट बात हो सकती है?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "प्लीज इस number पर दोबारा कभी call मत करना। अपनी list से मेरा number हटा दो।",
+        "caller_en": "Please don't call this number ever again. Remove my number from your list.",
+        "reply": "",
+        "farewell": "ठीक है, इस नंबर पर अब दोबारा कॉल नहीं करेंगे। समय देने के लिए धन्यवाद। नमस्कार।",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "ठीक है, इस नंबर पर अब दोबारा कॉल नहीं करेंगे। समय देने के लिए धन्यवाद। नमस्कार।",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "do_not_call",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "do_not_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "outcome:not_interested",
+        "sentiment:neutral",
+        "signal:do_not_call"
+      ],
+      "facts": {
+        "phone": "+919876500005"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "90a90f72-0bb6-49a8-8587-03c583401b98",
+          "tenant_id": "aca0ecdc-b5fd-4454-903f-235d8463afe6",
+          "agent_id": "532307ab-adc7-4231-b99d-522d0f31b405",
+          "session_id": "wf-677718788e574d7abee961038271ba62",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_cac4d9c4261646a9",
+          "started_at": "2026-10-29 20:55:57.655467+00:00",
+          "ended_at": "2026-10-29 20:56:00.369009+00:00",
+          "duration_sec": 2,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/90a90f72-0bb6-49a8-8587-03c583401b98/",
+          "end_reason": "firm_refusal",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "contact:phone_known",
+            "outcome:not_interested",
+            "sentiment:neutral",
+            "signal:do_not_call"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:55:57.655467+00:00",
+          "created_at": "2026-10-29 20:55:57.655467+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [
+        {
+          "id": "880de2b0-cbab-4a00-9c66-dac1cd240cf8",
+          "tenant_id": "aca0ecdc-b5fd-4454-903f-235d8463afe6",
+          "phone_e164": "+919876500005",
+          "reason": "verbal_opt_out_live_call",
+          "added_at": "2026-10-29 20:56:01.320426+00:00",
+          "active": true,
+          "source": "live_call_opt_out",
+          "added_by_user_id": null,
+          "removed_at": null,
+          "removed_by_user_id": null,
+          "removal_reason": null,
+          "reconsent_confirmed": false
+        }
+      ],
+      "leads": []
+    },
+    "meta": {
+      "contact_preference": "do_not_call",
+      "end_reason": "firm_refusal"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "not_interested"
+    }
+  },
+  {
+    "id": "hi-IN/end_no_dnd/academy",
+    "scenario": "end_no_dnd",
+    "language": "hi-IN",
+    "business": "academy",
+    "tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+    "agent_id": "66c32566-5c8f-4528-84f0-9f9128ab978b",
+    "call_id": "5d748e33-b910-4522-87cb-9f4710ac97c0",
+    "phone": "+919876500006",
+    "opening": "नमस्ते! मैं Teja Data Academy से Madhavi। बताइए, आज आपकी कैसे मदद करूँ?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "Course fee कितनी है और क्या weekend batch है?",
+        "caller_en": "What is the course fee and is there a weekend batch?",
+        "reply": "Course की fee ₹8,999 है और इसमें कोई instalment नहीं है। हाँ, weekend batch भी है, जो सुबह 10 बजे से दोपहर 1 बजे तक चलता है। क्या आप इसमें join करना चाहेंगे?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "ठीक है, मुझे बस यही चाहिए था। Thanks, bye.",
+        "caller_en": "Okay, that's all I needed. Thanks, bye.",
+        "reply": "",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "Course की fee ₹8,999 है और इसमें कोई instalment नहीं है। हाँ, weekend batch भी है, जो सुबह 10 बजे से दोपहर 1 बजे तक चलता है। क्या आप इसमें join करना चाहेंगे?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "interested",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "custom:course-fee",
+        "custom:weekend-batch",
+        "followup:send_info",
+        "intent:information",
+        "intent:purchase",
+        "outcome:interested",
+        "sentiment:positive",
+        "signal:ready_to_buy"
+      ],
+      "facts": {
+        "budget": "₹8,999",
+        "phone": "+919876500006",
+        "slot": "weekend 10:00 AM to 1:00 PM"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "5d748e33-b910-4522-87cb-9f4710ac97c0",
+          "tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+          "agent_id": "66c32566-5c8f-4528-84f0-9f9128ab978b",
+          "session_id": "wf-81bb0a604a684197b0402079e9d1d2ae",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_5a8c71c5e4d64b89",
+          "started_at": "2026-10-29 20:56:01.414049+00:00",
+          "ended_at": "2026-10-29 20:56:06.598720+00:00",
+          "duration_sec": 5,
+          "disposition": "interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/5d748e33-b910-4522-87cb-9f4710ac97c0/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "custom:course-fee",
+            "custom:weekend-batch",
+            "followup:send_info",
+            "intent:information",
+            "intent:purchase",
+            "outcome:interested",
+            "sentiment:positive",
+            "signal:ready_to_buy"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:56:01.414049+00:00",
+          "created_at": "2026-10-29 20:56:01.415330+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [
+        {
+          "id": "626e67df-a082-4273-99c4-e419b1c0e53c",
+          "tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+          "agent_id": "66c32566-5c8f-4528-84f0-9f9128ab978b",
+          "origin_key": "callback:ef828937-80fd-4172-bf7c-0058b2bdfb28",
+          "source_id": "28cbf811-09b3-46ee-ad42-b8ac7af9d3d5",
+          "kind": "callback",
+          "phone": "+919876500004",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "मैं अभी busy हूँ। क्या आप मुझे कल शाम 6 बजे call कर सकते हो?",
+            "requestedWhen": "कल शाम 6 बजे",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "मैं अभी busy हूँ। क्या आप मुझे कल शाम 6 बजे call कर सकते हो?",
+                "at": "2026-10-29T20:55:54.373965Z"
+              }
+            ],
+            "callbackId": "ef828937-80fd-4172-bf7c-0058b2bdfb28",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:55:55.546052+00:00"
+          },
+          "due_at": "2026-10-29 20:55:55.546052+00:00",
+          "expires_at": "2026-11-05 20:55:55.546052+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "f502bb9a-3b99-46af-aa6b-ea60b6bd9994",
+          "billing_tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+          "created_at": "2026-10-29 20:55:55.546052+00:00",
+          "updated_at": "2026-10-29 20:55:55.546052+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "1f4f8ed8-fecb-4704-a587-bd18ae5665cd",
+          "tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+          "agent_id": "66c32566-5c8f-4528-84f0-9f9128ab978b",
+          "name": "New lead",
+          "phone": "+919876500004",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 28cbf811-09b3-46ee-ad42-b8ac7af9d3d5]\nThe caller stated that they were currently busy and requested a callback the following day at 6 PM. The agent acknowledged the request, logged the callback details, and concluded the call.\n\nNext step: Call the caller back at 6 PM the next day.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-29 20:55:57.572002+00:00",
+          "updated_at": "2026-10-29 20:55:57.572002+00:00"
+        },
+        {
+          "lead_id": "e04631e3-d6a1-4353-8e03-197fd4145a0f",
+          "tenant_id": "af56f4eb-bc50-46e1-afaa-9c785f25fdb9",
+          "agent_id": "66c32566-5c8f-4528-84f0-9f9128ab978b",
+          "name": "New lead",
+          "phone": "+919876500006",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 5d748e33-b910-4522-87cb-9f4710ac97c0]\nThe caller reached out to inquire about the course fee and whether a weekend batch was available. The agent provided the fee as ₹8,999 with no installments and confirmed the weekend schedule from 10:00 AM to 1:00 PM. The caller expressed satisfaction with this information and concluded the call by saying goodbye.\n\nCall outcome: interested (95% confidence)",
+          "created_at": "2026-10-29 20:56:07.949219+00:00",
+          "updated_at": "2026-10-29 20:56:07.949219+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "interested"
+    }
+  },
+  {
+    "id": "kn-IN/callback/clinic",
+    "scenario": "callback",
+    "language": "kn-IN",
+    "business": "clinic",
+    "tenant_id": "442e564d-7a46-4247-9a8d-89a79c13955d",
+    "agent_id": "a1f977dd-54ae-4a69-95a6-c94cf1420b4b",
+    "call_id": "377a67da-7cac-4963-a981-9e67468efb17",
+    "phone": "+919876500010",
+    "opening": "ನಮಸ್ಕಾರ! ನಾನು Sunrise Dental Clinic ಇಂದ Anjali. ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+    "turn_index": 3,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "ನಾನು ಈಗ ಬ್ಯುಸಿ ಇದ್ದೀನಿ. ನಾಳೆ ಸಂಜೆ 6 ಗಂಟೆಗೆ ಕಾಲ್ ಮಾಡ್ತೀರಾ?",
+        "caller_en": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+        "reply": "ಖಂಡಿತ, ನಾಳೆ ಸಂಜೆ 6 ಗಂಟೆಗೆ callback ಮಾಡೋಕೆ ನಾನು note ಮಾಡ್ತೀನಿ. ಅಷ್ಟರಲ್ಲಿ, ನಿಮ್ಮ ಸಮಸ್ಯೆ ಏನು ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "ಹೌದು, ಇದೇ number-ನಲ್ಲಿ. ನನ್ನ ಹೆಸರು ಕಿರಣ್.",
+        "caller_en": "Yes, on this same number. My name is Kiran.",
+        "reply": "ಸರಿ ಕಿರಣ್, ನಾಳೆ ಸಂಜೆ 6 ಗಂಟೆಗೆ callback ಮಾಡೋಕೆ note ಮಾಡಿದ್ದೀನಿ. ನಿಮ್ಮ dental problem ಏನು ಅಂತ ಸ್ವಲ್ಪ ಹೇಳ್ತೀರಾ?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 3,
+        "caller": "ಓಕೆ, ಥ್ಯಾಂಕ್ ಯು.",
+        "caller_en": "Okay, thank you.",
+        "reply": "",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "ಖಂಡಿತ, ನಾಳೆ ಸಂಜೆ 6 ಗಂಟೆಗೆ callback ಮಾಡೋಕೆ ನಾನು note ಮಾಡ್ತೀನಿ. ಅಷ್ಟರಲ್ಲಿ, ನಿಮ್ಮ ಸಮಸ್ಯೆ ಏನು ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "ಸರಿ ಕಿರಣ್, ನಾಳೆ ಸಂಜೆ 6 ಗಂಟೆಗೆ callback ಮಾಡೋಕೆ note ಮಾಡಿದ್ದೀನಿ. ನಿಮ್ಮ dental problem ಏನು ಅಂತ ಸ್ವಲ್ಪ ಹೇಳ್ತೀರಾ?",
+        "farewell": false
+      },
+      {
+        "turn": 3,
+        "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 3
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "custom:dental-issue",
+        "followup:callback",
+        "outcome:callback_required",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "callback_time": "Tomorrow at 6 PM",
+        "caller_name": "ಕಿರಣ್",
+        "name": "Kiran",
+        "phone": "+919876500010"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "377a67da-7cac-4963-a981-9e67468efb17",
+          "tenant_id": "442e564d-7a46-4247-9a8d-89a79c13955d",
+          "agent_id": "a1f977dd-54ae-4a69-95a6-c94cf1420b4b",
+          "session_id": "wf-05114fd6e1bf4264b5bcd880c053e0f0",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_fa41544d90cd4304",
+          "started_at": "2026-10-29 20:56:23.465251+00:00",
+          "ended_at": "2026-10-29 20:56:31.061040+00:00",
+          "duration_sec": 7,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/377a67da-7cac-4963-a981-9e67468efb17/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "custom:dental-issue",
+            "followup:callback",
+            "outcome:callback_required",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:56:23.465251+00:00",
+          "created_at": "2026-10-29 20:56:23.467795+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "d7495691-a5f1-4df9-b103-b9f1363b8236",
+          "tenant_id": "442e564d-7a46-4247-9a8d-89a79c13955d",
+          "agent_id": "a1f977dd-54ae-4a69-95a6-c94cf1420b4b",
+          "name": "Kiran",
+          "phone": "+919876500010",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 377a67da-7cac-4963-a981-9e67468efb17]\nThe caller, Kiran, contacted the business while busy and requested a callback for the following evening at 6 PM on the same number. The agent agreed to schedule the callback for that time and asked about the caller's dental issue. Kiran confirmed his name and agreed to the callback time, concluding the call with thanks.\n\nNext step: Agent to call Kiran back tomorrow at 6 PM.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-29 20:56:32.123285+00:00",
+          "updated_at": "2026-10-29 20:56:32.123285+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": false,
+      "failures": [
+        "callback_not_saved"
+      ],
+      "disposition": "callback_required"
+    }
+  },
+  {
+    "id": "kn-IN/dnd/appliance",
+    "scenario": "dnd",
+    "language": "kn-IN",
+    "business": "appliance",
+    "tenant_id": "314a7cc6-ce4e-4910-ad41-644d464f2497",
+    "agent_id": "e6d462e4-155f-4191-a80d-3742300f8886",
+    "call_id": "1a70fb67-2d10-41b5-9e11-6a996cced631",
+    "phone": "+919876500011",
+    "opening": "ನಮಸ್ಕಾರ! ನಾನು SmartCare Appliance Services ಇಂದ Suresh. ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "ದಯವಿಟ್ಟು ಈ number-ಗೆ ಮತ್ತೆ ಕಾಲ್ ಮಾಡ್ಬೇಡಿ. ನಿಮ್ಮ ಲಿಸ್ಟ್‌ನಿಂದ ನನ್ನ number ರಿಮೂವ್ ಮಾಡಿ.",
+        "caller_en": "Please don't call this number ever again. Remove my number from your list.",
+        "reply": "",
+        "farewell": "ಸರಿ, ಈ ನಂಬರ್‌ಗೆ ಮತ್ತೆ ಕಾಲ್ ಮಾಡಲ್ಲ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "ಸರಿ, ಈ ನಂಬರ್‌ಗೆ ಮತ್ತೆ ಕಾಲ್ ಮಾಡಲ್ಲ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "do_not_call",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "do_not_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "outcome:not_interested",
+        "sentiment:neutral",
+        "signal:do_not_call",
+        "signal:objection"
+      ],
+      "facts": {
+        "phone": "+919876500011"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "1a70fb67-2d10-41b5-9e11-6a996cced631",
+          "tenant_id": "314a7cc6-ce4e-4910-ad41-644d464f2497",
+          "agent_id": "e6d462e4-155f-4191-a80d-3742300f8886",
+          "session_id": "wf-e455d1ed100b4d53a97b86b06df327c9",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_8803d08943724b82",
+          "started_at": "2026-10-29 20:56:32.407626+00:00",
+          "ended_at": "2026-10-29 20:56:35.405722+00:00",
+          "duration_sec": 2,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/1a70fb67-2d10-41b5-9e11-6a996cced631/",
+          "end_reason": "firm_refusal",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "contact:phone_known",
+            "outcome:not_interested",
+            "sentiment:neutral",
+            "signal:do_not_call",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:56:32.407626+00:00",
+          "created_at": "2026-10-29 20:56:32.407626+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [
+        {
+          "id": "45ab98d8-e2e5-49fc-a1aa-f4e995c5366f",
+          "tenant_id": "314a7cc6-ce4e-4910-ad41-644d464f2497",
+          "phone_e164": "+919876500011",
+          "reason": "verbal_opt_out_live_call",
+          "added_at": "2026-10-29 20:56:36.300610+00:00",
+          "active": true,
+          "source": "live_call_opt_out",
+          "added_by_user_id": null,
+          "removed_at": null,
+          "removed_by_user_id": null,
+          "removal_reason": null,
+          "reconsent_confirmed": false
+        }
+      ],
+      "leads": []
+    },
+    "meta": {
+      "contact_preference": "do_not_call",
+      "end_reason": "firm_refusal"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "not_interested"
+    }
+  },
+  {
+    "id": "kn-IN/end_no_dnd/clinic",
+    "scenario": "end_no_dnd",
+    "language": "kn-IN",
+    "business": "clinic",
+    "tenant_id": "442e564d-7a46-4247-9a8d-89a79c13955d",
+    "agent_id": "a1f977dd-54ae-4a69-95a6-c94cf1420b4b",
+    "call_id": "899867b1-e247-4105-89d1-8a7877ae617d",
+    "phone": "+919876500012",
+    "opening": "ನಮಸ್ಕಾರ! ನಾನು Sunrise Dental Clinic ಇಂದ Anjali. ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "ಕನ್ಸಲ್ಟೇಶನ್ ಫೀ ಎಷ್ಟು, ಮತ್ತೆ ನೀವು ಯಾವಾಗ ಓಪನ್ ಇರ್ತೀರಾ?",
+        "caller_en": "How much is the consultation fee and when are you open?",
+        "reply": "Consultation fee ₹300 ಇರುತ್ತೆ. ನಾವು Monday ಇಂದ Saturday ವರೆಗೆ, ಬೆಳಿಗ್ಗೆ 10 AM ಇಂದ ಸಂಜೆ 8 PM ವರೆಗೆ open ಇರ್ತೀವಿ. Appointment ಬೇಕಾ?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "ಓಕೆ, ನನಗೆ ಇಷ್ಟೇ ಬೇಕಾಗಿದ್ದು. ಥ್ಯಾಂಕ್ಸ್, ಬೈ.",
+        "caller_en": "Okay, that's all I needed. Thanks, bye.",
+        "reply": "",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "Consultation fee ₹300 ಇರುತ್ತೆ. ನಾವು Monday ಇಂದ Saturday ವರೆಗೆ, ಬೆಳಿಗ್ಗೆ 10 AM ಇಂದ ಸಂಜೆ 8 PM ವರೆಗೆ open ಇರ್ತೀವಿ. Appointment ಬೇಕಾ?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "interested",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "followup:send_info",
+        "intent:information",
+        "outcome:interested",
+        "sentiment:positive"
+      ],
+      "facts": {
+        "budget": "₹300",
+        "phone": "+919876500012",
+        "slot": "Monday to Saturday, 10 AM to 8 PM"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "899867b1-e247-4105-89d1-8a7877ae617d",
+          "tenant_id": "442e564d-7a46-4247-9a8d-89a79c13955d",
+          "agent_id": "a1f977dd-54ae-4a69-95a6-c94cf1420b4b",
+          "session_id": "wf-890cdc08571b4308b45d82b4ca950cbd",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_fa41544d90cd4304",
+          "started_at": "2026-10-29 20:56:36.451284+00:00",
+          "ended_at": "2026-10-29 20:56:41.392727+00:00",
+          "duration_sec": 4,
+          "disposition": "interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/899867b1-e247-4105-89d1-8a7877ae617d/",
+          "end_reason": "goodbye",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "contact:phone_known",
+            "followup:send_info",
+            "intent:information",
+            "outcome:interested",
+            "sentiment:positive"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:56:36.451284+00:00",
+          "created_at": "2026-10-29 20:56:36.451284+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "d7495691-a5f1-4df9-b103-b9f1363b8236",
+          "tenant_id": "442e564d-7a46-4247-9a8d-89a79c13955d",
+          "agent_id": "a1f977dd-54ae-4a69-95a6-c94cf1420b4b",
+          "name": "Kiran",
+          "phone": "+919876500010",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 377a67da-7cac-4963-a981-9e67468efb17]\nThe caller, Kiran, contacted the business while busy and requested a callback for the following evening at 6 PM on the same number. The agent agreed to schedule the callback for that time and asked about the caller's dental issue. Kiran confirmed his name and agreed to the callback time, concluding the call with thanks.\n\nNext step: Agent to call Kiran back tomorrow at 6 PM.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-29 20:56:32.123285+00:00",
+          "updated_at": "2026-10-29 20:56:32.123285+00:00"
+        },
+        {
+          "lead_id": "66a2f074-7b4e-4103-88b3-3e700057c7b0",
+          "tenant_id": "442e564d-7a46-4247-9a8d-89a79c13955d",
+          "agent_id": "a1f977dd-54ae-4a69-95a6-c94cf1420b4b",
+          "name": "New lead",
+          "phone": "+919876500012",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 899867b1-e247-4105-89d1-8a7877ae617d]\nThe caller initiated the call to inquire about the consultation fee and business operating hours. The agent provided the fee as ₹300 and specified that the business is open Monday through Saturday from 10 AM to 8 PM. The caller expressed satisfaction with this information, thanked the agent, and ended the call.\n\nCall outcome: interested (85% confidence)",
+          "created_at": "2026-10-29 20:56:42.323401+00:00",
+          "updated_at": "2026-10-29 20:56:42.323401+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "interested"
+    }
+  },
+  {
+    "id": "ml-IN/callback/appliance",
+    "scenario": "callback",
+    "language": "ml-IN",
+    "business": "appliance",
+    "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+    "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+    "call_id": "f6858b73-7fce-4d86-86d7-6fd4f70200a2",
+    "phone": "+919876500019",
+    "opening": "നമസ്കാരം! ഞാൻ SmartCare Appliance Services-ൽ നിന്ന് Suresh. പറയൂ, എങ്ങനെ സഹായിക്കണം?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "ഞാൻ ഇപ്പോ തിരക്കിലാണ്. നാളെ വൈകുന്നേരം 6 മണിക്ക് തിരിച്ചു വിളിക്കാമോ?",
+        "caller_en": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+        "reply": "",
+        "farewell": "നിങ്ങളുടെ വിവരങ്ങളും തിരികെ വിളിക്കാനുള്ള അഭ്യർത്ഥനയും രേഖപ്പെടുത്തിയിട്ടുണ്ട്. നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "നിങ്ങളുടെ വിവരങ്ങളും തിരികെ വിളിക്കാനുള്ള അഭ്യർത്ഥനയും രേഖപ്പെടുത്തിയിട്ടുണ്ട്. നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:callback_required",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "phone": "+919876500019",
+        "slot": "Tomorrow at 6 PM"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "f6858b73-7fce-4d86-86d7-6fd4f70200a2",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+          "session_id": "wf-a5b407e0ce7543d9920978a4b093adcb",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_16bd038808044f6d",
+          "started_at": "2026-10-29 20:57:14.995694+00:00",
+          "ended_at": "2026-10-29 20:57:17.261059+00:00",
+          "duration_sec": 2,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/f6858b73-7fce-4d86-86d7-6fd4f70200a2/",
+          "end_reason": "goal_complete",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "followup:callback",
+            "outcome:callback_required",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:57:14.995694+00:00",
+          "created_at": "2026-10-29 20:57:14.995694+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "ad0aec2c-a076-43a7-9882-e5d3d317d7a5",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "user_id": null,
+          "original_call_id": "f6858b73-7fce-4d86-86d7-6fd4f70200a2",
+          "original_attempt_id": null,
+          "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+          "to_e164": "+919876500019",
+          "from_e164": null,
+          "dial_request_id": "requested:f6858b73-7fce-4d86-86d7-6fd4f70200a2",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-29 20:57:16.155599+00:00",
+          "updated_at": "2026-10-29 20:57:16.155599+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "61b0c39e-f3d6-4e29-bf47-cb039d24e468",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+          "origin_key": "callback:ad0aec2c-a076-43a7-9882-e5d3d317d7a5",
+          "source_id": "f6858b73-7fce-4d86-86d7-6fd4f70200a2",
+          "kind": "callback",
+          "phone": "+919876500019",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "ഞാൻ ഇപ്പോ തിരക്കിലാണ്. നാളെ വൈകുന്നേരം 6 മണിക്ക് തിരിച്ചു വിളിക്കാമോ?",
+            "requestedWhen": "നാളെ വൈകുന്നേരം 6 മണിക്ക്",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "ഞാൻ ഇപ്പോ തിരക്കിലാണ്. നാളെ വൈകുന്നേരം 6 മണിക്ക് തിരിച്ചു വിളിക്കാമോ?",
+                "at": "2026-10-29T20:57:15.018373Z"
+              }
+            ],
+            "callbackId": "ad0aec2c-a076-43a7-9882-e5d3d317d7a5",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:57:16.167311+00:00"
+          },
+          "due_at": "2026-10-29 20:57:16.167311+00:00",
+          "expires_at": "2026-11-05 20:57:16.167311+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "a0128c94-41cf-4dd8-a123-783190aaa766",
+          "billing_tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "created_at": "2026-10-29 20:57:16.172800+00:00",
+          "updated_at": "2026-10-29 20:57:16.172800+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "3e29db36-325d-4647-828c-97aba454994a",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+          "name": "New lead",
+          "phone": "+919876500019",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: f6858b73-7fce-4d86-86d7-6fd4f70200a2]\nThe caller initiated the call but stated they were busy. They requested that the agent call them back tomorrow at 6 PM. The agent acknowledged and recorded the callback request, and the call concluded with the agent thanking the caller.\n\nNext step: Call the caller back tomorrow at 6 PM.\n\nCall outcome: callback required (90% confidence)",
+          "created_at": "2026-10-29 20:57:18.931708+00:00",
+          "updated_at": "2026-10-29 20:57:18.931708+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "callback_request": {
+        "id": "ad0aec2c-a076-43a7-9882-e5d3d317d7a5",
+        "status": "requested",
+        "requestedWhen": "നാളെ വൈകുന്നേരം 6 മണിക്ക്",
+        "requestText": "ഞാൻ ഇപ്പോ തിരക്കിലാണ്. നാളെ വൈകുന്നേരം 6 മണിക്ക് തിരിച്ചു വിളിക്കാമോ?"
+      },
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    }
+  },
+  {
+    "id": "ml-IN/dnd/appliance",
+    "scenario": "dnd",
+    "language": "ml-IN",
+    "business": "appliance",
+    "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+    "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+    "call_id": "bc0fe50f-a063-4d07-8085-d17797c75310",
+    "phone": "+919876500020",
+    "opening": "നമസ്കാരം! ഞാൻ SmartCare Appliance Services-ൽ നിന്ന് Suresh. പറയൂ, എങ്ങനെ സഹായിക്കണം?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "ഈ number-ലേക്ക് ഇനി ഒരിക്കലും വിളിക്കരുത്. എന്റെ number നിങ്ങളുടെ ലിസ്റ്റിൽ നിന്ന് മാറ്റണം.",
+        "caller_en": "Please don't call this number ever again. Remove my number from your list.",
+        "reply": "",
+        "farewell": "ശരി, ഈ നമ്പറിലേക്ക് ഇനി വിളിക്കില്ല. നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "ശരി, ഈ നമ്പറിലേക്ക് ഇനി വിളിക്കില്ല. നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "do_not_call",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "do_not_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "outcome:not_interested",
+        "sentiment:neutral",
+        "signal:do_not_call",
+        "signal:objection"
+      ],
+      "facts": {
+        "phone": "+919876500020"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "bc0fe50f-a063-4d07-8085-d17797c75310",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+          "session_id": "wf-b56154ac433241d5a355eb1f145d1d96",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_16bd038808044f6d",
+          "started_at": "2026-10-29 20:57:19.227230+00:00",
+          "ended_at": "2026-10-29 20:57:22.168851+00:00",
+          "duration_sec": 2,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/bc0fe50f-a063-4d07-8085-d17797c75310/",
+          "end_reason": "firm_refusal",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "contact:phone_known",
+            "outcome:not_interested",
+            "sentiment:neutral",
+            "signal:do_not_call",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:57:19.227230+00:00",
+          "created_at": "2026-10-29 20:57:19.227230+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [
+        {
+          "id": "61b0c39e-f3d6-4e29-bf47-cb039d24e468",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+          "origin_key": "callback:ad0aec2c-a076-43a7-9882-e5d3d317d7a5",
+          "source_id": "f6858b73-7fce-4d86-86d7-6fd4f70200a2",
+          "kind": "callback",
+          "phone": "+919876500019",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "ഞാൻ ഇപ്പോ തിരക്കിലാണ്. നാളെ വൈകുന്നേരം 6 മണിക്ക് തിരിച്ചു വിളിക്കാമോ?",
+            "requestedWhen": "നാളെ വൈകുന്നേരം 6 മണിക്ക്",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "ഞാൻ ഇപ്പോ തിരക്കിലാണ്. നാളെ വൈകുന്നേരം 6 മണിക്ക് തിരിച്ചു വിളിക്കാമോ?",
+                "at": "2026-10-29T20:57:15.018373Z"
+              }
+            ],
+            "callbackId": "ad0aec2c-a076-43a7-9882-e5d3d317d7a5",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:57:16.167311+00:00"
+          },
+          "due_at": "2026-10-29 20:57:16.167311+00:00",
+          "expires_at": "2026-11-05 20:57:16.167311+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "a0128c94-41cf-4dd8-a123-783190aaa766",
+          "billing_tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "created_at": "2026-10-29 20:57:16.172800+00:00",
+          "updated_at": "2026-10-29 20:57:16.172800+00:00"
+        }
+      ],
+      "dnd": [
+        {
+          "id": "618635bb-6b7c-4bb7-b1ed-5dacf1275751",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "phone_e164": "+919876500020",
+          "reason": "verbal_opt_out_live_call",
+          "added_at": "2026-10-29 20:57:23.164019+00:00",
+          "active": true,
+          "source": "live_call_opt_out",
+          "added_by_user_id": null,
+          "removed_at": null,
+          "removed_by_user_id": null,
+          "removal_reason": null,
+          "reconsent_confirmed": false
+        }
+      ],
+      "leads": [
+        {
+          "lead_id": "3e29db36-325d-4647-828c-97aba454994a",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+          "name": "New lead",
+          "phone": "+919876500019",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: f6858b73-7fce-4d86-86d7-6fd4f70200a2]\nThe caller initiated the call but stated they were busy. They requested that the agent call them back tomorrow at 6 PM. The agent acknowledged and recorded the callback request, and the call concluded with the agent thanking the caller.\n\nNext step: Call the caller back tomorrow at 6 PM.\n\nCall outcome: callback required (90% confidence)",
+          "created_at": "2026-10-29 20:57:18.931708+00:00",
+          "updated_at": "2026-10-29 20:57:18.931708+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "do_not_call",
+      "end_reason": "firm_refusal"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "not_interested"
+    }
+  },
+  {
+    "id": "ml-IN/end_no_dnd/appliance",
+    "scenario": "end_no_dnd",
+    "language": "ml-IN",
+    "business": "appliance",
+    "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+    "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+    "call_id": "22323f6d-4b65-4602-bc45-e1ac402174c7",
+    "phone": "+919876500021",
+    "opening": "നമസ്കാരം! ഞാൻ SmartCare Appliance Services-ൽ നിന്ന് Suresh. പറയൂ, എങ്ങനെ സഹായിക്കണം?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "split AC servicing-ന് എത്രയാകും?",
+        "caller_en": "How much is split AC servicing?",
+        "reply": "സ്പ്ലിറ്റ് എസി സർവീസിങ്ങിന് ₹599 ആകും. നിങ്ങൾക്ക് ഒരു വിസിറ്റ് ആവശ്യമുണ്ടോ?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "ശരി, എനിക്ക് ഇത്രയേ വേണ്ടിയിരുന്നുള്ളൂ. Thanks, bye.",
+        "caller_en": "Okay, that's all I needed. Thanks, bye.",
+        "reply": "",
+        "farewell": "നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "സ്പ്ലിറ്റ് എസി സർവീസിങ്ങിന് ₹599 ആകും. നിങ്ങൾക്ക് ഒരു വിസിറ്റ് ആവശ്യമുണ്ടോ?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "നിങ്ങളുടെ സമയത്തിന് നന്ദി. നമസ്കാരം.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "interested",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "custom:ac-servicing",
+        "custom:pricing-inquiry",
+        "intent:information",
+        "outcome:interested",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "phone": "+919876500021",
+        "price": "₹599",
+        "service": "split AC servicing"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "22323f6d-4b65-4602-bc45-e1ac402174c7",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+          "session_id": "wf-eb6013f2a7ee45c5991cc76406ab3a7f",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_16bd038808044f6d",
+          "started_at": "2026-10-29 20:57:23.497340+00:00",
+          "ended_at": "2026-10-29 20:57:28.925134+00:00",
+          "duration_sec": 5,
+          "disposition": "interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/22323f6d-4b65-4602-bc45-e1ac402174c7/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "custom:ac-servicing",
+            "custom:pricing-inquiry",
+            "intent:information",
+            "outcome:interested",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:57:23.497340+00:00",
+          "created_at": "2026-10-29 20:57:23.499346+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [
+        {
+          "id": "61b0c39e-f3d6-4e29-bf47-cb039d24e468",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+          "origin_key": "callback:ad0aec2c-a076-43a7-9882-e5d3d317d7a5",
+          "source_id": "f6858b73-7fce-4d86-86d7-6fd4f70200a2",
+          "kind": "callback",
+          "phone": "+919876500019",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "ഞാൻ ഇപ്പോ തിരക്കിലാണ്. നാളെ വൈകുന്നേരം 6 മണിക്ക് തിരിച്ചു വിളിക്കാമോ?",
+            "requestedWhen": "നാളെ വൈകുന്നേരം 6 മണിക്ക്",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "ഞാൻ ഇപ്പോ തിരക്കിലാണ്. നാളെ വൈകുന്നേരം 6 മണിക്ക് തിരിച്ചു വിളിക്കാമോ?",
+                "at": "2026-10-29T20:57:15.018373Z"
+              }
+            ],
+            "callbackId": "ad0aec2c-a076-43a7-9882-e5d3d317d7a5",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:57:16.167311+00:00"
+          },
+          "due_at": "2026-10-29 20:57:16.167311+00:00",
+          "expires_at": "2026-11-05 20:57:16.167311+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "a0128c94-41cf-4dd8-a123-783190aaa766",
+          "billing_tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "created_at": "2026-10-29 20:57:16.172800+00:00",
+          "updated_at": "2026-10-29 20:57:16.172800+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "3e29db36-325d-4647-828c-97aba454994a",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+          "name": "New lead",
+          "phone": "+919876500019",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: f6858b73-7fce-4d86-86d7-6fd4f70200a2]\nThe caller initiated the call but stated they were busy. They requested that the agent call them back tomorrow at 6 PM. The agent acknowledged and recorded the callback request, and the call concluded with the agent thanking the caller.\n\nNext step: Call the caller back tomorrow at 6 PM.\n\nCall outcome: callback required (90% confidence)",
+          "created_at": "2026-10-29 20:57:18.931708+00:00",
+          "updated_at": "2026-10-29 20:57:18.931708+00:00"
+        },
+        {
+          "lead_id": "703735ed-a006-40c4-9963-41109a822480",
+          "tenant_id": "c7add41a-8735-494d-be9b-e6ee68a4885b",
+          "agent_id": "b461ac71-4222-4c9f-8202-d93cfea589dd",
+          "name": "New lead",
+          "phone": "+919876500021",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 22323f6d-4b65-4602-bc45-e1ac402174c7]\nThe caller initiated the call to inquire about the cost of split AC servicing. The agent provided the price of ₹599 for the service. The caller expressed that this was the only information they needed and concluded the call by saying thanks and goodbye. The agent acknowledged the time and ended the conversation.\n\nNext step: No further action is required as the caller's query was resolved.\n\nCall outcome: interested (90% confidence)",
+          "created_at": "2026-10-29 20:57:30.024880+00:00",
+          "updated_at": "2026-10-29 20:57:30.024880+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "interested"
+    }
+  },
+  {
+    "id": "ta-IN/callback/appliance",
+    "scenario": "callback",
+    "language": "ta-IN",
+    "business": "appliance",
+    "tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+    "agent_id": "0b2a6319-883d-43e2-8779-4482bc77776c",
+    "call_id": "075869d9-f8d8-4b92-b6d8-43bd874ff7b4",
+    "phone": "+919876500007",
+    "opening": "வணக்கம்! நான் SmartCare Appliance Services-ல இருந்து Suresh பேசுறேன். உங்களுக்கு எப்படி உதவலாம்?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "நான் இப்போ busy-ஆ இருக்கேன். நாளைக்கு evening 6 மணிக்கு திரும்ப call பண்ண முடியுமா?",
+        "caller_en": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+        "reply": "",
+        "farewell": "உங்கள் விவரங்களையும் மீண்டும் அழைக்க வேண்டிய கோரிக்கையையும் பதிவு செய்துள்ளேன். உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "உங்கள் விவரங்களையும் மீண்டும் அழைக்க வேண்டிய கோரிக்கையையும் பதிவு செய்துள்ளேன். உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:callback_required",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "callback_time": "Tomorrow at 6 PM",
+        "phone": "+919876500007"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "075869d9-f8d8-4b92-b6d8-43bd874ff7b4",
+          "tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+          "agent_id": "0b2a6319-883d-43e2-8779-4482bc77776c",
+          "session_id": "wf-10953bed252a47599c85972e5e3eec33",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_de543d465a5b431f",
+          "started_at": "2026-10-29 20:56:08.298145+00:00",
+          "ended_at": "2026-10-29 20:56:10.597380+00:00",
+          "duration_sec": 2,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/075869d9-f8d8-4b92-b6d8-43bd874ff7b4/",
+          "end_reason": "goal_complete",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "followup:callback",
+            "outcome:callback_required",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:56:08.298145+00:00",
+          "created_at": "2026-10-29 20:56:08.299146+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "a8c31935-51da-420f-8258-e5f128450ffc",
+          "tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+          "user_id": null,
+          "original_call_id": "075869d9-f8d8-4b92-b6d8-43bd874ff7b4",
+          "original_attempt_id": null,
+          "agent_id": "0b2a6319-883d-43e2-8779-4482bc77776c",
+          "to_e164": "+919876500007",
+          "from_e164": null,
+          "dial_request_id": "requested:075869d9-f8d8-4b92-b6d8-43bd874ff7b4",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-29 20:56:09.464976+00:00",
+          "updated_at": "2026-10-29 20:56:09.464976+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "cc100605-016a-4212-bbed-b3e7624a1467",
+          "tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+          "agent_id": "0b2a6319-883d-43e2-8779-4482bc77776c",
+          "origin_key": "callback:a8c31935-51da-420f-8258-e5f128450ffc",
+          "source_id": "075869d9-f8d8-4b92-b6d8-43bd874ff7b4",
+          "kind": "callback",
+          "phone": "+919876500007",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "நான் இப்போ busy-ஆ இருக்கேன். நாளைக்கு evening 6 மணிக்கு திரும்ப call பண்ண முடியுமா?",
+            "requestedWhen": "நாளைக்கு evening 6 மணிக்கு",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "நான் இப்போ busy-ஆ இருக்கேன். நாளைக்கு evening 6 மணிக்கு திரும்ப call பண்ண முடியுமா?",
+                "at": "2026-10-29T20:56:08.321792Z"
+              }
+            ],
+            "callbackId": "a8c31935-51da-420f-8258-e5f128450ffc",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:56:09.478356+00:00"
+          },
+          "due_at": "2026-10-29 20:56:09.478356+00:00",
+          "expires_at": "2026-11-05 20:56:09.478356+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "5d49f990-a68b-484a-86c3-a3ceb8c65911",
+          "billing_tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+          "created_at": "2026-10-29 20:56:09.478356+00:00",
+          "updated_at": "2026-10-29 20:56:09.478356+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "1f9ffe19-dfb6-4723-8a34-ca393eb51aa1",
+          "tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+          "agent_id": "0b2a6319-883d-43e2-8779-4482bc77776c",
+          "name": "New lead",
+          "phone": "+919876500007",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 075869d9-f8d8-4b92-b6d8-43bd874ff7b4]\nThe caller requested a callback for the following day at 6 PM because they were currently busy. The agent acknowledged the request and recorded the callback preference. The call concluded with the agent confirming the callback details.\n\nNext step: Call the caller back at 6 PM the next day as requested.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-29 20:56:11.604810+00:00",
+          "updated_at": "2026-10-29 20:56:11.604810+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "callback_request": {
+        "id": "a8c31935-51da-420f-8258-e5f128450ffc",
+        "status": "requested",
+        "requestedWhen": "நாளைக்கு evening 6 மணிக்கு",
+        "requestText": "நான் இப்போ busy-ஆ இருக்கேன். நாளைக்கு evening 6 மணிக்கு திரும்ப call பண்ண முடியுமா?"
+      },
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    }
+  },
+  {
+    "id": "ta-IN/dnd/printing",
+    "scenario": "dnd",
+    "language": "ta-IN",
+    "business": "printing",
+    "tenant_id": "f0435e35-2691-4a77-b074-98742012518b",
+    "agent_id": "2aa28d84-3e3b-4a1b-b93f-6b7eeeda4474",
+    "call_id": "6db8e0fe-a0e2-4d32-947c-695c74bdda3a",
+    "phone": "+919876500008",
+    "opening": "வணக்கம்! நான் Sri Krishna Digital Prints-ல இருந்து Kavitha பேசுறேன். உங்களுக்கு எப்படி உதவலாம்?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "தயவுசெஞ்சு இனிமே இந்த number-க்கு call பண்ணாதீங்க. என் number-அ உங்க list-ல இருந்து remove பண்ணிடுங்க.",
+        "caller_en": "Please don't call this number ever again. Remove my number from your list.",
+        "reply": "",
+        "farewell": "சரி, இந்த எண்ணுக்கு இனி அழைக்க மாட்டோம். உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "சரி, இந்த எண்ணுக்கு இனி அழைக்க மாட்டோம். உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "do_not_call",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "do_not_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "outcome:not_interested",
+        "sentiment:neutral",
+        "signal:do_not_call",
+        "signal:objection"
+      ],
+      "facts": {
+        "phone": "+919876500008"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "6db8e0fe-a0e2-4d32-947c-695c74bdda3a",
+          "tenant_id": "f0435e35-2691-4a77-b074-98742012518b",
+          "agent_id": "2aa28d84-3e3b-4a1b-b93f-6b7eeeda4474",
+          "session_id": "wf-ed8d1599553b4f20b009ba986092312f",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_a20ca03ae0494740",
+          "started_at": "2026-10-29 20:56:11.909386+00:00",
+          "ended_at": "2026-10-29 20:56:14.637255+00:00",
+          "duration_sec": 2,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/6db8e0fe-a0e2-4d32-947c-695c74bdda3a/",
+          "end_reason": "firm_refusal",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "contact:phone_known",
+            "outcome:not_interested",
+            "sentiment:neutral",
+            "signal:do_not_call",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:56:11.909386+00:00",
+          "created_at": "2026-10-29 20:56:11.910390+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [
+        {
+          "id": "99ae1299-9d60-4a44-848e-bffcf7621b89",
+          "tenant_id": "f0435e35-2691-4a77-b074-98742012518b",
+          "phone_e164": "+919876500008",
+          "reason": "verbal_opt_out_live_call",
+          "added_at": "2026-10-29 20:56:15.697480+00:00",
+          "active": true,
+          "source": "live_call_opt_out",
+          "added_by_user_id": null,
+          "removed_at": null,
+          "removed_by_user_id": null,
+          "removal_reason": null,
+          "reconsent_confirmed": false
+        }
+      ],
+      "leads": []
+    },
+    "meta": {
+      "contact_preference": "do_not_call",
+      "end_reason": "firm_refusal"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "not_interested"
+    }
+  },
+  {
+    "id": "ta-IN/end_no_dnd/appliance",
+    "scenario": "end_no_dnd",
+    "language": "ta-IN",
+    "business": "appliance",
+    "tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+    "agent_id": "0b2a6319-883d-43e2-8779-4482bc77776c",
+    "call_id": "b84d3532-88da-42cb-a601-4bb270808eab",
+    "phone": "+919876500009",
+    "opening": "வணக்கம்! நான் SmartCare Appliance Services-ல இருந்து Suresh பேசுறேன். உங்களுக்கு எப்படி உதவலாம்?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "Split AC servicing-க்கு எவ்வளவு charge பண்ணுவீங்க?",
+        "caller_en": "How much is split AC servicing?",
+        "reply": "Split AC servicing-க்கு ₹599 charge பண்ணுவோம்.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "Okay, எனக்கு இதுதான் வேணும். Thanks, bye.",
+        "caller_en": "Okay, that's all I needed. Thanks, bye.",
+        "reply": "",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "Split AC servicing-க்கு ₹599 charge பண்ணுவோம்.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "interested",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "custom:ac-servicing",
+        "followup:send_quote",
+        "intent:information",
+        "outcome:interested",
+        "sentiment:positive",
+        "signal:price_sensitive"
+      ],
+      "facts": {
+        "phone": "+919876500009",
+        "price": "₹599",
+        "service_type": "split AC servicing"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "b84d3532-88da-42cb-a601-4bb270808eab",
+          "tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+          "agent_id": "0b2a6319-883d-43e2-8779-4482bc77776c",
+          "session_id": "wf-31a3f53a2a35460cba7f3d2e21801737",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_de543d465a5b431f",
+          "started_at": "2026-10-29 20:56:16.017985+00:00",
+          "ended_at": "2026-10-29 20:56:22.098967+00:00",
+          "duration_sec": 6,
+          "disposition": "interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/b84d3532-88da-42cb-a601-4bb270808eab/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "custom:ac-servicing",
+            "followup:send_quote",
+            "intent:information",
+            "outcome:interested",
+            "sentiment:positive",
+            "signal:price_sensitive"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:56:16.017985+00:00",
+          "created_at": "2026-10-29 20:56:16.017985+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [
+        {
+          "id": "cc100605-016a-4212-bbed-b3e7624a1467",
+          "tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+          "agent_id": "0b2a6319-883d-43e2-8779-4482bc77776c",
+          "origin_key": "callback:a8c31935-51da-420f-8258-e5f128450ffc",
+          "source_id": "075869d9-f8d8-4b92-b6d8-43bd874ff7b4",
+          "kind": "callback",
+          "phone": "+919876500007",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "நான் இப்போ busy-ஆ இருக்கேன். நாளைக்கு evening 6 மணிக்கு திரும்ப call பண்ண முடியுமா?",
+            "requestedWhen": "நாளைக்கு evening 6 மணிக்கு",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "நான் இப்போ busy-ஆ இருக்கேன். நாளைக்கு evening 6 மணிக்கு திரும்ப call பண்ண முடியுமா?",
+                "at": "2026-10-29T20:56:08.321792Z"
+              }
+            ],
+            "callbackId": "a8c31935-51da-420f-8258-e5f128450ffc",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:56:09.478356+00:00"
+          },
+          "due_at": "2026-10-29 20:56:09.478356+00:00",
+          "expires_at": "2026-11-05 20:56:09.478356+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "5d49f990-a68b-484a-86c3-a3ceb8c65911",
+          "billing_tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+          "created_at": "2026-10-29 20:56:09.478356+00:00",
+          "updated_at": "2026-10-29 20:56:09.478356+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "1f9ffe19-dfb6-4723-8a34-ca393eb51aa1",
+          "tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+          "agent_id": "0b2a6319-883d-43e2-8779-4482bc77776c",
+          "name": "New lead",
+          "phone": "+919876500007",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 075869d9-f8d8-4b92-b6d8-43bd874ff7b4]\nThe caller requested a callback for the following day at 6 PM because they were currently busy. The agent acknowledged the request and recorded the callback preference. The call concluded with the agent confirming the callback details.\n\nNext step: Call the caller back at 6 PM the next day as requested.\n\nCall outcome: callback required (95% confidence)",
+          "created_at": "2026-10-29 20:56:11.604810+00:00",
+          "updated_at": "2026-10-29 20:56:11.604810+00:00"
+        },
+        {
+          "lead_id": "9e078bfb-c01f-43d7-a477-84b4ee9c893c",
+          "tenant_id": "ed08f9d2-17a6-4165-b1ca-aa42d2f3e108",
+          "agent_id": "0b2a6319-883d-43e2-8779-4482bc77776c",
+          "name": "New lead",
+          "phone": "+919876500009",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: b84d3532-88da-42cb-a601-4bb270808eab]\nThe caller initiated the call to inquire about the service charge for split AC servicing. The agent provided the pricing, stating it is ₹599. The caller expressed interest in the service, thanked the agent, and ended the call.\n\nCall outcome: interested (95% confidence)",
+          "created_at": "2026-10-29 20:56:23.220715+00:00",
+          "updated_at": "2026-10-29 20:56:23.220715+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "interested"
+    }
+  },
+  {
+    "id": "te-IN/callback/realestate",
+    "scenario": "callback",
+    "language": "te-IN",
+    "business": "realestate",
+    "tenant_id": "f104c105-0e1a-4e56-b5dd-e4ebe2fcf261",
+    "agent_id": "09a996ac-634e-441f-ba63-62dc3f9e3255",
+    "call_id": "ad607fba-9c97-481c-b1e8-d32bb2ff0fee",
+    "phone": "+919876500001",
+    "opening": "హలో, నేను Green Acres Realty నుండి Ravi. మాట్లాడటానికి ఒక moment ఉంటుందా?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "నేను ఇప్పుడు busy గా ఉన్నాను. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయగలరా?",
+        "caller_en": "I'm busy right now. Can you call me back tomorrow at 6 in the evening?",
+        "reply": "సరే, మీరు busy గా ఉన్నారని అర్థమైంది. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయమని note చేస్తున్నాను.",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "అవును, ఈ same number కి. నా పేరు Kiran.",
+        "caller_en": "Yes, on this same number. My name is Kiran.",
+        "reply": "",
+        "farewell": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "సరే, మీరు busy గా ఉన్నారని అర్థమైంది. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయమని note చేస్తున్నాను.",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "callback",
+    "outcome": {
+      "disposition": "callback_required",
+      "contact_preference": "callback",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:callback_required",
+        "sentiment:neutral"
+      ],
+      "facts": {
+        "callback_time": "Tomorrow at 6 PM",
+        "caller_name": "Kiran",
+        "name": "Kiran",
+        "phone": "+919876500001"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "ad607fba-9c97-481c-b1e8-d32bb2ff0fee",
+          "tenant_id": "f104c105-0e1a-4e56-b5dd-e4ebe2fcf261",
+          "agent_id": "09a996ac-634e-441f-ba63-62dc3f9e3255",
+          "session_id": "wf-ca3ef193c87c4e818c78316cb155d9a6",
+          "channel": "pstn",
+          "direction": "outbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_cef01c1701ca4d5b",
+          "started_at": "2026-10-29 20:55:30.202496+00:00",
+          "ended_at": "2026-10-29 20:55:39.260832+00:00",
+          "duration_sec": 9,
+          "disposition": "callback_required",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/ad607fba-9c97-481c-b1e8-d32bb2ff0fee/",
+          "end_reason": "goal_complete",
+          "status": "outbound",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:name_known",
+            "contact:phone_known",
+            "followup:callback",
+            "outcome:callback_required",
+            "sentiment:neutral"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:55:30.202496+00:00",
+          "created_at": "2026-10-29 20:55:30.212827+00:00"
+        }
+      ],
+      "callbacks": [
+        {
+          "callback_id": "09bb07a2-63c1-468c-a411-4438a072091d",
+          "tenant_id": "f104c105-0e1a-4e56-b5dd-e4ebe2fcf261",
+          "user_id": null,
+          "original_call_id": "ad607fba-9c97-481c-b1e8-d32bb2ff0fee",
+          "original_attempt_id": null,
+          "agent_id": "09a996ac-634e-441f-ba63-62dc3f9e3255",
+          "to_e164": "+919876500001",
+          "from_e164": null,
+          "dial_request_id": "requested:ad607fba-9c97-481c-b1e8-d32bb2ff0fee",
+          "mode": "requested",
+          "status": "requested",
+          "provider": null,
+          "provider_call_control_id": null,
+          "error": null,
+          "created_at": "2026-10-29 20:55:38.131148+00:00",
+          "updated_at": "2026-10-29 20:55:38.132162+00:00"
+        }
+      ],
+      "jobs": [
+        {
+          "id": "0c2d8756-eb54-4126-858d-69c1ad0e6e02",
+          "tenant_id": "f104c105-0e1a-4e56-b5dd-e4ebe2fcf261",
+          "agent_id": "09a996ac-634e-441f-ba63-62dc3f9e3255",
+          "origin_key": "callback:09bb07a2-63c1-468c-a411-4438a072091d",
+          "source_id": "ad607fba-9c97-481c-b1e8-d32bb2ff0fee",
+          "kind": "callback",
+          "phone": "+919876500001",
+          "status": "planning",
+          "reason": "resolve_requested_time",
+          "payload": {
+            "requestText": "నేను ఇప్పుడు busy గా ఉన్నాను. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయగలరా?\nఅవును, ఈ same number కి. నా పేరు Kiran.",
+            "requestedWhen": "రేపు సాయంత్రం 6 కి",
+            "recentTurns": [
+              {
+                "role": "user",
+                "text": "నేను ఇప్పుడు busy గా ఉన్నాను. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయగలరా?",
+                "at": "2026-10-29T20:55:31.145570Z"
+              },
+              {
+                "role": "assistant",
+                "text": "సరే, మీరు busy గా ఉన్నారని అర్థమైంది. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయమని note చేస్తున్నాను.",
+                "at": "2026-10-29T20:55:36.615101Z"
+              },
+              {
+                "role": "user",
+                "text": "అవును, ఈ same number కి. నా పేరు Kiran.",
+                "at": "2026-10-29T20:55:36.615101Z"
+              }
+            ],
+            "callbackId": "09bb07a2-63c1-468c-a411-4438a072091d",
+            "timezone": "Asia/Kolkata",
+            "llm": {
+              "provider": "openai",
+              "model": "gpt-5.6-luna",
+              "options": {},
+              "purpose": "configured_post_call_analysis"
+            },
+            "requestedAt": "2026-10-29T20:55:38.140665+00:00"
+          },
+          "due_at": "2026-10-29 20:55:38.140665+00:00",
+          "expires_at": "2026-11-05 20:55:38.140665+00:00",
+          "attempts": 0,
+          "lease_token": null,
+          "lease_until": null,
+          "control_id": null,
+          "authorized_by": "f80dabde-bb79-4bb4-8e1a-a7062ef72f6d",
+          "billing_tenant_id": "f104c105-0e1a-4e56-b5dd-e4ebe2fcf261",
+          "created_at": "2026-10-29 20:55:38.150006+00:00",
+          "updated_at": "2026-10-29 20:55:38.150006+00:00"
+        }
+      ],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "7bf8e500-1990-4cc9-aae4-20ac3f378d7e",
+          "tenant_id": "f104c105-0e1a-4e56-b5dd-e4ebe2fcf261",
+          "agent_id": "09a996ac-634e-441f-ba63-62dc3f9e3255",
+          "name": "Kiran",
+          "phone": "+919876500001",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: ad607fba-9c97-481c-b1e8-d32bb2ff0fee]\nThe caller, Kiran, contacted the agent to request a callback for the following evening at 6 PM on the same number because they were currently busy. The agent acknowledged the request, noted down the caller's name and callback preference, and concluded the call.\n\nNext step: Call the caller back tomorrow at 6 PM on the same number.\n\nCall outcome: callback required (100% confidence)",
+          "created_at": "2026-10-29 20:55:40.299582+00:00",
+          "updated_at": "2026-10-29 20:55:40.299582+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "callback_request": {
+        "id": "09bb07a2-63c1-468c-a411-4438a072091d",
+        "status": "requested",
+        "requestedWhen": "రేపు సాయంత్రం 6 కి",
+        "requestText": "నేను ఇప్పుడు busy గా ఉన్నాను. రేపు సాయంత్రం 6 కి మళ్ళీ call చేయగలరా?\nఅవును, ఈ same number కి. నా పేరు Kiran."
+      },
+      "contact_preference": "callback",
+      "end_reason": "goal_complete"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "callback_required"
+    }
+  },
+  {
+    "id": "te-IN/dnd/appliance",
+    "scenario": "dnd",
+    "language": "te-IN",
+    "business": "appliance",
+    "tenant_id": "9317197f-c3cf-4642-a009-75fabea1208b",
+    "agent_id": "04829a0b-9e6b-42b5-a961-6f23e4ecdad9",
+    "call_id": "3cae4dbc-118b-4abf-9c8c-543b0bb5a4cd",
+    "phone": "+919876500002",
+    "opening": "నమస్తే! నేను SmartCare Appliance Services నుండి Suresh. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
+    "turn_index": 1,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "దయచేసి ఈ number కి మళ్ళీ ఎప్పుడూ call చేయకండి. నా number ని మీ list నుంచి తీసేయండి.",
+        "caller_en": "Please don't call this number ever again. Remove my number from your list.",
+        "reply": "",
+        "farewell": "సరే, ఈ నంబర్‌కి మళ్లీ కాల్ చేయము. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "సరే, ఈ నంబర్‌కి మళ్లీ కాల్ చేయము. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 1
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "do_not_call",
+    "outcome": {
+      "disposition": "not_interested",
+      "contact_preference": "do_not_call",
+      "summary": null,
+      "status_tags": [
+        "contact:phone_known",
+        "outcome:not_interested",
+        "sentiment:neutral",
+        "signal:do_not_call",
+        "signal:objection"
+      ],
+      "facts": {
+        "phone": "+919876500002"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "3cae4dbc-118b-4abf-9c8c-543b0bb5a4cd",
+          "tenant_id": "9317197f-c3cf-4642-a009-75fabea1208b",
+          "agent_id": "04829a0b-9e6b-42b5-a961-6f23e4ecdad9",
+          "session_id": "wf-2e5072e9fa1f4e538dbfc1e0abe064b7",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_1e0095597c2e415b",
+          "started_at": "2026-10-29 20:55:40.674751+00:00",
+          "ended_at": "2026-10-29 20:55:43.684477+00:00",
+          "duration_sec": 3,
+          "disposition": "not_interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/3cae4dbc-118b-4abf-9c8c-543b0bb5a4cd/",
+          "end_reason": "firm_refusal",
+          "status": "missed",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "contact:phone_known",
+            "outcome:not_interested",
+            "sentiment:neutral",
+            "signal:do_not_call",
+            "signal:objection"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:55:40.674751+00:00",
+          "created_at": "2026-10-29 20:55:40.676759+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [
+        {
+          "id": "00d6c2c7-444b-4ab1-bd3d-6b67ade492f6",
+          "tenant_id": "9317197f-c3cf-4642-a009-75fabea1208b",
+          "phone_e164": "+919876500002",
+          "reason": "verbal_opt_out_live_call",
+          "added_at": "2026-10-29 20:55:44.634411+00:00",
+          "active": true,
+          "source": "live_call_opt_out",
+          "added_by_user_id": null,
+          "removed_at": null,
+          "removed_by_user_id": null,
+          "removal_reason": null,
+          "reconsent_confirmed": false
+        }
+      ],
+      "leads": []
+    },
+    "meta": {
+      "contact_preference": "do_not_call",
+      "end_reason": "firm_refusal"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "not_interested"
+    }
+  },
+  {
+    "id": "te-IN/end_no_dnd/printing",
+    "scenario": "end_no_dnd",
+    "language": "te-IN",
+    "business": "printing",
+    "tenant_id": "fe26202a-7fc5-417a-8b5a-ef213295c238",
+    "agent_id": "86874841-895f-4617-b750-fee9e7e360ac",
+    "call_id": "71fb3eab-f19c-4615-b765-64b8662b6c73",
+    "phone": "+919876500003",
+    "opening": "నమస్తే! నేను Sri Krishna Digital Prints నుండి Kavitha. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
+    "turn_index": 2,
+    "turns": [
+      {
+        "turn": 1,
+        "caller": "Matte visiting cards price ఎంత?",
+        "caller_en": "What is the price of matte visiting cards?",
+        "reply": "Matte finish visiting cards 100 కి ₹350 అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?",
+        "farewell": "",
+        "armed": false,
+        "error": null
+      },
+      {
+        "turn": 2,
+        "caller": "Okay, నాకు కావాల్సింది అంతే. Thanks, bye.",
+        "caller_en": "Okay, that's all I needed. Thanks, bye.",
+        "reply": "",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "armed": true,
+        "error": null
+      }
+    ],
+    "speech": [
+      {
+        "turn": 1,
+        "text": "Matte finish visiting cards 100 కి ₹350 అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?",
+        "farewell": false
+      },
+      {
+        "turn": 2,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "farewell": true
+      }
+    ],
+    "carrier": [
+      {
+        "turn": 2
+      }
+    ],
+    "errors": [],
+    "ended_by_agent": true,
+    "contact_preference": "end_call",
+    "outcome": {
+      "disposition": "interested",
+      "contact_preference": "end_call",
+      "summary": null,
+      "status_tags": [
+        "action:required",
+        "contact:phone_known",
+        "custom:visiting-cards",
+        "followup:send_quote",
+        "intent:pricing",
+        "outcome:interested",
+        "sentiment:neutral",
+        "signal:price_sensitive"
+      ],
+      "facts": {
+        "phone": "+919876500003",
+        "price": "₹350",
+        "product": "matte visiting cards",
+        "quantity": "100"
+      }
+    },
+    "order_proof": null,
+    "db": {
+      "call": [
+        {
+          "call_id": "71fb3eab-f19c-4615-b765-64b8662b6c73",
+          "tenant_id": "fe26202a-7fc5-417a-8b5a-ef213295c238",
+          "agent_id": "86874841-895f-4617-b750-fee9e7e360ac",
+          "session_id": "wf-99e872b112c94a289bcdd69ea3d58e55",
+          "channel": "pstn",
+          "direction": "inbound",
+          "campaign_id": null,
+          "environment": "development",
+          "tier": "medium",
+          "combination_id": "5b3ecb0dcd721b7f",
+          "compiled_brain_version": "cb_sim_48439451eea9470f",
+          "started_at": "2026-10-29 20:55:44.730512+00:00",
+          "ended_at": "2026-10-29 20:55:52.958129+00:00",
+          "duration_sec": 8,
+          "disposition": "interested",
+          "finalization_status": "complete",
+          "storage_path": "data/calls/71fb3eab-f19c-4615-b765-64b8662b6c73/",
+          "end_reason": "goodbye",
+          "status": "answered",
+          "is_test": true,
+          "applied_rate_usd_cents_per_min": null,
+          "applied_rate_usd_micros_per_min": null,
+          "applied_rate_inr_paise_per_min": null,
+          "applied_fx_rate_inr": null,
+          "rate_version": null,
+          "status_tags": [
+            "action:required",
+            "contact:phone_known",
+            "custom:visiting-cards",
+            "followup:send_quote",
+            "intent:pricing",
+            "outcome:interested",
+            "sentiment:neutral",
+            "signal:price_sensitive"
+          ],
+          "last_heartbeat_at": "2026-10-29 20:55:44.730512+00:00",
+          "created_at": "2026-10-29 20:55:44.730512+00:00"
+        }
+      ],
+      "callbacks": [],
+      "jobs": [],
+      "dnd": [],
+      "leads": [
+        {
+          "lead_id": "c91e647c-93d2-47a2-920e-3ec0637ddd6d",
+          "tenant_id": "fe26202a-7fc5-417a-8b5a-ef213295c238",
+          "agent_id": "86874841-895f-4617-b750-fee9e7e360ac",
+          "name": "New lead",
+          "phone": "+919876500003",
+          "email": null,
+          "stage": "contacted",
+          "notes": "[Call reference: 71fb3eab-f19c-4615-b765-64b8662b6c73]\nThe caller inquired about the price of matte visiting cards. The agent quoted ₹350 for 100 cards. The caller confirmed that this was what they wanted and ended the call by saying goodbye.\n\nNext step: No further action required.\n\nCall outcome: interested (85% confidence)",
+          "created_at": "2026-10-29 20:55:53.993864+00:00",
+          "updated_at": "2026-10-29 20:55:53.993864+00:00"
+        }
+      ]
+    },
+    "meta": {
+      "contact_preference": "end_call",
+      "end_reason": "goodbye"
+    },
+    "verdict": {
+      "passed": true,
+      "failures": [],
+      "disposition": "interested"
+    }
+  }
+]

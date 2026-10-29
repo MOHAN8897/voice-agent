@@ -87,7 +87,7 @@ def test_same_language_refresh_preserves_custom_farewell():
 
 def test_both_hangup_aliases_share_one_runtime_closing_contract():
     assert END_CALL_TOOL["description"] == REQUEST_END_CALL_TOOL["description"] == CLOSING_TOOL_DESCRIPTION
-    assert "immediately when the farewell playback finishes" in CLOSING_TOOL_DESCRIPTION
+    assert "immediately when the farewell playback" in CLOSING_TOOL_DESCRIPTION
     assert "when that workflow applies and is permitted" in CLOSING_TOOL_DESCRIPTION
     assert "only if they stay silent" not in CLOSING_TOOL_DESCRIPTION
 

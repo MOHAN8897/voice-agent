@@ -5,7 +5,7 @@ Transcript grammar is separate from model-specific delivery capabilities.
 Voice quality comes from:
 1) LLM writing punctuated, speakable sentences (rules below)
 2) Provider delivery knobs — Cartesia generation_config {emotion, speed, volume};
-   Sarvam v3 pace/temperature, v4 pace/pitch/loudness; Gemini speech metadata;
+   Sarvam v3/v4 pace/temperature (v4 Flash has no pitch/loudness); Gemini speech metadata;
    optional Gnani v3 cues (see tts_delivery_rules.py).
 
 Sources:

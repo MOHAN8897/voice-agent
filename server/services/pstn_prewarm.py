@@ -738,7 +738,7 @@ async def _synthesize_greeting_frames(
     selection = resolved_stack.get("tts", {}) if isinstance(resolved_stack, dict) else getattr(resolved_stack, "tts", None)
     provider = selection.get("provider") if isinstance(selection, dict) else getattr(selection, "provider", None)
     model = selection.get("model") if isinstance(selection, dict) else getattr(selection, "model", None)
-    text = prepare_spoken_reply(greeting or "", provider=provider, model=model).strip()
+    text = prepare_spoken_reply(greeting or "", provider=provider, model=model, language=language).strip()
     if not text:
         return [], {}
     stub = _PrewarmVoiceStub(
