@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -31,6 +31,8 @@ export function DncRegistryPanel({ readOnly = false }) {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [loadError, setLoadError] = useState('');
+  const requestVersion = useRef(0);
 
   // Add Modal State
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -47,7 +49,8 @@ export function DncRegistryPanel({ readOnly = false }) {
   const [deactivateBusy, setDeactivateBusy] = useState(false);
 
   const fetchEntries = useCallback(async () => {
-    setLoading(true);
+    const version = ++requestVersion.current;
+    setLoading(true); setLoadError('');
     try {
       const res = await api.dnc.list({
         status: subTab === 'active' ? 'active' : 'inactive',
@@ -55,17 +58,21 @@ export function DncRegistryPanel({ readOnly = false }) {
         page,
         limit: 50,
       });
+      if (version !== requestVersion.current) return;
       setEntries(res.entries || []);
       setTotal(res.total || 0);
     } catch (err) {
+      if (version !== requestVersion.current) return;
+      setLoadError(err.message || 'Could not load the Do Not Call registry. Retry to refresh these results.');
       showToast(err.message || 'Could not load Do Not Call registry', 'error');
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   }, [subTab, search, page]);
 
   useEffect(() => {
     fetchEntries();
+    return () => { requestVersion.current += 1; };
   }, [fetchEntries]);
 
   // Handle Add Entry
@@ -109,11 +116,11 @@ export function DncRegistryPanel({ readOnly = false }) {
 
   // Handle Deactivate with Mandatory Audit Re-consent
   const handleDeactivate = async () => {
-    if (readOnly || !deactivateTarget || !removalReason.trim() || !reconsentConfirmed || deactivateBusy) return;
+    if (readOnly || !deactivateTarget || removalReason.trim().length < 5 || !reconsentConfirmed || deactivateBusy) return;
     setDeactivateBusy(true);
     try {
       const phone = deactivateTarget.phoneE164 || deactivateTarget.phone_e164;
-      await api.dnc.deactivate(phone, removalReason.trim(), true);
+      await api.dnc.deactivate(phone, removalReason.trim(), true, deactivateTarget.addedAt || deactivateTarget.added_at || null);
       showToast(`Removed ${phone} from active Do Not Call list`, 'success');
       setDeactivateTarget(null);
       setRemovalReason('');
@@ -151,6 +158,7 @@ export function DncRegistryPanel({ readOnly = false }) {
 
   return (
     <div className="space-y-6" data-testid="dnc-registry-panel">
+      {loadError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><span>{loadError} Previously loaded results may be out of date.</span><TactileButton size="sm" variant="secondary" onClick={fetchEntries}>Retry registry</TactileButton></div>}
       <p className="text-xs leading-relaxed text-[#524E5E]">
         This workspace's opt-out list blocks these numbers in your campaigns. Verify national DND
         preferences and valid consent separately through the authorised TRAI process.
@@ -306,7 +314,7 @@ export function DncRegistryPanel({ readOnly = false }) {
                             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                            Deactivate
+                            Remove from DND
                           </button>
                         </td>
                       )}
@@ -420,7 +428,7 @@ export function DncRegistryPanel({ readOnly = false }) {
       {/* Deactivation Audit Modal */}
       <Modal
         isOpen={Boolean(deactivateTarget)}
-        onClose={() => setDeactivateTarget(null)}
+        onClose={() => { if (!deactivateBusy) setDeactivateTarget(null); }}
         title="Remove from Do Not Call Registry"
         subtitle={`Confirm re-consent authorization for ${deactivateTarget?.phoneE164 || deactivateTarget?.phone_e164}`}
         maxWidth="max-w-lg"
@@ -441,6 +449,7 @@ export function DncRegistryPanel({ readOnly = false }) {
               type="text"
               placeholder="e.g. Recipient requested re-subscription via web form"
               value={removalReason}
+              maxLength={1000}
               onChange={(e) => setRemovalReason(e.target.value)}
               data-testid="dnc-deactivate-reason-input"
               className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#FF5C35] text-[#0F0E17]"
@@ -478,7 +487,7 @@ export function DncRegistryPanel({ readOnly = false }) {
               onClick={handleDeactivate}
               data-testid="dnc-deactivate-confirm-btn"
             >
-              Confirm Deactivation
+              Confirm removal
             </TactileButton>
           </div>
         </div>

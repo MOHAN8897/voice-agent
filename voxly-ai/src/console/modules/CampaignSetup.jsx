@@ -20,10 +20,17 @@ function fileData(file) {
   });
 }
 
-export function CampaignSetup({ initialAgentId = '', initialContacts = [], onComplete, onBusyChange }) {
+export function CampaignSetup({ initialAgentId = '', initialContacts = [], initialSource = '', onComplete, onBusyChange }) {
   const { agents, phoneNumbers, outboundFromE164, createCampaign } = useWorkspace();
   const [config, setConfig] = useState({ name: '', description: '', agentId: initialAgentId || agents[0]?.id || '', fromE164: outboundFromE164 || '', defaultCountry: 'IN' });
-  const [source, setSource] = useState(initialContacts.length ? 'leads' : 'upload');
+  const [source, setSource] = useState(initialContacts.length ? 'leads' : initialSource || 'upload');
+  const [audience, setAudience] = useState({ jobs: [], total: 0 });
+  const [audienceSelected, setAudienceSelected] = useState([]);
+  const [audienceLoading, setAudienceLoading] = useState(false);
+  const [audienceError, setAudienceError] = useState('');
+  const [audienceReload, setAudienceReload] = useState(0);
+  const [dateRangeEnabled, setDateRangeEnabled] = useState(false);
+  const [dateRange, setDateRange] = useState({ startsAt: '', expiresAt: '' });
   const [file, setFile] = useState(null);
   const [text, setText] = useState('');
   const [lists, setLists] = useState([]);
@@ -49,6 +56,19 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], onCom
   const currentAgent = config.agentId || initialAgentId || agents[0]?.id || '';
   const outbound = phoneNumbers.filter((n) => n.outboundEnabled !== false && !['released', 'pending', 'failed'].includes(n.status));
   const agent = agents.find((a) => a.id === currentAgent);
+  const followupSource = source === 'callbacks' || source === 'missed';
+
+  useEffect(() => {
+    if (!followupSource || !currentAgent) return;
+    let active = true;
+    setAudienceLoading(true); setAudienceError(''); setAudience({ jobs: [], total: 0 });
+    setAudienceSelected([]); setParsed(null); setValidation(null); setVariables(null); setConsent(false);
+    api.campaigns.followupAudience(currentAgent, source === 'missed' ? 'missed' : 'callback')
+      .then((data) => { if (active) { setAudience(data); setAudienceError(data.unavailableReason || ''); } })
+      .catch((err) => { if (active) setAudienceError(err.message || 'Could not load follow-ups. Retry to refresh the audience.'); })
+      .finally(() => { if (active) setAudienceLoading(false); });
+    return () => { active = false; };
+  }, [followupSource, currentAgent, source, audienceReload]);
 
   useEffect(() => {
     let active = true;
@@ -82,6 +102,9 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], onCom
     if (!Object.values(selectedMapping).includes('phone')) throw new Error('Map one column to phone before validating.');
     const result = await api.contacts.normalizePreview({ rows: data.rows, mapping: selectedMapping,
       defaultCountry: config.defaultCountry, duplicateStrategy, sourceFileName: data.fileName });
+    if (!Array.isArray(result.validContacts) || !Number.isSafeInteger(result.validCount) || !Number.isSafeInteger(result.totalRows)) {
+      throw new Error('The contact check returned incomplete results. No campaign was created. Retry after refreshing.');
+    }
     const variableResult = await api.campaigns.validateVariables(currentAgent, result.validContacts || []);
     setValidation(result); setVariables(variableResult); setConsent(false);
     lastValidated.current = { agentId: currentAgent, country: config.defaultCountry };
@@ -93,7 +116,14 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], onCom
       let data = parsed;
       let selectedMapping = mapping;
       if (!data) {
-        if (source === 'leads') {
+        if (followupSource) {
+          const chosen = audience.jobs.filter((job) => audienceSelected.includes(job.jobId));
+          if (!chosen.length) throw new Error('Select scheduled follow-ups for this campaign first.');
+          const headers = ['phone', 'full_name', 'email', 'notes', 'timezone', 'custom_field:followup_job_id', 'custom_field:followup_kind'];
+          const rows = chosen.map((job) => ({ ...job, 'custom_field:followup_job_id': job.jobId, 'custom_field:followup_kind': job.kind }));
+          data = { rows, headers, totalRows: rows.length, fileName: 'scheduled-follow-ups' };
+          selectedMapping = Object.fromEntries(headers.map((key) => [key, key]));
+        } else if (source === 'leads') {
           const headers = ['phone', 'full_name', 'email', 'notes', 'custom_field:lead_id', 'custom_field:lead_stage'];
           data = { rows: initialContacts, headers, totalRows: initialContacts.length, fileName: 'selected-leads' };
           selectedMapping = Object.fromEntries(headers.map((key) => [key, key]));
@@ -136,7 +166,17 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], onCom
         contacts = contacts.filter((_contact, index) => !excluded.has(index));
       }
       if (!contacts.length) throw new Error('No contacts remain after applying the variable policy.');
-      const created = await createCampaign({ clientRequestId: creationId.current, ...config, agentId: currentAgent, expectedScriptVersion: variables?.scriptVersion, ...pacing, contacts, autoStart,
+      let dates = {};
+      if (dateRangeEnabled) {
+        if (!dateRange.startsAt || !dateRange.expiresAt) throw new Error('Choose the campaign start and expiry.');
+        const start = new Date(dateRange.startsAt), end = new Date(dateRange.expiresAt);
+        if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start || end <= new Date()) throw new Error('Choose an expiry after the start and the current time.');
+        dates = { startsAt: start.toISOString(), expiresAt: end.toISOString() };
+      }
+      const followupJobIds = followupSource ? contacts.map((contact) => contact.custom_fields?.followup_job_id).filter(Boolean) : undefined;
+      if (followupSource && followupJobIds.length !== contacts.length) throw new Error('Follow-up references were lost during validation. Refresh the audience and try again.');
+      const created = await createCampaign({ clientRequestId: creationId.current, ...config, agentId: currentAgent, expectedScriptVersion: variables?.scriptVersion, ...pacing, ...dates,
+        contacts: followupSource ? [] : contacts, followupJobIds, autoStart,
         callingWindow: windowEnabled ? callingWindow : undefined, consentConfirmed: consent, dndScrubEnabled: true });
       const excluded = created.dndExcludedCount || 0;
       showToast(created.status === 'running' ? `Campaign queued: ${Math.max(0, created.totalContacts - excluded)} eligible contacts.` : 'Campaign saved as a draft.', 'success');
@@ -161,7 +201,15 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], onCom
         </section>
         <section className="space-y-4 border-t border-[#E4E2EB] pt-5" aria-labelledby="campaign-contacts-heading">
           <div className="flex flex-wrap items-center justify-between gap-2"><h3 id="campaign-contacts-heading" className="text-base font-bold">Contacts</h3><span className="text-xs text-[#645D73]">Up to 10,000 contacts · 5 MB</span></div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Contact source">{[...(initialContacts.length ? [['leads', 'Selected leads']] : []), ['upload', 'Upload file'], ['paste', 'Paste CSV'], ['list', 'Saved list']].map(([key, label]) => <button key={key} type="button" aria-pressed={source === key} onClick={() => changeSource(key)} className={`min-h-11 rounded-xl border px-4 text-sm font-semibold ${source === key ? 'border-[#6344E7] bg-[#F0EEF6] text-[#5033C6]' : 'border-[#E4E2EB] text-[#524E5E]'}`}>{label}</button>)}</div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Contact source">{[...(initialContacts.length ? [['leads', 'Selected leads']] : []), ['upload', 'Upload file'], ['paste', 'Paste CSV'], ['list', 'Saved list'], ['callbacks', 'Callback requests'], ['missed', 'Missed calls']].map(([key, label]) => <button key={key} type="button" aria-pressed={source === key} onClick={() => changeSource(key)} className={`min-h-11 rounded-xl border px-4 text-sm font-semibold ${source === key ? 'border-[#6344E7] bg-[#F0EEF6] text-[#5033C6]' : 'border-[#E4E2EB] text-[#524E5E]'}`}>{label}</button>)}</div>
+          {followupSource && <div className="space-y-3 rounded-xl border border-[#DCD7EE] bg-[#FAF9FD] p-4" data-testid="campaign-followup-audience">
+            <p className="text-sm">Use scheduled follow-ups from this agent. Review unclear timing in Leads first. Caller-requested times, agent permission, DND and wallet checks still apply; each job has one dispatch owner.</p>
+            <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-xs text-[#645D73]">{audienceSelected.length} selected · showing {audience.jobs.length} of {audience.total} available</span><TactileButton variant="secondary" size="sm" disabled={audienceLoading} onClick={() => setAudienceReload((value) => value + 1)}>Refresh audience</TactileButton></div>
+            {audienceLoading && <p role="status" className="text-sm">Loading scheduled follow-ups…</p>}
+            {audienceError && <p role="alert" className="text-sm text-amber-900">{audienceError}</p>}
+            {!audienceLoading && !audienceError && !audience.jobs.length && <p className="text-sm text-[#645D73]">No scheduled follow-ups are available. Enable follow-ups and review their times in agent settings and Leads.</p>}
+            {audience.jobs.length > 0 && <><label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={audience.jobs.every((job) => audienceSelected.includes(job.jobId))} onChange={(event) => { setAudienceSelected(event.target.checked ? audience.jobs.map((job) => job.jobId) : []); setParsed(null); invalidate(); }} />Select all visible follow-ups</label><ul className="max-h-72 divide-y divide-[#E4E2EB] overflow-auto">{audience.jobs.map((job) => <li key={job.jobId}><label className="flex min-h-11 items-start gap-3 py-3 text-sm"><input type="checkbox" className="mt-1 shrink-0" aria-label={`Select follow-up ${job.phone}`} checked={audienceSelected.includes(job.jobId)} onChange={() => { setAudienceSelected((ids) => ids.includes(job.jobId) ? ids.filter((id) => id !== job.jobId) : [...ids, job.jobId]); setParsed(null); invalidate(); }} /><span className="min-w-0 break-words"><span className="font-medium">{job.full_name || job.phone}</span><span className="mt-1 block text-xs text-[#645D73]">Not before {new Date(job.dueAt).toLocaleString()} · {job.timezone || 'saved timezone'}</span></span></label></li>)}</ul></>}
+          </div>}
           {source === 'leads' && <div className="rounded-xl border border-[#DCD7EE] bg-[#FAF9FD] p-4 text-sm" data-testid="campaign-selected-leads">
             <p className="font-semibold">{initialContacts.length} selected {initialContacts.length === 1 ? 'lead' : 'leads'}</p>
             <p className="mt-1 text-[#524E5E]">Names, phone numbers, email, notes and lead references are carried into this campaign. Validate before saving or launching.</p>
@@ -179,8 +227,11 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], onCom
         </section>
         <details className="rounded-xl border border-[#E4E2EB] p-4"><summary className="cursor-pointer text-sm font-semibold">Advanced settings · pacing, calling hours and import options</summary><div className="mt-4 space-y-4">
           <label className="block text-sm font-medium">Description<textarea className={input} maxLength={4000} value={config.description} onChange={(e) => changeConfig('description', e.target.value)} /></label>
-          <div className="grid gap-3 sm:grid-cols-3">{[['concurrency', 'Concurrent calls', 1, 20], ['maxAttempts', 'Maximum attempts', 1, 5], ['retryDelayMinutes', 'Retry delay (minutes)', 5, 1440]].map(([key, label, min, max]) => <label key={key} className="block text-sm font-medium">{label}<input type="number" className={input} min={min} max={max} value={pacing[key]} onChange={(e) => setPacing((prev) => ({ ...prev, [key]: Math.max(min, Math.min(max, Number(e.target.value) || min)) }))} /></label>)}</div>
+          <div className="grid gap-3 sm:grid-cols-3">{[['concurrency', 'Concurrent calls', 1, 20], ['maxAttempts', 'Maximum attempts', 1, 5], ...(followupSource ? [] : [['retryDelayMinutes', 'Retry delay (minutes)', 5, 1440]])].map(([key, label, min, max]) => <label key={key} className="block text-sm font-medium">{label}<input type="number" className={input} min={min} max={max} value={pacing[key]} onChange={(e) => setPacing((prev) => ({ ...prev, [key]: Math.max(min, Math.min(max, Number(e.target.value) || min)) }))} /></label>)}</div>
           <p className="text-xs text-[#645D73]">Your plan limit also applies. Retries wait for a confirmed non-connection; uncertain requests need review.</p>
+          {followupSource && <p className="text-xs text-[#645D73]">For follow-up campaigns, the stricter agent attempt limit and campaign attempt limit apply. Retry delay and daily limits come from the agent’s follow-up policy.</p>}
+          <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={dateRangeEnabled} onChange={(e) => setDateRangeEnabled(e.target.checked)} />Set campaign start and expiry</label>
+          {dateRangeEnabled && <div className="grid gap-3 sm:grid-cols-2">{[['startsAt', 'Campaign starts'], ['expiresAt', 'Campaign expires']].map(([key, title]) => <label key={key} className="text-sm font-medium">{title}<input type="datetime-local" aria-label={title} className={input} value={dateRange[key]} onChange={(event) => setDateRange((value) => ({ ...value, [key]: event.target.value }))} /></label>)}<p className="text-xs text-[#645D73] sm:col-span-2">Times use your browser timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}). A campaign never advances a caller’s requested callback time. Expiry stops new attempts.</p></div>}
           <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={windowEnabled} onChange={(e) => setWindowEnabled(e.target.checked)} className="h-4 w-4" />Limit calls to a daily calling window</label>
           {windowEnabled && <div className="grid gap-3 sm:grid-cols-2"><label className="text-sm font-medium">Start time<input type="time" className={input} value={callingWindow.start} onChange={(e) => setCallingWindow((prev) => ({ ...prev, start: e.target.value }))} /></label><label className="text-sm font-medium">End time<input type="time" className={input} value={callingWindow.end} onChange={(e) => setCallingWindow((prev) => ({ ...prev, end: e.target.value }))} /></label><label className="text-sm font-medium sm:col-span-2">Fallback timezone<input className={input} value={callingWindow.timezone} onChange={(e) => setCallingWindow((prev) => ({ ...prev, timezone: e.target.value }))} /><span className="mt-1 block text-xs font-normal text-[#645D73]">Uses each contact’s timezone when supplied; otherwise this IANA timezone (for example, Asia/Kolkata).</span></label></div>}
         </div></details>
@@ -195,7 +246,7 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], onCom
         </section>}
         <dl className="my-5 space-y-3 text-sm"><div><dt className="text-[#645D73]">Agent</dt><dd className="break-words font-semibold">{agent?.name || 'Choose an agent'}</dd></div><div><dt className="text-[#645D73]">Contacts ready</dt><dd className="text-2xl font-bold tabular-nums">{validation ? contactsReady.toLocaleString() : '—'}</dd></div><div><dt className="text-[#645D73]">Concurrent calls</dt><dd className="font-semibold">Up to {pacing.concurrency}, within your plan</dd></div><div><dt className="text-[#645D73]">Calling window</dt><dd className="break-words font-semibold">{windowEnabled ? `${callingWindow.start}–${callingWindow.end} · ${callingWindow.timezone}` : 'No daily time restriction'}</dd></div></dl>
         <div className="flex gap-2 rounded-xl bg-white p-3 text-xs text-[#365A45]"><ShieldCheck className="h-4 w-4 shrink-0" /><p>Do Not Call checks stay enabled. Pausing stops new work; calls already in progress may continue.</p></div>
-        <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm leading-relaxed"><input type="checkbox" checked={consent} disabled={!validation?.validCount || Boolean(busy)} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4 shrink-0" /><span>I confirm I have authorization and required consent to call these contacts, and accept responsibility for the campaign’s purpose, content and legality.</span></label>
+        <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm leading-relaxed"><input type="checkbox" checked={consent} disabled={!validation?.validCount || Boolean(busy)} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4 shrink-0" /><span>I confirm I have authorization and required consent to call these contacts, approve wallet charges, and accept responsibility for the campaign’s purpose, content and legality.</span></label>
         {error && <div ref={errorRef} tabIndex={-1} role="alert" className="mt-4 flex gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"><AlertCircle className="h-4 w-4 shrink-0" /><p className="break-words">{error}</p></div>}
         {busy && <p role="status" className="mt-3 flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" />{busy}…</p>}
         <div className="mt-5 flex flex-col gap-2"><TactileButton onClick={() => submit(true)} disabled={!ready || Boolean(busy)} variant="primary" className="w-full min-h-11 justify-center" data-testid="campaign-launch">Launch campaign</TactileButton><TactileButton onClick={() => submit(false)} disabled={!ready || Boolean(busy)} variant="secondary" className="w-full min-h-11 justify-center">Save as draft</TactileButton></div>

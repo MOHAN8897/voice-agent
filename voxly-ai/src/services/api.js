@@ -219,6 +219,9 @@ function preferSameOriginApi() {
 
 export const api = {
   followups: {
+    async importReview(agentId, kind, days) {
+      return api.request('POST', `/api/agents/${encodeURIComponent(agentId)}/follow-ups/import-review`, { kind, days });
+    },
     policy: (agentId) => api.request('GET', `/api/agents/${agentId}/follow-up-policy`),
     savePolicy: (agentId, body) => api.request('PUT', `/api/agents/${agentId}/follow-up-policy`, body),
     list: (params = {}) => api.request('GET', `/api/follow-ups?${new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== ''))}`),
@@ -1365,6 +1368,9 @@ export const api = {
         consentVersion: campaignData.consentVersion || '2026-10-v1',
         dndScrubEnabled: campaignData.dndScrubEnabled ?? true,
         callingWindow: campaignData.callingWindow,
+        startsAt: campaignData.startsAt,
+        expiresAt: campaignData.expiresAt,
+        followupJobIds: campaignData.followupJobIds,
       });
       if (data.ok === false) throw new Error(data.error?.message || data.error || "Campaign could not be created");
       const row = data.campaign || data;
@@ -1384,6 +1390,9 @@ export const api = {
     async start(id) {
       return await api.request('POST', `/api/campaigns/${id}/start`);
     },
+    async cancel(id) {
+      return api.request('POST', `/api/campaigns/${id}/cancel`);
+    },
     async importContacts(id, contacts) {
       return await api.request('POST', `/api/campaigns/${id}/contacts/import`, { contacts });
     },
@@ -1395,6 +1404,10 @@ export const api = {
         agentId,
         contacts,
       });
+    },
+    async followupAudience(agentId, kind, { offset = 0 } = {}) {
+      const query = new URLSearchParams({ agentId, kind, offset: String(offset), limit: '500' });
+      return api.request('GET', `/api/campaigns/audience/follow-ups?${query}`);
     },
   },
 
@@ -1410,10 +1423,11 @@ export const api = {
     async bulkAdd(phones, reason = 'bulk_upload') {
       return await api.request('POST', '/api/dnc/bulk', { phones, reason });
     },
-    async deactivate(phone, removalReason, reconsentConfirmed = true) {
+    async deactivate(phone, removalReason, reconsentConfirmed = false, expectedAddedAt = null) {
       return await api.request('POST', `/api/dnc/${encodeURIComponent(phone)}/deactivate`, {
         removalReason,
         reconsentConfirmed: Boolean(reconsentConfirmed),
+        expectedAddedAt,
       });
     },
   },

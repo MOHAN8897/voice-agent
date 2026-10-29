@@ -94,6 +94,8 @@ export function AgentSettingsPanel({
   const [followup, setFollowup] = useState(null);
   const [followupRevision, setFollowupRevision] = useState(0);
   const [followupError, setFollowupError] = useState('');
+  const [profileError, setProfileError] = useState('');
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [followupAcknowledged, setFollowupAcknowledged] = useState(false);
   const [compliance, setCompliance] = useState({});
   const [complianceSummary, setComplianceSummary] = useState(null);
@@ -131,6 +133,7 @@ export function AgentSettingsPanel({
     );
     let cancelled = false;
     setComplianceLoading(true);
+    setComplianceError(null); setProfileError(''); setProfileLoaded(false);
     setFollowup(null); setFollowupError(''); setFollowupAcknowledged(false);
 
     Promise.all([
@@ -138,7 +141,10 @@ export function AgentSettingsPanel({
         if (!cancelled) setComplianceError(e?.message || 'Could not load compliance obligations');
         return null;
       }),
-      api.agents.getTelephonyProfile(agentId).catch(() => ({ profile: {} })),
+      api.agents.getTelephonyProfile(agentId).catch((e) => {
+        if (!cancelled) setProfileError(e.message || 'Operating settings could not be loaded. Reload before saving.');
+        return null;
+      }),
       api.followups.policy(agentId).catch((e) => { if (!cancelled) setFollowupError(e.message || 'Follow-up scheduling could not be loaded. Reload to retry.'); return null; }),
     ]).then(([compData, profData, followupData]) => {
       if (cancelled) return;
@@ -153,6 +159,7 @@ export function AgentSettingsPanel({
       setFollowup(followupData?.config || null);
       setFollowupRevision(followupData?.revision || 0);
       setCompliance(loadedComp);
+      setProfileLoaded(Boolean(profData));
       setComplianceSummary(compData || null);
       setTelephonyProfile(loadedProf);
       setComplianceLoading(false);
@@ -229,6 +236,8 @@ export function AgentSettingsPanel({
     setError(null);
 
     try {
+      if (!profileLoaded) throw new Error(profileError || 'Wait for operating settings to load before saving.');
+      if (complianceError) throw new Error('Compliance settings could not be loaded. Reload before saving changes.');
       const baseSnapshot = initialSnapshot ? JSON.parse(initialSnapshot) : {};
       const needsConsent = followup?.enabled && (!baseSnapshot.followup?.enabled ||
         (followup.callbackMode === 'automatic' && baseSnapshot.followup?.callbackMode !== 'automatic') ||
@@ -236,7 +245,9 @@ export function AgentSettingsPanel({
       if (needsConsent && !followupAcknowledged) throw new Error('Confirm follow-up call permission and wallet charges before saving.');
 
       // 1. Update Agent identity, status, and recording disclosures in a single call
-      await updateAgent(agentId, {
+      const identityChanged = ['name', 'status', 'language', 'recordingDisclosureEnabled', 'recordingDisclosureText']
+        .some((key) => currentSnapshot[key] !== baseSnapshot[key]);
+      if (identityChanged) await updateAgent(agentId, {
         name: name.trim(),
         status,
         languages: [language],
@@ -255,7 +266,7 @@ export function AgentSettingsPanel({
       }
 
       // 3. Save telephony profile (operating hours, transfer, greeting)
-      await api.agents.saveTelephonyProfile(agentId, {
+      if (JSON.stringify(currentSnapshot.telephonyProfile) !== JSON.stringify(baseSnapshot.telephonyProfile)) await api.agents.saveTelephonyProfile(agentId, {
         greetingPhrase: telephonyProfile.greetingPhrase || '',
         businessHours: telephonyProfile.businessHours || {},
         closedDates: Array.isArray(telephonyProfile.closedDates) ? telephonyProfile.closedDates : [],
@@ -273,18 +284,9 @@ export function AgentSettingsPanel({
         });
       }
 
-      // 5. Keep voice-section language in sync
-      try {
-        const brain = await api.agents.getBusinessBrain(agentId);
-        const voice = brain?.voice || {};
-        await api.agents.saveVoice(agentId, {
-          voiceId: voice.voiceId || voice.realtimeVoice || 'marin',
-          speed: voice.speed ?? 1,
-          language,
-        });
-      } catch {
-        /* Language still applies via agent row */
-      }
+      // Agent.languages is the canonical session language. Voice selection is
+      // saved by the voice panel with its revision; unrelated settings must not
+      // overwrite it through the legacy voice endpoint.
 
       if (followup && JSON.stringify(followup) !== JSON.stringify(baseSnapshot.followup)) {
         const saved = await api.followups.savePolicy(agentId, { config: followup, revision: followupRevision, acknowledgeCharges: followupAcknowledged });
@@ -331,6 +333,7 @@ export function AgentSettingsPanel({
     compliance,
     currentSnapshot,
     followup, followupRevision, followupAcknowledged,
+    profileLoaded, profileError, complianceError,
     updateAgent,
     assignNumberToAgent,
     onSettingsSaved,
@@ -372,6 +375,7 @@ export function AgentSettingsPanel({
           ['followups', 'Follow-ups & scoring', PhoneCall, 'Callback permission, schedules and lead priority'],
           ['compliance', 'Recording & compliance', ShieldCheck, 'Disclosure and calling requirements'],
         ]} />
+      {profileError && <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">{profileError} Reload before saving so your existing operating settings are preserved.</p>}
       {error && (
         <div
           role="alert"
@@ -382,7 +386,7 @@ export function AgentSettingsPanel({
         </div>
       )}
 
-      <fieldset disabled={savingChanges || saving} className="console-categories settings-categories grid min-w-0 gap-4 items-start" data-category={category}>
+      <fieldset disabled={readOnly || savingChanges || saving} className="console-categories settings-categories grid min-w-0 gap-4 items-start" data-category={category}>
       <div className="settings-primary flex min-w-0 flex-col gap-4">
       <div data-section="identity"><SolidCard>
         <h3 className="text-xs font-bold text-[#0F0E17] mb-4">Identity</h3>
