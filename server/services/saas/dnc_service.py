@@ -12,6 +12,18 @@ logger = logging.getLogger(__name__)
 _OPT_OUT_DISPOSITIONS = frozenset({"opt_out", "optout", "do_not_call", "dnc", "opt_out_live_call"})
 
 
+async def lock_registry(session, tenant_id):
+    """Serialize registry edits without requiring the account to be active.
+
+    A caller's opt-out must still be saved for a paused/quarantined workspace.
+    """
+    from server.db.models.entities import Tenant
+    from sqlalchemy import text
+    if session.bind.dialect.name == "sqlite":
+        await session.execute(text("BEGIN IMMEDIATE"))
+    await session.execute(select(Tenant.tenant_id).where(Tenant.tenant_id == tenant_id).with_for_update())
+
+
 async def auto_enroll_dnc_opt_out(tenant_id: uuid.UUID | str, phone: str) -> bool:
     """Atomic upsert of opt-out into tenant's dnc_list.
     
@@ -38,6 +50,7 @@ async def auto_enroll_dnc_opt_out(tenant_id: uuid.UUID | str, phone: str) -> boo
 
     now = datetime.now(timezone.utc)
     async with factory() as session:
+        await lock_registry(session, tid)
         bind = session.bind
         dialect_name = bind.dialect.name if bind else ""
         if dialect_name == "postgresql":
@@ -123,10 +136,9 @@ async def handle_call_opt_out(
     meta = call_ledger.read_meta(call_id) or {}
     # The live gate records the caller's contact preference separately from the
     # hangup reason. The ledger copy survives context eviction before lifecycle end.
-    recorded_preference = (
-        str(getattr(ctx, "contact_preference", "") or "").strip().lower()
-        or str(meta.get("contact_preference") or "").strip().lower()
-    )
+    live_preference = str(getattr(ctx, "contact_preference", "") or "").strip().lower()
+    saved_preference = str(meta.get("contact_preference") or "").strip().lower()
+    recorded_preference = "do_not_call" if "do_not_call" in (live_preference, saved_preference) else live_preference or saved_preference
     is_opt_out = (
         (reason and str(reason).strip().lower() == "opt_out")
         or (disposition and str(disposition).strip().lower() in _OPT_OUT_DISPOSITIONS)

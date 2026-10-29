@@ -13,9 +13,10 @@ from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 
-from server.db.models.entities import Agent, Base, Call, Tenant
-from server.db.models.saas_models import TenantMembership, User
-from server.db.models.phase5_models import Campaign, CampaignContact, CampaignRun, Contact, ContactList, ContactImportTemplate, DialAttempt, DncEntry, PstnDialRequest
+from server.db.models.entities import Agent, Base, Call, CallAttempt, CallCallback, Tenant
+from server.db.models.saas_models import TenantMembership, User, Lead
+from server.db.models.phase5_models import Campaign, CampaignContact, CampaignRun, Contact, ContactList, ContactImportTemplate, DialAttempt, DncEntry, PstnDialRequest, AgentTelephonyProfile, AuditLog
+from server.db.models.followup_models import AgentFollowUpPolicy, FollowUpJob, LeadAssessment
 from server.routes import campaigns as routes
 from server.services.saas import call_admission as admission, campaign_runner as runner
 
@@ -29,7 +30,8 @@ def sqlite_json(*_args, **_kw):
 
 @pytest.fixture
 async def db(tmp_path, monkeypatch):
-    models = [Tenant, Agent, User, TenantMembership, Call, Contact, ContactList, ContactImportTemplate, Campaign, CampaignContact, CampaignRun, DialAttempt, DncEntry, PstnDialRequest]
+    models = [Tenant, Agent, User, TenantMembership, Call, CallAttempt, CallCallback, Contact, ContactList, ContactImportTemplate, Campaign, CampaignContact, CampaignRun, DialAttempt, DncEntry, PstnDialRequest,
+              AgentTelephonyProfile, Lead, AgentFollowUpPolicy, FollowUpJob, LeadAssessment, AuditLog]
     for model in models:
         for column in model.__table__.columns:
             if isinstance(column.type, ARRAY):
@@ -57,9 +59,10 @@ async def db(tmp_path, monkeypatch):
     monkeypatch.setattr(runner, "get_settings", lambda: settings)
     monkeypatch.setattr("server.config.env.get_settings", lambda: settings)
     monkeypatch.setattr("server.services.saas.tenant_guard.subscriber_workspace_tenant_id", lambda p: p.tenant_id)
+    monkeypatch.setattr("server.services.saas.telephony_profile.get_profile", AsyncMock(return_value=None))
     async with factory() as session:
         session.add_all([Tenant(tenant_id=TID, name="Own", limits={"max_concurrent_pstn": 2}),
-            Tenant(tenant_id=OTHER, name="Other"), User(user_id=UID, email="audit@example.test", password_hash="unused"),
+            Tenant(tenant_id=OTHER, name="Other"), User(user_id=UID, email="audit@example.test", password_hash="unused", email_verified_at=runner._utcnow()),
         ])
         await session.flush()
         session.add_all([TenantMembership(user_id=UID, tenant_id=TID, role="customer_admin"),
@@ -145,10 +148,11 @@ async def test_unconfirmed_carrier_response_keeps_capacity_and_never_redials(db,
         assert await admission.active_capacity(session, TID) == 1
 
 
-async def test_preparation_failure_does_not_strand_destination_or_capacity(db):
+@pytest.mark.parametrize("code", ["voice_preparation_failed", "predial_policy_changed"])
+async def test_preparation_failure_does_not_strand_destination_or_capacity(db, code):
     payload = {"to": "+12025550123"}
     result = await admission.execute(tenant_id=TID, request_id="prepare-failed", provider="vobiz", payload=payload,
-        operation=AsyncMock(return_value={"ok": False, "code": "voice_preparation_failed"}))
+        operation=AsyncMock(return_value={"ok": False, "code": code}))
     assert "No call was placed" in result["error"]
     async with db() as session:
         row = await session.get(PstnDialRequest, admission.request_key(TID, "prepare-failed"))

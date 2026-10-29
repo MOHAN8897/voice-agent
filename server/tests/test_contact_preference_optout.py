@@ -45,14 +45,18 @@ def live_ctx(call_id: str = CALL, *, direction: str = "inbound") -> CallContext:
 
 
 @pytest.fixture(autouse=True)
-def _isolate(monkeypatch):
+def _isolate(monkeypatch, tmp_path):
     from server.config.env import get_settings
 
     monkeypatch.setenv("ENABLE_CALL_ARCHIVE", "false")
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
     get_settings.cache_clear()
     clear_all()
+    from server.call.call_ledger import call_ledger
+    call_ledger.reset_for_tests()
     yield
     clear_all()
+    call_ledger.reset_for_tests()
     get_settings.cache_clear()
 
 
@@ -83,6 +87,30 @@ async def test_explicit_opt_out_enrolls_before_the_line_closes(dnc):
 
     assert ctx.contact_preference == "do_not_call"
     dnc.assert_awaited_once_with(CALL, disposition="do_not_call")
+
+
+@pytest.mark.asyncio
+async def test_later_neutral_turn_cannot_erase_explicit_optout(dnc):
+    ctx = live_ctx()
+    await record_contact_preference(CALL, "do_not_call")
+    assert await record_contact_preference(CALL, "none") == "do_not_call"
+    assert ctx.contact_preference == "do_not_call"
+
+
+@pytest.mark.asyncio
+async def test_optout_latch_survives_live_context_eviction(dnc):
+    live_ctx()
+    await record_contact_preference(CALL, "do_not_call")
+    clear_all()
+    assert await record_contact_preference(CALL, "callback") == "do_not_call"
+
+
+def test_callback_tag_uses_recorded_multilingual_intent():
+    from server.call.outcome_schema import derive_status_tags
+    tags = derive_status_tags("interested", {}, contact_preference="callback",
+                              next_action="ఆరు గంటల తర్వాత సంప్రదించాలి")
+    assert "followup:callback" in tags
+    assert "signal:do_not_call" not in tags
 
 
 @pytest.mark.asyncio

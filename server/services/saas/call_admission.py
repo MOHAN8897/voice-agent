@@ -23,7 +23,7 @@ from server.services.saas.voice_setup_errors import VOICE_SETUP_MESSAGES
 
 ACTIVE = ("reserved", "accepted", "answered", "uncertain")
 logger = logging.getLogger(__name__)
-NO_DIAL_CODES = frozenset({"voice_preparation_failed", "live_transcription_unavailable", *VOICE_SETUP_MESSAGES})
+NO_DIAL_CODES = frozenset({"voice_preparation_failed", "live_transcription_unavailable", "predial_policy_changed", *VOICE_SETUP_MESSAGES})
 
 
 def _now():

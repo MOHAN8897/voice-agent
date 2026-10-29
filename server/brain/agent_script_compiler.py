@@ -1267,7 +1267,14 @@ def validate_agent_script(
         reasons.append("empty or placeholder agent identity")
 
     body = script or ""
-    if _PLACEHOLDER_BAD.search(body):
+    # Preserve recipient variables explicitly authored in the brief. They are
+    # resolved and checked per campaign contact, unlike unfinished generator
+    # placeholders. Newly invented variables remain a generation error.
+    from server.services.saas.script_variables import TEMPLATE_TAG_RE
+    declared = {(m.group(1), (m.group(2) or "").strip()) for m in TEMPLATE_TAG_RE.finditer(brief or "")}
+    placeholder_body = TEMPLATE_TAG_RE.sub(
+        lambda m: "runtime value" if (m.group(1), (m.group(2) or "").strip()) in declared else m.group(0), body)
+    if _PLACEHOLDER_BAD.search(placeholder_body) or "{{" in placeholder_body or "}}" in placeholder_body:
         reasons.append("placeholder tokens remain in script")
 
     non_flow = _strip_script_section(body, "CONVERSATION FLOW")

@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
-from sqlalchemy import String, exists, func, select, update
+from sqlalchemy import String, exists, func, select, update, or_
 from sqlalchemy.exc import IntegrityError, ProgrammingError, OperationalError
 
 from server.db.connection import get_session_factory
@@ -50,6 +50,8 @@ def job_public(row: FollowUpJob) -> dict:
             "expiresAt": row.expires_at.isoformat(), "attempts": row.attempts,
             "requestedWhen": (row.payload or {}).get("requestedWhen") or (row.payload or {}).get("requestText", ""),
             "timezone": (row.payload or {}).get("timezone"),
+            "campaignId": (row.payload or {}).get("campaignId"),
+            "campaignName": (row.payload or {}).get("campaignName"),
             "createdAt": row.created_at.isoformat(), "updatedAt": row.updated_at.isoformat()}
 
 
@@ -143,7 +145,7 @@ async def edit_job(principal: SubscriberPrincipal, job_id: uuid.UUID, action: st
 
 
 async def capture_request(session, callback: CallCallback, *, request_text: str, llm: dict | None = None,
-                          requested_when: str = "", recent_turns: list[dict] | None = None) -> None:
+                          requested_when: str = "", recent_turns: list[dict] | None = None, review_only: bool = False) -> None:
     """Called in the same transaction as the callback record, before any spoken assurance."""
     policy = await session.scalar(select(AgentFollowUpPolicy).where(
         AgentFollowUpPolicy.tenant_id == callback.tenant_id, AgentFollowUpPolicy.agent_id == uuid.UUID(callback.agent_id)))
@@ -153,7 +155,7 @@ async def capture_request(session, callback: CallCallback, *, request_text: str,
             FollowUpJob.origin_key == f"callback:{callback.callback_id}")):
         return
     cfg = FollowUpConfig.model_validate(policy.config)
-    automatic = cfg.enabled and cfg.callbackMode == "automatic"
+    automatic = cfg.enabled and cfg.callbackMode == "automatic" and not review_only
     moment = now_utc()
     await session.execute(update(FollowUpJob).where(FollowUpJob.tenant_id == callback.tenant_id,
         FollowUpJob.agent_id == uuid.UUID(callback.agent_id), FollowUpJob.phone == callback.to_e164,
@@ -162,7 +164,7 @@ async def capture_request(session, callback: CallCallback, *, request_text: str,
     session.add(FollowUpJob(tenant_id=callback.tenant_id, agent_id=uuid.UUID(callback.agent_id),
         origin_key=f"callback:{callback.callback_id}", source_id=str(callback.original_call_id),
         kind="callback", phone=callback.to_e164, status="planning" if automatic else "needs_review",
-        reason="resolve_requested_time" if automatic else "approval_required",
+        reason="resolve_requested_time" if automatic else "interrupted_request_review" if review_only else "approval_required",
         payload={"requestText": request_text[:1200], "requestedWhen": requested_when[:400], "recentTurns": recent_turns or [], "callbackId": str(callback.callback_id),
                  "timezone": cfg.timezone, "llm": llm or {}, "requestedAt": moment.isoformat()},
         due_at=moment if automatic else None, expires_at=moment + timedelta(days=cfg.expiryDays),
@@ -181,6 +183,56 @@ async def suppress_jobs(tenant_id: uuid.UUID, *, phone: str | None = None, callb
             return
         await session.execute(stmt.values(status="suppressed", reason=reason, lease_token=None, lease_until=None, updated_at=now_utc()))
         await session.commit()
+
+
+async def import_for_review(principal: SubscriberPrincipal, agent_id: uuid.UUID, kind: str, days: int) -> dict:
+    """Explicitly requested historical import. Never makes a job automatic."""
+    from types import SimpleNamespace
+    from server.services.saas.call_admission import lock_tenant
+    from server.services.saas.callback_request_service import _public
+    tid, moment = subscriber_workspace_tenant_id(principal), now_utc()
+    async with factory_required()() as session:
+        await lock_tenant(session, tid)
+        if not await session.scalar(select(Agent.agent_id).where(Agent.tenant_id == tid, Agent.agent_id == agent_id)):
+            raise HTTPException(404, "Agent not found")
+        policy = await session.scalar(select(AgentFollowUpPolicy).where(AgentFollowUpPolicy.tenant_id == tid,
+            AgentFollowUpPolicy.agent_id == agent_id))
+        cfg = FollowUpConfig.model_validate(policy.config if policy else {})
+        if not cfg.enabled or (kind == "missed" and cfg.missedMode == "off"):
+            raise HTTPException(409, "Enable this follow-up flow in agent settings before importing earlier calls")
+        effective_days = min(days, cfg.expiryDays)
+        since = moment - timedelta(days=effective_days)
+        before = await session.scalar(select(func.count()).select_from(FollowUpJob).where(
+            FollowUpJob.tenant_id == tid, FollowUpJob.agent_id == agent_id))
+        if kind == "missed":
+            review = cfg.model_copy(update={"missedMode": "review"})
+            source = SimpleNamespace(tenant_id=tid, agent_id=agent_id, authorized_at=since,
+                                     authorized_by=principal.user_id, billing_tenant_id=principal.tenant_id)
+            await _capture_missed(session, source, review, moment)
+        else:
+            active_phones = select(FollowUpJob.phone).where(FollowUpJob.tenant_id == tid,
+                FollowUpJob.agent_id == agent_id, FollowUpJob.kind == "callback", FollowUpJob.status.in_(ACTIVE))
+            seen = exists(select(FollowUpJob.id).where(FollowUpJob.tenant_id == tid,
+                func.replace(FollowUpJob.origin_key, "-", "") == "callback:" + func.replace(CallCallback.callback_id.cast(String), "-", "")))
+            requests = (await session.scalars(select(CallCallback).where(CallCallback.tenant_id == tid,
+                CallCallback.agent_id == str(agent_id), CallCallback.mode == "requested", CallCallback.status == "requested",
+                CallCallback.to_e164.not_in(active_phones), ~seen,
+                CallCallback.created_at >= since).order_by(CallCallback.created_at.desc()).limit(200))).all()
+            active = set((await session.scalars(select(FollowUpJob.phone).where(FollowUpJob.tenant_id == tid,
+                FollowUpJob.agent_id == agent_id, FollowUpJob.kind == "callback", FollowUpJob.status.in_(ACTIVE)))).all())
+            for request in requests:
+                if request.to_e164 in active:
+                    continue
+                details = await asyncio.to_thread(_public, request)
+                await capture_request(session, request, request_text=details.get("requestText") or "",
+                                      requested_when=details.get("requestedWhen") or "", review_only=True)
+                active.add(request.to_e164)
+        await session.flush()
+        after = await session.scalar(select(func.count()).select_from(FollowUpJob).where(
+            FollowUpJob.tenant_id == tid, FollowUpJob.agent_id == agent_id))
+        await session.commit()
+        return {"imported": after - before, "days": effective_days, "reviewOnly": True,
+                "batchLimit": 50 if kind == "missed" else 200}
 
 
 async def _capture_missed(session, policy: AgentFollowUpPolicy, cfg: FollowUpConfig, moment: datetime) -> None:
@@ -308,6 +360,7 @@ async def _process(job_id: uuid.UUID) -> None:
 
     moment = now_utc()
     token = str(uuid.uuid4())
+    campaign_contact = None
     async with factory_required()() as session:
         row = await session.scalar(select(FollowUpJob).where(FollowUpJob.id == job_id,
             FollowUpJob.status.in_(("planning", "scheduled")), FollowUpJob.due_at <= moment)
@@ -325,6 +378,17 @@ async def _process(job_id: uuid.UUID) -> None:
         cfg = FollowUpConfig.model_validate(policy.config if policy else {})
         reason = await _block_reason(session, row, policy, cfg)
         principal = await _principal(session, row)
+        if not reason and principal and row.status == "scheduled" and utc(row.expires_at) > moment:
+            from server.services.saas.campaign_followups import dispatch_gate
+            action, gate_reason, campaign_contact = await dispatch_gate(session, row, moment)
+            if action != "allow":
+                if action == "wait":
+                    row.due_at = moment + timedelta(seconds=30)
+                else:
+                    row.status = {"cancel": "cancelled", "expire": "expired", "review": "needs_review", "finish": "completed"}[action]
+                row.reason, row.updated_at = gate_reason, moment
+                await session.commit()
+                return
         if utc(row.expires_at) <= moment:
             row.status, row.reason = "expired", "request_expired"
         elif row.attempts >= cfg.maxAttempts:
@@ -357,7 +421,9 @@ async def _process(job_id: uuid.UUID) -> None:
                     row.status, row.reason, row.lease_token = "dispatching", "dispatch_reserved", token
                     row.lease_until = moment + timedelta(minutes=3)
                     row.attempts += 1
-                    row.payload = {**(row.payload or {}), "dispatches": [*(row.payload or {}).get("dispatches", []), moment.isoformat()]}
+                    row.payload = {**(row.payload or {}),
+                        "dispatchSequence": max(int((row.payload or {}).get("dispatchSequence") or 0), row.attempts - 1) + 1,
+                        "dispatches": [*(row.payload or {}).get("dispatches", []), moment.isoformat()]}
         row.updated_at = moment
         await session.commit()
         state = row.status
@@ -373,10 +439,17 @@ async def _process(job_id: uuid.UUID) -> None:
         try:
             result = await asyncio.wait_for(request_callback(principal, call_id=row.source_id,
                 agent_id=str(row.agent_id), to_e164=row.phone, mode="scheduled",
-                dial_request_id=f"fu:{row.id}:{row.attempts}"), timeout=90)
+                dial_request_id=f"fu:{row.id}:{(row.payload or {}).get('dispatchSequence') or row.attempts}",
+                from_e164=campaign_contact.pop("_from_e164", None) if campaign_contact else None,
+                contact=campaign_contact or {"followup_job_id": str(row.id)}), timeout=90)
             status = "dialed" if result.get("ok") else "needs_review"
             reason = "dial_accepted" if result.get("ok") else "dial_not_confirmed"
-            await _finish_lease(row.tenant_id, row.id, token, status, reason, control_id=result.get("callControlId"))
+            changes = {"control_id": result.get("callControlId")}
+            if result.get("code") == "predial_policy_changed":
+                changes.update(attempts=max(0, row.attempts - 1), payload={**row.payload,
+                    "dispatches": (row.payload or {}).get("dispatches", [])[:-1]})
+                reason = "policy_changed_before_dial"
+            await _finish_lease(row.tenant_id, row.id, token, status, reason, **changes)
         except Exception as exc:
             # Provider may already have accepted. The deterministic journal remains the source of truth.
             logger.warning("followup.dispatch_uncertain kind=%s", type(exc).__name__)
@@ -409,7 +482,13 @@ async def run_once() -> int:
             FollowUpJob.expires_at <= moment).values(status="expired", reason="request_expired", updated_at=moment))
         await _reconcile_dials(session, policies, moment)
         await session.commit()
+        from server.db.models.phase5_models import Campaign
+        campaign_id = FollowUpJob.payload["campaignId"].as_string()
+        held_campaign = exists(select(Campaign.campaign_id).where(Campaign.tenant_id == FollowUpJob.tenant_id,
+            func.replace(Campaign.campaign_id.cast(String), "-", "") == func.replace(campaign_id, "-", ""),
+            Campaign.status.in_(("draft", "paused", "requires_review"))))
         ids = (await session.scalars(select(FollowUpJob.id).where(FollowUpJob.status.in_(("planning", "scheduled")),
+            or_(campaign_id.is_(None), ~held_campaign),
             FollowUpJob.due_at <= moment).order_by(FollowUpJob.due_at, FollowUpJob.id).limit(10))).all()
     for job_id in ids:
         await _process(job_id)
@@ -433,6 +512,11 @@ async def _reconcile_dials(session, policies, moment):
         cfg = configs.get((row.tenant_id, row.agent_id), FollowUpConfig())
         if attempt.answered_at or attempt.linked_call_id:
             row.status, row.reason = "completed", "call_connected"
+            callback_id = (row.payload or {}).get("callbackId")
+            if callback_id:
+                await session.execute(update(CallCallback).where(CallCallback.tenant_id == row.tenant_id,
+                    CallCallback.callback_id == uuid.UUID(callback_id), CallCallback.status == "requested")
+                    .values(status="completed"))
         elif attempt.status in ("missed", "no_answer", "no-answer", "busy") and row.attempts < cfg.maxAttempts and cfg.enabled:
             row.status, row.reason = "scheduled", "retry_unanswered"
             row.due_at = moment + timedelta(minutes=cfg.retryDelayMinutes)

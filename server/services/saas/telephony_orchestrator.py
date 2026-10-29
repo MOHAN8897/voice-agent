@@ -269,6 +269,11 @@ async def subscriber_outbound(
         inheritTestStudioConfig=False,
         contact=contact,
     )
+    async def before_dial_check():
+        from server.services.saas.predial_policy import assert_predial_policy
+        await assert_predial_policy(principal, agent_id=agent_id, phone=clean_to,
+                                    contact=contact, request_id=dial_request_id)
+    body._before_dial_check = before_dial_check
     session_stub = SessionData(
         kind="app",
         subject=str(principal.user_id),

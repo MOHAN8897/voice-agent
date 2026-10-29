@@ -10,13 +10,12 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PrivateAttr
 
 from server.auth.dependencies import require_dev_session, require_permission
 from server.auth.session import SessionData
 from server.services.telephony import (
     active_telephony_provider,
-    provider_enabled,
     telephony_guard_error,
     telephony_summary_async,
 )
@@ -158,6 +157,7 @@ class LiveSpeakTestBody(BaseModel):
 
 
 class OutboundTestBody(BaseModel):
+    _before_dial_check: Any = PrivateAttr(default=None)
     admission_key: str | None = Field(None, exclude=True)
     to_e164: str = Field(..., alias="toE164")
     from_e164: str | None = Field(None, alias="fromE164")
@@ -171,6 +171,21 @@ class OutboundTestBody(BaseModel):
     contact: dict[str, Any] | None = None
 
     model_config = {"populate_by_name": True}
+
+
+async def _predial_block(body: OutboundTestBody) -> dict | None:
+    check = getattr(body, "_before_dial_check", None)
+    if check is None:
+        return None
+    try:
+        await check()
+    except Exception as exc:
+        # The carrier operation has not started. Return a definitive no-dial
+        # result, rather than treating this as ambiguous provider acceptance.
+        logger.info("subscriber.predial_blocked kind=%s", type(exc).__name__)
+        return {"ok": False, "code": "predial_policy_changed", "status": 409,
+                "error": "Calling settings or caller permission changed before dialing. No call was placed; review the request."}
+    return None
 
 
 class PstnStackValidateBody(BaseModel):
@@ -504,6 +519,9 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         logger.warning("[PSTN-Telnyx] Composed prewarm failed (%s), proceeding with live synthesis on answer", type(exc).__name__)
     bound = False
     try:
+        blocked = await _predial_block(body)
+        if blocked:
+            return blocked
         result = await client.create_outbound_call(
             to_e164=body.to_e164,
             from_e164=body.from_e164,
@@ -761,6 +779,17 @@ async def _outbound_vobiz(
     )
 
     try:
+        blocked = await _predial_block(body)
+        if blocked:
+            try:
+                await pstn_prewarm_registry.cancel("vobiz", tracking_id)
+            except Exception as exc:
+                logger.warning("subscriber.predial_cleanup_failed kind=%s", type(exc).__name__)
+            try:
+                await asyncio.to_thread(vobiz_call_registry.upsert, tracking_id, {"status": "failed", "end_reason": "predial_policy_changed"})
+            except Exception as exc:
+                logger.warning("subscriber.predial_registry_failed kind=%s", type(exc).__name__)
+            return blocked
         result = await client.create_outbound_call(
             to=body.to_e164,
             from_=body.from_e164,

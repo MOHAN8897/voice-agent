@@ -5,12 +5,12 @@ import uuid
 import hashlib
 import json
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 import re
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel, Field, ConfigDict, AliasChoices, field_validator
+from pydantic import BaseModel, Field, ConfigDict, AliasChoices, field_validator, model_validator
 from sqlalchemy import func, or_, select, update
 
 from server.auth.api_tenant import ApiTenantContext, require_api_tenant
@@ -61,6 +61,9 @@ class CampaignCreate(BaseModel):
     contact_list_id: str | None = Field(None, validation_alias=AliasChoices("contactListId", "contact_list_id"))
     auto_start: bool = Field(False, validation_alias=AliasChoices("autoStart", "auto_start"))
     calling_window: CallingWindow | None = Field(None, validation_alias=AliasChoices("callingWindow", "calling_window"))
+    starts_at: datetime | None = Field(None, validation_alias=AliasChoices("startsAt", "starts_at"))
+    expires_at: datetime | None = Field(None, validation_alias=AliasChoices("expiresAt", "expires_at"))
+    followup_job_ids: list[uuid.UUID] = Field(default_factory=list, max_length=1000, validation_alias=AliasChoices("followupJobIds", "followup_job_ids"))
     expected_script_version: str | None = Field(None, max_length=100, validation_alias=AliasChoices("expectedScriptVersion", "expected_script_version"))
     # Compliance Attestation
     consent_confirmed: bool = Field(..., validation_alias=AliasChoices("consentConfirmed", "consent_confirmed"))
@@ -73,6 +76,17 @@ class CampaignCreate(BaseModel):
         if not v:
             raise ValueError("You must confirm consent to launch campaigns.")
         return v
+
+    @model_validator(mode="after")
+    def validate_schedule(self):
+        for stamp in (self.starts_at, self.expires_at):
+            if stamp is not None and (stamp.tzinfo is None or stamp.utcoffset() is None):
+                raise ValueError("Campaign dates must include an explicit timezone offset")
+        if self.starts_at and self.expires_at and self.expires_at <= self.starts_at:
+            raise ValueError("Campaign expiry must be after its start")
+        if self.followup_job_ids and (self.contacts or self.contact_list_id):
+            raise ValueError("Follow-up jobs cannot be mixed with uploaded contacts")
+        return self
 
 
 class ValidateVariablesBody(BaseModel):
@@ -101,12 +115,13 @@ class DncBody(BaseModel):
 class DncBulkBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    phones: list[str] = Field(default_factory=list)
+    phones: list[str] = Field(default_factory=list, max_length=5000)
     reason: str | None = "bulk_upload"
 
 
 class DncDeactivateBody(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    expected_added_at: datetime | None = Field(None, validation_alias=AliasChoices("expectedAddedAt", "expected_added_at"))
 
     removal_reason: str = Field(
         ...,
@@ -127,13 +142,42 @@ class DncDeactivateBody(BaseModel):
             raise ValueError("You must explicitly confirm new recipient authorization.")
         return v
 
+    @field_validator("removal_reason", mode="before")
+    @classmethod
+    def trimmed_reason(cls, value):
+        value = str(value or "").strip()
+        if not 5 <= len(value) <= 1000:
+            raise ValueError("Explain renewed permission in 5–1,000 characters")
+        return value
+
 
 class PhoneNumberBody(BaseModel):
     e164: str
 
 
+@router.get("/api/campaigns/audience/follow-ups")
+async def followup_audience(
+    agent_id: uuid.UUID = Query(alias="agentId"), kind: Literal["callback", "missed"] = "callback",
+    limit: int = Query(500, ge=1, le=500), offset: int = Query(0, ge=0),
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
+    require_role_permission(ctx.role, "app.calls.read")
+    factory = get_session_factory()
+    if factory is None:
+        raise HTTPException(503, "Follow-up storage is unavailable")
+    from server.services.saas.campaign_followups import audience
+    from server.routes.app_followups import storage
+    async with factory() as db:
+        return await storage(audience(db, ctx.workspace_tenant_id, agent_id, kind,
+                                      now=datetime.now(timezone.utc), limit=limit, offset=offset))
+
+
 async def _campaign_for_tenant(db, campaign_id: str, tenant_id: uuid.UUID) -> Campaign:
-    result = await db.execute(select(Campaign).where(Campaign.campaign_id == uuid.UUID(campaign_id)))
+    try:
+        cid = uuid.UUID(campaign_id)
+    except (ValueError, TypeError):
+        raise HTTPException(404, "Campaign not found") from None
+    result = await db.execute(select(Campaign).where(Campaign.campaign_id == cid, Campaign.tenant_id == tenant_id))
     camp = result.scalar_one_or_none()
     if camp is None or camp.tenant_id != tenant_id:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Campaign not found"}})
@@ -298,6 +342,12 @@ async def create_campaign(
         if body.calling_window.start == body.calling_window.end:
             raise HTTPException(422, "Calling window start and end must differ")
         schedule["calling_window"] = body.calling_window.model_dump()
+    if body.starts_at:
+        schedule["starts_at"] = body.starts_at.isoformat()
+    if body.expires_at:
+        if body.expires_at <= datetime.now(timezone.utc):
+            raise HTTPException(422, "Choose a future campaign expiry")
+        schedule["expires_at"] = body.expires_at.isoformat()
     cid = uuid.uuid4()
     imported_count = 0
     client_ip = _client_ip(request) or "unknown"
@@ -350,6 +400,9 @@ async def create_campaign(
 
         # Gather contacts list
         raw_contact_list = list(body.contacts or [])
+        if body.followup_job_ids:
+            from server.services.saas.campaign_followups import bind_jobs
+            raw_contact_list = await bind_jobs(db, ctx, camp, body.followup_job_ids, datetime.now(timezone.utc))
         if body.contact_list_id:
             cl_contacts = await db.execute(
                 select(Contact).where(
@@ -383,7 +436,7 @@ async def create_campaign(
         if body.expected_script_version and body.expected_script_version != version:
             raise HTTPException(409, "The agent script changed. Recheck contacts before launching.")
         await asyncio.to_thread(require_campaign_variables, script, raw_contact_list)
-        camp.schedule = {**schedule, "script_version": version}
+        camp.schedule = {**(camp.schedule or {}), "script_version": version}
         # Process and snapshot contacts
         active_dnc_set: set[str] = set()
         if True:  # DNC exclusion cannot be disabled by a client.
@@ -397,7 +450,7 @@ async def create_campaign(
 
         dnd_excluded_count = 0
         seen_phones: set[str] = set()
-        for c in raw_contact_list:
+        for index, c in enumerate(raw_contact_list):
             raw_phone = str(c.get("phone") or c.get("phone_e164") or c.get("phoneE164") or "").strip()
             if not raw_phone:
                 continue
@@ -420,6 +473,11 @@ async def create_campaign(
 
             # Derive names & variables snapshot
             c_derived = derive_names(dict(c))
+            if c_derived.get("timezone"):
+                try:
+                    ZoneInfo(str(c_derived["timezone"]))
+                except (ZoneInfoNotFoundError, ValueError):
+                    raise HTTPException(422, f"Contact row {index + 1} has an invalid timezone. Use an IANA timezone or review the contact before calling.") from None
             c_derived["phone"] = e164
             resolved_vars = resolve_contact_variables(c_derived)
 
@@ -525,6 +583,8 @@ async def import_contacts(
             raise HTTPException(404, "Campaign not found")
         if camp.status != "draft":
             raise HTTPException(409, "Contacts can only be added to a draft campaign")
+        if (camp.schedule or {}).get("audience") == "followups":
+            raise HTTPException(409, "Create a separate campaign for additional follow-ups; this audience is already reserved")
         existing = set((await db.execute(select(CampaignContact.phone_e164).where(CampaignContact.campaign_id == cid))).scalars())
         dnc = set((await db.execute(select(DncEntry.phone_e164).where(DncEntry.tenant_id == ctx.workspace_tenant_id,
             DncEntry.active.is_(True)))).scalars())
@@ -570,11 +630,16 @@ async def start_campaign(campaign_id: str, ctx: ApiTenantContext = Depends(requi
             raise HTTPException(404, "Campaign not found")
         if not camp.consent_confirmed:
             raise HTTPException(409, "Campaign consent must be confirmed before starting")
+        if (camp.schedule or {}).get("expires_at") and datetime.fromisoformat(camp.schedule["expires_at"]) <= datetime.now(timezone.utc):
+            raise HTTPException(409, "This campaign window has expired. Create a new reviewed campaign.")
         if camp.status in ("cancelled", "completed"):
             raise HTTPException(409, "This campaign has ended. Create a new campaign to call again.")
         run = (await db.execute(select(CampaignRun).where(CampaignRun.campaign_id == cid,
             CampaignRun.status.in_(("running", "blocked", "requires_review")))
             .order_by(CampaignRun.started_at.desc().nullslast()).limit(1).with_for_update())).scalar_one_or_none()
+        if (camp.schedule or {}).get("audience") == "followups" and run is not None:
+            from server.services.saas.campaign_followups import sync_progress
+            await sync_progress(db, camp, run)
         eligible = (await db.execute(select(func.count()).select_from(CampaignContact).where(
             CampaignContact.campaign_id == cid, or_(CampaignContact.status.in_(("dialing", "placed", "connected")),
                 CampaignContact.status.in_(("pending", "queued", "failed")) &
@@ -647,6 +712,9 @@ async def cancel_campaign(campaign_id: str, ctx: ApiTenantContext = Depends(requ
         if camp.status in ("completed", "cancelled"):
             raise HTTPException(409, "Campaign has already ended")
         camp.status = "cancelled"
+        if (camp.schedule or {}).get("audience") == "followups":
+            from server.services.saas.campaign_followups import cancel_pending
+            await cancel_pending(db, camp, datetime.now(timezone.utc))
         await db.commit()
     return {"ok": True, "status": "cancelled"}
 
@@ -733,6 +801,8 @@ async def add_dnc(body: DncBody, ctx: ApiTenantContext = Depends(require_api_ten
     user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
 
     async with factory() as db:
+        from server.services.saas.call_admission import lock_tenant
+        await lock_tenant(db, tenant_id)
         existing = await db.execute(
             select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == norm_phone)
         )
@@ -761,6 +831,7 @@ async def add_dnc(body: DncBody, ctx: ApiTenantContext = Depends(require_api_ten
                     added_by_user_id=user_id,
                 )
             )
+        await _suppress_dnd_jobs(db, tenant_id, [norm_phone])
         await db.commit()
     return {"ok": True, "phone_e164": norm_phone, "active": True}
 
@@ -782,6 +853,8 @@ async def bulk_add_dnc(body: DncBulkBody, ctx: ApiTenantContext = Depends(requir
         raise HTTPException(422, "Every DND entry must be a valid phone number; no changes were saved")
 
     async with factory() as db:
+        from server.services.saas.call_admission import lock_tenant
+        await lock_tenant(db, tenant_id)
         for norm in normalized:
             existing = await db.execute(
                 select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == norm)
@@ -811,6 +884,7 @@ async def bulk_add_dnc(body: DncBulkBody, ctx: ApiTenantContext = Depends(requir
                     )
                 )
             count += 1
+        await _suppress_dnd_jobs(db, tenant_id, normalized)
         await db.commit()
     return {"ok": True, "added": count}
 
@@ -839,7 +913,12 @@ async def deactivate_dnc(
     user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
 
     async with factory() as db:
-        clean_phone = phone_e164.strip()
+        from server.services.saas.call_admission import lock_tenant
+        from server.services.saas.call_callback_service import normalize_e164
+        await lock_tenant(db, tenant_id)
+        clean_phone = normalize_e164(phone_e164)
+        if not clean_phone:
+            raise HTTPException(422, "Choose a valid phone number")
         entry = await db.execute(
             select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == clean_phone)
         )
@@ -852,13 +931,37 @@ async def deactivate_dnc(
             row = entry2.scalar_one_or_none()
         if not row:
             raise HTTPException(status_code=404, detail="DND entry not found")
+        if body.expected_added_at:
+            from server.services.saas.followup_policy import utc
+            if body.expected_added_at.tzinfo is None or utc(body.expected_added_at) != utc(row.added_at):
+                raise HTTPException(409, "This caller's preferences changed. Refresh the DND registry before reviewing removal.")
         row.active = False
         row.removed_at = datetime.now(timezone.utc)
         row.removed_by_user_id = user_id
         row.removal_reason = body.removal_reason.strip()
         row.reconsent_confirmed = True
+        from server.db.models.phase5_models import AuditLog
+        db.add(AuditLog(tenant_id=tenant_id, actor=str(ctx.subject or "api"), action="dnd.remove",
+                        resource_type="dnd_entry", resource_id=str(row.id), source="subscriber",
+                        payload={"removalReason": body.removal_reason, "reconsentConfirmed": True}))
         await db.commit()
     return {"ok": True, "phone_e164": row.phone_e164, "active": False}
+
+
+async def _suppress_dnd_jobs(db, tenant_id, phones):
+    """Keep the registry and pending queue aligned in the same transaction."""
+    from server.db.models.followup_models import FollowUpJob
+    from server.services.saas.followup_retention import table_not_installed
+    from sqlalchemy.exc import DBAPIError
+    try:
+        async with db.begin_nested():
+            await db.execute(update(FollowUpJob).where(FollowUpJob.tenant_id == tenant_id,
+                FollowUpJob.phone.in_(phones), FollowUpJob.status.in_(("planning", "scheduled", "resolving", "needs_review")))
+                .values(status="suppressed", reason="do_not_call", lease_token=None, lease_until=None,
+                        updated_at=datetime.now(timezone.utc)))
+    except DBAPIError as exc:
+        if not table_not_installed(exc):
+            raise
 
 
 @router.get("/api/phone-numbers")

@@ -27,6 +27,7 @@ async def test_primary_dial_keeps_contact_in_prewarm_and_authorized_media_contex
     tenant = str(uuid.uuid4())
     contact = {"first_name": "Example", "campaign_id": str(uuid.uuid4())}
     body = route.OutboundTestBody(agentId=str(uuid.uuid4()), toE164="+12025550101", fromE164="+12025550102", contact=contact)
+    body._before_dial_check = AsyncMock()
     registry, tokens = carrier.VobizCallRegistry(), carrier.VobizStreamTokens()
     monkeypatch.setattr(registry, "_redis", lambda: None)
     monkeypatch.setattr(tokens, "_redis", lambda: None)
@@ -51,6 +52,7 @@ async def test_primary_dial_keeps_contact_in_prewarm_and_authorized_media_contex
     monkeypatch.setattr(PstnPrewarmRegistry, "prepare", prepare)
     result = await route._outbound_vobiz(body, SessionData(kind="app", subject=str(uuid.uuid4()), tenant_id=tenant, role="customer_admin", issued_at=0))
     assert result["ok"]
+    body._before_dial_check.assert_awaited_once()
     assert prepared[0][2]["contact"] == contact
     record = registry.get("isolated-carrier-call")
     assert record["contact"] == contact

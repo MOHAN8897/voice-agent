@@ -4,7 +4,7 @@ from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.exc import ProgrammingError, OperationalError
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt
@@ -28,6 +28,12 @@ class JobWrite(BaseModel):
     dueAt: datetime | None = None
     expectedUpdatedAt: datetime
     confirm: bool = False
+
+
+class ReviewImport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    kind: Literal["callback", "missed"]
+    days: int = Field(7, ge=1, le=30)
 
 
 async def storage(operation):
@@ -58,6 +64,13 @@ async def jobs_read(agentId: UUID | None = None, status: Literal["active", "need
                     principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
     require_subscriber_permission(principal, "app.calls.read")
     return await storage(service.list_jobs(subscriber_workspace_tenant_id(principal), agentId, status, limit, offset))
+
+
+@router.post("/api/agents/{agent_id}/follow-ups/import-review")
+async def import_review(agent_id: UUID, body: ReviewImport, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    require_subscriber_permission(principal, "app.telephony.write")
+    await load_agent_for_tenant(str(agent_id), subscriber_workspace_tenant_id(principal))
+    return await storage(service.import_for_review(principal, agent_id, body.kind, body.days))
 
 
 @router.patch("/api/follow-ups/{job_id}")

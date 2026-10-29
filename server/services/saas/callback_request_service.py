@@ -73,7 +73,18 @@ def _public(row: CallCallback) -> dict[str, Any]:
     }
 
 
-async def record_callback_request(ctx: Any, request_text: str) -> dict[str, Any] | None:
+async def recover_interrupted_callback(ctx: Any) -> dict[str, Any] | None:
+    """Keep an unfinished explicit request for human review after a disconnect."""
+    if (ctx is None or getattr(ctx, "contact_preference", "") == "do_not_call"
+            or getattr(ctx, "callback_close_phase", "idle") == "idle"):
+        return None
+    request = str(getattr(ctx, "callback_request_text", "") or "").strip()
+    if not request:
+        return None
+    return await asyncio.wait_for(record_callback_request(ctx, request, review_only=True), timeout=3.0)
+
+
+async def record_callback_request(ctx: Any, request_text: str, *, review_only: bool = False) -> dict[str, Any] | None:
     """Commit before the voice agent claims the request was noted. Never dials."""
     factory = get_session_factory()
     if factory is None or ctx is None:
@@ -121,7 +132,8 @@ async def record_callback_request(ctx: Any, request_text: str) -> dict[str, Any]
                     recent_turns = await asyncio.to_thread(_timing_context, str(call_id), request_text, requested_when)
                     async with session.begin_nested():
                         await capture_request(session, row, request_text=request_text, llm=llm,
-                                              requested_when=requested_when, recent_turns=recent_turns)
+                                              requested_when=requested_when, recent_turns=recent_turns,
+                                              review_only=review_only)
                         await session.flush()
                 except Exception as exc:
                     logger.warning("callback.scheduling_unavailable kind=%s", type(exc).__name__)
@@ -144,7 +156,7 @@ async def record_callback_request(ctx: Any, request_text: str) -> dict[str, Any]
 
 
 async def list_callback_requests(principal: Any, *, agent_id: str | None = None, status: str = "requested") -> list[dict[str, Any]]:
-    if status not in {"requested", "converted", "dismissed"}:
+    if status not in {"requested", "completed", "converted", "dismissed"}:
         raise HTTPException(422, "Invalid callback status")
     factory = get_session_factory()
     if factory is None:
@@ -176,11 +188,23 @@ async def update_callback_request(principal: Any, callback_id: uuid.UUID, status
             raise HTTPException(404, "Callback request not found")
         row.status = status
         row.updated_at = datetime.now(timezone.utc)
+        if status == "converted":
+            # Tenant confirmation must agree with the CRM's conversion metric.
+            # Scope by the original agent as well as workspace and phone.
+            from server.db.models.saas_models import Lead
+            leads = (await session.scalars(select(Lead).where(Lead.tenant_id == row.tenant_id,
+                Lead.agent_id == row.agent_id, Lead.phone.is_not(None)))).all()
+            for lead in leads:
+                if normalize_e164(lead.phone) == normalize_e164(row.to_e164):
+                    lead.stage, lead.updated_at = "converted", datetime.now(timezone.utc)
         await session.commit()
         result = {"id": str(row.callback_id), "status": row.status}
     try:
         from server.services.saas.followup_service import suppress_jobs
         await suppress_jobs(subscriber_workspace_tenant_id(principal), callback_id=str(callback_id), reason="request_closed")
+        if status == "converted":
+            from server.services.saas.lead_scoring import retire_converted_followups
+            await retire_converted_followups(subscriber_workspace_tenant_id(principal), row.to_e164)
     except Exception as exc:
         # Dispatch also rechecks the committed request status before dialing.
         logger.warning("callback.cancel_queue_failed kind=%s", type(exc).__name__)

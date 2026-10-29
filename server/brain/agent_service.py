@@ -357,6 +357,7 @@ class AgentService:
             if tenant_id and str(row.tenant_id) != tenant_id:
                 raise KeyError(agent_id)
             current_voice = dict(row.voice_settings or {})
+            language_changed = "languages" in patch and patch["languages"] is not None and list(patch["languages"]) != list(row.languages or [])
             disclosure_changed = False
             if "recording_disclosure_enabled" in patch or "recording_disclosure_text" in patch:
                 incoming_enabled = patch.get("recording_disclosure_enabled")
@@ -484,7 +485,7 @@ class AgentService:
             await session.commit()
             await session.refresh(row)
             result = self._row_to_dict(row)
-        if disclosure_changed:
+        if disclosure_changed or language_changed:
             self._schedule_disclosure_recompile(agent_id)
         return result
 

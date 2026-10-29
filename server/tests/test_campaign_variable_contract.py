@@ -76,3 +76,11 @@ async def test_generated_script_personalizes_the_primary_gemini_prompt():
     instructions = build_gemini_audio_session_instructions(rendered, language="en-IN", direction="outbound")
     assert "Example Contact" in instructions and "November 2" in instructions
     assert "{{contact." not in instructions
+
+
+@pytest.mark.parametrize("token", ["{{contact.unknown}}", "{{contact.full_name", "{{}}"])
+def test_generation_rejects_invented_or_malformed_runtime_variables(token):
+    from server.brain.agent_script_compiler import validate_agent_script
+    reasons = validate_agent_script(f"You are Maya from Example Clinic. Hello {token}.",
+                                    brief="Maya from Example Clinic handles appointment reminders.", agent_name="Maya")
+    assert "placeholder tokens remain in script" in reasons

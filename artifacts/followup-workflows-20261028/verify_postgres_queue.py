@@ -20,7 +20,7 @@ from server.config.env import get_settings
 from server.db import connection
 from server.db.models.entities import Agent, Base, Call, CallAttempt, CallCallback, Tenant
 from server.db.models.followup_models import AgentFollowUpPolicy, FollowUpJob, LeadAssessment
-from server.db.models.phase5_models import AgentTelephonyProfile, DncEntry
+from server.db.models.phase5_models import AgentTelephonyProfile, DncEntry, Campaign
 from server.db.models.saas_models import BillingWallet, BillingWalletTransaction, Lead, TenantMembership, User
 from server.services.saas import callback_request_service, call_callback_service, followup_service as service
 from server.services.saas import lead_scoring, telephony_orchestrator, telephony_profile
@@ -33,7 +33,7 @@ AT = datetime(2026, 10, 28, 10, tzinfo=timezone.utc)
 PHONE = "+12025550123"
 MODELS = [Tenant, Agent, User, TenantMembership, Call, CallAttempt, CallCallback,
           AgentTelephonyProfile, DncEntry, Lead, BillingWallet, BillingWalletTransaction,
-          AgentFollowUpPolicy, FollowUpJob, LeadAssessment]
+          AgentFollowUpPolicy, FollowUpJob, LeadAssessment, Campaign]
 
 
 async def main():

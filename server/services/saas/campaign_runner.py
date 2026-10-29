@@ -44,6 +44,7 @@ async def _principal(db, run, workspace_tenant_id):
     from server.auth.rbac import require_role_permission
     from server.db.models.saas_models import User
     from server.services.saas.tenant_guard import SubscriberPrincipal, assert_membership, subscriber_workspace_tenant_id
+    from server.services.saas.platform_admins import effective_membership_role
 
     actor = (run.stats or {}).get("actor") or {}
     try:
@@ -54,26 +55,56 @@ async def _principal(db, run, workspace_tenant_id):
     tenant = await db.get(Tenant, tenant_id)
     if user is None or user.status != "active" or user.deleted_at is not None or tenant is None or tenant.status != "active" or tenant.deleted_at is not None:
         raise HTTPException(403, "Campaign account is inactive")
+    if get_settings().saas_require_email_verification_for_login and user.email_verified_at is None:
+        raise HTTPException(403, "Campaign authorizer must verify their email")
     member = await assert_membership(db, user_id, tenant_id)
-    require_role_permission(member.role, "app.campaigns.write")
-    principal = SubscriberPrincipal(user_id=user_id, tenant_id=tenant_id, role=member.role, email=user.email)
+    role = effective_membership_role(user.email, member.role)
+    require_role_permission(role, "app.campaigns.write")
+    principal = SubscriberPrincipal(user_id=user_id, tenant_id=tenant_id, role=role, email=user.email)
     if subscriber_workspace_tenant_id(principal) != workspace_tenant_id:
         raise HTTPException(403, "Campaign workspace is no longer accessible")
+    workspace = await db.get(Tenant, workspace_tenant_id)
+    from server.services.saas.tenant_guard import tenant_is_usable
+    if not tenant_is_usable(workspace) or workspace.status != "active":
+        raise HTTPException(403, "Campaign workspace is inactive")
     return principal
 
 
 def within_calling_window(schedule, metadata, now=None):
+    now = now or _utcnow()
+    try:
+        if (schedule or {}).get("starts_at") and now < _aware(datetime.fromisoformat(schedule["starts_at"])):
+            return False
+        if (schedule or {}).get("expires_at") and now >= _aware(datetime.fromisoformat(schedule["expires_at"])):
+            return False
+    except (ValueError, TypeError):
+        return False
     window = (schedule or {}).get("calling_window")
     if not window:
         return True
     # Explicit recipient timezone takes precedence over the chosen fallback zone.
     zone = str((metadata or {}).get("timezone") or window["timezone"])
     try:
-        local = (now or _utcnow()).astimezone(ZoneInfo(zone)).strftime("%H:%M")
+        local = now.astimezone(ZoneInfo(zone)).strftime("%H:%M")
     except (ValueError, KeyError):
         return False
     start, end = window["start"], window["end"]
     return start <= local < end if start < end else local >= start or local < end
+
+
+def within_agent_hours(profile, now=None):
+    if not profile:
+        return True
+    from server.services.saas.followup_policy import within_profile_hours
+    now = now or _utcnow()
+    try:
+        zone = str(profile.get("timezone") or "Asia/Kolkata")
+        if now.astimezone(ZoneInfo(zone)).date().isoformat() in (profile.get("closed_dates") or []):
+            return False
+        return profile.get("outbound_enabled") is not False and within_profile_hours(
+            now, profile.get("business_hours") or {}, zone)
+    except (ValueError, KeyError, TypeError):
+        return False
 
 
 async def _lock_campaign(db, campaign_id, tenant_id):
@@ -136,13 +167,35 @@ async def _dial_claim(campaign_id, run_id, tenant_id, owner, contact_id, attempt
             await db.commit()
             return
         principal = await _principal(db, run, tenant_id)
-        dnc = (await db.execute(select(DncEntry.id).where(DncEntry.tenant_id == principal.tenant_id,
+        from server.services.saas.telephony_profile import get_profile
+        if not within_calling_window(camp.schedule, row.metadata_) or not within_agent_hours(await get_profile(str(camp.agent_id))):
+            row.status, row.attempts = "pending", max(0, row.attempts - 1)
+            row.next_attempt_at = _utcnow() + timedelta(minutes=1)
+            attempt = await db.get(DialAttempt, attempt_id)
+            attempt.status = "deferred_before_dial"
+            await db.commit()
+            return
+        dnc = (await db.execute(select(DncEntry.id).where(DncEntry.tenant_id == tenant_id,
             DncEntry.phone_e164 == row.phone_e164, DncEntry.active.is_(True)).limit(1))).scalar_one_or_none()
         if dnc:
             row.status = "dnc_excluded"
             attempt = (await db.execute(select(DialAttempt).where(DialAttempt.campaign_id == campaign_id,
                 DialAttempt.id == attempt_id))).scalar_one()
             attempt.status, attempt.error = "dnc_skipped", "Excluded by the Do Not Call registry before dialing."
+            await db.commit()
+            return
+        from server.db.models.followup_models import FollowUpJob
+        from server.db.models.entities import CallCallback
+        reserved = await db.scalar(select(FollowUpJob.id).where(FollowUpJob.tenant_id == tenant_id,
+            FollowUpJob.phone == row.phone_e164,
+            FollowUpJob.status.in_(("planning", "resolving", "scheduled", "dispatching", "dialed", "needs_review"))).limit(1))
+        requested = await db.scalar(select(CallCallback.callback_id).where(CallCallback.tenant_id == tenant_id,
+            CallCallback.to_e164 == row.phone_e164, CallCallback.mode == "requested", CallCallback.status == "requested").limit(1))
+        if reserved or requested:
+            row.status, row.attempts = "followup_reserved", max(0, row.attempts - 1)
+            attempt = await db.get(DialAttempt, attempt_id)
+            attempt.status = "followup_reserved"
+            attempt.error = "Reserved for the existing callback workflow; no campaign call placed."
             await db.commit()
             return
         payload = {**(row.metadata_ or {}), "campaign_id": str(campaign_id), "contact_id": str(contact_id),
@@ -153,10 +206,13 @@ async def _dial_claim(campaign_id, run_id, tenant_id, owner, contact_id, attempt
         await db.commit()
     # Subscriber outbound repeats wallet, verification, ownership, DNC and shared
     # admission checks immediately before the carrier request.
+    no_dial_confirmed = False
     try:
         result = await subscriber_outbound(principal, **args)
         state = "placed" if result.get("ok") else "requires_review"
         error = None if result.get("ok") else "Call request could not be confirmed; review before retrying."
+        if result.get("code") == "predial_policy_changed":
+            state, error, no_dial_confirmed = "blocked", "Policy changed before dialing; no call was placed.", True
     except HTTPException as exc:
         code = ((exc.detail or {}).get("error") or {}).get("code") if isinstance(exc.detail, dict) else ""
         state = "pending" if exc.status_code == 429 else "dnc_excluded" if code == "dnc_blocked" else "blocked"
@@ -173,6 +229,8 @@ async def _dial_claim(campaign_id, run_id, tenant_id, owner, contact_id, attempt
         attempt = (await db.execute(select(DialAttempt).where(DialAttempt.campaign_id == campaign_id,
             DialAttempt.id == attempt_id))).scalar_one()
         row.status, attempt.status, attempt.error = state, state, error
+        if no_dial_confirmed:
+            row.attempts = max(0, row.attempts - 1)
         if state == "pending":
             row.attempts = max(0, row.attempts - 1)
             row.next_attempt_at = _utcnow() + timedelta(seconds=5)
@@ -207,7 +265,16 @@ async def campaign_tick(campaign_id, run_id, *, workspace_tenant_id, owner):
             run.stats = {**(run.stats or {}), "error": "Account access changed. Review and resume the campaign."}
             await db.commit()
             return False
+        if (camp.schedule or {}).get("audience") == "followups":
+            from server.services.saas.campaign_followups import sync_progress
+            await sync_progress(db, camp, run)
+            await db.commit()
+            return camp.status == "running"
         await _reconcile(db, camp, principal)
+        if (camp.schedule or {}).get("expires_at") and _utcnow() >= _aware(datetime.fromisoformat(camp.schedule["expires_at"])):
+            from sqlalchemy import update
+            await db.execute(update(CampaignContact).where(CampaignContact.campaign_id == camp.campaign_id,
+                CampaignContact.status.in_(READY)).values(status="expired"))
         max_attempts = max(1, min(5, int((camp.retry_rules or {}).get("max_attempts") or 3)))
         concurrency = max(1, min(20, int(get_settings().campaign_max_concurrency or 20), int(camp.concurrency or 1)))
         active = (await db.execute(select(func.count()).select_from(CampaignContact).where(
@@ -221,10 +288,18 @@ async def campaign_tick(campaign_id, run_id, *, workspace_tenant_id, owner):
                 or_(CampaignContact.next_attempt_at.is_(None), CampaignContact.next_attempt_at <= _utcnow()))
                 .order_by(CampaignContact.next_attempt_at.asc().nullsfirst(), CampaignContact.id)
                 .limit(100).with_for_update(skip_locked=True))).scalars().all()
+            from server.services.saas.telephony_profile import get_profile
+            profile = await get_profile(str(camp.agent_id))
             for row in candidates:
                 if len(claims) >= min(concurrency - active, batch_size):
                     break
-                if not within_calling_window(camp.schedule, row.metadata_):
+                if (row.metadata_ or {}).get("timezone"):
+                    try:
+                        ZoneInfo(str(row.metadata_["timezone"]))
+                    except (KeyError, ValueError):
+                        row.status = "requires_review"
+                        continue
+                if not within_calling_window(camp.schedule, row.metadata_) or not within_agent_hours(profile):
                     row.next_attempt_at = _utcnow() + timedelta(minutes=1)
                     continue
                 row.status, row.last_attempt_at = "dialing", _utcnow()

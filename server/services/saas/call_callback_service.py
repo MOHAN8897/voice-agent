@@ -166,6 +166,7 @@ async def request_callback(
     from_e164: str | None = None,
     dial_request_id: str | None = None,
     mode: str = "manual",
+    contact: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Dial a missed caller back through the normal subscriber outbound flow."""
     from server.services.saas.telephony_orchestrator import subscriber_outbound
@@ -215,6 +216,7 @@ async def request_callback(
         from_e164=normalize_e164(from_e164),
         to_e164=target,
         dial_request_id=request_id,
+        **({"contact": contact} if contact else {}),
     )
 
     ok = bool(result.get("ok"))
@@ -228,6 +230,7 @@ async def request_callback(
     )
     return {
         "ok": ok,
+        **({"code": result["code"]} if result.get("code") else {}),
         "callbackOf": call_id,
         "toE164": target,
         "agentId": effective_agent,

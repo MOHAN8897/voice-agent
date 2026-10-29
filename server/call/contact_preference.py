@@ -23,19 +23,22 @@ def current_contact_preference(call_id: str | None) -> str:
     return str(getattr(ctx, "contact_preference", "") or "none")
 
 
-def _stamp_meta(call_id: str | None, preference: str) -> None:
+def _stamp_meta(call_id: str | None, preference: str) -> str:
     if not call_id:
-        return
+        return preference
     try:
         from server.call.call_ledger import call_ledger
 
         # Write even when meta.json does not exist yet: the lifecycle-end DNC
         # check reads this field after the live context is gone.
         meta = call_ledger.read_meta(call_id) or {}
+        if meta.get("contact_preference") == "do_not_call":
+            preference = "do_not_call"
         meta["contact_preference"] = preference
         call_ledger.write_meta(call_id, meta)
     except Exception as exc:
         log_pstn("contact_preference.meta_failed", call_id=call_id, error_type=type(exc).__name__)
+    return preference
 
 
 async def record_contact_preference(call_id: str | None, preference: Any) -> str:
@@ -46,9 +49,18 @@ async def record_contact_preference(call_id: str | None, preference: Any) -> str
     from server.call.call_context import get as get_ctx
 
     ctx = get_ctx(call_id) if call_id else None
+    # A neutral later turn cannot undo an explicit opt-out. Renewed permission
+    # belongs to the tenant's audited DND management flow, never a model label.
+    previous = str(getattr(ctx, "contact_preference", "") or "")
+    if call_id and previous != "do_not_call":
+        from server.call.call_ledger import call_ledger
+        meta = await asyncio.to_thread(call_ledger.read_meta, call_id)
+        previous = str((meta or {}).get("contact_preference") or previous)
+    if previous == "do_not_call" or getattr(ctx, "contact_preference", "") == "do_not_call":
+        value = "do_not_call"
+    value = _stamp_meta(call_id, value)
     if ctx is not None:
         ctx.contact_preference = value
-    _stamp_meta(call_id, value)
     if value != "do_not_call" or not call_id:
         return value
     try:

@@ -110,14 +110,24 @@ def render_capabilities_section(compiled_text: str | None) -> str:
     )
 
 
-def apply_available_tools(text: str, tools: list[dict]) -> str:
+def apply_available_tools(text: str, tools: list[dict], *, followup_config: dict | None = None) -> str:
     """Replace platform permissions with this agent/session's executable actions."""
     names = {str(tool.get("name") or "").upper() for tool in tools}
     rows = [CAPABILITIES_HEADER, "capabilities_source: runtime_tools_v1",
             f"order_confirmation: {'allowed' if 'CONFIRM_ORDER' in names else 'not_allowed'}",
             "Business workflow steps are conditional on these actions. Collecting details is not completion; success requires a successful server result.",
             "CONFIRM_ORDER, when listed, records the order in this call's platform ledger; it does not prove payment, external fulfilment or an email was sent.",
-            "A caller-requested callback can be saved by the platform after required details and timing are collected. It does not guarantee an automatically scheduled call."]
+            "A caller-requested callback can be saved by the platform after required details and timing are collected. It does not guarantee an automatically scheduled call.",
+            "Record explicit requests to stop future calls as do_not_call, separately from ending this call. Ordinary refusal, abuse, questions or a goodbye do not by themselves opt out of future contact."]
+    enabled = bool((followup_config or {}).get("enabled"))
+    mode = str((followup_config or {}).get("callbackMode") or "review") if enabled else "manual_only"
+    rows.extend([f"callback_dispatch: {mode}",
+                 f"missed_call_dispatch: {(followup_config or {}).get('missedMode', 'off') if enabled else 'off'}",
+                 "Collect the caller's desired callback time, including short answers to your timing question. Never turn a future-interest request into a rejection or permanent opt-out."])
+    if mode == "automatic":
+        rows.append("The tenant permits automatic callbacks after the server resolves timing and passes calling-window, DND and account checks. A saved request is not a confirmed call time; do not promise an exact dial or claim a schedule succeeded without a server result.")
+    else:
+        rows.append("The team must review callback requests. Do not promise that an automatic callback or exact appointment has been scheduled.")
     if not tools:
         rows.append("No in-call action tools are available. Answer questions without promising a submission, booking or order.")
     for tool in tools[:32]:
@@ -154,10 +164,36 @@ async def agent_available_tools(agent_id: str, compiled_text: str, *, tenant_id:
 
 async def compile_agent_capabilities(text: str, agent_id: str) -> str:
     from server.db.connection import get_session_factory
+    from server.brain.agent_service import agent_service
+    from server.db.models.followup_models import AgentFollowUpPolicy
+    from sqlalchemy import select
+    from sqlalchemy.exc import ProgrammingError, OperationalError
+    import uuid
 
-    if get_session_factory() is None:
+    factory = get_session_factory()
+    if factory is None:
         return text
-    return apply_available_tools(text, await agent_available_tools(agent_id, text))
+    agent = await agent_service.get_agent(agent_id)
+    from server.brain.compiled_brain_artifact import refresh_platform_sections
+    from server.prompts.agent_voice_rules import inject_recording_disclosure
+    language = str((agent.get("languages") or ["en-IN"])[0])
+    text = refresh_platform_sections(text, language)
+    text = inject_recording_disclosure(text, enabled=bool(agent.get("recording_disclosure_enabled")),
+                                      disclosure_text=agent.get("recording_disclosure_text"), language=language)
+    tenant_id = agent.get("tenant_id")
+    config = None
+    if tenant_id:
+        try:
+            async with factory() as session:
+                policy = await session.scalar(select(AgentFollowUpPolicy).where(
+                    AgentFollowUpPolicy.tenant_id == uuid.UUID(str(tenant_id)),
+                    AgentFollowUpPolicy.agent_id == uuid.UUID(agent_id)))
+                config = policy.config if policy else None
+        except (ProgrammingError, OperationalError):
+            # Existing manual capture remains available before migration 047.
+            config = None
+    return apply_available_tools(text, await agent_available_tools(agent_id, text, tenant_id=tenant_id),
+                                 followup_config=config)
 
 
 def capabilities_section_present(compiled_text: str | None) -> bool:

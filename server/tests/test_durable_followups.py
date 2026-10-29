@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from server.db.models.entities import Agent, Call, CallAttempt, CallCallback, Tenant
 from server.db.models.followup_models import AgentFollowUpPolicy, FollowUpJob, LeadAssessment
-from server.db.models.phase5_models import AgentTelephonyProfile, DncEntry
+from server.db.models.phase5_models import AgentTelephonyProfile, DncEntry, Campaign, CampaignContact, CampaignRun
 from server.db.models.saas_models import BillingWallet, BillingWalletTransaction, Lead, TenantMembership, User
 from server.services.saas import followup_service as svc
 from server.services.saas.followup_policy import FollowUpConfig, extracted_due, local_instant, next_allowed
@@ -29,7 +29,8 @@ async def queue(monkeypatch, tmp_path):
     from server.db import connection
     from server.services.saas import telephony_profile, call_callback_service, callback_request_service, lead_scoring, tenant_guard, followup_retention
     tables = [Tenant, Agent, User, TenantMembership, Call, CallAttempt, CallCallback, AgentTelephonyProfile,
-              DncEntry, Lead, BillingWallet, BillingWalletTransaction, AgentFollowUpPolicy, FollowUpJob, LeadAssessment]
+              DncEntry, Lead, BillingWallet, BillingWalletTransaction, AgentFollowUpPolicy, FollowUpJob, LeadAssessment,
+              Campaign, CampaignContact, CampaignRun]
     changed = [(c, c.type) for model in tables for c in model.__table__.columns if isinstance(c.type, (ARRAY, JSONB))]
     for c, _ in changed:
         c.type = JSON()
@@ -529,6 +530,99 @@ async def test_callback_timing_answer_and_utterance_timestamp_survive_capture(qu
     assert due == stated_at + timedelta(hours=6)
     prompt = json.loads(adapter.structured_completion.call_args.args[0][1]["content"])
     assert prompt["recentTurns"][1]["role"] == "assistant"
+
+
+async def test_disconnect_retains_unfinished_callback_for_review_not_automatic_dial(queue, monkeypatch):
+    from server.services.saas import callback_request_service
+    await enable(queue)
+    cid = uuid.uuid4()
+    async with queue.factory() as session:
+        session.add(Call(call_id=cid, tenant_id=queue.principal.tenant_id, agent_id=queue.aid,
+                         combination_id="synthetic", storage_path="test", status_tags=[]))
+        await session.commit()
+    ctx = SimpleNamespace(call_id=str(cid), tenant_id=str(queue.principal.tenant_id), agent_id=str(queue.aid),
+        callback_phone=PHONE, callback_when="in six hours", callback_close_phase="collecting_timing",
+        callback_request_text="Please call in six hours", contact_preference="none", resolved_stack=None)
+    saved = await callback_request_service.recover_interrupted_callback(ctx)
+    assert saved
+    async with queue.factory() as session:
+        row = await session.scalar(select(FollowUpJob))
+        assert row.status == "needs_review" and row.reason == "interrupted_request_review"
+    queue.dial.assert_not_awaited()
+    ctx.contact_preference = "do_not_call"
+    assert await callback_request_service.recover_interrupted_callback(ctx) is None
+
+
+async def test_historical_missed_import_is_opt_in_review_only_and_idempotent(queue):
+    await enable(queue)
+    async with queue.factory() as session:
+        session.add(CallAttempt(tenant_id=queue.principal.tenant_id, agent_id=queue.aid, direction="inbound",
+            provider_call_control_id="historical-missed", status="missed", from_number=PHONE, to_number="+12025550124", started_at=NOW - timedelta(days=1),
+            ended_at=NOW - timedelta(days=1), created_at=NOW - timedelta(days=1)))
+        await session.commit()
+    result = await svc.import_for_review(queue.principal, queue.aid, "missed", 7)
+    assert result["imported"] == 1 and result["reviewOnly"] is True
+    assert (await svc.import_for_review(queue.principal, queue.aid, "missed", 7))["imported"] == 0
+    await svc.run_once()
+    queue.dial.assert_not_awaited()
+
+
+async def test_historical_callback_import_stays_in_review_and_cannot_resurrect_closed_jobs(queue):
+    await enable(queue)
+    cid, rid = uuid.uuid4(), uuid.uuid4()
+    async with queue.factory() as session:
+        session.add(Call(call_id=cid, tenant_id=queue.principal.tenant_id, agent_id=queue.aid,
+                         combination_id="synthetic", storage_path="test", status_tags=[]))
+        await session.flush()
+        session.add(CallCallback(callback_id=rid, tenant_id=queue.principal.tenant_id, original_call_id=cid,
+            agent_id=str(queue.aid), to_e164=PHONE, mode="requested", status="requested",
+            created_at=NOW - timedelta(days=1), dial_request_id=f"requested:{cid}"))
+        await session.commit()
+    assert (await svc.import_for_review(queue.principal, queue.aid, "callback", 7))["imported"] == 1
+    await svc.run_once()
+    queue.dial.assert_not_awaited()
+    async with queue.factory() as session:
+        row = await session.scalar(select(FollowUpJob))
+        assert row.status == "needs_review"
+        row.status = "cancelled"
+        await session.commit()
+    assert (await svc.import_for_review(queue.principal, queue.aid, "callback", 7))["imported"] == 0
+
+
+async def test_known_predial_block_does_not_spend_attempt_and_next_approval_has_new_identity(queue):
+    await enable(queue)
+    row = await job(queue)
+    queue.dial.side_effect = [{"ok": False, "code": "predial_policy_changed"}, {"ok": True, "callControlId": "accepted"}]
+    await svc.run_once()
+    async with queue.factory() as session:
+        saved = await session.get(FollowUpJob, row.id)
+        assert saved.status == "needs_review" and saved.attempts == 0
+        assert saved.payload["dispatches"] == []
+        saved.status, saved.due_at = "scheduled", NOW
+        await session.commit()
+    await svc.run_once()
+    first, second = queue.dial.call_args_list
+    assert first.kwargs["dial_request_id"].endswith(":1") and second.kwargs["dial_request_id"].endswith(":2")
+
+
+async def test_connected_callback_is_removed_from_pending_requests(queue):
+    await enable(queue)
+    cid, rid = uuid.uuid4(), uuid.uuid4()
+    async with queue.factory() as session:
+        session.add(Call(call_id=cid, tenant_id=queue.principal.tenant_id, agent_id=queue.aid,
+                         combination_id="synthetic", storage_path="test", status_tags=[]))
+        await session.flush()
+        session.add(CallCallback(callback_id=rid, tenant_id=queue.principal.tenant_id, original_call_id=cid,
+            agent_id=str(queue.aid), to_e164=PHONE, mode="requested", status="requested", dial_request_id=f"requested:{cid}"))
+        session.add(CallAttempt(tenant_id=queue.principal.tenant_id, agent_id=queue.aid, direction="outbound",
+            provider_call_control_id="completed-callback", status="completed", from_number="+12025550124", to_number=PHONE,
+            started_at=NOW, answered_at=NOW, ended_at=NOW, created_at=NOW))
+        await session.commit()
+    row = await job(queue, status="dialed", control_id="completed-callback", attempts=1, payload={"callbackId": str(rid)})
+    await svc.run_once()
+    async with queue.factory() as session:
+        assert (await session.get(CallCallback, rid)).status == "completed"
+        assert (await session.get(FollowUpJob, row.id)).status == "completed"
 
 
 async def test_agent_suggestion_cannot_supply_unspoken_caller_time(queue, monkeypatch):

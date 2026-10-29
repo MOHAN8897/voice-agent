@@ -18,7 +18,7 @@ from server.call.call_store import call_store
 from server.call.paths import relative_storage_path
 from server.call.post_call_pipeline import enqueue as enqueue_post_call
 from server.config.env import get_settings
-from server.providers.base import ResolvedStack, StackSelection, StageSelection
+from server.providers.base import ResolvedStack, StackSelection
 from server.providers.resolver import resolve_stack
 from server.providers.session_stack import resolve_stack_for_session
 from server.realtime.manager import realtime_text_manager
@@ -726,6 +726,11 @@ class CallLifecycleService:
 
     async def _finalize_async(self, call_id: str) -> None:
         ctx = call_context.get(call_id)
+        try:
+            from server.services.saas.callback_request_service import recover_interrupted_callback
+            await recover_interrupted_callback(ctx)
+        except Exception as exc:
+            logger.warning("[CALL] interrupted callback recovery failed call=%s kind=%s", call_id, type(exc).__name__)
         try:
             from server.call.memory_manager import memory_manager
             from server.call.paths import call_dir

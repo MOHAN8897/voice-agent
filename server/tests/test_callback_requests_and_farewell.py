@@ -20,8 +20,25 @@ from server.call.call_end_policy import (
     server_farewell_for,
 )
 from server.db.models.entities import Call, CallCallback
+from server.db.models.saas_models import Lead
 from server.services.saas import callback_request_service as svc
 from server.services.saas.tenant_guard import SubscriberPrincipal
+
+
+@pytest.mark.asyncio
+async def test_confirmed_callback_conversion_updates_the_owning_agents_crm_lead(callback_db):
+    factory, principal, ctx = callback_db
+    saved = await svc.record_callback_request(ctx, ctx.callback_request_text)
+    async with factory() as session:
+        session.add_all([
+            Lead(tenant_id=principal.tenant_id, agent_id=ctx.agent_id, name="Requested enquiry", phone=ctx.callback_phone, stage="qualified"),
+            Lead(tenant_id=principal.tenant_id, agent_id="another-agent", name="Separate enquiry", phone=ctx.callback_phone, stage="qualified"),
+        ])
+        await session.commit()
+    await svc.update_callback_request(principal, uuid.UUID(saved["id"]), "converted")
+    async with factory() as session:
+        rows = (await session.scalars(select(Lead).where(Lead.tenant_id == principal.tenant_id))).all()
+        assert {row.agent_id: row.stage for row in rows} == {ctx.agent_id: "converted", "another-agent": "qualified"}
 
 
 @pytest.fixture
@@ -36,6 +53,7 @@ async def callback_db(monkeypatch, tmp_path):
         async with engine.begin() as conn:
             await conn.run_sync(lambda sync: Call.__table__.create(sync))
             await conn.run_sync(lambda sync: CallCallback.__table__.create(sync))
+            await conn.run_sync(lambda sync: Lead.__table__.create(sync))
         factory = async_sessionmaker(engine, expire_on_commit=False)
         monkeypatch.setattr(svc, "get_session_factory", lambda: factory)
         principal = SubscriberPrincipal(user_id=uuid.uuid4(), tenant_id=uuid.uuid4(), role="customer_admin", email="test@example.invalid")
