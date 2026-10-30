@@ -48,7 +48,7 @@ async def db(monkeypatch):
     factory = async_sessionmaker(engine, expire_on_commit=False)
     monkeypatch.setattr(svc, "get_session_factory", lambda: factory)
     monkeypatch.setattr(svc, "get_settings", lambda: SimpleNamespace(
-        vobiz_subaccount_encryption_key=key, voxly_frontend_url="https://console.example.test",
+        vobiz_subaccount_encryption_key=key, dialtact_frontend_url="https://console.example.test",
         app_environment="development",
     ))
     key = Fernet.generate_key().decode()
@@ -226,7 +226,7 @@ async def test_development_console_rejects_untrusted_loopback_redirects(db, url)
 
 async def test_production_console_rejects_loopback_kyc_return(db, monkeypatch):
     monkeypatch.setattr(svc, "get_settings", lambda: SimpleNamespace(
-        voxly_frontend_url="https://console.example.test", app_environment="production",
+        dialtact_frontend_url="https://console.example.test", app_environment="production",
     ))
     with pytest.raises(svc.VoiceKycError, match="invalid_voice_kyc_return_url"):
         svc._trusted_return_url("http://127.0.0.1:5173/#dashboard/settings")
@@ -239,7 +239,7 @@ async def test_production_console_rejects_loopback_kyc_return(db, monkeypatch):
 ])
 async def test_production_console_accepts_trusted_dialtact_origins(db, monkeypatch, url):
     monkeypatch.setattr(svc, "get_settings", lambda: SimpleNamespace(
-        voxly_frontend_url="https://app-dev.dialtact.com", app_environment="production",
+        dialtact_frontend_url="https://app-dev.dialtact.com", app_environment="production",
     ))
     assert svc._trusted_return_url(url) == url
 
@@ -251,7 +251,7 @@ async def test_production_console_accepts_trusted_dialtact_origins(db, monkeypat
 ])
 async def test_production_console_rejects_untrusted_dialtact_like_origins(db, monkeypatch, url):
     monkeypatch.setattr(svc, "get_settings", lambda: SimpleNamespace(
-        voxly_frontend_url="https://app-dev.dialtact.com", app_environment="production",
+        dialtact_frontend_url="https://app-dev.dialtact.com", app_environment="production",
     ))
     with pytest.raises(svc.VoiceKycError, match="invalid_voice_kyc_return_url"):
         svc._trusted_return_url(url)

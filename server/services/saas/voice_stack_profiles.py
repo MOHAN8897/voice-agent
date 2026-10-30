@@ -90,6 +90,61 @@ def _reject_secrets(value: Any, path: str = "profile") -> None:
             _reject_secrets(child, f"{path}[{index}]")
 
 
+def _price_field(value: Any, field: str, label: str, *, allow_zero: bool = False) -> float:
+    """A finite INR amount; never silently dropped or stored when invalid."""
+    try:
+        amount = Decimal(str(value).strip())
+        if not amount.is_finite():
+            raise ValueError
+    except (InvalidOperation, TypeError, ValueError, OverflowError) as exc:
+        raise VoiceProfileError("invalid_price", f"{label} must be a number.", details={"field": field}) from exc
+    minimum = Decimal("0") if allow_zero else Decimal("0.01")
+    if amount < minimum:
+        raise VoiceProfileError(
+            "invalid_price",
+            f"{label} must be {'zero or more' if allow_zero else 'greater than zero'}.",
+            details={"field": field},
+        )
+    if amount > 1_000_000:
+        raise VoiceProfileError("invalid_price", f"{label} is too large.", details={"field": field})
+    return float(amount.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
+
+
+def is_native_profile(profile: dict[str, Any] | None) -> bool:
+    """True for a single-model native audio (websocket) conversation profile."""
+    if not isinstance(profile, dict):
+        return False
+    llm = profile.get("llm") if isinstance(profile.get("llm"), dict) else {}
+    from server.providers.llm_protocol import native_audio_provider
+
+    try:
+        return bool(native_audio_provider(str(llm.get("provider") or ""), str(llm.get("modelId") or ""), llm.get("apiMode")))
+    except ValueError:
+        return False
+
+
+def _validate_stt_languages(provider: str, model: str, languages: list[str]) -> None:
+    """Reject recognition models the registry knows cannot serve a language."""
+    if provider == "sarvam":
+        if model not in constants.STT_MODELS:
+            raise VoiceProfileError("invalid_profile", "Choose a supported speech recognition model.", details={"field": "stt.model"})
+        return
+    if provider == "cartesia":
+        meta = constants.CARTESIA_STT_MODELS.get(model)
+        if meta is None:
+            raise VoiceProfileError("invalid_profile", "Choose a supported speech recognition model.", details={"field": "stt.model"})
+        known = {str(code).lower() for code in meta.get("languages") or []}
+        if not known or "multilingual" in known:
+            return
+        unsupported = [lang for lang in languages if lang.lower() not in known and lang.split("-")[0].lower() not in known]
+        if unsupported:
+            raise VoiceProfileError(
+                "invalid_profile",
+                "The speech recognition model does not support: " + ", ".join(unsupported) + ".",
+                details={"field": "stt.model", "unsupportedLanguages": unsupported},
+            )
+
+
 def _identifier(value: Any, label: str, *, allow_empty: bool = False) -> str:
     raw = str(value or "").strip()
     if (not raw and allow_empty) or (raw and _VOICE_ID_RE.fullmatch(raw)):
@@ -109,29 +164,26 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
         raise VoiceProfileError("unsupported_profile_version", "schemaVersion must be 1.")
     profile = copy.deepcopy(payload)
     profile["enabled"] = False
+    # Server-owned status; a browser draft can never set or clear it.
+    profile.pop("disabledReason", None)
     web_rate = payload.get("webRetailRateInr")
-    if web_rate is not None:
-        try:
-            value = Decimal(str(web_rate))
-            if not value.is_finite() or value < Decimal("0.01") or value > 1_000_000:
-                raise ValueError
-            profile["webRetailRateInr"] = float(value.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
-        except (InvalidOperation, TypeError, ValueError, OverflowError) as exc:
-            raise VoiceProfileError("invalid_profile", "Web call price must be a positive finite amount.") from exc
+    if web_rate is not None and str(web_rate).strip() != "":
+        profile["webRetailRateInr"] = _price_field(web_rate, "webRetailRateInr", "Web call price")
+    else:
+        profile.pop("webRetailRateInr", None)
     if "label" in payload and str(payload["label"]).strip():
         profile["label"] = str(payload["label"]).strip()[:100]
     rate_val = payload.get("retailRateInr") if payload.get("retailRateInr") is not None else payload.get("rateInr")
-    if rate_val is not None:
-        try:
-            profile["retailRateInr"] = round(float(rate_val), 4)
-            profile["rateInr"] = profile["retailRateInr"]
-        except (TypeError, ValueError):
-            pass
-    if "supplierCostInr" in payload and payload["supplierCostInr"] is not None:
-        try:
-            profile["supplierCostInr"] = round(float(payload["supplierCostInr"]), 4)
-        except (TypeError, ValueError):
-            pass
+    if rate_val is not None and str(rate_val).strip() != "":
+        profile["retailRateInr"] = _price_field(rate_val, "retailRateInr", "Phone call price")
+        profile["rateInr"] = profile["retailRateInr"]
+    else:
+        profile.pop("retailRateInr", None)
+        profile.pop("rateInr", None)
+    if payload.get("supplierCostInr") is not None and str(payload["supplierCostInr"]).strip() != "":
+        profile["supplierCostInr"] = _price_field(payload["supplierCostInr"], "supplierCostInr", "Supplier cost", allow_zero=True)
+    else:
+        profile.pop("supplierCostInr", None)
 
     languages = profile.get("supportedLanguages")
     if not isinstance(languages, list) or not languages:
@@ -167,7 +219,10 @@ def validate_composed_profile(payload: Any, *, tier: str, allow_premium: bool = 
         native_provider = native_audio_provider(llm_provider, llm["modelId"], llm_api_mode)
         llm["apiMode"] = "websocket" if native_provider else text_llm_api_mode(llm_provider, llm["modelId"], llm_api_mode)
     except ValueError as exc:
-        raise VoiceProfileError("invalid_profile", str(exc)) from exc
+        raise VoiceProfileError("invalid_profile", str(exc), details={"field": "llm.modelId"}) from exc
+    if not native_provider:
+        # Native audio has no separate recognition stage to validate.
+        _validate_stt_languages(stt_provider, str(stt.get("model") or ""), clean_languages)
 
     engines = profile.get("engines")
     if not isinstance(engines, list) or not engines:
@@ -325,6 +380,55 @@ def _profile_record(row: TierAssignment | None) -> dict[str, Any] | None:
 
 
 _REVERSE_ALIAS_CACHE: dict[str, dict[str, Any]] = {}
+# API, voice and worker processes each hold their own copy; a short TTL bounds
+# how long another process can serve an alias that an admin save removed.
+_ALIAS_TTL_S = 30.0
+# Tenant catalog responses, keyed by (environment, language).
+_PUBLIC_CATALOG_CACHE: dict[tuple[str, str], tuple[float, dict[str, Any]]] = {}
+PUBLIC_CATALOG_TTL_S = 60.0
+
+
+def _monotonic() -> float:
+    import time
+
+    return time.monotonic()
+
+
+def _public_catalog_cache_enabled() -> bool:
+    # Unit tests monkeypatch the record/rate loaders per test; a shared
+    # process cache would leak one test's catalog into the next. Tests that
+    # exercise the cache opt in explicitly.
+    import os
+
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return os.environ.get("VOICE_CATALOG_CACHE_IN_TESTS") == "1"
+    return True
+
+
+def public_catalog_cache_get(environment: str, language: str) -> dict[str, Any] | None:
+    if not _public_catalog_cache_enabled():
+        return None
+    hit = _PUBLIC_CATALOG_CACHE.get((environment, language))
+    if hit is None or _monotonic() - hit[0] > PUBLIC_CATALOG_TTL_S:
+        return None
+    return copy.deepcopy(hit[1])
+
+
+def public_catalog_cache_put(environment: str, language: str, value: dict[str, Any]) -> None:
+    if not _public_catalog_cache_enabled():
+        return
+    _PUBLIC_CATALOG_CACHE[(environment, language)] = (_monotonic(), copy.deepcopy(value))
+
+
+def invalidate_profile_caches(tier: str | None = None) -> None:
+    """Drop this process's derived views after an admin change to a tier or price."""
+    _PUBLIC_CATALOG_CACHE.clear()
+    if tier is None:
+        _REVERSE_ALIAS_CACHE.clear()
+        return
+    for alias, entry in list(_REVERSE_ALIAS_CACHE.items()):
+        if entry.get("tier") == tier:
+            _REVERSE_ALIAS_CACHE.pop(alias, None)
 
 
 def _clean_catalog_voice_label(raw_label: Any, pvid: str, tier: str) -> str:
@@ -342,6 +446,11 @@ def _resolve_catalog_voice_metadata(pvid: str, tier: str) -> dict[str, str]:
 def cache_aliases_from_record(tier: str, record: dict[str, Any] | None) -> None:
     if not record or not isinstance(record, dict):
         return
+    # Replace this tier's entries so aliases removed by an admin edit expire.
+    for alias, entry in list(_REVERSE_ALIAS_CACHE.items()):
+        if entry.get("tier") == tier:
+            _REVERSE_ALIAS_CACHE.pop(alias, None)
+    cached_at = _monotonic()
     aliases = record.get("publicAliases") or {}
     voice_map = aliases.get("voices") or {}
     profile = record.get("profile") or {}
@@ -357,19 +466,27 @@ def cache_aliases_from_record(tier: str, record: dict[str, Any] | None) -> None:
                     _REVERSE_ALIAS_CACHE[str(alias_val)] = {
                         "tier": tier, "provider": mdl.get("provider"), "model": mdl.get("model"),
                         "providerVoiceId": pvid, "label": label, "languages": list(vc.get("languages") or []),
+                        "voiceDynamics": copy.deepcopy(profile.get("voiceDynamics") or {}),
+                        "_cachedAt": cached_at,
                     }
 
 
 
 def lookup_cached_voice_alias(alias_id: str) -> dict[str, Any] | None:
-    return _REVERSE_ALIAS_CACHE.get(str(alias_id or "").strip())
+    hit = _REVERSE_ALIAS_CACHE.get(str(alias_id or "").strip())
+    if hit is None:
+        return None
+    cached_at = hit.get("_cachedAt")
+    if cached_at is not None and _monotonic() - float(cached_at) > _ALIAS_TTL_S:
+        return None
+    return hit
 
 
 async def resolve_voice_alias(alias_id: str, environment: str | None = None) -> dict[str, Any] | None:
     wanted = str(alias_id or "").strip()
     if not wanted:
         return None
-    hit = _REVERSE_ALIAS_CACHE.get(wanted)
+    hit = lookup_cached_voice_alias(wanted)
     if hit:
         return hit
     from server.services.dev_runtime import effective_app_environment
@@ -594,19 +711,55 @@ def readiness_for_profile(tier: str, record: dict[str, Any] | None, rates: dict[
         blockers.append({"code": "profile_not_configured", "message": "An approved composed profile has not been configured."})
         return {"ready": False, "enabled": False, "blockers": blockers}
     profile = record["profile"]
-    evidence = profile.get("evidence") if isinstance(profile.get("evidence"), dict) else {}
-    for key, (code, message) in _EVIDENCE_MESSAGES.items():
-        if evidence.get(key) is not True:
-            blockers.append({"code": code, "message": message})
+    native = is_native_profile(profile)
+    if not native:
+        # Native audio is one live model: there is no separate recognition,
+        # text or speech stage for the synthetic composed probes to exercise.
+        # Its gate is the runtime registry check below plus the tier price, and
+        # the operator confirms audio quality in Test Studio.
+        evidence = profile.get("evidence") if isinstance(profile.get("evidence"), dict) else {}
+        for key, (code, message) in _EVIDENCE_MESSAGES.items():
+            if evidence.get(key) is not True:
+                blockers.append({"code": code, "message": message})
     native_rate = _native_tier_retail_rate(rates, tier, record=record)
     if native_rate is None:
         blockers.append({"code": "tier_native_rate_missing", "message": "An approved native retail rate for this tier has not been configured."})
     blockers.extend(_runtime_profile_blockers(profile))
-    return {
+    result: dict[str, Any] = {
         "ready": not blockers,
         "enabled": bool(profile.get("enabled")),
         "blockers": blockers,
+        "verificationPath": "test_studio" if native else "synthetic_checks",
     }
+    if isinstance(profile.get("disabledReason"), dict):
+        result["disabledReason"] = copy.deepcopy(profile["disabledReason"])
+    return result
+
+
+def effective_voice_dynamics(profile: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Tier knobs as each speech model will actually receive them on a call."""
+    from server.services.tts_voice_direction import normalize_tts_dynamics, tts_knob_specs
+
+    rows: list[dict[str, Any]] = []
+    if not isinstance(profile, dict):
+        return rows
+    dynamics = profile.get("voiceDynamics") if isinstance(profile.get("voiceDynamics"), dict) else {}
+    for engine in profile.get("engines") or []:
+        for model in (engine or {}).get("models") or []:
+            provider = str(model.get("provider") or "")
+            model_id = str(model.get("model") or "")
+            supported = [spec["key"] for spec in tts_knob_specs(provider, model_id)]
+            applied = normalize_tts_dynamics(provider, model_id, dynamics)
+            rows.append({
+                "engineId": engine.get("id"),
+                "modelId": model.get("id"),
+                "provider": provider,
+                "model": model_id,
+                "supportedKnobs": supported,
+                "applied": applied,
+                "ignored": sorted(k for k in dynamics if k not in supported and k != "pace"),
+            })
+    return rows
 
 
 def tier_is_public(tier: str, record: dict[str, Any] | None, rates: dict[str, Any] | None) -> bool:
@@ -704,51 +857,26 @@ async def validate_agent_language_for_tier(environment: str, tier: str, language
 
 
 async def _load_rates_without_fallback() -> dict[str, Any] | None:
-    """Only DB-backed rates can authorize a tier; disk/legacy defaults are not tier prices."""
+    """Only DB-backed rates can authorize a tier; disk/legacy defaults are not tier prices.
+
+    Uses the same row mapping as the billing catalog (``billing_rates.rate_row_data``)
+    so console, admin and /api/billing/catalog agree, including web-call defaults.
+    """
     factory = get_session_factory()
     if factory is None:
         return None
     try:
-        from sqlalchemy import desc
-
-        from server.db.models.saas_models import BillingRateVersion
-
         async with factory() as session:
-            result = await session.execute(
-                select(BillingRateVersion)
-                .where(BillingRateVersion.is_active == True)  # noqa: E712
-                .order_by(desc(BillingRateVersion.version))
-                .limit(1)
-            )
-            row = result.scalar_one_or_none()
-            if row is None:
-                return None
-            ver = getattr(row, "version", 1)
-            return {
-                "pstn_low_rate_usd_micros_per_min": getattr(row, "pstn_low_rate_usd_micros_per_min", None),
-                "pstn_low_rate_inr_paise_per_min": getattr(row, "pstn_low_rate_inr_paise_per_min", None),
-                "low_rate_version": ver if getattr(row, "pstn_low_rate_usd_micros_per_min", None) is not None else getattr(row, "low_rate_version", None),
-                "pstn_medium_rate_usd_micros_per_min": getattr(row, "pstn_medium_rate_usd_micros_per_min", None),
-                "pstn_medium_rate_inr_paise_per_min": getattr(row, "pstn_medium_rate_inr_paise_per_min", None),
-                "medium_rate_version": ver if getattr(row, "pstn_medium_rate_usd_micros_per_min", None) is not None else getattr(row, "medium_rate_version", None),
-                "pstn_premium_rate_usd_micros_per_min": getattr(row, "pstn_premium_rate_usd_micros_per_min", None),
-                "pstn_premium_rate_inr_paise_per_min": getattr(row, "pstn_premium_rate_inr_paise_per_min", None),
-                "premium_rate_version": ver if (getattr(row, "pstn_premium_rate_usd_micros_per_min", None) is not None or getattr(row, "pstn_rate_usd_micros_per_min", None) is not None) else getattr(row, "premium_rate_version", None),
-                "pstn_rate_usd_micros_per_min": getattr(row, "pstn_rate_usd_micros_per_min", None),
-                "pstn_rate_inr_paise_per_min": getattr(row, "pstn_rate_inr_paise_per_min", None),
-                "version": ver,
-                "fx_rate_inr": getattr(row, "fx_rate_inr", None),
-            }
+            return await _rates_for_session(session)
     except Exception:
         return None
 
 
 async def _rates_for_session(session) -> dict[str, Any] | None:
-    """Read the active row in the activation transaction, if tier fields exist."""
+    """Read the active row in the caller's transaction."""
     try:
-        from sqlalchemy import desc
-
         from server.db.models.saas_models import BillingRateVersion
+        from server.services.saas.billing_rates import tier_rates_from_row
 
         result = await session.execute(
             select(BillingRateVersion)
@@ -759,24 +887,18 @@ async def _rates_for_session(session) -> dict[str, Any] | None:
         row = result.scalar_one_or_none()
         if row is None:
             return None
-        ver = getattr(row, "version", 1)
-        return {
-            "pstn_low_rate_usd_micros_per_min": getattr(row, "pstn_low_rate_usd_micros_per_min", None),
-            "pstn_low_rate_inr_paise_per_min": getattr(row, "pstn_low_rate_inr_paise_per_min", None),
-            "low_rate_version": ver if getattr(row, "pstn_low_rate_usd_micros_per_min", None) is not None else getattr(row, "low_rate_version", None),
-            "pstn_medium_rate_usd_micros_per_min": getattr(row, "pstn_medium_rate_usd_micros_per_min", None),
-            "pstn_medium_rate_inr_paise_per_min": getattr(row, "pstn_medium_rate_inr_paise_per_min", None),
-            "medium_rate_version": ver if getattr(row, "pstn_medium_rate_usd_micros_per_min", None) is not None else getattr(row, "medium_rate_version", None),
-            "pstn_premium_rate_usd_micros_per_min": getattr(row, "pstn_premium_rate_usd_micros_per_min", None),
-            "pstn_premium_rate_inr_paise_per_min": getattr(row, "pstn_premium_rate_inr_paise_per_min", None),
-            "premium_rate_version": ver if (getattr(row, "pstn_premium_rate_usd_micros_per_min", None) is not None or getattr(row, "pstn_rate_usd_micros_per_min", None) is not None) else getattr(row, "premium_rate_version", None),
-            "pstn_rate_usd_micros_per_min": getattr(row, "pstn_rate_usd_micros_per_min", None),
-            "pstn_rate_inr_paise_per_min": getattr(row, "pstn_rate_inr_paise_per_min", None),
-            "version": ver,
-            "fx_rate_inr": getattr(row, "fx_rate_inr", None),
-        }
+        return tier_rates_from_row(row)
     except Exception:
         return None
+
+
+def _price_source(tier: str, record: dict[str, Any] | None, rates: dict[str, Any] | None) -> str:
+    profile = (record or {}).get("profile") or {}
+    if profile.get("retailRateInr") is not None or profile.get("rateInr") is not None:
+        return "tier_card"
+    if _native_tier_retail_rate(rates, tier, record=None) is not None:
+        return "billing_rate_version"
+    return "missing"
 
 
 async def profile_view(tier: str, environment: str, *, include_internal: bool = False) -> dict[str, Any]:
@@ -798,11 +920,62 @@ async def profile_view(tier: str, environment: str, *, include_internal: bool = 
     }
     if include_internal:
         result["readOnly"] = False
+        result["priceSource"] = _price_source(tier, record, rates)
+        result["native"] = is_native_profile(profile if isinstance(profile, dict) else None)
+        result["effectiveVoiceDynamics"] = effective_voice_dynamics(profile if isinstance(profile, dict) else None)
+        result["public"] = tier_is_public(tier, record, rates)
+        if isinstance((record or {}).get("verification"), dict):
+            result["verification"] = copy.deepcopy(record["verification"])
     return result
+
+
+def mirror_stage_payload(profile: dict[str, Any], previous_stage: dict[str, Any] | None = None) -> dict[str, dict[str, Any]]:
+    """Legacy stt/llm/tts stage keys that Test Studio and resolve_stack read.
+
+    Derived from the composed profile so both views describe the same runtime,
+    including the tier's voice knobs (clamped to the primary speech model).
+    """
+    from server.services.tts_voice_direction import normalize_tts_dynamics
+
+    previous_stage = previous_stage if isinstance(previous_stage, dict) else {}
+    stt_spec = profile.get("stt") or {}
+    llm_spec = profile.get("llm") or {}
+    primary_eng = (profile.get("engines") or [{}])[0]
+    primary_mdl = (primary_eng.get("models") or [{}])[0]
+    first_voice = (primary_mdl.get("voices") or [{}])[0]
+    tts_provider = primary_mdl.get("provider", "sarvam")
+    tts_model = primary_mdl.get("model", "bulbul:v3")
+    tts_speaker = first_voice.get("providerVoiceId") or first_voice.get("id") or "Zephyr"
+    tts_api = primary_mdl.get("apiMode") or ("websocket" if tts_provider in {"sarvam", "cartesia", "gemini", "gnani"} else "streaming_rest")
+    tts_config: dict[str, Any] = {"speaker": tts_speaker, "api_mode": tts_api}
+    applied = normalize_tts_dynamics(str(tts_provider), str(tts_model), profile.get("voiceDynamics") or {})
+    if "speed" in applied:
+        tts_config["speed"] = applied["speed"]
+        tts_config["pace"] = applied["speed"]
+    for key in ("pitch", "temperature", "emotion", "volume"):
+        if key in applied:
+            tts_config[key] = applied[key]
+    stt_provider = stt_spec.get("provider", "sarvam")
+    stt_model = stt_spec.get("model", "saaras:v2")
+    prev_stt = previous_stage.get("stt") if isinstance(previous_stage.get("stt"), dict) else {}
+    stt_config: dict[str, Any] = {"mode": "realtime"}
+    if prev_stt.get("provider") == stt_provider and prev_stt.get("model") == stt_model and isinstance(prev_stt.get("config"), dict):
+        # Keep operator-tuned recognition settings while the model is unchanged.
+        stt_config = {"mode": "realtime", **prev_stt["config"]}
+    return {
+        "stt": {"provider": stt_provider, "model": stt_model, "config": stt_config},
+        "llm": {"provider": llm_spec.get("provider", "gemini"), "model": llm_spec.get("modelId", "gemini-2.0-flash"),
+                "config": {"api_mode": llm_spec.get("apiMode", "chat_completions_v1")}},
+        "tts": {"provider": tts_provider, "model": tts_model, "config": tts_config},
+    }
+
+
+_CORE_PRICE_TIERS = ("low", "medium", "premium")
 
 
 async def save_composed_profile(
     *, environment: str, tier: str, expected_revision: int, payload: Any, actor: str, allow_premium: bool = True,
+    confirm_take_offline: bool = False,
 ) -> dict[str, Any]:
     tier_norm = str(tier or "").strip().lower()
     if not (tier_norm in COMPOSED_TIERS or (allow_premium and tier_norm == "premium") or re.match(r"^[a-z0-9_]{1,20}$", tier_norm)):
@@ -813,6 +986,7 @@ async def save_composed_profile(
         raise VoiceProfileError("durable_store_unavailable", "Voice profiles require the database-backed configuration store.", status_code=503)
 
     resource_id = f"{environment}:{tier}"
+    price_changed = False
     async with factory() as session:
         bind = session.get_bind()
         if bind.dialect.name == "postgresql":
@@ -831,6 +1005,7 @@ async def save_composed_profile(
                 "revision_conflict", "This profile changed in another session. Reload it before saving.",
                 status_code=409, details={"currentRevision": current_revision},
             )
+        same_runtime = False
         if previous:
             # Stale browser drafts cannot erase server verification. A different
             # executable tuple must obtain fresh evidence.
@@ -843,24 +1018,48 @@ async def save_composed_profile(
             # service may establish readiness for a newly saved runtime.
             profile["evidence"] = {key: False for key in _EVIDENCE_KEYS}
         next_revision = current_revision + 1
-        if payload.get("enabled") is True or (previous and (previous.get("profile") or {}).get("enabled")):
-            profile["enabled"] = True
+        previous_profile = (previous or {}).get("profile") or {}
+        was_enabled = previous_profile.get("enabled") is True
         aliases = _choice_keys(profile, (previous or {}).get("publicAliases"))
-        record = {"revision": next_revision, "profile": profile, "publicAliases": aliases}
+        record: dict[str, Any] = {"revision": next_revision, "profile": profile, "publicAliases": aliases}
         if previous and same_runtime and isinstance(previous.get("verification"), dict):
             record["verification"] = copy.deepcopy(previous["verification"])
-        stt_spec = profile.get("stt") or {}
-        llm_spec = profile.get("llm") or {}
-        primary_eng = (profile.get("engines") or [{}])[0]
-        primary_mdl = (primary_eng.get("models") or [{}])[0]
-        first_voice = (primary_mdl.get("voices") or [{}])[0]
-        tts_speaker = first_voice.get("providerVoiceId") or first_voice.get("id") or "Zephyr"
-        tts_api = primary_mdl.get("apiMode") or ("websocket" if primary_mdl.get("provider") in {"sarvam", "cartesia", "gemini", "gnani"} else "streaming_rest")
-        tts_payload = {
-            "provider": primary_mdl.get("provider", "sarvam"),
-            "model": primary_mdl.get("model", "bulbul:v3"),
-            "config": {"speaker": tts_speaker, "api_mode": tts_api},
-        }
+        # Activation is only granted by set_profile_enabled (readiness-gated). A
+        # save keeps an enabled tier live, unless the change would leave it
+        # enabled-but-unservable: that needs explicit confirmation and then
+        # takes the tier offline with a recorded reason.
+        if was_enabled:
+            rates = await _rates_for_session(session)
+            would_be = readiness_for_profile(tier, {**record, "profile": {**profile, "enabled": True}}, rates)
+            if would_be["ready"]:
+                profile["enabled"] = True
+            elif not confirm_take_offline:
+                raise VoiceProfileError(
+                    "change_takes_tier_offline",
+                    "This change takes the tier offline until it is verified again. Confirm to save it as a draft.",
+                    status_code=409,
+                    details={"blockers": would_be["blockers"], "currentRevision": current_revision},
+                )
+            else:
+                profile["enabled"] = False
+                profile["disabledReason"] = {
+                    "code": "readiness_lost" if same_runtime else "runtime_changed",
+                    "message": (
+                        "The tier no longer meets readiness. Resolve the blockers, then activate it again."
+                        if same_runtime else
+                        "Speech, text or voice selections changed. Run verification, then activate the tier again."
+                    ),
+                    "at": datetime.now(timezone.utc).isoformat(),
+                    "actor": actor,
+                }
+        elif isinstance(previous_profile.get("disabledReason"), dict):
+            profile["disabledReason"] = copy.deepcopy(previous_profile["disabledReason"])
+        previous_price = previous_profile.get("retailRateInr") if previous_profile.get("retailRateInr") is not None else previous_profile.get("rateInr")
+        price_changed = profile.get("retailRateInr") is not None and (
+            previous_price is None or abs(float(previous_price) - float(profile["retailRateInr"])) > 1e-9
+        )
+        previous_stage = copy.deepcopy(row.stack_payload) if row is not None and isinstance(row.stack_payload, dict) else {}
+        mirrored = mirror_stage_payload(profile, previous_stage)
         if row is None:
             from server.providers import resolve_stack
 
@@ -871,9 +1070,7 @@ async def save_composed_profile(
             except Exception:
                 combo_id = uuid.uuid4().hex[:16]
                 payload_to_store = {}
-            payload_to_store["stt"] = {"provider": stt_spec.get("provider", "sarvam"), "model": stt_spec.get("model", "saaras:v2"), "config": {"mode": "realtime"}}
-            payload_to_store["llm"] = {"provider": llm_spec.get("provider", "gemini"), "model": llm_spec.get("modelId", "gemini-2.0-flash"), "config": {"api_mode": llm_spec.get("apiMode", "chat_completions_v1")}}
-            payload_to_store["tts"] = tts_payload
+            payload_to_store.update(mirrored)
             row = TierAssignment(
                 id=uuid.uuid4(),
                 environment=environment,
@@ -883,11 +1080,9 @@ async def save_composed_profile(
             )
             session.add(row)
         else:
-            stage_payload = copy.deepcopy(row.stack_payload) if isinstance(row.stack_payload, dict) else {}
+            stage_payload = previous_stage
+            stage_payload.update(mirrored)
             stage_payload["composed_voice_profile"] = record
-            stage_payload["stt"] = {"provider": stt_spec.get("provider", "sarvam"), "model": stt_spec.get("model", "saaras:v2"), "config": {"mode": "realtime"}}
-            stage_payload["llm"] = {"provider": llm_spec.get("provider", "gemini"), "model": llm_spec.get("modelId", "gemini-2.0-flash"), "config": {"api_mode": llm_spec.get("apiMode", "chat_completions_v1")}}
-            stage_payload["tts"] = tts_payload
             row.stack_payload = stage_payload
             flag_modified(row, "stack_payload")
             row.updated_at = datetime.now(timezone.utc)
@@ -908,47 +1103,38 @@ async def save_composed_profile(
                 created_at=datetime.now(timezone.utc),
             )
         )
-        # Synchronize active BillingRateVersion when retailRateInr is updated for standard tiers
-        retail_inr = profile.get("retailRateInr")
-        if retail_inr is not None and tier_norm in {"low", "medium", "premium"}:
-            try:
-                from server.db.models.saas_models import BillingRateVersion
-
-                rate_res = await session.execute(
-                    select(BillingRateVersion)
-                    .where(BillingRateVersion.is_active == True)  # noqa: E712
-                    .order_by(desc(BillingRateVersion.version))
-                    .limit(1)
-                    .with_for_update()
-                )
-                active_rate = rate_res.scalar_one_or_none()
-                if active_rate is not None:
-                    fx_rate = float(active_rate.fx_rate_inr or 95.64)
-                    inr_paise = int(round(float(retail_inr) * 100))
-                    usd_micros = int(round((float(retail_inr) / fx_rate) * 1_000_000))
-                    if tier_norm == "low":
-                        active_rate.pstn_low_rate_inr_paise_per_min = inr_paise
-                        active_rate.pstn_low_rate_usd_micros_per_min = usd_micros
-                    elif tier_norm == "medium":
-                        active_rate.pstn_medium_rate_inr_paise_per_min = inr_paise
-                        active_rate.pstn_medium_rate_usd_micros_per_min = usd_micros
-                    elif tier_norm == "premium":
-                        active_rate.pstn_premium_rate_inr_paise_per_min = inr_paise
-                        active_rate.pstn_premium_rate_usd_micros_per_min = usd_micros
-                        active_rate.pstn_rate_inr_paise_per_min = inr_paise
-                        active_rate.pstn_rate_usd_micros_per_min = usd_micros
-                        active_rate.pstn_rate_usd_cents_per_min = int(round(usd_micros / 10000))
-                    flag_modified(active_rate, "pstn_rate_inr_paise_per_min")
-            except Exception as e:
-                import logging
-                logging.getLogger(__name__).warning("[VOICE_PROFILE] BillingRateVersion sync error: %s", e)
-
         await session.commit()
         from server.db.tier_store import _cache_put
         _cache_put(environment, tier, row.stack_payload)
-        from server.services.saas.billing_rates import clear_rates_cache
-        clear_rates_cache()
+    invalidate_profile_caches(tier)
+    if price_changed and tier_norm in _CORE_PRICE_TIERS:
+        # The tier card is the single place a tier price is edited. Core tiers
+        # are also published as a NEW billing rate version (never an in-place
+        # edit of the active one) so wallet, invoices and marketing agree.
+        await _publish_core_tier_price(tier_norm, float(profile["retailRateInr"]), actor=actor)
     return await profile_view(tier, environment, include_internal=True)
+
+
+async def _publish_core_tier_price(tier: str, inr_per_min: float, *, actor: str) -> None:
+    from server.services.saas.billing_rates import clear_rates_cache, update_rates_versioned
+
+    amount = str(Decimal(str(inr_per_min)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+    kwargs: dict[str, Any] = {f"pstn_{tier}_inr_per_min": amount}
+    if tier == "premium":
+        # The legacy single PSTN rate has always tracked the premium tier.
+        kwargs["pstn_inr_per_min"] = amount
+    try:
+        await update_rates_versioned(
+            actor=actor,
+            reason=f"Tier {tier} retail price set to INR {amount}/min from the voice stack tier card",
+            rate_currency="INR",
+            **kwargs,
+        )
+    except Exception as exc:  # The profile price still governs the tier; log the mirror failure.
+        import logging
+
+        logging.getLogger(__name__).warning("[VOICE_PROFILE] tier price rate version not published: %s", exc)
+        clear_rates_cache()
 
 
 async def set_profile_enabled(*, environment: str, tier: str, expected_revision: int, enabled: bool, actor: str, allow_premium: bool = True) -> dict[str, Any]:
@@ -988,6 +1174,13 @@ async def set_profile_enabled(*, environment: str, tier: str, expected_revision:
                 )
         if current_enabled != enabled:
             profile["enabled"] = enabled
+            if enabled:
+                profile.pop("disabledReason", None)
+            else:
+                profile["disabledReason"] = {
+                    "code": "operator_disabled", "message": "Taken offline by an administrator.",
+                    "at": datetime.now(timezone.utc).isoformat(), "actor": actor,
+                }
             record["profile"] = profile
             stage_payload = copy.deepcopy(row.stack_payload) if isinstance(row.stack_payload, dict) else {}
             stage_payload["composed_voice_profile"] = record
@@ -1013,6 +1206,7 @@ async def set_profile_enabled(*, environment: str, tier: str, expected_revision:
             await session.commit()
             from server.db.tier_store import _cache_put
             _cache_put(environment, tier, row.stack_payload)
+    invalidate_profile_caches(tier)
     return await profile_view(tier, environment, include_internal=True)
 
 
@@ -1058,6 +1252,7 @@ async def delete_composed_profile(*, environment: str, tier: str, actor: str) ->
     from server.db.tier_store import _TIER_CACHE
     if environment in _TIER_CACHE:
         _TIER_CACHE[environment].pop(tier_norm, None)
+    invalidate_profile_caches(tier_norm)
     return {"ok": True, "tier": tier_norm, "deleted": True}
 
 
@@ -1167,10 +1362,12 @@ async def resolve_agent_selection(
         raise VoiceProfileError("profile_unavailable", "The selected voice profile is not available for calls.", status_code=409, details={"blockers": readiness["blockers"]})
     try:
         selected_revision = int(voice_settings.get("profileRevision") or -1)
-    except (ValueError, TypeError, OverflowError) as exc:
-        raise VoiceProfileError("profile_revision_conflict", "Reload the voice catalog and save a current selection.", status_code=409) from exc
-    if selected_revision != int(record.get("revision") or 0):
-        raise VoiceProfileError("profile_revision_conflict", "The selected voice profile changed. Reload the voice catalog and save again.", status_code=409)
+    except (ValueError, TypeError, OverflowError):
+        selected_revision = -1
+    # Admin edits (knobs, labels, prices) bump the revision on every save. An
+    # agent's saved selection stays valid while its engine/model/voice aliases
+    # still resolve in the current profile; only a removed choice is a conflict.
+    revision_changed = selected_revision != int(record.get("revision") or 0)
     profile = record["profile"]
     if language not in (profile.get("supportedLanguages") or []):
         raise VoiceProfileError("unsupported_language", "This profile does not support the agent language.", status_code=409)
@@ -1204,6 +1401,8 @@ async def resolve_agent_selection(
 
     # The compatibility argument is intentionally ignored: a stale or missing
     # selection must never choose a different voice, language or engine.
+    if revision_changed and (not engine_row or not model_row or not voice_row):
+        raise VoiceProfileError("profile_revision_conflict", "The selected voice is no longer offered on this plan. Reload the voice catalog and save again.", status_code=409)
     if not engine_row:
         raise VoiceProfileError("voice_selection_invalid", "Choose a voice option from the current catalog.", status_code=409)
     if not model_row:
@@ -1237,17 +1436,17 @@ async def resolve_agent_selection(
     }
     tier_dynamics = profile.get("voiceDynamics")
     if isinstance(tier_dynamics, dict):
-        if tier_dynamics.get("speed") is not None:
-            tts_config["pace"] = tier_dynamics["speed"]
-            tts_config["speed"] = tier_dynamics["speed"]
-        if tier_dynamics.get("pitch") is not None:
-            tts_config["pitch"] = tier_dynamics["pitch"]
-        if tier_dynamics.get("temperature") is not None:
-            tts_config["temperature"] = tier_dynamics["temperature"]
-        if tier_dynamics.get("emotion") is not None:
-            tts_config["emotion"] = tier_dynamics["emotion"]
-        if tier_dynamics.get("volume") is not None:
-            tts_config["volume"] = tier_dynamics["volume"]
+        # Saved knobs are clamped to the union of every engine's band; each
+        # call applies only the knobs the selected model honours, in its range.
+        from server.services.tts_voice_direction import normalize_tts_dynamics
+
+        applied = normalize_tts_dynamics(str(model_row.get("provider") or ""), str(model_row.get("model") or ""), tier_dynamics)
+        if applied.get("speed") is not None:
+            tts_config["pace"] = applied["speed"]
+            tts_config["speed"] = applied["speed"]
+        for key in ("pitch", "temperature", "emotion", "volume"):
+            if applied.get(key) is not None:
+                tts_config[key] = applied[key]
 
     stack = {
         "pipeline": "composed_voice",

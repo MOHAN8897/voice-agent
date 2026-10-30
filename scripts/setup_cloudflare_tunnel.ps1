@@ -109,7 +109,7 @@ if (Test-Path $EnvFile) {
         "VOBIZ_WEBHOOK_BASE_URL" = $publicApi
         "CLIENT_URL"             = "https://$AppHost"
         "PUBLIC_APP_URL"         = "https://$AppHost"
-        "VOXLY_FRONTEND_URL"     = "https://$AppHost"
+        "DIALTACT_FRONTEND_URL"     = "https://$AppHost"
     }
     foreach ($key in $map.Keys) {
         $val = $map[$key]
@@ -124,7 +124,7 @@ if (Test-Path $EnvFile) {
         if (-not $found) { $lines += "$key=$val" }
     }
     Set-Content -Path $EnvFile -Value $lines
-    Write-Host "Updated .env (PUBLIC_TUNNEL_URL, VOBIZ_WEBHOOK_BASE_URL, CLIENT_URL, VOXLY_FRONTEND_URL)."
+    Write-Host "Updated .env (PUBLIC_TUNNEL_URL, VOBIZ_WEBHOOK_BASE_URL, CLIENT_URL, DIALTACT_FRONTEND_URL)."
 }
 
 # web/.env.local for stable public API when testing from browser

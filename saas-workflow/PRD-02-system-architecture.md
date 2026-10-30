@@ -5,7 +5,7 @@
 ```mermaid
 flowchart TB
   subgraph clients [Clients]
-    Voxly[Voxly AI - JWT]
+    Dialtact[Dialtact AI - JWT]
     DevPortal[Dev portal - cookie]
   end
 
@@ -25,7 +25,7 @@ flowchart TB
     Calls[calls audit]
   end
 
-  Voxly --> AppAuth
+  Dialtact --> AppAuth
   AppAuth --> TenantGuard
   TenantGuard --> Agents
   TenantGuard --> Orch
@@ -92,5 +92,5 @@ See PRD-12 Phase A/B.
 |-----------|--------|
 | API | FastAPI; worker can be same process or sidecar polling `provision_jobs` |
 | Postgres | Required |
-| Voxly | Static; `Authorization: Bearer` |
+| Dialtact | Static; `Authorization: Bearer` |
 | Webhooks | `/api/stripe/webhook`, `/api/telnyx/webhook` |

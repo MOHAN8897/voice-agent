@@ -213,7 +213,7 @@ class Settings(BaseSettings):
     app_console_username: str | None = Field(None, alias="APP_CONSOLE_USERNAME")
     app_console_password: str | None = Field(None, alias="APP_CONSOLE_PASSWORD")
     default_tenant_id: str = Field("00000000-0000-4000-8000-000000000001", alias="DEFAULT_TENANT_ID")
-    # The legacy client/ app is superseded by voxly-ai. Opt in explicitly if needed.
+    # The legacy client/ app is superseded by dialtact-app. Opt in explicitly if needed.
     serve_client_static: bool = Field(False, alias="SERVE_CLIENT_STATIC")
     redis_url: str | None = Field(None, alias="REDIS_URL")
 
@@ -221,7 +221,7 @@ class Settings(BaseSettings):
     r2_account_id: str | None = Field(None, alias="R2_ACCOUNT_ID")
     r2_access_key_id: str | None = Field(None, alias="R2_ACCESS_KEY_ID")
     r2_secret_access_key: str | None = Field(None, alias="R2_SECRET_ACCESS_KEY")
-    r2_bucket_name: str = Field("voxly-call-archives", alias="R2_BUCKET_NAME")
+    r2_bucket_name: str = Field("dialtact-call-archives", alias="R2_BUCKET_NAME")
 
     telephony_provider: str = Field("vobiz", alias="TELEPHONY_PROVIDER")
     enable_telnyx: bool = Field(False, alias="ENABLE_TELNYX")
@@ -361,14 +361,11 @@ class Settings(BaseSettings):
         20.0,
         validation_alias=AliasChoices("PSTN_SILENCE_HANGUP_SEC", "SILENCE_HANGUP_SEC"),
     )
-    voxly_frontend_url: str = Field(
+    dialtact_frontend_url: str = Field(
         "http://localhost:5173",
+        # VOXLY_FRONTEND_URL is the pre-rebrand name, still read so old deployments keep working.
         validation_alias=AliasChoices("DIALTACT_FRONTEND_URL", "VOXLY_FRONTEND_URL"),
     )
-
-    @property
-    def dialtact_frontend_url(self) -> str:
-        return self.voxly_frontend_url
 
     # --- Tenant account deletion (Danger Zone) ---
     #: Grace period in days between quarantine and irreversible purge.
@@ -589,12 +586,66 @@ def get_settings() -> Settings:
         ) from e
 
 
+def razorpay_config_issues(settings: Settings) -> list[str]:
+    """Unsafe Razorpay combinations, as codes. Never includes secret values.
+
+    * `webhook_secret_reuses_api_secret`: the webhook endpoint secret must be
+      its own value; reusing the API secret means a leak of either lets an
+      attacker forge payment webhooks.
+    * `test_key_in_production`: a `rzp_test_` key in production takes
+      payments that never settle.
+    """
+    issues: list[str] = []
+    key = str(getattr(settings, "razorpay_api_key", "") or "").strip()
+    secret = str(getattr(settings, "razorpay_api_secret", "") or "").strip()
+    webhook = str(getattr(settings, "razorpay_webhook_secret", "") or "").strip()
+    if webhook and secret and hmac_compare(webhook, secret):
+        issues.append("webhook_secret_reuses_api_secret")
+    if key.startswith("rzp_test_") and getattr(settings, "app_environment", "") == "production":
+        issues.append("test_key_in_production")
+    return issues
+
+
+def hmac_compare(left: str, right: str) -> bool:
+    import hmac
+
+    return hmac.compare_digest(left.encode(), right.encode())
+
+
+def razorpay_refused(settings: Settings) -> bool:
+    """True when payments must be refused: an unsafe Razorpay setup in production."""
+    if getattr(settings, "app_environment", "") != "production":
+        return False
+    return bool(razorpay_config_issues(settings))
+
+
+def _check_razorpay_config(settings: Settings) -> None:
+    import logging
+
+    issues = razorpay_config_issues(settings)
+    if not issues:
+        return
+    log = logging.getLogger("server.config.env")
+    production = getattr(settings, "app_environment", "") == "production"
+    for issue in issues:
+        log.error(
+            "RAZORPAY CONFIG UNSAFE: %s%s",
+            issue,
+            " - payments and the Razorpay webhook are DISABLED until this is fixed"
+            if production
+            else " - fix before going to production",
+        )
+
+
 def validate_env() -> Settings:
     """Explicit fail-fast helper for app startup. Never logs secret values."""
     settings = get_settings()
     # Touch required fields to trigger validation
     _ = settings.openai_api_key
     _ = settings.sarvam_api_key
+    # Unsafe Razorpay setups are logged loudly here and refused at use time
+    # (`razorpay_refused`), so the voice product still boots in production.
+    _check_razorpay_config(settings)
     return settings
 
 

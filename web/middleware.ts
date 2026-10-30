@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const API_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-const VOXLY_URL =
-  process.env.VOXLY_DEV_URL || process.env.NEXT_PUBLIC_VOXLY_URL || "http://127.0.0.1:5173";
+const DIALTACT_URL =
+  process.env.DIALTACT_DEV_URL ||
+  process.env.NEXT_PUBLIC_DIALTACT_URL ||
+  process.env.VOXLY_DEV_URL ||
+  process.env.NEXT_PUBLIC_VOXLY_URL || "http://127.0.0.1:5173";
 const DEV_PORTAL_ALLOW_REMOTE =
   process.env.DEV_PORTAL_ALLOW_REMOTE === "1" || process.env.DEV_PORTAL_ALLOW_REMOTE === "true";
 
@@ -30,8 +33,8 @@ function requestIsLocalDevHost(request: NextRequest): boolean {
   return candidates.every(hostnameIsLocal);
 }
 
-function redirectToVoxly(path = "/") {
-  const base = VOXLY_URL.replace(/\/$/, "");
+function redirectToDialtact(path = "/") {
+  const base = DIALTACT_URL.replace(/\/$/, "");
   const hash = path.startsWith("#") ? path : "";
   const pathname = hash ? "/" : path;
   return `${base}${pathname}${hash}`;
@@ -88,7 +91,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/app")
   ) {
     const dest =
-      pathname.startsWith("/app") ? redirectToVoxly("#dashboard/overview") : redirectToVoxly("/");
+      pathname.startsWith("/app") ? redirectToDialtact("#dashboard/overview") : redirectToDialtact("/");
     return NextResponse.redirect(dest);
   }
 

@@ -9,7 +9,7 @@ def main():
     # Rule 3: check forbidden vendors in tenant surfaces
     forbidden_re = re.compile(r'\b(plivo|exotel|composio|stripe)\b', re.IGNORECASE)
     scan_files = glob.glob('server/routes/app_*.py') + glob.glob('server/routes/campaigns.py') + glob.glob('server/routes/integrations.py')
-    for root, _, files in os.walk('voxly-ai/src'):
+    for root, _, files in os.walk('dialtact-app/src'):
         for f in files:
             if f.endswith(('.js', '.jsx', '.ts', '.tsx', '.json', '.html')):
                 scan_files.append(os.path.join(root, f))

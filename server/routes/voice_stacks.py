@@ -10,11 +10,11 @@ from server.auth.subscriber_dependencies import require_subscriber_jwt_if_enable
 from server.config.constants import normalize_supported_language
 from server.services.saas.tenant_guard import SubscriberPrincipal
 from server.services.saas.voice_stack_profiles import (
-    COMPOSED_TIERS,
     _load_rates_without_fallback,
-    _native_tier_retail_rate,
     load_profile_records,
     ordered_stack_tier_ids,
+    public_catalog_cache_get,
+    public_catalog_cache_put,
     public_catalog_profile,
 )
 
@@ -40,44 +40,21 @@ async def voice_stack_catalog(
     from server.services.dev_runtime import effective_app_environment
 
     environment = effective_app_environment()
+    cached = public_catalog_cache_get(environment, normalized_language)
+    if cached is not None:
+        # Warm-up was scheduled when this entry was built; a hit never re-queues it.
+        return cached
     records, rates = await asyncio.gather(
         load_profile_records(environment, None), _load_rates_without_fallback(),
     )
 
-    import copy
-    from server.services.saas.voice_stack_defaults import recommended_composed_profile
-
-    # Premium is appended below so an older record can borrow the recommended profile.
-    ordered_tiers = [tier for tier in ordered_stack_tier_ids(records) if tier != "premium"]
-
-    active_ordered_tiers = [
-        tier for tier in ordered_tiers
-        if bool((records.get(tier) or {}).get("profile", {}).get("enabled", False))
-    ]
-
+    # Every tier, Flagship included, is published exactly as the admin saved
+    # it. A record without approved voices is never padded with defaults.
     profiles = [
         public_catalog_profile(tier, records.get(tier), rates)
-        for tier in active_ordered_tiers
+        for tier in ordered_stack_tier_ids(records)
+        if bool(((records.get(tier) or {}).get("profile") or {}).get("enabled", False))
     ]
-
-    premium_record = records.get("premium")
-    prem_p = (premium_record or {}).get("profile") if premium_record else None
-    prem_enabled = bool(prem_p.get("enabled", False)) if isinstance(prem_p, dict) else False
-
-    if prem_enabled:
-        if premium_record and isinstance(premium_record.get("profile"), dict) and premium_record["profile"].get("engines"):
-            premium_profile = public_catalog_profile("premium", premium_record, rates)
-        else:
-            prem_rec = copy.deepcopy(premium_record) if premium_record else {"profile": {}}
-            default_prem = recommended_composed_profile("premium", allow_premium=True)
-            if not prem_rec.get("profile"):
-                prem_rec["profile"] = default_prem
-            else:
-                for k, v in default_prem.items():
-                    if k not in prem_rec["profile"] or not prem_rec["profile"][k]:
-                        prem_rec["profile"][k] = v
-            premium_profile = public_catalog_profile("premium", prem_rec, rates)
-        profiles.append(premium_profile)
 
     warm_targets: list[tuple[str, str, str]] = []
     for profile in profiles:
@@ -119,5 +96,7 @@ async def voice_stack_catalog(
         and not any(b.get("code") == "profile_not_available" for b in p.get("blockers", []))
     ]
 
-    return {"language": normalized_language, "profiles": active_profiles}
+    response = {"language": normalized_language, "profiles": active_profiles}
+    public_catalog_cache_put(environment, normalized_language, response)
+    return response
 

@@ -328,10 +328,10 @@ def find_static_sample(voice: str, language: str | None = None) -> bytes | None:
     lang_prefix = (language.split("-")[0] if language else "te").lower()
 
     base_dirs = [
-        Path("voxly-ai/public/audio/voxly/samples"),
+        Path("dialtact-app/public/audio/dialtact/samples"),
         Path(get_settings().data_dir) / "voice-samples" / "static",
         Path("server/static/audio/samples"),
-        Path("web/public/audio/voxly/samples"),
+        Path("web/public/audio/dialtact/samples"),
     ]
     # Priority: 1. Voice with language prefix (e.g. zephyr_te.wav), 2. Base voice (e.g. shubh.wav)
     filenames = [
@@ -615,11 +615,19 @@ async def synthesize_catalog_preview(alias_id: str, language: str) -> dict[str, 
     provider = str(alias.get("provider") or "").strip().lower()
     if provider not in {"gemini", "sarvam", "cartesia", "gnani", "openai"}:
         raise ValueError("unsupported_voice_provider")
+    # Tenants hear the voice as calls on this tier will sound: the tier's
+    # admin knobs, clamped per model inside synthesize_preview.
+    dynamics = alias.get("voiceDynamics") if isinstance(alias.get("voiceDynamics"), dict) else {}
+    speed = dynamics.get("speed", dynamics.get("pace"))
     result = await synthesize_preview(
         catalog_preview_text(normalized),
         voice_id=alias.get("providerVoiceId"),
         language=normalized,
-        speed=1.0,
+        speed=float(speed) if speed is not None else 1.0,
+        pitch=dynamics.get("pitch"),
+        temperature=dynamics.get("temperature"),
+        emotion=dynamics.get("emotion"),
+        volume=dynamics.get("volume"),
         provider=provider,
         model=alias.get("model"),
         tier=alias.get("tier"),

@@ -2,7 +2,7 @@
 
 **Document Version:** 1.1.0  
 **Status:** Authoritative Specification & Implementation Directive  
-**Target Stack:** FastAPI (Python 3.12, SQLAlchemy Async, Redis), PostgreSQL, React 18 / Vite (`voxly-ai`), Telephony (Vobiz & Telnyx), Nango Gateway, Razorpay / Stripe  
+**Target Stack:** FastAPI (Python 3.12, SQLAlchemy Async, Redis), PostgreSQL, React 18 / Vite (`dialtact-app`), Telephony (Vobiz & Telnyx), Nango Gateway, Razorpay / Stripe  
 
 > [!IMPORTANT]
 > **Precedence Rule:** Where any earlier design notes or RFCs conflict with this document, this specification wins. Do not modify production application code until the gap analysis and migration phases are reviewed.
@@ -22,13 +22,13 @@ An authoritative audit of the active repository was conducted against the deleti
 | **Authentication & Sudo Re-auth**<br>[`server/services/saas/auth_service.py`](file:///d:/voice%20agent/server/services/saas/auth_service.py) | Has `verify_portal_password()` and rate limiters. | Lacks passwordless/SSO email OTP fallback for re-authentication; lacks rate-limiting lockout specific to destructive tenant deletion. | Password verify field must NOT enforce `min_length=8` (verify-only input). |
 | **Session & Token Models**<br>[`server/db/models/saas_models.py`](file:///d:/voice%20agent/server/db/models/saas_models.py#L69-L91) | `RefreshToken` maps `user_id` to token hash. | Does not record tenant scope directly on the token. Revoking all tokens for a user would log them out of other workspaces. | **Resolved in v1.1:** Only revoke refresh tokens or sessions associated with the quarantined tenant. Multi-tenant users remain logged into other workspaces. |
 | **Integrations & Carrier Trunks**<br>[`server/services/nango_service.py`](file:///d:/voice%20agent/server/services/nango_service.py), [`telephony.py`](file:///d:/voice%20agent/server/services/telephony.py) | `nango_service.delete_connection()` exists. Vobiz and Telnyx inventory exists. | No orchestrated carrier deprovisioning pipeline triggered on account teardown. | Must handle external carrier/Nango 404s idempotently without failing the pipeline. |
-| **Frontend Console**<br>[`voxly-ai/src/console/modules/SettingsModule.jsx`](file:///d:/voice%20agent/voxly-ai/src/console/modules/SettingsModule.jsx) | Has password change, KYC, session security, and wallet cards. | Completely lacks a Danger Zone card, confirmation modal, grace period cancel banner, and global `tenant_quarantined` error interceptor. | UI must be strictly scrubbed of wholesale carrier/vendor names (`Vobiz`, `Telnyx`, `Nango`). |
+| **Frontend Console**<br>[`dialtact-app/src/console/modules/SettingsModule.jsx`](file:///d:/voice%20agent/dialtact-app/src/console/modules/SettingsModule.jsx) | Has password change, KYC, session security, and wallet cards. | Completely lacks a Danger Zone card, confirmation modal, grace period cancel banner, and global `tenant_quarantined` error interceptor. | UI must be strictly scrubbed of wholesale carrier/vendor names (`Vobiz`, `Telnyx`, `Nango`). |
 
 ---
 
 ## 1. Regulatory & Industry Standards Compliance Matrix
 
-| Regulation / Standard | Mandate | Application to Voxly AI |
+| Regulation / Standard | Mandate | Application to Dialtact AI |
 | :--- | :--- | :--- |
 | **GDPR (Art. 17 & 20) / India DPDP Act 2023** | **Right to be Forgotten & Data Portability**: Users have the right to erase all PII and export their data prior to account deletion. | • Pre-deletion Data Export ("Takeout") generates an encrypted ZIP of call logs, contacts, and prompts.<br>• Complete purge of audio recordings from S3, transcripts, contacts, leads, and custom prompts. |
 | **Telecom Regulations (TRAI/DoT, FCC, Ofcom)** | **Lawful CDR Metadata Retention**: Telecom service providers are legally required to retain Call Detail Record (CDR) metadata for 1–2 years for fraud and regulatory audits. | • Retain anonymized CDR audit rows (timestamps, call duration, anonymized hashes) while purging raw audio files and conversation transcripts. |
@@ -399,9 +399,9 @@ Each stage checkpoints `job.stage` in the database. If a worker crashes, the nex
 
 ---
 
-## 7. Phase 5 — Frontend UX & Settings Console (`voxly-ai`)
+## 7. Phase 5 — Frontend UX & Settings Console (`dialtact-app`)
 
-### 7.1 "Danger Zone" in [`SettingsModule.jsx`](file:///d:/voice%20agent/voxly-ai/src/console/modules/SettingsModule.jsx)
+### 7.1 "Danger Zone" in [`SettingsModule.jsx`](file:///d:/voice%20agent/dialtact-app/src/console/modules/SettingsModule.jsx)
 - Placed at the very bottom of Settings.
 - Rendered with distinct red/destructive theme styling.
 - Visible **only** if `user?.role === "owner"`.
@@ -420,7 +420,7 @@ Each stage checkpoints `job.stage` in the database. If a worker crashes, the nex
 4. **Step 4: Submission & Cleanup**
    - Sends `POST /api/tenant/delete`.
    - Handles errors gracefully (400 wrong password, 403 not owner, 429 rate limited).
-   - On success: clears `voxly_auth_token` and sessionStorage, redirects to `/login?notice=workspace_quarantined`.
+   - On success: clears `dialtact_auth_token` and sessionStorage, redirects to `/login?notice=workspace_quarantined`.
 
 ### 7.3 Grace Period Restoration Banner
 - If an owner logs in during the 14-day grace period, show a sticky top banner:  
@@ -464,8 +464,8 @@ Test suite located at `server/tests/test_tenant_deletion.py`.
    - Run: `pytest server/tests/test_tenant_deletion.py -v`
    - All tests must pass 100% green.
 3. **Frontend Build & Copy Verification:**
-   - `npm --prefix voxly-ai run check:copy` (0 forbidden vendor names).
-   - `npm --prefix voxly-ai run build` (Clean production bundle).
+   - `npm --prefix dialtact-app run check:copy` (0 forbidden vendor names).
+   - `npm --prefix dialtact-app run build` (Clean production bundle).
 4. **Third-Party Mocking Guard:**
    - In all unit and integration tests, never hit real Telnyx, Vobiz, Nango, or Stripe endpoints; use authoritative mocks.
 5. **Legal & Compliance Escalations:**
@@ -493,7 +493,7 @@ Follow the authoritative specification in `TENANT_ACCOUNT_DELETION_IMPLEMENTATIO
 4. **Teardown Worker (`server/services/saas/teardown_worker.py`):**
    - Implement stage-checkpointed pipeline (`integrations` -> `subscriptions` -> `carrier_numbers` -> `storage` -> `database` -> `cache` -> `verification` -> `done`).
    - Use keyed HMAC for CDR anonymization, preserve invoices, handle multi-tenant users, and add retention cleanup cron.
-5. **Frontend Console (`voxly-ai/src/console/modules/SettingsModule.jsx`):**
+5. **Frontend Console (`dialtact-app/src/console/modules/SettingsModule.jsx`):**
    - Build Danger Zone card, multi-step confirmation modal with password challenge, grace period restore banner, and global `tenant_quarantined` redirect.
    - Ensure zero vendor leaks in customer copy.
 6. **Tests & Quality Gates:**

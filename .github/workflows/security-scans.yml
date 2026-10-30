@@ -10,7 +10,7 @@ on:
       staging_url:
         description: "Target staging URL for active DAST and agentic pen-testing"
         required: false
-        default: "https://staging.voxly.ai"
+        default: "https://staging.dialtact.com"
       run_active_scans:
         description: "Execute OWASP ZAP and Strix against target staging URL"
         type: boolean
@@ -38,7 +38,7 @@ jobs:
             --config p/owasp-top-ten \
             --config p/security-audit \
             --config .semgrep.yml \
-            server/ voxly-ai/src/
+            server/ dialtact-app/src/
 
   owasp-zap-dast:
     name: OWASP ZAP Dynamic Staging Scan

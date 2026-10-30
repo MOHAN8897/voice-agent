@@ -31,7 +31,7 @@ async def test_web_agent_uses_selected_stack_and_private_ready_metadata(monkeypa
         def __init__(self):
             self.query_params = {"agentId": "agent-1", "language": "hi-IN"}
             self.headers = {}
-            self.scope = {"subprotocols": ["voxly-web-agent", "voxly-auth.test-token"]}
+            self.scope = {"subprotocols": ["dialtact-web-agent", "dialtact-auth.test-token"]}
             self.events = []
             self.accepted_subprotocol = None
             self.ready = asyncio.Event()
@@ -180,7 +180,7 @@ async def test_web_agent_uses_selected_stack_and_private_ready_metadata(monkeypa
         assert loops[0].current_output_codec == "L16"
     else:
         assert isinstance(loops[0], FakeVoiceLoop)
-    assert websocket.accepted_subprotocol == "voxly-web-agent"
+    assert websocket.accepted_subprotocol == "dialtact-web-agent"
     assert stack_used["value"]["language"] == "hi-IN"
     assert started_kwargs["language"] == "hi-IN"
     assert started_kwargs["tenant_id"] == "tenant-1"
@@ -190,7 +190,7 @@ async def test_web_agent_uses_selected_stack_and_private_ready_metadata(monkeypa
 def test_web_agent_token_prefers_subprotocol_over_url_query():
     route = import_module("server.routes.web_agent_ws")
     websocket = SimpleNamespace(
-        scope={"subprotocols": ["voxly-web-agent", "voxly-auth.header-token"]},
+        scope={"subprotocols": ["dialtact-web-agent", "dialtact-auth.header-token"]},
         query_params={"token": "query-token"},
         headers={"authorization": "Bearer authorization-token"},
     )

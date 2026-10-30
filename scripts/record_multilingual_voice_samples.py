@@ -8,8 +8,8 @@ Generates high-fidelity WAV samples for core voices across:
 - English (en-IN / en-US)
 
 Files are written to both:
-- voxly-ai/public/audio/voxly/samples/
-- web/public/audio/voxly/samples/
+- dialtact-app/public/audio/dialtact/samples/
+- web/public/audio/dialtact/samples/
 
 Naming convention:
 - {voice_id}_{lang}.wav (e.g. aoede_te.wav, puck_te.wav, kore_hi.wav, etc.)
@@ -46,8 +46,8 @@ from server.realtime.providers.gemini_voice import (
     GeminiLiveVoiceAdapter,
 )
 
-VOXLY_SAMPLES_DIR = REPO_ROOT / "voxly-ai" / "public" / "audio" / "voxly" / "samples"
-WEB_SAMPLES_DIR = REPO_ROOT / "web" / "public" / "audio" / "voxly" / "samples"
+DIALTACT_SAMPLES_DIR = REPO_ROOT / "dialtact-app" / "public" / "audio" / "dialtact" / "samples"
+WEB_SAMPLES_DIR = REPO_ROOT / "web" / "public" / "audio" / "dialtact" / "samples"
 
 # Core Gemini Live voices to generate samples for:
 CORE_VOICES = (
@@ -124,13 +124,13 @@ async def record_sample(
     max_retries: int = 3,
 ) -> bool:
     filename = f"{voice.lower()}_{lang_key}.wav"
-    target_voxly = VOXLY_SAMPLES_DIR / filename
+    target_dialtact = DIALTACT_SAMPLES_DIR / filename
     target_web = WEB_SAMPLES_DIR / filename
 
-    if target_voxly.exists() and target_voxly.stat().st_size > 4000 and not force:
-        print(f"  = [EXISTS] {filename} ({target_voxly.stat().st_size // 1024} KB)")
-        if not target_web.exists() or target_web.stat().st_size != target_voxly.stat().st_size:
-            shutil.copy2(target_voxly, target_web)
+    if target_dialtact.exists() and target_dialtact.stat().st_size > 4000 and not force:
+        print(f"  = [EXISTS] {filename} ({target_dialtact.stat().st_size // 1024} KB)")
+        if not target_web.exists() or target_web.stat().st_size != target_dialtact.stat().st_size:
+            shutil.copy2(target_dialtact, target_web)
         return True
 
     lang_info = LANGUAGES[lang_key]
@@ -188,9 +188,9 @@ async def record_sample(
         pcm = b"".join(chunks)
         # Verify valid audio (> 1 second of speech)
         if len(pcm) >= GEMINI_LIVE_OUTPUT_RATE * 2:
-            seconds = _write_wav(target_voxly, pcm, GEMINI_LIVE_OUTPUT_RATE)
-            shutil.copy2(target_voxly, target_web)
-            print(f"  + [RECORDED] {filename} ({seconds:.2f}s, {target_voxly.stat().st_size // 1024} KB)")
+            seconds = _write_wav(target_dialtact, pcm, GEMINI_LIVE_OUTPUT_RATE)
+            shutil.copy2(target_dialtact, target_web)
+            print(f"  + [RECORDED] {filename} ({seconds:.2f}s, {target_dialtact.stat().st_size // 1024} KB)")
             return True
         else:
             print(f"    ! Incomplete audio ({len(pcm)} bytes) on attempt {attempt}")
@@ -206,11 +206,11 @@ def copy_aliases():
         for alias, base_voice in OPENAI_ALIASES.items():
             src_name = f"{base_voice}_{lang_key}.wav"
             dst_name = f"{alias}_{lang_key}.wav"
-            src_path = VOXLY_SAMPLES_DIR / src_name
-            dst_voxly = VOXLY_SAMPLES_DIR / dst_name
+            src_path = DIALTACT_SAMPLES_DIR / src_name
+            dst_dialtact = DIALTACT_SAMPLES_DIR / dst_name
             dst_web = WEB_SAMPLES_DIR / dst_name
             if src_path.exists():
-                shutil.copy2(src_path, dst_voxly)
+                shutil.copy2(src_path, dst_dialtact)
                 shutil.copy2(src_path, dst_web)
                 print(f"  ~ [ALIAS] {dst_name} -> {src_name}")
 
@@ -227,7 +227,7 @@ async def main():
         print("ERROR: GEMINI_API_KEY is not set.")
         sys.exit(1)
 
-    VOXLY_SAMPLES_DIR.mkdir(parents=True, exist_ok=True)
+    DIALTACT_SAMPLES_DIR.mkdir(parents=True, exist_ok=True)
     WEB_SAMPLES_DIR.mkdir(parents=True, exist_ok=True)
 
     target_voices = [v for v in CORE_VOICES if not args.voice or v[0].lower() == args.voice.lower()]

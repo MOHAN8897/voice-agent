@@ -508,7 +508,7 @@ async def signup(
         tenant_out = _tenant_public(tenant)
         await session.commit()
     settings = get_settings()
-    base = settings.voxly_frontend_url.rstrip("/")
+    base = settings.dialtact_frontend_url.rstrip("/")
     verify_url = f"{base}/#verify-email?token={verify_raw}"
     delivery = await send_verification_email(norm, verify_url, otp)
     if not delivery.ok:
@@ -1268,7 +1268,7 @@ async def resend_verification_email(email: str, *, expose_debug_otp: bool = Fals
         verify_raw, otp = await _create_email_verification_token(session, user.user_id)
         await session.commit()
     settings = get_settings()
-    verify_url = f"{settings.voxly_frontend_url.rstrip('/')}/#verify-email?token={verify_raw}"
+    verify_url = f"{settings.dialtact_frontend_url.rstrip('/')}/#verify-email?token={verify_raw}"
     delivery = await send_verification_email(norm, verify_url, otp)
     if not delivery.ok:
         logger.error(

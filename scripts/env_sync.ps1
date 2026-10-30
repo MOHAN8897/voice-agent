@@ -71,7 +71,7 @@ if (Test-Path $EnvFile) {
     $lines = Set-EnvKey $lines "PUBLIC_APP_URL" $AppUrl
     # Public origin of the product UI. The API redirects / here, and it is what
     # Google OAuth and password-reset links point at, so it must not stay localhost.
-    $lines = Set-EnvKey $lines "VOXLY_FRONTEND_URL" $AppUrl
+    $lines = Set-EnvKey $lines "DIALTACT_FRONTEND_URL" $AppUrl
     Set-Content -Path $EnvFile -Value $lines
     Write-Host "Synced .env -> API $ApiUrl | App $AppUrl"
 }

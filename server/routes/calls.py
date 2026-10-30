@@ -28,6 +28,7 @@ def _validate_call_id(call_id: str) -> str:
     return cid
 
 from server.call.audio_archive import audio_archive
+from server.call.paths import call_dir
 from server.call.call_ledger import call_ledger
 from server.call.call_lifecycle_service import call_lifecycle_service
 from server.call.call_status import CALL_STATUSES
@@ -429,6 +430,43 @@ async def calls_stats(
 
 _ENRICH_CALL_CACHE: dict[str, dict] = {}
 _CACHE_MAX_ENTRIES = 2000
+#: Ledger contact fields keyed by call, invalidated by the meta file's mtime, so the
+#: list poll stats the file instead of re-parsing its JSON for every row.
+_CONTACT_CACHE: dict[str, tuple[int, tuple[str, Any, Any]]] = {}
+#: Call-folder mtime seen when a finished call had no recording. Carrier recordings
+#: arrive after finalization and land in that folder, so "none" is re-probed only
+#: when the folder changed (one stat instead of six file probes per row).
+_RECORDING_CHECKED_AT: dict[str, int] = {}
+
+
+def _call_dir_mtime(call_id: str) -> int:
+    try:
+        return call_dir(call_id).stat().st_mtime_ns
+    except OSError:
+        return 0
+
+
+def _ledger_contact(cid: str) -> tuple[str, Any, Any]:
+    """(ledger tenant, caller, callee) for a call; re-read only when its meta changes."""
+    try:
+        mtime = call_ledger.meta_path(cid).stat().st_mtime_ns
+    except (OSError, ValueError):
+        mtime = None
+    cached = _CONTACT_CACHE.get(cid)
+    if mtime is not None and cached is not None and cached[0] == mtime:
+        return cached[1]
+    meta = call_ledger.read_meta(cid) or {}
+    contact = (
+        str(meta.get("tenant_id") or ""),
+        meta.get("caller_id") or meta.get("from_number"),
+        meta.get("callee_e164") or meta.get("to_number"),
+    )
+    if mtime is not None:
+        if len(_CONTACT_CACHE) >= _CACHE_MAX_ENTRIES:
+            for k in list(_CONTACT_CACHE.keys())[:200]:
+                _CONTACT_CACHE.pop(k, None)
+        _CONTACT_CACHE[cid] = (mtime, contact)
+    return contact
 
 
 def _enrich_timeline_item(item: dict) -> dict:
@@ -448,12 +486,12 @@ def _enrich_timeline_item(item: dict) -> dict:
         }
     )
     out = dict(item)
-    meta = call_ledger.read_meta(str(item.get("call_id") or "")) or {}
+    ledger_tenant, caller, callee = _ledger_contact(str(item.get("call_id") or ""))
     # Only copy contact fields from a ledger belonging to the indexed tenant.
     # Attempts already carry their numbers; connected rows previously lost both.
-    if str(meta.get("tenant_id") or "") == str(item.get("tenant_id") or "") and item.get("tenant_id"):
-        out["caller_phone"] = meta.get("caller_id") or meta.get("from_number") or out.get("caller_phone")
-        out["called_phone"] = meta.get("callee_e164") or meta.get("to_number") or out.get("called_phone")
+    if ledger_tenant == str(item.get("tenant_id") or "") and item.get("tenant_id"):
+        out["caller_phone"] = caller or out.get("caller_phone")
+        out["called_phone"] = callee or out.get("called_phone")
     for key in ("summary", "customer", "pipeline", "has_recording"):
         if key in enriched:
             out[key] = enriched[key]
@@ -486,10 +524,21 @@ def _enrich_call_list_item(item: dict) -> dict:
         cached = dict(_ENRICH_CALL_CACHE[cid])
         cached.update({k: v for k, v in item.items() if v is not None})
         # Carrier recordings arrive after finalization. Cached call summaries
-        # must not hide a recording that became available in the meantime.
-        source = audio_archive.recording_source(cid)
-        cached.update(has_recording=source != "none", recording_source=source,
-                      has_telnyx_recording=source == "telnyx")
+        # must not hide a recording that became available in the meantime, but a
+        # found recording does not disappear, so only "none" is re-probed.
+        if _ENRICH_CALL_CACHE[cid].get("recording_source", "none") == "none" and (
+            (mtime := _call_dir_mtime(cid)) != _RECORDING_CHECKED_AT.get(cid)
+        ):
+            source = audio_archive.recording_source(cid)
+            _RECORDING_CHECKED_AT[cid] = mtime
+            _ENRICH_CALL_CACHE[cid].update(
+                has_recording=source != "none", recording_source=source,
+                has_telnyx_recording=source == "telnyx",
+            )
+        entry = _ENRICH_CALL_CACHE[cid]
+        cached.update(has_recording=entry.get("has_recording", False),
+                      recording_source=entry.get("recording_source", "none"),
+                      has_telnyx_recording=entry.get("has_telnyx_recording", False))
         return cached
 
     out = dict(item)
@@ -552,12 +601,17 @@ def _enrich_call_list_item(item: dict) -> dict:
             keys_to_remove = list(_ENRICH_CALL_CACHE.keys())[:200]
             for k in keys_to_remove:
                 _ENRICH_CALL_CACHE.pop(k, None)
+                _RECORDING_CHECKED_AT.pop(k, None)
         _ENRICH_CALL_CACHE[cid] = out
+        _RECORDING_CHECKED_AT[cid] = _call_dir_mtime(cid)
 
     return out
 
 
-async def _assert_call_scoped(call_id: str, scope: tuple[str, bool]) -> dict:
+async def _assert_call_scoped(
+    call_id: str, scope: tuple[str, bool], meta: dict | None = None
+) -> dict:
+    """``meta``: the ledger meta when the caller already read it, so it is read once."""
     _validate_call_id(call_id)
     stored = await call_store.get(call_id)
     if stored is None and not call_ledger.meta_path(call_id).exists():
@@ -570,7 +624,8 @@ async def _assert_call_scoped(call_id: str, scope: tuple[str, bool]) -> dict:
         scoped_tenant, _ = scope
         tenant = str((stored or {}).get("tenant_id") or "")
         if not tenant:
-            meta = call_ledger.read_meta(call_id) or {}
+            if meta is None:
+                meta = call_ledger.read_meta(call_id) or {}
             tenant = str(meta.get("tenant_id") or "")
         if not tenant or tenant != scoped_tenant:
             raise HTTPException(
@@ -582,10 +637,12 @@ async def _assert_call_scoped(call_id: str, scope: tuple[str, bool]) -> dict:
 
 @router.get("/api/call/{call_id}/transcript")
 async def get_transcript(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
-    await _assert_call_scoped(call_id, scope)
+    _validate_call_id(call_id)
+    meta = call_ledger.read_meta(call_id) or {}
+    await _assert_call_scoped(call_id, scope, meta=meta)
     from server.services.saas.call_redaction import tenant_live_transcription
     return {"call_id": call_id, "lines": call_ledger.read_lines(call_id),
-            "transcription": tenant_live_transcription(call_ledger.read_meta(call_id) or {})}
+            "transcription": tenant_live_transcription(meta)}
 
 
 @router.get("/api/call/{call_id}/trace")

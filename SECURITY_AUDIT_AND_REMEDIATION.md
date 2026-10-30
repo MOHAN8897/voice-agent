@@ -27,7 +27,7 @@ In accordance with enterprise security standards for multi-tenant voice AI syste
    - Removed all legacy Plivo routes, clients, audio stream bridges, environment configurations, and fallback dial paths.
    - Removed Composio entirely: deleted `server/services/composio_service.py`, purged Composio MCP servers and configurations, eradicated `composio_api_key`, and unified all external app/CRM integrations under enterprise Nango gateway with vendor-neutral `connection_id` abstractions.
    - Normalized database models to vendor-neutral carrier and connection abstractions (`carrier_number_id`, `connection_id`) while preserving physical schema stability without downtime.
-   - Sanitized frontend consoles (`voxly-ai`), developer administration portals, and test suites.
+   - Sanitized frontend consoles (`dialtact-app`), developer administration portals, and test suites.
 4. **Agent Memory Updated:**
    - Updated `AGENTS.md` to record the security tools (Semgrep SAST, OWASP ZAP DAST, Strix AI pentest, Unified Runner), complete Plivo/Exotel/Composio eradication, and standing rules for telephony and multi-tenant security.
 
@@ -52,7 +52,7 @@ In accordance with enterprise security standards for multi-tenant voice AI syste
 - **Workflow:** Integrated into `.github/workflows/security-scans.yml` with dispatch triggers for staging validation.
 
 ### 2.3 Strix (Agentic AI Pen-Testing)
-- **Target:** Staging web app and REST/WebSocket endpoints (`https://staging.voxly.ai`).
+- **Target:** Staging web app and REST/WebSocket endpoints (`https://staging.dialtact.com`).
 - **Mechanism:** Multi-agent orchestration simulating attacker reconnaissance, API probing, and authentication state manipulation using containerized environments (`ghcr.io/usestrix/strix:latest`).
 - **Reporting:** Emits machine-readable vulnerability reproduction steps and verification logs to `artifacts/strix-report.json`.
 
@@ -62,10 +62,10 @@ In accordance with enterprise security standards for multi-tenant voice AI syste
 python scripts/security_audit.py --mode sast
 
 # Run OWASP ZAP baseline scan against staging
-python scripts/security_audit.py --mode zap --target https://staging.voxly.ai
+python scripts/security_audit.py --mode zap --target https://staging.dialtact.com
 
 # Run Strix agentic pen-testing against staging
-python scripts/security_audit.py --mode strix --target https://staging.voxly.ai
+python scripts/security_audit.py --mode strix --target https://staging.dialtact.com
 ```
 
 ---
@@ -170,8 +170,8 @@ Every trace of Plivo has been completely removed from the project:
 | **Inventory Pool** | `server/services/saas/number_inventory.py` | Deprecated and removed `plivo_number_id` argument; unified under `carrier_number_id`. |
 | **Provisioning** | `server/services/saas/provision_worker.py` | Removed Plivo inventory provisioning paths. |
 | **Dev Workspace** | `server/services/saas/dev_tester_workspace.py` | Removed Plivo number checks; set Vobiz direct DID allocations. |
-| **Frontend Console** | `voxly-ai/src/console/modules/PhoneNumbersModule.jsx` | Removed Plivo badges and vendor details. |
-| **API Normalizer** | `voxly-ai/src/services/apiNormalize.js` | Removed `plivoNumberId` mapping; normalized to `carrierNumberId`. |
+| **Frontend Console** | `dialtact-app/src/console/modules/PhoneNumbersModule.jsx` | Removed Plivo badges and vendor details. |
+| **API Normalizer** | `dialtact-app/src/services/apiNormalize.js` | Removed `plivoNumberId` mapping; normalized to `carrierNumberId`. |
 | **Admin Portal** | `web/app/dev/(portal)/admin/numbers/page.tsx` | Removed Plivo status columns and filters. |
 | **Test Suites** | `test_pstn_prewarm.py`, `test_dev_environment.py` | Removed Plivo tests; verified 100% pass on remaining telephony tests. |
 | **Reference Snapshots**| `pstn-critical-for-chatgpt/` | Cleaned all Plivo references across configuration, app, and service files. |
@@ -215,10 +215,10 @@ Key verification: Multi-tenant tool routing, 1.5s SLA timeout handling, fail-clo
 
 ### 5.3 Frontend Build & Copy Audits
 ```
-Frontend bundle: npm run build in voxly-ai
+Frontend bundle: npm run build in dialtact-app
 Status: Successfully built in 7.83s with 0 errors.
 
-Copy verification: npm run check:copy in voxly-ai
+Copy verification: npm run check:copy in dialtact-app
 Status: Landing copy OK — 0 carrier names leaked, 0 violations.
 ```
 

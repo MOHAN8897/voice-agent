@@ -58,7 +58,7 @@ export function PromotionPanel() {
     const r = await portalFetch("dev", `/api/promotions/${lastPromotionId}/rollback`, { method: "POST" });
     const j = await r.json();
     setRollbackOpen(false);
-    setStatus(r.ok ? `Rollback synced ${j.tier_rows_synced} rows from env` : "Rollback failed");
+    setStatus(r.ok ? `Rollback restored ${j.tier_rows_restored ?? j.tier_rows_synced} tier rows in ${j.target_environment ?? "the target environment"}` : "Rollback failed");
   }
 
   return (

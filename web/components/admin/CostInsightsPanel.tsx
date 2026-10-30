@@ -58,11 +58,12 @@ export function CostInsightsPanel({ display }: {
   const [days, setDays] = useState(30);
   const [report, setReport] = useState<{ data: Insights | null; error: string | null; loading: boolean }>({ data: null, error: null, loading: true });
   const request = useRef(0);
-  const reload = useCallback(async () => {
+  // `fresh` asks the server to bypass its 5-minute insights cache (manual refresh only).
+  const reload = useCallback(async (fresh = false) => {
     const id = ++request.current;
     setReport((previous) => ({ ...previous, error: null, loading: true }));
     try {
-      const data = await devFetch(`/api/dev/admin/billing/cost-insights?days=${days}`) as Insights;
+      const data = await devFetch(`/api/dev/admin/billing/cost-insights?days=${days}${fresh ? "&fresh=1" : ""}`) as Insights;
       if (id === request.current) setReport({ data, error: null, loading: false });
     } catch (error) {
       if (id === request.current) setReport({ data: null, error: error instanceof Error ? error.message : "Could not load supplier costs", loading: false });
@@ -70,8 +71,15 @@ export function CostInsightsPanel({ display }: {
   }, [days]);
   useEffect(() => {
     void reload();
-    const interval = window.setInterval(() => { void reload(); }, 60_000);
-    return () => { request.current++; window.clearInterval(interval); };
+    // Background refresh every 5 minutes, only while the tab is visible; catch up on return.
+    const refreshIfVisible = () => { if (document.visibilityState === "visible") void reload(); };
+    const interval = window.setInterval(refreshIfVisible, 300_000);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    return () => {
+      request.current++;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
   }, [reload]);
 
   function currency(usd: number | null, inr: number | null) {
@@ -90,7 +98,7 @@ export function CostInsightsPanel({ display }: {
               <option value={7}>Last 7 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option>
             </select>
           </label>
-          <SkeuoButton variant="ghost" onClick={() => void reload()} disabled={report.loading} data-testid="cost-insights-refresh">Refresh costs</SkeuoButton>
+          <SkeuoButton variant="ghost" onClick={() => void reload(true)} disabled={report.loading} data-testid="cost-insights-refresh">Refresh costs</SkeuoButton>
           <p className="text-xs text-text-muted" aria-live="polite">{report.loading ? "Refreshing usage…" : report.data ? `Updated ${new Date(report.data.asOf).toLocaleTimeString()}` : ""}</p>
         </div>
         <AdminError error={report.error} />

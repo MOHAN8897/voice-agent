@@ -1,369 +1,43 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { DevCard } from "@/components/dev/DevCard";
 import { portalFetch, refreshPortalSession } from "@/lib/auth-client";
-
-type ProfileTier = string;
-
-type StageProfile = { provider: string; model: string };
-type LlmProfile = { provider: string; modelId: string; apiMode: string };
-type VoiceProfile = {
-  id: string;
-  label: string;
-  providerVoiceId: string;
-  languages: string[];
-  category?: string;
-  gender?: string;
-  tone?: string;
-  selectable?: boolean;
-  preferredLanguages?: string[];
-  unavailableReason?: string;
-};
-type ModelProfile = {
-  id: string;
-  label: string;
-  provider: string;
-  model: string;
-  apiMode: string;
-  voices: VoiceProfile[];
-};
-type EngineProfile = { id: string; label: string; models: ModelProfile[] };
-type ProfileEvidence = {
-  sarvamModelAccess: boolean;
-  sttVerified: boolean;
-  ttsCatalogVerified: boolean;
-  toolsVerified: boolean;
-  capacityVerified: boolean;
-  mediaFormatsVerified: boolean;
-  credentialRefConfigured: boolean;
-};
-type VoiceDynamics = {
-  speed: number;
-  pitch?: number;
-  temperature?: number;
-  emotion?: string;
-  volume?: number;
-};
-type TtsKnobOption = { value: string; label: string };
-type TtsKnobKey = "speed" | "pitch" | "temperature" | "emotion" | "volume";
-type TtsKnobSpec = {
-  key: TtsKnobKey;
-  label: string;
-  description?: string;
-  kind: "range" | "select";
-  min?: number;
-  max?: number;
-  step?: number;
-  default?: number | string;
-  unit?: string;
-  native?: string;
-  options?: TtsKnobOption[];
-};
-type ComposedProfile = {
-  schemaVersion: 1;
-  enabled: boolean;
-  label?: string;
-  retailRateInr?: number | null;
-  webRetailRateInr?: number | null;
-  supplierCostInr?: number | null;
-  supportedLanguages: string[];
-  stt: StageProfile;
-  llm: LlmProfile;
-  engines: EngineProfile[];
-  evidence: ProfileEvidence;
-  voiceDynamics?: VoiceDynamics;
-};
-type ReadinessBlocker = { code: string; message: string };
-type RetailRate = { complete?: boolean; usdMicrosPerMin?: number; inrPaisePerMin?: number; fxRateInr?: number; version?: number } | null;
-type TierProfileRow = {
-  tier: ProfileTier;
-  label?: string;
-  profileRevision: number | null;
-  composedProfile: ComposedProfile | null;
-  readiness: { ready: boolean; enabled: boolean; blockers: ReadinessBlocker[] };
-  retailRate: RetailRate;
-  webRetailRate?: RetailRate;
-  readOnly?: boolean;
-};
-type ProfilesResponse = { environment: string; profiles: TierProfileRow[] };
-type CatalogModel = { id: string; label?: string; realtime?: boolean; api_mode?: string; api_modes?: string[]; voices?: VoiceProfile[]; knobs?: TtsKnobSpec[] };
-type CatalogProvider = { id: string; label?: string; enabled?: boolean; configured?: boolean; models?: { stt?: CatalogModel[]; llm?: CatalogModel[]; tts?: CatalogModel[] } };
-type CatalogResponse = { providers?: CatalogProvider[]; voiceInventory?: { errors?: string[] } };
-
-type TelephonyProvider = {
-  id: string;
-  name?: string;
-  enabled?: boolean;
-  ready?: boolean;
-  phone_number?: string;
-  connection_id?: string;
-  account_info?: { auth_id?: string; app_id?: string };
-};
-type TelephonyStatus = {
-  active_provider?: string;
-  active_enabled?: boolean;
-  active_ready?: boolean;
-  providers?: TelephonyProvider[];
-  enabled_providers?: string[];
-};
-
-const DEFAULT_TIER_LABELS: Record<string, string> = {
-  low: "Economical Tier",
-  medium: "Standard Regional Tier",
-  premium: "Gemini 3.8 Live (Flagship)",
-};
-
-function getVoicesForTtsProvider(providers: CatalogProvider[], provider: string, model: string, languages: string[], previous: VoiceProfile[] = []): VoiceProfile[] {
-  const rows = providers.find((entry) => entry.id === provider)?.models?.tts?.find((entry) => entry.id === model)?.voices || [];
-  return rows.filter((voice) => voice.selectable !== false).map((voice) => ({ ...voice,
-    id: previous.find((item) => item.providerVoiceId === voice.providerVoiceId)?.id || voice.id,
-    languages: voice.languages.filter((language) => !languages.length || languages.includes(language)),
-  })).filter((voice) => voice.languages.length > 0);
-}
-
-const DEFAULT_VOICE_DYNAMICS: VoiceDynamics = { speed: 1.0, pitch: 0.0, temperature: 0.7, emotion: "calm", volume: 1.0 };
-
-// Native live voice (Gemini Live / OpenAI Realtime) exposes one delivery knob:
-// speed, clamped by server/realtime/models.normalize_realtime_speed.
-const NATIVE_LIVE_KNOBS: TtsKnobSpec[] = [
-  {
-    key: "speed",
-    label: "Live Voice Pace",
-    description: "Applied to the native realtime voice instruction; no separate TTS engine is used.",
-    kind: "range",
-    min: 0.25,
-    max: 1.5,
-    step: 0.05,
-    default: 1.0,
-    native: "speed",
-    unit: "x",
-  },
-];
-
-const FALLBACK_SPEED_KNOB: TtsKnobSpec = {
-  key: "speed",
-  label: "Speaking Pace",
-  description: "Speech engine pace.",
-  kind: "range",
-  min: 0.25,
-  max: 2.0,
-  step: 0.05,
-  default: 1.0,
-  native: "pace",
-  unit: "x",
-};
-
-function resolveModelKnobs(providers: CatalogProvider[], provider: string, model: string): TtsKnobSpec[] | null {
-  const specs = providers.find((entry) => entry.id === provider)?.models?.tts?.find((entry) => entry.id === model)?.knobs;
-  return Array.isArray(specs) && specs.length > 0 ? specs : null;
-}
-
-function dynamicsValue(dynamics: VoiceDynamics | undefined, key: TtsKnobKey): number | string | undefined {
-  if (!dynamics) return undefined;
-  switch (key) {
-    case "speed": return dynamics.speed;
-    case "pitch": return dynamics.pitch;
-    case "temperature": return dynamics.temperature;
-    case "emotion": return dynamics.emotion;
-    case "volume": return dynamics.volume;
-  }
-}
-
-function knobPatch(key: TtsKnobKey, value: number | string): Partial<VoiceDynamics> {
-  switch (key) {
-    case "speed": return { speed: Number(value) };
-    case "pitch": return { pitch: Number(value) };
-    case "temperature": return { temperature: Number(value) };
-    case "emotion": return { emotion: String(value) };
-    case "volume": return { volume: Number(value) };
-  }
-}
-
-function assignKnob(target: VoiceDynamics, key: TtsKnobKey, value: number | string): void {
-  switch (key) {
-    case "speed": target.speed = Number(value); break;
-    case "pitch": target.pitch = Number(value); break;
-    case "temperature": target.temperature = Number(value); break;
-    case "emotion": target.emotion = String(value); break;
-    case "volume": target.volume = Number(value); break;
-  }
-}
-
-function normalizeDynamicsForKnobs(dynamics: VoiceDynamics | undefined, knobs: TtsKnobSpec[]): VoiceDynamics {
-  const next: VoiceDynamics = { speed: 1.0 };
-  const speedSpec = knobs.find((spec) => spec.key === "speed");
-  const rawSpeed = Number(dynamics?.speed ?? speedSpec?.default ?? 1.0);
-  const speedMin = Number(speedSpec?.min ?? FALLBACK_SPEED_KNOB.min);
-  const speedMax = Number(speedSpec?.max ?? FALLBACK_SPEED_KNOB.max);
-  next.speed = Math.max(speedMin, Math.min(speedMax, Number.isFinite(rawSpeed) ? rawSpeed : 1.0));
-  for (const spec of knobs) {
-    if (spec.key === "speed") continue;
-    if (spec.kind === "select") {
-      const allowed = (spec.options || []).map((option) => option.value);
-      const current = String(dynamicsValue(dynamics, spec.key) ?? spec.default ?? "");
-      if (allowed.includes(current)) assignKnob(next, spec.key, current);
-      continue;
-    }
-    const raw = dynamicsValue(dynamics, spec.key);
-    if (raw === undefined || raw === null || raw === "") continue;
-    const parsed = Number(raw);
-    if (!Number.isFinite(parsed)) continue;
-    assignKnob(next, spec.key, Math.max(Number(spec.min), Math.min(Number(spec.max), parsed)));
-  }
-  return next;
-}
-
-function speedPresetsFor(spec: TtsKnobSpec): Array<{ value: number; label: string }> {
-  const min = Number(spec.min);
-  const max = Number(spec.max);
-  const candidates = [
-    { value: 0.9, label: "Patient" },
-    { value: 1.0, label: "Standard" },
-    { value: 1.1, label: "Dynamic" },
-    { value: 1.25, label: "Energetic" },
-  ].filter((preset) => preset.value >= min && preset.value <= max);
-  return candidates.length > 0 ? candidates : [{ value: Math.max(min, Math.min(max, 1.0)), label: "Standard" }];
-}
-
-const EMPTY_EVIDENCE: ProfileEvidence = {
-  sarvamModelAccess: false, sttVerified: false, ttsCatalogVerified: false,
-  toolsVerified: false, capacityVerified: false, mediaFormatsVerified: false, credentialRefConfigured: false,
-};
-
-function defaultProfileForTier(tier: ProfileTier): ComposedProfile {
-  if (tier === "premium") {
-    return {
-      schemaVersion: 1,
-      enabled: false,
-      label: DEFAULT_TIER_LABELS[tier] || "Gemini 3.8 Live (Flagship)",
-      retailRateInr: 10.0,
-      supplierCostInr: 3.5,
-      supportedLanguages: [
-        "te-IN", "hi-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN",
-        "bn-IN", "gu-IN", "pa-IN", "en-IN",
-      ],
-      stt: { provider: "gemini", model: "gemini-3.8-live-audio" },
-      llm: { provider: "gemini", modelId: "gemini-2.5-flash", apiMode: "websocket" },
-      engines: [
-        {
-          id: "gemini",
-          label: "Gemini Live Native Audio",
-          models: [
-            {
-              id: "gemini-3.8-live-tts",
-              label: "Gemini 3.8 Live",
-              provider: "gemini",
-              model: "gemini-2.5-flash",
-              apiMode: "websocket",
-              voices: [
-                { id: "Puck", providerVoiceId: "Puck", label: "Puck", languages: ["te-IN", "hi-IN", "en-IN"] },
-                { id: "Charon", providerVoiceId: "Charon", label: "Charon", languages: ["te-IN", "hi-IN", "en-IN"] },
-                { id: "Aoede", providerVoiceId: "Aoede", label: "Aoede", languages: ["te-IN", "hi-IN", "en-IN"] },
-                { id: "Fenrir", providerVoiceId: "Fenrir", label: "Fenrir", languages: ["te-IN", "hi-IN", "en-IN"] },
-                { id: "Kore", providerVoiceId: "Kore", label: "Kore", languages: ["te-IN", "hi-IN", "en-IN"] },
-              ],
-            },
-          ],
-        },
-      ],
-      evidence: { ...EMPTY_EVIDENCE },
-      voiceDynamics: { ...DEFAULT_VOICE_DYNAMICS },
-    };
-  }
-  const defaultSupplier = tier === "low" ? 1.2 : tier === "medium" ? 2.0 : 1.5;
-  const defaultRetail = tier === "low" ? 3.5 : tier === "medium" ? 5.0 : 6.0;
-  return {
-    schemaVersion: 1,
-    enabled: false,
-    label: DEFAULT_TIER_LABELS[tier] || tier,
-    retailRateInr: defaultRetail,
-    supplierCostInr: defaultSupplier,
-    supportedLanguages: [
-      "te-IN", "hi-IN", "ta-IN", "kn-IN", "ml-IN", "mr-IN",
-      "bn-IN", "gu-IN", "pa-IN", "en-IN",
-    ],
-    stt: { provider: "sarvam", model: "saaras:v3-realtime" },
-    llm: { provider: "sarvam", modelId: "sarvam-105b-conversations", apiMode: "chat_completions_v1" },
-    engines: [],
-    evidence: { ...EMPTY_EVIDENCE },
-    voiceDynamics: { ...DEFAULT_VOICE_DYNAMICS },
-  };
-}
-
-function normalizeProfile(profile: ComposedProfile | null | undefined, tier: ProfileTier): ComposedProfile {
-  const fallback = defaultProfileForTier(tier);
-  if (!profile) return fallback;
-  return {
-    schemaVersion: 1,
-    enabled: profile.enabled === true,
-    label: profile.label || DEFAULT_TIER_LABELS[tier] || tier.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-    webRetailRateInr: profile.webRetailRateInr ?? null,
-    retailRateInr: profile.retailRateInr !== undefined && profile.retailRateInr !== null ? Number(profile.retailRateInr) : (fallback.retailRateInr ?? null),
-    supplierCostInr: profile.supplierCostInr !== undefined && profile.supplierCostInr !== null ? Number(profile.supplierCostInr) : (fallback.supplierCostInr ?? null),
-    supportedLanguages: Array.isArray(profile.supportedLanguages) && profile.supportedLanguages.length > 0
-      ? [...profile.supportedLanguages]
-      : fallback.supportedLanguages,
-    stt: {
-      provider: profile.stt?.provider || fallback.stt.provider,
-      model: profile.stt?.model || fallback.stt.model,
-    },
-    llm: {
-      provider: profile.llm?.provider || fallback.llm.provider,
-      modelId: profile.llm?.modelId || fallback.llm.modelId,
-      apiMode: profile.llm?.apiMode || fallback.llm.apiMode,
-    },
-    engines: Array.isArray(profile.engines) && profile.engines.length > 0
-      ? profile.engines
-      : fallback.engines,
-    evidence: { ...EMPTY_EVIDENCE, ...(profile.evidence || {}) },
-    voiceDynamics: profile.voiceDynamics
-      ? {
-          speed: Number(profile.voiceDynamics.speed ?? 1.0),
-          pitch: Number(profile.voiceDynamics.pitch ?? 0.0),
-          temperature: Number(profile.voiceDynamics.temperature ?? 0.7),
-          emotion: String(profile.voiceDynamics.emotion || DEFAULT_VOICE_DYNAMICS.emotion),
-          volume: Number(profile.voiceDynamics.volume ?? 1.0),
-        }
-      : { ...DEFAULT_VOICE_DYNAMICS },
-  };
-}
-
-function StatusPill({ tone, children }: { tone: "good" | "warn" | "muted"; children: ReactNode }) {
-  const style = {
-    good: "border-emerald-400/25 bg-emerald-400/10 text-emerald-300",
-    warn: "border-amber-400/25 bg-amber-400/10 text-amber-200",
-    muted: "border-surface-border-subtle bg-surface-raised text-text-muted",
-  }[tone];
-  return <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${style}`}>{children}</span>;
-}
-
-async function responseError(response: Response): Promise<string> {
-  const payload: unknown = await response.json().catch(() => null);
-  if (typeof payload === "object" && payload !== null) {
-    const raw = payload as Record<string, unknown>;
-    const detail = raw.detail ?? raw.error ?? raw;
-    if (typeof detail === "string" && detail.length < 300) return detail;
-    if (typeof detail === "object" && detail !== null) {
-      const d = detail as Record<string, unknown>;
-      const err = (typeof d.error === "object" && d.error !== null) ? (d.error as Record<string, unknown>) : d;
-      const message = typeof err.message === "string" ? err.message : typeof err.detail === "string" ? err.detail : "";
-      const blockers = Array.isArray(err.blockers)
-        ? err.blockers.map((b: any) => (typeof b === "object" && b !== null ? (b.message || b.code) : String(b))).filter(Boolean)
-        : (typeof err.readiness === "object" && err.readiness !== null && Array.isArray((err.readiness as any).blockers))
-        ? (err.readiness as any).blockers.map((b: any) => (typeof b === "object" && b !== null ? (b.message || b.code) : String(b))).filter(Boolean)
-        : [];
-      const blockerStr = blockers.length > 0 ? blockers.join("; ") : "";
-      const revNote = typeof err.currentRevision === "number" ? ` (server revision is ${err.currentRevision})` : "";
-      if (message && blockerStr) return `${message}: ${blockerStr}${revNote}`;
-      if (message) return `${message}${revNote}`;
-      if (blockerStr) return `${blockerStr}${revNote}`;
-    }
-  }
-  return `Request failed (${response.status}).`;
-}
+import {
+  DEFAULT_TIER_LABELS,
+  DEFAULT_VOICE_DYNAMICS,
+  FALLBACK_SPEED_KNOB,
+  NATIVE_LIVE_KNOBS,
+  StatusPill,
+  allModels,
+  defaultProfileForTier,
+  dynamicsValue,
+  formatInr,
+  getVoicesForTtsProvider,
+  knobPatch,
+  normalizeDynamicsForKnobs,
+  normalizeProfile,
+  parseApiError,
+  resolveModelKnobs,
+  responseError,
+  runtimeSignature,
+  speedPresetsFor,
+  type CatalogProvider,
+  type CatalogResponse,
+  type ComposedProfile,
+  type ProfileTier,
+  type ProfilesResponse,
+  type TierProfileRow,
+  type VerificationCheck,
+  type VoiceDynamics,
+} from "@/components/dev/voice-stack/profileModel";
+import { TierResolvesToCard } from "@/components/dev/voice-stack/TierResolvesToCard";
+import { PrewarmGreetingCard } from "@/components/dev/voice-stack/PrewarmGreetingCard";
+import { PlatformPricesPanel } from "@/components/dev/voice-stack/PlatformPricesPanel";
+import { TelephonyTrunkPanel } from "@/components/dev/voice-stack/TelephonyTrunkPanel";
+import { TranscriptionPanel } from "@/components/dev/voice-stack/TranscriptionPanel";
 
 const PROFILE_SECTIONS = [
   { id: "stack", label: "Voice Stack" },
@@ -374,6 +48,51 @@ const PROFILE_SECTIONS = [
 
 type ProfileSectionId = (typeof PROFILE_SECTIONS)[number]["id"];
 
+/** Unsaved, per-tier edits. Nothing reaches live calls until Save. */
+type TierDraft = {
+  profile: ComposedProfile;
+  label: string;
+  retail: string;
+  supplier: string;
+  web: string;
+};
+
+type PendingSave = {
+  kind: "live" | "offline";
+  tier: ProfileTier;
+  payload: ComposedProfile;
+  blockers?: string[];
+};
+
+function priceString(value: number | null | undefined): string {
+  return value !== null && value !== undefined && Number.isFinite(Number(value)) ? String(value) : "";
+}
+
+function draftFromRow(row: TierProfileRow | undefined, tier: ProfileTier): TierDraft {
+  const profile = normalizeProfile(row?.composedProfile, tier);
+  // The card shows the price calls are billed today, so saving it makes the
+  // tier card the single source even for tiers still priced by the rate table.
+  if ((profile.retailRateInr === null || profile.retailRateInr === undefined) && row?.retailRate?.inrPaisePerMin) {
+    profile.retailRateInr = Number((row.retailRate.inrPaisePerMin / 100).toFixed(2));
+  }
+  return {
+    profile,
+    label: row?.label || profile.label || DEFAULT_TIER_LABELS[tier] || tier,
+    retail: priceString(profile.retailRateInr),
+    supplier: priceString(profile.supplierCostInr),
+    web: priceString(profile.webRetailRateInr),
+  };
+}
+
+function tierDisplayName(row: TierProfileRow | undefined, tier: ProfileTier): string {
+  return row?.label || DEFAULT_TIER_LABELS[tier] || tier.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function FieldError({ message, id }: { message?: string; id: string }) {
+  if (!message) return null;
+  return <p id={id} role="alert" className="mt-1 text-[11px] font-medium text-rose-300">{message}</p>;
+}
+
 export function PstnVoiceProfileWorkbench() {
   const [rows, setRows] = useState<TierProfileRow[]>([]);
   const [activeSection, setActiveSection] = useState<ProfileSectionId>("stack");
@@ -383,32 +102,29 @@ export function PstnVoiceProfileWorkbench() {
   const [tierLabelInput, setTierLabelInput] = useState<string>("");
   const [retailRateInput, setRetailRateInput] = useState<string>("");
   const [supplierCostInput, setSupplierCostInput] = useState<string>("");
-  const [dirty, setDirty] = useState(false);
+  const [webRateInput, setWebRateInput] = useState<string>("");
+  const [dirtyTiers, setDirtyTiers] = useState<Record<string, boolean>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
-  const [verification, setVerification] = useState<Record<string, { passed: boolean; detail: string }> | null>(null);
+  const [verification, setVerification] = useState<Record<string, VerificationCheck> | null>(null);
   const [providers, setProviders] = useState<CatalogProvider[]>([]);
   const [catalogError, setCatalogError] = useState("");
   const [catalogRefreshing, setCatalogRefreshing] = useState(false);
   const [voiceCategory, setVoiceCategory] = useState("");
-  const [autoSaveStatus, setAutoSaveStatus] = useState<string>("");
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const draftsByTierRef = useRef<Record<string, ComposedProfile>>({});
-  const retailInputsByTierRef = useRef<Record<string, string>>({});
-  const supplierInputsByTierRef = useRef<Record<string, string>>({});
-  const labelsByTierRef = useRef<Record<string, string>>({});
-  const pendingSaveRef = useRef<{ draft: ComposedProfile; label?: string; tier: ProfileTier } | null>(null);
-  const activeTierRef = useRef<ProfileTier>("low");
-  activeTierRef.current = selected;
+  const [agentsByTier, setAgentsByTier] = useState<Record<string, number> | null>(null);
+  const [pendingSave, setPendingSave] = useState<PendingSave | null>(null);
+  const [pendingDisable, setPendingDisable] = useState(false);
+  const editsRef = useRef<Record<string, TierDraft>>({});
 
   // Audio preview playback state
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Speed Dynamics Testing & Audition state
+  // Knob audition state
   const [testText, setTestText] = useState("నమస్కారం! నేను మీ రియల్ ఎస్టేట్ సేల్స్ అసిస్టెంట్ మోహన్‌ని. మీకు ఎలా సహాయపడగలను?");
   const [testVoiceId, setTestVoiceId] = useState("");
   const [isTestingDynamics, setIsTestingDynamics] = useState(false);
@@ -420,43 +136,19 @@ export function PstnVoiceProfileWorkbench() {
   const [duplicateNewSlug, setDuplicateNewSlug] = useState("");
   const [duplicateLabel, setDuplicateLabel] = useState("");
 
-  // Platform & Channel Prices (INR) state
-  const [pricesSaving, setPricesSaving] = useState(false);
-  const [pricesStatus, setPricesStatus] = useState("");
-  const [pricesError, setPricesError] = useState("");
-  const [webInr, setWebInr] = useState("0");
-  const [numberInr, setNumberInr] = useState("0");
-  const [fxRate, setFxRate] = useState("95.64");
-  const [liveFx, setLiveFx] = useState<number | null>(null);
-
-  // Telephony Trunk State
-  const [telephony, setTelephony] = useState<TelephonyStatus | null>(null);
-  const [telephonyBusy, setTelephonyBusy] = useState(false);
-  const [telephonyMsg, setTelephonyMsg] = useState("");
-  const [telephonyError, setTelephonyError] = useState("");
-
-  // Transcription Configuration State
-  const [transcriptionMode, setTranscriptionMode] = useState<"off" | "live" | "post_call">("off");
-  const [transcriptionLiveModel, setTranscriptionLiveModel] = useState("gpt-4o-mini-transcribe");
-  const [saasPhoneRaw, setSaasPhoneRaw] = useState<Record<string, unknown> | null>(null);
-  const [transcriptionSaving, setTranscriptionSaving] = useState(false);
-
-  // Global Prewarm Greeting Synthesis Toggle State
-  const [prewarmGreetingEnabled, setPrewarmGreetingEnabled] = useState<boolean>(true);
-  const [prewarmLoading, setPrewarmLoading] = useState<boolean>(false);
-  const [transcriptionStatus, setTranscriptionStatus] = useState("");
-  const [transcriptionError, setTranscriptionError] = useState("");
-
   const selectedRow = rows.find((r) => r.tier === selected);
   const isEnabled = selectedRow?.readiness.enabled === true;
-  const blockers = selectedRow?.readiness.blockers ?? [];
+  const dirty = dirtyTiers[selected] === true;
+  const selectedName = tierLabelInput || tierDisplayName(selectedRow, selected);
+  const agentCount = agentsByTier ? (agentsByTier[selected] ?? 0) : null;
+  const agentPhrase = agentCount === null
+    ? "Agents on this tier"
+    : `${agentCount} agent${agentCount === 1 ? "" : "s"} on this tier`;
 
   const allDisplayTiers = useMemo(() => {
     const list: string[] = ["low", "medium", "premium"];
     rows.forEach((r) => {
-      if (!list.includes(r.tier)) {
-        list.push(r.tier);
-      }
+      if (!list.includes(r.tier)) list.push(r.tier);
     });
     return list;
   }, [rows]);
@@ -496,161 +188,114 @@ export function PstnVoiceProfileWorkbench() {
     }
   }, []);
 
-  const loadPrices = useCallback(async () => {
+  const loadUsage = useCallback(async () => {
     try {
-      const res = await portalFetch("dev", "/api/dev/admin/billing-rates");
-      if (!res.ok) return;
-      const data = await res.json();
-      const r = data.rates;
-      if (r) {
-        setWebInr(String(r.webInrPerMin ?? (r.webUsdPerMin ? (r.webUsdPerMin * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
-        setNumberInr(String(r.numberMonthlyInr ?? (r.numberMonthlyUsd ? (r.numberMonthlyUsd * (r.fxRateInr || 95.64)).toFixed(2) : "0")));
-        setFxRate(String(r.fxRateInr ?? "95.64"));
-      }
-      if (data.fx?.liveRateInr) {
-        setLiveFx(data.fx.liveRateInr);
+      const response = await portalFetch("dev", "/api/dev/stack/voice-profiles/usage");
+      if (!response.ok) return;
+      const payload = await response.json();
+      if (payload?.available && payload.agentsByTier && typeof payload.agentsByTier === "object") {
+        setAgentsByTier(payload.agentsByTier as Record<string, number>);
       }
     } catch {
-      // Non-blocking prices fetch
+      // The count only informs confirmations; saving never depends on it.
     }
   }, []);
-
-  const loadTelephony = useCallback(async () => {
-    try {
-      const res = await portalFetch("dev", "/api/dev/telephony/status");
-      if (!res.ok) return;
-      const data = await res.json();
-      setTelephony(data);
-    } catch {
-      // Non-blocking telephony fetch
-    }
-  }, []);
-
-  const loadTranscription = useCallback(async () => {
-    try {
-      const res = await portalFetch("dev", "/api/dev/stack/saas-phone");
-      if (!res.ok) return;
-      const data = await res.json();
-      const saved = (data.saved?.stack_override || data.resolved) as Record<string, unknown> | undefined;
-      if (saved) {
-        setSaasPhoneRaw(saved);
-        if (typeof saved.transcription_mode === "string") {
-          setTranscriptionMode(saved.transcription_mode as "off" | "live" | "post_call");
-        }
-        if (typeof saved.transcription_live_model === "string") {
-          setTranscriptionLiveModel(saved.transcription_live_model);
-        }
-      }
-    } catch {
-      // Non-blocking transcription fetch
-    }
-  }, []);
-
-  const loadPrewarmGreeting = useCallback(async () => {
-    try {
-      const res = await portalFetch("dev", "/api/dev/stack/prewarm-greeting");
-      if (!res.ok) return;
-      const data = await res.json();
-      if (typeof data.enabled === "boolean") {
-        setPrewarmGreetingEnabled(data.enabled);
-      }
-    } catch {
-      // Non-blocking prewarm greeting fetch
-    }
-  }, []);
-
-  const togglePrewarmGreeting = async (nextState: boolean) => {
-    setPrewarmLoading(true);
-    try {
-      const res = await portalFetch("dev", "/api/dev/stack/prewarm-greeting", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: nextState }),
-      });
-      if (res.ok) {
-        setPrewarmGreetingEnabled(nextState);
-      }
-    } catch {
-      // Non-blocking error handling
-    } finally {
-      setPrewarmLoading(false);
-    }
-  };
 
   useEffect(() => {
     void loadProfiles();
     void loadCatalog();
-    void loadPrices();
-    void loadTelephony();
-    void loadTranscription();
-    void loadPrewarmGreeting();
+    void loadUsage();
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
     };
-  }, [loadProfiles, loadCatalog, loadPrices, loadTelephony, loadTranscription, loadPrewarmGreeting]);
+  }, [loadProfiles, loadCatalog, loadUsage]);
+
+  const applyDraft = useCallback((next: TierDraft) => {
+    setDraft(next.profile);
+    setTierLabelInput(next.label);
+    setRetailRateInput(next.retail);
+    setSupplierCostInput(next.supplier);
+    setWebRateInput(next.web);
+  }, []);
 
   useEffect(() => {
     const row = rows.find((r) => r.tier === selected);
-    // Do not cache an empty startup draft ahead of the saved profile response.
+    // Do not show an empty startup draft ahead of the saved profile response.
     if (!row && loading) return;
-    const activeRefDraft = draftsByTierRef.current[selected];
-    const norm = activeRefDraft || normalizeProfile(row?.composedProfile, selected);
-    if ((norm.retailRateInr === null || norm.retailRateInr === undefined) && row?.retailRate?.inrPaisePerMin) {
-      norm.retailRateInr = Number((row.retailRate.inrPaisePerMin / 100).toFixed(2));
-    }
-    setDraft(norm);
-    draftsByTierRef.current[selected] = norm;
+    applyDraft(editsRef.current[selected] ?? draftFromRow(row, selected));
+  }, [rows, selected, loading, applyDraft]);
 
-    const labelVal = labelsByTierRef.current[selected] ?? (row?.label || norm.label || DEFAULT_TIER_LABELS[selected] || selected);
-    setTierLabelInput(labelVal);
-    labelsByTierRef.current[selected] = labelVal;
+  /** Record an edit for the selected tier. Nothing is sent to the server. */
+  function updateEdit(patch: Partial<TierDraft>) {
+    const current = editsRef.current[selected] ?? draftFromRow(selectedRow, selected);
+    const next: TierDraft = { ...current, ...patch };
+    editsRef.current[selected] = next;
+    applyDraft(next);
+    setDirtyTiers((prev) => ({ ...prev, [selected]: true }));
+    setStatus("");
+  }
 
-    const retailVal = retailInputsByTierRef.current[selected] ?? (norm.retailRateInr !== null && norm.retailRateInr !== undefined ? String(norm.retailRateInr) : "");
-    setRetailRateInput(retailVal);
-    retailInputsByTierRef.current[selected] = retailVal;
+  function updateProfile(nextProfile: ComposedProfile) {
+    updateEdit({ profile: nextProfile });
+  }
 
-    const supplierVal = supplierInputsByTierRef.current[selected] ?? (norm.supplierCostInr !== null && norm.supplierCostInr !== undefined ? String(norm.supplierCostInr) : "");
-    setSupplierCostInput(supplierVal);
-    supplierInputsByTierRef.current[selected] = supplierVal;
+  function clearFieldError(field: string) {
+    setFieldErrors((prev) => {
+      if (!(field in prev)) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
 
-    setDirty(false);
-  }, [rows, selected, loading]);
+  function discardChanges() {
+    delete editsRef.current[selected];
+    setDirtyTiers((prev) => ({ ...prev, [selected]: false }));
+    setFieldErrors({});
+    setError("");
+    applyDraft(draftFromRow(selectedRow, selected));
+    setStatus(`Unsaved changes to ${selectedName} were discarded.`);
+  }
+
+  function switchSelectedTier(newTier: ProfileTier) {
+    if (newTier === selected) return;
+    // Edits stay in memory per tier and are marked "Unsaved" on the tier tab.
+    setStatus("");
+    setError("");
+    setFieldErrors({});
+    setVerification(null);
+    setSelected(newTier);
+  }
 
   // STT Options
   const availableSttProviders = useMemo(() => {
     return providers.filter((p) => (p.models?.stt?.length || 0) > 0).map((p) => {
-      const cat = providers.find((cp) => cp.id === p.id);
-      const suffix = cat && (!cat.enabled || !cat.configured) ? " · setup required" : "";
+      const suffix = !p.enabled || !p.configured ? " · setup required" : "";
       return { id: p.id, label: `${p.label}${suffix}` };
     });
   }, [providers]);
 
   const currentSttModels = useMemo(() => {
     const catModels = providers.find((p) => p.id === draft.stt.provider)?.models?.stt;
-    if (catModels && catModels.length > 0) {
-      return catModels.map((m) => ({ id: m.id, label: m.label || m.id }));
-    }
-    return [];
+    return catModels && catModels.length > 0 ? catModels.map((m) => ({ id: m.id, label: m.label || m.id })) : [];
   }, [providers, draft.stt.provider]);
 
   // LLM Options
   const availableLlmProviders = useMemo(() => {
     return providers.filter((p) => (p.models?.llm?.length || 0) > 0).map((p) => {
-      const cat = providers.find((cp) => cp.id === p.id);
-      const suffix = cat && (!cat.enabled || !cat.configured) ? " · setup required" : "";
+      const suffix = !p.enabled || !p.configured ? " · setup required" : "";
       return { id: p.id, label: `${p.label}${suffix}` };
     });
   }, [providers]);
 
   const currentLlmModels = useMemo(() => {
     const catModels = providers.find((p) => p.id === draft.llm.provider)?.models?.llm;
-    if (catModels && catModels.length > 0) {
-      return catModels.map((m) => ({ id: m.id, label: m.label || m.id, apiMode: m.api_mode || "chat_completions_v1" }));
-    }
-    return [];
+    return catModels && catModels.length > 0
+      ? catModels.map((m) => ({ id: m.id, label: m.label || m.id, apiMode: m.api_mode || "chat_completions_v1" }))
+      : [];
   }, [providers, draft.llm.provider]);
 
   // TTS Options
@@ -660,19 +305,16 @@ export function PstnVoiceProfileWorkbench() {
 
   const availableTtsProviders = useMemo(() => {
     return providers.filter((p) => (p.models?.tts?.length || 0) > 0).map((p) => {
-      const cat = providers.find((cp) => cp.id === p.id);
-      const isConfigured = cat ? cat.enabled && cat.configured : true;
-      const suffix = !isConfigured ? " ⚠️ (setup/credits required)" : "";
-      return { id: p.id, label: `${p.label}${suffix}`, hasWarning: !isConfigured };
+      const isConfigured = p.enabled !== false && p.configured !== false;
+      return { id: p.id, label: `${p.label}${isConfigured ? "" : " · setup or credits required"}`, hasWarning: !isConfigured };
     });
   }, [providers]);
 
   const currentTtsModels = useMemo(() => {
     const catModels = providers.find((p) => p.id === currentTtsProvider)?.models?.tts;
-    if (catModels && catModels.length > 0) {
-      return catModels.map((m) => ({ id: m.id, label: m.label || m.id, apiMode: m.api_mode || "websocket" }));
-    }
-    return [];
+    return catModels && catModels.length > 0
+      ? catModels.map((m) => ({ id: m.id, label: m.label || m.id, apiMode: m.api_mode || "websocket" }))
+      : [];
   }, [providers, currentTtsProvider]);
 
   // Native realtime voice (Gemini Live / OpenAI Realtime) bypasses the composed
@@ -684,85 +326,74 @@ export function PstnVoiceProfileWorkbench() {
   }, [providers, currentTtsProvider, currentTtsModel, isNativeRealtimeLlm]);
   const speedKnob = currentTtsKnobs.find((spec) => spec.key === "speed") || FALLBACK_SPEED_KNOB;
   const secondaryKnobs = currentTtsKnobs.filter((spec) => spec.key !== "speed");
+  const draftModels = allModels(draft);
+  const knobTargets = isNativeRealtimeLlm
+    ? "the native live voice"
+    : draftModels.map((model) => `${model.provider} / ${model.model}`).join(", ") || "the selected speech model";
 
-  async function executeSaveProfile(targetDraft?: ComposedProfile, customLabel?: string, targetTier?: ProfileTier) {
-    const tierToSave = targetTier || selected;
-    const activeDraft = targetDraft || draftsByTierRef.current[tierToSave] || draft;
-    const currentLabelInput = labelsByTierRef.current[tierToSave] ?? tierLabelInput;
-    const labelVal = (customLabel !== undefined ? customLabel : currentLabelInput).trim() || DEFAULT_TIER_LABELS[tierToSave] || tierToSave;
-    const isNativeLive = activeDraft.llm.apiMode === "websocket" || tierToSave === "premium";
-
-    const ttsProv = activeDraft.engines[0]?.models[0]?.provider || (isNativeLive ? "gemini" : currentTtsProvider);
-    const ttsMdl = activeDraft.engines[0]?.models[0]?.model || (isNativeLive ? "gemini-2.5-flash" : currentTtsModel);
+  /** Validate and assemble the save payload; returns null and marks fields on error. */
+  function buildPayload(): ComposedProfile | null {
+    const edit = editsRef.current[selected] ?? draftFromRow(selectedRow, selected);
+    const activeDraft = edit.profile;
+    const errors: Record<string, string> = {};
+    const isNativeLive = activeDraft.llm.apiMode === "websocket";
+    const primary = activeDraft.engines[0]?.models[0];
+    const ttsProv = primary?.provider || "";
+    const ttsMdl = primary?.model || "";
     const matchedTtsModel = providers.find((entry) => entry.id === ttsProv)?.models?.tts?.find((entry) => entry.id === ttsMdl);
     const languages = activeDraft.supportedLanguages.length > 0
       ? activeDraft.supportedLanguages
       : [...new Set((matchedTtsModel?.voices || []).flatMap((voice) => voice.languages))];
-    let voices = getVoicesForTtsProvider(providers, ttsProv, ttsMdl, languages, activeDraft.engines[0]?.models[0]?.voices);
-    if (!voices.length && isNativeLive) {
-      voices = defaultProfileForTier("premium").engines[0]?.models[0]?.voices || [];
+    const catalogVoices = getVoicesForTtsProvider(providers, ttsProv, ttsMdl, languages, primary?.voices);
+    // Never substitute voices the catalog does not offer for this model.
+    const voices = catalogVoices.length ? catalogVoices : (primary?.voices || []);
+
+    if (!isNativeLive && (!activeDraft.stt.model || !activeDraft.stt.provider)) errors["stt.model"] = "Choose a speech recognition model.";
+    if (!activeDraft.llm.modelId) errors["llm.modelId"] = "Choose a conversation model.";
+    if (!ttsProv || !ttsMdl) errors["tts.model"] = "Choose a speech output model.";
+    else if (!voices.length) errors["tts.model"] = "This speech model has no voices for the tier languages. Refresh provider voices or pick another model.";
+
+    const retail = edit.retail.trim();
+    const retailNum = Number(retail);
+    if (!retail) errors.retailRateInr = "Set the phone call price for this tier.";
+    else if (!Number.isFinite(retailNum) || retailNum <= 0) errors.retailRateInr = "Phone call price must be greater than zero.";
+    const supplier = edit.supplier.trim();
+    const supplierNum = Number(supplier);
+    if (supplier && (!Number.isFinite(supplierNum) || supplierNum < 0)) errors.supplierCostInr = "Supplier cost must be zero or more.";
+    const web = edit.web.trim();
+    const webNum = Number(web);
+    if (web && (!Number.isFinite(webNum) || webNum <= 0)) errors.webRetailRateInr = "Web call price must be greater than zero, or blank to use the platform default.";
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) {
+      setError("Fix the highlighted fields before saving.");
+      return null;
     }
-    const targetKnobs = isNativeLive
-      ? NATIVE_LIVE_KNOBS
-      : resolveModelKnobs(providers, ttsProv, ttsMdl);
 
-    if (!isNativeLive && (!activeDraft.stt.model || !activeDraft.stt.provider)) {
-      setError("Choose a speech recognition (STT) model for this tier.");
-      setDirty(true);
-      return;
-    }
-    if (!activeDraft.llm.modelId) {
-      setError("Choose an intelligence (LLM) model.");
-      setDirty(true);
-      return;
-    }
-    if (!voices.length) {
-      setError("Choose a complete stack with voices from the current provider catalog.");
-      setDirty(true);
-      return;
-    }
-
-    const currentRetailStr = retailInputsByTierRef.current[tierToSave] ?? retailRateInput;
-    const currentSupplierStr = supplierInputsByTierRef.current[tierToSave] ?? supplierCostInput;
-
-    const parsedRetail = activeDraft.retailRateInr !== undefined && activeDraft.retailRateInr !== null
-      ? activeDraft.retailRateInr
-      : (currentRetailStr.trim() !== "" && !isNaN(parseFloat(currentRetailStr)) ? parseFloat(currentRetailStr) : null);
-    const parsedSupplier = activeDraft.supplierCostInr !== undefined && activeDraft.supplierCostInr !== null
-      ? activeDraft.supplierCostInr
-      : (currentSupplierStr.trim() !== "" && !isNaN(parseFloat(currentSupplierStr)) ? parseFloat(currentSupplierStr) : null);
-
-    const targetRow = rows.find((r) => r.tier === tierToSave);
-    const tierEnabled = targetRow?.readiness?.enabled === true;
-
-    const payload: ComposedProfile = {
+    const singleModel = allModels(activeDraft).length <= 1;
+    const targetKnobs = isNativeLive ? NATIVE_LIVE_KNOBS : resolveModelKnobs(providers, ttsProv, ttsMdl);
+    const labelVal = edit.label.trim() || DEFAULT_TIER_LABELS[selected] || selected;
+    return {
       schemaVersion: 1,
-      enabled: tierEnabled,
+      enabled: selectedRow?.readiness?.enabled === true,
       label: labelVal,
-      webRetailRateInr: activeDraft.webRetailRateInr ?? null,
-      retailRateInr: parsedRetail !== null && !isNaN(parsedRetail) ? parsedRetail : null,
-      supplierCostInr: parsedSupplier !== null && !isNaN(parsedSupplier) ? parsedSupplier : null,
-      supportedLanguages: languages.length > 0 ? languages : ["te-IN", "hi-IN", "en-IN"],
-      stt: {
-        provider: activeDraft.stt.provider || (isNativeLive ? "gemini" : "sarvam"),
-        model: activeDraft.stt.model || (isNativeLive ? "gemini-3.8-live-audio" : "saaras:v3-realtime"),
-      },
-      llm: {
-        provider: activeDraft.llm.provider || (isNativeLive ? "gemini" : "sarvam"),
-        modelId: activeDraft.llm.modelId || (isNativeLive ? "gemini-2.5-flash" : "sarvam-105b-conversations"),
-        apiMode: activeDraft.llm.apiMode || (isNativeLive ? "websocket" : "chat_completions_v1"),
-      },
+      webRetailRateInr: web ? webNum : null,
+      retailRateInr: retailNum,
+      supplierCostInr: supplier ? supplierNum : null,
+      supportedLanguages: languages,
+      stt: { provider: activeDraft.stt.provider, model: activeDraft.stt.model },
+      llm: { provider: activeDraft.llm.provider, modelId: activeDraft.llm.modelId, apiMode: activeDraft.llm.apiMode },
       engines: [
         {
           id: activeDraft.engines[0]?.id || ttsProv,
-          label: ttsProv === "sarvam" ? "Sarvam Bulbul" : ttsProv === "gemini" ? (isNativeLive ? "Gemini Live Native Audio" : "Gemini TTS") : ttsProv === "cartesia" ? "Cartesia Sonic" : "Gnani.ai Timbre",
+          label: activeDraft.engines[0]?.label || ttsProv,
           models: [
             {
-              id: activeDraft.engines[0]?.models[0]?.id || ttsMdl,
-              label: ttsMdl,
+              id: primary?.id || ttsMdl,
+              label: primary?.label || ttsMdl,
               provider: ttsProv,
               model: ttsMdl,
-              apiMode: activeDraft.engines[0]?.models[0]?.apiMode || matchedTtsModel?.api_mode || (isNativeLive ? "websocket" : ""),
+              apiMode: primary?.apiMode || matchedTtsModel?.api_mode || (isNativeLive ? "websocket" : ""),
               voices,
             },
             ...(activeDraft.engines[0]?.models.slice(1) || []),
@@ -771,98 +402,88 @@ export function PstnVoiceProfileWorkbench() {
         ...activeDraft.engines.slice(1),
       ],
       evidence: { ...activeDraft.evidence },
-      voiceDynamics: targetKnobs
+      // With one speech model the knobs are trimmed to what it supports. With
+      // several, the server keeps the union and clamps per model on each call.
+      voiceDynamics: singleModel && targetKnobs
         ? normalizeDynamicsForKnobs(activeDraft.voiceDynamics, targetKnobs)
         : (activeDraft.voiceDynamics || { ...DEFAULT_VOICE_DYNAMICS }),
     };
+  }
 
-    const expectedRev = targetRow?.profileRevision !== null && targetRow?.profileRevision !== undefined
-      ? targetRow.profileRevision
-      : 0;
+  function requestSave() {
+    if (busy) return;
+    setError("");
+    setStatus("");
+    const payload = buildPayload();
+    if (!payload) return;
+    if (isEnabled) {
+      const runtimeChanged = selectedRow?.native !== true
+        && runtimeSignature(selectedRow?.composedProfile) !== runtimeSignature(payload);
+      setPendingSave({ kind: runtimeChanged ? "offline" : "live", tier: selected, payload });
+      return;
+    }
+    void commitSave(payload, selected, false);
+  }
 
-    setAutoSaveStatus("⚡ Auto-saving changes…");
+  async function commitSave(payload: ComposedProfile, tier: ProfileTier, confirmTakeOffline: boolean) {
+    setBusy(true);
+    setError("");
     try {
-      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${tierToSave}`, {
+      const row = rows.find((r) => r.tier === tier);
+      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${tier}`, {
         method: "PUT",
         body: JSON.stringify({
-          expectedRevision: expectedRev,
+          expectedRevision: row?.profileRevision ?? 0,
           composedProfile: payload,
+          confirmTakeOffline,
         }),
       });
-
-      if (!response.ok) throw new Error(await responseError(response));
-      await response.json().catch(() => null);
-      draftsByTierRef.current[tierToSave] = payload;
-      pendingSaveRef.current = null;
+      if (!response.ok) {
+        const apiError = await parseApiError(response);
+        if (apiError.code === "change_takes_tier_offline" && !confirmTakeOffline) {
+          const blockers = Array.isArray(apiError.details.blockers)
+            ? (apiError.details.blockers as Array<{ message?: string }>).map((b) => String(b?.message || "")).filter(Boolean)
+            : [];
+          setPendingSave({ kind: "offline", tier, payload, blockers });
+          return;
+        }
+        if (apiError.field) setFieldErrors((prev) => ({ ...prev, [apiError.field as string]: apiError.message }));
+        setError(apiError.code === "revision_conflict"
+          ? "Someone else saved this tier. Discard your changes to load the latest version, then edit again."
+          : apiError.message);
+        return;
+      }
+      const saved = (await response.json().catch(() => null)) as TierProfileRow | null;
+      delete editsRef.current[tier];
+      setDirtyTiers((prev) => ({ ...prev, [tier]: false }));
+      setFieldErrors({});
       await loadProfiles(false);
-      await loadPrices();
-      setAutoSaveStatus("✓ Auto-saved & applied globally");
-      setDirty(false);
-      setTimeout(() => setAutoSaveStatus(""), 3500);
+      void loadUsage();
+      const name = tierDisplayName(row, tier);
+      if (confirmTakeOffline && saved?.readiness && !saved.readiness.enabled) {
+        setStatus(`${name} saved and taken offline. Verify the setup, then enable it again.`);
+      } else {
+        setStatus(`${name} saved (revision ${saved?.profileRevision ?? "updated"}). New calls use it now.`);
+      }
     } catch (caught) {
-      setAutoSaveStatus("⚠️ Save error");
       setError(caught instanceof Error ? caught.message : "Could not save tier configuration.");
-      void loadProfiles(false);
+    } finally {
+      setBusy(false);
+      setPendingSave(null);
     }
-  }
-
-  function triggerAutoSave(nextDraft: ComposedProfile, customLabel?: string, delayMs: number = 0, targetTier?: ProfileTier) {
-    const tierToSave = targetTier || selected;
-    pendingSaveRef.current = { draft: nextDraft, label: customLabel, tier: tierToSave };
-    if (autoSaveTimerRef.current) {
-      clearTimeout(autoSaveTimerRef.current);
-      autoSaveTimerRef.current = null;
-    }
-    if (delayMs > 0) {
-      setAutoSaveStatus("Typing…");
-      autoSaveTimerRef.current = setTimeout(() => {
-        autoSaveTimerRef.current = null;
-        pendingSaveRef.current = null;
-        void executeSaveProfile(nextDraft, customLabel, tierToSave);
-      }, delayMs);
-    } else {
-      pendingSaveRef.current = null;
-      void executeSaveProfile(nextDraft, customLabel, tierToSave);
-    }
-  }
-
-  function switchSelectedTier(newTier: ProfileTier) {
-    if (newTier === selected) return;
-    if (autoSaveTimerRef.current) {
-      clearTimeout(autoSaveTimerRef.current);
-      autoSaveTimerRef.current = null;
-    }
-    if (pendingSaveRef.current) {
-      const { draft: pDraft, label: pLabel, tier: pTier } = pendingSaveRef.current;
-      pendingSaveRef.current = null;
-      void executeSaveProfile(pDraft, pLabel, pTier);
-    }
-    setStatus("");
-    setError("");
-    setSelected(newTier);
   }
 
   function handleSttProviderChange(provider: string) {
     const models = providers.find((entry) => entry.id === provider)?.models?.stt || [];
     const firstModel = models[0]?.id;
     if (!firstModel) return;
-    const nextDraft = {
-      ...draft,
-      stt: { provider, model: firstModel },
-    };
-    setDraft(nextDraft);
-    setDirty(false);
-    triggerAutoSave(nextDraft);
+    clearFieldError("stt.model");
+    updateProfile({ ...draft, stt: { provider, model: firstModel } });
   }
 
   function handleSttModelChange(model: string) {
-    const nextDraft = {
-      ...draft,
-      stt: { ...draft.stt, model },
-    };
-    setDraft(nextDraft);
-    setDirty(false);
-    triggerAutoSave(nextDraft);
+    clearFieldError("stt.model");
+    updateProfile({ ...draft, stt: { ...draft.stt, model } });
   }
 
   function handleLlmProviderChange(provider: string) {
@@ -872,14 +493,12 @@ export function PstnVoiceProfileWorkbench() {
     const nextKnobs = first.api_mode === "websocket"
       ? NATIVE_LIVE_KNOBS
       : (resolveModelKnobs(providers, currentTtsProvider, currentTtsModel) || [FALLBACK_SPEED_KNOB]);
-    const nextDraft = {
+    clearFieldError("llm.modelId");
+    updateProfile({
       ...draft,
       llm: { provider, modelId: first.id, apiMode: first.api_mode || "" },
       voiceDynamics: normalizeDynamicsForKnobs(draft.voiceDynamics, nextKnobs),
-    };
-    setDraft(nextDraft);
-    setDirty(false);
-    triggerAutoSave(nextDraft);
+    });
   }
 
   function handleLlmModelChange(modelId: string) {
@@ -888,27 +507,24 @@ export function PstnVoiceProfileWorkbench() {
     const nextKnobs = apiMode === "websocket"
       ? NATIVE_LIVE_KNOBS
       : (resolveModelKnobs(providers, currentTtsProvider, currentTtsModel) || [FALLBACK_SPEED_KNOB]);
-    const nextDraft = {
+    clearFieldError("llm.modelId");
+    updateProfile({
       ...draft,
       llm: { ...draft.llm, modelId, apiMode },
       voiceDynamics: normalizeDynamicsForKnobs(draft.voiceDynamics, nextKnobs),
-    };
-    setDraft(nextDraft);
-    setDirty(false);
-    triggerAutoSave(nextDraft);
+    });
   }
 
   function handleTtsProviderChange(provider: string) {
     const models = providers.find((entry) => entry.id === provider)?.models?.tts || [];
     const first = models[0];
     if (!first) return;
-    const languages = draft.supportedLanguages;
     const voices = getVoicesForTtsProvider(providers, provider, first.id, []);
     const nextKnobs = draft.llm.apiMode === "websocket"
       ? NATIVE_LIVE_KNOBS
       : (resolveModelKnobs(providers, provider, first.id) || [FALLBACK_SPEED_KNOB]);
-
-    const nextDraft: ComposedProfile = {
+    clearFieldError("tts.model");
+    updateProfile({
       ...draft,
       supportedLanguages: [...new Set(voices.flatMap((voice) => voice.languages))],
       voiceDynamics: normalizeDynamicsForKnobs(draft.voiceDynamics, nextKnobs),
@@ -916,93 +532,46 @@ export function PstnVoiceProfileWorkbench() {
         {
           id: provider,
           label: provider === "sarvam" ? "Sarvam Bulbul" : provider === "gemini" ? "Gemini TTS" : provider === "gnani" ? "Gnani.ai Timbre" : "Cartesia Sonic",
-          models: [
-            {
-              id: first.id,
-              label: first.id,
-              provider,
-              model: first.id,
-              apiMode: first.api_mode || "",
-              voices,
-            },
-          ],
+          models: [{ id: first.id, label: first.id, provider, model: first.id, apiMode: first.api_mode || "", voices }],
         },
       ],
-    };
-    setDraft(nextDraft);
-    setDirty(false);
-    triggerAutoSave(nextDraft);
+    });
   }
 
   function handleTtsModelChange(model: string) {
     const matched = currentTtsModels.find((m) => m.id === model);
-    const languages = draft.supportedLanguages;
     const voices = getVoicesForTtsProvider(providers, currentTtsProvider, model, []);
     const nextKnobs = draft.llm.apiMode === "websocket"
       ? NATIVE_LIVE_KNOBS
       : (resolveModelKnobs(providers, currentTtsProvider, model) || [FALLBACK_SPEED_KNOB]);
-
-    const engines = [...draft.engines];
-    const engine = { ...(engines[0] || { id: currentTtsProvider, label: currentTtsProvider, models: [] }) };
-    engine.models = [
-      {
-        id: model,
-        label: model,
-        provider: currentTtsProvider,
-        model,
-        apiMode: matched?.apiMode || "websocket",
-        voices,
-      },
-    ];
-    const nextDraft: ComposedProfile = {
+    const engine = { ...(draft.engines[0] || { id: currentTtsProvider, label: currentTtsProvider, models: [] }) };
+    engine.models = [{ id: model, label: model, provider: currentTtsProvider, model, apiMode: matched?.apiMode || "websocket", voices }];
+    clearFieldError("tts.model");
+    updateProfile({
       ...draft,
       supportedLanguages: [...new Set(voices.flatMap((voice) => voice.languages))],
       voiceDynamics: normalizeDynamicsForKnobs(draft.voiceDynamics, nextKnobs),
       engines: [engine],
-    };
-    setDraft(nextDraft);
-    setDirty(false);
-    triggerAutoSave(nextDraft);
+    });
   }
 
   function handleTierLabelChange(val: string) {
-    setTierLabelInput(val);
-    labelsByTierRef.current[selected] = val;
-    const nextDraft = { ...draft, label: val };
-    setDraft(nextDraft);
-    draftsByTierRef.current[selected] = nextDraft;
-    triggerAutoSave(nextDraft, val, 700, selected);
+    updateEdit({ label: val });
   }
 
   function handleRetailRateChange(val: string) {
-    setRetailRateInput(val);
-    retailInputsByTierRef.current[selected] = val;
-    const num = parseFloat(val);
-    const nextDraft = { ...draft, retailRateInr: !isNaN(num) ? num : null };
-    setDraft(nextDraft);
-    draftsByTierRef.current[selected] = nextDraft;
-    triggerAutoSave(nextDraft, undefined, 800, selected);
+    clearFieldError("retailRateInr");
+    updateEdit({ retail: val });
   }
 
   function handleSupplierCostChange(val: string) {
-    setSupplierCostInput(val);
-    supplierInputsByTierRef.current[selected] = val;
-    const num = parseFloat(val);
-    const nextDraft = { ...draft, supplierCostInr: !isNaN(num) ? num : null };
-    setDraft(nextDraft);
-    draftsByTierRef.current[selected] = nextDraft;
-    triggerAutoSave(nextDraft, undefined, 800, selected);
+    clearFieldError("supplierCostInr");
+    updateEdit({ supplier: val });
   }
 
   function handleWebRateChange(val: string) {
-    const value = val === "" ? null : Number(val);
-    const nextDraft = { ...draft, webRetailRateInr: value };
-    setDraft(nextDraft);
-    draftsByTierRef.current[selected] = nextDraft;
-    if (value !== null && (!Number.isFinite(value) || value <= 0)) {
-      setDirty(true); setError("Web call price must be positive."); return;
-    }
-    triggerAutoSave(nextDraft, undefined, 800, selected);
+    clearFieldError("webRetailRateInr");
+    updateEdit({ web: val });
   }
 
   function handleDynamicsChange(patch: Partial<VoiceDynamics>) {
@@ -1014,12 +583,27 @@ export function PstnVoiceProfileWorkbench() {
       volume: draft.voiceDynamics?.volume,
       ...patch,
     };
-    const nextDraft: ComposedProfile = {
-      ...draft,
-      voiceDynamics: normalizeDynamicsForKnobs(merged, currentTtsKnobs),
-    };
-    setDraft(nextDraft);
-    triggerAutoSave(nextDraft, undefined, 400);
+    updateProfile({ ...draft, voiceDynamics: normalizeDynamicsForKnobs(merged, currentTtsKnobs) });
+  }
+
+  async function handleLoadRecommended() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${selected}/template`);
+      if (!response.ok) throw new Error(await responseError(response));
+      const payload = await response.json();
+      const recommended = normalizeProfile(payload?.composedProfile as ComposedProfile, selected);
+      // Keep the operator's name and prices; only the stack is replaced.
+      recommended.label = draft.label;
+      updateEdit({ profile: recommended });
+      setStatus("Recommended setup loaded as unsaved changes. Review it, then save.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not load the recommended setup.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleTestSpeedDynamics() {
@@ -1071,7 +655,7 @@ export function PstnVoiceProfileWorkbench() {
       await audio.play();
       setIsPlayingDynamics(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate speed dynamics preview.");
+      setError(err instanceof Error ? err.message : "Failed to generate the knob preview.");
     } finally {
       setIsTestingDynamics(false);
     }
@@ -1083,38 +667,25 @@ export function PstnVoiceProfileWorkbench() {
       return;
     }
     const tierRow = rows.find((r) => r.tier === tierToDelete);
-    const label = tierRow?.label || tierToDelete;
-    if (!window.confirm(`Are you sure you want to delete the tier "${label}" (${tierToDelete})? This will permanently remove it from the platform.`)) {
+    const label = tierDisplayName(tierRow, tierToDelete);
+    const count = agentsByTier ? (agentsByTier[tierToDelete] ?? 0) : null;
+    const usage = count === null ? "" : ` ${count} agent${count === 1 ? "" : "s"} use it and will stop placing calls.`;
+    if (!window.confirm(`Delete the tier "${label}" (${tierToDelete})? This permanently removes it.${usage}`)) {
       return;
     }
     setBusy(true);
     setError("");
     setStatus("");
     try {
-      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${tierToDelete}`, {
-        method: "DELETE",
-      });
+      const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${tierToDelete}`, { method: "DELETE" });
       if (!response.ok) throw new Error(await responseError(response));
+      delete editsRef.current[tierToDelete];
+      setDirtyTiers((prev) => ({ ...prev, [tierToDelete]: false }));
       await loadProfiles(false);
       switchSelectedTier("medium");
-      setStatus(`Tier "${label}" (${tierToDelete}) was deleted successfully.`);
+      setStatus(`Tier "${label}" (${tierToDelete}) was deleted.`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not delete tier.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleSaveProfile() {
-    if (busy) return;
-    setBusy(true);
-    setError("");
-    setStatus("");
-    try {
-      await executeSaveProfile();
-      setStatus(`Configuration saved for ${tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected}. Applied globally.`);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not save tier configuration.");
     } finally {
       setBusy(false);
     }
@@ -1133,12 +704,10 @@ export function PstnVoiceProfileWorkbench() {
       const result = await response.json();
       setVerification(result.checks);
       const verified = result.profile as TierProfileRow;
-      if (verified.composedProfile) {
-        draftsByTierRef.current[selected] = verified.composedProfile;
-        setDraft(verified.composedProfile);
-      }
       await loadProfiles(false);
-      setStatus(verified.readiness.ready ? "Saved setup verified. Enabled tiers are available to tenants." : "Checks completed. Review the remaining requirements below.");
+      setStatus(verified.readiness.ready
+        ? `${selectedName} meets every readiness requirement.${verified.readiness.enabled ? "" : " Enable it to offer it to tenants."}`
+        : "Checks completed. Review the remaining requirements in the Resolves to card.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Verification could not finish. Try again.");
     } finally {
@@ -1152,42 +721,32 @@ export function PstnVoiceProfileWorkbench() {
     setError("");
     setStatus("");
     try {
-      const expectedRev = selectedRow?.profileRevision !== null && selectedRow?.profileRevision !== undefined
-        ? selectedRow.profileRevision
-        : 0;
-
       const response = await portalFetch("dev", `/api/dev/stack/voice-profiles/${selected}/activation`, {
         method: "PUT",
-        body: JSON.stringify({
-          expectedRevision: expectedRev,
-          enabled: newEnabledState,
-        }),
+        body: JSON.stringify({ expectedRevision: selectedRow?.profileRevision ?? 0, enabled: newEnabledState }),
       });
-
       if (!response.ok) throw new Error(await responseError(response));
       await response.json().catch(() => null);
       await loadProfiles(false);
-      setStatus(
-        newEnabledState
-          ? `${tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected} is now ENABLED for all tenants.`
-          : `${tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected} is now DISABLED and hidden from tenants.`
-      );
+      setStatus(newEnabledState
+        ? `${selectedName} is enabled and offered to tenants.`
+        : `${selectedName} is disabled and hidden from tenants.`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not update tier activation.");
       void loadProfiles(false);
     } finally {
       setBusy(false);
+      setPendingDisable(false);
     }
   }
 
   const currentVoices = useMemo(() => {
-    const languages = draft.supportedLanguages;
-    return getVoicesForTtsProvider(providers, currentTtsProvider, currentTtsModel, languages, currentTtsModelObj?.voices);
+    return getVoicesForTtsProvider(providers, currentTtsProvider, currentTtsModel, draft.supportedLanguages, currentTtsModelObj?.voices);
   }, [providers, currentTtsProvider, currentTtsModel, currentTtsModelObj?.voices, draft.supportedLanguages]);
 
   const currentModelInventory = useMemo(() => {
-    const rows = providers.find((entry) => entry.id === currentTtsProvider)?.models?.tts?.find((entry) => entry.id === currentTtsModel)?.voices || [];
-    return rows.map((voice) => ({ ...voice,
+    const inventory = providers.find((entry) => entry.id === currentTtsProvider)?.models?.tts?.find((entry) => entry.id === currentTtsModel)?.voices || [];
+    return inventory.map((voice) => ({ ...voice,
       id: currentTtsModelObj?.voices.find((item) => item.providerVoiceId === voice.providerVoiceId)?.id || voice.id,
     }));
   }, [providers, currentTtsProvider, currentTtsModel, currentTtsModelObj?.voices]);
@@ -1219,9 +778,7 @@ export function PstnVoiceProfileWorkbench() {
           language: voice.languages[0],
         }),
       });
-      if (!response.ok) {
-        throw new Error(await responseError(response));
-      }
+      if (!response.ok) throw new Error(await responseError(response));
       const data = await response.json();
       const b64 = data.audio_base64;
       if (!b64) throw new Error("No preview audio returned from server.");
@@ -1248,13 +805,9 @@ export function PstnVoiceProfileWorkbench() {
     const basePrefix = selected.slice(0, 10).replace(/[^a-z0-9_]/g, "_");
     const existingTiers = new Set(rows.map((r) => r.tier));
     let idx = 1;
-    while (existingTiers.has(`${basePrefix}_copy_${idx}`)) {
-      idx++;
-    }
-    const defaultSlug = `${basePrefix}_copy_${idx}`.slice(0, 20);
-    const sourceName = tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected;
-    setDuplicateNewSlug(defaultSlug);
-    setDuplicateLabel(`${sourceName} (Copy ${idx})`);
+    while (existingTiers.has(`${basePrefix}_copy_${idx}`)) idx++;
+    setDuplicateNewSlug(`${basePrefix}_copy_${idx}`.slice(0, 20));
+    setDuplicateLabel(`${selectedName} (Copy ${idx})`);
     setShowDuplicateModal(true);
   }
 
@@ -1262,7 +815,7 @@ export function PstnVoiceProfileWorkbench() {
     if (busy) return;
     const slug = duplicateNewSlug.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 20);
     if (!slug) {
-      setError("Please enter a valid identifier for the duplicated stack (lowercase letters, numbers, and underscores).");
+      setError("Enter a valid identifier for the new tier (lowercase letters, numbers and underscores).");
       return;
     }
     setBusy(true);
@@ -1271,120 +824,19 @@ export function PstnVoiceProfileWorkbench() {
     try {
       const response = await portalFetch("dev", "/api/dev/stack/voice-profiles/duplicate", {
         method: "POST",
-        body: JSON.stringify({
-          sourceTier: selected,
-          targetTier: slug,
-          targetLabel: duplicateLabel.trim() || undefined,
-        }),
+        body: JSON.stringify({ sourceTier: selected, targetTier: slug, targetLabel: duplicateLabel.trim() || undefined }),
       });
-
       if (!response.ok) throw new Error(await responseError(response));
       const data = await response.json();
       const createdTier = data.tier || slug;
       await loadProfiles(false);
       switchSelectedTier(createdTier);
       setShowDuplicateModal(false);
-      setStatus(`Successfully created new duplicated stack "${duplicateLabel || createdTier}" (${createdTier})! Selected and ready for configuration.`);
+      setStatus(`Created "${duplicateLabel || createdTier}" (${createdTier}) from the saved ${selectedName} setup. It starts disabled.`);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not duplicate tier stack.");
+      setError(caught instanceof Error ? caught.message : "Could not duplicate tier.");
     } finally {
       setBusy(false);
-    }
-  }
-
-  async function handleSavePrices() {
-    if (pricesSaving) return;
-    setPricesSaving(true);
-    setPricesError("");
-    setPricesStatus("");
-    try {
-      const payload = {
-        rateCurrency: "INR",
-        webInrPerMin: Number(webInr) || 0,
-        didMonthlyInr: Number(numberInr) || 0,
-        fxRateInr: Number(fxRate) || 95.64,
-        reason: "Updated Platform & Channel Prices (INR) from Stacks & Tiers workbench",
-      };
-      const res = await portalFetch("dev", "/api/dev/admin/billing-rates", {
-        method: "PUT",
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(await responseError(res));
-      setPricesStatus("Platform & Channel Prices (INR) saved successfully. Applied globally across all tenants and billing calculations.");
-      await loadProfiles(false);
-    } catch (err) {
-      setPricesError(err instanceof Error ? err.message : "Failed to save prices.");
-    } finally {
-      setPricesSaving(false);
-    }
-  }
-
-  const switchTelephony = async (providerId: string) => {
-    if (telephonyBusy || telephony?.active_provider === providerId) return;
-    setTelephonyBusy(true);
-    setTelephonyMsg("");
-    setTelephonyError("");
-    try {
-      const r = await portalFetch("dev", "/api/dev/telephony/provider", {
-        method: "PATCH",
-        body: JSON.stringify({ provider: providerId }),
-      });
-      if (!r.ok) {
-        setTelephonyError(`Failed to switch provider (${r.status})`);
-        return;
-      }
-      await loadTelephony();
-      setTelephonyMsg(`Active telephony trunk switched to ${providerId.toUpperCase()}. Direct routing updated.`);
-    } catch (e) {
-      setTelephonyError(e instanceof Error ? e.message : "Failed to switch provider");
-    } finally {
-      setTelephonyBusy(false);
-    }
-  };
-
-  const testHandshake = async () => {
-    setTelephonyBusy(true);
-    setTelephonyMsg("Testing carrier handshake…");
-    setTelephonyError("");
-    try {
-      const r = await portalFetch("dev", "/api/dev/telephony/handshake", { method: "POST" });
-      const j = await r.json();
-      if (j.ok) {
-        setTelephonyMsg(`✓ Handshake OK (${telephony?.active_provider?.toUpperCase()}): Connected to carrier trunk`);
-      } else {
-        setTelephonyError(`⚠ Handshake warning: ${j.error || JSON.stringify(j)}`);
-      }
-    } catch (e) {
-      setTelephonyError(e instanceof Error ? e.message : "Handshake failed");
-    } finally {
-      setTelephonyBusy(false);
-    }
-  };
-
-  async function handleSaveTranscription() {
-    if (transcriptionSaving) return;
-    setTranscriptionSaving(true);
-    setTranscriptionStatus("");
-    setTranscriptionError("");
-    try {
-      const currentOverride: Record<string, unknown> = saasPhoneRaw ? { ...saasPhoneRaw } : { pipeline: "realtime_voice", language: "te-IN" };
-      currentOverride.transcription_mode = transcriptionMode;
-      currentOverride.transcription_live_model = transcriptionLiveModel;
-
-      const res = await portalFetch("dev", "/api/dev/stack/saas-phone", {
-        method: "PUT",
-        body: JSON.stringify({
-          language: String(currentOverride.language || "te-IN"),
-          stack_override: currentOverride,
-        }),
-      });
-      if (!res.ok) throw new Error(await responseError(res));
-      setTranscriptionStatus("Transcription configuration saved and applied globally.");
-      await loadTranscription();
-    } catch (err) {
-      setTranscriptionError(err instanceof Error ? err.message : "Failed to save transcription.");
-    } finally {
-      setTranscriptionSaving(false);
     }
   }
 
@@ -1400,8 +852,8 @@ export function PstnVoiceProfileWorkbench() {
             Voice Stacks & Tier Configuration
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-text-muted">
-            Configure providers for Speech-to-Text (STT), Intelligence (LLM), and Speech Synthesis (TTS) for each tier.
-            Manage platform prices in INR, configure telephony trunks, and caller transcription settings in one unified workbench.
+            Each tier bundles speech recognition, a conversation model, speech output and a price. Edits stay as unsaved
+            changes until you save; tenants only ever see enabled, ready tiers.
           </p>
         </div>
         <span className="rounded-full border border-surface-border-subtle bg-surface-raised px-3 py-1.5 font-mono text-xs text-text-muted">
@@ -1430,7 +882,9 @@ export function PstnVoiceProfileWorkbench() {
           const row = rows.find((r) => r.tier === tier);
           const active = selected === tier;
           const tierEnabled = row?.readiness?.enabled === true;
-          const label = row?.label || DEFAULT_TIER_LABELS[tier] || tier.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+          const tierReady = row?.readiness?.ready === true;
+          const label = tierDisplayName(row, tier);
+          const tierDirty = dirtyTiers[tier] === true;
 
           return (
             <button
@@ -1454,19 +908,12 @@ export function PstnVoiceProfileWorkbench() {
               </div>
               <span className="mt-1 font-semibold text-sm text-text">{label}</span>
               <div className="mt-2 flex items-center gap-2">
-                <span className={`text-[11px] font-medium ${tierEnabled ? "text-emerald-400" : "text-text-muted"}`}>
-                  {tierEnabled ? (row?.readiness.ready ? "Active / Ready" : "Enabled · verification needed") : "Disabled"}
+                <span className={`text-[11px] font-medium ${tierEnabled ? (tierReady ? "text-emerald-400" : "text-rose-300") : "text-text-muted"}`}>
+                  {tierEnabled ? (tierReady ? "Live" : "Enabled, not ready: calls fail") : "Offline"}
                 </span>
-                {row?.composedProfile?.retailRateInr ? (
-                  <span className="font-mono text-[11px] text-text-subtle">
-                    · ₹{Number(row.composedProfile.retailRateInr).toFixed(2)}/min
-                  </span>
-                ) : row?.retailRate?.inrPaisePerMin ? (
-                  <span className="font-mono text-[11px] text-text-subtle">
-                    · ₹{(row.retailRate.inrPaisePerMin / 100).toFixed(2)}/min
-                  </span>
-                ) : null}
+                <span className="font-mono text-[11px] text-text-subtle">· {formatInr(row?.retailRate?.inrPaisePerMin)}</span>
               </div>
+              {tierDirty && <span className="mt-1 text-[11px] font-semibold text-amber-300">Unsaved changes</span>}
             </button>
           );
         })}
@@ -1518,18 +965,19 @@ export function PstnVoiceProfileWorkbench() {
         hidden={activeSection !== "stack"}
       >
       <DevCard
-        title={`${tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected} Configuration`}
-        description="Select the provider and model for STT, LLM, and TTS. Changes apply to all new tenant calls in this tier."
+        title={`${selectedName} configuration`}
+        description="Edits are kept as unsaved changes. Save applies them to new calls on this tier; Discard restores the saved version."
       >
         {/* Tier Controls Bar (Name + Enable/Disable Toggle + Duplicate Stack) */}
         <div className="rounded-xl border border-surface-border bg-surface-raised/50 p-4 mb-6">
           <div className="grid gap-4 md:grid-cols-3 items-center">
             {/* Custom Name */}
             <div>
-              <label className="block text-xs font-medium text-text-muted mb-1.5">
-                Tier Display Name (Visible to Tenants)
+              <label htmlFor="tier-display-name" className="block text-xs font-medium text-text-muted mb-1.5">
+                Tier display name (visible to tenants)
               </label>
               <input
+                id="tier-display-name"
                 type="text"
                 value={tierLabelInput}
                 onChange={(e) => handleTierLabelChange(e.target.value)}
@@ -1540,29 +988,31 @@ export function PstnVoiceProfileWorkbench() {
 
             {/* Enable/Disable Status & Toggle */}
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-text-muted">Tier Status for Tenants</span>
+              <span className="text-xs font-medium text-text-muted">Tier status for tenants</span>
               <div className="flex items-center gap-3">
                 <StatusPill tone={isEnabled ? "good" : "muted"}>
-                  {isEnabled ? "Enabled for Tenants" : "Disabled (Hidden)"}
+                  {isEnabled ? "Enabled" : "Disabled (hidden)"}
                 </StatusPill>
                 <button
                   type="button"
-                  disabled={busy}
-                  onClick={() => void handleToggleActivation(!isEnabled)}
+                  disabled={busy || dirty}
+                  title={dirty ? "Save or discard your changes first." : undefined}
+                  onClick={() => (isEnabled ? setPendingDisable(true) : void handleToggleActivation(true))}
                   className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
                     isEnabled
                       ? "border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
                       : "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
                   }`}
                 >
-                  {isEnabled ? "Disable Tier" : "Enable Tier"}
+                  {isEnabled ? "Disable tier" : "Enable tier"}
                 </button>
               </div>
+              {dirty && <span className="text-[11px] text-text-subtle">Save or discard changes before enabling or disabling.</span>}
             </div>
 
             {/* Tier Actions (Duplicate + Delete) */}
             <div className="flex flex-col gap-1.5 md:items-end">
-              <span className="text-xs font-medium text-text-muted">Tier Actions</span>
+              <span className="text-xs font-medium text-text-muted">Tier actions</span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -1571,7 +1021,7 @@ export function PstnVoiceProfileWorkbench() {
                   className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-surface-border bg-surface-card px-3 py-1.5 text-xs font-semibold text-text hover:border-surface-border-subtle hover:bg-surface-raised transition-colors shadow-sm"
                   title="Replicate this stack configuration as a new tier"
                 >
-                  <span>📋 Duplicate</span>
+                  Duplicate
                 </button>
                 {!["low", "medium", "premium"].includes(selected) && (
                   <button
@@ -1581,7 +1031,7 @@ export function PstnVoiceProfileWorkbench() {
                     className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 transition-colors shadow-sm"
                     title="Permanently delete this custom tier"
                   >
-                    <span>🗑️ Delete Tier</span>
+                    Delete tier
                   </button>
                 )}
               </div>
@@ -1589,95 +1039,89 @@ export function PstnVoiceProfileWorkbench() {
           </div>
         </div>
 
+        <div className="mb-6">
+          <TierResolvesToCard row={selectedRow} agentCount={agentCount} hasUnsavedChanges={dirty} />
+        </div>
+
         {/* Tier Pricing & Provider Cost Configuration */}
         <div className="rounded-xl border border-surface-border bg-surface-card p-4 mb-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-surface-border-subtle pb-3 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-base">💰</span>
-              <h3 className="text-sm font-semibold text-text">Tier Pricing & Provider Cost</h3>
-            </div>
-            <span className="text-[11px] font-mono text-text-subtle">Direct Platform Economics · Applied Universally</span>
+            <h3 className="text-sm font-semibold text-text">Tier price</h3>
+            <span className="text-[11px] text-text-subtle">The only place this tier&apos;s price is edited</span>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <label className="block text-xs font-semibold text-text mb-1">
-                Platform Calling Price (₹/min)
-                <span className="text-text-muted font-normal ml-1">· Billed to Tenants</span>
+              <label htmlFor="tier-retail-rate" className="block text-xs font-semibold text-text mb-1">
+                Phone call price (₹/min)
+                <span className="text-text-muted font-normal ml-1">· billed to tenants</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-2.5 text-sm font-semibold text-text-muted">₹</span>
                 <input
+                  id="tier-retail-rate"
                   type="number"
                   step="0.05"
-                  min="0"
+                  min="0.01"
+                  aria-invalid={Boolean(fieldErrors.retailRateInr)}
+                  aria-describedby={fieldErrors.retailRateInr ? "tier-retail-rate-error" : undefined}
                   value={retailRateInput}
                   onChange={(e) => handleRetailRateChange(e.target.value)}
                   placeholder="e.g. 5.00"
                   className="w-full rounded-xl border border-surface-border bg-surface-panel pl-7 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
                 />
               </div>
+              <FieldError id="tier-retail-rate-error" message={fieldErrors.retailRateInr} />
               <p className="mt-1 text-[11px] text-text-subtle">
-                Retail price per minute deducted from tenant wallets when placing phone calls on this tier.
+                Deducted from tenant wallets per minute. Saving a core tier price also publishes a new billing rate version.
+                Billed now: {formatInr(selectedRow?.retailRate?.inrPaisePerMin)}.
               </p>
             </div>
 
             <div>
               <label htmlFor="tier-web-rate" className="block text-xs font-semibold text-text mb-1">Web agent price (₹/min)</label>
-              <input id="tier-web-rate" type="number" min="0.01" step="0.01" value={draft.webRetailRateInr ?? ""}
+              <input id="tier-web-rate" type="number" min="0.01" step="0.01" value={webRateInput}
+                aria-invalid={Boolean(fieldErrors.webRetailRateInr)}
                 onChange={(event) => handleWebRateChange(event.target.value)}
                 placeholder={selectedRow?.webRetailRate?.inrPaisePerMin ? `${selectedRow.webRetailRate.inrPaisePerMin / 100}` : "Use saved web default"}
                 className="w-full rounded-xl border border-surface-border bg-surface-panel px-3 py-2 text-sm text-text font-mono" />
+              <FieldError id="tier-web-rate-error" message={fieldErrors.webRetailRateInr} />
               <p className="mt-1 text-[11px] text-text-subtle">Browser and embedded web calls on this stack. Blank uses the saved global web default. Each call locks its price at start.</p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-text mb-1">
-                Estimated Provider / Supplier Cost (₹/min)
-                <span className="text-text-muted font-normal ml-1">· Admin Wholesale Cost</span>
+              <label htmlFor="tier-supplier-cost" className="block text-xs font-semibold text-text mb-1">
+                Estimated supplier cost (₹/min)
+                <span className="text-text-muted font-normal ml-1">· admin only</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-2.5 text-sm font-semibold text-text-muted">₹</span>
                 <input
+                  id="tier-supplier-cost"
                   type="number"
                   step="0.05"
                   min="0"
+                  aria-invalid={Boolean(fieldErrors.supplierCostInr)}
                   value={supplierCostInput}
                   onChange={(e) => handleSupplierCostChange(e.target.value)}
                   placeholder="e.g. 1.80"
                   className="w-full rounded-xl border border-surface-border bg-surface-panel pl-7 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
                 />
               </div>
+              <FieldError id="tier-supplier-cost-error" message={fieldErrors.supplierCostInr} />
               <p className="mt-1 text-[11px] text-text-subtle">
-                Estimated cost to platform for telephony trunk + STT + LLM + TTS for accurate profit margin tracking.
+                Estimated cost of trunk, recognition, model and speech, used for margin tracking. Never shown to tenants.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Gemini 3.8 Live (Flagship) Native Architecture Callout */}
-        {selected === "premium" && (
-          <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4 mb-6 text-sm text-indigo-100">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg">⚡</span>
-              <h4 className="font-semibold text-indigo-200">Gemini 3.8 Live (Flagship) Native Realtime Architecture</h4>
-            </div>
-            <p className="text-xs text-indigo-200/90 leading-relaxed mb-3">
-              Gemini 3.8 Live is our flagship unified bidirectional multimodal speech agent. Unlike modular composed tiers, Speech-to-Text (STT), reasoning intelligence (LLM), and speech generation (TTS) operate end-to-end within a single ultra-low-latency WebSocket connection (<code className="font-mono bg-indigo-950/60 px-1 py-0.5 rounded text-indigo-300">server/realtime/</code>).
+        {isNativeRealtimeLlm && (
+          <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-4 mb-6 text-xs text-indigo-100">
+            <h4 className="font-semibold text-indigo-200">Native audio tier</h4>
+            <p className="mt-1 text-indigo-200/90">
+              One live model listens, reasons and speaks over a single session, so there is no separate recognition or speech
+              engine to verify. Readiness checks the provider, model, voices and price; confirm call quality in Test Studio.
             </p>
-            <div className="grid gap-3 sm:grid-cols-2 text-xs">
-              <div className="rounded-lg bg-indigo-950/50 border border-indigo-500/20 p-3">
-                <span className="font-semibold text-indigo-300 block mb-1">🧠 Direct In-Session Context (No Dynamic Caching)</span>
-                <p className="text-indigo-200/80 text-[11px] leading-relaxed">
-                  The 3.8 Live session retains dialogue memory organically inside the open carrier stream. Server-side dynamic memory caching—which is utilized to bridge intermediate STT and LLM turns in the Economical and Standard composed tiers—is completely bypassed, minimizing turn latency and eliminating token re-injection overhead.
-                </p>
-              </div>
-              <div className="rounded-lg bg-indigo-950/50 border border-indigo-500/20 p-3">
-                <span className="font-semibold text-indigo-300 block mb-1">📞 Zero-Hangup PSTN Trunk Alignment</span>
-                <p className="text-indigo-200/80 text-[11px] leading-relaxed">
-                  Pre-buffers audio greetings upon carrier media readiness before database call record finalization to eliminate answer-race hangups. Bidirectional turn-taking is guarded with acoustic echo suppression and a 350ms speech onset threshold.
-                </p>
-              </div>
-            </div>
           </div>
         )}
 
@@ -1722,6 +1166,7 @@ export function PstnVoiceProfileWorkbench() {
                 </label>
                 <select
                   aria-label="STT model"
+                  aria-invalid={Boolean(fieldErrors["stt.model"])}
                   value={draft.stt.model}
                   onChange={(e) => handleSttModelChange(e.target.value)}
                   disabled={busy || selected === "premium"}
@@ -1734,6 +1179,7 @@ export function PstnVoiceProfileWorkbench() {
                     </option>
                   ))}
                 </select>
+                <FieldError id="stt-model-error" message={fieldErrors["stt.model"]} />
               </div>
             </div>
 
@@ -1793,6 +1239,7 @@ export function PstnVoiceProfileWorkbench() {
                     </option>
                   ))}
                 </select>
+                <FieldError id="llm-model-error" message={fieldErrors["llm.modelId"]} />
               </div>
             </div>
 
@@ -1852,6 +1299,7 @@ export function PstnVoiceProfileWorkbench() {
                     </option>
                   ))}
                 </select>
+                <FieldError id="tts-model-error" message={fieldErrors["tts.model"]} />
               </div>
             </div>
 
@@ -1862,10 +1310,9 @@ export function PstnVoiceProfileWorkbench() {
               if (!hasWarning) return null;
               return (
                 <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
-                  <span className="text-base leading-none">⚠️</span>
                   <div className="space-y-0.5">
                     <p className="font-semibold text-amber-100">
-                      Warning: {currentTtsProvider.toUpperCase()} credits or API credentials not configured/active
+                      {currentTtsProvider.toUpperCase()} credentials or credits are not configured
                     </p>
                     <p className="text-[11px] text-amber-200/80">
                       The chosen stack will <strong>never silently fall back to any default provider</strong>. If credits or quota are exhausted, call synthesis will report an error for this provider. Ensure account balance is active.
@@ -1886,25 +1333,22 @@ export function PstnVoiceProfileWorkbench() {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-surface-border-subtle pb-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="flex size-7 items-center justify-center rounded-xl bg-accent-primary/20 text-accent-primary font-bold text-sm">
-                  🎛️
-                </span>
                 <h3 className="text-base font-semibold text-text">
-                  Acoustic Calibration &amp; Speech Dynamics
+                  Voice knobs
                 </h3>
                 <span className="rounded-full border border-purple-500/30 bg-purple-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-purple-300">
-                  Universal Defaults
+                  Tier default
                 </span>
               </div>
               <p className="text-xs text-text-muted">
                 {isNativeRealtimeLlm
                   ? <>Fine-tune the native live voice pace. This tier speaks through the realtime voice, so no separate TTS engine is active.</>
-                  : <>Only the knobs supported by <strong>{currentTtsProvider ? currentTtsProvider.toUpperCase() : "the selected engine"}</strong> are shown. Every saved value is applied to all platform calls.</>}
+                  : <>Only the knobs supported by <strong>{currentTtsProvider ? currentTtsProvider.toUpperCase() : "the selected engine"}</strong> are shown. Agents inherit these unless they set their own pace.</>}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
-                ⚡ Universal Platform Default: Applied to all calls
+              <span className="text-[11px] text-text-muted bg-surface-raised border border-surface-border px-2.5 py-1 rounded-lg">
+                Applies to: {knobTargets}
               </span>
             </div>
           </div>
@@ -2097,10 +1541,10 @@ export function PstnVoiceProfileWorkbench() {
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-surface-border-subtle pb-3">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-text">
-                  🎧 Test Speed &amp; Dynamics Audio Generator
+                  Audition the knobs
                 </span>
                 <span className="text-[10px] text-text-subtle font-mono">
-                  (Audition live with configured pace)
+                  (uses your unsaved knob values)
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -2180,11 +1624,11 @@ export function PstnVoiceProfileWorkbench() {
                     </>
                   ) : isPlayingDynamics ? (
                     <>
-                      <span>⏹ Stop Audition</span>
+                      <span>Stop audition</span>
                     </>
                   ) : (
                     <>
-                      <span>▶ Generate &amp; Audition Dynamics</span>
+                      <span>Play audition</span>
                     </>
                   )}
                 </Button>
@@ -2192,7 +1636,7 @@ export function PstnVoiceProfileWorkbench() {
                 {isPlayingDynamics && (
                   <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg animate-pulse">
                     <span className="size-2 rounded-full bg-emerald-400" />
-                    <span>Playing at {Number(draft.voiceDynamics?.speed || 1.0).toFixed(2)}x Speed ({currentTtsProvider.toUpperCase()})</span>
+                    <span>Playing at {Number(draft.voiceDynamics?.speed || 1.0).toFixed(2)}x ({currentTtsProvider.toUpperCase()})</span>
                   </div>
                 )}
               </div>
@@ -2204,66 +1648,7 @@ export function PstnVoiceProfileWorkbench() {
           </div>
         </div>
 
-        {/* Global Prewarm Greeting Synthesis Configuration Card */}
-        <div className="mt-6 rounded-xl border border-surface-border-subtle bg-surface-raised/40 p-5 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-2.5">
-                <div className={`p-1.5 rounded-lg ${prewarmGreetingEnabled ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-surface-border/20 text-text-muted"}`}>
-                  <span className="text-sm">⚡</span>
-                </div>
-                <h4 className="text-sm font-semibold text-text">
-                  Global Prewarm Greeting (Instant First Audio)
-                </h4>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider border ${
-                    prewarmGreetingEnabled
-                      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                      : "bg-surface-border/20 text-text-subtle border-surface-border/40"
-                  }`}
-                >
-                  {prewarmGreetingEnabled ? "Active (Global)" : "Disabled (Standard Playout)"}
-                </span>
-              </div>
-              <p className="mt-2 text-xs text-text-muted leading-relaxed">
-                Pre-synthesizes the outbound agent greeting during carrier ring and connection time so caller hears the opening instantly (&lt;200ms) upon answering. Applies to all PSTN calls globally. When disabled, the agent synthesizes greeting on live stream pickup.
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-[10px] font-mono text-text-subtle">
-                  API: PATCH /api/dev/stack/prewarm-greeting
-                </span>
-                <span className="text-[10px] text-text-subtle">·</span>
-                <span className="text-[10px] text-text-subtle">
-                  Scope: Universal Platform
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                disabled={prewarmLoading}
-                onClick={() => void togglePrewarmGreeting(!prewarmGreetingEnabled)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 ${
-                  prewarmGreetingEnabled ? "bg-emerald-500" : "bg-surface-border"
-                } ${prewarmLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                role="switch"
-                aria-checked={prewarmGreetingEnabled}
-                aria-label="Toggle Prewarm Greeting"
-              >
-                <span
-                  aria-hidden="true"
-                  className={`pointer-events-none inline-block size-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    prewarmGreetingEnabled ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
-              <span className="text-xs font-medium text-text select-none min-w-[58px]">
-                {prewarmGreetingEnabled ? "Enabled" : "Disabled"}
-              </span>
-            </div>
-          </div>
-        </div>
+        <PrewarmGreetingCard />
 
         {/* Curated Voice Catalog Auto-Binding Notification & Audio Playback Preview */}
         <div className="mt-6 rounded-xl border border-surface-border-subtle bg-surface-raised/40 p-4">
@@ -2333,9 +1718,9 @@ export function PstnVoiceProfileWorkbench() {
                     {isLoading ? (
                       <span>Loading…</span>
                     ) : isPlaying ? (
-                      <span>⏸ Stop</span>
+                      <span>Stop</span>
                     ) : (
-                      <span>▶ Play</span>
+                      <span>Play</span>
                     )}
                   </button>
                 </div>
@@ -2363,421 +1748,102 @@ export function PstnVoiceProfileWorkbench() {
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-surface-border p-4">
-          <p className="max-w-xl text-xs text-text-muted">Verify the saved model, speech, tools, credentials and media path with synthetic provider requests. No phone call is placed. Capacity is a concurrency smoke check, not a peak-load certification.</p>
-          <Button type="button" variant="secondary" disabled={busy || dirty || !selectedRow?.composedProfile || draft.llm.apiMode === "websocket"}
+          <p className="max-w-xl text-xs text-text-muted">
+            {isNativeRealtimeLlm
+              ? "Checks the saved provider, live model and voices against the approved runtime. Native audio has no separate stages to probe; confirm call quality with a Test Studio session."
+              : "Verifies the saved model, speech, tools, credentials and media path with synthetic provider requests. No phone call is placed. Capacity is a concurrency smoke check, not a peak-load certification."}
+            {dirty ? " Save or discard your changes first: verification runs on the saved revision." : ""}
+          </p>
+          <Button type="button" variant="secondary" disabled={busy || dirty || !selectedRow?.composedProfile}
             onClick={() => void handleVerifyReadiness()} data-testid="verify-profile-readiness">
-            {busy ? "Working…" : "Verify saved setup"}
+            {busy ? "Working…" : isNativeRealtimeLlm ? "Run static check" : "Verify saved setup"}
           </Button>
         </div>
         {verification && <ul className="mt-3 space-y-2 text-xs" aria-label="Verification results">
-          {Object.entries(verification).map(([key, check]) => <li key={key} className={check.passed ? "text-emerald-300" : "text-amber-300"}>
-            {check.passed ? "Passed" : "Needs attention"}: {check.detail}
+          {Object.entries(verification).map(([key, check]) => <li key={key} className={check.notApplicable ? "text-text-muted" : check.passed ? "text-emerald-300" : "text-amber-300"}>
+            {check.notApplicable ? "Not applicable" : check.passed ? "Passed" : "Needs attention"}: {check.detail}
           </li>)}
         </ul>}
 
-        {/* Blockers alert if any */}
-        {blockers.length > 0 && (
-          <div className="mt-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-            <h4 className="text-xs font-semibold text-amber-300 mb-2">Readiness Blockers ({blockers.length})</h4>
-            <ul className="space-y-1 text-xs text-amber-200">
-              {blockers.map((b, i) => (
-                <li key={i}>• {b.message} ({b.code})</li>
-              ))}
-            </ul>
-          </div>
-        )}
 
-        {/* Save & Apply Footer */}
-        <div className="mt-6 pt-4 border-t border-border flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        {/* Save / discard footer */}
+        <div className="sticky bottom-0 mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-border bg-surface-card/95 pt-4 pb-2 backdrop-blur">
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               type="button"
-              disabled={busy}
-              onClick={() => void handleSaveProfile()}
+              disabled={busy || !dirty}
+              onClick={requestSave}
               className="px-5 py-2.5"
+              data-testid="save-tier"
             >
-              {busy ? "Saving Configuration…" : "Save Tier Configuration"}
+              {busy ? "Saving…" : isEnabled ? "Save and apply" : "Save"}
             </Button>
-            {dirty && (
-              <span className="text-xs font-medium text-amber-400">
-                ● Unsaved changes
-              </span>
-            )}
-            {autoSaveStatus && (
-              <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full animate-pulse">
-                {autoSaveStatus}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={busy}
-              onClick={() => {
-                const def = defaultProfileForTier(selected);
-                setDraft(def);
-                setTierLabelInput(DEFAULT_TIER_LABELS[selected] || selected);
-                setDirty(true);
-              }}
-            >
-              Load Recommended Default
+            <Button type="button" variant="secondary" disabled={busy || !dirty} onClick={discardChanges} data-testid="discard-tier">
+              Discard changes
             </Button>
+            <span className={`text-xs font-medium ${dirty ? "text-amber-300" : "text-text-subtle"}`} aria-live="polite">
+              {dirty ? "Unsaved changes" : `All changes saved (revision ${selectedRow?.profileRevision ?? 0})`}
+            </span>
           </div>
+          <Button type="button" variant="secondary" disabled={busy} onClick={() => void handleLoadRecommended()}>
+            Load recommended setup
+          </Button>
         </div>
       </DevCard>
       </div>
 
-      {/* Platform & Channel Prices (INR) Card */}
       <div
         role="tabpanel"
         id="pstn-section-panel-pricing"
         aria-labelledby="pstn-section-tab-pricing"
         hidden={activeSection !== "pricing"}
       >
-      <DevCard
-        title="Platform & Channel Prices (INR)"
-        description="Web calling, number rental and exchange-rate settings. Phone-call prices are managed once, inside each voice stack."
-      >
-        {pricesError && (
-          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
-            {pricesError}
-          </div>
-        )}
-        {pricesStatus && (
-          <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300">
-            {pricesStatus}
-          </div>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Web Calling Rate */}
-          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
-            <label className="block text-xs font-semibold text-text">
-              Default Web Calling Rate
-            </label>
-            <p className="text-[11px] text-text-muted">Used only when the selected stack has no separate web price. Configure overrides in each stack’s pricing section.</p>
-            <div className="relative mt-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={webInr}
-                onChange={(e) => setWebInr(e.target.value)}
-                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-              />
-            </div>
-          </div>
-
-          {/* Phone DID Rental Rate */}
-          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
-            <label className="block text-xs font-semibold text-text">
-              DID Phone Number Rental
-            </label>
-            <p className="text-[11px] text-text-muted">Monthly leased virtual carrier phone number in ₹</p>
-            <div className="relative mt-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
-              <input
-                type="number"
-                step="1"
-                min="0"
-                value={numberInr}
-                onChange={(e) => setNumberInr(e.target.value)}
-                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-              />
-            </div>
-          </div>
-
-          {/* FX Exchange Rate */}
-          <div className="rounded-xl border border-surface-border bg-surface-card p-4 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold text-text">USD → INR FX Rate</label>
-              {liveFx ? (
-                <span className="text-[10px] font-mono text-emerald-400">
-                  Live: ₹{liveFx.toFixed(2)}
-                </span>
-              ) : null}
-            </div>
-            <p className="text-[11px] text-text-muted">Platform charge FX rate (rupees per USD)</p>
-            <div className="relative mt-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-xs text-text-muted">₹</span>
-              <input
-                type="number"
-                step="0.01"
-                min="50"
-                value={fxRate}
-                onChange={(e) => setFxRate(e.target.value)}
-                className="w-full rounded-lg border border-surface-border bg-surface-raised pl-8 pr-3 py-2 text-sm text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
-          <p className="text-xs text-text-subtle">
-            All entered rates apply immediately to platform calls and wallet balance calculations.
-          </p>
-          <Button
-            type="button"
-            disabled={pricesSaving}
-            onClick={() => void handleSavePrices()}
-            className="px-5 py-2.5"
-          >
-            {pricesSaving ? "Saving Prices…" : "Save Platform Prices"}
-          </Button>
-        </div>
-      </DevCard>
+        <PlatformPricesPanel rows={rows} onSaved={() => loadProfiles(false)} />
       </div>
 
-      {/* Telephony Infrastructure & PSTN Calling Trunk Card */}
       <div
         role="tabpanel"
         id="pstn-section-panel-telephony"
         aria-labelledby="pstn-section-tab-telephony"
         hidden={activeSection !== "telephony"}
       >
-      <DevCard
-        title="Telephony Infrastructure & PSTN Calling Trunk"
-        description="Select and manage wholesale carrier trunks for inbound and outbound calls, DID provisioning, and bidirectional audio streaming."
-      >
-        {telephonyError && (
-          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
-            {telephonyError}
-          </div>
-        )}
-        {telephonyMsg && (
-          <div className="mb-4 rounded-xl border border-accent/30 bg-accent/10 p-3 text-xs font-mono text-accent">
-            {telephonyMsg}
-          </div>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* Telnyx Trunk Card */}
-          {(() => {
-            const telnyxSt = telephony?.providers?.find((p) => p.id === "telnyx");
-            const isTelnyxActive = (telephony?.active_provider || "vobiz") === "telnyx";
-            const isReady = Boolean(telnyxSt?.ready);
-            return (
-              <div
-                className={`rounded-xl border p-4 text-left transition-all ${
-                  isTelnyxActive
-                    ? "border-accent bg-accent/5 ring-1 ring-accent/30"
-                    : "border-border bg-surface-card hover:border-accent/40"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-text">Telnyx PSTN Trunk</p>
-                  <span
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${
-                      isReady ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
-                    }`}
-                  >
-                    {isReady ? "✓ Ready" : "⚠ Incomplete"}
-                  </span>
-                </div>
-                <p className="text-xs text-text-muted mt-1">
-                  Call Control v2 · 8 kHz µ-law · WebSocket media streaming
-                </p>
-                <div className="mt-3 space-y-1 font-mono text-[11px] text-text-subtle">
-                  <div>Caller ID: {telnyxSt?.phone_number || "Auto"}</div>
-                  <div>Connection ID: {telnyxSt?.connection_id || "Configured"}</div>
-                  <div>Webhook: /api/telnyx/webhook</div>
-                  <div>Stream: /ws/telnyx-stream</div>
-                </div>
-                <div className="mt-4">
-                  <Button
-                    type="button"
-                    variant={isTelnyxActive ? "primary" : "secondary"}
-                    disabled={isTelnyxActive || telephonyBusy}
-                    onClick={() => void switchTelephony("telnyx")}
-                    className="w-full text-xs"
-                  >
-                    {isTelnyxActive ? "Active Trunk" : "Switch to Telnyx"}
-                  </Button>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Vobiz Trunk Card */}
-          {(() => {
-            const vobizSt = telephony?.providers?.find((p) => p.id === "vobiz");
-            const isVobizActive = (telephony?.active_provider || "vobiz") === "vobiz";
-            const isReady = Boolean(vobizSt?.ready);
-            return (
-              <div
-                className={`rounded-xl border p-4 text-left transition-all ${
-                  isVobizActive
-                    ? "border-accent bg-accent/5 ring-1 ring-accent/30"
-                    : "border-border bg-surface-card hover:border-accent/40"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-text">Vobiz Telephony (Primary Trunk)</p>
-                  <span
-                    className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${
-                      isReady ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"
-                    }`}
-                  >
-                    {isReady ? "✓ Ready" : "⚠ Incomplete"}
-                  </span>
-                </div>
-                <p className="text-xs text-text-muted mt-1">
-                  Voice XML + Bidirectional L16/µ-law WebSocket stream
-                </p>
-                <div className="mt-3 space-y-1 font-mono text-[11px] text-text-subtle">
-                  <div>Auth ID: {vobizSt?.account_info?.auth_id || "MA_LX2CKOU1"}</div>
-                  <div>App ID: {vobizSt?.account_info?.app_id || "551682"}</div>
-                  <div>Answer URL: /api/vobiz/answer</div>
-                  <div>Stream: /ws/vobiz-stream</div>
-                </div>
-                <div className="mt-4">
-                  <Button
-                    type="button"
-                    variant={isVobizActive ? "primary" : "secondary"}
-                    disabled={isVobizActive || telephonyBusy}
-                    onClick={() => void switchTelephony("vobiz")}
-                    className="w-full text-xs"
-                  >
-                    {isVobizActive ? "Active Trunk" : "Switch to Vobiz"}
-                  </Button>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-
-        <div className="mt-6 pt-4 border-t border-border flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={telephonyBusy}
-              onClick={() => void testHandshake()}
-              className="text-xs"
-            >
-              Test Live Handshake
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={telephonyBusy}
-              onClick={() => void loadTelephony()}
-              className="text-xs"
-            >
-              Refresh Trunk Status
-            </Button>
-          </div>
-          <span className="font-mono text-xs text-text-subtle">
-            Trunk controls are isolated to platform infrastructure.
-          </span>
-        </div>
-      </DevCard>
+        <TelephonyTrunkPanel />
       </div>
 
-      {/* Transcription Mode & Caller Transcripts Card */}
       <div
         role="tabpanel"
         id="pstn-section-panel-transcription"
         aria-labelledby="pstn-section-tab-transcription"
         hidden={activeSection !== "transcription"}
       >
-      <DevCard
-        title="Transcription Mode & Caller Transcripts"
-        description="Choose when and how caller speech is transcribed into text records during PSTN telephone conversations."
-      >
-        {transcriptionError && (
-          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
-            {transcriptionError}
-          </div>
-        )}
-        {transcriptionStatus && (
-          <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300">
-            {transcriptionStatus}
-          </div>
-        )}
-
-        <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-3">
-            {[
-              {
-                id: "off" as const,
-                title: "Off",
-                detail: "No caller transcripts recorded. Reduces processing overhead for high-throughput calls.",
-              },
-              {
-                id: "live" as const,
-                title: "Live transcription",
-                detail: "Caller speech transcribed in real time during the call using the selected recognizer below.",
-              },
-              {
-                id: "post_call" as const,
-                title: "Post-call — Gemini 3.5 Transcribe",
-                detail: "~$0.005/min batch processed from recording after call hangs up.",
-              },
-            ].map((opt) => (
-              <label
-                key={opt.id}
-                className={`flex flex-col rounded-xl border p-4 cursor-pointer transition-all ${
-                  transcriptionMode === opt.id
-                    ? "border-accent-primary bg-accent-dim shadow-sm"
-                    : "border-surface-border bg-surface-card hover:bg-surface-raised/40"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="workbenchTranscriptionMode"
-                    checked={transcriptionMode === opt.id}
-                    onChange={() => setTranscriptionMode(opt.id)}
-                    className="accent-accent-primary"
-                  />
-                  <span className="font-semibold text-xs text-text">{opt.title}</span>
-                </div>
-                <p className="mt-2 text-xs text-text-muted leading-relaxed">{opt.detail}</p>
-              </label>
-            ))}
-          </div>
-
-          {transcriptionMode === "live" && (
-            <div className="mt-4 rounded-xl border border-surface-border bg-surface-raised/40 p-4 space-y-2">
-              <label className="block text-xs font-semibold text-text">
-                Live Transcription Recognizer Model
-              </label>
-              <select
-                value={transcriptionLiveModel}
-                onChange={(e) => setTranscriptionLiveModel(e.target.value)}
-                className="w-full sm:max-w-md rounded-xl border border-surface-border bg-surface-panel px-3 py-2 text-xs text-text font-mono focus:outline-none focus:ring-2 focus:ring-accent-primary/40"
-              >
-                <option value="gpt-4o-mini-transcribe">GPT-4o Mini Transcribe · ~$0.003/min</option>
-                <option value="gpt-transcribe">GPT-Transcribe · ~$0.0045/min</option>
-                <option value="saaras:v3-realtime">Sarvam Saaras Realtime · ~₹0.50/min</option>
-                <option value="gemini-native">Gemini Native · In-session tokens</option>
-              </select>
-              <p className="text-[11px] text-text-subtle">
-                The recognizer receives the inbound caller audio stream and writes live speech transcripts to the database.
-              </p>
-            </div>
-          )}
-
-          <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
-            <span className="text-xs text-text-subtle">
-              Applies globally to new inbound and outbound PSTN calls.
-            </span>
-            <Button
-              type="button"
-              disabled={transcriptionSaving}
-              onClick={() => void handleSaveTranscription()}
-              className="px-5 py-2.5"
-            >
-              {transcriptionSaving ? "Saving…" : "Save Transcription Settings"}
-            </Button>
-          </div>
-        </div>
-      </DevCard>
+        <TranscriptionPanel />
       </div>
+
+      <ConfirmDialog
+        open={pendingSave !== null}
+        busy={busy}
+        title={pendingSave?.kind === "offline" ? `Take ${selectedName} offline?` : `Apply changes to ${selectedName}?`}
+        description={pendingSave?.kind === "offline"
+          ? `These speech, conversation or voice changes need fresh verification. Saving takes ${selectedName} offline until it is verified and enabled again. ${agentPhrase} cannot place calls on it until then.${pendingSave.blockers?.length ? ` Blocking: ${pendingSave.blockers.join("; ")}.` : ""}`
+          : `${selectedName} is live. ${agentPhrase} will use the new settings on their next call.`}
+        confirmLabel={pendingSave?.kind === "offline" ? "Save and take offline" : "Save and apply"}
+        cancelLabel="Keep editing"
+        onCancel={() => setPendingSave(null)}
+        onConfirm={() => {
+          if (pendingSave) void commitSave(pendingSave.payload, pendingSave.tier, pendingSave.kind === "offline");
+        }}
+      />
+
+      <ConfirmDialog
+        open={pendingDisable}
+        busy={busy}
+        title={`Disable ${selectedName}?`}
+        description={`${selectedName} will be hidden from tenants. ${agentPhrase} cannot place calls on it until it is enabled again.`}
+        confirmLabel="Disable tier"
+        cancelLabel="Cancel"
+        onCancel={() => setPendingDisable(false)}
+        onConfirm={() => void handleToggleActivation(false)}
+      />
 
       {/* Duplicate Stack Modal */}
       {showDuplicateModal && (
@@ -2785,9 +1851,8 @@ export function PstnVoiceProfileWorkbench() {
           <div className="w-full max-w-md rounded-2xl border border-surface-border bg-surface-card p-6 shadow-2xl space-y-4">
             <h3 className="text-base font-semibold text-text">Duplicate Stack as Brand New Tier</h3>
             <p className="text-xs text-text-muted">
-              Creates a <strong>completely new, independent voice stack</strong> cloning all STT, LLM, TTS models,
-              WebSocket options, and voice configurations from <strong>{tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected}</strong>.
-              The existing stack will NOT be overwritten.
+              Creates a new, independent tier from the <strong>saved</strong> setup of <strong>{selectedName}</strong>
+              (unsaved edits are not copied). The new tier starts disabled; the source tier is unchanged.
             </p>
 
             <div className="space-y-3">
@@ -2796,7 +1861,7 @@ export function PstnVoiceProfileWorkbench() {
                   Source Stack (Selected)
                 </label>
                 <div className="rounded-xl border border-surface-border bg-surface-raised px-3 py-2 text-xs font-mono text-text-subtle">
-                  {tierLabelInput || DEFAULT_TIER_LABELS[selected] || selected} ({selected})
+                  {selectedName} ({selected})
                 </div>
               </div>
 

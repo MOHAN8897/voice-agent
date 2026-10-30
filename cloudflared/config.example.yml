@@ -19,7 +19,7 @@ ingress:
     service: http://127.0.0.1:8000
   - hostname: api.dialtact.com
     service: http://127.0.0.1:8000
-  # Public product UI. Voxly proxies /api and /ws to 8000.
+  # Public product UI. Dialtact proxies /api and /ws to 8000.
   - hostname: app-dev.dialtact.com
     service: http://127.0.0.1:5173
   - hostname: app.dialtact.com

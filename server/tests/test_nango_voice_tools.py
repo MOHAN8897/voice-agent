@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from server.services.nango_service import NangoService, nango_service
-from server.services.tool_router import VoxlyToolRouter
+from server.services.tool_router import DialtactToolRouter
 
 
 # ---------------------------------------------------------------------------
@@ -86,7 +86,7 @@ def test_schema_optimizer_preserves_semantics_and_targets_size_reduction():
 @pytest.mark.asyncio
 async def test_tool_router_fails_closed_without_tenant_and_dispatches_with_tenant():
     """Verify tool router rejects missing tenant and routes valid calls through router."""
-    router = VoxlyToolRouter()
+    router = DialtactToolRouter()
 
     # 1. Missing tenant MUST FAIL CLOSED (No "default" fallback)
     result_rejected = await router.route_and_execute(
@@ -135,7 +135,7 @@ async def test_tool_router_fails_closed_without_tenant_and_dispatches_with_tenan
 @pytest.mark.asyncio
 async def test_tool_router_handles_1_5s_sla_timeout_gracefully():
     """Verify tool router intercepts 1.5s SLA timeouts on write actions."""
-    router = VoxlyToolRouter()
+    router = DialtactToolRouter()
 
     async def _sim_slow_tool(*args, **kwargs):
         raise asyncio.TimeoutError()
@@ -186,7 +186,7 @@ async def test_nango_service_provider_mapping_and_connect_initiation():
                 tenant_id="11111111-1111-1111-1111-111111111111",
                 user_id="22222222-2222-2222-2222-222222222222",
                 app_name="GOOGLECALENDAR",
-                base_redirect_uri="https://app.voxly.ai/callback",
+                base_redirect_uri="https://app.dialtact.com/callback",
             )
             assert res is not None
             assert res["status"] == "INITIATED"

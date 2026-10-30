@@ -17,10 +17,7 @@ from server.db.models.entities import ConfigVersion
 from server.db.tier_store import (
     get_cached_tier_stack,
     get_tier_combination_id,
-    load_tier_cache,
     promote_tier_assignments,
-    sync_tier_assignments_from_env,
-    upsert_tier_assignment,
 )
 from server.providers import get_provider_registry, resolve_stack
 from server.utils.logger import logger
@@ -73,6 +70,8 @@ class ValidateSelectionBody(BaseModel):
 class ComposedVoiceProfileBody(BaseModel):
     expected_revision: int = Field(..., alias="expectedRevision", ge=0)
     composed_profile: dict[str, Any] = Field(..., alias="composedProfile")
+    # Required when the change would take an enabled tier offline.
+    confirm_take_offline: bool = Field(False, alias="confirmTakeOffline")
 
     model_config = {"populate_by_name": True}
 
@@ -311,9 +310,43 @@ async def dev_composed_voice_profile_update(
             payload=body.composed_profile,
             actor=session.subject,
             allow_premium=True,
+            confirm_take_offline=body.confirm_take_offline,
         )
     except VoiceProfileError as exc:
         raise _voice_profile_http_error(exc) from exc
+
+
+@router.get("/api/dev/stack/voice-profiles/usage")
+async def dev_composed_voice_profile_usage(session: SessionData = Depends(require_dev_session)):
+    """How many agents use each tier, so the admin sees the blast radius of a change."""
+    require_permission(session, "dev.stack.read")
+    from sqlalchemy import func, select
+
+    from server.db.models.entities import Agent
+    from server.services.saas.voice_stack_profiles import VoiceProfileError, canonical_voice_tier
+
+    app_env = effective_app_environment()
+    counts: dict[str, int] = {}
+    factory = get_session_factory()
+    if factory is None:
+        return {"environment": app_env, "agentsByTier": counts, "available": False}
+    try:
+        async with factory() as db:
+            rows = await db.execute(
+                select(Agent.default_tier, func.count())
+                .where(Agent.environment == app_env, Agent.status != "deleted")
+                .group_by(Agent.default_tier)
+            )
+            for raw_tier, count in rows.all():
+                try:
+                    tier = canonical_voice_tier(raw_tier or "medium")
+                except VoiceProfileError:
+                    tier = str(raw_tier or "")
+                counts[tier] = counts.get(tier, 0) + int(count or 0)
+    except Exception as exc:
+        logger.warning("[VOICE] Could not count agents per tier: %s", exc)
+        return {"environment": app_env, "agentsByTier": {}, "available": False}
+    return {"environment": app_env, "agentsByTier": counts, "available": True}
 
 
 @router.put("/api/dev/stack/voice-profiles/{tier}/activation")
@@ -436,36 +469,6 @@ async def dev_stack_tiers(session: SessionData = Depends(require_dev_session)):
         except AppError as e:
             tiers.append({"tier": tier, "error": e.user_message})
     return {"environment": app_env, "config_mode": effective_config_mode(), "tiers": tiers}
-
-
-@router.put("/api/dev/stack/tiers/{tier}")
-async def dev_stack_tier_update(tier: str, body: TierStackBody, session: SessionData = Depends(require_dev_session)):
-    require_permission(session, "dev.stack.write")
-    if tier not in constants.TIER_NAMES:
-        return {"ok": False, "error": {"code": "validation_error", "message": f"Unknown tier: {tier}"}}
-    settings = get_settings()
-    app_env = effective_app_environment()
-    stack = StackSelection(
-        stt=StageSelection(body.stt_provider, body.stt_model, {}),
-        llm=StageSelection(body.llm_provider, body.llm_model, {}),
-        tts=StageSelection(body.tts_provider, body.tts_model, {}),
-        language=body.language,
-    )
-    resolved = resolve_stack(
-        mode="frontend",
-        user_selection=stack,
-        tier=tier,
-        environment=app_env,
-    )
-    if get_session_factory():
-        await upsert_tier_assignment(
-            app_env,
-            tier,
-            resolved.combination_id,
-            resolved.to_safe_dict(),
-            actor=session.subject,
-        )
-    return {"ok": True, "tier": tier, "resolved": resolved.to_safe_dict()}
 
 
 @router.post("/api/dev/stack/test")
@@ -596,7 +599,10 @@ async def dev_promote(body: PromoteBody, session: SessionData = Depends(require_
         return {"ok": False, "error": {"code": "validation_error", "message": "target must be staging or production"}}
     settings = get_settings()
     source = effective_app_environment()
-    count = await promote_tier_assignments(source, target, actor=session.subject)
+    if source == target:
+        return {"ok": False, "error": {"code": "validation_error", "message": "Source and target environments are the same."}}
+    previous_rows: list[dict[str, Any]] = []
+    count = await promote_tier_assignments(source, target, actor=session.subject, snapshot=previous_rows)
     promotion_id = str(uuid.uuid4())
     factory = get_session_factory()
     if factory:
@@ -608,10 +614,13 @@ async def dev_promote(body: PromoteBody, session: SessionData = Depends(require_
                     resource_id=promotion_id,
                     version=1,
                     payload={
+                        "source_environment": source,
                         "target_environment": target,
                         "reason": body.reason,
                         "actor": session.subject,
                         "tier_rows_copied": count,
+                        # Exact prior target state, so rollback restores it.
+                        "previous_rows": previous_rows,
                     },
                     created_at=datetime.now(timezone.utc),
                 )
@@ -622,26 +631,47 @@ async def dev_promote(body: PromoteBody, session: SessionData = Depends(require_
 
 @router.post("/api/promotions/{promotion_id}/rollback")
 async def promotion_rollback(promotion_id: str, session: SessionData = Depends(require_dev_session)):
+    """Restore the target environment's tier rows to their state before the promotion."""
     require_permission(session, "dev.promote")
-    settings = get_settings()
-    app_env = effective_app_environment()
-    count = await sync_tier_assignments_from_env(environment=app_env)
-    await load_tier_cache()
+    from sqlalchemy import select
+
+    from server.db.tier_store import restore_tier_assignments
+
     factory = get_session_factory()
-    if factory:
-        async with factory() as db:
-            db.add(
-                ConfigVersion(
-                    id=uuid.uuid4(),
-                    resource_type="promotion_rollback",
-                    resource_id=promotion_id,
-                    version=1,
-                    payload={"actor": session.subject, "tier_rows_synced": count},
-                    created_at=datetime.now(timezone.utc),
-                )
+    if factory is None:
+        raise HTTPException(status_code=503, detail={"error": {"code": "durable_store_unavailable", "message": "Rollback requires the configuration store."}})
+    async with factory() as db:
+        promotion = (await db.execute(
+            select(ConfigVersion).where(
+                ConfigVersion.resource_type == "promotion",
+                ConfigVersion.resource_id == promotion_id,
+            ).limit(1)
+        )).scalar_one_or_none()
+    payload = promotion.payload if promotion is not None and isinstance(promotion.payload, dict) else None
+    if payload is None:
+        raise HTTPException(status_code=404, detail={"error": {"code": "promotion_not_found", "message": "Promotion not found."}})
+    previous_rows = payload.get("previous_rows")
+    target = str(payload.get("target_environment") or "")
+    if not isinstance(previous_rows, list) or not target:
+        raise HTTPException(status_code=409, detail={"error": {
+            "code": "rollback_unavailable",
+            "message": "This promotion was recorded without a snapshot and cannot be rolled back automatically.",
+        }})
+    count = await restore_tier_assignments(target, previous_rows, actor=session.subject)
+    async with factory() as db:
+        db.add(
+            ConfigVersion(
+                id=uuid.uuid4(),
+                resource_type="promotion_rollback",
+                resource_id=promotion_id,
+                version=1,
+                payload={"actor": session.subject, "target_environment": target, "tier_rows_restored": count},
+                created_at=datetime.now(timezone.utc),
             )
-            await db.commit()
-    return {"ok": True, "promotion_id": promotion_id, "tier_rows_synced": count}
+        )
+        await db.commit()
+    return {"ok": True, "promotion_id": promotion_id, "target_environment": target,
+            "tier_rows_restored": count, "tier_rows_synced": count}
 
 
 class SaasPhoneStackBody(BaseModel):

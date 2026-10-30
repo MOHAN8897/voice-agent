@@ -4,6 +4,9 @@ DB is authoritative for L1 when VOICE_AGENT_CONFIG_MODE=env (per environment+tie
 """
 from __future__ import annotations
 
+import asyncio
+import copy
+import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -20,6 +23,34 @@ from server.providers.resolver import StackResolver
 
 # In-memory cache: environment -> tier -> resolved safe dict (from stack_payload)
 _TIER_CACHE: dict[str, dict[str, dict[str, Any]]] = {}
+# API, voice and worker processes each keep their own cache and only the saving
+# process updates it directly. Reads older than this TTL trigger a background
+# reload so admin changes reach every process without a restart.
+TIER_CACHE_TTL_S = 30.0
+_TIER_CACHE_LOADED_AT = 0.0
+_REFRESH_TASK: Any = None
+
+
+def _schedule_refresh_if_stale() -> None:
+    global _REFRESH_TASK
+    if time.monotonic() - _TIER_CACHE_LOADED_AT < TIER_CACHE_TTL_S:
+        return
+    if _REFRESH_TASK is not None and not _REFRESH_TASK.done():
+        return
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return
+    if get_session_factory() is None:
+        return
+
+    async def _refresh() -> None:
+        try:
+            await load_tier_cache()
+        except Exception:
+            pass
+
+    _REFRESH_TASK = loop.create_task(_refresh())
 
 
 def _utcnow() -> datetime:
@@ -28,6 +59,7 @@ def _utcnow() -> datetime:
 
 def get_cached_tier_stack(environment: str, tier: str) -> StackSelection | None:
     """Sync read for StackResolver — populated by load_tier_cache / upsert."""
+    _schedule_refresh_if_stale()
     payload = _TIER_CACHE.get(environment, {}).get(tier)
     if not payload or not isinstance(payload, dict):
         return None
@@ -57,14 +89,43 @@ async def load_tier_cache() -> int:
     factory = get_session_factory()
     if factory is None:
         return 0
+    global _TIER_CACHE_LOADED_AT
     count = 0
+    fresh: dict[str, dict[str, dict[str, Any]]] = {}
     async with factory() as session:
         result = await session.execute(select(TierAssignment))
         for row in result.scalars().all():
             if row.stack_payload:
-                _cache_put(row.environment, row.tier, row.stack_payload)
+                fresh.setdefault(row.environment, {})[row.tier] = row.stack_payload
                 count += 1
+    # Replace wholesale so tiers deleted in another process disappear here too.
+    _TIER_CACHE.clear()
+    _TIER_CACHE.update(fresh)
+    _TIER_CACHE_LOADED_AT = time.monotonic()
     return count
+
+
+def _merge_preserving_profile(existing: Any, incoming: dict[str, Any]) -> dict[str, Any]:
+    """Stage-only writers must never delete the composed voice profile.
+
+    When a composed profile exists it stays authoritative: it is kept, and the
+    legacy stage keys are re-derived from it so both views describe one runtime.
+    """
+    merged = copy.deepcopy(incoming) if isinstance(incoming, dict) else {}
+    if not isinstance(existing, dict):
+        return merged
+    record = existing.get("composed_voice_profile")
+    if isinstance(record, dict) and "composed_voice_profile" not in merged:
+        merged["composed_voice_profile"] = copy.deepcopy(record)
+        profile = record.get("profile")
+        if isinstance(profile, dict) and profile.get("engines"):
+            try:
+                from server.services.saas.voice_stack_profiles import mirror_stage_payload
+
+                merged.update(mirror_stage_payload(profile, existing))
+            except Exception:
+                pass
+    return merged
 
 
 async def upsert_tier_assignment(
@@ -114,6 +175,7 @@ async def upsert_tier_assignment(
                         created_at=_utcnow(),
                     )
                 )
+            stack_payload = _merge_preserving_profile(row.stack_payload, stack_payload)
             row.combination_id = combination_id
             row.stack_payload = stack_payload
             row.updated_at = _utcnow()
@@ -157,8 +219,19 @@ async def sync_tier_assignments_from_env(environment: str | None = None, *, forc
     return count
 
 
-async def promote_tier_assignments(source_environment: str, target_environment: str, *, actor: str | None = None) -> int:
-    """Copy tier rows (combination_id + stack_payload) from source env to target."""
+async def promote_tier_assignments(
+    source_environment: str,
+    target_environment: str,
+    *,
+    actor: str | None = None,
+    snapshot: list[dict[str, Any]] | None = None,
+) -> int:
+    """Copy tier rows (combination_id + stack_payload) from source env to target.
+
+    When ``snapshot`` is given, the target's prior state of every touched tier is
+    appended to it (``stack_payload`` None when the tier did not exist) so the
+    promotion can be rolled back exactly with ``restore_tier_assignments``.
+    """
     factory = get_session_factory()
     if factory is None:
         return 0
@@ -177,6 +250,12 @@ async def promote_tier_assignments(source_environment: str, target_environment: 
                 )
             )
             target = target_result.scalar_one_or_none()
+            if snapshot is not None:
+                snapshot.append({
+                    "tier": src.tier,
+                    "combination_id": target.combination_id if target is not None else None,
+                    "stack_payload": copy.deepcopy(target.stack_payload) if target is not None else None,
+                })
             payload = src.stack_payload or {}
             if target is None:
                 target = TierAssignment(
@@ -213,6 +292,60 @@ async def promote_tier_assignments(source_environment: str, target_environment: 
     return count
 
 
+async def restore_tier_assignments(
+    environment: str, rows: list[dict[str, Any]], *, actor: str | None = None,
+) -> int:
+    """Put tier rows back exactly as captured by a promotion snapshot."""
+    factory = get_session_factory()
+    if factory is None:
+        return 0
+    restored = 0
+    async with factory() as session:
+        for item in rows:
+            tier = str(item.get("tier") or "")
+            if not tier:
+                continue
+            result = await session.execute(
+                select(TierAssignment).where(
+                    TierAssignment.environment == environment,
+                    TierAssignment.tier == tier,
+                ).with_for_update()
+            )
+            row = result.scalar_one_or_none()
+            payload = item.get("stack_payload")
+            if payload is None:
+                if row is not None:
+                    await session.delete(row)
+                _TIER_CACHE.get(environment, {}).pop(tier, None)
+            else:
+                if row is None:
+                    row = TierAssignment(
+                        id=uuid.uuid4(), environment=environment, tier=tier,
+                        combination_id=str(item.get("combination_id") or uuid.uuid4().hex[:16]),
+                        stack_payload=payload,
+                    )
+                    session.add(row)
+                else:
+                    row.combination_id = str(item.get("combination_id") or row.combination_id)
+                    row.stack_payload = payload
+                    row.updated_at = _utcnow()
+                _cache_put(environment, tier, payload)
+            session.add(ConfigVersion(
+                id=uuid.uuid4(), resource_type="tier_assignment_restore",
+                resource_id=f"{environment}:{tier}", version=1,
+                payload={"actor": actor, "restored": payload is not None}, created_at=_utcnow(),
+            ))
+            restored += 1
+        await session.commit()
+    try:
+        from server.services.saas.voice_stack_profiles import invalidate_profile_caches
+
+        invalidate_profile_caches(None)
+    except Exception:
+        pass
+    return restored
+
+
 async def get_tier_combination_id(environment: str, tier: str) -> str | None:
     factory = get_session_factory()
     if factory is None:
@@ -228,4 +361,6 @@ async def get_tier_combination_id(environment: str, tier: str) -> str | None:
 
 
 def clear_tier_cache_for_tests() -> None:
+    global _TIER_CACHE_LOADED_AT
     _TIER_CACHE.clear()
+    _TIER_CACHE_LOADED_AT = 0.0

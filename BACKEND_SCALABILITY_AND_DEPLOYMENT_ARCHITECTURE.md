@@ -407,7 +407,7 @@ JWT_SECRET=<RANDOM_64_CHAR_HEX>
 R2_ACCOUNT_ID=<YOUR_CLOUDFLARE_ACCOUNT_ID>
 R2_ACCESS_KEY_ID=<YOUR_R2_ACCESS_KEY_ID>
 R2_SECRET_ACCESS_KEY=<YOUR_R2_SECRET_ACCESS_KEY>
-R2_BUCKET_NAME=voxly-call-archives
+R2_BUCKET_NAME=dialtact-call-archives
 
 # Telephony Webhook Host & CORS
 PUBLIC_APP_URL=https://<your-railway-domain>.up.railway.app
@@ -557,7 +557,7 @@ from server.routes.telnyx_ws import router as telnyx_ws_router
 from server.routes.exotel_ws import router as exotel_ws_router
 from server.routes.web_agent_ws import router as web_agent_ws_router
 
-app = FastAPI(title="Voxly Voice Gateway")
+app = FastAPI(title="Dialtact Voice Gateway")
 app.include_router(telnyx_ws_router)
 app.include_router(exotel_ws_router)
 app.include_router(web_agent_ws_router)

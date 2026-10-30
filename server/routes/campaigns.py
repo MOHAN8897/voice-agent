@@ -211,8 +211,29 @@ async def list_campaigns(
         result = await db.execute(stmt)
         rows = result.all()
 
+        # Per-campaign analytics for the whole page in one grouped query, so the
+        # console does not poll /analytics once per campaign.
+        page_ids = [r.campaign_id for r, _ in rows]
+        dispositions: dict[str, dict[str, int]] = {str(cid): {} for cid in page_ids}
+        dial_attempts: dict[str, int] = {str(cid): 0 for cid in page_ids}
+        if page_ids:
+            grouped = await db.execute(
+                select(
+                    CampaignContact.campaign_id,
+                    CampaignContact.status,
+                    func.count(),
+                    func.coalesce(func.sum(CampaignContact.attempts), 0),
+                )
+                .where(CampaignContact.campaign_id.in_(page_ids))
+                .group_by(CampaignContact.campaign_id, CampaignContact.status)
+            )
+            for cid, contact_status, n, tried in grouped.all():
+                dispositions[str(cid)][contact_status] = int(n)
+                dial_attempts[str(cid)] += int(tried or 0)
+
         out = []
         for r, cnt in rows:
+            groups = dispositions.get(str(r.campaign_id), {})
             out.append({
                 "campaignId": str(r.campaign_id),
                 "campaign_id": str(r.campaign_id),
@@ -229,6 +250,13 @@ async def list_campaigns(
                 "retry_rules": r.retry_rules or {},
                 "totalContacts": int(cnt or 0),
                 "createdAt": r.created_at.isoformat() if r.created_at else None,
+                # Same shape as GET /api/campaigns/{id}/analytics.
+                "analytics": {
+                    "status": r.status,
+                    "attempts": dial_attempts.get(str(r.campaign_id), 0),
+                    "connects": groups.get("connected", 0) + groups.get("completed", 0),
+                    "dispositions": groups,
+                },
             })
         return {"campaigns": out}
 

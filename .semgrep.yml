@@ -42,7 +42,7 @@ rules:
         - "**/server/routes/app_*.py"
         - "**/server/routes/campaigns.py"
         - "**/server/routes/integrations.py"
-        - "**/voxly-ai/src/**"
+        - "**/dialtact-app/src/**"
     patterns:
       - pattern-regex: "(?i)\\b(plivo|exotel|composio)\\b"
 

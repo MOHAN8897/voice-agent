@@ -34,7 +34,7 @@ Platform fixes:
 - Model: `gpt-realtime-2.1-mini` (or env default)
 - PSTN wire: Telnyx L16 16 kHz path (existing)
 
-Subscriber UI (Voxly or simplified `/app` voice page):
+Subscriber UI (Dialtact or simplified `/app` voice page):
 
 - Language picker (maps to `agents.languages[0]`)
 - Voice dropdown (OpenAI Realtime voices supported by `build_realtime_voice_session`)

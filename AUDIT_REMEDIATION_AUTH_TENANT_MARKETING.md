@@ -5,7 +5,7 @@ verified by a test or is called out as not done.
 
 Verification used:
 - `server/tests/test_session_policy_and_password_reset.py` (13 new tests, pass)
-- `voxly-ai/e2e/auth-session-voice.spec.js` (11 tests, all pass, real account)
+- `dialtact-app/e2e/auth-session-voice.spec.js` (11 tests, all pass, real account)
 - Reticle verdicts against the running app on `http://127.0.0.1:5173`
 
 ---
@@ -63,7 +63,7 @@ a working mailer.
 `{"ok": true}`. A valid single-use reset token *is* proof of mailbox ownership, so the
 person is dropped straight into their console.
 
-Frontend (`voxly-ai/src/components/AuthModal.jsx`):
+Frontend (`dialtact-app/src/components/AuthModal.jsx`):
 - No redundant "Work Email" field on the reset form — the API never accepted one.
 - "Confirm new password" added; mismatch is caught before the request.
 - **Bug found while testing:** the token was read from `window.location.hash` once, in a
@@ -82,9 +82,9 @@ for the account is revoked (a password change must lock out a stolen cookie) and
 browser that made the change stays signed in.
 
 Frontend:
-- `voxly-ai/src/console/modules/SettingsModule.jsx` — "Password" card with current /
+- `dialtact-app/src/console/modules/SettingsModule.jsx` — "Password" card with current /
   new / confirm, plus a "Session security" card showing the idle and absolute bounds.
-- `voxly-ai/src/services/api.js` — `auth.changePassword()`, which adopts the new token.
+- `dialtact-app/src/services/api.js` — `auth.changePassword()`, which adopts the new token.
 - `web/components/auth/ChangePasswordCard.tsx` + wired into
   `web/app/app/(console)/settings/page.tsx`.
 
@@ -112,13 +112,13 @@ Server:
 - `refresh` distinguishes those two states from an invalid token, so the sign-in screen
   can say *why* rather than "invalid refresh token".
 
-Client (`voxly-ai/src/services/sessionIdle.js`, `IdleWarningModal.jsx`, `AuthContext`):
+Client (`dialtact-app/src/services/sessionIdle.js`, `IdleWarningModal.jsx`, `AuthContext`):
 - Activity on pointerdown / keydown / wheel / touchstart / focus / visibility.
 - Countdown modal with a focus trap, "Stay signed in", and "Sign out now".
 - Signed-out reason is shown on the sign-in form instead of silently emptying.
 - Cross-tab: activity and the warning are broadcast so a background tab cannot sign the
   person out of the tab they are using.
-- `voxly_idle_timeout_ms` in `localStorage` can only *lower* the bound (E2E + support).
+- `dialtact_idle_timeout_ms` in `localStorage` can only *lower* the bound (E2E + support).
 
 ---
 
@@ -145,7 +145,7 @@ instead of "Telnyx + Gemini 3.5".
 
 Voice picker: `AgentStudioModule.jsx` groups voices by **character tier** ("Ultra-Realistic
 Conversational (Tier 1)", "Expressive Customer Care", "Professional & Formal", "Bright &
-Energetic") instead of by supplier. `IntegrationsModule` says "Voxly platform API";
+Energetic") instead of by supplier. `IntegrationsModule` says "Dialtact platform API";
 `AgentDialBulkPanel`'s ceiling comment no longer names the carrier.
 
 ---
@@ -172,8 +172,8 @@ Energetic") instead of by supplier. `IntegrationsModule` says "Voxly platform AP
 | Travel & Hospitality | Itinerary change |
 
 24 kHz mono 16-bit WAV (~8.7–10.5 s each), written to
-`voxly-ai/public/audio/voxly/samples/`, with a generated manifest
-(`voxly-ai/src/data/voiceSamples.js`) that the UI imports. Re-record with
+`dialtact-app/public/audio/dialtact/samples/`, with a generated manifest
+(`dialtact-app/src/data/voiceSamples.js`) that the UI imports. Re-record with
 `.venv\Scripts\python.exe scripts\record_marketing_voice_samples.py [--force] [--only <id>]`.
 
 Where they are wired in:
@@ -195,11 +195,11 @@ Where they are wired in:
 ## 7. 3D scene on the critical path — **fixed**
 
 `three` + `three/fiber` were ~1 MB uncompressed in the entry graph. `Hero` now renders
-`LazyVoxlyScene`, a `React.lazy` boundary that falls back to the real preview image
+`LazyDialtactScene`, a `React.lazy` boundary that falls back to the real preview image
 (container keeps its height, so no layout shift).
 
 Getting three.js actually *out* of the initial graph needed three fixes in
-`voxly-ai/vite.config.js`:
+`dialtact-app/vite.config.js`:
 - `manualChunks` object form put `react-dom` (pulled in by `@react-three/*` via
   `its-fine`) inside the 3D chunk, so the entry statically imported it. Now a function
   that sends `react`/`react-dom`/`scheduler`/`react-reconciler` to their own chunk.
@@ -214,7 +214,7 @@ react-vendor   239 kB │ gzip  75 kB
 ui-vendor       38 kB │ gzip   8 kB
 index          497 kB │ gzip 130 kB
 three          785 kB │ gzip 208 kB   <- lazy, fetched when the mascot mounts
-VoxlyScene      16 kB │ gzip   6 kB   <- lazy
+DialtactScene      16 kB │ gzip   6 kB   <- lazy
 ```
 
 The mascot itself is untouched: same scene, same gestures, same lip-sync.
@@ -223,7 +223,7 @@ The mascot itself is untouched: same scene, same gestures, same lip-sync.
 
 ## 7b. The landing page said the same thing 15 times — **fixed**
 
-Follow-up pass on repetition and unsourced claims. `voxly-ai/scripts/check-landing-copy.mjs`
+Follow-up pass on repetition and unsourced claims. `dialtact-app/scripts/check-landing-copy.mjs`
 (`npm run check:copy`) now fails the build on any of these regressions, because every one
 of them was invisible: the build passed, the page looked fine, and the copy still
 contradicted itself.
@@ -295,9 +295,9 @@ Later, on the landing-copy pass:
   writes into the same `.next` directory as the running `next dev` on port 3000 and the
   two contend. I stopped it rather than report a green build I had not seen. Run it with
   the dev server stopped.
-- **Rebranding Voxly / Vāṇi.** The report offers three options and a decision; that is a
+- **Rebranding Dialtact / Vāṇi.** The report offers three options and a decision; that is a
   product call, not a bug.
-- **`web/app/app/*` still redirects to the Voxly app** (`web/middleware.ts`), so
+- **`web/app/app/*` still redirects to the Dialtact app** (`web/middleware.ts`), so
   `/app/calls/[id]` is dev-only. The redaction is in the API, so it holds on both
   surfaces.
 
@@ -307,7 +307,7 @@ Verified identical on a clean `HEAD` worktree, so nothing here was introduced by
 
 - 19 `pytest server/tests` failures (brief compilation, LLM catalogue, stack resolver,
   trace API, dev environment, TTS guardrails).
-- `voxly-ai` Playwright: `console-billing` and `smoke` expect Razorpay `currency: INR`
+- `dialtact-app` Playwright: `console-billing` and `smoke` expect Razorpay `currency: INR`
   and get `USD` (drifted with the international-Razorpay commit);
   `injected-session-create` needs a dev-tester injected session.
 - `npx playwright test` with no file list aborts: `e2e/backend-contract.spec.js` is a

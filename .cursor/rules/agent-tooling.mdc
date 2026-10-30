@@ -12,8 +12,8 @@ Use **Chisle** for prose + code efficiency (`.cursor/rules/chisle.mdc`).
 
 ## UI verification — Reticle
 
-User-facing UI work on **voxly-ai** (Vite) is verified with **Reticle** (`reticle_*` MCP tools).  
-Instrumented app: `voxly-ai/` · skill: `.agents/skills/install-and-verify` · details: `AGENTS.md` (reticle block) + `RETICLE.md`.  
+User-facing UI work on **dialtact-app** (Vite) is verified with **Reticle** (`reticle_*` MCP tools).  
+Instrumented app: `dialtact-app/` · skill: `.agents/skills/install-and-verify` · details: `AGENTS.md` (reticle block) + `RETICLE.md`.  
 No verdict from `reticle_act_and_wait` / `reticle_assert` → do not claim the UI change is done. Skip Reticle for docs/backend-only with one-line reason.
 
 ## Code navigation — Graft

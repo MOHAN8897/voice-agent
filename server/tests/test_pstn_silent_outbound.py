@@ -40,7 +40,7 @@ GENERIC_FALLBACK_EN = "Hi, this is a courtesy call. Do you have a moment?"
             "Hi, this is Priya from Vertex Education about admissions. Do you have a moment?",
         ),
         (
-            "voxly console writes 'OPENING LINE' + line",
+            "dialtact console writes 'OPENING LINE' + line",
             "<!-- section:facts:2 -->\nOPENING LINE\n"
             "Hi, I am Alex from Spandana Private Limited regarding fees. Do you have a moment?\n",
             "Hi, I am Alex from Spandana Private Limited regarding fees. Do you have a moment?",

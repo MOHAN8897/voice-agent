@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+import time
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
@@ -24,6 +25,9 @@ logger = logging.getLogger(__name__)
 _LOCK = threading.Lock()
 _PATH = Path(__file__).resolve().parents[3] / "data" / "billing_rates.json"
 _cache: dict[str, Any] | None = None
+_cache_loaded_at: float = 0.0
+_refresh_task: Any = None
+RATES_CACHE_TTL_S = 30.0
 _USD_MICRODOLLARS_PER_DOLLAR = 1_000_000
 _USD_MICRODOLLARS_PER_CENT = 10_000
 
@@ -119,8 +123,9 @@ def _load_disk_fallback() -> dict[str, Any]:
 
 
 def _save_disk_backup(data: dict[str, Any]) -> None:
-    global _cache
+    global _cache, _cache_loaded_at
     with _LOCK:
+        _cache_loaded_at = time.monotonic()
         try:
             _PATH.parent.mkdir(parents=True, exist_ok=True)
             _PATH.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
@@ -131,16 +136,103 @@ def _save_disk_backup(data: dict[str, Any]) -> None:
 
 def set_cached_rates(rates: dict[str, Any]) -> None:
     """Set in-memory cache directly (used in tests and after DB updates)."""
-    global _cache
+    global _cache, _cache_loaded_at
     with _LOCK:
         _cache = dict(rates)
+        _cache_loaded_at = time.monotonic()
 
 
 def clear_rates_cache() -> None:
     """Clear in-memory cache (for test isolation)."""
-    global _cache
+    global _cache, _cache_loaded_at
     with _LOCK:
         _cache = None
+        _cache_loaded_at = 0.0
+
+
+def _schedule_refresh_if_stale() -> None:
+    """Refresh this process's cached rates from the DB in the background.
+
+    API, voice and worker processes each hold their own cache; only the saving
+    process is cleared on an admin change. A short TTL bounds how long another
+    process keeps a superseded version (calls still snapshot DB-read rates).
+    """
+    global _refresh_task
+    if time.monotonic() - _cache_loaded_at < RATES_CACHE_TTL_S:
+        return
+    if _refresh_task is not None and not _refresh_task.done():
+        return
+    try:
+        import asyncio
+
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return
+    from server.db.connection import get_session_factory
+
+    if get_session_factory() is None:
+        return
+
+    async def _refresh() -> None:
+        try:
+            await load_rates_from_db_or_seed()
+        except Exception as exc:
+            logger.info("[BILLING_RATES] background refresh skipped: %s", exc)
+
+    _refresh_task = loop.create_task(_refresh())
+
+
+def rate_row_data(latest: Any) -> dict[str, Any]:
+    """The one mapping from an active BillingRateVersion row to a rate dict."""
+    return {
+        "version": latest.version,
+        "pstn_rate_usd_cents_per_min": latest.pstn_rate_usd_cents_per_min,
+        "web_agent_rate_usd_cents_per_min": latest.web_agent_rate_usd_cents_per_min,
+        "did_monthly_usd_cents": latest.did_monthly_usd_cents,
+        "pstn_rate_usd_micros_per_min": latest.pstn_rate_usd_micros_per_min,
+        "web_agent_rate_usd_micros_per_min": latest.web_agent_rate_usd_micros_per_min,
+        "did_monthly_usd_micros": latest.did_monthly_usd_micros,
+        "pstn_rate_inr_paise_per_min": latest.pstn_rate_inr_paise_per_min,
+        "web_agent_rate_inr_paise_per_min": latest.web_agent_rate_inr_paise_per_min,
+        "did_monthly_inr_paise": latest.did_monthly_inr_paise,
+        "pstn_low_rate_usd_micros_per_min": getattr(latest, "pstn_low_rate_usd_micros_per_min", None),
+        "pstn_low_rate_inr_paise_per_min": getattr(latest, "pstn_low_rate_inr_paise_per_min", None),
+        "pstn_medium_rate_usd_micros_per_min": getattr(latest, "pstn_medium_rate_usd_micros_per_min", None),
+        "pstn_medium_rate_inr_paise_per_min": getattr(latest, "pstn_medium_rate_inr_paise_per_min", None),
+        "pstn_premium_rate_usd_micros_per_min": getattr(latest, "pstn_premium_rate_usd_micros_per_min", None),
+        "pstn_premium_rate_inr_paise_per_min": getattr(latest, "pstn_premium_rate_inr_paise_per_min", None),
+        "fx_rate_inr": float(latest.fx_rate_inr),
+        "effective_from": latest.effective_from.isoformat() if latest.effective_from else _utcnow().isoformat(),
+        "created_by": latest.created_by,
+        "reason": latest.reason,
+    }
+
+
+def tier_rates_from_row(latest: Any) -> dict[str, Any]:
+    """Rate dict for tier authorization: the row's own values, plus per-tier versions.
+
+    Only columns stored on the row count; derived legacy fallbacks are left to
+    the tier-rate reader so a missing tier price is never invented here.
+    """
+    data = rate_row_data(latest)
+    ver = data["version"]
+    data["low_rate_version"] = ver if data.get("pstn_low_rate_usd_micros_per_min") is not None else None
+    data["medium_rate_version"] = ver if data.get("pstn_medium_rate_usd_micros_per_min") is not None else None
+    data["premium_rate_version"] = ver if (
+        data.get("pstn_premium_rate_usd_micros_per_min") is not None
+        or data.get("pstn_rate_usd_micros_per_min") is not None
+    ) else None
+    # Web defaults must always be present (older rows only carry cents).
+    try:
+        fx = _decimal(data["fx_rate_inr"])
+        cents = int(data.get("web_agent_rate_usd_cents_per_min") or 0)
+        if data.get("web_agent_rate_usd_micros_per_min") is None:
+            data["web_agent_rate_usd_micros_per_min"] = cents * _USD_MICRODOLLARS_PER_CENT
+        if data.get("web_agent_rate_inr_paise_per_min") is None:
+            data["web_agent_rate_inr_paise_per_min"] = _round_half_up(Decimal(cents) * fx)
+    except (ValueError, TypeError):
+        pass
+    return data
 
 
 async def load_rates_from_db_or_seed() -> dict[str, Any]:
@@ -183,28 +275,7 @@ async def load_rates_from_db_or_seed() -> dict[str, Any]:
             latest = res.scalar_one_or_none()
 
             if latest is not None:
-                data = {
-                    "version": latest.version,
-                    "pstn_rate_usd_cents_per_min": latest.pstn_rate_usd_cents_per_min,
-                    "web_agent_rate_usd_cents_per_min": latest.web_agent_rate_usd_cents_per_min,
-                    "did_monthly_usd_cents": latest.did_monthly_usd_cents,
-                    "pstn_rate_usd_micros_per_min": latest.pstn_rate_usd_micros_per_min,
-                    "web_agent_rate_usd_micros_per_min": latest.web_agent_rate_usd_micros_per_min,
-                    "did_monthly_usd_micros": latest.did_monthly_usd_micros,
-                    "pstn_rate_inr_paise_per_min": latest.pstn_rate_inr_paise_per_min,
-                    "web_agent_rate_inr_paise_per_min": latest.web_agent_rate_inr_paise_per_min,
-                    "did_monthly_inr_paise": latest.did_monthly_inr_paise,
-                    "pstn_low_rate_usd_micros_per_min": getattr(latest, "pstn_low_rate_usd_micros_per_min", None),
-                    "pstn_low_rate_inr_paise_per_min": getattr(latest, "pstn_low_rate_inr_paise_per_min", None),
-                    "pstn_medium_rate_usd_micros_per_min": getattr(latest, "pstn_medium_rate_usd_micros_per_min", None),
-                    "pstn_medium_rate_inr_paise_per_min": getattr(latest, "pstn_medium_rate_inr_paise_per_min", None),
-                    "pstn_premium_rate_usd_micros_per_min": getattr(latest, "pstn_premium_rate_usd_micros_per_min", None),
-                    "pstn_premium_rate_inr_paise_per_min": getattr(latest, "pstn_premium_rate_inr_paise_per_min", None),
-                    "fx_rate_inr": float(latest.fx_rate_inr),
-                    "effective_from": latest.effective_from.isoformat() if latest.effective_from else _utcnow().isoformat(),
-                    "created_by": latest.created_by,
-                    "reason": latest.reason,
-                }
+                data = rate_row_data(latest)
                 # Old versions legitimately have NULL in the native-rate
                 # columns. Normalize those from the original cents and FX,
                 # while preserving any values entered directly in INR.
@@ -267,8 +338,10 @@ def effective_rates() -> dict[str, int | float]:
     """Synchronous read for effective rates, cached with disk/settings fallback."""
     global _cache
     with _LOCK:
-        if _cache and _cache.get("pstn_rate_usd_cents_per_min"):
-            return _expand_rate_data(_cache)
+        cached = _cache
+    if cached and cached.get("pstn_rate_usd_cents_per_min"):
+        _schedule_refresh_if_stale()
+        return _expand_rate_data(cached)
 
     settings = get_settings()
     ov = _load_disk_fallback()
@@ -568,12 +641,12 @@ async def update_rates_versioned(
             session.add(new_row)
 
             # Synchronize active TierAssignments for standard tiers
+            synced_tiers: list[tuple[str, str, dict[str, Any]]] = []
             try:
                 import copy
                 from server.db.models.entities import TierAssignment
                 from sqlalchemy.orm.attributes import flag_modified
                 from server.services.dev_runtime import effective_app_environment
-                from server.db.tier_store import _cache_put
 
                 env = effective_app_environment()
                 tier_paise_map = {
@@ -596,17 +669,45 @@ async def update_rates_versioned(
                         payload_dict = copy.deepcopy(t_row.stack_payload)
                         rec = payload_dict.get("composed_voice_profile")
                         if isinstance(rec, dict) and isinstance(rec.get("profile"), dict):
+                            current_price = rec["profile"].get("retailRateInr")
+                            if current_price is not None and abs(float(current_price) - inr_val) < 0.005:
+                                continue  # Already the tier card price (e.g. published from it).
                             rec["profile"]["retailRateInr"] = inr_val
                             rec["profile"]["rateInr"] = inr_val
+                            # A price change is a profile change: bump the revision
+                            # and keep an audit row, like any tier-card save.
+                            rec["revision"] = int(rec.get("revision") or 0) + 1
                             payload_dict["composed_voice_profile"] = rec
                             t_row.stack_payload = payload_dict
                             flag_modified(t_row, "stack_payload")
-                            _cache_put(env, t_name, payload_dict)
+                            from sqlalchemy import func as _func
+                            from server.db.models.entities import ConfigVersion
+                            import uuid as _uuid
+
+                            resource_id = f"{env}:{t_name}"
+                            last = (await session.execute(
+                                select(_func.max(ConfigVersion.version)).where(
+                                    ConfigVersion.resource_type == "composed_voice_profile",
+                                    ConfigVersion.resource_id == resource_id,
+                                )
+                            )).scalar_one_or_none()
+                            session.add(ConfigVersion(
+                                id=_uuid.uuid4(), resource_type="composed_voice_profile", resource_id=resource_id,
+                                version=int(last or 0) + 1,
+                                payload={"profile": rec["profile"], "profile_revision": rec["revision"],
+                                         "actor": actor, "source": "billing_rate_version", "rate_version": next_version},
+                                created_at=now,
+                            ))
+                            synced_tiers.append((env, t_name, payload_dict))
             except Exception as e:
                 logger.warning("[BILLING_RATES] TierAssignment sync error: %s", e)
 
             await session.commit()
             version_id = next_version
+            from server.db.tier_store import _cache_put as _tier_cache_put
+
+            for env_name, t_name, payload_dict in synced_tiers:
+                _tier_cache_put(env_name, t_name, payload_dict)
     else:
         version_id = int(curr.get("version", 1)) + 1
 
@@ -633,6 +734,12 @@ async def update_rates_versioned(
         "reason": clean_reason,
     }
     _save_disk_backup(updated_data)
+    try:
+        from server.services.saas.voice_stack_profiles import invalidate_profile_caches
+
+        invalidate_profile_caches(None)
+    except Exception:
+        pass
     return _expand_rate_data(updated_data)
 
 

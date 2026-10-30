@@ -274,6 +274,8 @@ async def lifespan(app: FastAPI):
                 )
 
                 async def _billing_reconciliation_loop() -> None:
+                    # Each pass: open orders round robin, expired orders (late
+                    # captures, each at most hourly for 7 days), bulk expiry.
                     while True:
                         try:
                             result = await reconcile_pending_orders(limit=10)
@@ -488,6 +490,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             # Dev Test Studio UI polls — exempt from general limiter (prevents PSTN panel 429 storms).
             if path.startswith("/api/dev/telephony/pstn-stack/") or path.startswith("/api/test-studio/prefs"):
                 return await call_next(request)
+            # Provider webhooks: the HMAC signature is the gate, and providers
+            # deliver bursts from shared IPs. A 429 here makes Razorpay retry,
+            # then disable the webhook, and paid wallets stop being credited.
+            if path.startswith("/api/webhooks/"):
+                return await call_next(request)
             client_ip = request.client.host if request.client else "unknown"
             # TTS/Voice stricter
             if any(path.startswith(p) for p in self._LIMITED_PATHS_TTS):
@@ -656,7 +663,7 @@ def _should_serve_client() -> bool:
     """Opt-in only.
 
     The legacy `client/` app used to be served at `/`, which meant the public API
-    hostname showed an obsolete "Telugu Agent" page instead of the product. Voxly is
+    hostname showed an obsolete "Telugu Agent" page instead of the product. Dialtact is
     the frontend, so this is off unless it is explicitly re-enabled.
     """
     try:
@@ -678,7 +685,7 @@ async def root():
         settings = get_settings()
         product = (
             getattr(settings, "dialtact_frontend_url", None)
-            or getattr(settings, "voxly_frontend_url", None)
+            or getattr(settings, "dialtact_frontend_url", None)
             or ""
         ).strip().rstrip("/")
     except Exception:
@@ -695,7 +702,7 @@ async def root():
 
 
 # Serve the legacy client only when explicitly enabled, and never at `/`, so it can
-# no longer shadow a real API route. It is superseded by voxly-ai.
+# no longer shadow a real API route. It is superseded by dialtact-app.
 if CLIENT_DIR.exists() and _should_serve_client():
     @app.get("/legacy")
     async def serve_legacy_index():

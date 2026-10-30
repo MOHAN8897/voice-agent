@@ -2,7 +2,7 @@
 
 Normal invocation is a dry run. It makes no HTTP requests. To dial, provide
 operator-owned test values through environment variables and pass ``--live``
-with ``VOXLY_ALLOW_REAL_TEST_CALLS=1`` set.
+with ``DIALTACT_ALLOW_REAL_TEST_CALLS=1`` set.
 """
 from __future__ import annotations
 
@@ -39,12 +39,12 @@ def resolve_live_config(
     env = os.environ if environ is None else environ
     if not live_requested:
         raise ValueError("Live calling is disabled. Use the default mock-only mode.")
-    if env.get("VOXLY_ALLOW_REAL_TEST_CALLS") != "1":
-        raise ValueError("Set VOXLY_ALLOW_REAL_TEST_CALLS=1 to explicitly enable a real call.")
+    if env.get("DIALTACT_ALLOW_REAL_TEST_CALLS") != "1":
+        raise ValueError("Set DIALTACT_ALLOW_REAL_TEST_CALLS=1 to explicitly enable a real call.")
     if not 5 <= talk_seconds <= 300:
         raise ValueError("talk_seconds must be between 5 and 300.")
 
-    base_url = (env.get("VOXLY_TEST_API_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
+    base_url = (env.get("DIALTACT_TEST_API_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
     parsed = urlsplit(base_url)
     if (
         parsed.scheme != "http"
@@ -58,10 +58,10 @@ def resolve_live_config(
         raise ValueError("The test API URL must be a plain HTTP loopback origin.")
 
     required = {
-        "to_e164": env.get("VOXLY_TEST_CALL_TO_E164", "").strip(),
-        "agent_id": env.get("VOXLY_TEST_CALL_AGENT_ID", "").strip(),
-        "username": env.get("VOXLY_DEV_USERNAME", "").strip(),
-        "password": env.get("VOXLY_DEV_PASSWORD", ""),
+        "to_e164": env.get("DIALTACT_TEST_CALL_TO_E164", "").strip(),
+        "agent_id": env.get("DIALTACT_TEST_CALL_AGENT_ID", "").strip(),
+        "username": env.get("DIALTACT_DEV_USERNAME", "").strip(),
+        "password": env.get("DIALTACT_DEV_PASSWORD", ""),
     }
     missing = [key for key, value in required.items() if not value]
     if missing:

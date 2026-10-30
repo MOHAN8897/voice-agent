@@ -1,7 +1,7 @@
 # Unified dev stack - API + Web + Cloudflare tunnel (one command)
 #
 # Usage:
-#   npm run dev              # Voxly + API + named Cloudflare tunnel (PSTN)
+#   npm run dev              # Dialtact + API + named Cloudflare tunnel (PSTN)
 #   npm run dev:open         # same + open browser
 #   npm run share            # full stack + print friend share link
 #   npm run dev:down         # stop everything including tunnel
@@ -13,8 +13,8 @@
 #   share     - API + web + tunnel + public app link for friends
 
 param(
-    [ValidateSet("auto", "local", "voxly", "telephony", "share")]
-    [string]$Mode = "voxly",
+    [ValidateSet("auto", "local", "dialtact", "telephony", "share")]
+    [string]$Mode = "dialtact",
     [switch]$Open,
     [switch]$KillStale
 )
@@ -50,7 +50,7 @@ function Test-NamedTunnelConfig {
 
 function Should-StartTunnel {
     if ($Mode -eq "local") { return $false }
-    if ($Mode -in @("telephony", "share", "voxly")) {
+    if ($Mode -in @("telephony", "share", "dialtact")) {
         return Test-NamedTunnelConfig
     }
     # auto: tunnel only when explicitly enabled (avoids heavy CF + public URL sync on every dev)
@@ -64,7 +64,7 @@ function Should-StartTunnel {
 function Should-SyncRemoteEnv {
     if ($Mode -eq "local") { return $false }
     if ($Mode -in @("telephony", "share")) { return $true }
-    if ($Mode -eq "voxly" -and (Test-NamedTunnelConfig)) { return $true }
+    if ($Mode -eq "dialtact" -and (Test-NamedTunnelConfig)) { return $true }
     return Test-EnvFlag "DEV_ENABLE_TUNNEL"
 }
 
@@ -79,7 +79,7 @@ if (-not (Stop-VoiceAgentDevStack)) {
     Write-Error "Could not free dev ports. Close leftover Voice Agent windows and retry."
 }
 
-# --- Step 2: sync env URLs from named tunnel config (optional; off in voxly/local mode) ---
+# --- Step 2: sync env URLs from named tunnel config (optional; off in dialtact/local mode) ---
 $synced = $null
 if (Should-SyncRemoteEnv -and (Test-NamedTunnelConfig)) {
     $synced = & (Join-Path $PSScriptRoot "env_sync.ps1")
@@ -90,11 +90,11 @@ if (Should-SyncRemoteEnv -and (Test-NamedTunnelConfig)) {
 # serves the product UI and carrier webhooks; never expect public /dev to be OK.
 $productionWeb =
     ($Mode -in @("share", "telephony")) -or (Test-EnvFlag "DEV_PRODUCTION_PANEL")
-$voxlyFocus = $Mode -eq "voxly"
+$dialtactFocus = $Mode -eq "dialtact"
 if ($Open) {
-    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -Open -QuietBanner -ProductionWeb:$productionWeb -VoxlyFocus:$voxlyFocus
+    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -Open -QuietBanner -ProductionWeb:$productionWeb -DialtactFocus:$dialtactFocus
 } else {
-    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -QuietBanner -ProductionWeb:$productionWeb -VoxlyFocus:$voxlyFocus
+    & (Join-Path $PSScriptRoot "dev_up.ps1") -Wait -QuietBanner -ProductionWeb:$productionWeb -DialtactFocus:$dialtactFocus
 }
 if ($LASTEXITCODE -ne 0) {
     throw "Local stack failed to start. See data/dev-logs/api.log and web.log."

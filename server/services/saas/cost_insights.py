@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 import json
 import random
 from datetime import datetime, timedelta, timezone
@@ -384,8 +385,35 @@ def read_unused_prewarm(since: datetime, now: datetime) -> list[dict]:
     return records
 
 
-async def load_cost_insights(days: int = 30) -> dict:
-    """Called only after the platform billing permission gate; crosses tenants."""
+#: Insights per ``days`` window. The report scans up to MAX_CALLS calls plus their
+#: ledger JSON, so repeated admin views within this window reuse one result.
+CACHE_TTL_SECONDS = 300.0
+_CACHE: dict[int, tuple[float, dict]] = {}
+_CACHE_LOCKS: dict[int, asyncio.Lock] = {}
+
+
+def clear_cost_insights_cache() -> None:
+    _CACHE.clear()
+    _CACHE_LOCKS.clear()
+
+
+async def load_cost_insights(days: int = 30, *, fresh: bool = False) -> dict:
+    """Called only after the platform billing permission gate; crosses tenants.
+
+    Cached in-process for ``CACHE_TTL_SECONDS`` per ``days``; ``fresh`` recomputes
+    (an explicit "Refresh costs" click), and concurrent requests share one build.
+    """
+    lock = _CACHE_LOCKS.setdefault(days, asyncio.Lock())
+    async with lock:
+        hit = _CACHE.get(days)
+        if not fresh and hit is not None and time.monotonic() - hit[0] < CACHE_TTL_SECONDS:
+            return hit[1]
+        result = await _build_cost_insights(days)
+        _CACHE[days] = (time.monotonic(), result)
+        return result
+
+
+async def _build_cost_insights(days: int) -> dict:
     from server.db.connection import get_session_factory
     from server.db.models.entities import Call, Tenant
     from server.services.saas.billing_rates import load_current_rates

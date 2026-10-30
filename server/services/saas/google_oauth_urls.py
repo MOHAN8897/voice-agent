@@ -15,6 +15,6 @@ def google_oauth_redirect_uri(origin: str | None = None) -> str:
     settings = get_settings()
     if settings.google_oauth_redirect_uri:
         return settings.google_oauth_redirect_uri.strip()
-    base = settings.voxly_frontend_url.rstrip("/")
+    base = settings.dialtact_frontend_url.rstrip("/")
     canonical_base = base.replace("://www.dialtact.com", "://dialtact.com")
     return f"{canonical_base}/api/auth/google/callback"

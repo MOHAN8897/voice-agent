@@ -26,7 +26,7 @@ from server.db.models.saas_models import TenantMembership
 from server.realtime.testing import FakeRealtimeVoiceAdapter
 from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
 from server.services.pstn_text_chunker import extract_prewarm_greeting, extract_opening_greeting
-from server.services.tool_router import VoxlyToolRouter
+from server.services.tool_router import DialtactToolRouter
 from server.call.post_call_pipeline import reconcile_and_dispatch_post_call
 
 
@@ -337,7 +337,7 @@ async def test_agent_flow_calendar_conflict_and_alternative():
 @pytest.mark.asyncio
 async def test_tool_sla_timeout_acoustic_bridge_and_post_call_reconciliation():
     """Verify tool SLA timeout returns acoustic filler message, records timed_out_pending, and post-call reconciles it."""
-    router = VoxlyToolRouter()
+    router = DialtactToolRouter()
     call_id = f"test-sla-call-{uuid.uuid4().hex[:8]}"
 
     async def _slow_tool(*args, **kwargs):
@@ -409,7 +409,7 @@ async def test_stripe_endpoints_fail_closed_and_return_410():
 @pytest.mark.asyncio
 async def test_tenant_isolation_fails_closed_on_cross_tenant_tool_request():
     """Verify tool router rejects requests where tenant_id does not match caller or is empty."""
-    router = VoxlyToolRouter()
+    router = DialtactToolRouter()
 
     res_missing_tenant = await router.route_and_execute(
         tenant_id=None,

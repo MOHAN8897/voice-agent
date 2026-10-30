@@ -305,11 +305,20 @@ async def test_resolved_selection_pins_exact_stages_revision_and_native_rate(mon
     assert snapshot["profileRevision"] == 4
     assert snapshot["retailRate"]["version"] == 7
 
+    # An older revision whose aliases still resolve stays callable (admin knob
+    # and price edits bump the revision without changing the agent's choice).
     stale = copy.deepcopy(selection)
     stale["profileRevision"] = 3
+    _stack, stale_snapshot = await profiles.resolve_agent_selection(
+        environment="test", tier="low", voice_settings=stale, language="te-IN"
+    )
+    assert stale_snapshot["profileRevision"] == 4
+
+    # A removed choice on an older revision is still a revision conflict.
+    removed = {**stale, "voiceId": "voice-removed"}
     with pytest.raises(profiles.VoiceProfileError) as conflict:
         await profiles.resolve_agent_selection(
-            environment="test", tier="low", voice_settings=stale, language="te-IN"
+            environment="test", tier="low", voice_settings=removed, language="te-IN"
         )
     assert conflict.value.code == "profile_revision_conflict"
 

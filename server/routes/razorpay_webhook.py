@@ -10,9 +10,14 @@ Security posture:
   A missing endpoint secret disables the route (503) rather than trusting it.
 * Every delivery is written to a durable inbox keyed by the provider event id,
   so retries and duplicate deliveries cannot double-credit.
-* Handler failures return 5xx so Razorpay retries. Business-level "not our
-  order" events are recorded as ignored and acknowledged, which stops an
-  infinite retry loop for traffic that can never succeed.
+* Transient failures (database, provider) return 5xx so Razorpay retries.
+  Business-level "not our order" events are recorded as ignored, and
+  permanent rejections (amount/currency mismatch, impossible refund) are
+  recorded as rejected and alerted on. Both are acknowledged with 200: a
+  retry can never succeed, and repeated 5xx makes Razorpay disable the
+  webhook for every tenant.
+* The per-IP rate limiter does not apply here (see `RateLimitMiddleware`):
+  the HMAC signature is the gate, and Razorpay delivers from shared IPs.
 """
 from __future__ import annotations
 
@@ -27,7 +32,9 @@ from server.config.env import get_settings
 from server.db.connection import get_session_factory
 from server.services.saas.razorpay_service import (
     apply_refund,
+    capture_authorized_payment,
     credit_provider_payment,
+    handle_dispute_event,
     mark_order_failed,
     verify_webhook_signature,
 )
@@ -36,6 +43,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 MAX_WEBHOOK_BYTES = 512 * 1024
+
+#: Codes that no retry can fix: the event is inconsistent with what we sold.
+PERMANENT_ERRORS = frozenset(
+    {
+        "payment_amount_mismatch",
+        "payment_currency_mismatch",
+        "invalid_refund_amount",
+        "refund_currency_mismatch",
+    }
+)
+#: Codes meaning the event is not about anything we can act on.
+IGNORED_ERRORS = frozenset({"order_not_found", "payment_order_mismatch", "payment_id_mismatch"})
+#: Statuses after which a redelivery is acknowledged without re-running.
+_FINAL_STATUSES = ("handled", "ignored", "rejected")
 
 
 def _entity(payload: dict[str, Any], kind: str) -> dict[str, Any]:
@@ -68,6 +89,13 @@ async def _handle_event(event_type: str, payload: dict[str, Any]) -> str:
         await credit_provider_payment(payment, source="webhook")
         return "handled"
 
+    if event_type == "payment.authorized":
+        payment = _entity(payload, "payment")
+        if not payment:
+            return "ignored"
+        await capture_authorized_payment(payment, source="webhook")
+        return "handled"
+
     if event_type == "payment.failed":
         payment = _entity(payload, "payment")
         if not payment:
@@ -91,17 +119,9 @@ async def _handle_event(event_type: str, payload: dict[str, Any]) -> str:
         return "handled" if not result.get("ignored") else "ignored"
 
     if event_type.startswith("payment.dispute."):
-        payment = _entity(payload, "payment")
-        dispute = _entity(payload, "dispute")
-        logger.warning(
-            "razorpay dispute event=%s payment=%s dispute=%s status=%s",
-            event_type,
-            payment.get("id"),
-            dispute.get("id"),
-            dispute.get("status"),
+        return await handle_dispute_event(
+            event_type, _entity(payload, "dispute"), _entity(payload, "payment")
         )
-        # Disputes need human evidence, not an automated ledger move.
-        return "handled"
 
     if event_type == "refund.failed":
         refund = _entity(payload, "refund")
@@ -123,9 +143,15 @@ async def _handle_event(event_type: str, payload: dict[str, Any]) -> str:
 
 @router.post("/api/webhooks/razorpay")
 async def razorpay_webhook(request: Request):
-    secret = (get_settings().razorpay_webhook_secret or "").strip()
+    settings = get_settings()
+    secret = (settings.razorpay_webhook_secret or "").strip()
     if not secret:
         # Fail closed: an unverified payment webhook is an open wallet credit.
+        raise HTTPException(status_code=503, detail="webhook_not_configured")
+    from server.config.env import razorpay_refused
+
+    if razorpay_refused(settings):
+        # Production with a reused secret or test keys: logged at startup.
         raise HTTPException(status_code=503, detail="webhook_not_configured")
 
     raw = await request.body()
@@ -155,7 +181,7 @@ async def razorpay_webhook(request: Request):
     async with factory() as session:
         existing = await session.get(RazorpayWebhookEvent, event_id)
         if existing is not None:
-            if existing.status in ("handled", "ignored"):
+            if existing.status in _FINAL_STATUSES:
                 return {"ok": True, "duplicate": True, "status": existing.status}
             existing.attempts = int(existing.attempts or 1) + 1
             existing.status = "processing"
@@ -175,8 +201,11 @@ async def razorpay_webhook(request: Request):
         status = await _handle_event(event_type, payload)
     except ValueError as exc:
         code = str(exc)
-        if code in ("order_not_found", "payment_order_mismatch", "payment_id_mismatch"):
+        if code in IGNORED_ERRORS:
             status = "ignored"
+        elif code in PERMANENT_ERRORS:
+            await _record_rejection(event_id, event_type, code, payload)
+            return {"ok": True, "status": "rejected", "error": code}
         else:
             await _record_failure(event_id, code)
             raise HTTPException(status_code=503, detail="event_processing_failed") from None
@@ -220,3 +249,48 @@ async def _record_failure(event_id: str, error: str) -> None:
         row.status = "failed"
         row.error = error[:2000]
         await session.commit()
+
+
+async def _record_rejection(event_id: str, event_type: str, code: str, payload: dict[str, Any]) -> None:
+    """Acknowledge a permanently invalid event, and make sure a human sees it."""
+    payment = _entity(payload, "payment")
+    refund = _entity(payload, "refund")
+    logger.error(
+        "razorpay webhook rejected event=%s code=%s payment=%s order=%s refund=%s",
+        event_type,
+        code,
+        payment.get("id") or refund.get("payment_id"),
+        payment.get("order_id"),
+        refund.get("id"),
+    )
+    factory = get_session_factory()
+    if factory is not None:
+        from datetime import datetime, timezone
+
+        from server.db.models.saas_models import RazorpayWebhookEvent
+
+        async with factory() as session:
+            row = await session.get(RazorpayWebhookEvent, event_id, with_for_update=True)
+            if row is not None:
+                row.status = "rejected"
+                row.error = code[:2000]
+                row.processed_at = datetime.now(timezone.utc)
+                await session.commit()
+    from server.services.saas.activity_log import record_event
+
+    await record_event(
+        action="wallet.webhook.rejected",
+        resource_type="payment_order",
+        resource_id=str(payment.get("order_id") or refund.get("payment_id") or event_id),
+        actor="razorpay",
+        payload={
+            "eventId": event_id,
+            "eventType": event_type,
+            "code": code,
+            "paymentId": payment.get("id") or refund.get("payment_id"),
+            "refundId": refund.get("id"),
+        },
+        source="webhook",
+        outcome="error",
+        severity="error",
+    )

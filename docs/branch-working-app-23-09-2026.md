@@ -2,10 +2,10 @@
 
 **Repository:** [MOHAN8897/voice-agent](https://github.com/MOHAN8897/voice-agent)  
 **Base:** `working-app-12-09-2026` (Test Studio + PSTN hangup/lifecycle work)  
-**Head commit:** single integration snapshot — SaaS subscriber product + Voxly console in-tree  
+**Head commit:** single integration snapshot — SaaS subscriber product + Dialtact console in-tree  
 **Date:** 23 September 2026  
 
-This branch is a **working integration snapshot**: multi-tenant subscriber auth, telephony commerce (Stripe + Telnyx), wallet billing (Razorpay + Stripe), CRM/campaigns APIs, tenant-safe call/metrics access, and the **Voxly AI subscriber console** vendored under `voxly-ai/` (no longer a nested git repo).
+This branch is a **working integration snapshot**: multi-tenant subscriber auth, telephony commerce (Stripe + Telnyx), wallet billing (Razorpay + Stripe), CRM/campaigns APIs, tenant-safe call/metrics access, and the **Dialtact AI subscriber console** vendored under `dialtact-app/` (no longer a nested git repo).
 
 ---
 
@@ -16,7 +16,7 @@ Use this branch when you want the **full stack** in one clone:
 | Layer | Role | Location / port |
 |-------|------|-----------------|
 | Voice + PSTN backend | FastAPI, Realtime PSTN, Telnyx, business brain | `server/` — **8000** |
-| Subscriber console | Marketing site + signed-in dashboard | `voxly-ai/` — **5173** (Vite proxies `/api` → 8000) |
+| Subscriber console | Marketing site + signed-in dashboard | `dialtact-app/` — **5173** (Vite proxies `/api` → 8000) |
 | Dev portal (legacy) | Test Studio, internal tools | `web/` — separate Next dev stack |
 | Product / ops docs | PRDs, env templates, integration audit | `saas-workflow/`, `changes.md` |
 
@@ -63,18 +63,18 @@ It does **not** claim production-hardening on every edge case; see [Known gaps](
 
 - **Agent rows:** `server/routes/agents.py` — create/list/update with tenant context.
 - **Business brain:** `server/routes/agents_business_brain.py` — draft/publish paths used by the console.
-- **Console mapping:** `voxly-ai/src/services/agentBrain.js` — script, objections, greeting, **voice tuning**, **inbound routing prefs** stored as custom brain sections; publish on create/save.
+- **Console mapping:** `dialtact-app/src/services/agentBrain.js` — script, objections, greeting, **voice tuning**, **inbound routing prefs** stored as custom brain sections; publish on create/save.
 
-### 7. Voxly AI console (frontend, in-repo)
+### 7. Dialtact AI console (frontend, in-repo)
 
-First-class inclusion under `voxly-ai/`:
+First-class inclusion under `dialtact-app/`:
 
 - **Auth:** Google + email/password; access token in **sessionStorage**; refresh via **HttpOnly cookie** only (`api.js`, `authService.js`).
 - **Workspace:** `WorkspaceContext.jsx` — API-first when authenticated; empty state until sync; no demo fallback on errors; `ConsoleSyncBanner` for partial failures.
 - **Modules:** Overview (real call KPIs/chart), Agent Studio + wizard, Phone numbers (IN-default catalog, Stripe buy, release), Leads (add lead, notes, outbound with **caller ID** picker), Campaigns (import lines, start dialer, analytics), Billing (Razorpay/Stripe top-up; plan/auto-recharge labeled preview), Calls, Settings/Integrations (honest copy).
 - **Post-Stripe:** `PurchaseProvisioningBanner.jsx` — poll purchase, pending assign from sessionStorage.
 - **API client:** `api.js` — telephony, billing, leads, campaigns, brain, restricted `setBackendUrl` (same origin / localhost).
-- **E2E:** Playwright specs in `voxly-ai/e2e/`; smoke **5 passed** without credentialed env (see `voxly-ai/TESTING.md`).
+- **E2E:** Playwright specs in `dialtact-app/e2e/`; smoke **5 passed** without credentialed env (see `dialtact-app/TESTING.md`).
 - **Optional:** Stagehand smoke script; Chrome DevTools MCP entry in `.cursor/mcp.json`.
 
 ### 8. Voice / PSTN engine (continued from 12-09 branch)
@@ -84,9 +84,9 @@ First-class inclusion under `voxly-ai/`:
 
 ### 9. Documentation & tooling
 
-- **`saas-workflow/`:** Full PRD pack (00–12), phase status, `ENV-SaaS.example`, Google Cloud setup, Voxly integration notes, E2E SaaS audit.
+- **`saas-workflow/`:** Full PRD pack (00–12), phase status, `ENV-SaaS.example`, Google Cloud setup, Dialtact integration notes, E2E SaaS audit.
 - **`changes.md`:** Original audit tables + **Mar 2026 verification** (fixed / partial / open).
-- **Scripts:** Google OAuth provisioning/sync (`scripts/provision-voxly-google-oauth.ps1`, etc.), dev stack updates in `scripts/dev_up.ps1`.
+- **Scripts:** Google OAuth provisioning/sync (`scripts/provision-dialtact-google-oauth.ps1`, etc.), dev stack updates in `scripts/dev_up.ps1`.
 - **Dev admin:** `web/app/dev/(portal)/saas-admin/page.tsx`, `server/routes/dev_admin.py`.
 
 ### 10. Tests (backend)
@@ -100,7 +100,7 @@ New/updated coverage includes: `test_saas_auth.py`, `test_google_oauth.py`, `tes
 ```text
 voice-agent/
 ├── server/                 # FastAPI backend (SaaS + PSTN + brain)
-├── voxly-ai/               # Vite React subscriber + marketing UI
+├── dialtact-app/               # Vite React subscriber + marketing UI
 ├── web/                    # Next.js dev portal (Test Studio, etc.)
 ├── saas-workflow/          # PRDs, env example, integration guides
 ├── docs/                   # Branch notes, PSTN latency doc
@@ -135,10 +135,10 @@ Enable SaaS features as needed:
 - `STRIPE_*`, `RAZORPAY_*`, `TELNYX_*` for paid flows
 - `PSTN_MIN_BALANCE_*`, `PSTN_RATE_*` for outbound wallet gate/debit
 
-### Voxly console
+### Dialtact console
 
 ```powershell
-cd "D:\voice agent\voxly-ai"
+cd "D:\voice agent\dialtact-app"
 copy .env.example .env   # VITE_API_URL typically /api via proxy
 npm install
 npm run dev              # http://localhost:5173
@@ -149,7 +149,7 @@ Stripe CLI for number purchase webhooks: `saas-workflow/PRD-11-stripe-cli-local-
 ### Smoke test
 
 ```powershell
-cd voxly-ai
+cd dialtact-app
 npx playwright test e2e/smoke.spec.js
 ```
 
@@ -203,7 +203,7 @@ Prioritized backlog: `changes.md` § Recommended next fixes.
 ## Diff scale (vs `working-app-12-09-2026`)
 
 - **~239 files** changed in the integration commit  
-- **~35k insertions** — primarily `voxly-ai/`, `saas-workflow/`, `server/services/saas/`, migrations, and subscriber routes  
+- **~35k insertions** — primarily `dialtact-app/`, `saas-workflow/`, `server/services/saas/`, migrations, and subscriber routes  
 
 ---
 
@@ -213,8 +213,8 @@ Prioritized backlog: `changes.md` § Recommended next fixes.
 |----------|---------|
 | [changes.md](../changes.md) | Audit + Mar 2026 fix verification |
 | [saas-workflow/README.md](../saas-workflow/README.md) | PRD index |
-| [saas-workflow/VOXLY-LOCAL-SETUP.md](../saas-workflow/VOXLY-LOCAL-SETUP.md) | Local pairing (paths updated: use in-repo `voxly-ai/`) |
-| [voxly-ai/TESTING.md](../voxly-ai/TESTING.md) | Playwright, Stagehand, MCP |
+| [saas-workflow/DIALTACT-LOCAL-SETUP.md](../saas-workflow/DIALTACT-LOCAL-SETUP.md) | Local pairing (paths updated: use in-repo `dialtact-app/`) |
+| [dialtact-app/TESTING.md](../dialtact-app/TESTING.md) | Playwright, Stagehand, MCP |
 | [saas-workflow/PRD-PHASES-1-7-STATUS.md](../saas-workflow/PRD-PHASES-1-7-STATUS.md) | Backend phase checklist |
 
 ---

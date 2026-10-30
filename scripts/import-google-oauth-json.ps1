@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $JsonPath = Join-Path $RepoRoot "data\google-oauth-client.json"
 $EnvFile = Join-Path $RepoRoot ".env"
-$VoxlyEnv = Join-Path $RepoRoot "voxly-ai\.env"
+$DialtactEnv = Join-Path $RepoRoot "dialtact-app\.env"
 
 if (-not (Test-Path $JsonPath)) {
     Write-Error "Missing $JsonPath — create a Web OAuth client in Cloud Console and download JSON."
@@ -41,6 +41,6 @@ Set-EnvKey $EnvFile "GOOGLE_OAUTH_CLIENT_ID" $clientId
 Set-EnvKey $EnvFile "GOOGLE_OAUTH_CLIENT_SECRET" $secret
 Set-EnvKey $EnvFile "GOOGLE_OAUTH_REDIRECT_URI" "http://localhost:5173/api/auth/google/callback"
 Set-EnvKey $EnvFile "SAAS_AUTH_ENABLED" "true"
-Set-EnvKey $VoxlyEnv "VITE_GOOGLE_CLIENT_ID" $clientId
+Set-EnvKey $DialtactEnv "VITE_GOOGLE_CLIENT_ID" $clientId
 
-Write-Host "Imported Google OAuth client into .env and voxly-ai/.env. Restart the API."
+Write-Host "Imported Google OAuth client into .env and dialtact-app/.env. Restart the API."

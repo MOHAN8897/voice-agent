@@ -4,7 +4,7 @@
 | Tool | Role | Where & Usage |
 |------|------|----------------|
 | **Chisle** | Always-on efficiency (terse prose + YAGNI code ladder). **Replaces Ponytail.** | `.cursor/rules/chisle.mdc` · install: `npx chisle@latest --only cursor` |
-| **Reticle** | Prove user-facing UI changes in the running **voxly-ai** app (`reticle_*` MCP). | `.reticle.json`, `voxly-ai` vite plugin + `src/reticle-dev.ts`, skill `.agents/skills/install-and-verify`, `RETICLE.md` |
+| **Reticle** | Prove user-facing UI changes in the running **dialtact-app** app (`reticle_*` MCP). | `.reticle.json`, `dialtact-app` vite plugin + `src/reticle-dev.ts`, skill `.agents/skills/install-and-verify`, `RETICLE.md` |
 | **Graft** | Repo context graph before grepping | block below + MCP graft |
 | **SAM** | Autonomous TDD agent system (Red-Green-Refactor pipeline + PRD planning) | `_sam/`, `.cursor/rules/sam-*.mdc`, skills `.agents/skills/sam-*` |
 | **Semgrep** | Continuous SAST security checks on code changes & OWASP Top 10 compliance | `.semgrep.yml`, `scripts/security_audit.py --mode sast`, `.github/workflows/security-scans.yml`. Scans OWASP Top 10, security audit, tenant isolation, and vendor leaks. |
@@ -33,7 +33,7 @@
    - **Plivo and Exotel are completely removed** from all server routes, bridges, DB model attributes, configuration flags, and frontend surfaces. Telephony is strictly Vobiz (primary) and Telnyx (secondary).
    - **Composio is completely removed** from all server services, routes, MCP configurations, dependencies, and frontend modules. All CRM and tool integrations are strictly unified under enterprise Nango gateway and standard `connection_id` abstractions.
 
-**Reticle:** wired for `voxly-ai` (Vite). MCP: user `~/.cursor/mcp.json` → `npx @reticlehq/server mcp`. After UI edits, drive a flow and get a verdict before claiming done. Skip for docs/backend-only (say why in one line).
+**Reticle:** wired for `dialtact-app` (Vite). MCP: user `~/.cursor/mcp.json` → `npx @reticlehq/server mcp`. After UI edits, drive a flow and get a verdict before claiming done. Skip for docs/backend-only (say why in one line).
 
 **SAM:** installed for production flow. Use skills `/sam-orchestrator`, `/sam-plan-n-build`, `/sam-build-tdd` or Cursor rules `@sam`, `@sam-plan-n-build` to execute autonomous TDD workflows against PRDs in `prd/`.
 
@@ -58,7 +58,7 @@ Senior staff engineer and security auditor for multi-tenant voice AI SaaS (Pytho
 - Escape all dynamic XML/VoiceXML values; treat caller transcripts as untrusted input to LLMs.
 - Any UI action calling an API needs loading, error, and rollback handling.
 - Every bug fix ships with a regression test. Every new feature touching sensitive domains ships with failure-path tests.
-- **Strict Vendor & Secret Scrubbing in Tenant Surface**: Tenant-facing frontends (`voxly-ai`, Next.js app/marketing) and subscriber APIs (`/api/telephony/*`, `/api/integrations/*`) must NEVER leak internal wholesale carrier/vendor names (`vobiz`, `telnyx`, `nango`, `exotel`, `plivo`, `composio`), internal webhook endpoints, Auth IDs, Connection IDs, or carrier account keys. Always present generalized enterprise abstractions ('Enterprise Voice Network', 'Direct Voice Trunk', 'CRM Integration'). Carrier switching controls are strictly privileged to platform infrastructure.
+- **Strict Vendor & Secret Scrubbing in Tenant Surface**: Tenant-facing frontends (`dialtact-app`, Next.js app/marketing) and subscriber APIs (`/api/telephony/*`, `/api/integrations/*`) must NEVER leak internal wholesale carrier/vendor names (`vobiz`, `telnyx`, `nango`, `exotel`, `plivo`, `composio`), internal webhook endpoints, Auth IDs, Connection IDs, or carrier account keys. Always present generalized enterprise abstractions ('Enterprise Voice Network', 'Direct Voice Trunk', 'CRM Integration'). Carrier switching controls are strictly privileged to platform infrastructure.
 - **Configuration Persistence Across Server Restarts**: Never wipe or overwrite database-persisted tier assignments, universal phone stacks, or telephony states during server startup/bootstrap. Always respect existing database records (`TierAssignment`, `ConfigVersion`, telephony store snapshots) and hydrate them on lifespan boot before serving traffic.
 - **Primary PSTN opening invariant (Vobiz + Gemini)**: Before dialing, create one Gemini Live session and buffer its greeting; preserve that session and its personalized script for the conversation. Bind the prepared bundle to the outbound tracking ID and carrier request/call IDs, including fast-answer races. After stream authentication and admission succeed, send cached greeting audio at media readiness before post-answer database/registry work. Never synthesize a second greeting at answer or replay the cached opening on hello/yes/new turns. Atomically consume the buffer once and send a silent opening-delivered note; repeat identity briefly only when the caller asks who is calling. Keep the same hot session, clean up unclaimed sessions, and cover ID handoff, first-frame timing and duplicate-pickup cases with regression tests.
   Prepared Live sockets belong to their process: route media to the session owner. A lost prepared session must fail clearly rather than create another cold session at answer.

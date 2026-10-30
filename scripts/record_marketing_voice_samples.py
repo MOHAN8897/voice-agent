@@ -15,7 +15,7 @@ assistant". Each clip is fetched only when the visitor presses play.
 
 Re-running only records what is missing; pass --force to re-record everything, and
 --only <id> to redo a single clip. Output is a WAV next to the other hero audio plus a
-generated manifest the UI imports (`voxly-ai/src/data/voiceSamples.js`).
+generated manifest the UI imports (`dialtact-app/src/data/voiceSamples.js`).
 """
 from __future__ import annotations
 
@@ -50,8 +50,8 @@ from server.realtime.providers.gemini_voice import (  # noqa: E402
     GeminiLiveVoiceAdapter,
 )
 
-AUDIO_DIR = REPO_ROOT / "voxly-ai" / "public" / "audio" / "voxly" / "samples"
-MANIFEST = REPO_ROOT / "voxly-ai" / "src" / "data" / "voiceSamples.js"
+AUDIO_DIR = REPO_ROOT / "dialtact-app" / "public" / "audio" / "dialtact" / "samples"
+MANIFEST = REPO_ROOT / "dialtact-app" / "src" / "data" / "voiceSamples.js"
 
 PHONE_STYLE = (
     "You are a warm, professional phone receptionist for a busy business. Speak once, "
@@ -302,7 +302,7 @@ def _manifest_entry(sample: Sample, path: Path) -> dict:
         "industry": sample.industry,
         "label": sample.label,
         "text": sample.text,
-        "url": f"/audio/voxly/samples/{sample.filename}",
+        "url": f"/audio/dialtact/samples/{sample.filename}",
         "durationSeconds": round(seconds, 2),
         "model": DEFAULT_GEMINI_LIVE_MODEL,
         "voice": sample.voice,

@@ -31,7 +31,7 @@ These scores are qualitative. Native-speaker fluency, actual call quality, and a
 
 ## 2. What was actually checked
 
-- Traced both the Next.js Test Studio **Generated calling script** section and the Voxly agent-creation wizard into their backend compilation and persistence paths.
+- Traced both the Next.js Test Studio **Generated calling script** section and the Dialtact agent-creation wizard into their backend compilation and persistence paths.
 - Read the active brief compiler, interpretation prompt/schema, deterministic templates, validators, AgentSpec alternative, business-brain publication, and runtime prompt assembly.
 - Reviewed all 12 language packs and their shared rules, locale openings, fallback messages, styles, and farewells.
 - Traced Gemini Live, OpenAI Realtime, and composed voice prompt consumption, including model-visible hangup tool descriptions.
@@ -57,7 +57,7 @@ The section is in [TestStudioFineTuneWorkbench.tsx:405–424](<D:/voice agent/we
 6. `InstructionStore.save_agent_script` stores the brief, visible script, compiled brain, report, version, and configuration; disk/optional database persistence follows. See [instruction_store.py:127–180](<D:/voice agent/server/agent/instruction_store.py:127>) and [instructions.py:715–758](<D:/voice agent/server/routes/instructions.py:715>).
 7. At call time, the selected runtime adds its audio, tool, opening-delivery, and contact-policy overlays. The generated editor document is therefore only part of what the live model sees.
 
-### B. Voxly agent creation
+### B. Dialtact agent creation
 
 `CreateAgentWizard` → `api.agents.buildEmployee` → authenticated `/api/app/agents/build-employee` → `compile_brief_for_employee` → create agent → `publish_saas_employee_brain` → compile again → save draft/published brain → runtime snapshot.
 
@@ -108,7 +108,7 @@ The name matcher ranks patterns and takes the first highest-ranked hit without c
 
 With interpretation unavailable, native Hindi and Telugu briefs containing explicit local agent/business names produced **Priya**, no company, and role `other`. `José O’Neil` produced **Alex**. The regex's Latin name alphabet excludes accented Latin letters: [288–291](<D:/voice agent/server/brain/agent_script_compiler.py:288>).
 
-A live interpreter might rescue some native-language inputs; it cannot rescue a wrong nonempty regex identity under F01. Blank and emoji-only direct compiler inputs also produced scripts instead of missing-information results. Voxly's request minimum length blocks the exact blank case, so that result is a compiler-contract issue, not proof every UI accepts blank input.
+A live interpreter might rescue some native-language inputs; it cannot rescue a wrong nonempty regex identity under F01. Blank and emoji-only direct compiler inputs also produced scripts instead of missing-information results. Dialtact's request minimum length blocks the exact blank case, so that result is a compiler-contract issue, not proof every UI accepts blank input.
 
 **Improve:** support Unicode identities and preserve the supplied spelling. Make an optional default persona an explicit user choice. Otherwise return `needs_user_input` rather than silently inventing identity.
 
@@ -172,11 +172,11 @@ The genuine safety core and selected-language lock remained present. This is **n
 
 **Improve:** extract approved fields and reject unsafe directives before rendering. Escape or encode user-authored delimiters, distinguish facts from executable policy, and keep platform authority explicit. Delimiters and model refusal instructions alone are insufficient enforcement.
 
-### F08 — Voxly creation drops configuration before generation
+### F08 — Dialtact creation drops configuration before generation
 
 **Priority: High. Confidence: Confirmed.**
 
-The wizard supplies role/direction at [CreateAgentWizard.jsx:97–105](<D:/voice agent/voxly-ai/src/console/modules/CreateAgentWizard.jsx:97>). The API client omits them at [api.js:907–915](<D:/voice agent/voxly-ai/src/services/api.js:907>), and `BuildEmployeeBody` lacks them at [app_agents.py:47–53](<D:/voice agent/server/routes/app_agents.py:47>).
+The wizard supplies role/direction at [CreateAgentWizard.jsx:97–105](<D:/voice agent/dialtact-app/src/console/modules/CreateAgentWizard.jsx:97>). The API client omits them at [api.js:907–915](<D:/voice agent/dialtact-app/src/services/api.js:907>), and `BuildEmployeeBody` lacks them at [app_agents.py:47–53](<D:/voice agent/server/routes/app_agents.py:47>).
 
 Mode, industry, and natural-spoken-style fields are accepted, but generation calls pass only brief/language: [112–116,142–146](<D:/voice agent/server/routes/app_agents.py:112>). Industry chips can separately append text into the brief; that does not make the independent request field effective.
 
@@ -188,7 +188,7 @@ Initial **web Test Studio** creation does forward role/direction correctly. Howe
 
 **Priority: High. Confidence: Confirmed flow; name drift/failure residue are risks.**
 
-Voxly compiles to choose a display name, creates the agent, then calls a publisher that compiles again: [app_agents.py:112–151](<D:/voice agent/server/routes/app_agents.py:112>) and [employee_brain_build.py:109–111](<D:/voice agent/server/services/saas/employee_brain_build.py:109>). The returned script is from the second compile. This duplicates work and can make the first identity differ from the final script if interpretation varies. Failure after creation can leave an agent without the intended published brain.
+Dialtact compiles to choose a display name, creates the agent, then calls a publisher that compiles again: [app_agents.py:112–151](<D:/voice agent/server/routes/app_agents.py:112>) and [employee_brain_build.py:109–111](<D:/voice agent/server/services/saas/employee_brain_build.py:109>). The returned script is from the second compile. This duplicates work and can make the first identity differ from the final script if interpretation varies. Failure after creation can leave an agent without the intended published brain.
 
 That publisher directly saves draft and published version at [employee_brain_build.py:119–131](<D:/voice agent/server/services/saas/employee_brain_build.py:119>), bypassing the normal publication checks at [compiled_brain_service.py:155–199](<D:/voice agent/server/brain/compiled_brain_service.py:155>).
 
@@ -210,9 +210,9 @@ That publisher directly saves draft and published version at [employee_brain_bui
 
 **Priority: Medium. Confidence: Confirmed, with API-specific limits.**
 
-The Voxly build request permits **6,000 characters**, while the compiler enforces **1,200 characters / 180 words**: [app_agents.py:48](<D:/voice agent/server/routes/app_agents.py:48>) and [brain_prompt_composer.py:16–17](<D:/voice agent/server/agent/brain_prompt_composer.py:16>). A syntactically accepted request can therefore fail during compilation. Detailed unusual workflows have little room before hitting this ceiling.
+The Dialtact build request permits **6,000 characters**, while the compiler enforces **1,200 characters / 180 words**: [app_agents.py:48](<D:/voice agent/server/routes/app_agents.py:48>) and [brain_prompt_composer.py:16–17](<D:/voice agent/server/agent/brain_prompt_composer.py:16>). A syntactically accepted request can therefore fail during compilation. Detailed unusual workflows have little room before hitting this ceiling.
 
-A direct compiler call with unsupported `ja-JP` silently became Telugu. This follows [normalize_compile_language:141–150](<D:/voice agent/server/prompts/agent_voice_rules.py:141>). Voxly's enabled-language check rejects unavailable languages earlier, so its path has a stronger boundary.
+A direct compiler call with unsupported `ja-JP` silently became Telugu. This follows [normalize_compile_language:141–150](<D:/voice agent/server/prompts/agent_voice_rules.py:141>). Dialtact's enabled-language check rejects unavailable languages earlier, so its path has a stronger boundary.
 
 **Improve:** share limits and locale validation between UI, request schema, and compiler. Reject unsupported locales explicitly at all externally reachable entry points. Keep brief, factual knowledge, and workflow instructions in appropriately sized distinct fields.
 
@@ -301,7 +301,7 @@ The instructions router is plain `APIRouter()` and its save/get handlers accept 
 
 The Next.js proxy forwards credentials but does not validate them; its middleware guards `/dev` pages while allowing API paths through. Persistence looks up records by session ID: [saved_instruction_store.py:42–65](<D:/voice agent/server/services/saved_instruction_store.py:42>).
 
-Runtime router inspection listed all seven instructions routes with **dependencies = 0**. No customer sessions were accessed and no live exploit was attempted. An external gateway could reduce public exposure; that was not verified. The authenticated tenant-scoped Voxly creation route should not be conflated with this finding.
+Runtime router inspection listed all seven instructions routes with **dependencies = 0**. No customer sessions were accessed and no live exploit was attempted. An external gateway could reduce public exposure; that was not verified. The authenticated tenant-scoped Dialtact creation route should not be conflated with this finding.
 
 **Improve:** authenticate these endpoints explicitly, authorize ownership of each session/agent, and tenant-scope persistence. Protect generation endpoints as well as read/write operations. A local-only page does not protect its separate API.
 
@@ -309,7 +309,7 @@ Runtime router inspection listed all seven instructions routes with **dependenci
 
 **Priority: Medium. Confidence: Confirmed design; race not reproduced.**
 
-The frontend saves/publishes through GET → PUT draft → POST publish, without a draft revision precondition: [agentBrain.js:167–172](<D:/voice agent/voxly-ai/src/services/agentBrain.js:167>). Draft updates replace existing rows: [business_brain_store.py:170–187](<D:/voice agent/server/brain/business_brain_store.py:170>).
+The frontend saves/publishes through GET → PUT draft → POST publish, without a draft revision precondition: [agentBrain.js:167–172](<D:/voice agent/dialtact-app/src/services/agentBrain.js:167>). Draft updates replace existing rows: [business_brain_store.py:170–187](<D:/voice agent/server/brain/business_brain_store.py:170>).
 
 Another editor can change a draft between review and publication, or a stale editor can overwrite a newer draft. This undermines “the script I reviewed is the script the call used.”
 
@@ -356,7 +356,7 @@ These 20 cases used the real compiler with LLM interpretation explicitly mocked 
 | Mohan company plus Sindhuja connecting clause | Company includes “and the person”; Priya in fallback | Clause parsing failure. Correct mocked company does not repair it. |
 | Blank direct compiler input | Generic Priya script | Missing-information state absent; API/UI restrictions differ. |
 | Emoji-only direct compiler input | Generic Alex script with emoji offer | Meaningfulness not validated. |
-| Unsupported `ja-JP` direct compiler locale | Coerced to `te-IN` | Should explicitly reject at boundary; Voxly already gates enabled languages. |
+| Unsupported `ja-JP` direct compiler locale | Coerced to `te-IN` | Should explicitly reject at boundary; Dialtact already gates enabled languages. |
 | Exact custom English opening, no permission question | Template opening still asks permission | Exact opening contract not honored. |
 | No callbacks/WhatsApp/email; pickup only | Generic callback/WhatsApp guidance still added | Direct business/template conflict. |
 | Verify patient identity, never ask contact details | Verification instruction retained, but contact confirmation added | No checked prerequisites/forbidden-action model. |

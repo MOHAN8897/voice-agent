@@ -19,7 +19,7 @@ from server.services.dev_secrets_store import dev_secrets_store
 from server.utils.logger import log_brain, log_error
 
 _GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
-_STRUCTURED_REPLY_FUNCTION = "VOXLY_RETURN_SPOKEN_TURN"
+_STRUCTURED_REPLY_FUNCTION = "DIALTACT_RETURN_SPOKEN_TURN"
 
 
 def _function_declarations(tools: list[Any]) -> list[dict[str, Any]]:

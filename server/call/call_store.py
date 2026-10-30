@@ -6,7 +6,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select, text, update
+from sqlalchemy import func, or_, select, text, update
 
 from server.call.call_status import CALL_STATUSES, is_valid_call_status, status_for_record
 from server.db.connection import get_session_factory
@@ -69,6 +69,50 @@ def _row_to_dict(row: Call) -> dict[str, Any]:
     # consumer (console, callbacks, analytics) sees the same canonical value.
     record["status"] = status_for_record(record)
     return record
+
+
+#: Tenants whose pre-status rows were already materialised in this process.
+_LEGACY_STATUS_DONE: set[str] = set()
+_LEGACY_BATCH = 5000
+
+
+async def _materialize_legacy_statuses(session: Any, tenant_id: str) -> None:
+    """Write the canonical status onto a tenant's ended rows that predate the column.
+
+    Status filters run in SQL, so an ended row with ``status IS NULL`` would otherwise
+    drop out of them. The value written is exactly what ``status_for_record`` derives
+    on read. Runs once per tenant per process and never fails the read.
+    """
+    if tenant_id in _LEGACY_STATUS_DONE:
+        return
+    tenant_uuid = _parse_uuid(tenant_id)
+    if tenant_uuid is None:
+        return
+    try:
+        rows = (
+            await session.execute(
+                select(
+                    Call.call_id, Call.direction, Call.duration_sec, Call.end_reason,
+                    Call.disposition, Call.ended_at,
+                ).where(
+                    Call.tenant_id == tenant_uuid,
+                    Call.status.is_(None),
+                    Call.ended_at.isnot(None),
+                ).limit(_LEGACY_BATCH)
+            )
+        ).all()
+        for row in rows:
+            await session.execute(
+                update(Call)
+                .where(Call.call_id == row.call_id)
+                .values(status=status_for_record(dict(row._mapping)))
+            )
+        if rows:
+            await session.commit()
+        if len(rows) < _LEGACY_BATCH:
+            _LEGACY_STATUS_DONE.add(tenant_id)
+    except Exception:
+        await session.rollback()
 
 
 class CallStore:
@@ -200,8 +244,9 @@ class CallStore:
         include_tests: bool = False,
         tags: list[str] | None = None,
         tag_match: str = "any",
+        max_limit: int = 100,
     ) -> tuple[list[dict[str, Any]], int]:
-        limit = max(1, min(limit, 100))
+        limit = max(1, min(limit, max_limit))
         offset = max(0, offset)
         wanted = {s for s in (statuses or []) if s in CALL_STATUSES}
         wanted_tags = [str(tag).strip() for tag in (tags or []) if str(tag).strip()]
@@ -240,22 +285,16 @@ class CallStore:
 
         async with factory() as session:
             stmt = select(Call)
-            count_stmt = select(Call)
             if tenant_id:
                 stmt = stmt.where(Call.tenant_id == uuid.UUID(tenant_id))
-                count_stmt = count_stmt.where(Call.tenant_id == uuid.UUID(tenant_id))
             if agent_id:
                 stmt = stmt.where(Call.agent_id == uuid.UUID(agent_id))
-                count_stmt = count_stmt.where(Call.agent_id == uuid.UUID(agent_id))
             if disposition:
                 stmt = stmt.where(Call.disposition == disposition)
-                count_stmt = count_stmt.where(Call.disposition == disposition)
             if direction:
                 stmt = stmt.where(Call.direction == direction)
-                count_stmt = count_stmt.where(Call.direction == direction)
             if not include_tests:
                 stmt = stmt.where(Call.is_test.is_(False))
-                count_stmt = count_stmt.where(Call.is_test.is_(False))
             if wanted_tags:
                 tag_clause = (
                     Call.status_tags.contains(wanted_tags)
@@ -263,16 +302,15 @@ class CallStore:
                     else Call.status_tags.overlap(wanted_tags)
                 )
                 stmt = stmt.where(tag_clause)
-                count_stmt = count_stmt.where(tag_clause)
             if since:
                 since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
                 stmt = stmt.where(Call.started_at >= since_dt)
-                count_stmt = count_stmt.where(Call.started_at >= since_dt)
             if until:
                 until_dt = datetime.fromisoformat(until.replace("Z", "+00:00"))
                 stmt = stmt.where(Call.started_at <= until_dt)
-                count_stmt = count_stmt.where(Call.started_at <= until_dt)
             if wanted:
+                if tenant_id:
+                    await _materialize_legacy_statuses(session, tenant_id)
                 in_sql = [s for s in wanted if s != "in_progress"]
                 clauses = []
                 if in_sql:
@@ -280,13 +318,10 @@ class CallStore:
                 if "in_progress" in wanted:
                     clauses.append(Call.ended_at.is_(None))
                 if clauses:
-                    from sqlalchemy import or_ as _or_
-
-                    cond = clauses[0] if len(clauses) == 1 else _or_(*clauses)
-                    stmt = stmt.where(cond)
-                    count_stmt = count_stmt.where(cond)
-            total_result = await session.execute(count_stmt)
-            total = len(total_result.scalars().all())
+                    stmt = stmt.where(clauses[0] if len(clauses) == 1 else or_(*clauses))
+            total = int(
+                (await session.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one() or 0
+            )
             result = await session.execute(
                 stmt.order_by(Call.started_at.desc()).offset(offset).limit(limit)
             )
@@ -607,9 +642,14 @@ class CallAttemptStore:
         until: str | None = None,
         limit: int = 100,
         offset: int = 0,
+        statuses: list[str] | None = None,
+        direction: str | None = None,
+        exclude_linked: bool = False,
+        max_limit: int = 500,
     ) -> tuple[list[dict[str, Any]], int]:
-        limit = max(1, min(limit, 500))
+        limit = max(1, min(limit, max_limit))
         offset = max(0, offset)
+        wanted = {s for s in (statuses or []) if s in CALL_STATUSES}
         factory = get_session_factory()
         if factory is None:
             rows = list(_ATTEMPT_MEM.values())
@@ -617,27 +657,41 @@ class CallAttemptStore:
                 rows = [r for r in rows if str(r.get("tenant_id")) == str(tenant_id)]
             if agent_id:
                 rows = [r for r in rows if str(r.get("agent_id") or "") == str(agent_id)]
+            if direction:
+                rows = [r for r in rows if (r.get("direction") or "inbound") == direction]
+            if exclude_linked:
+                rows = [r for r in rows if not r.get("linked_call_id")]
+            if wanted:
+                rows = [r for r in rows if _matches_status(r, wanted)]
             rows.sort(key=lambda r: r.get("started_at") or "", reverse=True)
             return [dict(r) for r in rows[offset : offset + limit]], len(rows)
 
         async with factory() as session:
             stmt = select(CallAttempt)
-            count_stmt = select(CallAttempt)
             if tenant_id:
                 stmt = stmt.where(CallAttempt.tenant_id == uuid.UUID(tenant_id))
-                count_stmt = count_stmt.where(CallAttempt.tenant_id == uuid.UUID(tenant_id))
             if agent_id:
                 stmt = stmt.where(CallAttempt.agent_id == uuid.UUID(agent_id))
-                count_stmt = count_stmt.where(CallAttempt.agent_id == uuid.UUID(agent_id))
+            if direction:
+                stmt = stmt.where(
+                    or_(CallAttempt.direction == direction, CallAttempt.direction.is_(None))
+                    if direction == "inbound"
+                    else CallAttempt.direction == direction
+                )
+            if exclude_linked:
+                stmt = stmt.where(CallAttempt.linked_call_id.is_(None))
+            if wanted:
+                # Attempt status is NOT NULL and always materialised.
+                stmt = stmt.where(CallAttempt.status.in_(wanted))
             if since:
                 since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
                 stmt = stmt.where(CallAttempt.started_at >= since_dt)
-                count_stmt = count_stmt.where(CallAttempt.started_at >= since_dt)
             if until:
                 until_dt = datetime.fromisoformat(until.replace("Z", "+00:00"))
                 stmt = stmt.where(CallAttempt.started_at <= until_dt)
-                count_stmt = count_stmt.where(CallAttempt.started_at <= until_dt)
-            total = len((await session.execute(count_stmt)).scalars().all())
+            total = int(
+                (await session.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one() or 0
+            )
             result = await session.execute(
                 stmt.order_by(CallAttempt.started_at.desc()).offset(offset).limit(limit)
             )
@@ -645,6 +699,7 @@ class CallAttemptStore:
 
     def reset_for_tests(self) -> None:
         _ATTEMPT_MEM.clear()
+        _LEGACY_STATUS_DONE.clear()
 
 
 call_attempt_store = CallAttemptStore()

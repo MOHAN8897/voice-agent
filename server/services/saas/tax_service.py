@@ -404,7 +404,11 @@ def compute_tax(
 
     configured = config_configured(config)
     enabled = bool(config.get("enabled")) and configured
-    domestic = buyer_country == "IN"
+    # Zero-rating as an export needs foreign exchange, not just a foreign
+    # address: `countryCode` is tenant-editable, so an INR payment is always
+    # taxed as a domestic supply. A genuine foreign-currency order from a
+    # buyer outside India keeps the export treatment.
+    domestic = buyer_country == "IN" or currency == "INR"
     export = not domestic
     zero_rated = export and bool(config.get("exportZeroRated", True))
     rate_bps = int(config.get("defaultRateBps") or 0) if enabled and not zero_rated else 0
@@ -438,7 +442,7 @@ def compute_tax(
 
     if rate_bps <= 0:
         tax_kind = "export" if export and config.get("exportZeroRated", True) else "none"
-    elif domestic and buyer_state and supplier_state and buyer_state == supplier_state:
+    elif buyer_country == "IN" and buyer_state and supplier_state and buyer_state == supplier_state:
         tax_kind = "cgst_sgst"
     else:
         tax_kind = "igst"
@@ -449,9 +453,12 @@ def compute_tax(
     elif tax_kind == "igst":
         igst = tax_inr
 
-    place_state = (buyer_state or supplier_state) if domestic else buyer_country
-    charge_cgst = tax_minor // 2 if tax_kind == "cgst_sgst" else 0
-    charge_sgst = tax_minor - charge_cgst if tax_kind == "cgst_sgst" else 0
+    # A foreign-address buyer paying INR is taxed (not an export), as an
+    # inter-state supply with IGST and the buyer's country as place of supply.
+    place_state = (buyer_state or supplier_state) if buyer_country == "IN" else buyer_country
+    charge_cgst = charge_sgst = 0
+    if tax_kind == "cgst_sgst":
+        charge_cgst, charge_sgst = _split_cgst_sgst(tax_minor, rate_bps)
     return {
         "currency": currency,
         "amount": amount,

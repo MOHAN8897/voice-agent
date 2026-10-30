@@ -3874,7 +3874,7 @@ class PstnRealtimeVoiceLoop:
                 await self._handle_language_callback_tool(event)
                 return
 
-            # --- DEDICATED VOXLY TOOL ROUTER DISPATCH ---
+            # --- DEDICATED DIALTACT TOOL ROUTER DISPATCH ---
             is_dispatchable_tool = tool_name.upper() in {t.upper() for t in self._agent_tools}
             if is_dispatchable_tool and tool_name not in LIVE_HANGUP_TOOL_NAMES:
                 if len(self._integration_tool_tasks) >= 4:

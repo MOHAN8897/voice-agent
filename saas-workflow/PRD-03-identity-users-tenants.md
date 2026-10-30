@@ -1,6 +1,6 @@
 # PRD-03 — Identity, users, tenants & full account lifecycle
 
-**Backend-first:** Implement and test everything in this document **before** wiring [Voxly](https://github.com/saiskm115/voxly-ai). Dev portal keeps **cookie** auth; subscriber API uses **JWT** (PRD-00 C2).
+**Backend-first:** Implement and test everything in this document **before** wiring [Dialtact](https://github.com/saiskm115/dialtact-app). Dev portal keeps **cookie** auth; subscriber API uses **JWT** (PRD-00 C2).
 
 ## Problem (today)
 
@@ -41,7 +41,7 @@
 
 ### Tokens
 
-| Token | TTL | Storage (Voxly) | Claims |
+| Token | TTL | Storage (Dialtact) | Claims |
 |-------|-----|-----------------|--------|
 | **Access** JWT | 15 min | Memory / short-lived | `sub`=user_id, `tid`=tenant_id, `role`, `email` |
 | **Refresh** | 30 days | HttpOnly cookie **or** secure storage + rotation | opaque id → DB row |
@@ -259,4 +259,4 @@ Legacy **`POST /api/app/login`** — deprecate when `SAAS_AUTH_ENABLED=true`; re
 
 - Schema: [PRD-09-postgres-schema.md](./PRD-09-postgres-schema.md)
 - Admin UX: [PRD-06-dev-admin-panel.md](./PRD-06-dev-admin-panel.md)
-- Backend gate before Voxly: [PRD-12-backend-saas-readiness.md](./PRD-12-backend-saas-readiness.md)
+- Backend gate before Dialtact: [PRD-12-backend-saas-readiness.md](./PRD-12-backend-saas-readiness.md)

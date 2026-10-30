@@ -1,13 +1,13 @@
-# E2E SaaS audit checklist (Voxly + backend)
+# E2E SaaS audit checklist (Dialtact + backend)
 
-**E2E:** Playwright in `voxly-ai/e2e/` (TestSprite removed). API must be on `:8000`, Voxly on `:5173`.
+**E2E:** Playwright in `dialtact-app/e2e/` (TestSprite removed). API must be on `:8000`, Dialtact on `:5173`.
 
 ## Automated (run locally)
 
 ```powershell
 alembic upgrade head
 python -m pytest server/tests/test_razorpay_wallet.py server/tests/test_saas_auth.py server/tests/test_google_oauth.py -q
-cd voxly-ai
+cd dialtact-app
 npm install
 npx playwright install chromium
 npm run test:e2e
@@ -21,17 +21,17 @@ $env:E2E_PASSWORD="your-password"
 npm run test:e2e
 ```
 
-Required `.env` for SaaS + Google: `SAAS_AUTH_ENABLED=true`, `DATABASE_URL`, `JWT_SECRET`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/google/callback`, `VOXLY_FRONTEND_URL=http://localhost:5173`.
+Required `.env` for SaaS + Google: `SAAS_AUTH_ENABLED=true`, `DATABASE_URL`, `JWT_SECRET`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI=http://localhost:8000/api/auth/google/callback`, `DIALTACT_FRONTEND_URL=http://localhost:5173`.
 
 ## Auth (singinflow.md)
 
 | Step | UI | API | Backend validates |
 |------|----|-----|-------------------|
-| Signup | Voxly Auth modal | `POST /api/auth/signup` | Rate limit, password hash, Resend verify email |
+| Signup | Dialtact Auth modal | `POST /api/auth/signup` | Rate limit, password hash, Resend verify email |
 | Verify email | `#verify-email?token=` | `POST /api/auth/verify-email` | Single-use token table `013` |
 | Login | Auth modal | `POST /api/auth/login` | Generic errors, unverified blocked |
 | Session | Console gate | `GET /api/auth/me` + JWT | Tenant membership + email verified |
-| Refresh | Cookie | `POST /api/auth/refresh` | HttpOnly `voxly_refresh` |
+| Refresh | Cookie | `POST /api/auth/refresh` | HttpOnly `dialtact_refresh` |
 | Dev portal | `/dev/login` | `POST /api/dev/login` | Env creds, HttpOnly session, IP rate limit |
 
 ## Console modules ↔ API
@@ -45,11 +45,11 @@ Required `.env` for SaaS + Google: `SAAS_AUTH_ENABLED=true`, `DATABASE_URL`, `JW
 
 ## Razorpay wallet E2E (manual)
 
-1. `SAAS_AUTH_ENABLED=true`, logged into Voxly console.
+1. `SAAS_AUTH_ENABLED=true`, logged into Dialtact console.
 2. Billing → **+₹500** → Razorpay Checkout (test mode).
 3. After pay: `POST /api/billing/razorpay/verify` → wallet INR ↑, row in `GET /api/billing/invoices`.
 
-## SEO (Voxly)
+## SEO (Dialtact)
 
 - `public/robots.txt`, `public/sitemap.xml`
 - `index.html`: canonical, OG/Twitter, JSON-LD (already present)
@@ -65,4 +65,4 @@ Required `.env` for SaaS + Google: `SAAS_AUTH_ENABLED=true`, `DATABASE_URL`, `JW
 - Number **buy** is Stripe subscription flow (PRD-04), not Razorpay.
 - Workspace **demo fallback** only when not logged in; logged-in users see API errors (no silent mock).
 - Google OAuth requires `GOOGLE_OAUTH_*` in `.env`.
-- Full browser E2E: add Playwright against `voxly-ai` (not in CI yet).
+- Full browser E2E: add Playwright against `dialtact-app` (not in CI yet).

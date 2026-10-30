@@ -140,7 +140,7 @@ async def require_subscriber_jwt_if_enabled(
 ) -> SubscriberPrincipal | None:
     """
     When SaaS auth is on:
-    - Bearer JWT -> validated subscriber principal (Voxly console).
+    - Bearer JWT -> validated subscriber principal (Dialtact console).
     - Dev/app portal session cookie -> None (routes use tenant_id_from_request).
     - Otherwise -> 401.
     """

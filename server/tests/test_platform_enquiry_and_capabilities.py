@@ -131,14 +131,14 @@ async def test_disabled_tenant_has_no_discoverable_actions(call_db):
 @pytest.mark.asyncio
 async def test_post_call_catalog_actions_require_explicit_in_call_permission(call_db):
     from server.db.models.integration_models import AgentIntegration, TenantIntegration
-    from server.services.tool_router import VoxlyToolRouter
+    from server.services.tool_router import DialtactToolRouter
     from server.services.tool_schema_registry import get_tools_for_agent
 
     factory, _ = call_db
     async with factory() as session:
         session.add(TenantIntegration(tenant_id=TID, app_name="GMAIL", connection_id="synthetic-gmail", metadata_={"gateway_verified": True}))
         await session.commit()
-    router = VoxlyToolRouter()
+    router = DialtactToolRouter()
     assert not await router.authorized(str(TID), str(AID), "GMAIL_SEND_EMAIL")
     assert await get_tools_for_agent(["GMAIL", "TODOIST"], str(TID), str(AID), factory) == []
     async with factory() as session:

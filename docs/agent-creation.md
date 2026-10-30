@@ -37,6 +37,6 @@ Saving still validates before publication. Unsaved edits must be saved before te
 
 Regression coverage: `server/tests/test_employee_script_pipeline.py`,
 `server/tests/test_agent_creation_pipeline_contract.py`,
-`voxly-ai/e2e/agent-clarification.spec.js`, and
-`voxly-ai/e2e/primary-script-editor.spec.js`. Provider responses are controlled fixtures;
+`dialtact-app/e2e/agent-clarification.spec.js`, and
+`dialtact-app/e2e/primary-script-editor.spec.js`. Provider responses are controlled fixtures;
 these tests do not measure live model quality or speech naturalness.

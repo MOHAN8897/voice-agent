@@ -478,10 +478,10 @@ function Test-DevCommandLine {
         ($CommandLine -match $repoPath -or $CommandLine -match '(?i)https?://(localhost|127\.0\.0\.1):(8000|3000|4173|5173)\b')) { return $true }
     if ($CommandLine -match '(?i)dev_window\.ps1') { return $true }
     if ($CommandLine -match '(?i)voice-agent-dev-(runners|jobs)') { return $true }
-    if ($CommandLine -match '(?i)(Voice Agent (API|Web|Tunnel)|Voxly AI|Dialtact AI)') { return $true }
+    if ($CommandLine -match '(?i)(Voice Agent (API|Web|Tunnel)|Dialtact AI|Dialtact AI)') { return $true }
     if ($CommandLine -match '(?i)voice agent[\\/]+scripts[\\/]+dev_(stack|up|down)\.ps1') { return $true }
-    # Next / Vite / npm started from this repo's web or voxly-ai folder
-    if ($CommandLine -match '(?i)voice agent[\\/]+(web|voxly-ai)' -and $CommandLine -match '(?i)(next|npm|vite|node)') { return $true }
+    # Next / Vite / npm started from this repo's web or dialtact-app folder
+    if ($CommandLine -match '(?i)voice agent[\\/]+(web|dialtact-app)' -and $CommandLine -match '(?i)(next|npm|vite|node)') { return $true }
     return $false
 }
 

@@ -100,7 +100,11 @@ async def voice_kyc_status(principal: SubscriberPrincipal = Depends(require_subs
             from server.utils.rate_limiter import raise_rate_limited
             raise_rate_limited(retry, "Verification status was checked too often. Please retry shortly.")
     try:
-        return await voice_kyc_service.refresh_kyc_status(principal.tenant_id, force=refresh)
+        # A console refresh of an approved account needs no carrier round trip;
+        # purchase/dial gates still force a live check.
+        return await voice_kyc_service.refresh_kyc_status(
+            principal.tenant_id, force=refresh, skip_if_approved=True
+        )
     except voice_kyc_service.VoiceKycError as exc:
         raise HTTPException(
             status_code=exc.status_code,

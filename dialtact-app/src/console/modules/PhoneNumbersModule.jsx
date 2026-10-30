@@ -1,0 +1,855 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Phone,
+  Plus,
+  CheckCircle2,
+  X,
+  Radio,
+  Sliders,
+  Server,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
+import { SolidCard } from '../ui/SolidCard';
+import { StatusBadge } from '../ui/StatusBadge';
+import { TactileButton } from '../ui/TactileButton';
+import { Modal } from '../ui/Modal';
+import { useWorkspace } from '../context/WorkspaceContext';
+import { showToast } from '../ui/ToastHost';
+import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { VoiceServiceKycCard } from '../ui/VoiceServiceKycCard';
+import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
+import { CatalogSkeleton, PhoneNumberRowSkeleton } from '../ui/Skeleton';
+
+const FALLBACK_COUNTRIES = [
+  { code: 'US', name: 'United States', dial: '+1' },
+  { code: 'GB', name: 'United Kingdom', dial: '+44' },
+  { code: 'CA', name: 'Canada', dial: '+1' },
+  { code: 'AU', name: 'Australia', dial: '+61' },
+  { code: 'IE', name: 'Ireland', dial: '+353' },
+  { code: 'NZ', name: 'New Zealand', dial: '+64' },
+  { code: 'SG', name: 'Singapore', dial: '+65' },
+  { code: 'ZA', name: 'South Africa', dial: '+27' },
+  { code: 'PH', name: 'Philippines', dial: '+63' },
+  { code: 'IN', name: 'India', dial: '+91' },
+];
+
+export function TelephonyPlatformBadge({ provider, size = 'sm' }) {
+  const padding = size === 'xs' ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]';
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 font-mono uppercase font-bold rounded-md bg-purple-50 text-purple-700 border border-purple-200 tracking-wide ${padding}`}
+      title="Enterprise High-Capacity Voice Line"
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-purple-600 shrink-0" />
+      Direct Voice Line
+    </span>
+  );
+}
+
+export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyModal, onNavigate }) {
+  const { user } = useAuth();
+  const purchaseIntentKey = user?.tenantId && user?.id ? `dialtact_number_intent:${user.tenantId}:${user.id}` : null;
+  const resumedIntent = useRef(null);
+  const restoredCountry = useRef(false);
+  const purchaseLock = useRef(false);
+  const [pendingNumber, setPendingNumber] = useState(null);
+  const {
+    phoneNumbers,
+    agents,
+    availableCatalog,
+    buyPhoneNumber,
+    assignNumberToAgent,
+    releasePhoneNumber,
+    buyNumberPreselectedAgent,
+    reloadCatalog,
+    updateNumberRouting,
+    wallet,
+    refreshWallet,
+    isLoading,
+    openAddFunds,
+    loadWorkspaceData,
+  } = useWorkspace();
+
+  // Buy Modal Form State — default based on active carrier
+  const [selectedCountry, setSelectedCountry] = useState('IN');
+  const [countries, setCountries] = useState(FALLBACK_COUNTRIES);
+  const [selectedType, setSelectedType] = useState('Local DID');
+  const [searchAreaCode, setSearchAreaCode] = useState('');
+  const [targetAgentId, setTargetAgentId] = useState(buyNumberPreselectedAgent || '');
+  const [purchasedSuccess, setPurchasedSuccess] = useState(null);
+  const [buyError, setBuyError] = useState(null);
+  const [buying, setBuying] = useState(false);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogError, setCatalogError] = useState(null);
+  const [kycApproved, setKycApproved] = useState(false);
+  const [kycMode, setKycMode] = useState('checking');
+  const [kycLoading, setKycLoading] = useState(false);
+  const [kycStatusError, setKycStatusError] = useState('');
+  const [providerInfo, setProviderInfo] = useState(null);
+
+  const rememberNumber = (item) => {
+    const intent = { number: item.number || item.e164, country: item.country || selectedCountry, agentId: targetAgentId, savedAt: Date.now() };
+    setPendingNumber(intent);
+    if (purchaseIntentKey) {
+      try { sessionStorage.setItem(purchaseIntentKey, JSON.stringify(intent)); } catch { /* Selection remains in this open dialog. */ }
+    }
+  };
+  const forgetNumber = () => {
+    setPendingNumber(null);
+    if (purchaseIntentKey) {
+      try { sessionStorage.removeItem(purchaseIntentKey); } catch { /* No stored selection. */ }
+    }
+  };
+  useEffect(() => {
+    if (!purchaseIntentKey || resumedIntent.current === purchaseIntentKey) return;
+    resumedIntent.current = purchaseIntentKey;
+    setPendingNumber(null);
+    try {
+      const intent = JSON.parse(sessionStorage.getItem(purchaseIntentKey) || 'null');
+      if (!intent || !/^\+[1-9]\d{7,14}$/.test(intent.number) || !/^[A-Z]{2}$/.test(intent.country) || !Number.isFinite(intent.savedAt) || Date.now() - intent.savedAt > 86400000) return;
+      restoredCountry.current = true;
+      setPendingNumber(intent); setSelectedCountry(intent.country); setTargetAgentId(intent.agentId || '');
+      onOpenBuyModal?.();
+    } catch { /* Invalid saved data cannot start a purchase. */ }
+  }, [purchaseIntentKey, onOpenBuyModal]);
+
+  const refreshProviderInfo = async () => {
+    try {
+      const data = await api.telephony?.getProvider?.();
+      if (data) {
+        setProviderInfo(data);
+        if (!restoredCountry.current && data.phoneNumber?.startsWith('+91')) {
+          setSelectedCountry('IN');
+        } else if (!restoredCountry.current && data.phoneNumber?.startsWith('+1')) {
+          setSelectedCountry('US');
+        }
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    api.telephony
+      ?.getProvider?.()
+      .then((data) => {
+        if (!cancelled && data) {
+          setProviderInfo(data);
+          if (!restoredCountry.current && data.phoneNumber?.startsWith('+91')) {
+            setSelectedCountry('IN');
+          } else if (!restoredCountry.current && data.phoneNumber?.startsWith('+1')) {
+            setSelectedCountry('US');
+          }
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isBuyModalOpen) return;
+    setBuyError(null);
+    setCatalogLoading(true);
+    setCatalogError(null);
+    reloadCatalog?.(selectedCountry)
+      .catch((e) => setCatalogError(e.message || 'Could not load numbers for this country'))
+      .finally(() => setCatalogLoading(false));
+  }, [isBuyModalOpen, selectedCountry, reloadCatalog]);
+
+  // The active carrier owns its gate. Didit remains a separate optional identity flow.
+  useEffect(() => {
+    if (!isBuyModalOpen) return undefined;
+    let cancelled = false;
+    setKycLoading(true);
+    setKycMode('checking');
+    setKycStatusError('');
+    (async () => {
+      try {
+        const voiceStatus = await api.kyc.getVoiceStatus();
+        if (cancelled) return;
+        if (voiceStatus?.required) {
+          setKycMode('voice');
+          setKycApproved(Boolean(voiceStatus.approved));
+          return;
+        }
+        const platformStatus = await api.kyc.getStatus();
+        if (cancelled) return;
+        setKycMode(platformStatus?.required ? 'platform' : 'none');
+        setKycApproved(!platformStatus?.required || Boolean(platformStatus.approved));
+      } catch (e) {
+        if (!cancelled) {
+          setKycMode('error');
+          setKycApproved(false);
+          setKycStatusError(e.message || 'Could not load verification status. Close and reopen this window to retry.');
+        }
+      } finally {
+        if (!cancelled) setKycLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isBuyModalOpen]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.telephony
+      .getCountries()
+      .then((data) => {
+        if (cancelled) return;
+        if (data.countries?.length) setCountries(data.countries);
+        if (data.default && !restoredCountry.current) setSelectedCountry(data.default);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Inline alerts should not sit forever — toast pattern: 5s, dismissible.
+  useEffect(() => {
+    if (!buyError) return undefined;
+    const id = window.setTimeout(() => setBuyError(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [buyError]);
+
+  useEffect(() => {
+    if (!catalogError) return undefined;
+    const id = window.setTimeout(() => setCatalogError(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [catalogError]);
+
+  useEffect(() => {
+    if (buyNumberPreselectedAgent) setTargetAgentId(buyNumberPreselectedAgent);
+  }, [buyNumberPreselectedAgent]);
+
+  const unassignedCount = phoneNumbers.filter((n) => !n.assignedAgentId).length;
+  const assignedCount = phoneNumbers.length - unassignedCount;
+  const monthlyRentalUsd = phoneNumbers.reduce(
+    (sum, n) => sum + (Number(n.monthlyCost) || 0),
+    0
+  );
+  const balanceUsd = Number(wallet?.balanceUsd) || 0;
+
+  // Price and wallet top-up floor come from the server so the console can never
+  // quote something `/api/telephony/buy` or `/api/billing/topup` would reject.
+  const [catalog, setCatalog] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    api.billing
+      .getCatalog()
+      .then((c) => {
+        if (!cancelled) setCatalog(c);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  // USD is the only quoted currency. A missing catalog means we do not know the
+  // price, so we must not invent one — the buy button stays honest by asking the
+  // server, which is the authority anyway.
+  const numberPriceUsd = Number(catalog?.rates?.numberMonthlyUsd);
+  const priceKnown = Number.isFinite(numberPriceUsd) && numberPriceUsd > 0;
+  const canAffordNumber = priceKnown && balanceUsd >= numberPriceUsd;
+
+  const filteredCatalog = availableCatalog.filter((item) => {
+    const cc = (item.country || '').toUpperCase();
+    const matchesCountry = cc === selectedCountry.toUpperCase();
+    const normType = (t) => {
+      const s = String(t || '').toLowerCase();
+      if (s.includes('toll')) return 'toll';
+      return 'local';
+    };
+    const matchesType =
+      selectedType === 'All' ||
+      !item.type ||
+      normType(item.type) === normType(selectedType);
+    const matchesArea =
+      !searchAreaCode ||
+      (item.areaCode && item.areaCode.includes(searchAreaCode)) ||
+      (item.number && item.number.includes(searchAreaCode));
+    return matchesCountry && matchesType && matchesArea;
+  });
+
+  const completeNumberPurchase = async (catalogItem) => {
+    setBuyError(null);
+    if (!priceKnown) { setBuyError('The number price could not be loaded. Please reopen this window and retry.'); return; }
+    if (kycMode === 'voice') {
+      try {
+        const st = await api.kyc.getVoiceStatus({ refresh: true });
+        if (!st?.approved) {
+          setKycApproved(false);
+          rememberNumber(catalogItem);
+          return;
+        }
+        setKycApproved(true);
+      } catch (error) {
+        setBuyError(error.message || 'Could not check phone service verification. Retry before buying.');
+        return;
+      }
+    } else if (!kycApproved) {
+      rememberNumber(catalogItem); return;
+    }
+    if (priceKnown && balanceUsd < numberPriceUsd) {
+      const msg = `A phone number costs $${numberPriceUsd.toFixed(
+        2
+      )} per month. Add credit to your wallet to buy one.`;
+      setBuyError(msg);
+      return;
+    }
+    setBuying(true);
+    setPurchasedSuccess(null);
+    try {
+      const bought = await buyPhoneNumber(catalogItem, targetAgentId || null);
+      if (bought?.checkoutUrl) {
+        return;
+      }
+      if (bought?.ok === false) {
+        const failed =
+          bought.failureReason === 'pending'
+            ? 'The order is still being placed. It will appear in your lines shortly.'
+            : bought.failureReason === 'carrier_balance_exhausted'
+              ? 'Phone numbers are temporarily unavailable. Your wallet was not charged.'
+              : 'Purchase failed — the number could not be provisioned. Your wallet has been refunded.';
+        setBuyError(failed);
+        if (bought.failureReason !== 'pending') await refreshWallet?.();
+        return;
+      }
+      setPurchasedSuccess(catalogItem.formatted || catalogItem.number);
+      forgetNumber();
+      showToast('Number purchased — provisioning to your workspace', 'success', 5000);
+      await refreshWallet?.();
+      setTimeout(() => {
+        setPurchasedSuccess(null);
+        onCloseBuyModal();
+      }, 1800);
+    } catch (e) {
+      if (e.status === 402 || e.code === 'insufficient_balance') {
+        const msg = priceKnown
+          ? `${e.message} A phone number costs $${numberPriceUsd.toFixed(2)} per month.`
+          : e.message;
+        setBuyError(msg);
+        await refreshWallet?.();
+      } else if (e.status === 403 || e.code === 'kyc_required' || e.code === 'voice_kyc_required') {
+        setKycApproved(false);
+        const message = e.code === 'voice_kyc_required'
+          ? 'Complete phone service verification to buy a number.'
+          : 'Your account needs an additional verification step before buying a number.';
+        if (e.code === 'voice_kyc_required') {
+          setKycMode('voice');
+        } else {
+          setKycMode('error');
+          setKycStatusError(message);
+        }
+        setBuyError(message);
+      } else if (e.code === 'carrier_balance_exhausted' || e.status === 503) {
+        setBuyError(
+          e.message ||
+            'Phone numbers are temporarily unavailable. Your wallet was not charged.'
+        );
+      } else {
+        setBuyError(e.message || 'Could not start number purchase');
+      }
+    } finally {
+      setBuying(false);
+    }
+  };
+
+  const handleBuyNumber = async (catalogItem) => {
+    if (purchaseLock.current) return;
+    purchaseLock.current = true;
+    setBuying(true);
+    try { await completeNumberPurchase(catalogItem); }
+    finally { purchaseLock.current = false; setBuying(false); }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header & Quick Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
+            Phone lines ({phoneNumbers.length})
+          </h2>
+          <p className="text-xs text-[#524E5E] mt-0.5">
+            Buy a number and connect it to an AI agent. Rental is billed monthly; call time is billed
+            from your wallet.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <TactileButton
+            onClick={onOpenBuyModal}
+            variant="primary"
+            icon={Plus}
+            size="md"
+          >
+            Buy Phone Number
+          </TactileButton>
+        </div>
+      </div>
+
+      {providerInfo ? (
+        /* Active Telephony Infrastructure Banner */
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]" data-testid="numbers-provider-banner">
+          <div className="flex items-center gap-2.5">
+            <Radio className="w-4 h-4 text-[#6344E7] shrink-0" />
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-[#0F0E17]">
+                  Voice Network: Enterprise High-Capacity Line
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
+                  Live &amp; Operational
+                </span>
+              </div>
+              <p className="text-[11px] text-[#524E5E] mt-0.5">
+                All numbers are routed through low-latency enterprise voice networks.
+              </p>
+            </div>
+          </div>
+          {providerInfo.phoneNumber && (
+            <div className="text-left sm:text-right text-[11px] text-[#524E5E] font-mono">
+              Caller ID: <span className="font-bold text-[#0F0E17]">{providerInfo.phoneNumber}</span>
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <SolidCard className="p-4">
+          <div className="text-[10px] font-bold text-[#8C879A] uppercase">Owned lines</div>
+          <div className="text-2xl font-bold text-[#0F0E17]">{phoneNumbers.length}</div>
+        </SolidCard>
+        <SolidCard className="p-4">
+          <div className="text-[10px] font-bold text-[#8C879A] uppercase">Available to assign</div>
+          <div className="text-2xl font-bold text-[#047857]">{unassignedCount}</div>
+        </SolidCard>
+        <SolidCard className="p-4">
+          <div className="text-[10px] font-bold text-[#8C879A] uppercase">Linked to agents</div>
+          <div className="text-2xl font-bold text-[#6344E7]">{assignedCount}</div>
+        </SolidCard>
+      </div>
+
+      {/* Money the current lines cost per month, from the server's rates. */}
+      <div className="text-[11px] text-[#524E5E]">
+        Monthly rental for these {phoneNumbers.length} line
+        {phoneNumbers.length === 1 ? '' : 's'}:{' '}
+        <span className="font-mono font-semibold text-[#0F0E17]">
+          ${monthlyRentalUsd.toFixed(2)}
+        </span>{' '}
+        per month. Call time is billed separately from your wallet.
+      </div>
+
+      {/* Numbers Inventory Table Card */}
+      <SolidCard padding="p-0" className="overflow-hidden">
+        <div className="overflow-x-auto touch-pan-x">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] font-bold text-[#8C879A] uppercase tracking-wider">
+                <th className="py-3 px-5">Phone Number</th>
+                <th className="py-3 px-4">Telephony Platform</th>
+                <th className="py-3 px-4">Location / Type</th>
+                <th className="py-3 px-4">Assigned AI Employee</th>
+                <th className="py-3 px-4 font-mono">Monthly Rate</th>
+                <th className="py-3 px-4">Calls</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E4E2EB]">
+              {/* chisel: layout-stable skeleton while loading; explicit empty state otherwise */}
+              {isLoading && phoneNumbers.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-0">
+                    <PhoneNumberRowSkeleton rows={3} />
+                  </td>
+                </tr>
+              ) : phoneNumbers.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center">
+                    <div className="max-w-xs mx-auto space-y-2">
+                      <div className="w-10 h-10 rounded-2xl bg-[#F0EEF6] flex items-center justify-center text-[#6344E7] mx-auto">
+                        <Phone className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs font-bold text-[#0F0E17]">No active phone lines</p>
+                      <p className="text-[11px] text-[#524E5E]">
+                        Buy a virtual number to begin routing calls to your AI employees.
+                      </p>
+                      <TactileButton onClick={onOpenBuyModal} variant="primary" size="sm" icon={Plus}>
+                        Buy number
+                      </TactileButton>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                phoneNumbers.map((num) => (
+                  <tr key={num.id} className="hover:bg-[#FAF9FD] transition-colors">
+                    {/* Number & Capabilities */}
+                    <td className="py-4 px-5">
+                    <div className="font-mono font-bold text-sm text-[#0F0E17] flex items-center gap-2 flex-wrap">
+                      <Phone className="w-3.5 h-3.5 text-[#6344E7]" />
+                      <span>{num.number}</span>
+                      {num.isDevSandbox && (
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200">
+                          {num.label || 'Shared test line'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      {num.capabilities?.map((cap) => (
+                        <span key={cap} className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#F0EEF6] text-[#524E5E] border border-[#E4E2EB]">
+                          {cap}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+
+                  {/* Telephony Platform */}
+                  <td className="py-4 px-4">
+                    <TelephonyPlatformBadge
+                      provider={num.provider || (num.telnyxNumberId ? 'telnyx' : num.carrierNumberId ? 'vobiz' : providerInfo?.activeProvider || 'vobiz')}
+                    />
+                  </td>
+
+                  {/* Locality */}
+                  <td className="py-4 px-4">
+                    <div className="font-semibold text-[#0F0E17]">{num.locality}</div>
+                    <div className="text-[11px] text-[#524E5E]">{num.country} • {num.type}</div>
+                  </td>
+
+                  {/* Assigned Agent Dropdown */}
+                  <td className="py-4 px-4">
+                    <select
+                      value={num.assignedAgentId || ''}
+                      onChange={async (e) => {
+                        try {
+                          await assignNumberToAgent(num.id, e.target.value);
+                          showToast(e.target.value ? 'Number assigned' : 'Number unassigned', 'success');
+                        } catch (err) {
+                          showToast(err.message || 'Could not assign number', 'error');
+                        }
+                      }}
+                      className="bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#D1CFDB] rounded-xl px-2.5 py-1.5 text-xs text-[#0F0E17] font-medium focus:outline-none focus:border-[#6344E7] transition-colors"
+                    >
+                      <option value="">Unassigned (Pool)</option>
+                      {agents.map((agent) => (
+                        <option key={agent.id} value={agent.id}>
+                          {agent.name} ({agent.role})
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+
+                  {/* Monthly Cost */}
+                  <td className="py-4 px-4 font-mono text-[#524E5E]">
+                    ${Number(num.monthlyCost || 0).toFixed(2)}/mo
+                  </td>
+
+                  {/* Line-level inbound/outbound switches */}
+                  <td className="py-4 px-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="flex items-center gap-1.5 text-[10px] text-[#524E5E]">
+                        <input
+                          type="checkbox"
+                          checked={num.inboundEnabled !== false}
+                          onChange={async (e) => {
+                            try {
+                              await updateNumberRouting(num.id, {
+                                inboundEnabled: e.target.checked,
+                              });
+                            } catch (err) {
+                              showToast(err.message || 'Could not update', 'error');
+                            }
+                          }}
+                          data-testid={`number-inbound-${num.id}`}
+                          className="w-3 h-3 accent-[#6344E7]"
+                        />
+                        Accepts calls
+                      </label>
+                      <label className="flex items-center gap-1.5 text-[10px] text-[#524E5E]">
+                        <input
+                          type="checkbox"
+                          checked={num.outboundEnabled !== false}
+                          onChange={async (e) => {
+                            try {
+                              await updateNumberRouting(num.id, {
+                                outboundEnabled: e.target.checked,
+                              });
+                            } catch (err) {
+                              showToast(err.message || 'Could not update', 'error');
+                            }
+                          }}
+                          data-testid={`number-outbound-${num.id}`}
+                          className="w-3 h-3 accent-[#6344E7]"
+                        />
+                        Can call out
+                      </label>
+                    </div>
+                  </td>
+
+                  {/* Status */}
+                  <td className="py-4 px-4">
+                    <StatusBadge status={num.status} size="xs" />
+                  </td>
+
+                  {/* Actions */}
+                  <td className="py-4 px-5 text-right">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm(`Release ${num.number}? It will be returned to the carrier pool.`)) {
+                          releasePhoneNumber(num.id);
+                        }
+                      }}
+                      className="text-xs font-semibold text-[#DC2626] hover:underline"
+                    >
+                      Release
+                    </button>
+                  </td>
+                </tr>
+              )))}
+            </tbody>
+          </table>
+        </div>
+      </SolidCard>
+
+      {/* BUY VIRTUAL NUMBER MODAL */}
+      <Modal
+        isOpen={isBuyModalOpen}
+        onClose={() => { forgetNumber(); onCloseBuyModal(); }}
+        title={
+          purchasedSuccess
+            ? 'Number ready'
+            : pendingNumber && !kycApproved
+              ? 'Verify phone service'
+              : 'Buy Virtual Telephone Number'
+        }
+        subtitle={
+          purchasedSuccess
+            ? undefined
+            : pendingNumber && !kycApproved
+              ? 'Complete verification, then return to confirm your number purchase.'
+              : 'Choose an available number, verify your phone service, and confirm your purchase.'
+        }
+        maxWidth="max-w-2xl"
+      >
+        <div className="space-y-5">
+          {pendingNumber && !purchasedSuccess && <div className="rounded-xl border border-[#DCD7EE] bg-[#FAF9FD] p-4 space-y-2" data-testid="selected-number-review">
+            <p className="text-sm font-semibold">Selected number: <span className="font-mono">{pendingNumber.number}</span></p>
+            <p className="text-sm">{priceKnown ? `$${numberPriceUsd.toFixed(2)} / month` : 'Price unavailable — reload before buying.'}</p>
+            <p className="text-xs leading-relaxed text-[#524E5E]">Monthly rental is charged to your wallet only when you confirm the purchase. Call usage is billed separately. The number is not reserved during verification; availability and pricing are checked again before purchase.</p>
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="button" className="min-h-11 text-sm font-semibold text-[#6344E7]" onClick={forgetNumber}>Choose a different number</button>
+              {kycApproved && <TactileButton variant="primary" disabled={buying || catalogLoading || !priceKnown || !canAffordNumber || !availableCatalog.some((item) => item.number === pendingNumber.number)} onClick={() => handleBuyNumber(availableCatalog.find((item) => item.number === pendingNumber.number))} data-testid="confirm-selected-number">{buying ? 'Buying…' : 'Confirm number purchase'}</TactileButton>}
+            </div>
+            {kycApproved && !catalogLoading && !catalogError && !availableCatalog.some((item) => item.number === pendingNumber.number) && <p className="text-xs text-amber-800" role="status">This number is no longer available. Choose another number below.</p>}
+          </div>}
+          {purchasedSuccess ? (
+            <div className="p-8 text-center space-y-2">
+              <CheckCircle2 className="w-10 h-10 text-[#047857] mx-auto animate-bounce" />
+              <h3 className="text-base font-bold text-[#0F0E17]">Number Successfully Provisioned!</h3>
+              <p className="font-mono text-sm text-[#6344E7]">{purchasedSuccess}</p>
+              <p className="text-xs text-[#524E5E]">Inbound calls will now route directly to your selected AI agent.</p>
+            </div>
+          ) : pendingNumber && !kycApproved ? (
+            kycLoading || kycMode === 'checking' ? (
+              <div className="rounded-2xl border border-[#E4E2EB] bg-[#FAF9FD] p-6 text-sm text-[#524E5E]" role="status" aria-busy="true">
+                Checking verification status…
+              </div>
+            ) : kycMode === 'voice' ? (
+              <VoiceServiceKycCard onApproved={() => setKycApproved(true)} />
+            ) : kycMode === 'platform' ? (
+              <VerifyIdentityCard variant="gate" onApproved={() => setKycApproved(true)} />
+            ) : kycMode === 'error' ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950" role="alert">
+                {kycStatusError || 'Could not load verification status. Close and reopen this window to retry.'}
+              </div>
+            ) : null
+          ) : (
+            <>
+              {buyError && (
+                <div
+                  data-testid="buy-number-error"
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900 flex items-start gap-2"
+                >
+                  <p className="flex-1">{buyError}</p>
+                  <button
+                    type="button"
+                    aria-label="Dismiss"
+                    className="shrink-0 p-1 rounded-md hover:bg-red-100"
+                    onClick={() => setBuyError(null)}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Price and affordability, both from the server. USD only. */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+                <div className="text-[11px] text-[#524E5E]">
+                  <span className="font-semibold text-[#0F0E17]">
+                    {priceKnown ? `$${numberPriceUsd.toFixed(2)} / month` : 'Price unavailable'}
+                  </span>
+                  {', charged to your wallet when you buy.'}
+                  <span className="block mt-0.5 text-[10px] text-[#8C879A]">
+                    Monthly rental. Call usage is billed separately. Verification is required before purchase.
+                  </span>
+                  <span className="block mt-0.0">
+                    Wallet: ${balanceUsd.toFixed(2)}
+                  </span>
+                </div>
+                {priceKnown && !canAffordNumber && (
+                  <button
+                    type="button"
+                    className="shrink-0 text-[11px] font-semibold text-[#B45309] hover:underline"
+                    onClick={() => openAddFunds?.('buy-number')}
+                  >
+                    Add credit to buy a number
+                  </button>
+                )}
+              </div>
+
+              {kycLoading && <p role="status" className="text-sm text-[#524E5E]">Checking phone service verification…</p>}
+              {kycStatusError && <p role="alert" className="text-sm text-red-800">{kycStatusError}</p>}
+
+              {/* Search Filters */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+                {/* Country */}
+                <div>
+                  <label className="block text-[10px] font-bold text-[#8C879A] uppercase mb-1">Country</label>
+                  <select
+                    value={selectedCountry}
+                    onChange={(e) => setSelectedCountry(e.target.value)}
+                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                    data-testid="buy-number-country"
+                  >
+                    {countries.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.name} ({c.dial})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Type */}
+                <div>
+                  <label className="block text-[10px] font-bold text-[#8C879A] uppercase mb-1">Number Type</label>
+                  <select
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
+                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                  >
+                    <option value="Local DID">Local DID (Area Code)</option>
+                    <option value="Toll-Free">Toll-Free (800 / 888)</option>
+                    <option value="All">All Types</option>
+                  </select>
+                </div>
+
+                {/* Area Code */}
+                <div>
+                  <label className="block text-[10px] font-bold text-[#8C879A] uppercase mb-1">Area Code / Prefix</label>
+                  <input
+                    type="text"
+                    value={searchAreaCode}
+                    onChange={(e) => setSearchAreaCode(e.target.value)}
+                    placeholder="e.g. 415, 212, 800"
+                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Direct Agent Binding Dropdown */}
+              <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-bold text-[#0F0E17] block">Assign Directly to AI Employee</span>
+                  <span className="text-[11px] text-[#524E5E]">Optional: Route all inbound traffic immediately to this agent.</span>
+                </div>
+                <select
+                  value={targetAgentId}
+                  onChange={(e) => setTargetAgentId(e.target.value)}
+                  className="bg-white border border-[#E4E2EB] rounded-xl px-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] font-semibold focus:outline-none focus:border-[#6344E7] transition-colors"
+                >
+                  <option value="">Leave Unassigned (Pool)</option>
+                  {agents.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name} ({a.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Available Inventory Results */}
+              <div className="space-y-2 max-h-72 overflow-y-auto transition-opacity duration-200">
+                {catalogLoading ? (
+                  <CatalogSkeleton rows={4} />
+                ) : catalogError ? (
+                  <div className="p-6 text-center text-xs text-red-800 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+                    <p className="flex-1">{catalogError}</p>
+                    <button type="button" aria-label="Dismiss" onClick={() => setCatalogError(null)}>
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : filteredCatalog.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-[#524E5E]">
+                    No phone numbers are available for <strong>{selectedCountry}</strong> right
+                    now. Try another country or check back later.
+                  </div>
+                ) : (
+                  filteredCatalog.map((item) => (
+                    <div
+                      key={item.formatted || item.number || item.e164}
+                      className="p-3.5 rounded-xl bg-white border border-[#E4E2EB] hover:border-[#D1CFDB] flex items-center justify-between gap-4 transition-all shadow-2xs"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#6344E7]">
+                          <Phone className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <div className="font-mono font-bold text-sm text-[#0F0E17] flex items-center gap-2">
+                            <span>{item.number}</span>
+                            <TelephonyPlatformBadge
+                              provider={item.provider || providerInfo?.activeProvider || 'vobiz'}
+                              size="xs"
+                            />
+                          </div>
+                          <div className="text-[10px] text-[#524E5E]">{item.locality || item.region || 'National'} • {item.type}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-mono font-semibold text-[#524E5E]">
+                          {priceKnown ? `$${numberPriceUsd.toFixed(2)}/mo` : 'Price unavailable'}
+                          {item.source === 'inventory' ? (
+                            <span className="ml-1 text-[10px] text-[#047857]">In stock</span>
+                          ) : null}
+                        </span>
+                        <TactileButton
+                          size="xs"
+                          variant="primary"
+                          disabled={buying || !priceKnown || kycLoading || kycMode === 'error' || (kycApproved && !canAffordNumber)}
+                          loading={buying}
+                          onClick={() => handleBuyNumber(item)}
+                          data-testid="buy-number-submit"
+                        >
+                          {buying ? 'Please wait…' : kycApproved ? 'Buy number' : 'Choose number'}
+                        </TactileButton>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
+    </div>
+  );
+}

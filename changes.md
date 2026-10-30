@@ -1,4 +1,4 @@
-# SaaS flow audit (Voxly console ↔ voice-agent backend)
+# SaaS flow audit (Dialtact console ↔ voice-agent backend)
 
 **Branch overview (full description):** [docs/branch-working-app-23-09-2026.md](./docs/branch-working-app-23-09-2026.md) — `working-app-23-09-2026` on GitHub.
 
@@ -28,7 +28,7 @@ End-to-end path: **sign-in → dashboard sync → agents → numbers (search/buy
 |-------|----------|--------|
 | Create Agent wizard → API | Critical | Only name + languages on agent row. |
 | Agent Studio “Save” | Critical | Script/voice not on PATCH /api/agents. |
-| Business Brain not used from Voxly | Critical | No publish path in UI. |
+| Business Brain not used from Dialtact | Critical | No publish path in UI. |
 | Talk to AI / voiceAgent.js | Unwired | Browser mock, not realtime brain. |
 | Optimistic agent mutations | Silent failure | console.warn on API errors. |
 
@@ -49,7 +49,7 @@ Code review + smoke tests (`playwright e2e/smoke.spec.js`: **5 passed**).
 |----------------|----------|
 | Stale JWT / weak optional subscriber on agents + brain | `require_subscriber_jwt_if_enabled` → full `require_subscriber_jwt` when `SAAS_AUTH_ENABLED` (`server/auth/subscriber_dependencies.py`) |
 | Unauthenticated `/api/calls` leak | `resolve_calls_tenant_id` requires JWT when SaaS on (`server/auth/calls_tenant.py`, `server/routes/calls.py`) |
-| JWT in localStorage | Access token in **sessionStorage** (`voxly-ai/src/services/api.js`); refresh **HttpOnly cookie only** |
+| JWT in localStorage | Access token in **sessionStorage** (`dialtact-app/src/services/api.js`); refresh **HttpOnly cookie only** |
 | Fake API key in Settings | Replaced with session/account copy (`SettingsModule.jsx`) |
 | Business Brain + publish from console | `agentBrain.js`, create agent + Studio save call `saveAndPublishAgentBrain` |
 | Fake outbound call on error | Removed; `triggerCallToLead` uses real API + throws (`WorkspaceContext.jsx`) |

@@ -40,7 +40,9 @@ async def queue(monkeypatch, tmp_path):
             for model in tables:
                 await conn.run_sync(lambda sync, table=model.__table__: table.create(sync))
         factory = async_sessionmaker(engine, expire_on_commit=False)
-        for module in (svc, connection, telephony_profile, call_callback_service, callback_request_service, lead_scoring, tenant_guard, followup_retention):
+        from server.services.saas import agent_performance
+
+        for module in (svc, connection, telephony_profile, call_callback_service, callback_request_service, lead_scoring, tenant_guard, followup_retention, agent_performance):
             monkeypatch.setattr(module, "get_session_factory", lambda: factory)
         monkeypatch.setattr(svc, "now_utc", lambda: NOW)
         principal = SubscriberPrincipal(uuid.uuid4(), uuid.uuid4(), "customer_admin", "queue@example.invalid")

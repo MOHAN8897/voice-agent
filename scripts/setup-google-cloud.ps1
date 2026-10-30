@@ -1,4 +1,4 @@
-# Google Cloud CLI bootstrap for Voxly (run in elevated shell if winget prompts).
+# Google Cloud CLI bootstrap for Dialtact (run in elevated shell if winget prompts).
 $ErrorActionPreference = "Stop"
 
 function Ensure-Gcloud {
@@ -34,7 +34,7 @@ Next steps (manual in Cloud Console):
   2. Credentials -> Create OAuth client -> Web application
      - JS origin: http://localhost:5173
      - Redirect:  http://localhost:5173/api/auth/google/callback
-  3. Run: scripts/provision-voxly-google-oauth.ps1 (merges SAAS_AUTH_ENABLED, JWT_SECRET, redirect URI into .env)
+  3. Run: scripts/provision-dialtact-google-oauth.ps1 (merges SAAS_AUTH_ENABLED, JWT_SECRET, redirect URI into .env)
   4. Cursor MCP: see saas-workflow/GOOGLE-CLOUD-SETUP.md
 
 "@

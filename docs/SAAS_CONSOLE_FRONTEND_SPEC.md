@@ -1,18 +1,18 @@
 # SaaS Console Frontend — 5-Phase Build Spec
 
 **Status:** Ready to build. No code written yet.
-**Scope:** The tenant-facing console at `web/app/app/(console)/`. Internal dev portal (`web/app/dev/`) and the legacy Vite app (`voxly-ai/`) are **out of scope except as UX references**.
+**Scope:** The tenant-facing console at `web/app/app/(console)/`. Internal dev portal (`web/app/dev/`) and the legacy Vite app (`dialtact-app/`) are **out of scope except as UX references**.
 **Audience:** The paying SaaS customer (a business owner or ops lead), not an engineer.
 
 ---
 
 ## 1. The gap, in one paragraph
 
-The backend is essentially complete — 262 endpoints covering agent creation, script compilation, telephony, campaigns, leads, calls and billing. The working agent-creation flow lives **only in Test Studio**, which is an internal tool with internal-tool ergonomics. The tenant console at `web/app/app/(console)/` can **list** agents and edit a brain, but there is **no create button anywhere in it**, and campaigns, leads, numbers, billing and tenant members exist **only** in the legacy `voxly-ai` app, which is no longer routed. This spec wires the existing backend into a console a non-technical customer can operate.
+The backend is essentially complete — 262 endpoints covering agent creation, script compilation, telephony, campaigns, leads, calls and billing. The working agent-creation flow lives **only in Test Studio**, which is an internal tool with internal-tool ergonomics. The tenant console at `web/app/app/(console)/` can **list** agents and edit a brain, but there is **no create button anywhere in it**, and campaigns, leads, numbers, billing and tenant members exist **only** in the legacy `dialtact-app` app, which is no longer routed. This spec wires the existing backend into a console a non-technical customer can operate.
 
 ### 1.1 What exists today
 
-| Area | `web/` (Next.js, live) | `voxly-ai/` (legacy Vite) |
+| Area | `web/` (Next.js, live) | `dialtact-app/` (legacy Vite) |
 |---|---|---|
 | Agent creation | Test Studio only (`TestStudioCreateAgent.tsx`) | 4-step `CreateAgentWizard` + `agent-creation/` module |
 | Agent management | `agents` list + 8 sub-pages | `AgentStudioModule`, `EmployeesModule` |
@@ -40,7 +40,7 @@ The backend is essentially complete — 262 endpoints covering agent creation, s
 These are constraints, not suggestions. Every screen is reviewed against them.
 
 1. **The brief is the only required field.** A customer who writes two sentences about their business must be able to finish Step 1. Every other field has a working default. No form in this product is allowed to block on a field the customer did not ask for.
-2. **Four steps. Never five.** Describe → Review script → Phone & voice → Ready. The shape is already proven in `voxly-ai/src/console/modules/agent-creation/index.js`; keep it. A wizard that grows a fifth step has failed.
+2. **Four steps. Never five.** Describe → Review script → Phone & voice → Ready. The shape is already proven in `dialtact-app/src/console/modules/agent-creation/index.js`; keep it. A wizard that grows a fifth step has failed.
 3. **Test call is available from Step 1.** Never gate the ability to hear the agent behind completing setup. This is the single biggest trust-builder in the category and it is free — the Test Studio already works.
 4. **Reuse the Skeuo kit.** `web/components/ui/skeuo/` has `SkeuoPanel`, `SkeuoButton`, `SkeuoInput`, `SkeuoTextarea`, `SkeuoBadge`, `SkeuoTable`, `SkeuoEmptyState`, `SkeuoMeter`, `SkeuoNavItem`, `SkeuoStatusLight`, `icons`. Do not introduce a second design language. `cn()` from `web/lib/cn.ts` for all conditional classes.
 5. **Reuse the data layer.** `useAdminResource` / `adminAction` from `web/lib/useAdminResource.ts` (shared `devFetch`, error + loading states). Do not hand-roll `fetch` + `useEffect` per page.
@@ -268,7 +268,7 @@ Layout:
 - One `SkeuoTextarea`, min 200px. Placeholder is a real example, copied from the working one in `TestStudioCreateAgent.tsx:175`:
   > "Example: Agent name is Murthi. Business is Raghava Sales Private Limited — automobile spare parts in Hyderabad, Boduppal, with 20% discount…"
 - Helper line under it: *"Write it the way you'd brief a new hire. Include the agent's name, your business, and what you want them to say."*
-- **Industry chips** row (from `voxly-ai/src/console/modules/agent-creation/index.js:44-87`, reuse verbatim): Real estate, Clinic/doctor, Car dealership, Coaching/education, Property support, Restaurant. Clicking a chip **appends** its snippet to the textarea. It never replaces user text. This is how the category does templates and it measurably improves first-brief quality.
+- **Industry chips** row (from `dialtact-app/src/console/modules/agent-creation/index.js:44-87`, reuse verbatim): Real estate, Clinic/doctor, Car dealership, Coaching/education, Property support, Restaurant. Clicking a chip **appends** its snippet to the textarea. It never replaces user text. This is how the category does templates and it measurably improves first-brief quality.
 - **More options** disclosure containing: Language (`COMPILE_LANGUAGE_OPTIONS`, default `en-IN`), Call direction (Outbound / Inbound, default Outbound), Role (Sales / Lead qualification / Customer support / Appointments / Recruitment / Education / Information / Follow-up / General — reuse `ROLES` from `TestStudioCreateAgent.tsx:16-26`).
 - Primary button: **"Create my agent"** — disabled until `brief.trim().length >= 8`.
 - Secondary: **"Test a sample call first"** → runs a dry sample on the current brief text without creating anything, so the customer hears a voice before committing.
@@ -312,7 +312,7 @@ Two `SkeuoPanel`s, both skippable.
 **Panel C — When should it answer?** (`AgentTelephonyProfile`)
 - Inbound: `SkeuoInput type=checkbox` bound to `inboundEnabled`
 - Outbound: same, bound to `outboundEnabled`
-- Business hours: a 7-row `SkeuoTable` (Mon–Sun) each with one or more `open`/`close` time inputs, plus an **"Always open"** master toggle that writes `{}`. Reuse `DEFAULT_BUSINESS_HOURS` and the `WEEKDAYS` / `businessHoursSummary` helpers from `voxly-ai/.../agent-creation/index.js:117-152` — port them to `web/lib/business-hours.ts`.
+- Business hours: a 7-row `SkeuoTable` (Mon–Sun) each with one or more `open`/`close` time inputs, plus an **"Always open"** master toggle that writes `{}`. Reuse `DEFAULT_BUSINESS_HOURS` and the `WEEKDAYS` / `businessHoursSummary` helpers from `dialtact-app/.../agent-creation/index.js:117-152` — port them to `web/lib/business-hours.ts`.
 - Timezone: `SkeuoInput` with IANA default `Asia/Kolkata`.
 - After hours: 4 radio cards — Take a voicemail / Do not answer / Transfer to a number / Always answer. Selecting **Transfer** reveals a required `SkeuoInput` for `transferNumber`; the form cannot submit without it.
 - Greeting phrase: optional `SkeuoInput` maxLength 500, placeholder "Leave blank to use the agent's own opening line."
@@ -333,7 +333,7 @@ Save all of C with a single `PUT /api/agents/{id}/telephony-profile`. Show the r
 3. No tenant-console network request goes to `/api/instructions`. Verified by grep in review: `web/app/app/(console)/**` must not contain the string.
 4. Every failing call shows the backend's own `error.message`.
 5. Reloading at any step does not lose the brief (persist wizard state in `sessionStorage` keyed by tenant).
-6. `tsc --noEmit` clean; no new file imports from `voxly-ai/`.
+6. `tsc --noEmit` clean; no new file imports from `dialtact-app/`.
 7. Keyboard: the whole wizard is completable with Tab/Enter; the primary action is a real `<button>`, not a click-handler on a `<div>`.
 
 ---
@@ -428,7 +428,7 @@ web/components/numbers/NumberStatusBadge.tsx   pending | active | provisioning |
 web/lib/numbers.ts                              typed wrapper, e164 formatting helpers
 ```
 
-Port the UX of `voxly-ai/src/console/modules/PhoneNumbersModule.jsx` and `TelephonySettingsCard.jsx`; neither needs redesign.
+Port the UX of `dialtact-app/src/console/modules/PhoneNumbersModule.jsx` and `TelephonySettingsCard.jsx`; neither needs redesign.
 
 ## 8.2 `/numbers`
 
@@ -601,7 +601,7 @@ web/lib/campaigns.ts
 web/lib/leads.ts
 ```
 
-Port `voxly-ai/src/console/modules/CampaignsModule.jsx` and `LeadsModule.jsx`; the backend is complete.
+Port `dialtact-app/src/console/modules/CampaignsModule.jsx` and `LeadsModule.jsx`; the backend is complete.
 
 ## 10.2 Campaigns — `/campaigns`
 
@@ -668,7 +668,7 @@ Status vocabulary from `Campaign.status` default `"draft"`, plus the transitions
 ## 12. Explicitly out of scope
 
 - Any change to `web/app/dev/**` beyond the Phase 2 dedup.
-- Any change to `voxly-ai/`. It is a reference and a source of ported UX only.
+- Any change to `dialtact-app/`. It is a reference and a source of ported UX only.
 - Changing the agent-creation **backend** flow. Phase 1 wires up what exists; RISK-2 is the one exception and is scoped to extending an existing body, not redesigning the compiler.
 - Billing top-up flows, member invitations and RBAC screens — the backend exists (`app_billing.py`, `app_auth.py`); port them after Phase 5 as a Phase 6.
 - Prompt/brain optimisation. The brain is now 2,877 tokens and under budget; nothing in this spec changes it.

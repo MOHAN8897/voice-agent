@@ -312,7 +312,10 @@ def resolve_tts_config(
     if resolved_pace is None:
         resolved_pace = settings.sarvam_tts_pace
     resolved_pace = float(resolved_pace)
-    if resolved_model in {"bulbul:v3", "bulbul:v4-flash"}:
+    pace_range = (constants.TTS_MODELS.get(resolved_model) or {}).get("pace")
+    if pace_range:
+        resolved_pace = max(float(pace_range[0]), min(float(pace_range[1]), resolved_pace))
+    elif resolved_model in {"bulbul:v3", "bulbul:v4-flash"}:
         resolved_pace = max(0.5, min(2.0, resolved_pace))
     else:
         resolved_pace = max(0.3, min(3.0, resolved_pace))
@@ -346,9 +349,10 @@ def resolve_tts_config(
         "min_buffer_size": int(resolved_min_buf),
         "max_chunk_length": int(resolved_max_chunk),
     }
-    # Knob support is model-specific: v3 accepts temperature but not
-    # pitch/loudness; v4-flash accepts all four; v2 accepts pitch/loudness
-    # but not temperature. Never send a knob the selected model ignores.
+    # Knob support is model-specific (constants.TTS_MODELS): v3 and v4-flash
+    # accept pace and temperature but not pitch/loudness; v2 accepts
+    # pitch/loudness but not temperature. Each knob is clamped to the
+    # selected model's own range; never send a knob the model ignores.
     model_meta = constants.TTS_MODELS.get(resolved_model) or {}
     temp_range = model_meta.get("temperature")
     if resolved_temp is not None and temp_range:

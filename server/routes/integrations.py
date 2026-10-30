@@ -165,7 +165,7 @@ def _trusted_console_origins() -> set[tuple[str, str]]:
     """Every origin the console is deliberately served from, never a wildcard."""
     from urllib.parse import urlsplit
     settings = get_settings()
-    configured = [settings.voxly_frontend_url, getattr(settings, "public_app_url", None)]
+    configured = [settings.dialtact_frontend_url, getattr(settings, "public_app_url", None)]
     configured += [o for o in (getattr(settings, "cors_origins", "") or "").split(",") if o.strip() != "*"]
     origins = set()
     for raw in configured:

@@ -9,7 +9,7 @@ export default function DevStackPage() {
       <PageHeader
         eyebrow="Platform voice configuration"
         title="Voice stacks & PSTN tiers"
-        description="Configure composed PSTN profiles, pipeline stage models, readiness evidence, retail rates, and platform activation."
+        description="Configure each tier's speech stack, voice knobs and price, verify it, and choose which tiers tenants can use. Changes are saved explicitly per tier."
       />
       <div className="mt-6">
         <PstnVoiceProfileWorkbench />
@@ -24,7 +24,7 @@ export default function DevStackPage() {
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-text-muted">
             Badges and the highlighted tier on the public pricing cards and usage calculator.
-            Shelf prices come from the retail rates configured above.
+            Shelf prices are the tier card prices configured above (read-only here).
           </p>
         </div>
         <PricingMerchandisingEditor />

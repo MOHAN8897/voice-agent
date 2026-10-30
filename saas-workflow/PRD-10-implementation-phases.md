@@ -1,6 +1,6 @@
 # PRD-10 — Implementation phases (backend before frontend)
 
-**Rule:** Complete [PRD-12](./PRD-12-backend-saas-readiness.md) Phase **A–D** before Voxly integration (Phase E).
+**Rule:** Complete [PRD-12](./PRD-12-backend-saas-readiness.md) Phase **A–D** before Dialtact integration (Phase E).
 
 ## Phase 0 — Docs & tooling
 
@@ -22,7 +22,7 @@
 
 **Tests:** PRD-12 A1–A10 — run with `DATABASE_URL` + migration `010`
 
-**No Voxly work in this phase.**
+**No Dialtact work in this phase.**
 
 ## Phase 2 — Telephony orchestrator (PRD-12 Phase B, partial)
 
@@ -44,9 +44,9 @@
 - [x] `/api/dev/admin/*` — `server/routes/dev_admin.py`
 - [x] Dev UI `/dev/saas-admin` (minimal)
 
-## Phase 5 — Voxly frontend (PRD-12 Phase E)
+## Phase 5 — Dialtact frontend (PRD-12 Phase E)
 
-- [ ] Bearer token in Voxly `api.js` (see `voxly-api-bearer.patch.md`)
+- [ ] Bearer token in Dialtact `api.js` (see `dialtact-api-bearer.patch.md`)
 - [x] Backend endpoints + `CORS_ORIGINS` ready
 
 ## Phase 6 — Wallet & usage
@@ -68,7 +68,7 @@
 | `JWT_SECRET` | Subscriber tokens |
 | `SAAS_AUTH_ENABLED` | Gate new auth |
 | `STRIPE_*` | PRD-04 |
-| `CORS_ORIGINS` | Voxly origin |
+| `CORS_ORIGINS` | Dialtact origin |
 
 ## Rollout
 

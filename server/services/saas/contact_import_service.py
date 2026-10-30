@@ -12,7 +12,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# Supported canonical Voxly fields
+# Supported canonical Dialtact fields
 CANONICAL_FIELDS: dict[str, dict[str, Any]] = {
     "phone": {"label": "Phone Number", "category": "required", "description": "Primary phone in E.164 format"},
     "first_name": {"label": "First Name", "category": "recommended", "description": "Contact's given name"},

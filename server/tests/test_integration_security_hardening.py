@@ -67,7 +67,7 @@ async def client(db, monkeypatch):
     monkeypatch.setattr(routes, "require_api_tenant", principal)
     monkeypatch.setattr(routes, "require_role_permission", lambda *_: None)
     monkeypatch.setattr(routes, "get_settings", lambda: SimpleNamespace(
-        nango_webhook_signing_key="test-webhook-key", voxly_frontend_url="https://console.example.test", app_environment="production"))
+        nango_webhook_signing_key="test-webhook-key", dialtact_frontend_url="https://console.example.test", app_environment="production"))
     monkeypatch.setattr(routes.nango_service, "is_configured", lambda: False)
     app = FastAPI()
     app.include_router(routes.router)
@@ -107,7 +107,7 @@ async def test_keys_and_foreign_redirects_never_create_connections(client, monke
 async def test_every_configured_console_origin_can_open_the_connection_form(client, monkeypatch):
     # The console is served from more than one deliberate origin; a wildcard never qualifies.
     monkeypatch.setattr(routes, "get_settings", lambda: SimpleNamespace(
-        voxly_frontend_url="https://console.example.test", public_app_url="https://app.example.test",
+        dialtact_frontend_url="https://console.example.test", public_app_url="https://app.example.test",
         cors_origins="*,https://alt.example.test", app_environment="production"))
     start = AsyncMock(return_value={"status": "INITIATED", "session_token": "tok"})
     monkeypatch.setattr(routes.nango_service, "initiate_connection", start)
@@ -165,7 +165,7 @@ async def enable_live_slack(factory):
 
 async def test_router_ownership_disable_and_durable_idempotency(db, monkeypatch):
     await enable_live_slack(db)
-    router = router_module.VoxlyToolRouter()
+    router = router_module.DialtactToolRouter()
     execute = AsyncMock(return_value={"status": "success", "message_id": "real-id"})
     monkeypatch.setattr(router.nango, "execute_in_call_tool", execute)
     args = dict(tenant_id=str(TID), agent_id=str(FOREIGN), call_id="call-test", tool_name="SLACK_SEND_MESSAGE",
@@ -190,7 +190,7 @@ async def test_router_ownership_disable_and_durable_idempotency(db, monkeypatch)
 
 async def test_timeout_and_storage_failure_do_not_repeat_writes(db, monkeypatch):
     await enable_live_slack(db)
-    router = router_module.VoxlyToolRouter()
+    router = router_module.DialtactToolRouter()
     execute = AsyncMock(side_effect=asyncio.TimeoutError)
     monkeypatch.setattr(router.nango, "execute_in_call_tool", execute)
     args = dict(tenant_id=str(TID), agent_id=str(AID), call_id="call-timeout", tool_name="SLACK_SEND_MESSAGE",
@@ -212,7 +212,7 @@ async def test_timeout_and_storage_failure_do_not_repeat_writes(db, monkeypatch)
 
 async def test_external_error_is_not_a_successful_audit(db, monkeypatch):
     await enable_live_slack(db)
-    router = router_module.VoxlyToolRouter()
+    router = router_module.DialtactToolRouter()
     monkeypatch.setattr(router.nango, "execute_in_call_tool", AsyncMock(return_value={"status": "error"}))
     await router.route_and_execute(str(TID), str(AID), "call-error", "SLACK_SEND_MESSAGE", {"channel": "C", "text": "test"})
     async with db() as session:

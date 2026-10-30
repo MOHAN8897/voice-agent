@@ -31,7 +31,7 @@ def test_durable_job_serialization_roundtrip():
         call_id="call-abc",
         tenant_id="tenant-123",
         job_type="recording_upload",
-        payload={"bucket": "voxly-archives"},
+        payload={"bucket": "dialtact-archives"},
     )
     data = job.to_dict()
     assert data["status"] == "pending"
@@ -39,7 +39,7 @@ def test_durable_job_serialization_roundtrip():
     reconstructed = DurableJob.from_dict(data)
     assert reconstructed.job_id == job.job_id
     assert reconstructed.status == JobStatus.PENDING
-    assert reconstructed.payload == {"bucket": "voxly-archives"}
+    assert reconstructed.payload == {"bucket": "dialtact-archives"}
 
 
 def test_durable_job_retry_backoff_and_dead_letter():

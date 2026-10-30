@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from server.services.nango_service import NangoService
-from server.services.tool_router import VoxlyToolRouter
+from server.services.tool_router import DialtactToolRouter
 
 
 # ---------------------------------------------------------------------------
@@ -84,7 +84,7 @@ def test_schema_optimizer_preserves_semantics_and_targets_size_reduction():
 @pytest.mark.asyncio
 async def test_tool_router_fails_closed_without_tenant_and_dispatches_with_tenant():
     """Verify tool router rejects missing tenant and routes valid calls through router."""
-    router = VoxlyToolRouter()
+    router = DialtactToolRouter()
 
     # 1. Missing tenant MUST FAIL CLOSED (Fix #2: No "default" fallback)
     result_rejected = await router.route_and_execute(
@@ -131,7 +131,7 @@ async def test_tool_router_fails_closed_without_tenant_and_dispatches_with_tenan
 @pytest.mark.asyncio
 async def test_write_action_tracks_split_brain_timeout():
     """Verify write action creates execution record and transitions to timed_out_pending on timeout."""
-    router = VoxlyToolRouter()
+    router = DialtactToolRouter()
 
     async def slow_action(*args, **kwargs):
         raise asyncio.TimeoutError()

@@ -932,7 +932,7 @@ async def impersonate_tenant(
         raise HTTPException(status_code=400, detail=code.replace("_", " "))
 
     settings = get_settings()
-    front = (settings.voxly_frontend_url or "http://localhost:5173").rstrip("/")
+    front = (settings.dialtact_frontend_url or "http://localhost:5173").rstrip("/")
     # Prefer local Vite for ops handoff so tunnel never receives the session.
     if "localhost" not in front and "127.0.0.1" not in front:
         front = "http://localhost:5173"
@@ -2001,11 +2001,15 @@ async def list_wallets(session: SessionData = Depends(require_dev_session)):
 
 
 @router.get("/api/dev/admin/billing/cost-insights")
-async def billing_cost_insights(days: int = Query(30, ge=1, le=90), session: SessionData = Depends(require_dev_session)):
+async def billing_cost_insights(
+    days: int = Query(30, ge=1, le=90),
+    fresh: bool = Query(False),
+    session: SessionData = Depends(require_dev_session),
+):
     require_permission(session, "dev.admin.billing")
     _require_db()
     from server.services.saas.cost_insights import load_cost_insights
-    return await load_cost_insights(days)
+    return await load_cost_insights(days, fresh=fresh)
 
 
 @router.get("/api/dev/admin/calls")
@@ -2786,8 +2790,9 @@ class PaymentSettingsBody(BaseModel):
 async def get_payment_settings(session: SessionData = Depends(require_dev_session)):
     """Razorpay status, including whether international cards are switched on."""
     require_permission(session, "dev.admin.billing")
-    from server.services.saas.payment_settings import settings_state
+    from server.services.saas.payment_settings import refresh, settings_state
 
+    await refresh(force=True)
     return settings_state()
 
 
@@ -2805,9 +2810,10 @@ async def put_payment_settings(
     from server.services.saas.payment_settings import update_settings
 
     try:
-        state = update_settings(
+        state = await update_settings(
             international_enabled=body.internationalEnabled,
             currency=body.currency,
+            actor=session.subject,
         )
     except ValueError as exc:
         code = str(exc)
@@ -3189,12 +3195,7 @@ async def reconcile_payment_order(
     require_permission(session, "dev.admin.billing")
     _require_db()
     from server.db.models.saas_models import RazorpayOrder
-    from server.services.saas.razorpay_service import (
-        _client,
-        _run_provider_call,
-        credit_provider_payment,
-        mark_order_failed,
-    )
+    from server.services.saas.razorpay_service import reconcile_order
 
     async with get_session_factory()() as db:
         order = await db.get(RazorpayOrder, order_id)
@@ -3203,21 +3204,26 @@ async def reconcile_payment_order(
         current = order.status
     if current in ("paid", "refunded", "partially_refunded"):
         return {"ok": True, "status": current, "message": "Already settled."}
+    # Same path as the background loop: credit captured, capture authorised,
+    # and mark failed only when the latest payment really failed. A created or
+    # pending payment leaves the order as it is.
     try:
-        payments = await _run_provider_call(_client().order.payments, order_id)
+        outcome = await reconcile_order(order_id, source="admin")
+    except ValueError as exc:
+        code = str(exc)
+        if code in ("payment_capture_unavailable", "payment_verification_unavailable", "razorpay_not_configured"):
+            raise HTTPException(status_code=502, detail="provider_unavailable") from None
+        raise HTTPException(
+            status_code=409, detail={"error": {"code": code, "message": code}}
+        ) from None
     except Exception:
         raise HTTPException(status_code=502, detail="provider_unavailable") from None
-    items = payments.get("items", []) if isinstance(payments, dict) else []
-    captured = [item for item in items if str(item.get("status")) == "captured"]
-    result: dict[str, Any] = {"ok": True, "checked": len(items)}
-    if captured:
-        result.update(await credit_provider_payment(captured[0], source="admin"))
-        result["status"] = "paid"
-    elif items:
-        await mark_order_failed(items[0], source="admin")
-        result["status"] = "failed"
-    else:
-        result["status"] = current
+    status_by_outcome = {"credited": "paid", "failed": "failed"}
+    result: dict[str, Any] = {
+        **outcome,
+        "ok": True,
+        "status": status_by_outcome.get(str(outcome.get("outcome")), current),
+    }
     await record_admin_action(
         actor=session.subject,
         action="payments.reconcile",
@@ -3249,6 +3255,8 @@ async def refund_payment_order(
     amount_minor = to_minor(body.amount, currency) if body.amount else None
     if amount_minor is not None and amount_minor > gross_minor:
         raise HTTPException(status_code=400, detail="refund_exceeds_charge")
+    # No amount means "refund what is left"; the service computes the remainder
+    # (gross minus processed and pending refunds) under the order lock.
     try:
         result = await refund_order(
             order_id,
@@ -3259,12 +3267,21 @@ async def refund_payment_order(
     except ValueError as exc:
         code = str(exc)
         messages = {
-            "order_not_refundable": "Only a captured payment can be refunded.",
-            "invalid_refund_amount": "Refund amount must be between zero and the captured amount.",
+            "order_not_refundable": "Only a captured payment with an unrefunded balance can be refunded.",
+            "invalid_refund_amount": "Refund amount must be between zero and the amount not yet refunded.",
             "refund_failed": "Razorpay did not accept the refund. No balance was changed.",
+            "refund_in_progress": "A refund for this payment is still pending at Razorpay. Wait for it to settle.",
+            "refund_already_exists": (
+                "Razorpay already has a refund for this payment that was not recorded here. "
+                "It has now been recorded; review the order before refunding again."
+            ),
+            "refund_check_unavailable": "Could not read existing refunds from Razorpay. Nothing was refunded; retry shortly.",
         }
+        status_code = 409 if code in ("refund_in_progress", "refund_already_exists") else 400
+        if code == "refund_check_unavailable":
+            status_code = 502
         raise HTTPException(
-            status_code=400,
+            status_code=status_code,
             detail={"error": {"code": code, "message": messages.get(code, code)}},
         ) from None
     await record_admin_action(
@@ -3273,10 +3290,13 @@ async def refund_payment_order(
         resource_type="payment_order",
         resource_id=order_id,
         payload={
-            "amount": body.amount or from_minor(gross_minor, currency),
+            "amount": body.amount,
+            "fullRemaining": body.amount is None,
+            "grossCharged": from_minor(gross_minor, currency),
             "currency": currency,
             "reason": body.reason,
             "refundId": result.get("refundId"),
+            "pending": bool(result.get("pending")),
             "creditNoteNumber": result.get("creditNoteNumber"),
         },
     )

@@ -103,7 +103,7 @@ async def test_native_profile_uses_selected_live_model_without_inactive_adapters
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("change", ["voice", "revision"])
+@pytest.mark.parametrize("change", ["voice"])
 async def test_obsolete_fallback_flag_never_replaces_invalid_saved_selection(monkeypatch, approved_registry, change):
     profile = recommended_composed_profile("medium")
     profile.update(enabled=True, retailRateInr=9)
@@ -116,7 +116,9 @@ async def test_obsolete_fallback_flag_never_replaces_invalid_saved_selection(mon
     with pytest.raises(profiles.VoiceProfileError) as exc:
         await profiles.resolve_agent_selection(environment="development", tier="medium", voice_settings=selection,
             language="te-IN", allow_fallback=True)
-    assert exc.value.code == ("voice_selection_invalid" if change == "voice" else "profile_revision_conflict")
+    # A stale revision alone no longer invalidates a selection whose aliases
+    # resolve; with a removed voice it reports the revision conflict.
+    assert exc.value.code == "voice_selection_invalid"
 
 
 def test_profile_validation_accepts_native_transport_and_rejects_cross_model_tuple():

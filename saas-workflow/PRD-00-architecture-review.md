@@ -4,9 +4,9 @@ Records **issues in the initial PRD pack**, **fixes**, and **binding decisions**
 
 ## Executive summary
 
-Moving from a **dev-only PSTN panel** to **multi-tenant SaaS** fails if you: reuse dev stores without tenant guards, use cookie-only auth for a separate Voxly origin, provision Telnyx inside Stripe webhooks, or ship agents API without auth. This pack corrects that and adds a **full per-user lifecycle** (PRD-03) and a **backend readiness gate** before any frontend work (PRD-12).
+Moving from a **dev-only PSTN panel** to **multi-tenant SaaS** fails if you: reuse dev stores without tenant guards, use cookie-only auth for a separate Dialtact origin, provision Telnyx inside Stripe webhooks, or ship agents API without auth. This pack corrects that and adds a **full per-user lifecycle** (PRD-03) and a **backend readiness gate** before any frontend work (PRD-12).
 
-**Implementation order:** PRD-12 Phase A → B → C → D → then Voxly (PRD-07).
+**Implementation order:** PRD-12 Phase A → B → C → D → then Dialtact (PRD-07).
 
 ---
 
@@ -15,7 +15,7 @@ Moving from a **dev-only PSTN panel** to **multi-tenant SaaS** fails if you: reu
 | # | Issue | Risk | Resolution |
 |---|--------|------|------------|
 | C1 | App telephony “reuses dev_telephony” | Global store, no tenant checks | **`TelephonyOrchestrator`**; dev + app routers are thin wrappers (PRD-02) |
-| C2 | Cookie sessions + Voxly on another origin | Login broken cross-site | **JWT access + refresh** for subscriber API; dev keeps cookies (PRD-03) |
+| C2 | Cookie sessions + Dialtact on another origin | Login broken cross-site | **JWT access + refresh** for subscriber API; dev keeps cookies (PRD-03) |
 | C3 | Telnyx provision inside webhook handler | Timeouts, double provision | Webhook → **`provision_jobs`** row → worker; 200 after persist (PRD-04, PRD-09) |
 | C4 | Search → pay race on same E.164 | Double sale | **`number_reservations`** TTL during checkout (PRD-04, PRD-09) |
 | C5 | Unauthenticated agent/brain APIs | IDOR | **`tenant_guard`** on all `/api/agents/{id}/**` (PRD-03, PRD-10) |
@@ -25,7 +25,7 @@ Moving from a **dev-only PSTN panel** to **multi-tenant SaaS** fails if you: reu
 | C9 | **No account deletion / org teardown** | GDPR, orphaned Stripe/Telnyx | PRD-03 flows + async jobs |
 | C10 | **No refresh token rotation** | Stolen refresh = long compromise | PRD-03 `refresh_tokens` table |
 | C11 | **Sole admin can delete self** | Orphan tenant | Block delete; require transfer (PRD-03) |
-| C12 | **Frontend before backend gate** | Integration churn | PRD-12 sign-off before Voxly |
+| C12 | **Frontend before backend gate** | Integration churn | PRD-12 sign-off before Dialtact |
 
 ---
 
@@ -42,7 +42,7 @@ Moving from a **dev-only PSTN panel** to **multi-tenant SaaS** fails if you: reu
 | H7 | Call ledger missing `tenant_id` | Every PSTN init includes tenant from number/agent |
 | H8 | Recording / consent | Tenant setting; PRD-01 compliance note |
 | H9 | Observability | Metrics: `provision_failed`, `webhook_lag`, `pstn_active_by_tenant` |
-| H10 | Dual frontends | Voxly = customer; Next `/app` = internal QA only |
+| H10 | Dual frontends | Dialtact = customer; Next `/app` = internal QA only |
 | H11 | Email verification | Block number buy until verified (configurable) |
 | H12 | Legacy `/api/app/login` | Deprecate when `SAAS_AUTH_ENABLED` |
 
@@ -56,19 +56,19 @@ Moving from a **dev-only PSTN panel** to **multi-tenant SaaS** fails if you: reu
 | Job queue | Postgres `provision_jobs` + worker | Redis/SQS |
 | OAuth | 501 | Google/GitHub |
 | Leads CRM | 501 | Phase 6 |
-| Multi-tenant per user | `switch-tenant` API; UI later | Org switcher in Voxly |
+| Multi-tenant per user | `switch-tenant` API; UI later | Org switcher in Dialtact |
 
 ---
 
 ## Anti-patterns (do not implement)
 
-1. Calling `/api/dev/telephony/outbound` from Voxly.
+1. Calling `/api/dev/telephony/outbound` from Dialtact.
 2. Subscriber history in `dev_pstn_history`.
 3. Client `stackOverride` on subscriber routes (reject in schema).
 4. Stripe Checkout without DB `purchase_id` in `checkout_created`.
 5. Telnyx order before payment webhook verified.
 6. `list_agents()` without `tenant_id`.
-7. **Implementing Voxly signup UI before PRD-12 Phase A passes.**
+7. **Implementing Dialtact signup UI before PRD-12 Phase A passes.**
 
 ---
 

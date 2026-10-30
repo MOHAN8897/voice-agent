@@ -24,6 +24,11 @@ from server.utils.rate_limiter import RateLimiter, raise_rate_limited
 
 router = APIRouter()
 _billing_limiter = RateLimiter(max_requests=30, window_s=300)
+#: Provider orders are keyed per tenant, not per user: every order is a
+#: Razorpay API call and a local row, and a workspace with many seats must not
+#: multiply that. No shared Redis limiter exists in this codebase yet, so this
+#: is per process; the edge limit covers the multi-instance case.
+_order_limiter = RateLimiter(max_requests=30, window_s=300)
 
 
 class TopupBody(BaseModel):
@@ -322,7 +327,7 @@ async def billing_last_session(principal: SubscriberPrincipal = Depends(require_
 async def billing_topup(body: TopupBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
     """Legacy USD top-up → convert to INR Razorpay order (Stripe removed)."""
     require_subscriber_permission(principal, "app.billing.write")
-    allowed, retry = _billing_limiter.allow(f"topup:{principal.user_id}")
+    allowed, retry = _order_limiter.allow(f"order:{principal.tenant_id}")
     if not allowed:
         raise_rate_limited(retry, "Top-up rate limit reached.")
     from server.services.saas.billing_rates import load_current_rates
@@ -335,7 +340,9 @@ async def billing_topup(body: TopupBody, principal: SubscriberPrincipal = Depend
         raise HTTPException(status_code=503, detail={"error": {"code": "fx_unavailable", "message": "A positive INR per USD rate is required for top-ups."}})
     amount_inr = max(100.0, round(float(body.amountUsd) * fx, 2))
     try:
-        order = await create_wallet_order(principal.tenant_id, amount_inr)
+        # The amount was converted to INR above, so the order must be INR too;
+        # `None` would fall back to the admin's charge currency (e.g. USD).
+        order = await create_wallet_order(principal.tenant_id, amount_inr, currency="INR")
         return {**order, "convertedFromUsd": body.amountUsd, "fxRateInr": fx}
     except ValueError as e:
         raise HTTPException(status_code=400, detail={"error": {"code": str(e), "message": str(e)}})
@@ -347,7 +354,7 @@ async def razorpay_create_order(
     principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
 ):
     require_subscriber_permission(principal, "app.billing.write")
-    allowed, retry = _billing_limiter.allow(f"rzp:{principal.user_id}")
+    allowed, retry = _order_limiter.allow(f"order:{principal.tenant_id}")
     if not allowed:
         raise_rate_limited(retry, "Payment rate limit reached.")
     try:
@@ -390,8 +397,11 @@ async def razorpay_verify(body: RazorpayVerifyBody, principal: SubscriberPrincip
             status_code = 503
         elif code in ("payment_not_captured", "payment_amount_mismatch", "payment_currency_mismatch"):
             status_code = 409
+        if code == "payment_capture_unavailable":
+            status_code = 503
         messages = {
             "payment_verification_unavailable": "Payment status could not be confirmed. Please retry.",
+            "payment_capture_unavailable": "Your bank approved the payment and we are completing it. Your wallet will be credited automatically.",
             "payment_not_captured": "The bank has not captured this payment yet. It will be credited automatically once it is.",
             "invalid_signature": "This payment could not be verified. Please contact support if money was deducted.",
         }
@@ -517,8 +527,9 @@ async def razorpay_public_config():
         SUPPORTED_CURRENCIES,
         normalize_currency,
     )
-    from server.services.saas.payment_settings import is_international_enabled
+    from server.services.saas.payment_settings import is_international_enabled, refresh
 
+    await refresh()
     settings = get_settings()
     key = (settings.razorpay_api_key or "").strip()
     secret = (settings.razorpay_api_secret or "").strip()

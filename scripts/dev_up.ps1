@@ -16,7 +16,7 @@ param(
     [switch]$ApiOnly,
     [switch]$WebOnly,
     [switch]$ProductionWeb,
-    [switch]$VoxlyFocus,
+    [switch]$DialtactFocus,
     # dev_stack.ps1 prints the canonical banner (it knows about the tunnel), so it
     # suppresses this one. Without it the two blocks stack up and look duplicated.
     [switch]$QuietBanner,
@@ -36,9 +36,9 @@ $env:Path = $env:Path + ";" + [System.Environment]::GetEnvironmentVariable("Path
     [System.Environment]::GetEnvironmentVariable("Path", "User")
 
 $WebUrl = "http://127.0.0.1:3000"
-$VoxlyUrl = "http://127.0.0.1:5173"
+$DialtactUrl = "http://127.0.0.1:5173"
 $ApiUrl = "http://127.0.0.1:8000"
-$VoxlyRoot = Join-Path $RepoRoot "voxly-ai"
+$DialtactRoot = Join-Path $RepoRoot "dialtact-app"
 $DevLoginUrl = "$WebUrl/dev/login"
 $TestStudioUrl = "$WebUrl/dev/test-studio"
 $AppLoginUrl = "$WebUrl/app/login"
@@ -48,13 +48,13 @@ function Write-DevBanner {
     param(
         [bool]$ApiOk,
         [bool]$WebOk,
-        [bool]$VoxlyOk = $false,
-        [bool]$VoxlyFocus = $false
+        [bool]$DialtactOk = $false,
+        [bool]$DialtactFocus = $false
     )
     Write-Host ""
     Write-Host "============================================================"
     if ($ApiOk -and $WebOk) {
-        if ($VoxlyFocus) {
+        if ($DialtactFocus) {
             Write-Host "  Dialtact + dev panel (light local stack)"
         } else {
             Write-Host "  Voice agent - local dev is running (API + dev portal + Dialtact)"
@@ -65,14 +65,14 @@ function Write-DevBanner {
     Write-Host "============================================================"
     Write-Host ""
     if ($WebOk) {
-        if ($VoxlyOk) {
-            Write-Host "  Dialtact (subscriber UI) $VoxlyUrl"
+        if ($DialtactOk) {
+            Write-Host "  Dialtact (subscriber UI) $DialtactUrl"
         } else {
-            Write-Host "  Dialtact                 NOT RUNNING (see voxly.log)"
+            Write-Host "  Dialtact                 NOT RUNNING (see dialtact.log)"
         }
         Write-Host "  Dev portal            $DevLoginUrl  (dev / devpass)"
         Write-Host "  Test Studio           $TestStudioUrl"
-        if (-not $VoxlyFocus) {
+        if (-not $DialtactFocus) {
             Write-Host "  Legacy marketing      $MarketingUrl  (redirects to Dialtact)"
             Write-Host "  Legacy /app console   $AppLoginUrl  (redirects to Dialtact)"
         }
@@ -115,7 +115,7 @@ if ($KillStale) {
 
 $apiOk = $false
 $webOk = $false
-$voxlyOk = $false
+$dialtactOk = $false
 
 if (-not $WebOnly) {
     Ensure-RedisServer | Out-Null
@@ -223,44 +223,44 @@ if (-not $ApiOnly) {
     $webOk = $true
 }
 
-if (-not $ApiOnly -and (Test-Path $VoxlyRoot) -and $apiOk) {
-    if (-not (Test-Path (Join-Path $VoxlyRoot "node_modules"))) {
+if (-not $ApiOnly -and (Test-Path $DialtactRoot) -and $apiOk) {
+    if (-not (Test-Path (Join-Path $DialtactRoot "node_modules"))) {
         Write-Host "Installing Dialtact dependencies (first run)..."
-        Push-Location $VoxlyRoot
+        Push-Location $DialtactRoot
         try {
             & $npm install
             if ($LASTEXITCODE -ne 0) { throw "Dialtact dependency installation failed." }
         } finally { Pop-Location }
     }
-    Write-Host "Starting Dialtact on $VoxlyUrl"
-    Start-DevWindow -Title "Dialtact AI" -WorkingDir $VoxlyRoot `
+    Write-Host "Starting Dialtact on $DialtactUrl"
+    Start-DevWindow -Title "Dialtact AI" -WorkingDir $DialtactRoot `
         -Command "& '$npm' run dev" `
-        -LogFile (Join-Path $LogDir "voxly.log")
-    $voxlyOk = Wait-ForService -Label "Dialtact" -Url $VoxlyUrl -MaxAttempts 60
+        -LogFile (Join-Path $LogDir "dialtact.log")
+    $dialtactOk = Wait-ForService -Label "Dialtact" -Url $DialtactUrl -MaxAttempts 60
 }
 
 if (-not $QuietBanner) {
-    Write-DevBanner -ApiOk $apiOk -WebOk $webOk -VoxlyOk $voxlyOk -VoxlyFocus:$VoxlyFocus
+    Write-DevBanner -ApiOk $apiOk -WebOk $webOk -DialtactOk $dialtactOk -DialtactFocus:$DialtactFocus
 }
 
 if ($Open -and $webOk) {
-    $openUrl = if ($VoxlyFocus -and $voxlyOk) { $VoxlyUrl } else { $DevLoginUrl }
+    $openUrl = if ($DialtactFocus -and $dialtactOk) { $DialtactUrl } else { $DevLoginUrl }
     Write-Host "Opening $openUrl in browser..."
     Start-Process $openUrl
 }
 
-if ($VoxlyFocus) {
-    # Voxly mode: API + Voxly are the critical pair. Website proxy is nice-to-have.
+if ($DialtactFocus) {
+    # Dialtact mode: API + Dialtact are the critical pair. Website proxy is nice-to-have.
     if (-not $apiOk) {
         Write-Warning "API is not healthy. Exiting with error."
         exit 1
     }
-    if (-not $voxlyOk) {
-        Write-Warning "Voxly is not running. Exiting with error."
+    if (-not $dialtactOk) {
+        Write-Warning "Dialtact is not running. Exiting with error."
         exit 1
     }
     if (-not $webOk) {
-        Write-Warning "Website proxy is degraded but API + Voxly are healthy. Continuing."
+        Write-Warning "Website proxy is degraded but API + Dialtact are healthy. Continuing."
     }
 } else {
     if (-not $apiOk -or -not $webOk) {

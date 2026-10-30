@@ -1,10 +1,10 @@
 # Google shows "Sign in to venuefinder" when OAuth consent screen App name is still the old project name.
-# Fix in Cloud Console (cannot be changed from Voxly code):
+# Fix in Cloud Console (cannot be changed from Dialtact code):
 $project = "gen-lang-client-0799442928"
 $url = "https://console.cloud.google.com/auth/branding?project=$project"
 Write-Host @"
-Update Google OAuth branding for Voxly:
-  1. App name: Voxly AI
+Update Google OAuth branding for Dialtact:
+  1. App name: Dialtact AI
   2. User support email: your email
   3. App logo: optional
   4. Save

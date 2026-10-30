@@ -100,13 +100,13 @@ def _safe_name(value: str) -> str:
 def _trusted_return_url(candidate: str | None) -> str:
     settings = get_settings()
     try:
-        configured = urlsplit(str(settings.voxly_frontend_url or "").strip())
+        configured = urlsplit(str(settings.dialtact_frontend_url or "").strip())
         configured_port = configured.port
     except ValueError as exc:
         raise VoiceKycError("voice_kyc_redirect_not_configured") from exc
     if configured.scheme not in {"http", "https"} or not configured.hostname:
         raise VoiceKycError("voice_kyc_redirect_not_configured")
-    fallback = settings.voxly_frontend_url.rstrip("/") + "/"
+    fallback = settings.dialtact_frontend_url.rstrip("/") + "/"
     if not candidate:
         return fallback
     candidate = str(candidate).strip()
@@ -387,7 +387,15 @@ def _aware(value: datetime | None) -> datetime | None:
     return value.replace(tzinfo=timezone.utc) if value and value.tzinfo is None else value
 
 
-async def refresh_kyc_status(tenant_id: UUID, *, force: bool = False) -> dict:
+async def refresh_kyc_status(
+    tenant_id: UUID, *, force: bool = False, skip_if_approved: bool = False
+) -> dict:
+    """Carrier verification status, cached for ``_STATUS_CACHE_SECONDS``.
+
+    ``force`` bypasses the cache. ``skip_if_approved`` lets a console refresh return
+    an already-approved stored status without a carrier round trip; enforcement
+    gates (``assert_voice_kyc_approved``) never pass it, so revocation still lands.
+    """
     from server.services.vobiz_client import VobizClient
 
     account = await _get_account(tenant_id)
@@ -427,6 +435,8 @@ async def refresh_kyc_status(tenant_id: UUID, *, force: bool = False) -> dict:
     if last_sync and last_sync.tzinfo is None:
         last_sync = last_sync.replace(tzinfo=timezone.utc)
     if not force and last_sync and (now - last_sync).total_seconds() < _STATUS_CACHE_SECONDS:
+        return _public_status(account)
+    if force and skip_if_approved and _public_status(account)["approved"]:
         return _public_status(account)
 
     try:

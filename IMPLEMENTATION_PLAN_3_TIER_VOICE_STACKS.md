@@ -481,6 +481,6 @@ Repository references checked during this review:
 - [Call lifecycle/rates](server/call/call_lifecycle_service.py), [billing timing](server/call/billing_timing.py).
 - [Versioned rates](server/services/saas/billing_rates.py), [rate schema](server/db/models/saas_models.py), [wallet settlement](server/services/saas/billing_wallet_service.py).
 - [Cost insights](server/services/saas/cost_insights.py) and [admin billing](server/routes/dev_admin.py).
-- [Voice catalog](server/services/saas/voice_catalog.py), [preview service](server/services/saas/voice_preview.py), [tenant voice panel](voxly-ai/src/console/modules/agent-workspace/AgentVoicePanel.jsx).
+- [Voice catalog](server/services/saas/voice_catalog.py), [preview service](server/services/saas/voice_preview.py), [tenant voice panel](dialtact-app/src/console/modules/agent-workspace/AgentVoicePanel.jsx).
 
 Provider links above identify compatibility risks; they do not certify this account's access, costs, or latency. Re-check them and record staging probe results before release. This document review used no provider credentials, paid calls, schema execution, or production changes.

@@ -125,7 +125,7 @@ function normaliseCalculator(raw: Partial<CalculatorFlags> | undefined): Calcula
   };
 }
 
-// Palette values mirror .landing-price-card.is-featured presets in voxly-ai/src/styles/landing.css.
+// Palette values mirror .landing-price-card.is-featured presets in dialtact-app/src/styles/landing.css.
 const FEATURED_STYLE_OPTIONS: FeaturedStyleOption[] = [
   {
     id: "graphite",
@@ -468,7 +468,7 @@ export function PricingMerchandisingEditor() {
   return (
     <DevCard
       title="Pricing tags, featured tier & card style"
-      description="Badges shown beside each tier on the marketing pricing cards and the workspace calculator, the treatment of the highlighted card with a live preview, and which controls the usage calculator offers. Prices themselves come from the rate tables above, so editing a rate updates the public page without touching this card."
+      description="Badges shown beside each tier on the marketing pricing cards and the workspace calculator, the treatment of the highlighted card with a live preview, and which controls the usage calculator offers. Prices are read-only here: each tier price is edited on its tier card above, and saving it updates the public page."
       actions={
         <div className="flex flex-wrap items-center justify-end gap-2 text-[11px] text-text-subtle">
           <span className="rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel px-2.5 py-1 font-mono">
@@ -513,7 +513,7 @@ export function PricingMerchandisingEditor() {
             <h3 className="text-sm font-semibold text-text">Usage calculator controls</h3>
             <p className="mt-1 text-xs text-text-muted">
               Choose which controls the usage calculator offers on the marketing page and in the
-              workspace. Rates and tags come from the pricing tables above; the GST rate comes from
+              workspace. Tier prices come from the tier cards above and tags from this card; the GST rate comes from
               GST &amp; invoicing below.
             </p>
             <div

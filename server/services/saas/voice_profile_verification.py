@@ -144,8 +144,8 @@ async def verify_saved_profile(*, environment: str, tier: str, expected_revision
     record = (await profiles.load_profile_records(environment, [tier])).get(tier)
     if record is None or int(record["revision"]) != expected_revision:
         raise profiles.VoiceProfileError("revision_conflict", "Reload the saved setup before verification.", status_code=409)
-    if record["profile"]["llm"].get("apiMode") == "websocket":
-        raise profiles.VoiceProfileError("native_verification_required", "Verify native audio in Test Studio before approving this setup.", status_code=409)
+    if profiles.is_native_profile(record["profile"]):
+        return await _verify_native_profile(environment=environment, tier=tier, record=record, actor=actor)
     checks = await probe_profile(copy.deepcopy(record["profile"]))
     factory = get_session_factory()
     if factory is None:
@@ -170,4 +170,43 @@ async def verify_saved_profile(*, environment: str, tier: str, expected_revision
         await db.commit()
         from server.db.tier_store import _cache_put
         _cache_put(environment, tier, row.stack_payload)
+    profiles.invalidate_profile_caches(tier)
+    return {"profile": await profiles.profile_view(tier, environment, include_internal=True), "checks": checks}
+
+
+async def _verify_native_profile(*, environment: str, tier: str, record: dict[str, Any], actor: str) -> dict[str, Any]:
+    """Native audio is gated by the runtime registry, not synthetic stage probes.
+
+    The composed probes (separate STT, text model and TTS) do not apply to one
+    live audio model, so readiness excludes them for native profiles. This runs
+    the static registry/voice check, records it, and points the operator to
+    Test Studio for a live audio session. It never fabricates stage evidence.
+    """
+    blockers = profiles._runtime_profile_blockers(copy.deepcopy(record["profile"]))
+    passed = not blockers
+    na = "Not applicable to native audio; confirm call quality with a Test Studio session."
+    checks: dict[str, dict[str, Any]] = {key: {"passed": None, "notApplicable": True, "detail": na} for key in profiles._EVIDENCE_KEYS}
+    checks["credentialRefConfigured"] = {
+        "passed": passed,
+        "detail": "Provider, live model and voices are configured and approved." if passed
+        else "; ".join(b["message"] for b in blockers),
+    }
+    factory = get_session_factory()
+    if factory is None:
+        raise profiles.VoiceProfileError("durable_store_unavailable", "Verification requires the configuration store.", status_code=503)
+    async with factory() as db:
+        row = (await db.execute(select(TierAssignment).where(TierAssignment.environment == environment,
+            TierAssignment.tier == tier).with_for_update())).scalar_one_or_none()
+        current = profiles._profile_record(row)
+        if current is None or int(current["revision"]) != int(record["revision"]):
+            raise profiles.VoiceProfileError("revision_conflict", "The setup changed during verification. Run the checks again.", status_code=409)
+        current["verification"] = {"checkedAt": datetime.now(timezone.utc).isoformat(), "checks": checks, "native": True}
+        row.stack_payload = {**row.stack_payload, "composed_voice_profile": current}
+        flag_modified(row, "stack_payload")
+        db.add(ConfigVersion(resource_type="voice_profile_verification", resource_id=f"{environment}:{tier}",
+            version=current["revision"], payload={"actor": actor, **current["verification"]}))
+        await db.commit()
+        from server.db.tier_store import _cache_put
+        _cache_put(environment, tier, row.stack_payload)
+    profiles.invalidate_profile_caches(tier)
     return {"profile": await profiles.profile_view(tier, environment, include_internal=True), "checks": checks}

@@ -33,7 +33,7 @@ async def test_selected_model_gateway_roundtrip_is_authorized_and_write_is_not_r
 
     module = importlib.import_module("server.call.live_turn_orchestrator")
     monkeypatch.setattr(connection, "get_session_factory", lambda: integration_db)
-    router = tool_router.VoxlyToolRouter()
+    router = tool_router.DialtactToolRouter()
     router.nango = NangoService(secret_key="offline-test-key")
     monkeypatch.setattr(tool_router, "tool_router", router)
     requests, writes = [], []

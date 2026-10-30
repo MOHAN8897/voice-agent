@@ -107,7 +107,7 @@ def allowed_frontend_origin(origin: str | None) -> str | None:
     candidate = f"{parsed.scheme}://{parsed.netloc}"
     settings = get_settings()
     allowed = {
-        settings.voxly_frontend_url.rstrip("/"),
+        settings.dialtact_frontend_url.rstrip("/"),
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "https://app-dev.dialtact.com",
@@ -187,7 +187,7 @@ def google_signin_config() -> dict[str, Any]:
         "clientId": settings.google_oauth_client_id or "",
         "redirectUri": redirect,
         "javascriptOrigins": [
-            settings.voxly_frontend_url.rstrip("/"),
+            settings.dialtact_frontend_url.rstrip("/"),
             "https://dialtact.com",
             "https://www.dialtact.com",
             "https://app-dev.dialtact.com",

@@ -148,7 +148,7 @@ async def test_older_gemini_uses_forced_schema_function_for_final_reply(monkeypa
         "memory_update": {"operations": []},
     }
     requests = mocked_gemini(monkeypatch, [{"candidates": [{"content": {"role": "model", "parts": [
-        {"functionCall": {"name": "VOXLY_RETURN_SPOKEN_TURN", "args": reply}}]}, "finishReason": "STOP"}]}])
+        {"functionCall": {"name": "DIALTACT_RETURN_SPOKEN_TURN", "args": reply}}]}, "finishReason": "STOP"}]}])
     before = copy.deepcopy(conversation_manager.get_history("default"))
     events = [event async for event in gemini_llm.GeminiLLMAdapter().stream_structured_turn(
         model="gemini-2.5-flash", schema=LIVE_TURN_JSON_SCHEMA, tools=[TOOL], tool_choice="none",
@@ -157,7 +157,7 @@ async def test_older_gemini_uses_forced_schema_function_for_final_reply(monkeypa
     assert not events[-1].get("tool_calls")
     assert "responseMimeType" not in requests[0]["generationConfig"]
     assert requests[0]["toolConfig"]["functionCallingConfig"] == {
-        "mode": "ANY", "allowedFunctionNames": ["VOXLY_RETURN_SPOKEN_TURN"]}
+        "mode": "ANY", "allowedFunctionNames": ["DIALTACT_RETURN_SPOKEN_TURN"]}
     assert conversation_manager.get_history("default") == before
 
 

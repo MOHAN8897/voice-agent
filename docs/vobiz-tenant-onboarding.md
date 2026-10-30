@@ -91,7 +91,7 @@ it to a live database or alter production settings.
    key once. Share the same key across API/worker processes and restarts; keep
    a recoverable backup. Do not regenerate it at startup or rotate without
    re-encrypting the existing rows.
-2. Configure the parent's Vobiz credentials, the exact `VOXLY_FRONTEND_URL`,
+2. Configure the parent's Vobiz credentials, the exact `DIALTACT_FRONTEND_URL`,
    and a public HTTPS API base for live callbacks. If a callback is configured,
    it must be reachable over HTTPS. Status polling works without a callback.
 3. Apply `alembic -c alembic.ini upgrade head` through the normal deployment

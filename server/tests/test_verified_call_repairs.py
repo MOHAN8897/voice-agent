@@ -8,7 +8,7 @@ import pytest
 
 from server.call.memory_guard import grounded_turn_operations
 from server.call.memory_manager import MemoryManager, empty_snapshot
-from server.services.tool_router import VoxlyToolRouter
+from server.services.tool_router import DialtactToolRouter
 from server.services.saas.lead_scoring import score_outcome
 
 
@@ -21,7 +21,7 @@ def test_rejected_product_cannot_become_selected_product():
 
 
 def test_same_email_create_deduplicates_when_optional_phone_is_added():
-    router = VoxlyToolRouter()
+    router = DialtactToolRouter()
     first = router._generate_idempotency_key("tenant", "call", "HUBSPOT_CREATE_CONTACT", {
         "email": "audit@example.invalid", "firstname": "Test"
     })

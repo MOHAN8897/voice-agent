@@ -239,7 +239,7 @@ async def _build_export_zip(tenant_id: uuid.UUID) -> bytes:
         # --- README ---
         zf.writestr(
             "README.txt",
-            "Voxly AI — Workspace Data Export\n"
+            "Dialtact AI — Workspace Data Export\n"
             "=================================\n"
             "This archive contains your workspace data for your records and privacy requests.\n"
             "Handle the personal data it contains under applicable Indian law and your retention policy.\n\n"

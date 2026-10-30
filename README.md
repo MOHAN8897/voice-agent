@@ -1,11 +1,11 @@
-# Voxly AI — Enterprise Autonomous Voice Agent & Multi-Tenant Telephony SaaS
+# Dialtact AI — Enterprise Autonomous Voice Agent & Multi-Tenant Telephony SaaS
 
 [![Security SAST](https://img.shields.io/badge/Security-SAST%20Zero%20Findings-success)](scripts/security_audit.py)
 [![Telephony](https://img.shields.io/badge/Telephony-Vobiz%20Primary%20%7C%20Telnyx%20Secondary-blue)]()
 [![Voice Core](https://img.shields.io/badge/Voice%20Core-Gemini%20Live%20Streaming-orange)]()
 [![License](https://img.shields.io/badge/License-Proprietary-red)]()
 
-Voxly AI is a production-grade, multi-tenant conversational Voice AI platform providing ultra-low-latency bidirectional phone calls, automated outbound campaign management, intelligent business brain knowledge bases, and telecom carrier subaccount isolation.
+Dialtact AI is a production-grade, multi-tenant conversational Voice AI platform providing ultra-low-latency bidirectional phone calls, automated outbound campaign management, intelligent business brain knowledge bases, and telecom carrier subaccount isolation.
 
 ---
 
@@ -25,7 +25,7 @@ Voxly AI is a production-grade, multi-tenant conversational Voice AI platform pr
                                                          v
 +-------------------------------+               +-----------------+----------------+
 |       Tenant Voice Console    | <===========> |        FastAPI Backend Core      |
-|    (voxly-ai React 18 SPA)    |   REST / WS   |   (SQLAlchemy Async + Redis)     |
+|    (dialtact-app React 18 SPA)    |   REST / WS   |   (SQLAlchemy Async + Redis)     |
 +-------------------------------+               +-----------------+----------------+
                                                                   |
                                       +---------------------------+---------------------------+

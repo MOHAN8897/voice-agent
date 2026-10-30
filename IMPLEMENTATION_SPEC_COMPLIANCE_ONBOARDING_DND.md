@@ -2,7 +2,7 @@
 ## Compliance Attestation, Post-Prewarm Recording Disclosure, Normalized Onboarding vs. Settings Isolation, Tenant-Wide Authoritative Pre-Dial DND & Audit-Preserved Soft Deactivation
 
 **Document Version:** 2.1.0  
-**Target Systems:** FastAPI Backend (`server/`), Vite React Console (`voxly-ai/`), Next.js Web App (`web/`)  
+**Target Systems:** FastAPI Backend (`server/`), Vite React Console (`dialtact-app/`), Next.js Web App (`web/`)  
 **Compliance Standards:** FTC Telemarketing Sales Rule (TSR), Telephone Consumer Protection Act (TCPA), OWASP ASVS, SOC2 Security & Privacy  
 **Tooling & Verification:** Chisle Efficiency Ladder, Reticle In-App Browser Verification, Pytest Backend Suite, Playwright E2E  
 
@@ -414,25 +414,25 @@ Upgrade `dnc_list` (`server/db/models/phase5_models.py`) with soft deactivation 
 
 ---
 
-## Phase 4: Frontend UI / UX Implementation (`voxly-ai`)
+## Phase 4: Frontend UI / UX Implementation (`dialtact-app`)
 
 ### 4.1 Reusable `CampaignComplianceModal.jsx`
-* **File:** `voxly-ai/src/console/ui/CampaignComplianceModal.jsx`
+* **File:** `dialtact-app/src/console/ui/CampaignComplianceModal.jsx`
 * **Shared Component:** Invoked by both `CampaignsModule.jsx` (Global Campaigns) and `AgentDialBulkPanel.jsx` (`Calls` → `Outbound` in Agent Studio).
 * **UI Content:**
   * Header: Shield icon + `"Campaign Compliance Confirmation"`
   * Body:
     > "I confirm that I have the necessary authorization/consent to contact the phone numbers used in this campaign and that my campaign complies with applicable laws and regulations."  
     >  
-    > "I understand that I am responsible for the contacts, purpose, content, and legality of the calls made through Voxly."
+    > "I understand that I am responsible for the contacts, purpose, content, and legality of the calls made through Dialtact."
   * Checkbox: `[ ] I confirm and accept`
   * Action Buttons:
     * `Cancel` (secondary, closes modal)
     * `Confirm & Launch Campaign` (primary, disabled until checked)
-  * Clarifying Note: *"Notice: Voxly provides automated telephony infrastructure and does not verify or guarantee the legal validity of your contact lists. You are making this representation as the operating tenant."*
+  * Clarifying Note: *"Notice: Dialtact provides automated telephony infrastructure and does not verify or guarantee the legal validity of your contact lists. You are making this representation as the operating tenant."*
 
 ### 4.2 Agent Studio Outbound & Bulk Dialing Alignment
-* **File:** `voxly-ai/src/console/modules/agent-workspace/AgentDialBulkPanel.jsx`
+* **File:** `dialtact-app/src/console/modules/agent-workspace/AgentDialBulkPanel.jsx`
 * **Location in UI:** Inside `AgentStudioModule` under `Calls` tab → `Outbound` sub-tab.
 * **Enhancement:**
   * Clean tab switch: `"Single Call"` vs. `"Bulk Campaign"`.
@@ -441,7 +441,7 @@ Upgrade `dnc_list` (`server/db/models/phase5_models.py`) with soft deactivation 
   * Displays immediate feedback if contacts are scrubbed by DND: `"3 numbers on your tenant Do Not Call list were excluded."`
 
 ### 4.3 Agent Recording Disclosure Settings Card
-* **File:** `voxly-ai/src/console/modules/agent-workspace/AgentSettingsPanel.jsx`
+* **File:** `dialtact-app/src/console/modules/agent-workspace/AgentSettingsPanel.jsx`
 * **UI Elements:**
   * Title: **Call Recording & Disclosure**
   * Toggle: `Enable recording disclosure` (`[ OFF / ON ]`, default `OFF`)
@@ -452,7 +452,7 @@ Upgrade `dnc_list` (`server/db/models/phase5_models.py`) with soft deactivation 
     * Clean, simple disclosure focus without long jurisdictional legal warnings.
 
 ### 4.4 Clean Tenant Settings View (Strict Isolation of Telemetry)
-* **File:** `voxly-ai/src/console/modules/SettingsModule.jsx`
+* **File:** `dialtact-app/src/console/modules/SettingsModule.jsx`
 * **Rule:** **Never display marketing survey answers in tenant settings.**
 * **Tenant Cards Displayed:**
   1. **Profile & Account:** Owner / Full Name (editable), Work Email (read-only verified), Role.
@@ -462,7 +462,7 @@ Upgrade `dnc_list` (`server/db/models/phase5_models.py`) with soft deactivation 
   5. **Wallet & Usage:** Remaining minutes and balance.
 
 ### 4.5 Post-Auth Onboarding Survey Modal
-* **File:** `voxly-ai/src/components/OnboardingSurveyModal.jsx`
+* **File:** `dialtact-app/src/components/OnboardingSurveyModal.jsx`
 * **Trigger:** Intercepts user immediately after first signup/login if `user.hasCompletedOnboarding === false`.
 * **Flow:**
   * **Step 1: Your Role & Business:** Full Name, Company Name, Role dropdown.
@@ -474,7 +474,7 @@ Upgrade `dnc_list` (`server/db/models/phase5_models.py`) with soft deactivation 
   * Submits to `POST /api/auth/onboarding-survey`, updates local auth context, and reveals console.
 
 ### 4.6 DND Registry Management Screen with Deactivation Audit Modal
-* **File:** `voxly-ai/src/console/modules/CampaignsModule.jsx` (DND sub-tab)
+* **File:** `dialtact-app/src/console/modules/CampaignsModule.jsx` (DND sub-tab)
 * **Features:**
   * Tabbed view: `Active DND` vs. `Deactivated / Audit History`.
   * Table: Phone Number, Source (`Live Call Opt-Out`, `Manual`), Date Added, Removal Reason, Deactivated At.
@@ -485,7 +485,7 @@ Upgrade `dnc_list` (`server/db/models/phase5_models.py`) with soft deactivation 
       * Checkbox: `[ ] I confirm that this contact has provided new authorization to receive calls.`
       * Confirm button calls `POST /api/dnc/{phoneE164}/deactivate`.
 
-### 4.7 API Client Updates (`voxly-ai/src/services/api.js`)
+### 4.7 API Client Updates (`dialtact-app/src/services/api.js`)
 ```javascript
 export const api = {
   ...
@@ -522,7 +522,7 @@ export const api = {
 
 ## Phase 5: Verification, Reticle & Pytest
 
-### 5.1 Reticle In-App Browser Verification (`voxly-ai`)
+### 5.1 Reticle In-App Browser Verification (`dialtact-app`)
 Use Reticle MCP tools (`reticle_session`, `reticle_act_and_wait`, `reticle_assert`) to drive the running Vite app and assert UI behavior:
 1. **Flow 1: Campaign Compliance Modal (Global & Agent Console):**
    * Open Campaign wizard → Advance to Review → Assert "Launch" button is disabled.
@@ -564,9 +564,9 @@ Use Reticle MCP tools (`reticle_session`, `reticle_act_and_wait`, `reticle_asser
 | Live Call Opt-Out Auto-Enrollment | Backend | `server/call/close_call_executor.py` | Upserts `dnc_list` on `end_reason="opt_out"` |
 | DND Soft-Deactivation API | Backend | `server/routes/campaigns.py` | `POST /api/dnc/{phone}/deactivate` audits removal |
 | Post-Prewarm Voice Disclosure | Brain | `server/brain/agent_script_compiler.py` | Woven into first response turn after caller speaks |
-| Compliance Modal Component | Frontend | `voxly-ai/src/console/ui/CampaignComplianceModal.jsx` | Renders in both Campaign & Outbound tabs |
-| Clean Recording Disclosure Card | Frontend | `voxly-ai/src/console/modules/agent-workspace/AgentSettingsPanel.jsx` | Clean toggle + script without legal bloat |
-| Clean Settings Module | Frontend | `voxly-ai/src/console/modules/SettingsModule.jsx` | Zero survey telemetry leakage; clean profile |
-| Normalized Onboarding Survey Modal | Frontend | `voxly-ai/src/components/OnboardingSurveyModal.jsx` | Terms unchecked by default; canonical updates |
-| DND Registry Management Tab | Frontend | `voxly-ai/src/console/modules/CampaignsModule.jsx` | Active & Audit tabs with Deactivation modal |
+| Compliance Modal Component | Frontend | `dialtact-app/src/console/ui/CampaignComplianceModal.jsx` | Renders in both Campaign & Outbound tabs |
+| Clean Recording Disclosure Card | Frontend | `dialtact-app/src/console/modules/agent-workspace/AgentSettingsPanel.jsx` | Clean toggle + script without legal bloat |
+| Clean Settings Module | Frontend | `dialtact-app/src/console/modules/SettingsModule.jsx` | Zero survey telemetry leakage; clean profile |
+| Normalized Onboarding Survey Modal | Frontend | `dialtact-app/src/components/OnboardingSurveyModal.jsx` | Terms unchecked by default; canonical updates |
+| DND Registry Management Tab | Frontend | `dialtact-app/src/console/modules/CampaignsModule.jsx` | Active & Audit tabs with Deactivation modal |
 | Reticle & Pytest Suite | QA | `server/tests/test_compliance_dnc_and_onboarding.py` | All tests pass, zero regressions |

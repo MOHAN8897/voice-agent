@@ -1,9 +1,9 @@
-# Agent workspace UI redesign (voxly-ai frontend only)
+# Agent workspace UI redesign (dialtact-app frontend only)
 
-**Status:** Mostly implemented in `voxly-ai` (P0–P3). Doc header previously said “spec only” — that is outdated.  
+**Status:** Mostly implemented in `dialtact-app` (P0–P3). Doc header previously said “spec only” — that is outdated.  
 **Remaining:** P4 shadcn polish optional; keep §8 deferred items out of UI.  
 **Date:** 2026-10-01 (revised — frontend-only scope locked; status refreshed 2026-10-01)  
-**App:** `voxly-ai/` (Vite React console the customer opens after login)  
+**App:** `dialtact-app/` (Vite React console the customer opens after login)  
 **UI kit:** Prefer [shadcn/ui](https://ui.shadcn.com/) inside this Vite app only (P4 not done — still custom craft UI)  
 
 ---
@@ -15,23 +15,23 @@
 All work is **frontend UI/UX recombination** under:
 
 ```
-voxly-ai/src/console/modules/AgentStudioModule.jsx
-voxly-ai/src/console/modules/EmployeesModule.jsx
-voxly-ai/src/console/modules/TelephonySettingsCard.jsx
-voxly-ai/src/console/modules/CallsModule.jsx          ← reuse / extract agent-scoped UI only
-voxly-ai/src/console/modules/LeadsModule.jsx          ← reuse / extract agent-scoped UI only
-voxly-ai/src/console/modules/TalkToAiConsole.jsx      ← open as modal/drawer, not a top tab
-voxly-ai/src/console/modules/agent-creation/*         ← labels, defaults, chips, copy only
-voxly-ai/src/console/employeeFlowHash.js              ← tab ids for Open builder hash
-voxly-ai/src/console/Topbar.jsx                       ← step labels for employee flow only
-voxly-ai/src/console/AppShell.jsx                     ← only if needed to mount the new shell
-voxly-ai/src/lib/callStatus.js                        ← display labels only
-voxly-ai/src/lib/voicePresets.js / voiceDisplay.js    ← display grouping only
-voxly-ai/src/services/api.js                          ← call existing endpoints only; no new routes
-voxly-ai/src/services/agentBrain.js                   ← keep using current brain load/save
-voxly-ai/src/console/context/WorkspaceContext.jsx     ← filter/aggregate client-side if needed
-(+ optional new files under voxly-ai/src/console/modules/agent-workspace/ for the five tabs)
-(+ optional shadcn components under voxly-ai/src/components/ui/)
+dialtact-app/src/console/modules/AgentStudioModule.jsx
+dialtact-app/src/console/modules/EmployeesModule.jsx
+dialtact-app/src/console/modules/TelephonySettingsCard.jsx
+dialtact-app/src/console/modules/CallsModule.jsx          ← reuse / extract agent-scoped UI only
+dialtact-app/src/console/modules/LeadsModule.jsx          ← reuse / extract agent-scoped UI only
+dialtact-app/src/console/modules/TalkToAiConsole.jsx      ← open as modal/drawer, not a top tab
+dialtact-app/src/console/modules/agent-creation/*         ← labels, defaults, chips, copy only
+dialtact-app/src/console/employeeFlowHash.js              ← tab ids for Open builder hash
+dialtact-app/src/console/Topbar.jsx                       ← step labels for employee flow only
+dialtact-app/src/console/AppShell.jsx                     ← only if needed to mount the new shell
+dialtact-app/src/lib/callStatus.js                        ← display labels only
+dialtact-app/src/lib/voicePresets.js / voiceDisplay.js    ← display grouping only
+dialtact-app/src/services/api.js                          ← call existing endpoints only; no new routes
+dialtact-app/src/services/agentBrain.js                   ← keep using current brain load/save
+dialtact-app/src/console/context/WorkspaceContext.jsx     ← filter/aggregate client-side if needed
+(+ optional new files under dialtact-app/src/console/modules/agent-workspace/ for the five tabs)
+(+ optional shadcn components under dialtact-app/src/components/ui/)
 ```
 
 ### 0.2 Out of scope — do not touch
@@ -41,9 +41,9 @@ voxly-ai/src/console/context/WorkspaceContext.jsx     ← filter/aggregate clien
 | **Backend Python API** | Entire `server/` tree | Call behaviour, PSTN, hangup, brain compile, billing already work |
 | **Backend admin API** | `server/routes/app_admin.py`, `/api/admin/*` | Platform admin is separate |
 | **Next.js admin / dev portal** | Entire `web/` tree (`web/app/dev/admin`, Test Studio, agent brain pages) | Different product surface |
-| **voxly-ai Platform admin UI** | `voxly-ai/src/console/modules/AdminModule.jsx` | Do not redesign or restyle |
+| **dialtact-app Platform admin UI** | `dialtact-app/src/console/modules/AdminModule.jsx` | Do not redesign or restyle |
 | **Agent working flow** | Live inbound/outbound PSTN, hangup state machine, brain compiler, Gemini/OpenAI live session, Telnyx bridge | Must keep working exactly as today |
-| **New HTTP endpoints** | Anything not already in `voxly-ai/src/services/api.js` | Frontend must use existing APIs |
+| **New HTTP endpoints** | Anything not already in `dialtact-app/src/services/api.js` | Frontend must use existing APIs |
 | **DB migrations / models** | `server/db/**` | No schema work |
 | **Fleet Overview / Billing / Campaigns / Integrations / Settings (workspace)** | Those console tabs stay as they are unless a tiny label fix is required | This redesign is **Open builder → agent workspace** only |
 
@@ -97,7 +97,7 @@ with five customer-facing tabs:
 
 ### 2.2 APIs the frontend already calls (reuse these — do not invent)
 
-From `voxly-ai/src/services/api.js` (verified):
+From `dialtact-app/src/services/api.js` (verified):
 
 | Need | Existing client method | Endpoint |
 |------|------------------------|----------|
@@ -133,7 +133,7 @@ Frontend default today: `timezone: 'Asia/Kolkata'` in `TelephonySettingsCard.jsx
 
 ### 2.4 Call statuses the UI may filter (already canonical)
 
-From `voxly-ai/src/lib/callStatus.js` / server vocabulary:
+From `dialtact-app/src/lib/callStatus.js` / server vocabulary:
 
 `answered | missed | outbound | declined | failed | voicemail | in_progress`
 
@@ -319,14 +319,14 @@ Product peers (Retell/Vapi) inform **layout** (Overview + Calls + Script + Voice
 | `TelephonySettingsCard.jsx` | Default TZ in **frontend** `DEFAULT_PROFILE`; timezone favourites; clearer copy; remain embeddable |
 | `agent-creation/index.js` | `en-US` first in language list; US/UK industry chip copy; placeholders — **no new create APIs** |
 | New `agent-workspace/*` | Optional split of Overview/Script/Calls/Voice/Settings components |
-| shadcn under `voxly-ai` | Optional UI primitives for these pages |
+| shadcn under `dialtact-app` | Optional UI primitives for these pages |
 
 ## 7. Explicit do-not-edit list
 
 ```
 server/**                         # entire backend
 web/**                            # Next admin, Test Studio, app console
-voxly-ai/src/console/modules/AdminModule.jsx
+dialtact-app/src/console/modules/AdminModule.jsx
 server/services/pstn_realtime_voice_core.py
 server/services/saas/telephony_profile.py   # do not change DEFAULT_TIMEZONE or evaluate_inbound_policy
 server/call/**                    # hangup / validate / ledger
@@ -334,7 +334,7 @@ server/brain/**                   # compiler
 server/routes/**                  # no new routes
 ```
 
-(Creating **new** UI files under `voxly-ai/src/console/...` is fine. Editing the forbidden list above is not.)
+(Creating **new** UI files under `dialtact-app/src/console/...` is fine. Editing the forbidden list above is not.)
 
 ---
 
@@ -381,7 +381,7 @@ Document them here only so product does not confuse “UI redesign” with “co
 | **P1** | Calls = History (agent-scoped) + Leads (filtered) + embedded TelephonySettingsCard | ✅ `AgentCallsPanel.jsx` | Callback, stage change, save hours still hit same APIs |
 | **P2** | Script + Voice polish (labels, grouping, en-US first) | ✅ Script/Voice tabs in `AgentStudioModule`; `en-US` first in `voicePresets.js`; `groupPhoneVoices` | Save script/voice; live call still uses published brain unchanged |
 | **P3** | Settings = name/status/language/number assign + Test call modal | ✅ `AgentSettingsPanel.jsx` + Test call header → `TalkToAiConsole` modal | Assign number still works; AdminModule untouched |
-| **P4** | shadcn styling pass on these five tabs only | ❌ Not started (`voxly-ai/src/components/ui/` absent) | No `server/` or `web/` diffs |
+| **P4** | shadcn styling pass on these five tabs only | ❌ Not started (`dialtact-app/src/components/ui/` absent) | No `server/` or `web/` diffs |
 
 After each phase: smoke Open builder → edit → save → place/test call using **existing** Talk to AI / outbound UI. Confirm platform admin page still loads unchanged.
 
@@ -389,7 +389,7 @@ After each phase: smoke Open builder → edit → save → place/test call using
 
 ## 10. Acceptance criteria (no ambiguity)
 
-1. Diff for this project contains **only** files under `voxly-ai/` (plus this doc under `docs/`).  
+1. Diff for this project contains **only** files under `dialtact-app/` (plus this doc under `docs/`).  
 2. Zero changes under `server/` and `web/`.  
 3. `AdminModule.jsx` file hash unchanged.  
 4. Telephony save body field names unchanged vs today.  
@@ -405,5 +405,5 @@ After each phase: smoke Open builder → edit → save → place/test call using
 - Retell / Vapi dashboard IA (Overview + call history + agent config)  
 - US TCPA/TSR hours & consent — **copy/defaults only** in this pass  
 - UK ICO PECR live-call CLI / identify — **copy/defaults only**  
-- Internal API surface of truth: `voxly-ai/src/services/api.js`  
+- Internal API surface of truth: `dialtact-app/src/services/api.js`  
 - Related (different scope): `docs/SAAS_CONSOLE_FRONTEND_SPEC.md` targets `web/app/app/(console)/` — **not** this workstream

@@ -72,8 +72,8 @@ or after a handled catalogue failure.
   revisions were not rewritten by catalogue discovery.
 - `web/components/dev/PstnVoiceProfileWorkbench.tsx`: complete administrator
   catalogue, real provider voice identity, disabled unavailable rows.
-- `voxly-ai/src/console/modules/agent-workspace/AgentVoicePanel.jsx` and
-  `voxly-ai/src/console/modules/AgentStudioModule.jsx`: tenant language counts,
+- `dialtact-app/src/console/modules/agent-workspace/AgentVoicePanel.jsx` and
+  `dialtact-app/src/console/modules/AgentStudioModule.jsx`: tenant language counts,
   complete scrolling list, awaited refresh and failure feedback.
 
 ## Executed regression checks
@@ -85,7 +85,7 @@ Coverage includes complete live-enum parsing, failure preservation, unsupported
 language exclusion, stable aliases/order, 60 matching voices without truncation,
 safe catalogue counts and exact selected voice/model resolution.
 
-From `voxly-ai`, with `PLAYWRIGHT_SKIP_WEBSERVER=1`:
+From `dialtact-app`, with `PLAYWRIGHT_SKIP_WEBSERVER=1`:
 
 `npx playwright test e2e/voice-catalog-mapping.spec.js --reporter=line`
 

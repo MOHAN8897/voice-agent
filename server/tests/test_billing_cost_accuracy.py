@@ -153,8 +153,8 @@ async def test_cost_insights_allows_platform_billing_admin(monkeypatch):
     monkeypatch.setattr("server.services.saas.cost_insights.load_cost_insights", loader)
     monkeypatch.setattr("server.routes.dev_admin._require_db", lambda:None)
     session = SessionData(kind="dev", subject="synthetic", tenant_id="tenant", role=ROLE_PLATFORM_ADMIN, issued_at=int(time.time()))
-    assert await billing_cost_insights(days=7, session=session) == {"channels":[]}
-    loader.assert_awaited_once_with(7)
+    assert await billing_cost_insights(days=7, fresh=False, session=session) == {"channels":[]}
+    loader.assert_awaited_once_with(7, fresh=False)
 
 
 @pytest.mark.asyncio

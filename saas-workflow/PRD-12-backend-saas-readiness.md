@@ -1,6 +1,6 @@
 # PRD-12 — Backend SaaS readiness gate (before frontend)
 
-Use this checklist to declare the **API ready for Voxly integration**. Frontend work starts only when **Phase A–C** are green in staging.
+Use this checklist to declare the **API ready for Dialtact integration**. Frontend work starts only when **Phase A–C** are green in staging.
 
 ## Phase A — Identity & isolation (mandatory)
 
@@ -52,7 +52,7 @@ Use this checklist to declare the **API ready for Voxly integration**. Frontend 
 | D4 | Retry failed provision / refund | Manual |
 | D5 | Audit log on admin mutations | DB rows |
 
-## Phase E — Frontend (Voxly) — after A–D
+## Phase E — Frontend (Dialtact) — after A–D
 
 | # | Requirement |
 |---|-------------|

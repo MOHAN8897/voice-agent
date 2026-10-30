@@ -33,7 +33,7 @@ stripe login
 
 Dashboard → Developers → API keys:
 
-- **Publishable** → Voxly `.env` if using Elements (optional)
+- **Publishable** → Dialtact `.env` if using Elements (optional)
 - **Secret** → backend `STRIPE_SECRET_KEY=sk_test_...`
 
 Never commit secrets; use `.env` (already gitignored).
@@ -84,7 +84,7 @@ Use any future expiry, any CVC, any billing ZIP.
 1. Start Postgres + migrate.
 2. Start FastAPI: `uvicorn server.app:app --reload --port 8000`
 3. Start `stripe listen --forward-to ...`
-4. Start Voxly: `VITE_API_URL=http://localhost:8000/api npm run dev`
+4. Start Dialtact: `VITE_API_URL=http://localhost:8000/api npm run dev`
 5. Complete buy flow → confirm webhook hits → `number_purchases.status=active`
 
 ## Stripe Dashboard setup (staging)

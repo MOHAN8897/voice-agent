@@ -23,13 +23,13 @@ Last updated: 2026-09-22 (audit pass)
 | Audit on mutations | Done |
 | `/dev/saas-admin` UI | Minimal |
 
-## Phase 5 — Voxly (PRD-07)
+## Phase 5 — Dialtact (PRD-07)
 
 | Item | Status |
 |------|--------|
 | Backend APIs + CORS | Done |
-| [voxly-api-bearer.patch.md](./voxly-api-bearer.patch.md) | Doc for external repo |
-| Voxly repo wired | `voxly-ai/` in monorepo — `api.js`, console sync, Razorpay billing UI |
+| [dialtact-api-bearer.patch.md](./dialtact-api-bearer.patch.md) | Doc for external repo |
+| Dialtact repo wired | `dialtact-app/` in monorepo — `api.js`, console sync, Razorpay billing UI |
 
 ## Phase 6 — Wallet ✅ (v1)
 
@@ -58,4 +58,4 @@ Last updated: 2026-09-22 (audit pass)
 
 1. `alembic upgrade head`
 2. Staging PRD-12 checklist
-3. Voxly Phase E per patch doc
+3. Dialtact Phase E per patch doc

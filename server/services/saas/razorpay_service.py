@@ -23,6 +23,7 @@ from datetime import datetime, timedelta, timezone
 
 import razorpay
 import requests
+import sqlalchemy as sa
 from sqlalchemy import func, select
 
 from server.config.env import get_settings
@@ -44,10 +45,31 @@ RAZORPAY_CONNECT_TIMEOUT_SECONDS = 3.05
 RAZORPAY_READ_TIMEOUT_SECONDS = 8.0
 RAZORPAY_CALL_TIMEOUT_SECONDS = 12.0
 
-#: Orders older than this are reconciled and then expired if still unpaid.
+#: Orders older than this are expired if still unpaid. An expired order can
+#: still be credited by a late capture; it just leaves the fast lane.
 ORDER_EXPIRY = timedelta(hours=24)
 #: Do not call the provider for orders younger than this; checkout is in flight.
 RECONCILE_AFTER = timedelta(minutes=10)
+#: Banks can confirm a payment days after checkout (UPI/netbanking delays,
+#: late authorisation). Expired orders are re-checked on a slow lane this long.
+LATE_CAPTURE_WINDOW = timedelta(days=7)
+#: How often one expired order is re-checked on the slow lane.
+SLOW_LANE_INTERVAL = timedelta(hours=1)
+#: Order states that are still waiting for money.
+OPEN_ORDER_STATUSES = ("created", "attempted", "failed")
+#: States in which the order's money has already been credited once.
+SETTLED_ORDER_STATUSES = ("paid", "refunded", "partially_refunded")
+
+#: `last_reconciled_at` (migration 048) is read and written through Core so the
+#: round-robin scheduler does not depend on the ORM mapping of the order row.
+_ORDERS = sa.table(
+    "razorpay_orders",
+    sa.column("order_id", sa.String(64)),
+    sa.column("status", sa.String(30)),
+    sa.column("created_at", sa.DateTime(timezone=True)),
+    sa.column("expires_at", sa.DateTime(timezone=True)),
+    sa.column("last_reconciled_at", sa.DateTime(timezone=True)),
+)
 
 
 class _RazorpayTimeoutSession(requests.Session):
@@ -119,6 +141,12 @@ def _utcnow() -> datetime:
 def _client() -> razorpay.Client:
     settings = get_settings()
     if not settings.razorpay_api_key or not settings.razorpay_api_secret:
+        raise ValueError("razorpay_not_configured")
+    from server.config.env import razorpay_refused
+
+    if razorpay_refused(settings):
+        # Test keys or a reused webhook secret in production: refuse to move
+        # money rather than take live payments that can never be verified.
         raise ValueError("razorpay_not_configured")
     return razorpay.Client(
         auth=(settings.razorpay_api_key, settings.razorpay_api_secret),
@@ -231,6 +259,11 @@ async def quote_wallet_topup(
     from server.services.saas.billing_rates import load_current_rates
     from server.services.saas.tax_service import compute_tax, load_config
 
+    from server.services.saas import payment_settings
+
+    # Settings live in the database and may have been changed on another
+    # instance; read them fresh before choosing the charge currency.
+    await payment_settings.refresh()
     currency_code = normalize_currency(currency)
     floor = MIN_CHARGE.get(currency_code, 1.0)
     ceiling = MAX_CHARGE.get(currency_code, 5000.0)
@@ -458,6 +491,7 @@ def _validate_payment_details(
     order_id: str,
     currency: str,
     amount_minor: int,
+    expected_status: str = "captured",
 ) -> None:
     """Fail closed unless Razorpay confirms the exact signed payment and order."""
     provider_payment_id = payment.get("id")
@@ -469,8 +503,10 @@ def _validate_payment_details(
         raise ValueError("payment_order_mismatch")
 
     status = str(payment.get("status") or "").strip().lower()
-    if status != "captured":
-        raise ValueError("payment_not_captured")
+    if status != expected_status:
+        raise ValueError(
+            "payment_not_captured" if expected_status == "captured" else "payment_not_authorized"
+        )
 
     provider_currency = str(payment.get("currency") or "").strip().upper()
     if not provider_currency or provider_currency != currency:
@@ -497,6 +533,18 @@ async def _existing_invoice(session, *, tenant_id: uuid.UUID | None, order_id: s
             stmt = stmt.where(BillingInvoice.tenant_id == tenant_id)
         invoice = (await session.execute(stmt)).scalar_one_or_none()
     return invoice
+
+
+async def _locked_wallet(session, tenant_id: uuid.UUID) -> BillingWallet:
+    """Lock the tenant wallet, creating it if this is its first money movement."""
+    wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
+    if wallet is None:
+        wallet = BillingWallet(
+            tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow()
+        )
+        session.add(wallet)
+        await session.flush()
+    return wallet
 
 
 async def _credit_order_payment(order_id: str, payment_id: str, payment: dict, *, source: str) -> dict:
@@ -536,7 +584,10 @@ async def _credit_order_payment(order_id: str, payment_id: str, payment: dict, *
                 "duplicate": True,
             }
 
-        if row.status == "paid":
+        # Any settled state, not only "paid": a second captured payment on a
+        # refunded order must never be credited again. "expired" is not here on
+        # purpose, so a late capture is still credited once.
+        if row.status in SETTLED_ORDER_STATUSES:
             inv = await _existing_invoice(
                 session, tenant_id=tenant_id, order_id=order_id, payment_id=row.payment_id
             )
@@ -597,8 +648,10 @@ async def _credit_order_payment(order_id: str, payment_id: str, payment: dict, *
 
         tax_kind = str(getattr(row, "tax_kind", None) or "none")
         if tax_kind == "cgst_sgst":
-            cgst = tax_paise // 2
-            sgst = tax_paise - cgst
+            from server.services.saas.tax_service import _split_cgst_sgst
+
+            # Same split as the quote, so the invoice matches what was shown.
+            cgst, sgst = _split_cgst_sgst(tax_paise, int(getattr(row, "tax_rate_bps", 0) or 0))
             igst = 0
         elif tax_kind == "igst":
             cgst = sgst = 0
@@ -606,13 +659,8 @@ async def _credit_order_payment(order_id: str, payment_id: str, payment: dict, *
         else:
             cgst = sgst = igst = 0
 
-        wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
-        if wallet is None:
-            wallet = BillingWallet(
-                tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow()
-            )
-            session.add(wallet)
-            await session.flush()
+        prior_status = str(row.status or "")
+        wallet = await _locked_wallet(session, tenant_id)
         wallet.balance_inr_paise = int(wallet.balance_inr_paise or 0) + credit_paise
         wallet.currency = "inr"
         wallet.updated_at = _utcnow()
@@ -716,6 +764,27 @@ async def _credit_order_payment(order_id: str, payment_id: str, payment: dict, *
 
         from server.services.saas.activity_log import record_event
 
+        if prior_status == "expired":
+            # Money arrived after we gave up on the order. It is credited (the
+            # customer paid), but someone should know the expiry window missed it.
+            logger.error(
+                "razorpay late capture credited on expired order order=%s payment=%s source=%s",
+                order_id,
+                payment_id,
+                source,
+            )
+            await record_event(
+                action="wallet.topup.late_capture",
+                resource_type="payment_order",
+                resource_id=order_id,
+                actor=str(tenant_id),
+                tenant_id=tenant_id,
+                payload={"paymentId": payment_id, "source": source, "creditedInr": credit_paise / 100.0},
+                source="webhook" if source == "webhook" else "system",
+                outcome="error",
+                severity="error",
+            )
+
         await record_event(
             action="wallet.topup.paid",
             resource_type="invoice",
@@ -762,6 +831,91 @@ async def credit_provider_payment(payment: dict, *, source: str) -> dict:
     return await _credit_order_payment(order_id, payment_id, payment, source=source)
 
 
+async def capture_authorized_payment(payment: dict, *, source: str) -> dict:
+    """Capture an authorised-but-uncaptured payment, then credit it normally.
+
+    Orders are created with auto-capture, but Razorpay leaves a payment in
+    `authorized` when auto-capture times out (late bank confirmation). Unless it
+    is captured it is refunded to the customer after a few days and the wallet
+    is never credited, so the webhook and reconciliation capture it for the
+    exact amount and currency snapshotted on the order.
+    """
+    payment_id = str(payment.get("id") or "")
+    order_id = str(payment.get("order_id") or "")
+    if not payment_id or not order_id:
+        raise ValueError("payment_order_mismatch")
+    factory = get_session_factory()
+    if factory is None:
+        raise RuntimeError("database_required")
+    async with factory() as session:
+        row = await session.get(RazorpayOrder, order_id)
+        if row is None:
+            raise ValueError("order_not_found")
+        tenant_id = row.tenant_id
+        status = str(row.status or "")
+        current_payment = row.payment_id
+        currency = getattr(row, "currency", None) or "INR"
+        gross_minor = int(getattr(row, "gross_minor", None) or row.amount_minor or 0)
+
+    if status in SETTLED_ORDER_STATUSES and current_payment and current_payment != payment_id:
+        # The order was already paid by another payment. Capturing this one
+        # would charge the customer twice; an uncaptured authorisation is
+        # released automatically, so leave it alone and tell an operator.
+        from server.services.saas.activity_log import record_event
+
+        await record_event(
+            action="wallet.topup.duplicate_authorization",
+            resource_type="payment_order",
+            resource_id=order_id,
+            actor=str(tenant_id),
+            tenant_id=tenant_id,
+            payload={"creditedPaymentId": current_payment, "authorizedPaymentId": payment_id},
+            source="webhook" if source == "webhook" else "system",
+            outcome="error",
+            severity="warning",
+        )
+        return {"ok": True, "captured": False, "skipped": "order_already_settled"}
+
+    # Re-read the payment: Razorpay's own auto-capture may already have run.
+    fresh = await _run_provider_call(_fetch_payment, payment_id)
+    if not isinstance(fresh, dict) or not fresh:
+        raise ValueError("payment_verification_unavailable")
+    fresh_status = str(fresh.get("status") or "").strip().lower()
+    if fresh_status == "captured":
+        return await credit_provider_payment(fresh, source=source)
+    if fresh_status != "authorized":
+        # failed / refunded: nothing to capture and nothing to credit.
+        return {"ok": True, "captured": False, "providerStatus": fresh_status}
+
+    _validate_payment_details(
+        fresh,
+        payment_id=payment_id,
+        order_id=order_id,
+        currency=currency,
+        amount_minor=gross_minor,
+        expected_status="authorized",
+    )
+    try:
+        captured = await _run_provider_call(
+            _client().payment.capture, payment_id, gross_minor, {"currency": currency}
+        )
+    except razorpay.errors.BadRequestError:
+        # Usually "already captured" when auto-capture raced us. Ask again.
+        captured = await _run_provider_call(_fetch_payment, payment_id)
+    except (
+        razorpay.errors.GatewayError,
+        razorpay.errors.ServerError,
+        requests.exceptions.RequestException,
+        TimeoutError,
+    ) as exc:
+        logger.warning("razorpay capture failed error_type=%s", type(exc).__name__)
+        raise ValueError("payment_capture_unavailable") from None
+    if not isinstance(captured, dict) or str(captured.get("status") or "").lower() != "captured":
+        raise ValueError("payment_capture_unavailable")
+    logger.info("razorpay authorized payment captured order=%s payment=%s source=%s", order_id, payment_id, source)
+    return await credit_provider_payment(captured, source=source)
+
+
 async def confirm_wallet_payment(
     tenant_id: uuid.UUID,
     order_id: str,
@@ -801,6 +955,18 @@ async def confirm_wallet_payment(
         logger.warning("razorpay payment fetch returned no details")
         raise ValueError("payment_verification_unavailable")
 
+    if (
+        str(payment.get("status") or "").strip().lower() == "authorized"
+        and str(payment.get("id") or "") == payment_id
+        and str(payment.get("order_id") or "") == order_id
+    ):
+        # Signed by checkout but auto-capture has not run: capture it now
+        # rather than telling a customer who has paid to wait.
+        result = await capture_authorized_payment(payment, source="checkout")
+        if result.get("captured") is False:
+            raise ValueError("payment_not_captured")
+        return result
+
     return await _credit_order_payment(order_id, payment_id, payment, source="checkout")
 
 
@@ -823,7 +989,9 @@ async def mark_order_failed(payment: dict, *, source: str = "webhook") -> None:
 
     async with factory() as session:
         row = await session.get(RazorpayOrder, order_id, with_for_update=True)
-        if row is None or row.status in ("paid", "refunded", "partially_refunded"):
+        # "expired" stays expired: flipping it back to failed would take it out
+        # of both reconciliation lanes and hide a late capture.
+        if row is None or row.status in (*SETTLED_ORDER_STATUSES, "expired"):
             return
         row.status = "failed"
         row.failure_code = code
@@ -915,6 +1083,9 @@ async def apply_refund(
     reason: str | None,
     created_by: str | None,
     status: str = "processed",
+    cap_to_remaining: bool = False,
+    ledger_kind: str = "razorpay_refund",
+    event_action: str = "wallet.topup.refunded",
 ) -> dict:
     """Reverse the wallet and issue a GST credit note for a provider refund.
 
@@ -923,22 +1094,30 @@ async def apply_refund(
     refund that can still fail. The `refund.processed` webhook (or the pending
     reconciliation loop) completes it exactly once.
 
+    `processed` is terminal. Events arrive out of order (a delayed
+    `refund.failed` or a pending sync after `refund.processed`), and downgrading
+    a processed row would let the next processed event reverse the wallet again.
+
     The wallet may go negative: the customer is entitled to the refund even if
     they have already spent the credits, and a negative balance is the honest
     representation of that debt.
+
+    Lost chargebacks reuse this path with `refund_id="dispute:<id>"`, so they
+    get the same exactly-once ledger, credit note and cumulative cap.
     """
     from sqlalchemy.exc import IntegrityError
 
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
+    if not refund_id or not payment_id:
+        logger.warning("refund event without refund or payment id ignored")
+        return {"ok": True, "ignored": True, "refundId": refund_id}
 
     refund_status = str(status or "processed").strip().lower()
     async with factory() as session:
-        existing = await session.get(RazorpayRefund, refund_id)
-        if existing is not None and existing.status == "processed" and refund_status == "processed":
-            return {"ok": True, "duplicate": True, "refundId": refund_id}
-
+        # Lock the invoice first: every refund of one payment serialises on it,
+        # so the cumulative totals below cannot race a concurrent refund.
         invoice = (
             await session.execute(
                 select(BillingInvoice)
@@ -949,6 +1128,17 @@ async def apply_refund(
         if invoice is None:
             logger.warning("refund for unknown payment ignored refund_id=%s", refund_id)
             return {"ok": True, "ignored": True, "refundId": refund_id}
+
+        existing = await session.get(
+            RazorpayRefund, refund_id, with_for_update=True, populate_existing=True
+        )
+        if existing is not None and existing.status == "processed":
+            return {
+                "ok": True,
+                "duplicate": True,
+                "refundId": refund_id,
+                "refundStatus": "processed",
+            }
 
         refund_minor = max(0, int(amount_minor or 0))
         if refund_status != "processed":
@@ -1003,6 +1193,10 @@ async def apply_refund(
         ).where(RazorpayRefund.tenant_id == invoice.tenant_id, RazorpayRefund.payment_id == payment_id,
                 RazorpayRefund.status == "processed", RazorpayRefund.refund_id != refund_id))).one()
         prior_refunded, prior_credit, prior_tax, prior_cgst, _prior_sgst = (int(value or 0) for value in previous)
+        if cap_to_remaining and gross_minor > 0:
+            refund_minor = min(refund_minor, gross_minor - prior_refunded)
+            if refund_minor <= 0:
+                return {"ok": True, "ignored": True, "nothingRemaining": True, "refundId": refund_id}
         if refund_minor <= 0 or gross_minor <= 0 or prior_refunded + refund_minor > gross_minor:
             raise ValueError("invalid_refund_amount")
         from decimal import ROUND_HALF_UP, Decimal
@@ -1023,10 +1217,10 @@ async def apply_refund(
             cgst_reversal = sgst_reversal = igst_reversal = 0
             tax_reversal = 0
 
-        wallet = await session.get(BillingWallet, invoice.tenant_id, with_for_update=True)
-        if wallet is not None:
-            wallet.balance_inr_paise = int(wallet.balance_inr_paise or 0) - credit_reversal
-            wallet.updated_at = _utcnow()
+        # Same as the credit path: a ledger row must always have a wallet row.
+        wallet = await _locked_wallet(session, invoice.tenant_id)
+        wallet.balance_inr_paise = int(wallet.balance_inr_paise or 0) - credit_reversal
+        wallet.updated_at = _utcnow()
 
         from server.services.saas.tax_service import load_config
 
@@ -1089,7 +1283,7 @@ async def apply_refund(
                 tenant_id=invoice.tenant_id,
                 amount_cents=0,
                 amount_inr_paise=-credit_reversal,
-                kind="razorpay_refund",
+                kind=ledger_kind,
                 reference_id=f"razorpay_refund:{refund_id}",
                 created_at=_utcnow(),
             )
@@ -1109,7 +1303,7 @@ async def apply_refund(
         from server.services.saas.activity_log import record_event
 
         await record_event(
-            action="wallet.topup.refunded",
+            action=event_action,
             resource_type="credit_note",
             resource_id=str(note.credit_note_id),
             actor=created_by or "provider",
@@ -1138,6 +1332,15 @@ async def apply_refund(
         }
 
 
+_REFUND_PROVIDER_ERRORS = (
+    razorpay.errors.BadRequestError,
+    razorpay.errors.GatewayError,
+    razorpay.errors.ServerError,
+    requests.exceptions.RequestException,
+    TimeoutError,
+)
+
+
 async def refund_order(
     order_id: str,
     *,
@@ -1145,121 +1348,408 @@ async def refund_order(
     reason: str,
     actor: str,
 ) -> dict:
-    """Refund a captured top-up through Razorpay, then reverse the ledger."""
+    """Refund a captured top-up through Razorpay, then reverse the ledger.
+
+    Exactly-once rules, because a second click or a retried request after a
+    timeout must never refund twice:
+
+    * The order row is locked for the whole decision, so two admins refunding
+      the same order run one after the other.
+    * A local pending refund blocks another until it settles.
+    * Razorpay's own list of refunds for the payment is read first. A refund
+      it has that we do not (an earlier call timed out after Razorpay accepted
+      it) is recorded and the new request is refused.
+    * The amount is capped at what is still refundable (gross minus processed
+      and pending refunds), and "full refund" means that remainder.
+    """
     factory = get_session_factory()
     if factory is None:
         raise RuntimeError("database_required")
+
+    drift: list[dict] = []
+    refund_id = ""
+    refund_amount = 0
+    refund_currency = "INR"
+    entity_status = "pending"
     async with factory() as session:
-        order = await session.get(RazorpayOrder, order_id)
+        order = await session.get(RazorpayOrder, order_id, with_for_update=True)
         if order is None:
             raise ValueError("order_not_found")
         if order.status not in ("paid", "partially_refunded"):
             raise ValueError("order_not_refundable")
         payment_id = order.payment_id
+        tenant_id = order.tenant_id
         currency = order.currency or "INR"
         gross_minor = int(order.gross_minor or order.amount_minor or 0)
         if not payment_id:
             raise ValueError("order_not_refundable")
 
-    refund_minor = int(amount_minor) if amount_minor else gross_minor
-    if refund_minor <= 0 or refund_minor > gross_minor:
-        raise ValueError("invalid_refund_amount")
-
-    try:
-        entity = await _run_provider_call(
-            _client().payment.refund,
-            payment_id,
-            {"amount": refund_minor, "notes": {"reason": reason[:200], "order_id": order_id}},
-        )
-    except (
-        razorpay.errors.BadRequestError,
-        razorpay.errors.GatewayError,
-        razorpay.errors.ServerError,
-        requests.exceptions.RequestException,
-        TimeoutError,
-    ) as exc:
-        logger.warning("razorpay refund failed error_type=%s", type(exc).__name__)
-        raise ValueError("refund_failed") from None
-
-    refund_id = str(entity.get("id") or "")
-    if not refund_id:
-        raise ValueError("refund_failed")
-    return await apply_refund(
-        refund_id=refund_id,
-        payment_id=str(entity.get("payment_id") or payment_id),
-        amount_minor=int(entity.get("amount") or refund_minor),
-        currency=str(entity.get("currency") or currency),
-        reason=reason,
-        created_by=actor,
-        status=str(entity.get("status") or "processed"),
-    )
-
-
-async def reconcile_pending_orders(limit: int = 10) -> dict:
-    """Compare recent local orders with the provider and settle any drift.
-
-    Covers the failure modes checkout cannot: the browser closed after paying,
-    the verify call timed out, or a webhook was never delivered.
-    """
-    factory = get_session_factory()
-    if factory is None:
-        return {"checked": 0, "credited": 0, "failed": 0, "expired": 0}
-    now = _utcnow()
-    async with factory() as session:
-        rows = list(
+        local = list(
             (
                 await session.execute(
-                    select(RazorpayOrder)
-                    .where(
-                        RazorpayOrder.status.in_(("created", "attempted", "failed")),
-                        RazorpayOrder.created_at >= now - ORDER_EXPIRY,
-                        RazorpayOrder.created_at <= now - RECONCILE_AFTER,
-                    )
-                    .order_by(RazorpayOrder.created_at.asc())
-                    .limit(max(1, min(limit, 50)))
+                    select(RazorpayRefund).where(RazorpayRefund.payment_id == payment_id)
                 )
             ).scalars()
         )
-        order_ids = [r.order_id for r in rows]
+        if any(str(r.status) == "pending" for r in local):
+            raise ValueError("refund_in_progress")
 
-    credited = failed = expired = 0
-    for order_id in order_ids:
         try:
-            payments = await _run_provider_call(_client().order.payments, order_id)
-        except Exception as exc:  # provider outage must not kill the loop
-            logger.warning("reconcile order fetch failed error_type=%s", type(exc).__name__)
-            continue
-        items = payments.get("items", []) if isinstance(payments, dict) else []
-        captured = [p for p in items if str(p.get("status")) == "captured"]
-        if captured:
-            try:
-                await credit_provider_payment(captured[0], source="reconciliation")
-                credited += 1
-                continue
-            except Exception as exc:
-                logger.error("reconcile credit failed error_type=%s", type(exc).__name__)
-        elif items:
-            latest = items[0]
-            if str(latest.get("status")) in ("failed", "cancelled"):
-                await mark_order_failed(latest, source="reconciliation")
-                failed += 1
-                continue
+            listed = await _run_provider_call(
+                _client().payment.fetch_multiple_refund, payment_id, {"count": 100}
+            )
+        except _REFUND_PROVIDER_ERRORS as exc:
+            logger.warning("razorpay refund list failed error_type=%s", type(exc).__name__)
+            raise ValueError("refund_check_unavailable") from None
+        items = listed.get("items") if isinstance(listed, dict) else None
+        if not isinstance(items, list):
+            raise ValueError("refund_check_unavailable")
+        provider_refunds = [
+            item for item in items
+            if isinstance(item, dict) and item.get("id")
+            and str(item.get("status") or "").lower() != "failed"
+        ]
+        known = {r.refund_id for r in local}
+        drift = [item for item in provider_refunds if str(item["id"]) not in known]
 
+        if not drift:
+            provider_used = sum(int(item.get("amount") or 0) for item in provider_refunds)
+            local_used = sum(
+                int(r.amount_minor or 0) for r in local if str(r.status) in ("processed", "pending")
+            )
+            remaining = gross_minor - max(provider_used, local_used)
+            if remaining <= 0:
+                raise ValueError("order_not_refundable")
+            refund_minor = int(amount_minor) if amount_minor else remaining
+            if refund_minor <= 0 or refund_minor > remaining:
+                raise ValueError("invalid_refund_amount")
+
+            try:
+                entity = await _run_provider_call(
+                    _client().payment.refund,
+                    payment_id,
+                    {
+                        "amount": refund_minor,
+                        # Unique per attempt; makes the refund traceable in the
+                        # dashboard if this request dies before we record it.
+                        "receipt": f"rf_{uuid.uuid4().hex[:20]}",
+                        "notes": {"reason": reason[:200], "order_id": order_id},
+                    },
+                )
+            except _REFUND_PROVIDER_ERRORS as exc:
+                logger.warning("razorpay refund failed error_type=%s", type(exc).__name__)
+                raise ValueError("refund_failed") from None
+
+            refund_id = str((entity or {}).get("id") or "") if isinstance(entity, dict) else ""
+            if not refund_id:
+                raise ValueError("refund_failed")
+            refund_amount = int(entity.get("amount") or refund_minor)
+            refund_currency = str(entity.get("currency") or currency)
+            entity_status = str(entity.get("status") or "pending").strip().lower()
+            # Record the refund before the lock is released, as pending: it has
+            # moved no wallet balance yet, and it blocks a concurrent refund.
+            session.add(
+                RazorpayRefund(
+                    refund_id=refund_id,
+                    tenant_id=tenant_id,
+                    payment_id=payment_id,
+                    order_id=order_id,
+                    amount_minor=refund_amount,
+                    currency=refund_currency,
+                    credit_inr_paise=0,
+                    tax_inr_paise=0,
+                    status="pending",
+                    reason=(reason or "")[:2000] or None,
+                    created_by=actor,
+                    created_at=_utcnow(),
+                )
+            )
+            await session.commit()
+
+    if drift:
+        for item in drift:
+            try:
+                await apply_refund(
+                    refund_id=str(item["id"]),
+                    payment_id=payment_id,
+                    amount_minor=int(item.get("amount") or 0),
+                    currency=str(item.get("currency") or currency),
+                    reason="Refund found at Razorpay and recorded",
+                    created_by=None,
+                    status=str(item.get("status") or "pending"),
+                )
+            except Exception as exc:
+                logger.error("refund drift record failed error_type=%s", type(exc).__name__)
+        logger.error(
+            "razorpay refund drift order=%s unknown_refunds=%s",
+            order_id,
+            [str(item["id"]) for item in drift],
+        )
+        raise ValueError("refund_already_exists")
+
+    if entity_status == "pending":
+        return {
+            "ok": True,
+            "pending": True,
+            "refundId": refund_id,
+            "refundStatus": "pending",
+            "walletReversalInr": 0.0,
+            "taxReversalInr": 0.0,
+        }
+    return await apply_refund(
+        refund_id=refund_id,
+        payment_id=payment_id,
+        amount_minor=refund_amount,
+        currency=refund_currency,
+        reason=reason,
+        created_by=actor,
+        status=entity_status,
+    )
+
+
+#: Dispute phases that need an operator now (evidence deadline or money lost).
+_URGENT_DISPUTE_EVENTS = (
+    "payment.dispute.created",
+    "payment.dispute.action_required",
+    "payment.dispute.lost",
+)
+
+
+async def handle_dispute_event(event_type: str, dispute: dict, payment: dict) -> str:
+    """Record a chargeback and alert; reverse the wallet once if it is lost.
+
+    Each phase is written to the activity log (the operator's alert feed) with
+    the dispute id as the resource, at error severity when it needs action. A
+    lost dispute means the bank took the money back: the wallet credit and GST
+    are reversed through `apply_refund` keyed on `dispute:<id>`, which makes the
+    reversal exactly-once across webhook retries and issues a credit note.
+    """
+    dispute_id = str(dispute.get("id") or "")
+    payment_id = str(dispute.get("payment_id") or payment.get("id") or "")
+    if not dispute_id or not payment_id:
+        return "ignored"
+    order_id = str(payment.get("order_id") or "") or None
+    amount_minor = dispute.get("amount")
+    currency = str(dispute.get("currency") or payment.get("currency") or "INR").upper()
+
+    tenant_id = None
+    factory = get_session_factory()
+    if factory is not None:
         async with factory() as session:
-            row = await session.get(RazorpayOrder, order_id, with_for_update=True)
-            if row is None or row.status == "paid":
-                continue
-            created = row.created_at
-            if created and created.tzinfo is None:
-                created = created.replace(tzinfo=timezone.utc)
-            expiry = row.expires_at or ((created or now) + ORDER_EXPIRY)
-            if expiry.tzinfo is None:
-                expiry = expiry.replace(tzinfo=timezone.utc)
-            if expiry <= now:
-                row.status = "expired"
-                await session.commit()
-                expired += 1
-    return {"checked": len(order_ids), "credited": credited, "failed": failed, "expired": expired}
+            invoice = (
+                await session.execute(
+                    select(BillingInvoice).where(BillingInvoice.razorpay_payment_id == payment_id)
+                )
+            ).scalar_one_or_none()
+            if invoice is not None:
+                tenant_id = invoice.tenant_id
+                order_id = order_id or invoice.razorpay_order_id
+            elif order_id:
+                order = await session.get(RazorpayOrder, order_id)
+                tenant_id = order.tenant_id if order is not None else None
+
+    phase = event_type.rsplit(".", 1)[-1]
+    urgent = event_type in _URGENT_DISPUTE_EVENTS
+    (logger.error if urgent else logger.warning)(
+        "razorpay dispute event=%s dispute=%s payment=%s status=%s",
+        event_type,
+        dispute_id,
+        payment_id,
+        dispute.get("status"),
+    )
+    from server.services.saas.activity_log import record_event
+
+    await record_event(
+        action=f"payment.dispute.{phase}",
+        resource_type="payment_dispute",
+        resource_id=dispute_id,
+        actor="razorpay",
+        tenant_id=tenant_id,
+        payload={
+            "disputeId": dispute_id,
+            "paymentId": payment_id,
+            "orderId": order_id,
+            "amountMinor": amount_minor,
+            "currency": currency,
+            "status": dispute.get("status"),
+            "phase": dispute.get("phase"),
+            "reasonCode": dispute.get("reason_code"),
+            "respondBy": dispute.get("respond_by"),
+            "knownPayment": tenant_id is not None,
+        },
+        source="webhook",
+        outcome="error" if urgent else "ok",
+        severity="error" if urgent else "warning",
+    )
+
+    if event_type != "payment.dispute.lost":
+        return "handled" if tenant_id is not None else "ignored"
+    if isinstance(amount_minor, bool) or not isinstance(amount_minor, int) or amount_minor <= 0:
+        raise ValueError("invalid_refund_amount")
+    result = await apply_refund(
+        refund_id=f"dispute:{dispute_id}",
+        payment_id=payment_id,
+        amount_minor=amount_minor,
+        currency=currency,
+        reason=f"Chargeback lost ({dispute.get('reason_code') or 'dispute'})",
+        created_by=None,
+        status="processed",
+        # Earlier refunds may already have returned part of the money; reverse
+        # only what is left rather than refusing the chargeback.
+        cap_to_remaining=True,
+        ledger_kind="razorpay_chargeback",
+        event_action="wallet.topup.chargeback",
+    )
+    return "ignored" if result.get("ignored") else "handled"
+
+
+async def reconcile_order(order_id: str, *, source: str) -> dict:
+    """Ask Razorpay for one order's payments and settle the local row.
+
+    Captured payments are all passed to the credit path (a second capture is
+    flagged for refund there, never credited). An authorised payment is
+    captured and credited. Only a latest payment that actually *failed* marks
+    the order failed; created/pending payments are left to be checked again.
+    """
+    payments = await _run_provider_call(_client().order.payments, order_id)
+    items = payments.get("items", []) if isinstance(payments, dict) else []
+    items = [item for item in items if isinstance(item, dict)]
+    captured = [p for p in items if str(p.get("status")) == "captured"]
+    if captured:
+        first: dict = {}
+        for payment in captured:
+            outcome = await credit_provider_payment(payment, source=source)
+            first = first or outcome
+        return {**first, "outcome": "credited", "checked": len(items)}
+    authorized = [p for p in items if str(p.get("status")) == "authorized"]
+    if authorized:
+        outcome = await capture_authorized_payment(authorized[0], source=source)
+        state = "authorized" if outcome.get("captured") is False else "credited"
+        return {**outcome, "outcome": state, "checked": len(items)}
+    if items and str(items[0].get("status")) == "failed":
+        await mark_order_failed(items[0], source=source)
+        return {"outcome": "failed", "checked": len(items)}
+    return {"outcome": "pending", "checked": len(items)}
+
+
+async def _claim_for_reconciliation(session, now: datetime, *, slow: bool, limit: int) -> list[str]:
+    """Pick the orders least recently checked and stamp them as checked now.
+
+    Ordering by `last_reconciled_at NULLS FIRST` makes each lane round robin:
+    a never-checked order goes first, and an abandoned order that keeps coming
+    back pending moves to the back instead of starving newer ones.
+    """
+    if slow:
+        condition = sa.and_(
+            _ORDERS.c.status == "expired",
+            _ORDERS.c.created_at >= now - LATE_CAPTURE_WINDOW,
+            sa.or_(
+                _ORDERS.c.last_reconciled_at.is_(None),
+                _ORDERS.c.last_reconciled_at <= now - SLOW_LANE_INTERVAL,
+            ),
+        )
+    else:
+        condition = sa.and_(
+            _ORDERS.c.status.in_(OPEN_ORDER_STATUSES),
+            _ORDERS.c.created_at > now - ORDER_EXPIRY,
+            _ORDERS.c.created_at <= now - RECONCILE_AFTER,
+        )
+    ids = list(
+        (
+            await session.execute(
+                sa.select(_ORDERS.c.order_id)
+                .where(condition)
+                .order_by(
+                    _ORDERS.c.last_reconciled_at.asc().nulls_first(),
+                    _ORDERS.c.created_at.asc(),
+                )
+                .limit(max(1, min(limit, 50)))
+            )
+        ).scalars()
+    )
+    if ids:
+        await session.execute(
+            sa.update(_ORDERS).where(_ORDERS.c.order_id.in_(ids)).values(last_reconciled_at=now)
+        )
+    return ids
+
+
+async def expire_stale_orders(now: datetime | None = None) -> int:
+    """Expire every unpaid order past its expiry in one statement.
+
+    Separate from the provider checks so expiry happens even while the fast
+    lane is saturated. Expired orders stay creditable and move to the slow lane.
+    """
+    factory = get_session_factory()
+    if factory is None:
+        return 0
+    now = now or _utcnow()
+    async with factory() as session:
+        result = await session.execute(
+            sa.update(_ORDERS)
+            .where(
+                _ORDERS.c.status.in_(OPEN_ORDER_STATUSES),
+                sa.or_(
+                    _ORDERS.c.expires_at <= now,
+                    sa.and_(
+                        _ORDERS.c.expires_at.is_(None),
+                        _ORDERS.c.created_at <= now - ORDER_EXPIRY,
+                    ),
+                ),
+            )
+            .values(status="expired")
+        )
+        await session.commit()
+        return int(result.rowcount or 0)
+
+
+async def reconcile_pending_orders(limit: int = 10, *, include_slow_lane: bool = True) -> dict:
+    """Compare local orders with the provider and settle any drift.
+
+    Covers the failure modes checkout cannot: the browser closed after paying,
+    the verify call timed out, or a webhook was never delivered.
+
+    * Expiry: open orders past their expiry become `expired` in bulk.
+    * Fast lane: open orders 10 minutes to 24 hours old, round robin.
+    * Slow lane: expired orders up to 7 days old, each at most once per
+      SLOW_LANE_INTERVAL, for late captures. A capture found there is credited
+      and raised as an error-level alert by the credit path.
+    """
+    factory = get_session_factory()
+    if factory is None:
+        return {"checked": 0, "lateChecked": 0, "credited": 0, "failed": 0, "expired": 0}
+    now = _utcnow()
+    # Expire first, so an order that just crossed the line is late-checked in
+    # this same pass instead of waiting for the next one.
+    expired = await expire_stale_orders(now)
+    async with factory() as session:
+        fast_ids = await _claim_for_reconciliation(session, now, slow=False, limit=limit)
+        slow_ids: list[str] = []
+        if include_slow_lane:
+            slow_ids = await _claim_for_reconciliation(
+                session, now, slow=True, limit=max(1, limit // 2)
+            )
+        await session.commit()
+
+    credited = failed = 0
+    for order_id in [*fast_ids, *slow_ids]:
+        try:
+            outcome = await reconcile_order(order_id, source="reconciliation")
+        except Exception as exc:  # provider outage must not kill the loop
+            logger.warning("reconcile order failed error_type=%s", type(exc).__name__)
+            continue
+        if outcome.get("outcome") == "credited" and not outcome.get("duplicate"):
+            credited += 1
+        elif outcome.get("outcome") == "failed":
+            failed += 1
+
+    return {
+        "checked": len(fast_ids),
+        "lateChecked": len(slow_ids),
+        "credited": credited,
+        "failed": failed,
+        "expired": expired,
+    }
 
 
 async def reconcile_pending_refunds(limit: int = 10) -> dict:
@@ -1286,6 +1776,8 @@ async def reconcile_pending_refunds(limit: int = 10) -> dict:
 
     processed = failed = 0
     for refund_id, payment_id, amount_minor, currency in pending:
+        if str(refund_id).startswith("dispute:"):
+            continue  # chargebacks are not provider refunds
         try:
             entity = await _run_provider_call(_client().refund.fetch, refund_id)
         except Exception as exc:

@@ -87,7 +87,7 @@ def test_the_console_never_asks_for_test_sessions():
     """The frontend must rely on the server default, not opt in to test rows."""
     import pathlib
 
-    root = pathlib.Path(__file__).resolve().parents[2] / "voxly-ai" / "src"
+    root = pathlib.Path(__file__).resolve().parents[2] / "dialtact-app" / "src"
     offenders = []
     for path in root.rglob("*.js*"):
         text = path.read_text(encoding="utf-8", errors="ignore")

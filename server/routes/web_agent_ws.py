@@ -17,8 +17,8 @@ from server.utils.rate_limiter import RateLimiter
 logger = logging.getLogger(__name__)
 router = APIRouter()
 _web_agent_limiter = RateLimiter(max_requests=20, window_s=60)
-_WEB_AGENT_SUBPROTOCOL = "voxly-web-agent"
-_WEB_AGENT_AUTH_PROTOCOL_PREFIX = "voxly-auth."
+_WEB_AGENT_SUBPROTOCOL = "dialtact-web-agent"
+_WEB_AGENT_AUTH_PROTOCOL_PREFIX = "dialtact-auth."
 
 
 def _ws_token(ws: WebSocket) -> str:

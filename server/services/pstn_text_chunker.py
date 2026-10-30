@@ -270,7 +270,7 @@ def enrich_outbound_spoken_intro(
 # Every brain writer on this platform stores the opening as a *labelled* line
 # rather than a `--- OPENING ---` block: the SaaS studio writes
 # "Opening greeting: ...", the brief compiler writes "Example opening: ...", and
-# the Voxly console writes "OPENING LINE" followed by the greeting. Reading only
+# the Dialtact console writes "OPENING LINE" followed by the greeting. Reading only
 # the block form made those brains fall through to a generic default greeting, so
 # outbound calls opened with "Hi, konchem time unda?" and no agent identity.
 #

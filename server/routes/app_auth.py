@@ -376,7 +376,7 @@ async def auth_forgot_password(body: ForgotPasswordBody, request: Request):
 
     delivery: dict = {"attempted": False}
     if token:
-        reset_url = f"{settings.voxly_frontend_url.rstrip('/')}/#reset-password?token={token}"
+        reset_url = f"{settings.dialtact_frontend_url.rstrip('/')}/#reset-password?token={token}"
         result = await send_password_reset_email(email, reset_url)
         delivery = {"attempted": True, "sent": result.ok, "reason": result.code}
         if not result.ok:
@@ -397,7 +397,7 @@ async def auth_forgot_password(body: ForgotPasswordBody, request: Request):
     }
     if settings.auth_debug_expose_reset_token and token and not delivery.get("sent"):
         # Dev/staging only fallback when email delivery failed or is unconfigured.
-        payload["debugResetUrl"] = f"{settings.voxly_frontend_url.rstrip('/')}/#reset-password?token={token}"
+        payload["debugResetUrl"] = f"{settings.dialtact_frontend_url.rstrip('/')}/#reset-password?token={token}"
     if delivery.get("attempted") and not delivery.get("sent"):
         # Still the same generic message — the address may simply be undeliverable. The
         # operator needs the real reason in the logs, not the person who pressed "reset"
@@ -634,7 +634,7 @@ async def auth_google_callback(
     )
 
     settings = get_settings()
-    default_front = settings.voxly_frontend_url.rstrip("/")
+    default_front = settings.dialtact_frontend_url.rstrip("/")
     state_info = consume_oauth_state(state)
     front = (state_info or {}).get("return_to") or default_front
     redirect_uri = (state_info or {}).get("redirect_uri")

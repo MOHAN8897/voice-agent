@@ -2,7 +2,7 @@
 
 Multi-tenant SaaS for the **voice agent** backend: per-user auth, Stripe number purchase, Telnyx provision, Realtime PSTN, dev admin.
 
-**Customer frontend (later):** [Voxly AI](https://github.com/saiskm115/voxly-ai) — integrate only after backend gate ([PRD-12](./PRD-12-backend-saas-readiness.md)).
+**Customer frontend (later):** [Dialtact AI](https://github.com/saiskm115/dialtact-app) — integrate only after backend gate ([PRD-12](./PRD-12-backend-saas-readiness.md)).
 
 ## Reading order
 
@@ -15,23 +15,23 @@ Multi-tenant SaaS for the **voice agent** backend: per-user auth, Stripe number 
 | 4 | [PRD-04-phone-numbers-stripe-telnyx.md](./PRD-04-phone-numbers-stripe-telnyx.md) | Stripe, reservations, provision jobs |
 | 5 | [PRD-05-agents-voice-pstn-subscriber.md](./PRD-05-agents-voice-pstn-subscriber.md) | Agents, PSTN, no stack UI |
 | 6 | [PRD-06-dev-admin-panel.md](./PRD-06-dev-admin-panel.md) | Platform operator console |
-| 7 | [PRD-07-voxly-frontend-integration.md](./PRD-07-voxly-frontend-integration.md) | Voxly — **after backend ready** |
-| 8 | [PRD-08-api-contract-mapping.md](./PRD-08-api-contract-mapping.md) | Voxly ↔ API gaps |
+| 7 | [PRD-07-dialtact-frontend-integration.md](./PRD-07-dialtact-frontend-integration.md) | Dialtact — **after backend ready** |
+| 8 | [PRD-08-api-contract-mapping.md](./PRD-08-api-contract-mapping.md) | Dialtact ↔ API gaps |
 | 9 | [PRD-09-postgres-schema.md](./PRD-09-postgres-schema.md) | Migrations |
 | 10 | [PRD-10-implementation-phases.md](./PRD-10-implementation-phases.md) | Build order |
 | 11 | [PRD-11-stripe-cli-local-dev.md](./PRD-11-stripe-cli-local-dev.md) | Stripe CLI |
-| **12** | [PRD-12-backend-saas-readiness.md](./PRD-12-backend-saas-readiness.md) | **Gate checklist before Voxly** |
+| **12** | [PRD-12-backend-saas-readiness.md](./PRD-12-backend-saas-readiness.md) | **Gate checklist before Dialtact** |
 
-**Also:** [VOXLY-LOCAL-SETUP.md](./VOXLY-LOCAL-SETUP.md) · [ENV-SaaS.example](./ENV-SaaS.example)
+**Also:** [DIALTACT-LOCAL-SETUP.md](./DIALTACT-LOCAL-SETUP.md) · [ENV-SaaS.example](./ENV-SaaS.example)
 
 ## Backend-first rule
 
 ```text
 Phase 1 Auth + guards → Phase 2 Orchestrator → Phase 3 Stripe/numbers → Phase 4 Dev admin
-→ PRD-12 sign-off → Phase 5 Voxly
+→ PRD-12 sign-off → Phase 5 Dialtact
 ```
 
-Do **not** wire Voxly signup or payments until Phase A–D in PRD-12 are green.
+Do **not** wire Dialtact signup or payments until Phase A–D in PRD-12 are green.
 
 ## Codebase anchors
 
@@ -50,4 +50,4 @@ Do **not** wire Voxly signup or payments until Phase A–D in PRD-12 are green.
 |------|--------|
 | PRD pack | Reviewed 2026-09-22 — optimized for backend SaaS |
 | Backend implementation | Phases 1–7 backend — see [PRD-PHASES-1-7-STATUS.md](./PRD-PHASES-1-7-STATUS.md) |
-| Voxly integration | Blocked on PRD-12 |
+| Dialtact integration | Blocked on PRD-12 |

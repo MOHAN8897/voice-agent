@@ -37,6 +37,23 @@ def _agent_spoken_language(agent: dict[str, Any], voice_cfg: dict[str, Any]) -> 
     return "te-IN"
 
 
+def _agent_speed_override(value: Any) -> float | None:
+    """An agent speed only overrides the tier when it differs from the default.
+
+    Agents are created with speed 1.0, so treating 1.0 (or unset/invalid) as an
+    override would make the tier's voiceDynamics.speed knob dead on every call.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        speed = float(value)
+    except (TypeError, ValueError):
+        return None
+    if speed != speed or speed <= 0 or abs(speed - 1.0) < 1e-6:
+        return None
+    return speed
+
+
 async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]:
     """Platform stack from dev panel; agent only overrides spoken voice, speed, and language."""
     agent_id = str(agent.get("agent_id") or agent.get("id") or "")
@@ -47,9 +64,9 @@ async def saas_stack_override_for_agent(agent: dict[str, Any]) -> dict[str, Any]
     if not isinstance(saved_voice_settings, dict):
         saved_voice_settings = voice_cfg
     agent_voice = agent.get("voice") if isinstance(agent.get("voice"), dict) else {}
-    speed_val = next((value for value in (
+    speed_val = _agent_speed_override(next((value for value in (
         saved_voice_settings.get("speed"), voice_cfg.get("speed"), agent_voice.get("speed"),
-    ) if value is not None), None)
+    ) if value is not None), None))
     raw_tier = agent.get("default_tier") or agent.get("defaultTier")
     from server.services.saas.voice_stack_profiles import (
         VoiceProfileError,

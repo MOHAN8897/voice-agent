@@ -65,7 +65,7 @@ def run_semgrep() -> int:
     return run_cmd([
         'semgrep', 'scan', '--error', '--no-git-ignore', '--timeout', '20', '--config', 'p/owasp-top-ten', '--config', 'p/security-audit',
         '--config', '.semgrep.yml', '--json-output', str(reports / 'semgrep.json'),
-        'server/', 'worker/', 'scripts/', 'voxly-ai/src/', 'web/app/', 'web/lib/', 'web/components/',
+        'server/', 'worker/', 'scripts/', 'dialtact-app/src/', 'web/app/', 'web/lib/', 'web/components/',
     ], 'Semgrep SAST')
 
 

@@ -4,7 +4,7 @@ This document defines the production implementation specification for integratin
 
 It addresses:
 1. **Critical architectural flaws** in naive voice tool implementations and how this design eliminates them.
-2. **The Voxly Tool Router**: A dedicated policy, validation, and execution firewall between Gemini Live and Composio.
+2. **The Dialtact Tool Router**: A dedicated policy, validation, and execution firewall between Gemini Live and Composio.
 3. **Fail-Closed Tenant Isolation**: Eliminating risky "default" tenant fallbacks.
 4. **Write-Action SLA Timeout Semantics**: Resolving the 1.5s split-brain failure mode using `tool_executions` audit records and post-call reconciliation.
 5. **Semantically Safe Schema Optimization**: Replacing brittle primitive stripping with a structure-preserving optimizer targeting ≥85–90% schema size reduction.
@@ -21,7 +21,7 @@ A rigorous audit of naive tool calling vs. this production voice architecture re
 
 | Dimension | Naive Tool Implementation (What Was Broken) | Improved Production Architecture (What We Specify Here) |
 |---|---|---|
-| **1. Tool Execution Routing** | **No Tool Router**: Realtime voice loop directly called the Composio SDK. Telephony loop was tightly coupled to external network calls without tenant policy enforcement or argument validation. | **Dedicated Voxly Tool Router**: Sits between Gemini Live and external APIs. Enforces fail-closed tenant validation, agent whitelisting, schema validation, rate limits, and idempotency. |
+| **1. Tool Execution Routing** | **No Tool Router**: Realtime voice loop directly called the Composio SDK. Telephony loop was tightly coupled to external network calls without tenant policy enforcement or argument validation. | **Dedicated Dialtact Tool Router**: Sits between Gemini Live and external APIs. Enforces fail-closed tenant validation, agent whitelisting, schema validation, rate limits, and idempotency. |
 | **2. Multi-Tenant Isolation** | **Dangerous "Default" Tenant Fallback**: `tenant_id = str(self._tenant_id or "default")`. If tenant context was missing, tools executed against a shared tenant, risking catastrophic cross-tenant data leakage. | **Fail-Closed Tenant Security**: If tenant or agent context is missing, the tool call is instantly rejected (`401 Unauthorized`), logged, and never routed to Composio. |
 | **3. Timeout Semantics & Split-Brain** | **1.5s Timeout Without State**: When `asyncio.wait_for` timed out at 1.5s, the voice agent told the caller "failed," while the external API completed at 1.8s in the background, creating an orphaned calendar event or contact. | **`tool_executions` Audit & Reconciliation**: Distinguishes Read vs. Write actions. Write actions generate idempotency keys and track states (`initiated`, `timed_out_pending`, `succeeded`, `reconciled`) with post-call notification. |
 | **4. Schema Pruning Strategy** | **Overly Aggressive Primitive Flattening**: Stripping complex types broke APIs requiring nested objects (e.g. `start: {dateTime, timeZone}`), arrays, date formats, or specific enums, causing HTTP 400 errors from Composio. | **Semantically Safe Schema Optimizer**: Preserves required hierarchical types, arrays, date-time formats, and enums while eliminating multiline markdown descriptions and unused optional fields. |
@@ -30,7 +30,7 @@ A rigorous audit of naive tool calling vs. this production voice architecture re
 
 ---
 
-## 2. High-Level System Architecture & Voxly Tool Router
+## 2. High-Level System Architecture & Dialtact Tool Router
 
 ```
 Caller Speech (PSTN / Telnyx)
@@ -40,7 +40,7 @@ Gemini Live / Speech-to-Speech Adapter
     │
     ▼ (function_call event)
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   VOXLY TOOL ROUTER                                    │
+│                                   DIALTACT TOOL ROUTER                                    │
 │  server/services/tool_router.py                                                        │
 │                                                                                        │
 │  1. Fail-Closed Tenant Validation    ──> Reject immediately if tenant_id is missing    │
@@ -271,10 +271,10 @@ Add `composio_api_key` to `Settings`:
 composio_api_key: str | None = Field(None, alias="COMPOSIO_API_KEY")
 ```
 
-### 5.2 The Voxly Tool Router ([server/services/tool_router.py](file:///d:/voice%20agent/server/services/tool_router.py))
+### 5.2 The Dialtact Tool Router ([server/services/tool_router.py](file:///d:/voice%20agent/server/services/tool_router.py))
 
 ```python
-"""Voxly Tool Router - Centralized policy enforcement, validation, and execution for voice tools."""
+"""Dialtact Tool Router - Centralized policy enforcement, validation, and execution for voice tools."""
 from __future__ import annotations
 
 import asyncio
@@ -286,7 +286,7 @@ from server.services.composio_service import composio_service
 from server.utils.logger import logger
 
 
-class VoxlyToolRouter:
+class DialtactToolRouter:
     """Enterprise Tool Router enforcing multi-tenant isolation, idempotency, and SLA semantics."""
 
     def __init__(self) -> None:
@@ -404,7 +404,7 @@ class VoxlyToolRouter:
         pass
 
 
-tool_router = VoxlyToolRouter()
+tool_router = DialtactToolRouter()
 ```
 
 ---
@@ -611,7 +611,7 @@ In [server/services/pstn_realtime_voice_core.py](file:///d:/voice%20agent/server
                 ...
                 return
 
-            # --- DEDICATED VOXLY TOOL ROUTER DISPATCH ---
+            # --- DEDICATED DIALTACT TOOL ROUTER DISPATCH ---
             if self._agent_tools and tool_name in self._agent_tools:
                 log_pstn("tool_router.dispatch_start", call_id=self.call_id, tool=tool_name)
 
@@ -629,7 +629,7 @@ In [server/services/pstn_realtime_voice_core.py](file:///d:/voice%20agent/server
                 # 2. Trigger acoustic telephony bridge (no dead air)
                 await self._stream_acoustic_filler_if_needed(tool_name)
 
-                # 3. Route through Voxly Tool Router
+                # 3. Route through Dialtact Tool Router
                 from server.services.tool_router import tool_router
                 tool_output = await tool_router.route_and_execute(
                     tenant_id=str(self._tenant_id),
@@ -699,7 +699,7 @@ async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]
 
 ---
 
-## 6. Frontend Console & OAuth Security Specification ([IntegrationsModule.jsx](file:///d:/voice%20agent/voxly-ai/src/console/modules/IntegrationsModule.jsx))
+## 6. Frontend Console & OAuth Security Specification ([IntegrationsModule.jsx](file:///d:/voice%20agent/dialtact-app/src/console/modules/IntegrationsModule.jsx))
 
 ### Cryptographic OAuth Flow:
 1. Console requests connection: `POST /api/integrations/{app_id}/connect`.
@@ -938,7 +938,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from server.services.composio_service import ComposioService
-from server.services.tool_router import VoxlyToolRouter
+from server.services.tool_router import DialtactToolRouter
 
 
 # ---------------------------------------------------------------------------
@@ -1014,7 +1014,7 @@ def test_schema_optimizer_preserves_semantics_and_targets_size_reduction():
 @pytest.mark.asyncio
 async def test_tool_router_fails_closed_without_tenant_and_dispatches_with_tenant():
     """Verify tool router rejects missing tenant and routes valid calls through router."""
-    router = VoxlyToolRouter()
+    router = DialtactToolRouter()
 
     # 1. Missing tenant MUST FAIL CLOSED (Fix #2: No "default" fallback)
     result_rejected = await router.route_and_execute(
@@ -1054,7 +1054,7 @@ async def test_tool_router_fails_closed_without_tenant_and_dispatches_with_tenan
 @pytest.mark.asyncio
 async def test_write_action_tracks_split_brain_timeout():
     """Verify write action creates execution record and transitions to timed_out_pending on timeout."""
-    router = VoxlyToolRouter()
+    router = DialtactToolRouter()
 
     # Mock an external API that exceeds 1.5s
     mock_toolset = MagicMock()
@@ -1137,7 +1137,7 @@ async def test_oauth_state_generation_and_durable_job_idempotency():
    - Add `composio_api_key` to [server/config/env.py](file:///d:/voice%20agent/server/config/env.py).
 2. **Step 2: Database Migration**
    - Create migration for `tenant_integrations`, `agent_integrations`, `tool_executions`, and `oauth_states`.
-3. **Step 3: Voxly Tool Router Implementation**
+3. **Step 3: Dialtact Tool Router Implementation**
    - Implement `server/services/tool_router.py` with fail-closed validation and `tool_executions` audit.
 4. **Step 4: Composio Service Gateway**
    - Implement `server/services/composio_service.py` with the Semantically Safe Schema Optimizer and cryptographic OAuth state generation.
@@ -1146,6 +1146,6 @@ async def test_oauth_state_generation_and_durable_job_idempotency():
 6. **Step 6: Post-Call Reconciliation & Automation**
    - Implement split-brain reconciliation and Tier-2 durable sync in [server/call/post_call_pipeline.py](file:///d:/voice%20agent/server/call/post_call_pipeline.py).
 7. **Step 7: Frontend Console**
-   - Replace placeholder in [voxly-ai/src/console/modules/IntegrationsModule.jsx](file:///d:/voice%20agent/voxly-ai/src/console/modules/IntegrationsModule.jsx).
+   - Replace placeholder in [dialtact-app/src/console/modules/IntegrationsModule.jsx](file:///d:/voice%20agent/dialtact-app/src/console/modules/IntegrationsModule.jsx).
 8. **Step 8: Automated Verification**
    - Run `pytest server/tests/test_composio_voice_tools.py -v`.

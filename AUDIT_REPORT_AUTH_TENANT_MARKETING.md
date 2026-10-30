@@ -1,7 +1,7 @@
 # Comprehensive Audit & Recommendations: Auth, Session Security, Tenant Isolation & Marketing Landing Page
 
 **Generated:** October 3, 2026  
-**Repository:** `voice agent` (`voxly-ai` & `web` Next.js portal)
+**Repository:** `voice agent` (`dialtact-app` & `web` Next.js portal)
 
 ---
 
@@ -37,7 +37,7 @@
   In `server/routes/app_auth.py` (`auth_forgot_password`):
   ```python
   if token:
-      reset_url = f"{settings.voxly_frontend_url.rstrip('/')}/#reset-password?token={token}"
+      reset_url = f"{settings.dialtact_frontend_url.rstrip('/')}/#reset-password?token={token}"
       from server.services.saas.email_service import send_password_reset_email
       await send_password_reset_email(body.email.strip().lower(), reset_url)
   return {
@@ -49,7 +49,7 @@
 
 ### 1.2 User Authentication After Password Reset
 - **Flow Analysis:**
-  - When the reset link (`/#reset-password?token=...`) is opened, `voxly-ai/src/components/AuthModal.jsx` displays the reset form.
+  - When the reset link (`/#reset-password?token=...`) is opened, `dialtact-app/src/components/AuthModal.jsx` displays the reset form.
   - Submitting sends `POST /api/auth/reset-password` with `{ token, newPassword }`.
   - The backend (`server/routes/app_auth.py:236`) validates the token and updates the password hash, but returns only `{"ok": True}`.
   - `AuthModal.jsx` catches the response, sets message `"Password updated. Sign in with your new password."`, and switches `mode` to `'signin'`.
@@ -60,9 +60,9 @@
 
 ### 1.3 Missing "Change Password" Flow
 - **Backend:** `POST /api/auth/change-password` exists in `server/routes/app_auth.py:207` and is fully implemented in `server/services/saas/auth_service.py` (`change_password(user_id, currentPassword, newPassword)`).
-- **Frontend:** **Neither `voxly-ai` nor `web` has any UI for changing password.**
-  - `voxly-ai/src/services/api.js` has no `changePassword()` method.
-  - `voxly-ai/src/console/modules/SettingsModule.jsx` only shows KYC, user email/role, and wallet credits.
+- **Frontend:** **Neither `dialtact-app` nor `web` has any UI for changing password.**
+  - `dialtact-app/src/services/api.js` has no `changePassword()` method.
+  - `dialtact-app/src/console/modules/SettingsModule.jsx` only shows KYC, user email/role, and wallet credits.
   - `web/app/app/settings` has no password modification form.
   - Logged-in users currently have **no way to change their password** without logging out and attempting the forgot password flow.
 
@@ -76,7 +76,7 @@
   - `JWT_REFRESH_TTL_DAYS = 30` (Refresh Token: 30 days)
   - Portal session cookies (`server/auth/session.py`): hardcoded 7 days (`_TTL_SEC = 86400 * 7`).
 - **Silent Background Refresh:**
-  In `voxly-ai/src/services/api.js`, the request interceptor catches 401s and automatically calls `/api/auth/refresh` using the HTTP-only refresh cookie.
+  In `dialtact-app/src/services/api.js`, the request interceptor catches 401s and automatically calls `/api/auth/refresh` using the HTTP-only refresh cookie.
 - **Zero Activity Detection:**
   There are no listeners for user activity (`mousemove`, `keydown`, `click`, `touchstart`). If an operator opens the dashboard, leaves their computer unattended for 12 hours, and returns, any network call or page click silently refreshes the token. The session can remain active for up to 30 continuous days without requiring re-authentication.
 
@@ -107,7 +107,7 @@ A multi-tenant SaaS must prevent customers from seeing internal vendors, wholesa
   - Displays `"Ledger"`, `"Audio archive"`, `"Outcome job"`, `"Combination ID"`, `"Brain version"`, `"Dial request ID"`.
   - Exposes internal PSTN forensics (`"Answer → first audio sent: 1240 ms"` and internal packet buffers).
 
-### 3.2 Agent Studio Voice Settings (`voxly-ai/src/console/modules/AgentStudioModule.jsx`)
+### 3.2 Agent Studio Voice Settings (`dialtact-app/src/console/modules/AgentStudioModule.jsx`)
 - Under the Voice selection dropdown (lines 822 & 828), voice options are grouped with raw labels:
   - `<optgroup label="OpenAI (phone default)">`
   - `<optgroup label="Gemini Live">`
@@ -118,8 +118,8 @@ A multi-tenant SaaS must prevent customers from seeing internal vendors, wholesa
   - `"Professional & Formal"`
 
 ### 3.3 Integrations & Admin Labels
-- `voxly-ai/src/console/modules/IntegrationsModule.jsx` line 18 mentions `"voice-agent API"`. This should say `"Voxly Platform"` or `"Voxly Cloud"`.
-- `voxly-ai/src/console/modules/agent-workspace/AgentDialBulkPanel.jsx` contains references to Telnyx channel ceilings.
+- `dialtact-app/src/console/modules/IntegrationsModule.jsx` line 18 mentions `"voice-agent API"`. This should say `"Dialtact Platform"` or `"Dialtact Cloud"`.
+- `dialtact-app/src/console/modules/agent-workspace/AgentDialBulkPanel.jsx` contains references to Telnyx channel ceilings.
 
 ---
 
@@ -127,13 +127,13 @@ A multi-tenant SaaS must prevent customers from seeing internal vendors, wholesa
 
 ### 4.1 Product Naming & Brand Identity Options
 The codebase currently has split branding:
-- `voxly-ai` is branded as **Voxly** ("Autonomous AI Voice Employees").
+- `dialtact-app` is branded as **Dialtact** ("Autonomous AI Voice Employees").
 - `web` is branded as **Vāṇi** ("Voice control plane for Telugu-speaking businesses").
 
 Depending on your target market, here are 3 cohesive naming strategies:
 
 #### Option A: Modern Global Enterprise Voice SaaS (Recommended for Global/US Market)
-- **Names:** **Voxly**, **Vocalis AI**, **AuraVoice**, **EchoScale**
+- **Names:** **Dialtact**, **Vocalis AI**, **AuraVoice**, **EchoScale**
 - **Tagline:** *"The Autonomous AI Voice Workforce for Modern Enterprises"*
 - **Tone:** Sleek, high-converting B2B SaaS (similar to Bland.ai, Retell, Decagon).
 
@@ -149,13 +149,13 @@ Depending on your target market, here are 3 cohesive naming strategies:
 ### 4.2 Critical Fixes for Landing Page Conversion
 
 1. **Fix the "Talk to AI" Demo (Highest Priority):**
-   - **Problem:** `voxly-ai/src/services/voiceAgent.js` currently uses local browser `window.speechSynthesis` with static responses. In Chrome/Safari, this sounds robotic, flat, and nothing like the real neural voice pipeline.
+   - **Problem:** `dialtact-app/src/services/voiceAgent.js` currently uses local browser `window.speechSynthesis` with static responses. In Chrome/Safari, this sounds robotic, flat, and nothing like the real neural voice pipeline.
    - **Fix:** Connect the demo to a real rate-limited voice pipeline (or stream pre-rendered high-fidelity neural audio clips with lip-synced wave animations).
 2. **Replace Synthetic "Watch Demo" with a Real Video:**
    - `WatchDemoModal.jsx` steps through mock text dialogues with synthetic audio. Replace it with an embedded 60-second video demo showing a real incoming call, live screen dashboard, and instant CRM appointment booking.
 3. **Optimize Bundle Size & 3D Avatar Loading:**
    - Production build analysis reveals `three-core` (678 kB) and `three-fiber` (341 kB) total **over 1.5 MB uncompressed** in the initial bundle.
-   - Dynamic-import the 3D robot scene (`React.lazy(() => import('../three/VoxlyScene'))`) with a clean WebP/SVG fallback so mobile visitors get an instant page load.
+   - Dynamic-import the 3D robot scene (`React.lazy(() => import('../three/DialtactScene'))`) with a clean WebP/SVG fallback so mobile visitors get an instant page load.
 4. **Add High-Converting Trust & Proof Elements:**
    - **Interactive Audio Comparison:** Add a 1-click soundboard comparing *"Typical Robotic IVR"* vs *"Your Voice AI"*.
    - **Live Dial Demo Widget:** Allow visitors to enter their phone number and receive an instant demonstration call from the AI agent within 30 seconds.
@@ -189,7 +189,7 @@ graph TD
    - Log into [resend.com/domains](https://resend.com/domains).
    - Add `hustlelabs.in` and add the 3 DKIM TXT records and SPF TXT record to your DNS provider.
    - Once verified, emails sent from `support@hustlelabs.in` will deliver immediately.
-2. **Add `changePassword` in `voxly-ai/src/services/api.js`:**
+2. **Add `changePassword` in `dialtact-app/src/services/api.js`:**
    ```javascript
    async changePassword(currentPassword, newPassword) {
      return await api.request('POST', '/api/auth/change-password', { currentPassword, newPassword });

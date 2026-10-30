@@ -64,11 +64,11 @@ def _mock_live_config():
         live_requested=True,
         talk_seconds=10,
         environ={
-            "VOXLY_ALLOW_REAL_TEST_CALLS": "1",
-            "VOXLY_TEST_CALL_TO_E164": "+12025550123",
-            "VOXLY_TEST_CALL_AGENT_ID": "00000000-0000-4000-8000-000000000001",
-            "VOXLY_DEV_USERNAME": "operator",
-            "VOXLY_DEV_PASSWORD": "test-only-password",
+            "DIALTACT_ALLOW_REAL_TEST_CALLS": "1",
+            "DIALTACT_TEST_CALL_TO_E164": "+12025550123",
+            "DIALTACT_TEST_CALL_AGENT_ID": "00000000-0000-4000-8000-000000000001",
+            "DIALTACT_DEV_USERNAME": "operator",
+            "DIALTACT_DEV_PASSWORD": "test-only-password",
         },
     )
 
@@ -111,18 +111,18 @@ async def test_explicit_live_path_fails_when_hangup_completion_is_missing(monkey
 def test_live_configuration_requires_operator_opt_in() -> None:
     with pytest.raises(ValueError, match="Live calling is disabled"):
         quick_call.resolve_live_config(live_requested=False, talk_seconds=120, environ={})
-    with pytest.raises(ValueError, match="VOXLY_ALLOW_REAL_TEST_CALLS"):
+    with pytest.raises(ValueError, match="DIALTACT_ALLOW_REAL_TEST_CALLS"):
         quick_call.resolve_live_config(live_requested=True, talk_seconds=120, environ={})
 
 
 def test_live_configuration_rejects_non_loopback_api_origins() -> None:
     env = {
-        "VOXLY_ALLOW_REAL_TEST_CALLS": "1",
-        "VOXLY_TEST_API_BASE_URL": "https://example.invalid",
-        "VOXLY_TEST_CALL_TO_E164": "+12025550123",
-        "VOXLY_TEST_CALL_AGENT_ID": "00000000-0000-4000-8000-000000000001",
-        "VOXLY_DEV_USERNAME": "operator",
-        "VOXLY_DEV_PASSWORD": "test-only-password",
+        "DIALTACT_ALLOW_REAL_TEST_CALLS": "1",
+        "DIALTACT_TEST_API_BASE_URL": "https://example.invalid",
+        "DIALTACT_TEST_CALL_TO_E164": "+12025550123",
+        "DIALTACT_TEST_CALL_AGENT_ID": "00000000-0000-4000-8000-000000000001",
+        "DIALTACT_DEV_USERNAME": "operator",
+        "DIALTACT_DEV_PASSWORD": "test-only-password",
     }
     with pytest.raises(ValueError, match="loopback origin"):
         quick_call.resolve_live_config(live_requested=True, talk_seconds=120, environ=env)
@@ -130,17 +130,17 @@ def test_live_configuration_rejects_non_loopback_api_origins() -> None:
 
 def test_live_configuration_validates_destination_and_agent_before_network() -> None:
     env = {
-        "VOXLY_ALLOW_REAL_TEST_CALLS": "1",
-        "VOXLY_TEST_CALL_TO_E164": "not-a-number",
-        "VOXLY_TEST_CALL_AGENT_ID": "00000000-0000-4000-8000-000000000001",
-        "VOXLY_DEV_USERNAME": "operator",
-        "VOXLY_DEV_PASSWORD": "test-only-password",
+        "DIALTACT_ALLOW_REAL_TEST_CALLS": "1",
+        "DIALTACT_TEST_CALL_TO_E164": "not-a-number",
+        "DIALTACT_TEST_CALL_AGENT_ID": "00000000-0000-4000-8000-000000000001",
+        "DIALTACT_DEV_USERNAME": "operator",
+        "DIALTACT_DEV_PASSWORD": "test-only-password",
     }
     with pytest.raises(ValueError, match="E.164"):
         quick_call.resolve_live_config(live_requested=True, talk_seconds=120, environ=env)
 
-    env["VOXLY_TEST_CALL_TO_E164"] = "+12025550123"
+    env["DIALTACT_TEST_CALL_TO_E164"] = "+12025550123"
     config = quick_call.resolve_live_config(live_requested=True, talk_seconds=120, environ=env)
-    assert config.agent_id == env["VOXLY_TEST_CALL_AGENT_ID"]
+    assert config.agent_id == env["DIALTACT_TEST_CALL_AGENT_ID"]
     assert "test-only-password" not in repr(config)
-    assert env["VOXLY_TEST_CALL_TO_E164"] not in repr(config)
+    assert env["DIALTACT_TEST_CALL_TO_E164"] not in repr(config)

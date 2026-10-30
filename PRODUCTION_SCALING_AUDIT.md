@@ -1,4 +1,4 @@
-# Voxly AI — Production Scaling & Architecture Audit (1 → 10 → 50 → 100+ Concurrent Calls)
+# Dialtact AI — Production Scaling & Architecture Audit (1 → 10 → 50 → 100+ Concurrent Calls)
 
 > **Document Version:** 1.0.0  
 > **Target Workload:** Real-time PSTN Telephony (Telnyx / Exotel) + Multimodal AI (Gemini Live / OpenAI Realtime) + CRM Tooling (Nango / Composio)  
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-Voxly AI possesses an exceptionally well-engineered real-time audio pipeline: 20ms PCM audio frame slicing, dynamic jitter buffering, adaptive streaming resampling (8 kHz ↔ 16/24 kHz), and barge-in audio clearing are already implemented with microsecond-level efficiency (Real-Time Factor: **0.0006**).
+Dialtact AI possesses an exceptionally well-engineered real-time audio pipeline: 20ms PCM audio frame slicing, dynamic jitter buffering, adaptive streaming resampling (8 kHz ↔ 16/24 kHz), and barge-in audio clearing are already implemented with microsecond-level efficiency (Real-Time Factor: **0.0006**).
 
 However, **the platform is currently constrained to run on a single worker process**. Attempting to horizontally scale across multiple Uvicorn workers or multiple Railway replicas right now will cause **immediate call drops, wallet debit race conditions, and missing call recordings** due to unshared in-memory state and local disk storage.
 
@@ -277,4 +277,4 @@ To empirically verify the platform at each concurrency milestone without placing
 
 ## Conclusion
 
-Voxly AI's real-time audio core is **production-grade and exceptionally fast**. The current bottlenecks are purely operational: adding **Redis**, setting **object storage for recordings**, fixing the **wallet locking query**, and running **multi-worker Uvicorn**. Once these 4 fixes are applied, the platform will comfortably and reliably sustain 100+ concurrent live telephone conversations.
+Dialtact AI's real-time audio core is **production-grade and exceptionally fast**. The current bottlenecks are purely operational: adding **Redis**, setting **object storage for recordings**, fixing the **wallet locking query**, and running **multi-worker Uvicorn**. Once these 4 fixes are applied, the platform will comfortably and reliably sustain 100+ concurrent live telephone conversations.

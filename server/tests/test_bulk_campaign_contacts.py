@@ -1,4 +1,4 @@
-"""Automated test suite for Voxly Bulk Outbound Campaign contact import engine.
+"""Automated test suite for Dialtact Bulk Outbound Campaign contact import engine.
 
 Tests all 20 required specifications:
 Test 1: Name,Phone,Email

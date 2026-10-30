@@ -2,7 +2,7 @@
 
 ## User story
 
-> As a subscriber, I search for an available number on Voxly, pay with Stripe, and receive that number assigned to my account. I then assign it to one of my agents for inbound/outbound PSTN.
+> As a subscriber, I search for an available number on Dialtact, pay with Stripe, and receive that number assigned to my account. I then assign it to one of my agents for inbound/outbound PSTN.
 
 ## Industry pattern (reference)
 
@@ -21,11 +21,11 @@ Our variant: **Stripe gates Telnyx purchase**; platform owns one Telnyx account.
 |---------|-------------|-------|
 | Phone number — India mobile | Price: recurring monthly + optional one-time setup | Mirror Telnyx monthly + margin |
 | Phone number — US local | Same | Country-specific Prices |
-| Platform usage | Metered or wallet top-up (phase 2) | Voxly `POST /api/billing/topup` |
+| Platform usage | Metered or wallet top-up (phase 2) | Dialtact `POST /api/billing/topup` |
 
 Store `stripe_price_id` per country/number_type in `number_catalog` table or config.
 
-### What user sees on Voxly
+### What user sees on Dialtact
 
 1. **Search** — `GET /api/telephony/numbers/search?country=IN` → list of **available** candidates (from Telnyx search API, not yet purchased).
 2. **Select** — user picks `e164`.
@@ -72,7 +72,7 @@ Cron/worker: delete expired reservations; cancel abandoned Stripe sessions if po
 ```mermaid
 sequenceDiagram
   participant U as Subscriber
-  participant V as Voxly
+  participant V as Dialtact
   participant API as Backend
   participant S as Stripe
   participant T as Telnyx
@@ -100,7 +100,7 @@ sequenceDiagram
 - Mode: `subscription` if monthly recurring for number; or `payment` for first month + setup as line items.
 - `metadata`: `purchase_id`, `tenant_id`, `e164`, `user_id`
 - `customer`: tenant's `stripe_customer_id`
-- Success/cancel URLs: Voxly routes `/console/numbers?success=1`
+- Success/cancel URLs: Dialtact routes `/console/numbers?success=1`
 
 ### Webhooks (`POST /api/stripe/webhook`)
 
@@ -147,7 +147,7 @@ If Telnyx order fails after payment:
 **Dictionary views for admin:**
 
 - `GET /api/dev/admin/assignments` → flat list `{ tenant, e164, agent, purchase, stripe }`
-- `GET /api/telephony/numbers` → tenant-scoped list (Voxly)
+- `GET /api/telephony/numbers` → tenant-scoped list (Dialtact)
 
 ## Assign / unassign agent
 
@@ -157,7 +157,7 @@ If Telnyx order fails after payment:
 - Update `phone_numbers.agent_id`
 - Optional: push Telnyx metadata tag for ops
 
-`PUT /api/telephony/numbers/{id}/routing` (Voxly) — map to inbound_enabled, outbound_enabled, agent_id.
+`PUT /api/telephony/numbers/{id}/routing` (Dialtact) — map to inbound_enabled, outbound_enabled, agent_id.
 
 ## Admin pool (optional parallel path)
 

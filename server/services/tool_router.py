@@ -27,7 +27,7 @@ from server.utils.logger import logger
 TOOL_TIMEOUT_SECONDS = 8.0
 
 
-class VoxlyToolRouter:
+class DialtactToolRouter:
     def __init__(self) -> None:
         self.nango = nango_service
 
@@ -242,4 +242,4 @@ class VoxlyToolRouter:
             logger.warning("[TOOL_ROUTER] Audit update unavailable: %s", type(exc).__name__)
 
 
-tool_router = VoxlyToolRouter()
+tool_router = DialtactToolRouter()

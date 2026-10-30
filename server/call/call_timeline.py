@@ -16,9 +16,9 @@ from server.call.call_status import (
 )
 from server.call.call_store import call_attempt_store, call_store
 
-#: How many rows each source contributes to a page. Over-fetching by `offset`
-#: lets the merged list be sliced correctly without a full table scan.
-_MAX_FETCH = 500
+#: Upper bound on rows each source contributes to a page. A page needs only the
+#: first ``offset + limit`` rows of each source to be merged and sliced correctly.
+_MAX_FETCH = 2000
 
 
 def _attempt_to_item(row: dict[str, Any]) -> dict[str, Any]:
@@ -128,31 +128,45 @@ async def list_timeline(
     wanted = set(normalize_call_statuses(statuses))
     wanted_tags = [str(tag).strip() for tag in (tags or []) if str(tag).strip()]
 
-    calls, _call_total = await call_store.list_calls(
+    # Each source is already ordered newest first, so the first ``offset + limit``
+    # rows of the merged page can only come from the first ``offset + limit`` rows
+    # of each source. Status/direction filters and totals are evaluated in SQL.
+    fetch = min(offset + limit, _MAX_FETCH)
+    calls, call_total = await call_store.list_calls(
         tenant_id=tenant_id,
         agent_id=agent_id,
         since=since,
         until=until,
-        limit=_MAX_FETCH,
+        limit=fetch,
         offset=0,
+        statuses=sorted(wanted) or None,
+        direction=direction,
         include_tests=include_tests,
         tags=wanted_tags or None,
         tag_match=tag_match,
+        max_limit=_MAX_FETCH,
     )
     items = [_call_to_item(c) for c in calls]
+    total = call_total
 
     if wanted_tags:
         include_attempts = False
     if include_attempts:
-        attempts, _attempt_total = await call_attempt_store.list_attempts(
+        # An attempt linked to a connected call is represented by that call's row.
+        attempts, attempt_total = await call_attempt_store.list_attempts(
             tenant_id=tenant_id,
             agent_id=agent_id,
             since=since,
             until=until,
-            limit=_MAX_FETCH,
+            limit=fetch,
             offset=0,
+            statuses=sorted(wanted) or None,
+            direction=direction,
+            exclude_linked=True,
+            max_limit=_MAX_FETCH,
         )
         items.extend(_attempt_to_item(a) for a in attempts)
+        total += attempt_total
 
     items = _dedupe(items)
     if direction:
@@ -161,7 +175,6 @@ async def list_timeline(
         items = [i for i in items if i.get("status") in wanted]
     items.sort(key=_sort_key, reverse=True)
 
-    total = len(items)
     return items[offset : offset + limit], total
 
 

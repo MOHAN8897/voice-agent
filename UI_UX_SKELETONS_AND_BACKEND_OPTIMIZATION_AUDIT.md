@@ -1,6 +1,6 @@
 # UI/UX Skeletons, Loading States & Backend Optimization Audit
-**Project:** Voxly AI Voice Agent Platform  
-**Target:** Frontend (`voxly-ai/src`) & Backend (`server/`)  
+**Project:** Dialtact AI Voice Agent Platform  
+**Target:** Frontend (`dialtact-app/src`) & Backend (`server/`)  
 **Date:** October 2026  
 **Status:** Complete Architectural & Engineering Audit
 
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-A comprehensive, end-to-end architectural audit of the Voxly platform was conducted across every page, tab, modal, and drawer on the frontend, alongside an in-depth audit of all backend database queries, API endpoints, serialization loops, and filesystem operations.
+A comprehensive, end-to-end architectural audit of the Dialtact platform was conducted across every page, tab, modal, and drawer on the frontend, alongside an in-depth audit of all backend database queries, API endpoints, serialization loops, and filesystem operations.
 
 ### Key Audit Findings:
 1. **Frontend UI/UX Gaps:**
@@ -177,7 +177,7 @@ A comprehensive, end-to-end architectural audit of the Voxly platform was conduc
 
 | Component | Current Behavior | Problem / UX Risk | Recommended Skeleton & Animation |
 |---|---|---|---|
-| **3D Hero Scene** (`Hero.jsx` / `LazyVoxlyScene.jsx`) | Displays PNG image fallback (`VoxlyBot_preview.png`) before WebGL scene initializes. Good practice, but transition between 2D PNG and 3D Canvas is abrupt. | Robot model pops into existence with a flash. | Add a smooth fade-in crossfade (`transition-opacity duration-500`) when Canvas emits `onCreated`. |
+| **3D Hero Scene** (`Hero.jsx` / `LazyDialtactScene.jsx`) | Displays PNG image fallback (`DialtactBot_preview.png`) before WebGL scene initializes. Good practice, but transition between 2D PNG and 3D Canvas is abrupt. | Robot model pops into existence with a flash. | Add a smooth fade-in crossfade (`transition-opacity duration-500`) when Canvas emits `onCreated`. |
 | **Onboarding Survey Modal** (`OnboardingSurveyModal.jsx`) | Form submit button shows basic spinner text. | Submission of multi-step telemetry feels generic. | Add step transition slide animation (`transform transition-transform duration-300`) between Step 1, 2, and 3. |
 
 ---
@@ -295,7 +295,7 @@ For every single call in the list, `_enrich_call_list_item` runs:
 
 ## Part 3: Recommended Reusable Skeleton Design System
 
-To establish visual continuity across the entire Voxly platform, the following standardized skeleton components should be added to [voxly-ai/src/console/ui/Skeleton.jsx](file:///d:/voice%20agent/voxly-ai/src/console/ui/Skeleton.jsx):
+To establish visual continuity across the entire Dialtact platform, the following standardized skeleton components should be added to [dialtact-app/src/console/ui/Skeleton.jsx](file:///d:/voice%20agent/dialtact-app/src/console/ui/Skeleton.jsx):
 
 ```jsx
 // Recommended additions to src/console/ui/Skeleton.jsx
