@@ -23,6 +23,35 @@ import { VoiceServiceKycCard } from '../ui/VoiceServiceKycCard';
 import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
 import { CatalogSkeleton, PhoneNumberRowSkeleton } from '../ui/Skeleton';
 
+function formatInr(value) {
+  const n = Number(value) || 0;
+  return `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/** "₹X / month", or "Free" when the admin set the monthly rent to zero. */
+function monthlyRentLabel(inr) {
+  const n = Number(inr);
+  if (!Number.isFinite(n)) return 'Price unavailable';
+  return n === 0 ? 'Free' : `${formatInr(n)} / month`;
+}
+
+/** Same day next month, clamped to the month's last day (as the server renews). */
+function addOneMonth(date) {
+  const d = new Date(date);
+  const day = d.getDate();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + 1);
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  d.setDate(Math.min(day, last));
+  return d;
+}
+
+function formatRenewalDate(value) {
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 const FALLBACK_COUNTRIES = [
   { code: 'US', name: 'United States', dial: '+1' },
   { code: 'GB', name: 'United Kingdom', dial: '+44' },
@@ -233,11 +262,14 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
   const unassignedCount = phoneNumbers.filter((n) => !n.assignedAgentId).length;
   const assignedCount = phoneNumbers.length - unassignedCount;
-  const monthlyRentalUsd = phoneNumbers.reduce(
-    (sum, n) => sum + (Number(n.monthlyCost) || 0),
-    0
-  );
+  // Only wallet-billed numbers pay the monthly rent; platform/test lines do not.
+  const rentedNumbers = phoneNumbers.filter((n) => n.rentBilled);
+  const monthlyRentInr = rentedNumbers.reduce((sum, n) => sum + (Number(n.monthlyInr) || 0), 0);
+  const nextRenewal = rentedNumbers
+    .filter((n) => n.nextRenewalAt)
+    .sort((a, b) => String(a.nextRenewalAt).localeCompare(String(b.nextRenewalAt)))[0] || null;
   const balanceUsd = Number(wallet?.balanceUsd) || 0;
+  const balanceInr = Number(wallet?.balanceInr) || 0;
 
   // Price and wallet top-up floor come from the server so the console can never
   // quote something `/api/telephony/buy` or `/api/billing/topup` would reject.
@@ -257,9 +289,19 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   // USD is the only quoted currency. A missing catalog means we do not know the
   // price, so we must not invent one — the buy button stays honest by asking the
   // server, which is the authority anyway.
+  // The admin "Phone number monthly rent": charged for the first month at purchase
+  // and again on each monthly renewal. Zero is a real price (free numbers).
   const numberPriceUsd = Number(catalog?.rates?.numberMonthlyUsd);
-  const priceKnown = Number.isFinite(numberPriceUsd) && numberPriceUsd > 0;
-  const canAffordNumber = priceKnown && balanceUsd >= numberPriceUsd;
+  const numberPriceInr = Number(catalog?.rates?.numberMonthlyInr);
+  const priceKnown = catalog != null && Number.isFinite(numberPriceInr) && numberPriceInr >= 0;
+  // The server debits whichever wallet leg can cover the rent.
+  const canAffordNumber = priceKnown && (
+    numberPriceInr === 0 ||
+    balanceInr >= numberPriceInr ||
+    (Number.isFinite(numberPriceUsd) && balanceUsd >= numberPriceUsd)
+  );
+  const rentLabel = priceKnown ? monthlyRentLabel(numberPriceInr) : 'Price unavailable';
+  const firstRenewalLabel = formatRenewalDate(addOneMonth(new Date()));
 
   const filteredCatalog = availableCatalog.filter((item) => {
     const cc = (item.country || '').toUpperCase();
@@ -299,11 +341,8 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     } else if (!kycApproved) {
       rememberNumber(catalogItem); return;
     }
-    if (priceKnown && balanceUsd < numberPriceUsd) {
-      const msg = `A phone number costs $${numberPriceUsd.toFixed(
-        2
-      )} per month. Add credit to your wallet to buy one.`;
-      setBuyError(msg);
+    if (priceKnown && !canAffordNumber) {
+      setBuyError(`A phone number costs ${monthlyRentLabel(numberPriceInr)}. Add credit to your wallet to buy one.`);
       return;
     }
     setBuying(true);
@@ -341,7 +380,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     } catch (e) {
       if (e.status === 402 || e.code === 'insufficient_balance') {
         const msg = priceKnown
-          ? `${e.message} A phone number costs $${numberPriceUsd.toFixed(2)} per month.`
+          ? `${e.message} A phone number costs ${monthlyRentLabel(numberPriceInr)}.`
           : e.message;
         setBuyError(msg);
         await refreshWallet?.();
@@ -388,8 +427,8 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
             Phone lines ({phoneNumbers.length})
           </h2>
           <p className="text-xs text-[#524E5E] mt-0.5">
-            Buy a number and connect it to an AI agent. Rental is billed monthly; call time is billed
-            from your wallet.
+            Buy a number and connect it to an AI agent. Each number has a monthly rent, renewed from your
+            wallet on its purchase date each month; call time is billed separately.
           </p>
         </div>
 
@@ -448,13 +487,20 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       </div>
 
       {/* Money the current lines cost per month, from the server's rates. */}
-      <div className="text-[11px] text-[#524E5E]">
-        Monthly rental for these {phoneNumbers.length} line
-        {phoneNumbers.length === 1 ? '' : 's'}:{' '}
-        <span className="font-mono font-semibold text-[#0F0E17]">
-          ${monthlyRentalUsd.toFixed(2)}
-        </span>{' '}
-        per month. Call time is billed separately from your wallet.
+      <div className="text-[11px] text-[#524E5E]" data-testid="numbers-rent-summary">
+        Monthly rent for {rentedNumbers.length} rented line{rentedNumbers.length === 1 ? '' : 's'}:{' '}
+        <span className="font-mono font-semibold text-[#0F0E17]">{formatInr(monthlyRentInr)}</span>{' '}
+        per month.
+        {nextRenewal ? (
+          <>
+            {' '}Next renewal:{' '}
+            <span className="font-semibold text-[#0F0E17]">{formatRenewalDate(nextRenewal.nextRenewalAt)}</span>
+            {', '}
+            <span className="font-mono font-semibold text-[#0F0E17]">{formatInr(nextRenewal.nextRenewalInr)}</span>
+            {' '}for {nextRenewal.formatted || nextRenewal.number}.
+          </>
+        ) : null}{' '}
+        Call time is billed separately from your wallet.
       </div>
 
       {/* Numbers Inventory Table Card */}
@@ -467,7 +513,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 <th className="py-3 px-4">Telephony Platform</th>
                 <th className="py-3 px-4">Location / Type</th>
                 <th className="py-3 px-4">Assigned AI Employee</th>
-                <th className="py-3 px-4 font-mono">Monthly Rate</th>
+                <th className="py-3 px-4">Monthly rent</th>
                 <th className="py-3 px-4">Calls</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-5 text-right">Actions</th>
@@ -557,9 +603,22 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                     </select>
                   </td>
 
-                  {/* Monthly Cost */}
-                  <td className="py-4 px-4 font-mono text-[#524E5E]">
-                    ${Number(num.monthlyCost || 0).toFixed(2)}/mo
+                  {/* Monthly rent and next renewal */}
+                  <td className="py-4 px-4 text-[#524E5E]" data-testid="number-rent">
+                    {num.rentBilled ? (
+                      <>
+                        <span className="font-mono">{monthlyRentLabel(num.nextRenewalInr ?? num.monthlyInr)}</span>
+                        {num.nextRenewalAt ? (
+                          <span className="block text-[10px] text-[#8C879A]">
+                            renews on {formatRenewalDate(num.nextRenewalAt)}
+                          </span>
+                        ) : (
+                          <span className="block text-[10px] text-[#8C879A]">auto-renewal off</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-[10px] text-[#8C879A]">No rent</span>
+                    )}
                   </td>
 
                   {/* Line-level inbound/outbound switches */}
@@ -669,7 +728,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         <div className="space-y-5">
           {pendingNumber && !purchasedSuccess && <div className="rounded-xl border border-[#DCD7EE] bg-[#FAF9FD] p-4 space-y-2" data-testid="selected-number-review">
             <p className="text-sm font-semibold">Selected number: <span className="font-mono">{pendingNumber.number}</span></p>
-            <p className="text-sm">{priceKnown ? `$${numberPriceUsd.toFixed(2)} / month` : 'Price unavailable — reload before buying.'}</p>
+            <p className="text-sm">{priceKnown ? `${rentLabel}, renews on ${firstRenewalLabel}` : 'Price unavailable — reload before buying.'}</p>
             <p className="text-xs leading-relaxed text-[#524E5E]">Monthly rental is deducted from your prepaid wallet (GST was applied when you added funds) only when you confirm the purchase, and renews monthly. Call usage is billed separately. The number is not reserved during verification; availability and pricing are checked again before purchase.</p>
             <div className="flex flex-wrap items-center gap-3">
               <button type="button" className="min-h-11 text-sm font-semibold text-[#6344E7]" onClick={forgetNumber}>Choose a different number</button>
@@ -727,20 +786,20 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 </div>
               )}
 
-              {/* Price and affordability, both from the server. USD only. */}
+              {/* Monthly rent and affordability, both from the server. */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
                 <div className="text-[11px] text-[#524E5E]">
                   <span className="font-semibold text-[#0F0E17]">
-                    {priceKnown ? `$${numberPriceUsd.toFixed(2)} / month` : 'Price unavailable'}
+                    {priceKnown ? `${rentLabel}, renews on ${firstRenewalLabel}` : 'Price unavailable'}
                   </span>
-                  {', deducted from your prepaid wallet when you confirm.'}
+                  {', the first month deducted from your prepaid wallet when you confirm.'}
                   <span className="block mt-0.5 text-[10px] text-[#8C879A]">
                     Wallet credit already includes GST, charged when funds were added; no further tax is added here.
-                    Rental renews monthly from your wallet. If the wallet cannot cover it, the line is paused (not released) until you top up.
+                    The rent renews on the same date each month at the price in force that day. If the wallet cannot cover it, the line is paused (not released) until you top up.
                     Call usage is billed separately. Verification is required before purchase.
                   </span>
                   <span className="block mt-0.0">
-                    Wallet: ${balanceUsd.toFixed(2)}
+                    Wallet: {balanceInr > 0 ? formatInr(balanceInr) : `$${balanceUsd.toFixed(2)}`}
                   </span>
                 </div>
                 {priceKnown && !canAffordNumber && (
@@ -863,7 +922,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
                       <div className="flex items-center gap-3">
                         <span className="text-xs font-mono font-semibold text-[#524E5E]">
-                          {priceKnown ? `$${numberPriceUsd.toFixed(2)}/mo` : 'Price unavailable'}
+                          {rentLabel}
                           {item.source === 'inventory' ? (
                             <span className="ml-1 text-[10px] text-[#047857]">In stock</span>
                           ) : null}

@@ -513,6 +513,27 @@ def _enrich_timeline_item(item: dict) -> dict:
     return out
 
 
+def _integration_fields(cid: str) -> dict[str, Any]:
+    """Integrations attached at launch (single call) or the owning campaign id."""
+    try:
+        meta = call_ledger.read_meta(cid) or {}
+    except (OSError, ValueError):
+        return {}
+    contact = meta.get("contact") if isinstance(meta.get("contact"), dict) else {}
+    campaign_id = contact.get("campaign_id") or meta.get("campaign_id")
+    fields: dict[str, Any] = {}
+    if campaign_id:
+        # Campaign calls inherit the campaign's set; the console reads it there.
+        fields["campaign_id"] = str(campaign_id)
+    else:
+        selection = contact.get("integration_selection")
+        if isinstance(selection, list):
+            fields["integration_selection"] = [
+                {"app": str(i.get("app")), "mode": str(i.get("mode"))} for i in selection if isinstance(i, dict)
+            ][:12]
+    return fields
+
+
 def _enrich_call_list_item(item: dict) -> dict:
     """Attach outcome summary, customer label, pipeline, and session cost with memory caching."""
     cid = str(item.get("call_id") or "")
@@ -595,6 +616,7 @@ def _enrich_call_list_item(item: dict) -> dict:
     out["has_recording"] = source != "none"
     out["recording_source"] = source
     out["has_telnyx_recording"] = source == "telnyx"
+    out.update(_integration_fields(cid))
 
     if not is_in_progress:
         if len(_ENRICH_CALL_CACHE) >= _CACHE_MAX_ENTRIES:

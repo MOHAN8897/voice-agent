@@ -1018,7 +1018,8 @@ async def debit_did_purchase_in_session(
     user_id: uuid.UUID,
     purchase_id: uuid.UUID,
 ) -> dict:
-    """Charge the monthly number rental.
+    """Charge the first month's rent for a number (the admin "Phone number monthly
+    rent"; renewals in ``number_rental`` charge the same setting each month).
 
     A number is bought either from the USD credit or the INR credit, whichever the
     workspace actually holds — the price is the same in both, so a tenant funded in
@@ -1039,8 +1040,13 @@ async def debit_did_purchase_in_session(
             BillingWalletTransaction.reference_id == ref,
         )
     )
+    rate_version = int(rates.get("version") or 0) or None
     if dup.scalar_one_or_none():
-        return {"ok": True, "duplicate": True, "amountCents": 0, "amountInrPaise": 0}
+        return {"ok": True, "duplicate": True, "amountCents": 0, "amountInrPaise": 0, "rateVersion": rate_version}
+    if want_cents <= 0 and want_paise <= 0:
+        # The admin set the monthly rent to zero: nothing is debited and no
+        # zero-value row is written to the tenant's ledger.
+        return {"ok": True, "free": True, "amountCents": 0, "amountInrPaise": 0, "rateVersion": rate_version}
     wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
     if wallet is None:
         wallet = BillingWallet(tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow())
@@ -1065,7 +1071,7 @@ async def debit_did_purchase_in_session(
                     "code": "insufficient_balance",
                     "message": (
                         "Add funds to your wallet before buying a phone number. "
-                        f"A number costs ${want_cents / 100:.2f} per month."
+                        f"A number costs ₹{want_paise / 100:.2f} (${want_cents / 100:.2f}) per month."
                     ),
                 }
             },
@@ -1089,7 +1095,7 @@ async def debit_did_purchase_in_session(
             created_at=_utcnow(),
         )
     )
-    return {"ok": True, "amountCents": take_cents, "amountInrPaise": take_paise}
+    return {"ok": True, "amountCents": take_cents, "amountInrPaise": take_paise, "rateVersion": rate_version}
 
 
 async def debit_did_purchase(

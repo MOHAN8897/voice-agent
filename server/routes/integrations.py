@@ -240,12 +240,40 @@ async def get_integrations_catalog(
         p_key = nango_service.get_provider_key(item.get("id", "")).lower()
         # Connect sends exactly this key, so readiness must not accept look-alike variants.
         is_ready = p_key in configured_providers
+        from server.services.call_integrations import SETUP_REQUIRED, supported_modes
+
         annotated.append({
             **item,
             "oauth_ready": is_ready,
+            # What a call or campaign may attach this app for; empty = setup needed first.
+            "call_modes": list(supported_modes(item.get("id", ""))),
+            "call_setup_note": SETUP_REQUIRED.get(item.get("id", "")),
         })
 
     return {"items": annotated, "total": len(annotated)}
+
+
+@router.get("/api/integrations/call-options")
+async def get_call_integration_options(
+    request: Request,
+    agent_id: str = Query(..., alias="agentId", min_length=8, max_length=64),
+) -> dict[str, Any]:
+    """Integrations a single call or campaign for this agent may attach.
+
+    Only connected, verified apps that the agent has not turned off are
+    selectable; everything else is returned disabled with the reason.
+    """
+    from server.services.call_integrations import SelectionError, available_for_agent
+
+    tenant_id, _ = await _resolve_tenant_and_user(request)
+    try:
+        items = await available_for_agent(tenant_id, agent_id)
+    except SelectionError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.detail()) from None
+    return {
+        "items": items,
+        "defaultBehaviour": "When none are chosen, the agent uses its saved integration settings.",
+    }
 
 
 

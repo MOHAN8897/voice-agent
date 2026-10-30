@@ -163,7 +163,7 @@ async def test_proxy_shopify_cancel_order():
         assert "cancelled" in res["summary"]
         mock_post.assert_called_once()
         call_url = mock_post.call_args[0][0]
-        assert "/proxy/admin/api/2024-01/orders/123456/cancel.json" in call_url
+        assert "/proxy/admin/api/2026-07/orders/123456/cancel.json" in call_url
 
 
 @pytest.mark.asyncio

@@ -110,7 +110,8 @@ def render_capabilities_section(compiled_text: str | None) -> str:
     )
 
 
-def apply_available_tools(text: str, tools: list[dict], *, followup_config: dict | None = None) -> str:
+def apply_available_tools(text: str, tools: list[dict], *, followup_config: dict | None = None,
+                          call_integration_rows: list[str] | None = None) -> str:
     """Replace platform permissions with this agent/session's executable actions."""
     names = {str(tool.get("name") or "").upper() for tool in tools}
     rows = [CAPABILITIES_HEADER, "capabilities_source: runtime_tools_v1",
@@ -135,6 +136,8 @@ def apply_available_tools(text: str, tools: list[dict], *, followup_config: dict
         name = str(tool.get("name") or "")
         required = (tool.get("parameters") or {}).get("required") or []
         rows.append(f"- {name}; required: {', '.join(required) or 'none'}")
+    # Integrations the tenant attached when launching this call or campaign.
+    rows.extend(call_integration_rows or [])
     block = "\n".join(rows)
     pattern = re.compile(r"(?ms)^--- CALL CAPABILITIES ---[ \t]*\n.*?(?=^--- (?:PLATFORM CALL RULES|CALL END POLICY|STATIC OUTPUT RULES) ---|\Z)")
     if pattern.search(text):
@@ -142,7 +145,8 @@ def apply_available_tools(text: str, tools: list[dict], *, followup_config: dict
     return text.rstrip() + "\n\n" + block
 
 
-async def agent_available_tools(agent_id: str, compiled_text: str, *, tenant_id: str | None = None) -> list[dict]:
+async def agent_available_tools(agent_id: str, compiled_text: str, *, tenant_id: str | None = None,
+                                selection: list[dict] | None = None) -> list[dict]:
     """Use the same tenant/agent permission filters as live action execution."""
     from server.brain.agent_service import agent_service
     from server.db.connection import get_session_factory
@@ -160,7 +164,8 @@ async def agent_available_tools(agent_id: str, compiled_text: str, *, tenant_id:
         return []
     active = await get_active_app_names(str(tenant_id), factory)
     return (await get_tools_for_agent(active, str(tenant_id), agent_id, factory,
-                                     include_platform=True, compiled_text=compiled_text))[:32]
+                                     include_platform=True, compiled_text=compiled_text,
+                                     selection=selection))[:32]
 
 
 async def compile_agent_capabilities(text: str, agent_id: str) -> str:

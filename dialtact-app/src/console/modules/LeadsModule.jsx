@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { leadStageToApi } from '../../services/apiNormalize';
 import { CallbackRequests } from './CallbackRequests';
+import { LanguageCallbacks } from './LanguageCallbacks';
 import { CampaignSetup } from './CampaignSetup';
 import { FollowUpQueue } from './FollowUpQueue';
 import { DncRegistryPanel } from './DncRegistryPanel';
@@ -112,8 +113,9 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
   const toggle = (lead) => setSelected((current) => current.includes(lead.id) ? current.filter((id) => id !== lead.id) : [...current, lead.id]);
   const metrics = [['Matching leads', total], ['New enquiries', counts.new || 0], ['Qualified', counts.qualified || 0], ['Meetings booked', counts.meeting_booked || 0], ['Converted', counts.converted || 0]];
 
-  const navigation = <nav aria-label="Lead management" className="flex flex-wrap gap-2 rounded-2xl border border-[#E4E2EB] bg-white p-2">{[['pipeline', 'Pipeline'], ['followups', 'Callbacks & missed calls'], ['dnd', 'Do not call']].map(([value, title]) => <button key={value} type="button" aria-pressed={area === value} onClick={() => setArea(value)} className={`min-h-11 rounded-xl px-4 text-sm font-medium ${area === value ? 'bg-[#0F0E17] text-white' : 'text-[#524E5E] hover:bg-[#FAF9FD]'}`}>{title}</button>)}</nav>;
+  const navigation = <nav aria-label="Lead management" className="flex flex-wrap gap-2 rounded-2xl border border-[#E4E2EB] bg-white p-2">{[['pipeline', 'Pipeline'], ['followups', 'Callbacks & missed calls'], ['language', 'Callback in another language'], ['dnd', 'Do not call']].map(([value, title]) => <button key={value} type="button" aria-pressed={area === value} onClick={() => setArea(value)} className={`min-h-11 rounded-xl px-4 text-sm font-medium ${area === value ? 'bg-[#0F0E17] text-white' : 'text-[#524E5E] hover:bg-[#FAF9FD]'}`}>{title}</button>)}</nav>;
   if (area === 'followups') return <div className="space-y-5">{navigation}<FollowUpQueue agentId={agentId} readOnly={readOnly} /><CallbackRequests agentId={agentId} readOnly={readOnly} /></div>;
+  if (area === 'language') return <div className="space-y-5">{navigation}<LanguageCallbacks agentId={agentId} readOnly={readOnly} /></div>;
   if (area === 'dnd') return <div className="space-y-5">{navigation}<DncRegistryPanel readOnly={readOnly} /></div>;
   return (
     <div className="min-w-0 space-y-5" data-testid="leads-workspace">

@@ -38,3 +38,9 @@ Checked on 23 October 2026:
 - [Google Gemini speech generation and delivery metadata](https://ai.google.dev/gemini-api/docs/speech-generation)
 
 Gemini supports additional expressive mechanisms upstream; keeping its transcript tag-free here is an explicit application policy requested by the user.
+
+## Caller asks for another language
+
+An agent never switches language pack mid-call. `server/call/language_switch.py` detects an explicit request ("in English please", "Hindi lo matladandi", "हिंदी में बात करो", "தமிழ்ல பேசுங்க") or two consecutive turns in another language, before the reply model runs. For a supported language the server records a `language_switch` item (`language_switch_requests`), says in the call's language that a call back in the requested language will be arranged, plays the configured farewell and ends the call; sustained foreign speech gets one offer first. An unsupported language is declined politely and the call continues. An opt-out always wins. The outcome is tagged `followup:language_switch` with `requested_language`.
+
+The tenant console lists these under Leads → "Callback in another language". "Call now in <language>" and "Call all selected" (one campaign per agent) dial the same agent with `contact.call_language`, which `subscriber_outbound` applies to the brain's language pack, STT, TTS voice and opening. A connected callback with a caller turn marks the item done and stores the contact's language (`contact_language_preferences`).

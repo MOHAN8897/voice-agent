@@ -113,7 +113,7 @@ def _install_turn(monkeypatch, loop: PstnVoiceLoop, *, emit_audio: bool, exc: Ex
 
 
 @pytest.mark.asyncio
-async def test_partial_audio_from_an_early_stop_closes_without_outage(monkeypatch):
+async def test_partial_audio_from_an_early_stop_recovers_without_outage(monkeypatch):
     loop = PstnVoiceLoop(
         session_id="delivery",
         call_id="c-early-stop",
@@ -136,7 +136,9 @@ async def test_partial_audio_from_an_early_stop_closes_without_outage(monkeypatc
 
     assert loop._turn_audio_delivered is True
     fallback.assert_not_awaited()
-    loop._finish_agent_hangup.assert_awaited_once_with(reason="agent_hangup", revocable=False)
+    # One unfinished turn is transient: ask again and keep listening.
+    loop._finish_agent_hangup.assert_not_awaited()
+    assert loop._consecutive_reply_failures == 1
     assert loop._phase != "ended"
     assert failures and failures[0]["finish_reason"] == "length"
     assert failures[0]["delivered"] is False
@@ -269,7 +271,7 @@ async def test_completed_turn_keeps_the_call_alive_on_late_error(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_missing_tts_audio_without_provider_evidence_does_not_claim_outage(monkeypatch):
+async def test_model_failure_with_silent_voice_plays_the_prepared_outage_clip(monkeypatch):
     loop = PstnVoiceLoop(
         session_id="no-delivery",
         call_id="c-empty-turn",
@@ -286,9 +288,9 @@ async def test_missing_tts_audio_without_provider_evidence_does_not_claim_outage
     await loop._run_turn("yes please share the details")
 
     assert loop._turn_audio_delivered is False
-    fallback.assert_not_awaited()
-    loop._finish_agent_hangup.assert_awaited_once()
-    assert loop._finish_agent_hangup.await_args.kwargs["spoke_farewell"] is False
+    # The model failed and the recovery line produced no audio either: that is
+    # a sustained failure, so the pre-rendered clip (not live TTS) ends the call.
+    fallback.assert_awaited_once_with(trigger="llm_failure")
     assert failures and failures[0]["delivered"] is False
     await loop.close()
 

@@ -1634,6 +1634,26 @@ class PstnRealtimeVoiceLoop:
         raw = str(getattr(ctx, "direction", "") or self.stack_override.get("direction") or "")
         return "outbound" if raw.strip().lower() in ("outbound", "outgoing", "outbound-api") else "inbound"
 
+    async def _brain_with_call_integrations(self, brain: str, tools: list[dict[str, Any]], selection: list[dict]) -> str:
+        """Rewrite the capability section for the integrations attached to this call."""
+        try:
+            from uuid import UUID
+
+            from server.brain.capabilities import apply_available_tools
+            from server.services.call_integrations import capability_rows
+            from server.services.saas.followup_service import read_policy
+
+            try:
+                policy = await asyncio.wait_for(read_policy(UUID(str(self._tenant_id)), UUID(str(self._agent_id))), timeout=.5)
+                followup = dict(policy.get("config") or {})
+            except Exception:
+                followup = {}
+            return apply_available_tools(brain, tools, followup_config=followup,
+                                         call_integration_rows=capability_rows(selection, tools))
+        except Exception as exc:
+            logger.warning("[PSTN_REALTIME] Call integration prompt rows unavailable: %s", type(exc).__name__)
+            return brain
+
     def _compiled_brain(self) -> str | None:
         from server.call.call_context import get as get_ctx
 
@@ -1881,6 +1901,18 @@ class PstnRealtimeVoiceLoop:
         adopted = realtime_voice_manager.get(self.call_id)
         prepared_tools = getattr(adopted, "pstn_prewarm_tools", None)
         tenant_tool_schemas: list[dict[str, Any]] = list(prepared_tools or [])
+        call_selection = None
+        if self._tenant_id and self.call_id:
+            try:
+                from server.services.call_integrations import selection_for_call
+
+                # Integrations chosen at launch replace the agent defaults that
+                # the prewarmed session was prepared with.
+                call_selection = await selection_for_call(str(self.call_id), tenant_id=str(self._tenant_id))
+            except Exception as exc:
+                logger.warning("[PSTN_REALTIME] Call integration selection unavailable: %s", type(exc).__name__)
+        if call_selection is not None:
+            prepared_tools = None
         if prepared_tools is not None:
             self._agent_tools = {tool["name"] for tool in tenant_tool_schemas}
         elif self._tenant_id:
@@ -1896,6 +1928,7 @@ class PstnRealtimeVoiceLoop:
                     tenant_tool_schemas = await get_tools_for_agent(
                         active_apps, str(self._tenant_id), self._agent_id, _sf, self._configured_agent_tools,
                         include_platform=True, compiled_text=self._compiled_brain(),
+                        selection=call_selection,
                     )
                     # Exact tool names from registry — no guesswork suffixes
                     self._agent_tools = {tool["name"] for tool in tenant_tool_schemas}
@@ -1911,6 +1944,8 @@ class PstnRealtimeVoiceLoop:
         language = self._resolve_language()
         direction = self._resolve_direction()
         brain = self._compiled_brain()
+        if call_selection is not None and brain and "--- CALL CAPABILITIES ---" in brain:
+            brain = await self._brain_with_call_integrations(brain, tenant_tool_schemas, call_selection)
         cfg = realtime_voice_config(self.stack_override)
         from server.call.call_context import get as get_ctx
         from server.services.runtime_settings import runtime_settings

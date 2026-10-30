@@ -5,6 +5,7 @@ import { TactileButton } from '../../ui/TactileButton';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { showToast } from '../../ui/ToastHost';
 import { CampaignSetup } from '../CampaignSetup';
+import { CallIntegrationPicker, IntegrationSelectionSummary, useCallIntegrationOptions } from '../../ui/CallIntegrationPicker';
 
 // Workspace plan ceiling for simultaneous outbound lines.
 const MAX_CONCURRENCY = 20;
@@ -38,6 +39,9 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
     () => outboundFromE164 || assigned[0]?.number || assigned[0]?.e164 || ''
   );
   const [dialBusy, setDialBusy] = useState(false);
+  // Integrations attached to this call; null keeps the agent's saved settings.
+  const [callIntegrations, setCallIntegrations] = useState(null);
+  const integrationOptions = useCallIntegrationOptions(activeTab === 'single' ? agentId : null);
   const [error, setError] = useState(null);
 
   const balanceUsd = Number(wallet?.balanceUsd) || 0;
@@ -61,6 +65,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
         agentId,
         toE164: toNumber.trim(),
         fromE164: fromNumber || null,
+        integrations: callIntegrations,
       });
       showToast('Outgoing call started', 'success');
       setToNumber('');
@@ -141,6 +146,15 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
                 data-testid="agent-dial-to"
               />
             </label>
+          </div>
+          <div className="border-t border-[#E4E2EB] pt-3">
+            <CallIntegrationPicker scope="call" agentId={agentId} value={callIntegrations}
+              onChange={setCallIntegrations} disabled={dialBusy} options={integrationOptions} />
+          </div>
+          <div className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-3" data-testid="agent-dial-integration-summary">
+            <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#524E5E]">This call will use</div>
+            <IntegrationSelectionSummary selection={callIntegrations} options={integrationOptions.items}
+              emptyText="No integrations chosen: the agent uses its saved integration settings." />
           </div>
           <TactileButton
             variant="primary"

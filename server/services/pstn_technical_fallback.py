@@ -6,8 +6,15 @@ thing that failed.
 
 Two message variants exist because "we will call you again" is a promise:
 
-* ``callback_promise`` — only used after a pending callback row is committed.
-* ``call_back`` — the safe variant when that task cannot be created.
+* ``callback_promise`` — only used after an automatic retry is committed to the
+  follow-up queue (which applies DND, calling windows and attempt limits).
+* ``call_back`` — the safe variant when no automatic retry is queued (follow-ups
+  not authorized, review mode, DND / opt-out, or the daily retry limit).
+
+Clip order: tenant upload > the agent-voice render made at call setup
+(``outage_clip_prewarm``) > the shipped platform clip in a stock voice.
+When it plays is defined by ``TECHNICAL_TRIGGERS`` and the failure thresholds
+below.
 
 Tenants may upload their own clip per language/variant; the platform clip is the
 fallback. A tenant's typed text is never synthesized during an outage.
@@ -48,6 +55,75 @@ FALLBACK_SETTLE_SEC = 0.45
 #: broken wire, not slow speech; hang up immediately and record a defect.
 FALLBACK_WATCHDOG_GRACE_SEC = 8.0
 _FALLBACK_DB_TIMEOUT_SEC = 2.0
+
+# ---------------------------------------------------------------------------
+# When the outage clip plays (the trigger threshold)
+# ---------------------------------------------------------------------------
+#: Failures that may end a call with the outage clip. Anything else (caller
+#: silence, barge-in, a cancelled turn, a slow turn that recovered) never does.
+TECHNICAL_TRIGGERS: frozenset[str] = frozenset({
+    "tts_failure",          # the reply's TTS produced no audio (classic loop)
+    "farewell_tts_failure",  # the closing line's TTS produced no audio
+    "llm_failure",          # sustained LLM failure (see thresholds below)
+    "runtime_failure",      # native-audio provider unavailable at start
+    "provider_failure",     # native-audio provider died mid-call
+    "response_failure",     # native-audio response failed
+})
+#: A *failed turn* is counted only after the orchestrator's own recovery is
+#: spent: the composed transport's single larger retry and the reply watchdog's
+#: single re-ask (``live_turn_orchestrator`` / ``PstnVoiceLoop._watched_turn_stream``)
+#: and only when nothing of the reply reached the caller. Composed calls are
+#: pinned to one provider/model (no secondary LLM is configurable), so after
+#: those retries there is nothing else to try.
+#:
+#: * transient errors (timeouts, 5xx, truncated output): the first failed turn
+#:   gets one spoken "please repeat" and keeps listening; the second
+#:   *consecutive* failed turn plays the outage clip and hangs up. Any turn
+#:   that completes resets the count, so one slow turn never ends a call.
+#: * hard errors (auth / billing / quota / credits / model unavailable): the
+#:   provider will not recover within this call, so the first failed turn plays
+#:   the clip at once instead of asking the caller to repeat into a dead model.
+TRANSIENT_FAILURE_THRESHOLD = 2
+HARD_FAILURE_THRESHOLD = 1
+_HARD_STATUS = frozenset({401, 402, 403, 404})
+_HARD_ERROR_RE = re.compile(
+    r"insufficient|credit|quota|billing|payment|unauthori[sz]ed|forbidden|invalid\s+api\s*key|"
+    r"api\s*key|permission\s+denied|account\s+(?:suspended|disabled)|model\s+(?:not\s+found|is\s+unavailable)|"
+    r"\bis\s+unavailable\b|\b40[1234]\b",
+    re.IGNORECASE,
+)
+#: How soon the outage retry is due (the follow-up worker still moves it into
+#: the agent's calling window and applies DND / attempt / daily limits).
+OUTAGE_RETRY_DELAY_MIN = 15
+#: One outage retry per number per day; a retry call that also hits an outage
+#: does not schedule another one.
+OUTAGE_RETRY_WINDOW_HOURS = 24
+OUTAGE_RETRY_EXPIRY_DAYS = 2
+
+
+def classify_reply_failure(exc: BaseException | None) -> str:
+    """``"hard"`` when the provider cannot recover inside this call, else ``"transient"``."""
+    seen: set[int] = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        for attr in ("status_code", "status", "http_status"):
+            value = getattr(current, attr, None)
+            try:
+                if int(value) in _HARD_STATUS:
+                    return "hard"
+            except (TypeError, ValueError):
+                pass
+        if type(current).__name__ in {"AuthenticationError", "PermissionDeniedError", "PaymentRequiredError"}:
+            return "hard"
+        if _HARD_ERROR_RE.search(str(current) or ""):
+            return "hard"
+        current = current.__cause__ or current.__context__
+    return "transient"
+
+
+def failure_threshold(kind: str) -> int:
+    return HARD_FAILURE_THRESHOLD if kind == "hard" else TRANSIENT_FAILURE_THRESHOLD
 _CALLBACK_TARGET_RE = re.compile(r"^\+[1-9]\d{7,14}$")
 _DISCLOSURE_RE = re.compile(
     r"record|recording|recorded|రికార్డ|रिकॉर्ड|रेकॉर्ड|பதிவ|ರೆಕಾರ್ಡ|റെക്കോർഡ|রেকর্ড",
@@ -214,6 +290,8 @@ class FallbackPlan:
     disclosure_text: str = ""
     callback_task_id: str | None = None
     defect: str | None = None
+    retry_status: str = ""
+    opted_out: bool = False
 
     @property
     def has_audio(self) -> bool:
@@ -236,8 +314,11 @@ class TenantFallbackConfig:
     promise_callback: bool = True
     clips: dict[tuple[str, str], bytes] = field(default_factory=dict)
     callback_task_id: str | None = None
+    #: True only when an automatic retry is queued, so "we will call you" is kept.
     callback_created: bool = False
     note_text: str = ""
+    #: scheduled | existing | needs_review | skipped:<reason> | "" (not attempted)
+    retry_status: str = ""
 
 
 def _read_meta(call_id: str | None) -> dict[str, Any]:
@@ -318,6 +399,108 @@ def _uuid_or_none(value: Any) -> uuid.UUID | None:
         return None
 
 
+async def _schedule_outage_retry(
+    session: Any,
+    *,
+    tenant_uuid: uuid.UUID,
+    agent_uuid: uuid.UUID,
+    call_id: str,
+    target: str,
+) -> tuple[str | None, str]:
+    """Queue "we'll call you back" on the follow-up worker; returns (job id, status).
+
+    The follow-up queue is the platform's only redial path, so the retry gets
+    every rule it enforces at dispatch: tenant authorization and review mode,
+    DND, the agent's calling window and weekdays, attempt / daily / cooldown
+    limits and expiry. Nothing here dials. Statuses:
+
+    * ``scheduled`` / ``existing`` - an automatic retry is queued (promise kept)
+    * ``needs_review`` - queued for the tenant to approve (no spoken promise)
+    * ``skipped:<reason>`` - no follow-ups authorized, DND, or retry limit
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from sqlalchemy import select
+
+    from server.db.models.followup_models import AgentFollowUpPolicy, FollowUpJob
+    from server.db.models.phase5_models import DncEntry
+    from server.services.saas.followup_policy import FollowUpConfig
+
+    policy = await session.scalar(
+        select(AgentFollowUpPolicy).where(
+            AgentFollowUpPolicy.tenant_id == tenant_uuid,
+            AgentFollowUpPolicy.agent_id == agent_uuid,
+        )
+    )
+    if policy is None or policy.authorized_by is None:
+        return None, "skipped:followups_not_authorized"
+    cfg = FollowUpConfig.model_validate(policy.config or {})
+    if not cfg.enabled:
+        return None, "skipped:followups_disabled"
+    if await session.scalar(
+        select(DncEntry.id).where(
+            DncEntry.tenant_id == tenant_uuid,
+            DncEntry.phone_e164 == target,
+            DncEntry.active.is_(True),
+        )
+    ):
+        return None, "skipped:do_not_call"
+    origin_key = f"technical:{call_id}"[:120]
+    own = await session.scalar(
+        select(FollowUpJob).where(FollowUpJob.tenant_id == tenant_uuid, FollowUpJob.origin_key == origin_key)
+    )
+    if own is not None:
+        return str(own.id), "existing" if own.status == "scheduled" else str(own.status)
+    now = datetime.now(timezone.utc)
+    pending = await session.scalar(
+        select(FollowUpJob).where(
+            FollowUpJob.tenant_id == tenant_uuid,
+            FollowUpJob.agent_id == agent_uuid,
+            FollowUpJob.phone == target,
+            FollowUpJob.kind == "callback",
+            FollowUpJob.status.in_(("planning", "resolving", "scheduled")),
+        ).limit(1)
+    )
+    if pending is not None:
+        # The caller already has a callback coming; do not stack a second one.
+        return str(pending.id), "existing"
+    recent = await session.scalar(
+        select(FollowUpJob.id).where(
+            FollowUpJob.tenant_id == tenant_uuid,
+            FollowUpJob.phone == target,
+            FollowUpJob.origin_key.like("technical:%"),
+            FollowUpJob.created_at >= now - timedelta(hours=OUTAGE_RETRY_WINDOW_HOURS),
+        ).limit(1)
+    )
+    if recent is not None:
+        return None, "skipped:retry_limit"
+    automatic = cfg.callbackMode == "automatic"
+    job = FollowUpJob(
+        tenant_id=tenant_uuid,
+        agent_id=agent_uuid,
+        origin_key=origin_key,
+        source_id=str(call_id)[:36],
+        kind="callback",
+        phone=target,
+        status="scheduled" if automatic else "needs_review",
+        reason="technical_failure_retry" if automatic else "approval_required",
+        payload={
+            "origin": "technical_failure",
+            "requestText": "",
+            "requestedWhen": "",
+            "timezone": cfg.timezone,
+            "requestedAt": now.isoformat(),
+        },
+        due_at=now + timedelta(minutes=OUTAGE_RETRY_DELAY_MIN) if automatic else None,
+        expires_at=now + timedelta(days=min(cfg.expiryDays, OUTAGE_RETRY_EXPIRY_DAYS)),
+        authorized_by=policy.authorized_by,
+        billing_tenant_id=policy.billing_tenant_id,
+    )
+    session.add(job)
+    await session.flush()
+    return str(job.id), "scheduled" if automatic else "needs_review"
+
+
 async def _load_tenant_config(
     *,
     tenant_id: str | None,
@@ -345,7 +528,7 @@ async def _load_tenant_config(
     async def _work() -> TenantFallbackConfig:
         from sqlalchemy import select
 
-        from server.db.models.entities import Agent, AgentFallbackClip, CallCallback
+        from server.db.models.entities import Agent, AgentFallbackClip
 
         async with factory() as session:
             result = await session.execute(
@@ -380,35 +563,27 @@ async def _load_tenant_config(
                 note_text=str(agent.technical_fallback_text or "").strip(),
             )
             if not (config.promise_callback and target and call_id):
+                config.retry_status = "skipped:not_allowed" if target else "skipped:no_target"
                 return config
 
-            dial_request_id = f"tf:{call_id}"[:64]
-            existing = await session.execute(
-                select(CallCallback).where(
-                    CallCallback.dial_request_id == dial_request_id,
-                    CallCallback.tenant_id == tenant_uuid,
+            try:
+                job_id, status = await _schedule_outage_retry(
+                    session,
+                    tenant_uuid=tenant_uuid,
+                    agent_uuid=agent_uuid,
+                    call_id=str(call_id),
+                    target=target,
                 )
-            )
-            row = existing.scalar_one_or_none()
-            if row is None:
-                try:
-                    row = CallCallback(
-                        tenant_id=tenant_uuid,
-                        original_call_id=_uuid_or_none(call_id),
-                        agent_id=str(agent_uuid)[:64],
-                        to_e164=target,
-                        dial_request_id=dial_request_id,
-                        mode="ai_redial",
-                        status="pending",
-                    )
-                    session.add(row)
-                    await session.commit()
-                except Exception:
-                    await session.rollback()
-                    row = None
-            if row is not None:
-                config.callback_created = True
-                config.callback_task_id = str(row.callback_id)
+                await session.commit()
+            except Exception as exc:
+                await session.rollback()
+                log_pstn("fallback.retry.failed", call_id=call_id, error=type(exc).__name__)
+                job_id, status = None, "skipped:storage_error"
+            config.retry_status = status
+            config.callback_task_id = job_id
+            # Only an automatic, queued retry backs the spoken promise; a job
+            # waiting for review may never be approved.
+            config.callback_created = bool(job_id) and status in ("scheduled", "existing")
             return config
 
     try:
@@ -432,6 +607,36 @@ def _custom_clip(
         if pcm:
             return FallbackClip(pcm=pcm, language=_normalize_language(candidate), source="custom")
     return None
+
+
+def _agent_voice_clip(
+    *,
+    tenant_id: str | None,
+    agent_id: str | None,
+    language: str,
+    variant: str,
+    resolved_stack: Any | None,
+    stack_override: dict[str, Any] | None,
+) -> FallbackClip | None:
+    """The clip rendered at call setup in the call's own TTS voice, if any."""
+    if resolved_stack is None and not stack_override:
+        return None
+    try:
+        from server.services.outage_clip_prewarm import agent_voice_clip
+
+        pcm = agent_voice_clip(
+            tenant_id=tenant_id,
+            agent_id=agent_id,
+            language=language,
+            variant=variant,
+            resolved_stack=resolved_stack,
+            stack_override=stack_override,
+        )
+    except Exception:
+        return None
+    if not pcm:
+        return None
+    return FallbackClip(pcm=pcm, language=resolve_fallback_language(language), source="agent_voice")
 
 
 def _platform_clip(language: str, variant: str, gender: str) -> FallbackClip:
@@ -523,19 +728,38 @@ async def prepare_technical_fallback_plan(
     voice_provider: str | None = None,
     voice_model: str | None = None,
     voice_id: str | None = None,
+    pending_user_text: str | None = None,
+    resolved_stack: Any | None = None,
+    stack_override: dict[str, Any] | None = None,
 ) -> FallbackPlan:
+    """Resolve what the caller hears, whether a retry is queued, and record an opt-out.
+
+    ``pending_user_text`` is the caller turn the failed model never answered.
+    It is checked (with every earlier caller line) by the deterministic opt-out
+    detector, because no model is available to read it: a do-not-call request
+    is recorded and suppresses the retry.
+    """
     from server.services.speech_outage_config import load_speech_outage_config
 
     meta = _read_meta(call_id)
     transcript = _read_transcript(call_id)
     from server.call.end_call_validate import caller_firm_refusal, caller_requested_hangup
+    from server.services.outage_opt_out import opt_out_in_transcript, record_outage_opt_out
 
-    last_user = next(
+    last_user = (pending_user_text or "").strip() or next(
         (str(row.get("text") or "") for row in reversed(transcript) if row.get("role") == "user"),
         "",
     )
+    opted_out = str(meta.get("contact_preference") or "").lower() == "do_not_call"
+    evidence = opt_out_in_transcript(transcript, pending_user_text)
+    if evidence and not opted_out:
+        await record_outage_opt_out(call_id, evidence)
+    opted_out = opted_out or bool(evidence)
+    if opted_out:
+        log_pstn("fallback.retry.suppressed", call_id=call_id, reason="do_not_call")
     callback_allowed = (
-        trigger in {"tts_failure", "farewell_tts_failure"}
+        trigger in TECHNICAL_TRIGGERS
+        and not opted_out
         and not caller_firm_refusal(last_user)
         and not caller_requested_hangup(last_user)
     )
@@ -565,7 +789,14 @@ async def prepare_technical_fallback_plan(
     )
 
     variant = CALLBACK_PROMISE if config.callback_created else CALL_BACK
-    clip = _select_clip(config.clips, admitted_language, variant, gender)
+    clip = _custom_clip(config.clips, admitted_language, variant) or _agent_voice_clip(
+        tenant_id=tenant_id,
+        agent_id=agent_id,
+        language=admitted_language,
+        variant=variant,
+        resolved_stack=resolved_stack,
+        stack_override=stack_override,
+    ) or _select_clip(config.clips, admitted_language, variant, gender)
     defect = None if clip.pcm else "asset_missing"
     if defect:
         log_pstn(
@@ -612,6 +843,8 @@ async def prepare_technical_fallback_plan(
         disclosure_text=disclosure_text,
         callback_task_id=config.callback_task_id,
         defect=defect,
+        retry_status="skipped:do_not_call" if opted_out else config.retry_status,
+        opted_out=opted_out,
     )
 
 
@@ -649,6 +882,13 @@ def stamp_fallback_meta(
         meta["fallback_disclosure_played"] = bool(disclosure_played)
         if plan.callback_task_id:
             meta["fallback_callback_task_id"] = plan.callback_task_id
+        if plan.retry_status:
+            meta["fallback_retry_status"] = plan.retry_status
+        if plan.opted_out:
+            meta["fallback_opt_out_honoured"] = True
+        # One flag every consumer (calls list, analytics) can read without
+        # re-deriving it from the end reason.
+        meta["technical_failure"] = True
         if plan.disclosure_text and not disclosure_played:
             meta["fallback_disclosure_not_delivered"] = True
         if defect or plan.defect:

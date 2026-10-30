@@ -156,7 +156,7 @@ async def test_composed_start_speaks_and_remembers_localized_opening_once(monkey
 
 
 @pytest.mark.asyncio
-async def test_composed_model_failure_reports_service_error_without_claiming_outage(monkeypatch):
+async def test_composed_model_failure_with_silent_voice_plays_outage_clip(monkeypatch):
     from server.call.live_turn_orchestrator import live_turn_orchestrator
     from server.services.pstn_voice_core import PHASE_ENDED, PstnVoiceLoop
 
@@ -179,8 +179,10 @@ async def test_composed_model_failure_reports_service_error_without_claiming_out
     speak.assert_awaited_once()
     error.assert_awaited_once()
     hangup.assert_awaited_once()
-    # No provider evidence: a courtesy farewell is attempted, not the outage clip.
-    assert loop._technical_fallback_played is False
+    # The recovery line produced no audio after the model failed: the
+    # pre-rendered outage clip closes the call instead of dead air.
+    assert loop._technical_fallback_played is True
+    assert loop.on_agent_wire.await_count > 0
     assert loop._phase == PHASE_ENDED
     await loop.close()
 

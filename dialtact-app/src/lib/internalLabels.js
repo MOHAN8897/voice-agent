@@ -54,7 +54,16 @@ const END_REASON_LABEL = {
   voicemail: 'Voicemail',
   answering_machine: 'Answering machine',
   after_hours: 'Outside business hours',
+  technical_fallback: 'Technical issue — caller told, call ended',
+  technical_failure: 'Technical issue — call ended',
 };
+
+/** End reasons that mean the AI service failed mid-call (outage message played). */
+const TECHNICAL_FAILURE_REASONS = new Set(['technical_fallback', 'technical_failure']);
+
+export function isTechnicalFailure(reason) {
+  return TECHNICAL_FAILURE_REASONS.has(String(reason || '').trim().toLowerCase());
+}
 
 export function pipelineLabel(pipeline) {
   const key = String(pipeline || '').trim().toLowerCase();

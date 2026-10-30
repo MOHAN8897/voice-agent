@@ -7,6 +7,7 @@ import { Modal } from '../ui/Modal';
 import { CampaignCardSkeleton } from '../ui/Skeleton';
 import { DncRegistryPanel } from './DncRegistryPanel';
 import { CampaignSetup } from './CampaignSetup';
+import { IntegrationSelectionSummary } from '../ui/CallIntegrationPicker';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { showToast } from '../ui/ToastHost';
 import { useAuth } from '../../context/AuthContext';
@@ -136,6 +137,7 @@ export function CampaignsModule() {
             {['draft', 'running', 'paused', 'requires_review'].includes(campaign.status) && <div className="flex justify-end"><TactileButton variant="ghost" disabled={readOnly || pending.has(campaign.id)} onClick={() => setCancelTarget(campaign)}>Cancel campaign</TactileButton></div>}
             <dl className="grid grid-cols-2 gap-4 rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-4 sm:grid-cols-4">{[['Contacts', total], ['Connected', connected], ['Active calls', active], ['Needs review', review]].map(([label, value]) => <div key={label}><dt className="text-xs text-[#645D73]">{label}</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{Number(value).toLocaleString()}</dd></div>)}</dl>
             {review > 0 && <p role="status" className="text-sm text-amber-800">{review} contact{review === 1 ? '' : 's'} need review. Check call history and account settings before creating another attempt.</p>}
+            <div className="rounded-xl border border-[#E4E2EB] p-3" data-testid="campaign-integrations"><p className="mb-1.5 text-xs font-semibold text-[#524E5E]">Integrations each call may use</p><IntegrationSelectionSummary selection={campaign.integrations} emptyText="None chosen: the agent’s saved integration settings apply to every call." /></div>
             <p className="text-xs text-[#645D73]">Up to {campaign.concurrencyLimit || campaign.concurrency || 1} concurrent calls · {stats ? `${stats.attempts || 0} dial attempts` : 'Loading call statistics…'}</p>
           </SolidCard>;
         })}</div>}

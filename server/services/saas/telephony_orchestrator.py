@@ -253,6 +253,16 @@ async def subscriber_outbound(
         digits = "".join(c for c in clean_to if c.isdigit())
         clean_to = f"+91{digits}" if len(digits) == 10 else (f"+{digits}" if digits else clean_to)
 
+    # Per-call language (language-switch callbacks, campaign contacts): same agent,
+    # that language's pack for brain, STT, TTS voice and opening. Otherwise a
+    # contact's remembered language leads when the agent is configured for it.
+    from server.services.saas.language_switch_service import apply_call_language, apply_preferred_language
+
+    call_language = str((contact or {}).get("call_language") or "").strip()
+    if call_language:
+        agent = await apply_call_language(agent, call_language)
+    else:
+        agent = await apply_preferred_language(workspace_tid, agent, clean_to)
     try:
         stack = await saas_stack_override_for_agent(agent)
     except Exception as exc:

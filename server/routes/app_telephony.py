@@ -46,6 +46,8 @@ class OutboundCallBody(BaseModel):
     fromE164: str | None = None
     toE164: str
     dialRequestId: str | None = None
+    # Integrations attached to this call ([{app, mode}]); None keeps agent defaults.
+    integrations: list[dict] | None = Field(None, max_length=12)
 
     @model_validator(mode="before")
     @classmethod
@@ -89,12 +91,27 @@ async def telephony_outbound(body: OutboundCallBody, principal: SubscriberPrinci
     allowed, retry = _outbound_limiter.allow(f"out:{principal.tenant_id}")
     if not allowed:
         raise_rate_limited(retry, "Outbound call rate limit reached. Wait and try again.")
+    contact = None
+    if body.integrations:
+        from server.services.call_integrations import SelectionError, validate_selection
+
+        try:
+            selection = await validate_selection(
+                str(subscriber_workspace_tenant_id(principal)), body.agentId, body.integrations,
+            )
+        except SelectionError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=exc.detail()) from None
+        if selection:
+            # Travels with the call's contact into the ledger meta, so tool
+            # discovery, execution and post-call dispatch read the same set.
+            contact = {"integration_selection": selection}
     return await subscriber_outbound(
         principal,
         agent_id=body.agentId,
         from_e164=body.fromE164,
         to_e164=body.toE164,
         dial_request_id=body.dialRequestId,
+        contact=contact,
     )
 
 
@@ -452,6 +469,21 @@ async def live_voice_preview(
     )
 
 
+def _rent_fields(n, purchased_at, renewals_on: bool, monthly_usd: float, monthly_inr: float) -> dict:
+    """Next renewal of a number's monthly rent (only wallet-billed numbers pay rent)."""
+    from server.services.saas.number_rental import next_renewal_at
+
+    billed = n.billing_source == "wallet" and purchased_at is not None
+    return {
+        "rentBilled": billed,
+        "renewalEnabled": bool(billed and renewals_on),
+        "nextRenewalAt": next_renewal_at(purchased_at).isoformat() if billed and renewals_on else None,
+        # The price in force now; an admin change before that date would apply instead.
+        "nextRenewalUsd": monthly_usd if billed and renewals_on else None,
+        "nextRenewalInr": monthly_inr if billed and renewals_on else None,
+    }
+
+
 @router.get("/api/telephony/numbers")
 async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
     workspace_tid = subscriber_workspace_tenant_id(principal)
@@ -476,7 +508,24 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
         rates = await load_current_rates()
         monthly_usd = round(rates["did_monthly_usd_cents"] / 100.0, 2)
         monthly_inr = round(rates["did_monthly_inr_paise"] / 100.0, 2)
-        for n in result.scalars():
+        phone_rows = list(result.scalars())
+        # Wallet-billed numbers renew monthly on their purchase anniversary at the
+        # admin "Phone number monthly rent" in force on that date.
+        from server.db.models.saas_models import NumberPurchase
+        from server.services.saas.number_rental import renewal_enabled
+
+        purchase_ids = [n.purchase_id for n in phone_rows if n.purchase_id and n.billing_source == "wallet"]
+        purchased_at: dict = {}
+        if purchase_ids:
+            purchased_at = dict(
+                (
+                    await session.execute(
+                        select(NumberPurchase.id, NumberPurchase.created_at).where(NumberPurchase.id.in_(purchase_ids))
+                    )
+                ).all()
+            )
+        renewals_on = renewal_enabled()
+        for n in phone_rows:
             e164 = n.e164 or ""
             prov = "telnyx" if (n.telnyx_number_id or e164 == "+13526146416") else "vobiz"
             if e164.startswith("+1"):
@@ -502,6 +551,7 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
                     "billingSource": n.billing_source,
                     "monthlyCost": monthly_usd,
                     "monthlyInr": monthly_inr,
+                    **_rent_fields(n, purchased_at.get(n.purchase_id), renewals_on, monthly_usd, monthly_inr),
                     "country": country,
                     "provider": prov if is_admin else "direct_voice",
                     "telnyxNumberId": n.telnyx_number_id if is_admin else None,

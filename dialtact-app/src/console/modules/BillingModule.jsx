@@ -29,7 +29,7 @@ const TRANSACTION_LABEL = {
   usage_web: 'Browser test call',
   usage_web_test: 'Browser test call',
   usage_campaign: 'Outbound campaign',
-  did_purchase: 'Phone number rental',
+  did_purchase: 'Phone number rent (first month)',
   did_refund: 'Phone number refund',
   did_rental: 'Phone number monthly rental',
   channel_purchase: 'Call channels',

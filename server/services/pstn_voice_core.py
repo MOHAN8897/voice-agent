@@ -740,11 +740,35 @@ class PstnVoiceLoop:
                 log_pstn("turn.close.ledger_failed", call_id=self.call_id, error_type=type(exc).__name__)
         await self._finish_agent_hangup(reason=reason, revocable=False)
 
-    async def _recover_reply_failure(self, session: Any) -> None:
-        """A transient model failure does not imply the caller finished."""
+    async def _recover_reply_failure(self, session: Any, exc: BaseException | None = None) -> None:
+        """A failed model turn: recover once, or end with the pre-rendered outage clip.
+
+        Threshold (see ``pstn_technical_fallback.TRANSIENT_FAILURE_THRESHOLD``):
+        a transient failure gets one spoken "please repeat" and the line keeps
+        listening; the second *consecutive* failed turn, or the first hard
+        failure (auth / credits / quota / model unavailable), plays the outage
+        clip and hangs up. A completed turn resets the count, and silence,
+        barge-in or a cancelled turn never reach this method.
+
+        No model reads the caller's words while it is down, so a deterministic
+        opt-out check runs on them first: a do-not-call request is recorded and
+        closed with the opt-out acknowledgement instead of a retry promise.
+        """
+        from server.services.pstn_technical_fallback import classify_reply_failure, failure_threshold
+
         self._consecutive_reply_failures += 1
-        if self._consecutive_reply_failures >= 2:
-            await self._close_after_non_tts_failure(reason="technical_failure", session=session, technical=True)
+        kind = classify_reply_failure(exc)
+        log_pstn(
+            "turn.failure.counted",
+            call_id=self.call_id,
+            kind=kind,
+            consecutive_failures=self._consecutive_reply_failures,
+            threshold=failure_threshold(kind),
+        )
+        if await self._close_if_outage_opt_out(session):
+            return
+        if self._consecutive_reply_failures >= failure_threshold(kind):
+            await self._play_technical_fallback_and_hangup(trigger="llm_failure")
             return
         from server.prompts.agent_voice_rules import MODEL_RECOVERY, normalize_compile_language
         text = MODEL_RECOVERY[normalize_compile_language(self._resolve_language())]
@@ -757,8 +781,14 @@ class PstnVoiceLoop:
         except Exception as exc:
             log_pstn("turn.recovery.tts_failed", call_id=self.call_id, error_type=type(exc).__name__)
         if self._wire_frames_out == frames_before:
-            await self._close_after_tts_failure(defect="recovery_empty_audio", session=self._last_tts_session,
-                                               trigger="tts_failure", reason="technical_failure")
+            if self._caller_took_turn():
+                # A barge-in, not a dead voice: let the caller's turn run.
+                log_pstn("turn.recovery.barged", call_id=self.call_id)
+                return
+            # The model already failed and now the voice produced nothing too:
+            # that is a sustained failure, so the pre-rendered clip ends the call.
+            await self._record_failed_reply(defect="recovery_empty_audio")
+            await self._play_technical_fallback_and_hangup(trigger="llm_failure")
             return
         if self.call_id:
             from server.call.call_ledger import call_ledger
@@ -768,6 +798,64 @@ class PstnVoiceLoop:
                 log_pstn("turn.recovery.ledger_failed", call_id=self.call_id, error_type=type(exc).__name__)
         log_pstn("turn.recovery.listening", call_id=self.call_id, consecutive_failures=self._consecutive_reply_failures)
 
+    def _caller_took_turn(self) -> bool:
+        """The caller is speaking over us (barge-in), so silence is not an outage."""
+        return bool(
+            self._awaiting_barge_final
+            or self._phase == PHASE_INTERRUPTING
+            or self._pending_caller_turn() is not None
+        )
+
+    async def _close_if_outage_opt_out(self, session: Any) -> bool:
+        """Honour a final caller answer the failed model could not read, then close.
+
+        * a do-not-call request is recorded (DNC + follow-up suppression) and
+          acknowledged; no retry is ever queued for it;
+        * a firm refusal or a request to hang up gets the normal goodbye.
+        Both lines are fixed text, so only the voice is needed, not the model.
+        If the voice is down too, the outage clip closes the call instead (its
+        plan sees the same transcript and queues no retry).
+        """
+        from server.call.end_call_validate import caller_firm_refusal, caller_requested_hangup
+        from server.services.outage_opt_out import caller_opted_out, record_outage_opt_out
+
+        heard = (self._current_turn_transcript or "").strip()
+        if not heard:
+            return False
+        language = self._resolve_language()
+        if caller_opted_out(heard):
+            await record_outage_opt_out(self.call_id, heard)
+            from server.call.call_end_policy import do_not_call_acknowledgement_for
+
+            line, reason = do_not_call_acknowledgement_for(language), "opt_out"
+        elif caller_firm_refusal(heard) or caller_requested_hangup(heard):
+            from server.call.hangup_judge import default_farewell_for
+
+            line = default_farewell_for(language)
+            reason = "not_interested" if caller_firm_refusal(heard) else "goodbye"
+        else:
+            return False
+        await self._recover_tts_after_failure(session)
+        frames_before = self._wire_frames_out
+        try:
+            await self.speak(line, language_code=language)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            log_pstn("turn.final_intent.tts_failed", call_id=self.call_id, error_type=type(exc).__name__)
+        if self._wire_frames_out == frames_before and not self._caller_took_turn():
+            await self._play_technical_fallback_and_hangup(trigger="llm_failure")
+            return True
+        if self.call_id:
+            from server.call.call_ledger import call_ledger
+            try:
+                await call_ledger.append_assistant_turn(self.call_id, line)
+            except Exception as exc:
+                log_pstn("turn.final_intent.ledger_failed", call_id=self.call_id, error_type=type(exc).__name__)
+        log_pstn("turn.final_intent.closed_during_outage", call_id=self.call_id, reason=reason)
+        await self._finish_agent_hangup(reason=reason, revocable=False)
+        return True
+
     async def _play_technical_fallback_and_hangup(self, *, trigger: str) -> None:
         """Play a pre-recorded apology in the call language, then close the line.
 
@@ -776,19 +864,21 @@ class PstnVoiceLoop:
         for the terminal message, waits for the carrier queue to drain, leaves a
         short tail pause, and ends through the normal lifecycle.
         """
-        if trigger not in {"tts_failure", "farewell_tts_failure"}:
-            raise ValueError("Recorded speech outage requires a TTS failure")
-        if self._technical_fallback_played or self._hangup_started or self._closed:
-            return
-        self._technical_fallback_played = True
-        self._technical_fallback_active = True
         from server.services.pstn_technical_fallback import (
             FALLBACK_SETTLE_SEC,
             FALLBACK_TAIL_SEC,
+            TECHNICAL_TRIGGERS,
             infer_voice_identity,
             prepare_technical_fallback_plan,
             stamp_fallback_meta,
         )
+
+        if trigger not in TECHNICAL_TRIGGERS:
+            raise ValueError("Recorded outage clip requires a sustained technical failure")
+        if self._technical_fallback_played or self._hangup_started or self._closed:
+            return
+        self._technical_fallback_played = True
+        self._technical_fallback_active = True
 
         from server.call.call_context import get as get_ctx
 
@@ -800,14 +890,17 @@ class PstnVoiceLoop:
         try:
             plan = await prepare_technical_fallback_plan(
                 call_id=self.call_id,
-                tenant_id=ctx.tenant_id if ctx else None,
-                agent_id=ctx.agent_id if ctx else None,
+                tenant_id=str(ctx.tenant_id) if ctx and ctx.tenant_id else None,
+                agent_id=str(ctx.agent_id) if ctx and ctx.agent_id else None,
                 direction=ctx.direction if ctx else None,
                 language=self._resolve_language(),
                 trigger=trigger,
                 voice_provider=provider,
                 voice_model=model,
                 voice_id=voice_id,
+                pending_user_text=self._current_turn_transcript,
+                resolved_stack=ctx.resolved_stack if ctx else None,
+                stack_override=self.stack_override,
             )
         except Exception as exc:
             log_pstn("fallback.resolve.failed", call_id=self.call_id, error=str(exc)[:160])
@@ -1759,6 +1852,9 @@ class PstnVoiceLoop:
 
         before_frames = self._wire_frames_out
         results = await asyncio.gather(*jobs, return_exceptions=True)
+        # The greeting is synthesized; render the outage announcement now, off
+        # the critical path, so it exists before any failure can need it.
+        self._schedule_outage_clip_prewarm()
         stt_err = results[0] if isinstance(results[0], BaseException) else None
         if greeting:
             greet_err = results[2] if len(results) > 2 and isinstance(results[2], BaseException) else None
@@ -1802,6 +1898,29 @@ class PstnVoiceLoop:
             log_error("PSTN STT open failed", call_id=self.call_id, detail=str(stt_err)[:300])
             await self._close_after_non_tts_failure()
             raise stt_err
+
+    def _schedule_outage_clip_prewarm(self) -> None:
+        """Make sure the outage clip exists in this call's language and voice (cached)."""
+        if not self.call_id or self._closed:
+            return
+        try:
+            from server.call.call_context import get as get_ctx
+            from server.services.outage_clip_prewarm import schedule_outage_clip_prewarm
+
+            ctx = get_ctx(self.call_id)
+            if ctx is None:
+                return
+            schedule_outage_clip_prewarm(
+                tenant_id=str(ctx.tenant_id) if ctx.tenant_id else None,
+                agent_id=str(ctx.agent_id) if ctx.agent_id else None,
+                language=self._resolve_language(),
+                resolved_stack=ctx.resolved_stack,
+                pipeline=getattr(ctx, "pipeline", None),
+                stack_override=self.stack_override,
+                call_id=self.call_id,
+            )
+        except Exception as exc:
+            log_pstn("outage_clip.schedule_failed", call_id=self.call_id, error_type=type(exc).__name__)
 
     async def _play_buffered_greeting(self, frames: list[bytes], greeting: str) -> None:
         self._set_tts_active(True)
@@ -3000,7 +3119,7 @@ class PstnVoiceLoop:
                             reason="technical_failure",
                         )
                     else:
-                        await self._recover_reply_failure(tts_session)
+                        await self._recover_reply_failure(tts_session, e)
             elif not spoke_from_stream and not delivered and self._phase != PHASE_ENDED and not self._closed:
                 await self._close_after_non_tts_failure(session=tts_session)
             if self.call_id:

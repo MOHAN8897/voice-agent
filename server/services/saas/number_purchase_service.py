@@ -144,6 +144,28 @@ async def _active_reservation_conflict(e164: str) -> dict | None:
         return {"tenant_id": row[0], "purchase_id": row[1], "status": row[2]}
 
 
+def rent_terms(rates: dict, *, charge: dict | None = None, purchased_at: datetime | None = None) -> dict:
+    """Monthly rent quoted back to the buyer.
+
+    ``didMonthly*`` is the admin "Phone number monthly rent" now in force (what the
+    next renewal costs unless the admin changes it before then). ``charged*`` is
+    what this purchase actually debited for the first month, with its rate version.
+    """
+    out = {
+        "didMonthlyUsd": round(int(rates["did_monthly_usd_cents"]) / 100.0, 2),
+        "didMonthlyInr": round(int(rates["did_monthly_inr_paise"]) / 100.0, 2),
+    }
+    if charge is not None:
+        out["chargedUsd"] = round(int(charge.get("amountCents") or 0) / 100.0, 2)
+        out["chargedInr"] = round(int(charge.get("amountInrPaise") or 0) / 100.0, 2)
+        out["rateVersion"] = charge.get("rateVersion")
+    if purchased_at is not None:
+        from server.services.saas.number_rental import next_renewal_at
+
+        out["renewsOn"] = next_renewal_at(purchased_at, purchased_at).isoformat()
+    return out
+
+
 async def _replay_if_same_tenant(conflict, principal: SubscriberPrincipal, e164: str) -> dict | None:
     """Idempotent replay: a double-click or client retry gets the original purchase.
 
@@ -166,8 +188,7 @@ async def _replay_if_same_tenant(conflict, principal: SubscriberPrincipal, e164:
         "provisioning": True,
         "payment": "wallet",
         "replayed": True,
-        "didMonthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
-        "didMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
+        **rent_terms(rates),
     }
 
 
@@ -460,12 +481,13 @@ async def _purchase_from_inventory(
         pn.purchase_id = purchase_id
         pn.inbound_enabled = True
         pn.outbound_enabled = True
-        await debit_did_purchase_in_session(
+        charge = await debit_did_purchase_in_session(
             session,
             principal.tenant_id,
             user_id=principal.user_id,
             purchase_id=purchase_id,
         )
+        purchased_at = purchase.created_at
         phone_number_id = pn.id
         telnyx_number_id = pn.telnyx_number_id
         await session.commit()
@@ -481,8 +503,7 @@ async def _purchase_from_inventory(
         "id": str(phone_number_id),
         "telnyxNumberId": telnyx_number_id,
         "source": "inventory",
-        "didMonthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
-        "didMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
+        **rent_terms(rates, charge=charge, purchased_at=purchased_at),
     }
 
 
@@ -605,12 +626,13 @@ async def purchase_with_wallet(
                 updated_at=_utcnow(),
             )
         )
-        await debit_did_purchase_in_session(
+        charge = await debit_did_purchase_in_session(
             session,
             principal.tenant_id,
             user_id=principal.user_id,
             purchase_id=purchase_id,
         )
+        purchased_at = purchase.created_at
         lost_race = False
         try:
             await session.commit()
@@ -645,6 +667,5 @@ async def purchase_with_wallet(
         "status": "paid",
         "provisioning": True,
         "payment": "wallet",
-        "didMonthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
-        "didMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
+        **rent_terms(rates, charge=charge, purchased_at=purchased_at),
     }

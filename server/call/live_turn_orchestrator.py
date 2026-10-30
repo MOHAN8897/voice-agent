@@ -606,6 +606,19 @@ class LiveTurnOrchestrator:
                     self._safe_append_user(call_id, transcript, stt_latency_ms)
                 )
 
+            # A request for another language is server-owned: one language pack per
+            # call, so offer/arrange a callback in that language instead of switching.
+            from server.call.language_switch import server_language_switch_turn
+
+            switch = await server_language_switch_turn(ctx, transcript, language_code) if call_id and not retry_attempt else None
+            if switch and switch.get("hint"):
+                user_instructions = f"{switch['hint']}\n\n{user_instructions or ''}".strip()
+            elif switch:
+                yield {"done": True, "text": switch["text"], "replace_speech": True, "end_call": switch["end_call"],
+                       "finish_reason": "language_switch", "response_contract": "speech_text"}
+                await self._archive_server_turn(call_id, session_id, transcript, switch, ledger_task, stt_latency_ms)
+                return
+
             from server.realtime.manager import realtime_text_manager
 
             control_transcript = transcript
@@ -1202,6 +1215,17 @@ class LiveTurnOrchestrator:
                     self._safe_append_user(call_id, transcript, stt_latency_ms)
                 )
 
+            from server.call.language_switch import server_language_switch_turn
+
+            language_code = str(kwargs.get("language_code") or "te-IN")
+            switch = await server_language_switch_turn(ctx, transcript, language_code) if call_id else None
+            if switch and switch.get("hint"):
+                kwargs["user_instructions"] = f"{switch['hint']}\n\n{kwargs.get('user_instructions') or ''}".strip()
+            elif switch:
+                await self._archive_server_turn(call_id, session_id, transcript, switch, ledger_task, stt_latency_ms)
+                return {"text": switch["text"], "end_call": switch["end_call"], "memory_update": {"operations": []},
+                        "usage": {}, "finish_reason": "language_switch"}
+
             from server.realtime.manager import realtime_text_manager
 
             realtime = bool(call_id and realtime_text_manager.get(call_id))
@@ -1479,11 +1503,13 @@ class LiveTurnOrchestrator:
                     continue
                 content = message.get("content")
                 if isinstance(content, str) and "--- CALL CAPABILITIES ---" in content:
-                    message["content"] = apply_available_tools(content, tool_schemas, followup_config=getattr(ctx, "followup_config", None))
+                    message["content"] = apply_available_tools(content, tool_schemas, followup_config=getattr(ctx, "followup_config", None),
+                                                       call_integration_rows=getattr(ctx, "call_integration_rows", None))
                 elif isinstance(content, list):
                     for part in content:
                         if isinstance(part, dict) and "--- CALL CAPABILITIES ---" in str(part.get("text") or ""):
-                            part["text"] = apply_available_tools(part["text"], tool_schemas, followup_config=getattr(ctx, "followup_config", None))
+                            part["text"] = apply_available_tools(part["text"], tool_schemas, followup_config=getattr(ctx, "followup_config", None),
+                                                       call_integration_rows=getattr(ctx, "call_integration_rows", None))
             if tool_schemas:
                 async for chunk in self._composed_tool_turn(
                     ctx=ctx,
@@ -2135,8 +2161,13 @@ class LiveTurnOrchestrator:
             return []
         from server.brain.capabilities import agent_available_tools
 
-        tools = await agent_available_tools(str(ctx.agent_id), getattr(ctx, "compiled_brain_text", ""), tenant_id=str(ctx.tenant_id))
+        from server.services.call_integrations import capability_rows, selection_for_call
+
+        selection = await selection_for_call(getattr(ctx, "call_id", None), tenant_id=str(ctx.tenant_id))
+        tools = await agent_available_tools(str(ctx.agent_id), getattr(ctx, "compiled_brain_text", ""),
+                                            tenant_id=str(ctx.tenant_id), selection=selection)
         ctx.available_tools = [str(t.get("name") or "") for t in tools]
+        ctx.call_integration_rows = capability_rows(selection, tools)
         if getattr(ctx, "followup_config", None) is None:
             # The console's follow-up settings decide what the agent may say about callbacks.
             try:
@@ -2384,6 +2415,18 @@ class LiveTurnOrchestrator:
                 allowed = False
         if not allowed:
             raise RuntimeError("The selected text model is not available for its provider")
+
+    async def _archive_server_turn(self, call_id, session_id, transcript, switch, ledger_task, stt_latency_ms) -> None:
+        """History and ledger for a turn the server spoke without the reply model."""
+        from server.agent.conversation_manager import conversation_manager
+
+        user_seq = 0
+        if ledger_task is not None:
+            user_seq = int((await ledger_task).get("seq") or 0)
+        conversation_manager.add_turn(session_id, transcript, switch["text"])
+        if call_id and get_settings().enable_call_archive:
+            await self._after_assistant(call_id, switch["text"], 0, stt_latency_ms, turn_seq=user_seq,
+                                        user_text=transcript, close_approved=bool(switch["end_call"].get("should_end")))
 
     async def _safe_append_user(
         self, call_id: str, transcript: str, stt_latency_ms: int | None

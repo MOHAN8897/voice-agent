@@ -147,5 +147,6 @@ async def test_failed_reply_keeps_listening_then_repeated_outage_closes_honestly
     assert failures[0]["watchdog_retry"] is True
     assert failures[0]["delivered"] is False
     await loop._run_turn("Please answer my price question")
-    loop._finish_agent_hangup.assert_awaited_once_with(reason="technical_failure", revocable=False)
+    # Second consecutive failed turn: the prepared outage clip ends the call.
+    fallback.assert_awaited_once_with(trigger="llm_failure")
     await loop.close()

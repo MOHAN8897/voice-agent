@@ -32,8 +32,15 @@ class DialtactToolRouter:
     def __init__(self) -> None:
         self.nango = nango_service
 
-    async def authorized(self, tenant_id: str, agent_id: str, tool_name: str, *, timing: str = "in_call") -> bool:
+    async def authorized(self, tenant_id: str, agent_id: str, tool_name: str, *, timing: str = "in_call",
+                         call_id: str | None = None) -> bool:
         definition = tool_definition(tool_name)
+        selection = None
+        if call_id and definition is not None and definition[0] != "PLATFORM":
+            from server.services.call_integrations import selection_for_call
+
+            # Integrations chosen when the call or campaign was launched.
+            selection = await selection_for_call(call_id, tenant_id=tenant_id)
         factory = get_session_factory()
         if factory is None or definition is None:
             return False
@@ -59,6 +66,13 @@ class DialtactToolRouter:
                     AgentIntegration.tenant_id == tenant_uuid, AgentIntegration.agent_id == agent_uuid,
                 ))).scalars().all()
                 matching = [r for r in rules if _normalize(r.app_name) == app]
+                if selection is not None:
+                    from server.services.call_integrations import agent_allows, agent_whitelist, selected_apps
+
+                    if app not in selected_apps(selection, timing) or not agent_allows(app, rules):
+                        return False
+                    whitelist = agent_whitelist(app, rules, None if timing == "in_call" else timing)
+                    return not whitelist or tool_name.upper() in whitelist
                 if matching:
                     return any(r.enabled and r.timing_mode == timing and
                                (not r.action_whitelist or tool_name.upper() in {a.upper() for a in r.action_whitelist})
@@ -79,7 +93,7 @@ class DialtactToolRouter:
         error = validate_tool_arguments(tool_name, arguments)
         if error:
             return {"status": "error", "message": error}
-        if not await self.authorized(tenant_id, agent_id, tool_name, timing=timing):
+        if not await self.authorized(tenant_id, agent_id, tool_name, timing=timing, call_id=call_id or None):
             return {"status": "error", "message": "This action is not enabled for this agent and workspace."}
         if tool_name in {"SAVE_ENQUIRY", "CONFIRM_ORDER"}:
             from server.call.enquiry import execute_platform_action

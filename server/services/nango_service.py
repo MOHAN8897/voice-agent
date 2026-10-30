@@ -61,7 +61,8 @@ NANGO_PROVIDER_MAP: dict[str, str] = {
     "JIRA": "jira",
     "BOX": "box",
     "DROPBOX": "dropbox",
-    "OUTLOOKCALENDAR": "outlook-calendar",
+    # Nango's Microsoft Outlook provider (Graph base URL); "outlook-calendar" is not a Nango provider.
+    "OUTLOOKCALENDAR": "outlook",
     "MICROSOFTTEAMS": "microsoft-teams",
     "SENDGRID": "sendgrid",
     "SUPABASE": "supabase",
@@ -121,7 +122,13 @@ REVERSE_NANGO_PROVIDER_MAP.update({
     "freshdesk": "FRESHDESK",
     "zoho": "ZOHO_CRM",
     "zoho-crm": "ZOHO_CRM",
+    "outlook": "OUTLOOKCALENDAR",
+    "outlook-calendar": "OUTLOOKCALENDAR",
 })
+
+# Shopify retires each Admin API version after about a year; 2024-01 was retired
+# in 2025 and silently fell forward. Pin a currently supported stable version.
+SHOPIFY_API_VERSION = "2026-07"
 
 
 def _display_name(app: str) -> str:
@@ -1220,6 +1227,14 @@ class NangoService:
                 get_params = {}
                 if params.get("user"):
                     get_params["user"] = str(params["user"])
+                else:
+                    # Calendly requires user or organization on /event_types.
+                    me = await client.get(f"{self.base_url}/proxy/users/me", headers=headers)
+                    me.raise_for_status()
+                    user_uri = (me.json().get("resource") or {}).get("uri")
+                    if not user_uri:
+                        return {"status": "error", "message": "The Calendly account could not be identified."}
+                    get_params["user"] = str(user_uri)
                 resp = await client.get(
                     f"{self.base_url}/proxy/event_types",
                     headers=headers,
@@ -1282,18 +1297,18 @@ class NangoService:
                 if order_id:
                     clean_id = order_id.replace("#", "")
                     resp = await client.get(
-                        f"{self.base_url}/proxy/admin/api/2024-01/orders/{path_segment(clean_id)}.json",
+                        f"{self.base_url}/proxy/admin/api/{SHOPIFY_API_VERSION}/orders/{path_segment(clean_id)}.json",
                         headers=headers,
                     )
                     if resp.status_code == 404:
                         resp = await client.get(
-                            f"{self.base_url}/proxy/admin/api/2024-01/orders.json",
+                            f"{self.base_url}/proxy/admin/api/{SHOPIFY_API_VERSION}/orders.json",
                             headers=headers,
                             params={"name": f"#{clean_id}" if not clean_id.startswith("#") else clean_id, "status": "any"},
                         )
                 elif email:
                     resp = await client.get(
-                        f"{self.base_url}/proxy/admin/api/2024-01/orders.json",
+                        f"{self.base_url}/proxy/admin/api/{SHOPIFY_API_VERSION}/orders.json",
                         headers=headers,
                         params={"email": email, "status": "any"},
                     )
@@ -1302,7 +1317,13 @@ class NangoService:
 
                 if resp.status_code == 200:
                     data = resp.json()
-                    order = data.get("order") or (data.get("orders", [{}])[0] if data.get("orders") else {})
+                    orders = [o for o in (data.get("orders") or []) if isinstance(o, dict)]
+                    if email and not order_id:
+                        # orders.json has no documented email filter. Never read out
+                        # another customer's order when the filter is ignored.
+                        wanted = email.casefold()
+                        orders = [o for o in orders if str(o.get("email") or "").strip().casefold() == wanted]
+                    order = data.get("order") or (orders[0] if orders else {})
                     if not order:
                         return {"status": "error", "message": "No matching order found."}
                     return {
@@ -1324,7 +1345,7 @@ class NangoService:
                 if not order_id:
                     return {"status": "error", "message": "Order ID is required to cancel a Shopify order."}
                 current = await client.get(
-                    f"{self.base_url}/proxy/admin/api/2024-01/orders/{path_segment(order_id)}.json", headers=headers,
+                    f"{self.base_url}/proxy/admin/api/{SHOPIFY_API_VERSION}/orders/{path_segment(order_id)}.json", headers=headers,
                 )
                 current.raise_for_status()
                 order = current.json().get("order") or {}
@@ -1335,7 +1356,7 @@ class NangoService:
                 if order.get("cancelled_at"):
                     return {"status": "cancelled", "order_id": order_id, "summary": "Order is already cancelled."}
                 resp = await client.post(
-                    f"{self.base_url}/proxy/admin/api/2024-01/orders/{path_segment(order_id)}/cancel.json",
+                    f"{self.base_url}/proxy/admin/api/{SHOPIFY_API_VERSION}/orders/{path_segment(order_id)}/cancel.json",
                     headers=headers,
                     json={"reason": reason, "email": True},
                 )
@@ -1358,7 +1379,7 @@ class NangoService:
                 if not order_id:
                     return {"status": "error", "message": "Order ID is required."}
                 resp = await client.get(
-                    f"{self.base_url}/proxy/admin/api/2024-01/orders/{path_segment(order_id)}/fulfillments.json",
+                    f"{self.base_url}/proxy/admin/api/{SHOPIFY_API_VERSION}/orders/{path_segment(order_id)}/fulfillments.json",
                     headers=headers,
                 )
                 if resp.status_code == 200:
@@ -1380,7 +1401,7 @@ class NangoService:
                 if not query:
                     return {"status": "error", "message": "Search query or customer email is required."}
                 resp = await client.get(
-                    f"{self.base_url}/proxy/admin/api/2024-01/customers/search.json",
+                    f"{self.base_url}/proxy/admin/api/{SHOPIFY_API_VERSION}/customers/search.json",
                     headers=headers,
                     params={"query": query},
                 )

@@ -117,6 +117,12 @@ export function normalizePhoneNumber(row, agentsById = {}) {
     inboundEnabled: row.inboundEnabled ?? true,
     outboundEnabled: row.outboundEnabled ?? true,
     billingSource: row.billingSource || null,
+    // Monthly rent: only wallet-billed numbers pay it, on their purchase anniversary.
+    rentBilled: Boolean(row.rentBilled),
+    renewalEnabled: Boolean(row.renewalEnabled),
+    nextRenewalAt: row.nextRenewalAt || null,
+    nextRenewalInr: row.nextRenewalInr ?? null,
+    nextRenewalUsd: row.nextRenewalUsd ?? null,
   };
 }
 
@@ -248,6 +254,9 @@ export function normalizeCall(row, agentsById = {}) {
     hasRecording: row.has_recording ?? row.hasRecording ?? false,
     hasTranscript: Boolean(row.has_transcript ?? row.hasTranscript),
     durationSec: durationSec || null,
+    campaignId: row.campaign_id || row.campaignId || null,
+    // Integrations attached when this call was launched (campaign calls inherit the campaign's).
+    integrationSelection: row.integration_selection || row.integrationSelection || null,
   };
 }
 
@@ -271,6 +280,7 @@ export function normalizeCampaign(row) {
     totalContacts: row.totalContacts ?? row.total_contacts ?? 0,
     objective: row.objective || '',
     callingHours: row.callingHours || '09:00 - 18:00',
+    integrations: row.integrations || row.schedule?.integration_selection || null,
   };
 }
 

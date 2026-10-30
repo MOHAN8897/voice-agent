@@ -1258,10 +1258,12 @@ export const api = {
     async outcome(id) {
       return await api.request('GET', `/api/call/${id}/outcome`);
     },
-    async triggerOutbound({ agentId, toE164, fromE164 = null, dialRequestId = null }) {
+    async triggerOutbound({ agentId, toE164, fromE164 = null, dialRequestId = null, integrations = null }) {
       const body = { agentId, toE164 };
       if (fromE164) body.fromE164 = fromE164;
       if (dialRequestId) body.dialRequestId = dialRequestId;
+      // Integrations attached to this call; omitted keeps the agent's saved settings.
+      if (Array.isArray(integrations) && integrations.length) body.integrations = integrations;
       const result = await api.request('POST', '/api/calls/outbound', body);
       if (result?.ok === false) {
         const error = new Error(result.error?.message || result.error || 'The call could not be placed. Please try again.');
@@ -1286,6 +1288,13 @@ export const api = {
     async listCallbacks(callId) {
       const data = await api.request('GET', `/api/calls/${callId}/callbacks`);
       return data.callbacks || [];
+    },
+  },
+
+  integrations: {
+    /** Integrations a call or campaign for this agent may attach (connected ones selectable). */
+    async callOptions(agentId) {
+      return await api.request('GET', `/api/integrations/call-options?agentId=${encodeURIComponent(agentId)}`);
     },
   },
 
@@ -1363,6 +1372,7 @@ export const api = {
         description: campaignData.description || campaignData.objective,
         defaultCountry: campaignData.defaultCountry || 'US',
         contactListId: campaignData.contactListId,
+        integrations: campaignData.integrations || undefined,
         contacts: campaignData.contacts,
         autoStart: campaignData.autoStart ?? false,
         consentConfirmed: campaignData.consentConfirmed ?? false,

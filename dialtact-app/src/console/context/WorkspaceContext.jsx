@@ -829,7 +829,7 @@ export function WorkspaceProvider({ children }) {
     return created;
   };
 
-  const placeOutboundCall = async ({ agentId, toE164, fromE164 } = {}) => {
+  const placeOutboundCall = async ({ agentId, toE164, fromE164, integrations = null } = {}) => {
     if (!agentId) throw new Error('Create a voice agent before placing outbound calls.');
     if (!toE164) throw new Error('Destination number is required.');
     const fromLine =
@@ -842,6 +842,7 @@ export function WorkspaceProvider({ children }) {
       agentId,
       toE164,
       fromE164: fromLine,
+      integrations,
     });
     await Promise.all([refreshCalls(), refreshWallet()]);
     const callId = result.call_id || result.callId || result.id;

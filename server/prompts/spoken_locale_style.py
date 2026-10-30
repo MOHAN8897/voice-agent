@@ -39,7 +39,8 @@ def primary_language_rule(locale: str) -> str:
         "Keep this regional English style; preserve local names and the supplied business currency. "
     )
     return (f"Primary language: {style.name} ({locale}). Speak naturally, warmly and respectfully. {mixing}"
-            f"Reply in {style.name} even if the caller switches language.")
+            f"Reply in {style.name} even if the caller switches language or asks for another one; never switch "
+            "mid-call. The platform offers a call back in the requested language.")
 
 
 def spoken_register_for(locale: str) -> str:

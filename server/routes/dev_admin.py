@@ -2551,6 +2551,23 @@ async def get_billing_rates(session: SessionData = Depends(require_dev_session))
         "rates": _rates_payload(rates),
         # Market rate for reference in the converter; charging uses fxRateInr.
         "fx": live_fx(),
+        "numberRental": await _number_rental_summary(rates),
+    }
+
+
+async def _number_rental_summary(rates: dict) -> dict[str, Any]:
+    """How the monthly number rent is applied, for the admin price card."""
+    from server.services.saas.number_rental import renewal_enabled, renewing_number_count
+
+    try:
+        renewing = await renewing_number_count()
+    except Exception:
+        logger.warning("number rental count failed", exc_info=True)
+        renewing = None
+    return {
+        "renewingNumbers": renewing,
+        "renewalEnabled": renewal_enabled(),
+        "rateVersion": int(rates.get("version") or 0) or None,
     }
 
 
@@ -2599,7 +2616,7 @@ async def put_billing_rates(body: BillingRatesBody, session: SessionData = Depen
         resource_id="rates",
         payload=body.model_dump(exclude_none=True, mode="json"),
     )
-    return {"ok": True, "currency": "USD", "rates": _rates_payload(r)}
+    return {"ok": True, "currency": "USD", "rates": _rates_payload(r), "numberRental": await _number_rental_summary(r)}
 
 
 class TierMerchandisingBody(BaseModel):

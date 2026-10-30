@@ -95,11 +95,13 @@ SCENARIOS = [
          turns=["uh... hmm...", "hello hello"],
          expect={"no_dnd": True, "no_callback": True},
          judge=["asked_to_repeat_or_offered_help_without_inventing"]),
-    dict(id="language_switch", businesses=["clinic"],
-         turns=["{ask}", {"text": "Can you tell me the clinic timings in English please?", "lang": "en-IN"},
-                {"text": "मुझे दांत में दर्द है, क्या कल आ सकता हूँ?", "lang": "hi-IN"}, "Okay, thanks."],
-         expect={"no_dnd": True},
-         judge=["answered_question_with_facts", "held_or_handled_language_sensibly"]),
+    # Policy: never switch mid-call; offer a call back in the requested language and close.
+    dict(id="language_switch", businesses=["shop"],
+         turns=["{ask}", {"text": "Can you please speak in English? I want to talk in English.", "lang": "en-IN"},
+                "Okay, thanks."],
+         lang_overrides={"en-IN": {"text": "हिंदी में बात कीजिए, मुझे हिंदी में समझाइए", "lang": "hi-IN"}},
+         expect={"no_dnd": True, "ended": True, "language_switch": {"en-IN": "hi-IN"}},
+         judge=["answered_question_with_facts", "offered_language_callback_and_closed"]),
     dict(id="hangup_mid_sentence", businesses=["shop", "clinic"], hangup_mid_turn=1,
          turns=["{ask}"],
          expect={"no_dnd": True, "no_callback": True, "no_order": True}, judge=[]),
@@ -121,6 +123,7 @@ JUDGE_CHECKS = {
     "collected_booking_details": "The agent collected or acknowledged the caller's name, problem and preferred time for the front desk.",
     "stayed_polite_no_retaliation": "The agent stayed calm and polite, did not insult back, did not argue, and did not continue a sales pitch.",
     "asked_to_repeat_or_offered_help_without_inventing": "For unclear speech the agent asked the caller to repeat or offered help briefly, without inventing what the caller wanted.",
+    "offered_language_callback_and_closed": "When the caller asked for another language, the agent did not switch language; in its own configured language it said a call back in the requested language would be arranged and then ended politely. This confirmation is server-spoken, so it appears on the PLATFORM FAREWELL line with the agent turn shown as (silent); judge the farewell line.",
     "held_or_handled_language_sensibly": "When the caller switched language, the agent still answered the caller's actual question; replying in its configured language is correct platform policy and must not be penalised.",
 }
 

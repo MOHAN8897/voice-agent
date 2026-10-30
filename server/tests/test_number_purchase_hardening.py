@@ -24,6 +24,7 @@ from sqlalchemy.ext.compiler import compiles
 from server.db.models.entities import Base, Tenant
 from server.db.models.phase5_models import PhoneNumber
 from server.db.models.saas_models import (
+    BillingRateVersion,
     BillingWallet,
     BillingWalletTransaction,
     NumberPurchase,
@@ -60,7 +61,7 @@ async def db(monkeypatch):
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     tables = [
         Tenant, User, VobizSubaccount, PhoneNumber, NumberPurchase, NumberReservation,
-        ProvisionJob, BillingWallet, BillingWalletTransaction, TenantTeardownJob,
+        ProvisionJob, BillingWallet, BillingWalletTransaction, TenantTeardownJob, BillingRateVersion,
     ]
     async with engine.begin() as conn:
         await conn.run_sync(lambda s: Base.metadata.create_all(s, tables=[m.__table__ for m in tables]))
@@ -310,6 +311,146 @@ async def test_rental_skips_first_month(db):
     await _rented_number(db, purchased_at=_now() - timedelta(days=3))
     await _set_wallet(db, 1000)
     assert (await renew_due_numbers())["charged"] == 0
+
+
+# --- Monthly rent price (one admin setting for purchase and renewals) ----------
+
+
+async def _rate_version(factory, version, *, inr_paise, effective_from, active=False):
+    cents = round(inr_paise / 95)
+    async with factory() as session:
+        session.add(BillingRateVersion(
+            version=version, pstn_rate_usd_cents_per_min=5, web_agent_rate_usd_cents_per_min=2,
+            did_monthly_usd_cents=cents, did_monthly_usd_micros=cents * 10_000,
+            did_monthly_inr_paise=inr_paise, fx_rate_inr=95, effective_from=effective_from,
+            created_by="admin@example.test", reason="number rent change", is_active=active,
+        ))
+        await session.commit()
+
+
+async def _set_inr_wallet(factory, paise):
+    async with factory() as session:
+        wallet = await session.get(BillingWallet, TID)
+        if wallet is None:
+            wallet = BillingWallet(tenant_id=TID, balance_cents=0, balance_inr_paise=0, currency="inr")
+            session.add(wallet)
+        wallet.balance_inr_paise = paise
+        wallet.currency = "inr"
+        await session.commit()
+
+
+async def _rent_rows(factory, kind="did_rental"):
+    async with factory() as session:
+        return (await session.execute(select(BillingWalletTransaction).where(
+            BillingWalletTransaction.kind == kind).order_by(BillingWalletTransaction.created_at))).scalars().all()
+
+
+async def test_purchase_charges_admin_monthly_rent_and_quotes_renewal(db, monkeypatch):
+    from server.services.saas import billing_wallet_service
+
+    real_debit = billing_wallet_service.debit_did_purchase_in_session
+    _patch_purchase_gates(monkeypatch, real_debit)
+    await _set_inr_wallet(db, 100_000)
+    buyer = uuid4()
+    async with db() as session:
+        session.add(User(user_id=buyer, email="buyer@example.test", password_hash="x", email_verified_at=_now()))
+        await session.commit()
+    principal = SubscriberPrincipal(buyer, TID, "owner", "buyer@example.test")
+    result = await nps.purchase_with_wallet(principal, e164=PHONE, country_code="IN")
+    rows = await _rent_rows(db, "did_purchase")
+    assert len(rows) == 1 and rows[0].amount_inr_paise == -38_000 and rows[0].amount_cents == 0
+    assert result["chargedInr"] == 380.0 and result["didMonthlyInr"] == 380.0
+    renews = datetime.fromisoformat(result["renewsOn"])
+    assert timedelta(days=27) < renews - _now() < timedelta(days=32)
+    async with db() as session:
+        assert (await session.get(BillingWallet, TID)).balance_inr_paise == 62_000
+
+
+async def test_zero_rent_purchase_debits_nothing(db, monkeypatch):
+    from server.services.saas.billing_wallet_service import debit_did_purchase_in_session
+
+    async def free():
+        return {**RATES, "did_monthly_usd_cents": 0, "did_monthly_usd_micros": 0, "did_monthly_inr_paise": 0}
+
+    monkeypatch.setattr("server.services.saas.billing_rates.load_current_rates", free)
+    pid = await _purchase(db)
+    async with db() as session:
+        out = await debit_did_purchase_in_session(session, TID, user_id=None, purchase_id=pid)
+        await session.commit()
+    assert out["free"] is True and out["amountInrPaise"] == 0
+    assert await _rent_rows(db, "did_purchase") == []
+
+
+async def test_renewal_charges_price_in_force_on_renewal_date(db):
+    from server.services.saas import activity_log
+    from server.services.saas.number_rental import renew_due_numbers
+
+    purchased = _now() - timedelta(days=40)  # period 1 began ~10 days ago
+    await _rate_version(db, 1, inr_paise=38_000, effective_from=_now() - timedelta(days=400))
+    # Saved mid-period (after this period's renewal date): must wait for the next renewal.
+    await _rate_version(db, 2, inr_paise=50_000, effective_from=_now() - timedelta(days=5), active=True)
+    nid = await _rented_number(db, purchased_at=purchased)
+    await _set_inr_wallet(db, 200_000)
+
+    assert (await renew_due_numbers())["charged"] == 1
+    rows = await _rent_rows(db)
+    assert [r.amount_inr_paise for r in rows] == [-38_000]
+    payload = activity_log.record_event.await_args.kwargs["payload"]
+    assert payload["rateVersion"] == 1 and payload["amountInrPaise"] == 38_000
+    assert payload["reference"] == f"did_rent:{nid}:1"
+
+    # The next renewal is the first to use the new price.
+    assert (await renew_due_numbers(now=_now() + timedelta(days=31)))["charged"] == 1
+    rows = await _rent_rows(db)
+    assert [r.amount_inr_paise for r in rows] == [-38_000, -50_000]
+    assert activity_log.record_event.await_args.kwargs["payload"]["rateVersion"] == 2
+    async with db() as session:
+        assert (await session.get(BillingWallet, TID)).balance_inr_paise == 200_000 - 88_000
+
+
+async def test_price_change_before_renewal_date_applies_to_that_renewal(db):
+    from server.services.saas.number_rental import renew_due_numbers
+
+    await _rate_version(db, 1, inr_paise=38_000, effective_from=_now() - timedelta(days=400))
+    await _rate_version(db, 2, inr_paise=45_000, effective_from=_now() - timedelta(days=20), active=True)
+    await _rented_number(db, purchased_at=_now() - timedelta(days=40))
+    await _set_inr_wallet(db, 200_000)
+    assert (await renew_due_numbers())["charged"] == 1
+    assert [r.amount_inr_paise for r in await _rent_rows(db)] == [-45_000]
+
+
+async def test_zero_rent_renewal_debits_nothing_and_restores_line(db):
+    from server.services.saas.number_rental import SUSPENDED_STATUS, renew_due_numbers
+
+    await _rate_version(db, 1, inr_paise=0, effective_from=_now() - timedelta(days=400), active=True)
+    nid = await _rented_number(db, purchased_at=_now() - timedelta(days=40))
+    async with db() as session:
+        (await session.get(PhoneNumber, nid)).status = SUSPENDED_STATUS
+        await session.commit()
+    await _set_inr_wallet(db, 0)
+    summary = await renew_due_numbers()
+    assert summary["charged"] == 0 and summary["free"] == 1 and summary["restored"] == 1
+    assert await _rent_rows(db) == []
+
+
+async def test_renewal_off_switch(db, monkeypatch):
+    from server.services.saas.number_rental import renew_due_numbers
+
+    monkeypatch.setenv("DID_RENTAL_RENEWAL_ENABLED", "false")
+    await _rented_number(db, purchased_at=_now() - timedelta(days=40))
+    await _set_wallet(db, 1000)
+    assert (await renew_due_numbers())["charged"] == 0
+    assert await _rent_rows(db) == []
+
+
+async def test_renewing_number_count_and_next_renewal_date(db):
+    from server.services.saas.number_rental import next_renewal_at, renewing_number_count
+
+    await _rented_number(db, purchased_at=_now() - timedelta(days=40))
+    assert await renewing_number_count() == 1
+    anchor = datetime(2026, 1, 31, 9, tzinfo=timezone.utc)
+    assert next_renewal_at(anchor, datetime(2026, 3, 5, tzinfo=timezone.utc)) == datetime(2026, 3, 31, 9, tzinfo=timezone.utc)
+    assert next_renewal_at(anchor, anchor) == datetime(2026, 2, 28, 9, tzinfo=timezone.utc)
 
 
 # --- Release and teardown -------------------------------------------------------

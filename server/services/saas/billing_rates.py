@@ -398,6 +398,33 @@ async def load_current_rates() -> dict[str, int | float]:
     return await load_rates_from_db_or_seed()
 
 
+async def rates_in_force_at(session, when: datetime) -> dict[str, int | float]:
+    """The rate version that was in force at ``when`` (latest ``effective_from <= when``).
+
+    Phone-number rent is charged per period at the price in force on the day the
+    period starts, so a price saved mid-period applies from each number's next
+    renewal and a late-running worker cannot pick up a price saved after the
+    renewal date. Superseded versions are kept (``is_active`` False), so history
+    is read regardless of the active flag. With no version on record yet the
+    current rates are used (which seeds version 1).
+    """
+    from server.db.models.saas_models import BillingRateVersion
+
+    when = when.replace(tzinfo=timezone.utc) if when.tzinfo is None else when
+    row = (
+        await session.execute(
+            select(BillingRateVersion)
+            .where(BillingRateVersion.effective_from <= when)
+            .order_by(desc(BillingRateVersion.effective_from), desc(BillingRateVersion.version))
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        return await load_current_rates()
+    data = rate_row_data(row)
+    return {**data, **_expand_rate_data(data)}
+
+
 def live_fx() -> dict[str, Any]:
     """Market USD→INR for display only. Never used to compute a charge."""
     from server.services.usage_pricing import resolve_fx_rate_inr

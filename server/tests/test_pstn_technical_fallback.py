@@ -143,12 +143,13 @@ async def test_global_switch_off_suppresses_audio_and_callback_promise(monkeypat
 @pytest.mark.parametrize(
     ("trigger", "last_user"),
     [
-        ("runtime_failure", "Tell me more."),
+        ("silence_timeout", "Tell me more."),
         ("tts_failure", "ఇప్పుడైతే ఇంట్రెస్ట్ ఏం లేదండి."),
         ("tts_failure", "Please don't call me again."),
+        ("llm_failure", "Please don't call me again."),
     ],
 )
-async def test_callback_promise_is_suppressed_without_tts_failure_or_after_refusal(
+async def test_callback_promise_is_suppressed_without_technical_failure_or_after_refusal(
     monkeypatch, trigger, last_user,
 ):
     _patch_plan_inputs(monkeypatch, transcript=[{"role": "user", "text": last_user}])
@@ -331,10 +332,11 @@ async def test_classic_fallback_plays_once_then_closes_with_technical_reason(mon
 
 
 @pytest.mark.asyncio
-async def test_classic_outage_clip_rejects_non_tts_trigger():
+async def test_classic_outage_clip_rejects_non_technical_trigger():
     loop = PstnVoiceLoop(session_id="fallback-guard", call_id=None, on_agent_wire=AsyncMock())
-    with pytest.raises(ValueError, match="requires a TTS failure"):
-        await loop._play_technical_fallback_and_hangup(trigger="runtime_failure")
+    for trigger in ("silence_timeout", "barge_in", "slow_turn"):
+        with pytest.raises(ValueError, match="sustained technical failure"):
+            await loop._play_technical_fallback_and_hangup(trigger=trigger)
     assert loop._technical_fallback_played is False
     await loop.close()
 

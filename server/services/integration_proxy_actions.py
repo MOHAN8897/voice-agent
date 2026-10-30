@@ -29,8 +29,10 @@ async def execute_extended_action(client: httpx.AsyncClient, base: str, headers:
         if action == "CALENDLY_GET_AVAILABLE_TIMES":
             start = datetime.combine(date.fromisoformat(params["start_date"]), time.min, timezone.utc)
             end = datetime.combine(date.fromisoformat(params["end_date"]), time.min, timezone.utc) + timedelta(days=1)
-            if end <= start or end - start > timedelta(days=31):
-                return {"status": "error", "message": "Choose an availability window of at most 31 days."}
+            # Calendly needs a future start_time and a window of at most 7 days.
+            start = max(start, datetime.now(timezone.utc).replace(microsecond=0) + timedelta(minutes=1))
+            if end <= start or end - start > timedelta(days=7):
+                return {"status": "error", "message": "Choose an availability window of at most 7 days, starting from today or later."}
             response = await client.get(f"{root}/event_type_available_times", headers=headers, params={
                 "event_type": event_type, "start_time": start.isoformat(), "end_time": end.isoformat(),
             })

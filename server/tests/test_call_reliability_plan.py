@@ -275,7 +275,7 @@ class _TurnTts:
 
 
 @pytest.mark.asyncio
-async def test_exhausted_model_failure_speaks_an_honest_technical_line(monkeypatch):
+async def test_exhausted_model_failure_plays_the_outage_clip_not_a_goodbye(monkeypatch):
     """An unrecovered stop is a technical failure, not a normal goodbye."""
     spoken: list[str] = []
     loop = PstnVoiceLoop(
@@ -316,7 +316,8 @@ async def test_exhausted_model_failure_speaks_an_honest_technical_line(monkeypat
         "server.call.call_ledger.call_ledger.append_assistant_turn", AsyncMock()
     )
     monkeypatch.setattr(loop, "_finish_agent_hangup", AsyncMock())
-    monkeypatch.setattr(loop, "_play_technical_fallback_and_hangup", AsyncMock())
+    clip = AsyncMock()
+    monkeypatch.setattr(loop, "_play_technical_fallback_and_hangup", clip)
 
     original_send = _TurnTts.send_text
 
@@ -327,11 +328,19 @@ async def test_exhausted_model_failure_speaks_an_honest_technical_line(monkeypat
     monkeypatch.setattr(_TurnTts, "send_text", capture_send)
 
     await loop._run_turn("అదే వెడ్డింగ్ కార్డ్స్ చేస్తారా? ధర ఎంత?")
+    # First failed turn: one "please repeat" in the call language, keep listening.
+    from server.prompts.agent_voice_rules import MODEL_RECOVERY
+
+    assert spoken == [MODEL_RECOVERY["te-IN"]]
+    clip.assert_not_awaited()
+    await loop._run_turn("ధర ఎంత?")
     await loop.close()
 
-    assert spoken == [fallback_text("te-IN", CALL_BACK)]
-    assert spoken[0] != "ధన్యవాదాలు. నమస్కారం."  # not a normal farewell
-    loop._finish_agent_hangup.assert_awaited_once()
+    # Second consecutive failure: the pre-rendered clip, never live TTS or a goodbye.
+    assert spoken == [MODEL_RECOVERY["te-IN"]]
+    assert fallback_text("te-IN", CALL_BACK) not in spoken
+    clip.assert_awaited_once_with(trigger="llm_failure")
+    loop._finish_agent_hangup.assert_not_awaited()
 
 
 def test_rendered_brain_flags_a_locale_pack_that_contradicts_the_session():

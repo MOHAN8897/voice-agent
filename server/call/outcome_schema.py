@@ -53,7 +53,7 @@ TAG_VOCABULARY: dict[str, tuple[str, ...]] = {
         "repeat_customer",
         "urgent",
     ),
-    "followup": ("callback", "schedule_pending", "send_info", "send_quote", "site_visit"),
+    "followup": ("callback", "language_switch", "schedule_pending", "send_info", "send_quote", "site_visit"),
     "contact": ("email_known", "name_known", "phone_known", "preferred_language"),
     "compliance": ("disclosure_delivered", "disclosure_missing", "recording_objected"),
     "quality": (
@@ -73,7 +73,8 @@ STATUS_TAGS = frozenset(f"{category}:{value}" for category, values in TAG_VOCABU
 #: hallucinated compliance or outcome tag can never overwrite the truth.
 MODEL_TAG_CATEGORIES = frozenset({"intent", "sentiment", "signal", "followup", "action"})
 MODEL_STATUS_TAGS = frozenset(
-    tag for tag in STATUS_TAGS if tag.split(":", 1)[0] in MODEL_TAG_CATEGORIES
+    # A language switch is server truth (the caller asked; the platform recorded it).
+    tag for tag in STATUS_TAGS if tag.split(":", 1)[0] in MODEL_TAG_CATEGORIES and tag != "followup:language_switch"
 )
 
 CUSTOM_TAG_PREFIX = "custom:"
@@ -273,6 +274,8 @@ def derive_status_tags(
     action = str(next_action or "").lower()
     if contact_preference != "do_not_call" and (contact_preference == "callback" or normalized == "callback_required" or "callback" in action or "call back" in action):
         tags.add("followup:callback")
+    if contact_preference != "do_not_call" and normalized_facts.get("language_switch") == "true":
+        tags.add("followup:language_switch")
     if normalized == "site_visit_planned" or "site visit" in action or "appointment" in action:
         tags.add("followup:site_visit")
     if next_action and str(next_action).strip():

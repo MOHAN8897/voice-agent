@@ -15,8 +15,10 @@ import {
   Download,
   CreditCard,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
+import { CallIntegrationPicker, IntegrationSelectionSummary, useCallIntegrationOptions } from '../ui/CallIntegrationPicker';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { CallsTableSkeleton, CallDetailSkeleton, WaveformSkeleton } from '../ui/Skeleton';
@@ -31,7 +33,7 @@ import {
   isCallbackCandidate,
   statusMeta,
 } from '../../lib/callStatus';
-import { callReference, endReasonLabel, pipelineLabel } from '../../lib/internalLabels';
+import { callReference, endReasonLabel, isTechnicalFailure, pipelineLabel } from '../../lib/internalLabels';
 
 const STATUS_ICON = {
   answered: PhoneIncoming,
@@ -63,6 +65,20 @@ function StatusPill({ status, className = '' }) {
     >
       <Icon className="w-3 h-3" />
       {meta.short}
+    </span>
+  );
+}
+
+/** The AI service failed mid-call: the outage message played and the line closed. */
+function TechnicalIssuePill({ className = '' }) {
+  return (
+    <span
+      title="The AI service failed during this call. The caller heard the outage message and the call was ended."
+      data-testid="technical-issue-pill"
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${TONE_CLASS.danger} ${className}`}
+    >
+      <AlertTriangle className="w-3 h-3" />
+      Technical issue
     </span>
   );
 }
@@ -282,6 +298,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
     selectedCallId,
     setSelectedCallId,
     agents,
+    campaigns = [],
     phoneNumbers,
     wallet,
     loadWorkspaceData,
@@ -298,6 +315,8 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   const [fromNumber, setFromNumber] = useState('');
   const [agentId, setAgentId] = useState('');
   const [dialBusy, setDialBusy] = useState(false);
+  // Integrations attached to the next outgoing call; null keeps the agent's saved settings.
+  const [callIntegrations, setCallIntegrations] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [transcriptLines, setTranscriptLines] = useState([]);
   const [liveTranscription, setLiveTranscription] = useState(null);
@@ -468,6 +487,13 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
       (filteredCalls.length > 0 ? filteredCalls[0] : null),
     [filteredCalls, selectedCallId]
   );
+  // The dialer's select shows the first agent before any change; dial with what is shown.
+  const outboundAgentId = agentId || agents[0]?.id || '';
+  const outboundIntegrationOptions = useCallIntegrationOptions(!embedded && mainTab === 'outbound' ? outboundAgentId : null);
+  useEffect(() => { setCallIntegrations(null); }, [outboundAgentId]);
+  const activeCampaign = activeCall?.campaignId ? campaigns.find((c) => c.id === activeCall.campaignId) : null;
+  const activeCallSelection = activeCall?.integrationSelection || activeCampaign?.integrations || null;
+  const detailIntegrationOptions = useCallIntegrationOptions(activeCallSelection?.length ? activeCall?.agentId : null);
 
   useEffect(() => {
     if (!activeCall?.id) {
@@ -549,7 +575,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   }, [activeCall?.id]);
 
   const placeCall = async () => {
-    if (!agentId || !toNumber.trim()) return;
+    if (!outboundAgentId || !toNumber.trim()) return;
     // Payment wall: an empty wallet cannot place a billable call.
     if (balanceUsd <= 0 && balanceInr <= 0) {
       onRequireFunds?.();
@@ -558,9 +584,10 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
     setDialBusy(true);
     try {
       await api.calls.triggerOutbound({
-        agentId,
+        agentId: outboundAgentId,
         toE164: toNumber.trim(),
         fromE164: fromNumber || null,
+        integrations: callIntegrations,
       });
       showToast('Outgoing call started', 'success');
       await refreshCalls();
@@ -719,6 +746,25 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
               Call now
             </TactileButton>
           </div>
+
+          <div className="border-t border-[#E4E2EB] pt-3">
+            <CallIntegrationPicker
+              scope="call"
+              agentId={outboundAgentId}
+              value={callIntegrations}
+              onChange={setCallIntegrations}
+              disabled={dialBusy}
+              options={outboundIntegrationOptions}
+            />
+          </div>
+          <div className="rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] p-3" data-testid="outbound-integration-summary">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#524E5E] mb-1.5">This call will use</div>
+            <IntegrationSelectionSummary
+              selection={callIntegrations}
+              options={outboundIntegrationOptions.items}
+              emptyText="No integrations chosen: the agent uses its saved integration settings."
+            />
+          </div>
         </SolidCard>
       )}
 
@@ -845,6 +891,9 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                               <td className="py-3.5 px-3 text-[#524E5E] font-medium">{call.agentName}</td>
                               <td className="py-3.5 px-3">
                                 <StatusPill status={call.status} />
+                                {isTechnicalFailure(call.endReason) && (
+                                  <TechnicalIssuePill className="mt-1" />
+                                )}
                               </td>
                               <td className="py-3.5 px-3 font-mono font-bold text-[#0F0E17]">
                                 {call.duration}
@@ -896,6 +945,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                     </div>
                     <div className="flex items-center gap-2">
                       <StatusPill status={activeCall.status} />
+                      {isTechnicalFailure(activeCall.endReason) && <TechnicalIssuePill />}
                       <button
                         type="button"
                         onClick={() => setSelectedCallId(null)}
@@ -916,6 +966,18 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                   </p>
 
                   <RecordingPlayer call={activeCall} />
+
+                  <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-1.5" data-testid="call-integrations">
+                    <div className="text-xs font-semibold text-[#524E5E]">Integrations for this call</div>
+                    <IntegrationSelectionSummary
+                      selection={activeCallSelection}
+                      options={detailIntegrationOptions.items}
+                      inherited={Boolean(activeCampaign?.integrations?.length && !activeCall?.integrationSelection)}
+                      emptyText={activeCall?.campaignId && !activeCampaign
+                        ? 'Uses the campaign’s integration settings.'
+                        : 'None chosen: the agent’s saved integration settings applied.'}
+                    />
+                  </div>
 
                   {activeCall.connected && (
                     <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-between text-xs">

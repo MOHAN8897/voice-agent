@@ -69,6 +69,8 @@ class CampaignCreate(BaseModel):
     consent_confirmed: bool = Field(..., validation_alias=AliasChoices("consentConfirmed", "consent_confirmed"))
     consent_version: str = Field("2026-10-v1", validation_alias=AliasChoices("consentVersion", "consent_version"))
     dnd_scrub_enabled: bool = Field(True, validation_alias=AliasChoices("dndScrubEnabled", "dnd_scrub_enabled"))
+    # Integrations every call in this campaign may use ([{app, mode}]); None keeps agent defaults.
+    integrations: list[dict[str, Any]] | None = Field(None, max_length=12, validation_alias=AliasChoices("integrations", "integrationSelection", "integration_selection"))
 
     @field_validator("consent_confirmed")
     @classmethod
@@ -248,6 +250,7 @@ async def list_campaigns(
                 "concurrencyLimit": r.concurrency,
                 "retryRules": r.retry_rules or {},
                 "retry_rules": r.retry_rules or {},
+                "integrations": (r.schedule or {}).get("integration_selection"),
                 "totalContacts": int(cnt or 0),
                 "createdAt": r.created_at.isoformat() if r.created_at else None,
                 # Same shape as GET /api/campaigns/{id}/analytics.
@@ -402,6 +405,16 @@ async def create_campaign(
         agent = await db.get(Agent, agent_uuid)
         if agent is None or agent.tenant_id != tenant_id:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
+        if body.integrations:
+            from server.services.call_integrations import SelectionError, validate_selection
+
+            try:
+                selection = await validate_selection(str(tenant_id), str(agent.agent_id), body.integrations)
+            except SelectionError as exc:
+                raise HTTPException(status_code=exc.status_code, detail=exc.detail()) from None
+            if selection:
+                # Every campaign call inherits this set (resolved from the campaign at runtime).
+                schedule["integration_selection"] = selection
 
         # Create Campaign record with legal attestation audit trail
         camp = Campaign(
@@ -458,6 +471,11 @@ async def create_campaign(
 
         if len(raw_contact_list) > 10000:
             raise HTTPException(422, "Split this campaign into batches of at most 10,000 contacts")
+        if any(isinstance(c, dict) and c.get("call_language") for c in raw_contact_list):
+            # Per-contact language (language-switch callbacks): each must be callable by this agent.
+            from server.services.saas.call_callback_service import resolve_workspace_agent
+            from server.services.saas.language_switch_service import validate_campaign_languages
+            await validate_campaign_languages(await resolve_workspace_agent(str(agent.agent_id), str(tenant_id)), raw_contact_list)
         from server.services.saas.campaign_script import published_campaign_script, require_campaign_variables
         import asyncio
         version, script = await published_campaign_script(agent.active_compiled_brain_version)

@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { TactileButton } from '../ui/TactileButton';
 import { showToast } from '../ui/ToastHost';
+import { CallIntegrationPicker, IntegrationSelectionSummary, useCallIntegrationOptions } from '../ui/CallIntegrationPicker';
 
 const input = 'mt-1 w-full min-h-11 min-w-0 rounded-xl border border-[#D1CFDB] bg-white px-3 py-2 text-base sm:text-sm text-[#0F0E17] focus:outline-none focus:ring-2 focus:ring-[#6344E7]';
 const fields = ['phone', 'full_name', 'first_name', 'last_name', 'email', 'company', 'job_title', 'country', 'city', 'state', 'timezone', 'notes', 'ignore'];
@@ -47,6 +48,8 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], initi
   const [windowEnabled, setWindowEnabled] = useState(true);
   const [callingWindow, setCallingWindow] = useState({ start: '09:00', end: '18:00', timezone: 'Asia/Kolkata' });
   const [previewIndex, setPreviewIndex] = useState(0);
+  // Integrations every campaign call may use; null keeps the agent's saved settings.
+  const [integrations, setIntegrations] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState('');
   const lock = useRef(false);
@@ -57,6 +60,8 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], initi
   const outbound = phoneNumbers.filter((n) => n.outboundEnabled !== false && !['released', 'pending', 'failed'].includes(n.status));
   const agent = agents.find((a) => a.id === currentAgent);
   const followupSource = source === 'callbacks' || source === 'missed';
+  const integrationOptions = useCallIntegrationOptions(currentAgent);
+  useEffect(() => { setIntegrations(null); }, [currentAgent]);
 
   useEffect(() => {
     if (!followupSource || !currentAgent) return;
@@ -177,7 +182,8 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], initi
       if (followupSource && followupJobIds.length !== contacts.length) throw new Error('Follow-up references were lost during validation. Refresh the audience and try again.');
       const created = await createCampaign({ clientRequestId: creationId.current, ...config, agentId: currentAgent, expectedScriptVersion: variables?.scriptVersion, ...pacing, ...dates,
         contacts: followupSource ? [] : contacts, followupJobIds, autoStart,
-        callingWindow: windowEnabled ? callingWindow : undefined, consentConfirmed: consent, dndScrubEnabled: true });
+        callingWindow: windowEnabled ? callingWindow : undefined, consentConfirmed: consent, dndScrubEnabled: true,
+        integrations: integrations || undefined });
       const excluded = created.dndExcludedCount || 0;
       showToast(created.status === 'running' ? `Campaign queued: ${Math.max(0, created.totalContacts - excluded)} eligible contacts.` : 'Campaign saved as a draft.', 'success');
       onComplete?.(created);
@@ -199,6 +205,10 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], initi
             <label className="block text-sm font-medium">Outbound number<select className={input} value={config.fromE164} onChange={(e) => changeConfig('fromE164', e.target.value)}><option value="">Agent’s configured line</option>{outbound.map((n) => <option key={n.id} value={n.number || n.e164}>{n.number || n.e164}</option>)}</select></label>
           </div>
         </section>
+        <div className="border-t border-[#E4E2EB] pt-5">
+          <CallIntegrationPicker scope="campaign" agentId={currentAgent} value={integrations} onChange={setIntegrations}
+            disabled={Boolean(busy)} options={integrationOptions} />
+        </div>
         <section className="space-y-4 border-t border-[#E4E2EB] pt-5" aria-labelledby="campaign-contacts-heading">
           <div className="flex flex-wrap items-center justify-between gap-2"><h3 id="campaign-contacts-heading" className="text-base font-bold">Contacts</h3><span className="text-xs text-[#645D73]">Up to 10,000 contacts · 5 MB</span></div>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Contact source">{[...(initialContacts.length ? [['leads', 'Selected leads']] : []), ['upload', 'Upload file'], ['paste', 'Paste CSV'], ['list', 'Saved list'], ['callbacks', 'Callback requests'], ['missed', 'Missed calls']].map(([key, label]) => <button key={key} type="button" aria-pressed={source === key} onClick={() => changeSource(key)} className={`min-h-11 rounded-xl border px-4 text-sm font-semibold ${source === key ? 'border-[#6344E7] bg-[#F0EEF6] text-[#5033C6]' : 'border-[#E4E2EB] text-[#524E5E]'}`}>{label}</button>)}</div>
@@ -244,7 +254,7 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], initi
           <details><summary className="cursor-pointer text-sm font-semibold">Preview personalized script</summary><pre className="mt-2 max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-white p-3 font-sans text-xs leading-relaxed" data-testid="campaign-personalized-preview">{preview.renderedText}</pre></details>
           <p className="text-xs text-[#645D73]">Each call uses its own contact values and this published script version.</p>
         </section>}
-        <dl className="my-5 space-y-3 text-sm"><div><dt className="text-[#645D73]">Agent</dt><dd className="break-words font-semibold">{agent?.name || 'Choose an agent'}</dd></div><div><dt className="text-[#645D73]">Contacts ready</dt><dd className="text-2xl font-bold tabular-nums">{validation ? contactsReady.toLocaleString() : '—'}</dd></div><div><dt className="text-[#645D73]">Concurrent calls</dt><dd className="font-semibold">Up to {pacing.concurrency}, within your plan</dd></div><div><dt className="text-[#645D73]">Calling window</dt><dd className="break-words font-semibold">{windowEnabled ? `${callingWindow.start}–${callingWindow.end} · ${callingWindow.timezone}` : 'No daily time restriction'}</dd></div></dl>
+        <dl className="my-5 space-y-3 text-sm"><div><dt className="text-[#645D73]">Agent</dt><dd className="break-words font-semibold">{agent?.name || 'Choose an agent'}</dd></div><div><dt className="text-[#645D73]">Contacts ready</dt><dd className="text-2xl font-bold tabular-nums">{validation ? contactsReady.toLocaleString() : '—'}</dd></div><div><dt className="text-[#645D73]">Concurrent calls</dt><dd className="font-semibold">Up to {pacing.concurrency}, within your plan</dd></div><div><dt className="text-[#645D73]">Calling window</dt><dd className="break-words font-semibold">{windowEnabled ? `${callingWindow.start}–${callingWindow.end} · ${callingWindow.timezone}` : 'No daily time restriction'}</dd></div><div><dt className="text-[#645D73]">Integrations each call may use</dt><dd className="mt-1"><IntegrationSelectionSummary selection={integrations} options={integrationOptions.items} emptyText="None chosen: the agent’s saved integration settings apply." /></dd></div></dl>
         <div className="flex gap-2 rounded-xl bg-white p-3 text-xs text-[#365A45]"><ShieldCheck className="h-4 w-4 shrink-0" /><p>Do Not Call checks stay enabled. Pausing stops new work; calls already in progress may continue.</p></div>
         <label className="mt-4 flex cursor-pointer items-start gap-3 text-sm leading-relaxed"><input type="checkbox" checked={consent} disabled={!validation?.validCount || Boolean(busy)} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-4 w-4 shrink-0" /><span>I confirm I have authorization and required consent to call these contacts, approve wallet charges, and accept responsibility for the campaign’s purpose, content and legality.</span></label>
         {error && <div ref={errorRef} tabIndex={-1} role="alert" className="mt-4 flex gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800"><AlertCircle className="h-4 w-4 shrink-0" /><p className="break-words">{error}</p></div>}

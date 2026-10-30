@@ -694,6 +694,23 @@ async def _build_prewarm_bundle(
             reason="unsupported_pipeline",
         )
 
+    # While the phone rings, also render the outage announcement in this call's
+    # language and voice (cached per tenant/agent/language/voice). It must exist
+    # before a failure, because the failing LLM/TTS cannot be asked for it then.
+    try:
+        from server.services.outage_clip_prewarm import schedule_outage_clip_prewarm
+
+        schedule_outage_clip_prewarm(
+            tenant_id=str(dial_meta.get("tenant_id") or agent.get("tenant_id") or "") or None,
+            agent_id=str(agent.get("agent_id") or agent_id or "") or None,
+            language=language,
+            resolved_stack=stack,
+            pipeline=mode,
+            stack_override=pstn_opts.get("stack_override"),
+        )
+    except Exception as exc:
+        log_pstn("outage_clip.schedule_failed", control=external_id, error_type=type(exc).__name__)
+
     return PstnPrewarmBundle(
         provider=provider,
         external_id=external_id,

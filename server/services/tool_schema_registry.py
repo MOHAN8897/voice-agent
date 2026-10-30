@@ -917,10 +917,10 @@ _SCHEMAS: dict[str, list[dict]] = {
                 "properties": {
                     "subject":     {"type": "string"},
                     "description": {"type": "string"},
-                    "email":       {"type": "string"},
+                    "email":       {"type": "string", "description": "Caller email; Freshdesk requires a requester"},
                     "priority":    {"type": "integer", "description": "1=low 2=medium 3=high 4=urgent"},
                 },
-                "required": ["subject", "description"],
+                "required": ["subject", "description", "email"],
             },
         },
     ],
@@ -1193,8 +1193,14 @@ def default_action_timing(app_name: str) -> str:
     return next((row["timing"] for row in CATALOG_INTEGRATIONS if _normalize(row["id"]) == app), "post_call")
 
 
-async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: str | None, factory, configured_tools: set[str] | None = None, *, include_platform: bool = False, compiled_text: str = "") -> list[dict]:
-    """Apply agent-specific disable, timing and action rules before discovery."""
+async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: str | None, factory, configured_tools: set[str] | None = None, *, include_platform: bool = False, compiled_text: str = "", selection: list[dict] | None = None) -> list[dict]:
+    """Apply agent-specific disable, timing and action rules before discovery.
+
+    ``selection`` is the call's chosen integrations (see call_integrations).
+    When present, the exposed set is selected(in_call) ∩ connected ∩ agent-allowed:
+    the tenant's per-call choice sets the timing, while an agent rule that turns
+    the app off, or limits its actions, still applies.
+    """
     if factory is None or not agent_id:
         return []
     import uuid
@@ -1220,6 +1226,16 @@ async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: 
         if configured is not None and tool["name"] not in configured and app not in configured:
             continue
         matching = [r for r in rules if _normalize(r.app_name) == app]
+        if selection is not None:
+            from server.services.call_integrations import agent_allows, agent_whitelist, selected_apps
+
+            if app not in selected_apps(selection, "in_call") or not agent_allows(app, rules):
+                continue
+            whitelist = agent_whitelist(app, rules)
+            if whitelist and tool["name"] not in whitelist:
+                continue
+            allowed.append(tool)
+            continue
         if not matching and default_action_timing(app) != "in_call":
             continue
         if matching and not any(r.enabled and r.timing_mode == "in_call" and

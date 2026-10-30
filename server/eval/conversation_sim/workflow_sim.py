@@ -314,6 +314,7 @@ async def db_evidence(case: dict) -> dict:
     from server.db.connection import get_session_factory
     from server.db.models.entities import Call, CallCallback
     from server.db.models.followup_models import FollowUpJob
+    from server.db.models.language_switch_models import LanguageSwitchRequest
     from server.db.models.phase5_models import DncEntry
     from server.db.models.saas_models import Lead
 
@@ -327,6 +328,8 @@ async def db_evidence(case: dict) -> dict:
             ("dnd", DncEntry, [DncEntry.tenant_id == tid, DncEntry.phone_e164 == case["phone"]]),
             # Agents are shared across cases, so leads must be this call's caller, not the tenant's.
             ("leads", Lead, [Lead.tenant_id == tid, Lead.phone == case["phone"]]),
+            ("language_switch", LanguageSwitchRequest, [LanguageSwitchRequest.tenant_id == tid,
+                                                       LanguageSwitchRequest.original_call_id == cid]),
         ]:
             rows = (await db.scalars(select(cls).where(*filters))).all()
             out[name] = [{a.key: getattr(r, a.key) for a in inspect(r).mapper.column_attrs} for r in rows]
@@ -398,6 +401,9 @@ async def run_case(agent: dict, scenario: dict, lines: dict, playback_cls, index
         for turn, english in enumerate(scenario["turns"], 1):
             if voice._phase == PHASE_ENDED or ctx.status != "active":
                 break
+            if isinstance(english, dict) and english.get("lang") == lang:
+                # A "speak another language" line in the call's own language asks for nothing.
+                english = (scenario.get("lang_overrides") or {}).get(lang, english)
             source = turn_text(english).format(ask=agent["ask"])
             turn_lang = english.get("lang", lang) if isinstance(english, dict) else lang
             caller = lines.get(turn_lang, {}).get(source, source)
@@ -491,6 +497,15 @@ def evaluate(case: dict, scenario: dict) -> dict:
         failures.append("callback_job_missing")
     if expect.get("no_callback") and db.get("callbacks"):
         failures.append("unrequested_callback_saved")
+    if expect.get("language_switch"):
+        items = db.get("language_switch", [])
+        if not items:
+            failures.append("language_switch_not_saved")
+        elif items[0].get("requested_language") != (expect["language_switch"].get(case["language"], "en-IN")
+                                                     if isinstance(expect["language_switch"], dict) else expect["language_switch"]):
+            failures.append(f"language_switch_language:{items[0].get('requested_language')}")
+        if "followup:language_switch" not in ((case.get("outcome") or {}).get("status_tags") or []):
+            failures.append("language_switch_not_tagged")
     if expect.get("ended") and not case.get("ended_by_agent"):
         failures.append("agent_did_not_close")
     if expect.get("order") and not case.get("order_proof"):

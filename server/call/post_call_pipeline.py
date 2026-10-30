@@ -188,6 +188,17 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
             facts["callback_requested"] = "true"
             payload["summary_en"] = (payload.get("summary_en") or "") + " Language handoff: " + handoff["summary"]
             payload["next_action"] = f"Arrange a callback in {handoff['caller_language']}. No callback time has been booked."
+            from server.call.language_switch import code_for_language_name, language_name
+            requested_code = code_for_language_name(str(handoff.get("caller_language") or ""))
+            if requested_code:
+                # Tagged as a language switch call: the console lists it under
+                # "Callback needed in another language" for the same agent.
+                facts["requested_language"] = facts["preferred_language"] = requested_code
+                facts["language_switch"] = "true"
+                payload["language_switch"] = {"requested_language": requested_code,
+                                              "original_language": handoff.get("configured_language") or meta.get("language")}
+                payload["next_action"] = (f"Call back in {language_name(requested_code)} with the same agent "
+                                          "(Callback needed in another language). No callback time has been booked.")
     payload["extracted_fields"] = facts
     payload["facts"] = facts
     from server.call.order_confirmation import enforce_order_proof, read_order_proof
@@ -227,7 +238,7 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
         # Do not surface an actionable callback alongside a permanent opt-out.
         payload["disposition"] = "not_interested"
         payload["next_action"] = "Do not contact this number. The caller opted out."
-        for key in ("callback_requested", "callback_time", "requested_time", "callback_phone"):
+        for key in ("callback_requested", "callback_time", "requested_time", "callback_phone", "language_switch"):
             facts.pop(key, None)
     payload["status_tags"] = derive_status_tags(
         payload.get("disposition"),
@@ -247,6 +258,15 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
         call_id,
         {"disposition": payload["disposition"], "status_tags": payload["status_tags"]},
     )
+    try:
+        from server.services.saas.language_switch_service import (
+            complete_language_switch_after_call, ensure_language_switch_from_meta,
+        )
+        if stored_pref != "do_not_call":
+            await ensure_language_switch_from_meta(call_id, meta)
+        await complete_language_switch_after_call(call_id, meta)
+    except Exception as exc:  # noqa: BLE001 -- the outcome above is already durable.
+        logger.warning("[LANGUAGE_SWITCH] post-call sync failed call=%s kind=%s", call_id, type(exc).__name__)
     # The judgement above is only useful if it lands in the CRM, attributed to the
     # agent that took the call. Runs last so a lead write can never invalidate the
     # outcome the console reads, and swallows its own errors for the same reason.
@@ -579,7 +599,25 @@ async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]
             ToolExecution.status.in_(["initiated", "timed_out_pending"]),
         ))).scalars().all()
         outcome["integration_review_required"] = len(pending)
-    actions = await get_agent_post_call_actions(tenant_id, agent_id)
+    from server.services import call_integrations
+
+    selection = await call_integrations.selection_for_call(str(call_id), tenant_id=tenant_id)
+    meta: dict[str, Any] = {}
+    if selection is None:
+        actions = await get_agent_post_call_actions(tenant_id, agent_id)
+    else:
+        # Integrations were chosen at launch: only the selected after-call apps run.
+        from server.db.models.integration_models import AgentIntegration
+
+        async with factory() as session:
+            rules = (await session.execute(select(AgentIntegration).where(
+                AgentIntegration.tenant_id == uuid.UUID(tenant_id), AgentIntegration.agent_id == uuid.UUID(agent_id),
+            ))).scalars().all()
+        actions = await call_integrations.post_call_plan(selection, list(rules))
+        try:
+            meta = call_ledger.read_meta(str(call_id)) or {}
+        except Exception:  # noqa: BLE001 - arguments then come from the outcome only.
+            meta = {}
     facts = outcome.get("extracted_fields") or {}
     if not isinstance(facts, dict):
         facts = {}
@@ -590,6 +628,13 @@ async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]
         # Only actual extracted values are used. Missing resource IDs, recipients
         # or other required setup are rejected by the action schema.
         arguments = {key: facts[key] for key in properties if key in facts}
+        if selection is not None and action in call_integrations.POST_CALL_DEFAULT_ACTION.values():
+            built = call_integrations.post_call_arguments(action, outcome, meta)
+            if built is None:
+                results.append({"action": action, "result": {
+                    "status": "skipped", "message": "The call did not capture the details this action needs."}})
+                continue
+            arguments = built
         result = await tool_router.route_and_execute(
             tenant_id, agent_id, str(call_id), action, arguments, timing="post_call",
         )
