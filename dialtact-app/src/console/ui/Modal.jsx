@@ -53,7 +53,7 @@ export function Modal({
       {/* Dark backdrop overlay */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-[#0F0E17]/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-ink/60 backdrop-blur-sm transition-opacity"
         aria-hidden="true"
       />
 
@@ -64,23 +64,23 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={headerless ? undefined : titleId}
-        className={`relative w-full ${maxWidth} bg-white border border-[#E4E2EB] rounded-2xl shadow-2xl z-10 overflow-hidden my-auto max-h-[calc(100dvh-2rem)] flex flex-col ${panelClassName} ${className}`}
+        className={`relative w-full ${maxWidth} bg-surface border border-line rounded-card shadow-craft-lg z-10 overflow-hidden my-auto max-h-[calc(100dvh-2rem)] flex flex-col ${panelClassName} ${className}`}
       >
         {!headerless && (
-          <div className="flex items-start justify-between gap-4 p-5 sm:p-6 border-b border-[#E4E2EB] shrink-0">
-            <div>
-              <h2 id={titleId} className="text-base sm:text-lg font-bold text-[#0F0E17] tracking-tight">
+          <div className="flex items-start justify-between gap-4 px-5 py-4 sm:px-6 sm:py-5 border-b border-line shrink-0">
+            <div className="min-w-0">
+              <h2 id={titleId} className="text-title sm:text-heading text-ink">
                 {title}
               </h2>
               {subtitle && (
-                <p className="text-xs text-[#524E5E] mt-1">{subtitle}</p>
+                <p className="text-ui text-fg-muted mt-1">{subtitle}</p>
               )}
             </div>
             <button
               type="button"
               onClick={onClose}
               aria-label="Close dialog"
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] transition-colors"
+              className="-my-1.5 -mr-2 min-w-[44px] min-h-[44px] shrink-0 flex items-center justify-center p-2.5 rounded-control text-fg-muted hover:text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
             >
               <X className="w-4 h-4" />
             </button>

@@ -34,21 +34,21 @@ export function ToastHost() {
           toast.variant === 'success' ? CheckCircle2 : toast.variant === 'error' ? AlertCircle : Info;
         const styles =
           toast.variant === 'success'
-            ? 'border-emerald-200 bg-white text-emerald-900'
+            ? 'border-success-line bg-surface text-success-fg'
             : toast.variant === 'error'
-              ? 'border-red-200 bg-white text-red-900'
-              : 'border-[#E4E2EB] bg-white text-[#0F0E17]';
+              ? 'border-danger-line bg-surface text-danger-fg'
+              : 'border-line bg-surface text-ink';
         return (
           <div
             key={toast.id}
             role="status"
-            className={`pointer-events-auto flex items-start gap-2 rounded-xl border px-3 py-2.5 shadow-craft-md text-xs ${styles}`}
+            className={`pointer-events-auto flex items-start gap-2 rounded-control border px-3 py-2.5 shadow-craft-lg text-ui ${styles}`}
           >
-            <Icon className="w-4 h-4 shrink-0 mt-0.5" />
-            <p className="flex-1 leading-relaxed">{toast.message}</p>
+            <Icon className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+            <p className="flex-1 min-w-0 break-words">{toast.message}</p>
             <button
               type="button"
-              className="min-w-[28px] min-h-[28px] flex items-center justify-center rounded-lg text-[#8C879A] hover:text-[#0F0E17] hover:bg-[#FAF9FD]"
+              className="min-w-[32px] min-h-[32px] -my-1 -mr-1 flex items-center justify-center rounded-control text-fg-muted hover:text-ink hover:bg-canvas"
               onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
               aria-label="Dismiss"
             >

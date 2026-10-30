@@ -40,7 +40,7 @@ const TIMEZONE_FAVOURITES = [
 ];
 
 const HOURS_HELP =
-  'These hours route incoming calls in the timezone below. For outbound commercial calls in India, ' +
+  'These hours decide how incoming calls are answered, in the time zone below. For outbound commercial calls in India, ' +
   'separately verify applicable calling times and recipient preferences under TRAI rules. ' +
   'A business-hours setting does not establish permission to call.';
 
@@ -60,19 +60,19 @@ const DECISION_LABEL = {
 function DecisionNote({ decision, hasProfile }) {
   if (!decision) return null;
   return (
-    <div className="flex items-start gap-2 p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
-      <Info className="w-3.5 h-3.5 text-[#6344E7] mt-0.5 shrink-0" />
-      <div className="text-[11px] text-[#524E5E]">
-        <span className="font-semibold text-[#0F0E17]">Right now: </span>
+    <div className="flex items-start gap-2 p-3 rounded-control bg-info-soft border border-info-line">
+      <Info className="w-4 h-4 text-info-fg mt-0.5 shrink-0" aria-hidden="true" />
+      <div className="text-ui text-fg-body min-w-0">
+        <span className="font-semibold text-ink">Right now: </span>
         {DECISION_LABEL[decision.reason] || 'The agent answers normally'}
-        {decision.afterHours && <span className="block text-[10px] text-[#8C879A] mt-0.5">It is currently outside business hours.</span>}
+        {decision.afterHours && <span className="block text-meta text-fg-muted mt-0.5">It is currently outside business hours.</span>}
         {decision.greetingPhrase && (
-          <span className="block text-[10px] text-[#8C879A] mt-0.5">
+          <span className="block text-meta text-fg-muted mt-0.5">
             Caller hears: “{decision.greetingPhrase}”
           </span>
         )}
         {!hasProfile && (
-          <span className="block text-[10px] text-[#8C879A] mt-0.5">
+          <span className="block text-meta text-fg-muted mt-0.5">
             This agent has no phone settings yet, so it behaves exactly as before.
           </span>
         )}
@@ -197,18 +197,18 @@ export function TelephonySettingsCard({
 
   return (
     <SolidCard className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-xs font-bold text-[#0F0E17] flex items-center gap-1.5">
-            <Phone className="w-3.5 h-3.5 text-[#6344E7]" />
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-title text-ink flex items-center gap-2">
+            <Phone className="w-4 h-4 text-fg-subtle" aria-hidden="true" />
             When this number answers
           </h3>
-          <p className="text-[11px] text-[#524E5E] mt-0.5">
-            Applies to the next incoming call. Saved on the server, not in the agent's script.
+          <p className="text-ui text-fg-muted mt-0.5">
+            Applies from the next incoming call. Saved separately from the agent's script.
           </p>
         </div>
         {loading ? (
-          <RefreshCw className="w-3.5 h-3.5 text-[#8C879A] animate-spin" />
+          <RefreshCw className="w-3.5 h-3.5 text-fg-muted animate-spin" />
         ) : (
           <StatusBadge status={profile.inboundEnabled === false ? 'Paused' : 'Active'} size="xs" />
         )}
@@ -217,10 +217,10 @@ export function TelephonySettingsCard({
       <DecisionNote decision={decision} hasProfile={hasProfile} />
 
       <div className="space-y-2">
-        <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
-          <span>
-            <span className="block font-semibold text-[#0F0E17] text-xs">Accept incoming calls</span>
-            <span className="block text-[10px] text-[#8C879A]">
+        <label className="flex items-center justify-between gap-3 p-3 rounded-control bg-canvas border border-line cursor-pointer">
+          <span className="min-w-0">
+            <span className="block font-medium text-ink text-ui">Accept incoming calls</span>
+            <span className="block text-meta text-fg-muted">
               When off, this number does not ring for inbound calls.
             </span>
           </span>
@@ -230,14 +230,14 @@ export function TelephonySettingsCard({
             disabled={disabled}
             onChange={(e) => set({ inboundEnabled: e.target.checked })}
             data-testid="studio-inbound-enabled"
-            className="w-4 h-4 accent-[#6344E7]"
+            className="w-4 h-4 shrink-0 accent-accent"
           />
         </label>
 
-        <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
-          <span>
-            <span className="block font-semibold text-[#0F0E17] text-xs">Allow outgoing calls</span>
-            <span className="block text-[10px] text-[#8C879A]">
+        <label className="flex items-center justify-between gap-3 p-3 rounded-control bg-canvas border border-line cursor-pointer">
+          <span className="min-w-0">
+            <span className="block font-medium text-ink text-ui">Allow outgoing calls</span>
+            <span className="block text-meta text-fg-muted">
               When off, this agent cannot place calls or receive callbacks.
             </span>
           </span>
@@ -247,22 +247,22 @@ export function TelephonySettingsCard({
             disabled={disabled}
             onChange={(e) => set({ outboundEnabled: e.target.checked })}
             data-testid="studio-outbound-enabled"
-            className="w-4 h-4 accent-[#6344E7]"
+            className="w-4 h-4 shrink-0 accent-accent"
           />
         </label>
       </div>
 
       <div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-bold text-[#0F0E17]">Business hours</span>
-          <span className="text-[10px] text-[#8C879A]" data-testid="studio-hours-summary">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-copy font-semibold text-ink">Business hours</span>
+          <span className="text-meta text-fg-muted" data-testid="studio-hours-summary">
             {businessHoursSummary(hours)}
             {!isBusinessHoursEmpty(hours) && ` · ${profile.timezone}`}
           </span>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <label className="text-[11px] font-bold text-[#0F0E17]" htmlFor="studio-timezone">
-            Timezone
+          <label className="text-ui font-medium text-ink" htmlFor="studio-timezone">
+            Time zone
           </label>
           <input
             id="studio-timezone"
@@ -271,24 +271,24 @@ export function TelephonySettingsCard({
             onChange={(e) => set({ timezone: e.target.value.trim() })}
             disabled={disabled}
             data-testid="studio-timezone"
-            className="bg-white border border-[#E4E2EB] rounded-lg px-2 py-1 text-[11px] font-mono disabled:opacity-50"
+            className="min-w-0 max-w-full px-2.5 py-1.5 min-h-[36px] bg-surface border border-line rounded-control text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:opacity-50"
           />
           <datalist id="studio-timezone-options">
             {TIMEZONE_FAVOURITES.map((tz) => (
               <option key={tz} value={tz} />
             ))}
           </datalist>
-          <span className="text-[10px] text-[#8C879A]">
-            IANA name. Common US/EU zones are suggested; any valid zone works.
+          <span className="text-meta text-fg-muted">
+            Pick from the list or type a zone such as Asia/Kolkata.
           </span>
         </div>
-        <p className="mt-2 text-[10px] text-[#8C879A] leading-relaxed">{HOURS_HELP}</p>
+        <p className="mt-2 text-meta text-fg-muted">{HOURS_HELP}</p>
         <div className="mt-2 space-y-1.5">
           {WEEKDAYS.map((day) => {
             const windows = hours[day.id] || [];
             const isOpen = windows.length > 0;
             return (
-              <div key={day.id} className="flex items-center gap-2">
+              <div key={day.id} className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() =>
@@ -300,16 +300,16 @@ export function TelephonySettingsCard({
                   disabled={disabled}
                   data-testid={`studio-day-${day.id}`}
                   aria-pressed={isOpen}
-                  className={`w-11 shrink-0 px-2 py-1.5 rounded-lg text-[11px] font-bold border transition-colors disabled:opacity-50 ${
+                  className={`w-12 min-h-[36px] shrink-0 px-2 py-1.5 rounded-control text-meta font-semibold border transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                     isOpen
-                      ? 'bg-[#0F0E17] text-white border-[#0F0E17]'
-                      : 'bg-white text-[#8C879A] border-[#E4E2EB]'
+                      ? 'bg-ink text-white border-ink'
+                      : 'bg-surface text-fg-muted border-line hover:border-line-strong'
                   }`}
                 >
                   {day.label}
                 </button>
                 {isOpen ? (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {windows.map((w, i) => (
                       <div key={i} className="flex items-center gap-1">
                         <input
@@ -318,22 +318,22 @@ export function TelephonySettingsCard({
                           onChange={(e) => setWindow(day.id, i, 'open', e.target.value)}
                           disabled={disabled}
                           data-testid={`studio-hours-${day.id}-open`}
-                          className="bg-white border border-[#E4E2EB] rounded-lg px-1.5 py-1 text-[11px] font-mono disabled:opacity-50"
+                          className="px-2 py-1 min-h-[36px] font-mono tabular-nums bg-surface border border-line rounded-control text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:opacity-50"
                         />
-                        <span className="text-[10px] text-[#8C879A]">to</span>
+                        <span className="text-meta text-fg-muted">to</span>
                         <input
                           type="time"
                           value={w.close}
                           onChange={(e) => setWindow(day.id, i, 'close', e.target.value)}
                           disabled={disabled}
                           data-testid={`studio-hours-${day.id}-close`}
-                          className="bg-white border border-[#E4E2EB] rounded-lg px-1.5 py-1 text-[11px] font-mono disabled:opacity-50"
+                          className="px-2 py-1 min-h-[36px] font-mono tabular-nums bg-surface border border-line rounded-control text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:opacity-50"
                         />
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <span className="text-[10px] text-[#A9A5B4]">Closed</span>
+                  <span className="text-meta text-fg-muted">Closed</span>
                 )}
               </div>
             );
@@ -357,16 +357,16 @@ export function TelephonySettingsCard({
             })
           }
           data-testid="studio-hours-toggle-all"
-          className="mt-2 text-[11px] font-semibold text-[#5034CE] hover:underline disabled:opacity-50"
+          className="mt-2 min-h-[36px] text-ui font-semibold text-accent-fg hover:underline disabled:opacity-50"
         >
           {isBusinessHoursEmpty(hours) ? 'Set standard business hours' : 'Clear hours (always open)'}
         </button>
       </div>
 
       <div>
-        <span className="text-xs font-bold text-[#0F0E17]">Holidays / closed dates</span>
-        <span className="block text-[10px] text-[#8C879A] mb-1">
-          One YYYY-MM-DD per line. On these dates the agent follows the after-hours action
+        <span className="text-copy font-semibold text-ink">Holidays and closed dates</span>
+        <span className="block text-meta text-fg-muted mb-1">
+          One date per line, written as YYYY-MM-DD. On these dates the agent follows the after-hours action
           even if the weekday would normally be open.
         </span>
         <textarea
@@ -383,12 +383,12 @@ export function TelephonySettingsCard({
           disabled={disabled}
           placeholder={'2026-12-25\n2026-01-01'}
           data-testid="studio-closed-dates"
-          className="w-full rounded-xl bg-white border border-[#E4E2EB] px-3 py-2 text-xs font-mono text-[#0F0E17] placeholder:text-[#8C879A] focus:outline-none focus:border-[#6344E7] resize-none disabled:opacity-50"
+          className="w-full px-3 py-2 font-mono tabular-nums placeholder:text-fg-subtle resize-none bg-surface border border-line rounded-control text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:opacity-50"
         />
       </div>
 
       <div>
-        <span className="text-xs font-bold text-[#0F0E17]">Outside business hours</span>
+        <span className="text-copy font-semibold text-ink">Outside business hours</span>
         <div className="mt-2 grid sm:grid-cols-2 gap-2">
           {AFTER_HOURS_OPTIONS.map((opt) => {
             const active = (profile.afterHoursAction || 'voicemail') === opt.id;
@@ -400,15 +400,15 @@ export function TelephonySettingsCard({
                 onClick={() => set({ afterHoursAction: opt.id })}
                 data-testid={`studio-after-hours-${opt.id}`}
                 aria-pressed={active}
-                className={`px-3 py-2 rounded-xl text-left border transition-all disabled:opacity-50 ${
+                className={`px-3 py-2.5 rounded-control text-left border transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                   active
-                    ? 'bg-[#0F0E17] text-white border-[#0F0E17]'
-                    : 'bg-white text-[#524E5E] border-[#E4E2EB] hover:border-[#6344E7]/40'
+                    ? 'bg-ink text-white border-ink'
+                    : 'bg-surface text-fg-body border-line hover:border-line-strong'
                 }`}
               >
-                <span className="block text-xs font-bold">{opt.label}</span>
+                <span className="block text-ui font-semibold">{opt.label}</span>
                 <span
-                  className={`block text-[10px] mt-0.5 ${active ? 'text-white/70' : 'text-[#8C879A]'}`}
+                  className={`block text-meta mt-0.5 ${active ? 'text-white/70' : 'text-fg-muted'}`}
                 >
                   {opt.description}
                 </span>
@@ -419,7 +419,7 @@ export function TelephonySettingsCard({
 
         {needsTransfer && (
           <label className="block mt-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C879A]">
+            <span className="text-ui font-medium text-ink">
               Transfer to
             </span>
             <input
@@ -429,15 +429,15 @@ export function TelephonySettingsCard({
               disabled={disabled}
               placeholder="+919999999999"
               data-testid="studio-transfer-number"
-              className="mt-1 w-full bg-white border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-xs font-mono disabled:opacity-50"
+              className="mt-1 w-full px-3 py-2 min-h-[40px] font-mono tabular-nums bg-surface border border-line rounded-control text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:opacity-50"
             />
           </label>
         )}
       </div>
 
       <label className="block">
-        <span className="text-xs font-bold text-[#0F0E17]">Greeting the caller hears</span>
-        <span className="block text-[10px] text-[#8C879A] mb-1">
+        <span className="text-copy font-semibold text-ink">Greeting the caller hears</span>
+        <span className="block text-meta text-fg-muted mb-1">
           Leave blank to use the opening line from the agent's script.
         </span>
         <textarea
@@ -448,7 +448,7 @@ export function TelephonySettingsCard({
           disabled={disabled}
           placeholder="Thanks for calling, this is Priya speaking."
           data-testid="studio-greeting"
-          className="w-full rounded-xl bg-white border border-[#E4E2EB] px-3 py-2 text-xs text-[#0F0E17] placeholder:text-[#8C879A] focus:outline-none focus:border-[#6344E7] resize-none disabled:opacity-50"
+          className="w-full px-3 py-2 placeholder:text-fg-subtle resize-none bg-surface border border-line rounded-control text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:opacity-50"
         />
       </label>
 
@@ -456,15 +456,15 @@ export function TelephonySettingsCard({
         <div
           data-testid="studio-telephony-error"
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900"
+          className="rounded-control border border-danger-line bg-danger-soft px-3 py-2 text-ui text-danger-fg"
         >
           {error}
         </div>
       )}
 
       {!hideSaveButton && (
-        <div className="flex items-center justify-end gap-2 pt-1 border-t border-[#E4E2EB]">
-          {dirty && <span className="text-[10px] text-[#B45309]">Unsaved changes</span>}
+        <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-line">
+          {dirty && <span className="text-ui text-warning-fg">Unsaved changes</span>}
           <TactileButton
             variant="secondary"
             size="sm"

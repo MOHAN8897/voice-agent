@@ -52,7 +52,7 @@ test('the session card and idle monitor use the 6-hour window', async ({ page })
   await page.getByTestId('auth-modal').getByLabel('Work email').fill(user.email);
   await page.getByTestId('auth-modal').getByLabel('Password', { exact: true }).fill('test-only-password');
   await page.getByTestId('auth-modal').getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'AI Employees', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'AI employees (0)', exact: true })).toBeVisible();
   await page.getByTestId('nav-settings').click();
   await expect(page).toHaveURL(/#dashboard\/settings/);
   await expect(page.getByTestId('session-idle-minutes')).toHaveText('6 hours');

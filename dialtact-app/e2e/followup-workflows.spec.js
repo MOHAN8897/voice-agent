@@ -99,7 +99,7 @@ test('overview shows connection, confirmed conversion and actual charge metrics'
   await setup(page);
   await page.getByTestId('agent-tab-overview').click();
   await expect(page.getByTestId('agent-conversion-metrics')).toContainText('30%');
-  await expect(page.getByTestId('agent-conversion-metrics')).toContainText('₹20.00');
+  await expect(page.getByTestId('agent-conversion-metrics')).toContainText('₹20');
   await expect(page.getByText('75%', { exact: true })).toBeVisible();
   await expect(page.getByText('45s', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Pipeline', exact: true }).click();

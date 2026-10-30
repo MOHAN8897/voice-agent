@@ -144,16 +144,16 @@ test.describe('Integrations & Voice Tools Marketplace', () => {
     await expect(page.getByRole('heading', { name: /integrations/i }).first()).toBeVisible({ timeout: 20000 });
 
     // 1. Click "How Connections Work" tab
-    const guideTab = page.getByRole('button', { name: /how connections work/i });
+    const guideTab = page.getByRole('tab', { name: /how connections work/i });
     await expect(guideTab).toBeVisible();
     await guideTab.click();
-    await expect(page.getByRole('heading', { name: /how app connections & tenant sign-in work/i })).toBeVisible();
-    await expect(page.getByText(/personal \/ workspace sign-in/i)).toBeVisible();
-    await expect(page.getByText(/encrypted tenant vault/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'How connections work', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'You sign in to the app', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Access stays with your workspace', exact: true })).toBeVisible();
     await expect(page.getByText(/sub-second in-call dispatch/i)).toBeVisible();
 
     // 2. Return to All Integrations tab
-    const allTab = page.getByRole('button', { name: /all integrations/i });
+    const allTab = page.getByRole('tab', { name: /all integrations/i });
     await allTab.click();
     await expect(page.getByText('Google Calendar')).toBeVisible();
 

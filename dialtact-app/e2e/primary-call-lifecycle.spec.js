@@ -34,7 +34,7 @@ test('workspace search has no keyboard shortcut hint', async ({ page }) => {
 test('billing shows one wallet charge for the call without supplier cost details', async ({ page }) => {
   await setupPrimaryCall(page);
   await page.goto('/#dashboard/billing');
-  await expect(page.getByText('Last call session (1m 20s)', { exact: true })).toBeVisible();
+  await expect(page.getByText('Last call (1m 20s)', { exact: true })).toBeVisible();
   await expect(page.getByText('$0.14 billed', { exact: true })).toBeVisible();
   await expect(page.getByText(/Gemini Live AI Voice|Total Supplier Cost|Session Cost Breakdown/)).toHaveCount(0);
   await expect(page.getByText('-$0.14', { exact: true })).toBeVisible();
@@ -90,7 +90,7 @@ test('phone test blocks dialing without an eligible line and fits a mobile scree
   await page.getByTestId('agent-test-call').click();
   await page.getByTestId('test-call-mode-phone').click();
   await expect(page.getByTestId('test-call-start-phone')).toBeDisabled();
-  await expect(page.getByText('No phone line is ready for outgoing calls')).toBeVisible();
+  await expect(page.getByText('None of your numbers can make outgoing calls yet')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: '../artifacts/pstn-phone-test-mobile.png', fullPage: true });
 });

@@ -39,6 +39,6 @@ test('catalogue refresh awaits requests and reports a failed catalogue instead o
   await refresh.click();
   await expect(page.getByTestId('voice-stack-loading')).toBeVisible();
   await expect(page.getByRole('alert').filter({ hasText: 'Approved voice options could not be loaded' })).toBeVisible();
-  await expect(page.getByText('Some voice options could not be refreshed. Check the catalogue messages and retry.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Some voice options could not be refreshed. Check the messages below and try again.', { exact: true })).toBeVisible();
   await expect(page.getByText('Voice options refreshed.', { exact: true })).toHaveCount(0);
 });

@@ -15,14 +15,14 @@ export function ConsoleSyncBanner() {
 
   return (
     <div
-      className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+      className="mb-4 rounded-card border border-warning-line bg-warning-soft px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
       role="status"
     >
-      <div className="flex gap-2.5 text-sm text-amber-950">
-        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-700" />
-        <div>
-          <p className="font-semibold">Some console data could not be loaded from the API</p>
-          <ul className="mt-1 text-xs text-amber-900/90 list-disc pl-4 space-y-0.5">
+      <div className="flex min-w-0 gap-2.5 text-copy text-warning-fg">
+        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-warning-fg" aria-hidden="true" />
+        <div className="min-w-0">
+          <p className="font-semibold">Some information could not be loaded</p>
+          <ul className="mt-1 text-ui text-warning-fg list-disc pl-4 space-y-0.5 break-words">
             {issues.slice(0, 4).map((msg) => (
               <li key={msg}>{msg}</li>
             ))}

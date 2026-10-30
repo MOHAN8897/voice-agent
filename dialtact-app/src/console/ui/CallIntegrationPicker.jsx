@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Blocks, Clock, ExternalLink, Loader2, PhoneCall, RefreshCw } from 'lucide-react';
 import { api } from '../../services/api';
+import { FULL_INTEGRATIONS_CATALOG } from '../modules/integrationsCatalog';
 
 /**
  * "Integrations for this call": which connected apps this call (or every call
@@ -12,14 +13,14 @@ import { api } from '../../services/api';
 
 const MODE_LABEL = { in_call: 'During the call', post_call: 'After the call' };
 const MODE_TONE = {
-  in_call: 'bg-[#EEF2FF] text-[#4338CA] border-[#C7D2FE]',
-  post_call: 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]',
+  in_call: 'bg-info-soft text-info-fg border-info-line',
+  post_call: 'bg-neutral-soft text-neutral-fg border-neutral-line',
 };
 
 export function ModeBadge({ mode }) {
   const Icon = mode === 'in_call' ? PhoneCall : Clock;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${MODE_TONE[mode] || MODE_TONE.in_call}`}>
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-pill border px-2 py-0.5 text-meta font-medium ${MODE_TONE[mode] || MODE_TONE.in_call}`}>
       <Icon className="h-3 w-3" aria-hidden="true" />
       {MODE_LABEL[mode] || mode}
     </span>
@@ -35,7 +36,7 @@ export function useCallIntegrationOptions(agentId) {
     setState((prev) => ({ ...prev, loading: true, error: '' }));
     api.integrations.callOptions(agentId)
       .then((data) => { if (active) setState({ items: data.items || [], loading: false, error: '' }); })
-      .catch((err) => { if (active) setState({ items: [], loading: false, error: err.message || 'Integrations could not be loaded.' }); });
+      .catch((err) => { if (active) setState({ items: [], loading: false, error: err.message || 'Apps could not be loaded.' }); });
     return () => { active = false; };
   }, [agentId, reload]);
   return { ...state, refresh: () => setReload((n) => n + 1) };
@@ -46,8 +47,8 @@ export function IntegrationSelectionSummary({ selection, options = [], emptyText
   const names = Object.fromEntries((options || []).map((item) => [item.app, item.name]));
   if (!selection?.length) {
     return (
-      <p className={`text-xs text-[#645D73] ${className}`} data-testid="integration-summary-default">
-        {emptyText || 'Agent’s saved integration settings (none chosen for this call).'}
+      <p className={`text-ui text-fg-body ${className}`} data-testid="integration-summary-default">
+        {emptyText || 'The employee’s saved app settings (none chosen for this call).'}
       </p>
     );
   }
@@ -56,21 +57,32 @@ export function IntegrationSelectionSummary({ selection, options = [], emptyText
       {selection.map((item) => {
         const mode = (options.find((o) => o.app === item.app)?.modes || []).find((m) => m.mode === item.mode);
         return (
-          <li key={`${item.app}-${item.mode}`} className="min-w-0 text-xs">
+          <li key={`${item.app}-${item.mode}`} className="min-w-0 text-ui">
             <span className="flex flex-wrap items-center gap-1.5">
-              <span className="font-semibold text-[#0F0E17]">{names[item.app] || prettyApp(item.app)}</span>
+              <span className="font-semibold text-ink">{names[item.app] || prettyApp(item.app)}</span>
               <ModeBadge mode={item.mode} />
             </span>
-            {mode?.description && <span className="mt-0.5 block break-words text-[#645D73]">{mode.description}</span>}
+            {mode?.description && <span className="mt-0.5 block break-words text-fg-body">{mode.description}</span>}
           </li>
         );
       })}
-      {inherited && <li className="text-[11px] text-[#645D73]">Inherited from the campaign.</li>}
+      {inherited && <li className="text-meta text-fg-muted">Set by the campaign.</li>}
     </ul>
   );
 }
 
+/**
+ * One app-label map for the console: the integrations catalog's names, keyed by
+ * the app id with separators removed ("google_calendar" and "GOOGLECALENDAR" both
+ * become "Google Calendar"). Anything not in the catalog is title-cased.
+ */
+const APP_LABELS = Object.fromEntries(
+  FULL_INTEGRATIONS_CATALOG.map((entry) => [String(entry.id).replace(/[^a-z0-9]/gi, '').toUpperCase(), entry.name])
+);
+
 export function prettyApp(app) {
+  const key = String(app || '').replace(/[^a-z0-9]/gi, '').toUpperCase();
+  if (APP_LABELS[key]) return APP_LABELS[key];
   return String(app || '').replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
@@ -99,29 +111,29 @@ export function CallIntegrationPicker({ agentId, value, onChange, scope = 'call'
     <section className="space-y-3" aria-labelledby={`integrations-${scope}-heading`} data-testid="call-integration-picker">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 id={`integrations-${scope}-heading`} className="flex items-center gap-2 text-sm font-bold text-[#0F0E17]">
-            <Blocks className="h-4 w-4 text-[#6344E7]" aria-hidden="true" />
+          <h3 id={`integrations-${scope}-heading`} className="flex items-center gap-2 text-title text-ink">
+            <Blocks className="h-4 w-4 text-accent" aria-hidden="true" />
             Integrations for {scope === 'campaign' ? 'this campaign' : 'this call'}
           </h3>
-          <p className="mt-1 text-xs text-[#524E5E]">
-            Choose which connected apps the agent may use for {subject}. It uses exactly these and will not offer anything
-            else. If you choose none, the agent uses its saved integration settings.
+          <p className="mt-1 text-ui text-fg-body">
+            Choose which connected apps the employee may use for {subject}. They use only these. If you choose none,
+            the employee uses their saved app settings.
           </p>
         </div>
         <button type="button" onClick={refresh} disabled={loading || !agentId}
-          className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-[#5033C6] hover:bg-[#F0EEF6] disabled:opacity-50">
+          className="inline-flex min-h-9 items-center gap-1 rounded-control px-2 text-ui font-medium text-accent-fg hover:bg-surface-subtle disabled:opacity-50">
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" /> Refresh
         </button>
       </div>
 
-      {!agentId && <p className="text-xs text-[#645D73]">Choose an agent to see its integrations.</p>}
-      {loading && <p role="status" className="flex items-center gap-2 text-xs text-[#524E5E]"><Loader2 className="h-3.5 w-3.5 animate-spin" />Loading integrations…</p>}
-      {error && <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">{error} The agent’s saved integration settings will apply.</p>}
+      {!agentId && <p className="text-ui text-fg-body">Choose an employee to see their apps.</p>}
+      {loading && <p role="status" className="flex items-center gap-2 text-ui text-fg-body"><Loader2 className="h-3.5 w-3.5 animate-spin" />Loading apps…</p>}
+      {error && <p role="alert" className="rounded-control border border-warning-line bg-warning-soft p-2 text-ui text-warning-fg">{error} The employee’s saved app settings will be used.</p>}
 
       {!loading && agentId && !error && !available.length && (
-        <div className="rounded-xl border border-dashed border-[#D1CFDB] p-3 text-xs text-[#524E5E]">
-          No connected integrations can be used from calls yet.{' '}
-          <a href="#dashboard/integrations" className="font-semibold text-[#5033C6] underline">Connect one on the Integrations page</a>.
+        <div className="rounded-control border border-dashed border-line-strong p-3 text-ui text-fg-body">
+          None of your connected apps can be used on calls yet.{' '}
+          <a href="#dashboard/integrations" className="font-semibold text-accent-fg underline">Connect one on the Integrations page</a>.
         </div>
       )}
 
@@ -132,16 +144,16 @@ export function CallIntegrationPicker({ agentId, value, onChange, scope = 'call'
             const mode = selected[item.app] || item.defaultMode;
             const modeInfo = item.modes.find((m) => m.mode === mode) || item.modes[0];
             return (
-              <li key={item.app} className={`min-w-0 rounded-xl border p-3 transition-colors ${on ? 'border-[#6344E7] bg-[#F7F5FF]' : 'border-[#E4E2EB] bg-white'}`}>
+              <li key={item.app} className={`min-w-0 rounded-control border p-3 transition-colors ${on ? 'border-accent bg-accent-soft' : 'border-line bg-surface'}`}>
                 <label className="flex cursor-pointer items-start gap-2.5">
-                  <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0" checked={on} disabled={disabled}
+                  <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-accent" checked={on} disabled={disabled}
                     onChange={() => toggle(item)} aria-describedby={`ci-desc-${scope}-${item.app}`} data-testid={`ci-toggle-${item.app}`} />
                   <span className="min-w-0">
                     <span className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-sm font-semibold text-[#0F0E17]">{item.name}</span>
+                      <span className="text-copy font-semibold text-ink">{item.name || prettyApp(item.app)}</span>
                       <ModeBadge mode={mode} />
                     </span>
-                    <span id={`ci-desc-${scope}-${item.app}`} className="mt-1 block break-words text-xs text-[#524E5E]">{modeInfo?.description}</span>
+                    <span id={`ci-desc-${scope}-${item.app}`} className="mt-1 block break-words text-ui text-fg-body">{modeInfo?.description}</span>
                   </span>
                 </label>
                 {item.modes.length > 1 && (
@@ -149,7 +161,7 @@ export function CallIntegrationPicker({ agentId, value, onChange, scope = 'call'
                     {item.modes.map((m) => (
                       <button key={m.mode} type="button" role="radio" aria-checked={mode === m.mode} disabled={disabled}
                         onClick={() => (on ? setMode(item, m.mode) : update({ ...selected, [item.app]: m.mode }))}
-                        className={`min-h-8 rounded-lg border px-2.5 text-[11px] font-semibold ${mode === m.mode && on ? 'border-[#6344E7] bg-white text-[#5033C6]' : 'border-[#E4E2EB] text-[#524E5E]'}`}>
+                        className={`min-h-8 rounded-control border px-2.5 text-meta font-medium ${mode === m.mode && on ? 'border-accent bg-surface text-accent-fg' : 'border-line bg-surface text-fg-body hover:border-line-strong'}`}>
                         {m.label}
                       </button>
                     ))}
@@ -162,17 +174,17 @@ export function CallIntegrationPicker({ agentId, value, onChange, scope = 'call'
       )}
 
       {(unavailable.length > 0 || needsSetup.length > 0) && (
-        <details className="rounded-xl border border-[#E4E2EB] p-3">
-          <summary className="cursor-pointer text-xs font-semibold text-[#524E5E]">
+        <details className="rounded-control border border-line p-3">
+          <summary className="cursor-pointer text-ui font-medium text-fg-body">
             Not available for calls ({unavailable.length + needsSetup.length})
           </summary>
           <ul className="mt-2 grid gap-2 sm:grid-cols-2">
             {[...unavailable, ...needsSetup].map((item) => (
-              <li key={item.app} aria-disabled="true" className="min-w-0 rounded-lg border border-[#EEEDF3] bg-[#FAF9FD] p-2.5 opacity-70">
-                <span className="text-xs font-semibold text-[#524E5E]">{item.name}</span>
-                <span className="mt-0.5 block break-words text-[11px] text-[#645D73]">{item.reason}</span>
+              <li key={item.app} aria-disabled="true" className="min-w-0 rounded-control border border-line bg-canvas p-2.5 opacity-70">
+                <span className="text-ui font-semibold text-fg-body">{item.name || prettyApp(item.app)}</span>
+                <span className="mt-0.5 block break-words text-meta text-fg-body">{item.reason}</span>
                 {(item.state === 'not_connected' || item.state === 'needs_reauth') && (
-                  <a href="#dashboard/integrations" className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[#5033C6] underline">
+                  <a href="#dashboard/integrations" className="mt-1 inline-flex items-center gap-1 text-meta font-medium text-accent-fg underline">
                     Connect on Integrations page <ExternalLink className="h-3 w-3" aria-hidden="true" />
                   </a>
                 )}

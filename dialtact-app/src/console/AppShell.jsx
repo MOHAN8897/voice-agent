@@ -31,6 +31,13 @@ import { ToastHost } from './ui/ToastHost';
 import { AddFundsModal } from './ui/AddFundsModal';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 import { ServiceDegradedBanner } from './ui/ServiceDegradedBanner';
+import { NotFound } from './ui/NotFound';
+
+/** Every page the console can render. Anything else shows "Page not found". */
+export const CONSOLE_TABS = new Set([
+  'overview', 'employees', 'phone-numbers', 'calls', 'leads', 'campaigns',
+  'billing', 'calculator', 'integrations', 'settings',
+]);
 
 export function AppShell({ onBackToLanding, onSignOut }) {
   const { user } = useAuth();
@@ -145,7 +152,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
   };
 
   return (
-    <div className="flex h-screen bg-[#FAF9FD] text-[#0F0E17] overflow-hidden select-none font-sans antialiased">
+    <div className="flex h-screen bg-canvas text-ink overflow-hidden select-none font-sans antialiased">
       {/* Primary Vertical Navigation (Responsive Desktop & Mobile Drawer) */}
       <ErrorBoundary title="Sidebar Navigation Unavailable">
         <Sidebar
@@ -165,7 +172,7 @@ export function AppShell({ onBackToLanding, onSignOut }) {
       </ErrorBoundary>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FAF9FD]">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-canvas">
         <ErrorBoundary title="Banners Unavailable">
           <ImpersonationBanner />
           <GracePeriodBanner />
@@ -189,14 +196,14 @@ export function AppShell({ onBackToLanding, onSignOut }) {
         </ErrorBoundary>
 
         {/* Dynamic Viewport */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 bg-[#FAF9FD]">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8 bg-canvas">
           <div className="w-full max-w-[1680px] mx-auto pb-8 console-workspace">
             <ServiceDegradedBanner />
             <ConsoleSyncBanner />
             <PurchaseProvisioningBanner />
             <ErrorBoundary
               key={activeTab}
-              title={`Unable to load ${activeTab} module`}
+              title="This page couldn't load"
               description="An unexpected error occurred in this module. You can retry or switch to another section."
             >
               {activeTab === 'overview' && (
@@ -248,6 +255,8 @@ export function AppShell({ onBackToLanding, onSignOut }) {
               {activeTab === 'integrations' && <IntegrationsModule />}
 
               {activeTab === 'settings' && <SettingsModule />}
+
+              {!CONSOLE_TABS.has(activeTab) && <NotFound page={activeTab} onHome={() => handleSelectTab('overview')} />}
             </ErrorBoundary>
           </div>
         </main>

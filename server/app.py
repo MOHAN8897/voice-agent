@@ -38,6 +38,7 @@ from server.routes.auth import router as auth_router
 from server.routes.app_auth import router as app_auth_router
 from server.routes.app_telephony import router as app_telephony_router
 from server.routes.language_switch import router as language_switch_router
+from server.routes.activity_feed import router as activity_feed_router
 from server.routes.app_agents import router as app_agents_router
 from server.routes.app_kyc import router as app_kyc_router
 from server.routes.app_agent_telephony import router as app_agent_telephony_router
@@ -617,6 +618,7 @@ app.include_router(auth_router)
 app.include_router(app_auth_router)
 app.include_router(app_telephony_router)
 app.include_router(language_switch_router)
+app.include_router(activity_feed_router)
 app.include_router(app_agents_router)
 app.include_router(app_kyc_router)
 app.include_router(app_agent_telephony_router)

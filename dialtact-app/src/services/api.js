@@ -218,6 +218,24 @@ function preferSameOriginApi() {
 }
 
 export const api = {
+  /** Console home: activity feed and the "now" rail (tenant-scoped, read-only). */
+  activity: {
+    feed({ cursor, limit = 30, filter = 'all', agentId } = {}) {
+      const qs = new URLSearchParams({ limit: String(limit), filter });
+      if (cursor) qs.set('cursor', cursor);
+      if (agentId) qs.set('agentId', agentId);
+      return api.request('GET', `/api/activity/feed?${qs}`);
+    },
+    live({ since } = {}) {
+      const qs = since ? `?${new URLSearchParams({ since })}` : '';
+      return api.request('GET', `/api/activity/live${qs}`);
+    },
+  },
+  languageSwitch: {
+    readiness: (agentId, language) => api.request('GET', `/api/language-switch-requests/readiness?agentId=${encodeURIComponent(agentId)}&language=${encodeURIComponent(language)}`),
+    call: (id, fromE164 = null) => api.request('POST', `/api/language-switch-requests/${encodeURIComponent(id)}/call`, fromE164 ? { fromE164 } : {}),
+    setStatus: (id, status) => api.request('PATCH', `/api/language-switch-requests/${encodeURIComponent(id)}`, { status }),
+  },
   followups: {
     async importReview(agentId, kind, days) {
       return api.request('POST', `/api/agents/${encodeURIComponent(agentId)}/follow-ups/import-review`, { kind, days });

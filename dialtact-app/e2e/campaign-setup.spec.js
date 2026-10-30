@@ -97,7 +97,7 @@ test('changing import country invalidates prior validation and consent', async (
 test('dashboard follows server completion and bounds statistics request concurrency', async ({ page }) => {
   const initialCampaigns = Array.from({ length: 9 }, (_, n) => ({ id: `audit-${n}`, name: `Batch ${n}`, status: 'running', agentId: 'campaign-agent', totalContacts: 121 }));
   const state = await setupCampaign(page, { initialCampaigns, analyticsStatus: 'completed', analyticsDelay: 60 });
-  await expect(page.getByText('completed', { exact: true })).toHaveCount(9);
+  await expect(page.getByText('Completed', { exact: true })).toHaveCount(9);
   await expect(page.getByRole('button', { name: 'Pause campaign', exact: true })).toHaveCount(0);
   expect(state.analyticsRequests).toBe(9);
   expect(state.analyticsPeak).toBeLessThanOrEqual(4);

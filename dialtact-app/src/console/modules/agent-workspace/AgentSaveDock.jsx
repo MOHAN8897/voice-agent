@@ -32,12 +32,12 @@ export function AgentSaveDock({ containerRef, scriptDirty, settingsDirty, saving
     <section ref={dockRef} aria-label="Unsaved agent changes" data-testid="agent-studio-unsaved"
       className="agent-save-dock" style={bounds || { visibility: 'hidden' }}>
       <div className="min-w-0" role="status" aria-live="polite">
-        <p className="text-sm font-semibold text-[#0F0E17]">{saving ? 'Saving your changes…' : 'You have unsaved changes'}</p>
-        <p className="mt-0.5 text-xs text-[#524E5E]">
+        <p className="text-copy font-semibold text-ink">{saving ? 'Saving your changes…' : 'You have unsaved changes'}</p>
+        <p className="mt-0.5 text-ui text-fg-body">
           {scriptDirty && settingsDirty ? 'Script & settings' : settingsDirty ? 'Agent settings' : 'Calling script'}
           {' · '}Save to apply to future calls.
         </p>
-        {error && <p role="alert" className="mt-1 text-xs text-red-800">{error}</p>}
+        {error && <p role="alert" className="mt-1 text-ui text-danger-fg">{error}</p>}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <TactileButton size="sm" variant="ghost" onClick={onDiscard} disabled={saving} data-testid="agent-studio-discard">Discard</TactileButton>

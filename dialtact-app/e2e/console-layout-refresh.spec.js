@@ -48,7 +48,7 @@ test('sidebar collapses, keeps navigation usable and persists across reload', as
   }
   await expect(sidebar).toHaveAttribute('data-collapsed', 'true');
   expect((await sidebar.boundingBox()).width).toBeLessThan(before);
-  await expect(page.getByTestId('nav-employees')).toHaveAccessibleName('AI Employees');
+  await expect(page.getByTestId('nav-employees')).toHaveAccessibleName('AI employees');
   await expect(page.getByTestId('nav-employees').locator('svg')).toBeVisible();
   await expect(page.getByTestId('sidebar-collapse-toggle')).toHaveAttribute('title', 'Expand sidebar');
   await expect(page.getByTestId('sidebar-collapse-toggle').getByText('Expand', { exact: true })).toBeVisible();

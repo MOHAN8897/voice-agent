@@ -10,10 +10,17 @@ import {
   Sliders,
   FileCode2,
   Phone,
+  Users,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
+import { Avatar } from '../ui/Avatar';
+import { PageHeader } from '../ui/PageHeader';
+import { EmptyState } from '../ui/EmptyState';
+import { Tabs } from '../ui/Tabs';
+import { Toolbar, SearchInput } from '../ui/Toolbar';
+import { useLiveRail } from './home/useActivity';
 import { AgentCardsGridSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { AgentStudioModule } from './AgentStudioModule';
@@ -40,6 +47,11 @@ export function EmployeesModule({
 
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
+  // Same live snapshot the Home rail uses (paused while the tab is hidden, 5s only
+  // while someone is on a call), so an employee on a call gets the green ring here
+  // and in the workspace header too.
+  const live = useLiveRail(true);
+  const onCallIds = new Set((live.calls || []).map((call) => call.agentId).filter(Boolean));
 
   // A legacy ?step=telephony / ?step=test link must still open the workspace, not fall
   // back to the fleet list — resolveEmployeeStep maps it to a real tab.
@@ -77,10 +89,7 @@ export function EmployeesModule({
   if (isLoading && agents.length === 0) {
     return (
       <div className="space-y-6" data-testid="employees-loading" aria-busy="true">
-        <div className="space-y-2 animate-pulse">
-          <div className="h-6 w-48 bg-[#E4E2EB]/80 rounded-lg" />
-          <div className="h-3.5 w-96 max-w-full bg-[#E4E2EB]/80 rounded-lg" />
-        </div>
+        <PageHeader title="AI employees" description="Loading your team…" />
         <AgentCardsGridSkeleton count={3} />
       </div>
     );
@@ -90,8 +99,8 @@ export function EmployeesModule({
     return (
       <ErrorBoundary
         key={selectedAgentId}
-        title="Unable to load AI Employee Studio"
-        description="An unexpected error occurred while rendering the agent workspace. You can return to your agent fleet or retry."
+        title="This employee could not be opened"
+        description="Something went wrong while loading this employee. Go back to your team and try again."
         onRetry={onBackToFleet}
       >
         <AgentStudioModule
@@ -100,6 +109,7 @@ export function EmployeesModule({
           flowStep={employeeFlowStep}
           onFlowStepChange={(step) => onEmployeeFlowStepChange?.(step, selectedAgentId)}
           onBackToFleet={onBackToFleet}
+          liveAgentIds={onCallIds}
         />
       </ErrorBoundary>
     );
@@ -107,127 +117,121 @@ export function EmployeesModule({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-            AI Employees ({agents.length})
-          </h2>
-          <p className="text-xs text-[#524E5E] mt-0.5 max-w-2xl">
-            One flow: create an employee, write the script, assign a number, test in the browser, then run
-            outgoing calls and campaigns on the live phone AI stack.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
+      <PageHeader
+        title={`AI employees (${agents.length})`}
+        description="Create an employee, write what they say, give them a number, test them in the browser, then let them take and make calls."
+        actions={
           <TactileButton onClick={onOpenCreateAgent} variant="primary" icon={Plus} size="md">
-            Create AI Employee
+            Create AI employee
           </TactileButton>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs">
-        <div className="flex items-center p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB] overflow-x-auto scrollbar-none touch-pan-x">
-          {['All', 'Active', 'Paused', 'Draft'].map((tab) => {
-            const count =
+      <Toolbar className="rounded-card border border-line bg-surface p-2.5 shadow-craft-xs">
+        <Tabs
+          variant="pills"
+          label="Filter employees by status"
+          value={filter}
+          onChange={setFilter}
+          className="max-w-full"
+          items={['All', 'Active', 'Paused', 'Draft'].map((tab) => ({
+            id: tab,
+            label: tab,
+            count:
               tab === 'All'
                 ? agents.length
-                : agents.filter((a) => a.status.toLowerCase() === tab.toLowerCase()).length;
-            return (
-              <button
-                key={tab}
-                onClick={() => setFilter(tab)}
-                className={`px-3 py-1.5 min-h-[36px] flex items-center whitespace-nowrap rounded-lg text-xs font-semibold transition-all ${
-                  filter === tab
-                    ? 'bg-white text-[#0F0E17] shadow-xs'
-                    : 'text-[#524E5E] hover:text-[#0F0E17]'
-                }`}
-              >
-                {tab} ({count})
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="relative w-full sm:w-auto sm:min-w-[240px]">
-          <Search className="w-3.5 h-3.5 text-[#524E5E] absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search agents..."
-            className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl pl-8 pr-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] placeholder-[#8C879A] focus:outline-none focus:border-[#6344E7] transition-colors"
-          />
-        </div>
-      </div>
+                : agents.filter((a) => a.status.toLowerCase() === tab.toLowerCase()).length,
+          }))}
+        />
+        <Toolbar.Spacer />
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search employees"
+          className="w-full sm:w-64"
+        />
+      </Toolbar>
 
       {!isLoading && filteredAgents.length === 0 && (
-        <SolidCard className="p-10 text-center space-y-3">
-          <p className="text-sm text-[#524E5E]">No agents match your filters.</p>
-          <TactileButton onClick={onOpenCreateAgent} variant="primary" icon={Plus}>
-            Create your first AI employee
-          </TactileButton>
+        <SolidCard padding="p-0">
+          <EmptyState
+            icon={Users}
+            title={agents.length === 0 ? 'No AI employees yet' : 'No employees match these filters'}
+            description={
+              agents.length === 0
+                ? 'Your first employee can answer calls and call leads for you once it has a script and a number.'
+                : 'Try another status or clear the search.'
+            }
+            action={
+              <TactileButton onClick={onOpenCreateAgent} variant="primary" icon={Plus}>
+                Create your first AI employee
+              </TactileButton>
+            }
+          />
         </SolidCard>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {filteredAgents.map((agent) => (
-          <SolidCard key={agent.id} data-testid="agent-card" className="flex flex-col justify-between hover:shadow-craft-sm transition-shadow">
+          <SolidCard key={agent.id} data-testid="agent-card" padding="p-5" className="flex min-w-0 flex-col justify-between transition-shadow hover:shadow-craft-sm">
             <div className="space-y-4">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#0F0E17] font-bold text-lg">
-                    {agent.name.charAt(0)}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-[#0F0E17]">{agent.name}</h3>
-                    <p className="text-xs text-[#524E5E]">{agent.role}</p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar name={agent.name} size="lg" live={onCallIds.has(agent.id)} />
+                  <div className="min-w-0">
+                    <h3 className="truncate text-title text-ink" title={agent.name}>{agent.name}</h3>
+                    <p className="truncate text-ui text-fg-body" title={agent.role}>
+                      {onCallIds.has(agent.id) ? 'On a call now' : agent.role}
+                    </p>
                   </div>
                 </div>
-                <StatusBadge status={agent.status} size="xs" />
+                {onCallIds.has(agent.id) ? (
+                  <StatusBadge status="live" label="On a call" tone="live" size="xs" />
+                ) : (
+                  <StatusBadge status={agent.status} size="xs" />
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <span className="text-[10px] text-[#8C879A] uppercase tracking-wider block font-bold">
-                    Live number
-                  </span>
-                  <div className="flex items-center gap-1 font-mono font-semibold text-[#0F0E17] mt-0.5 truncate">
-                    <Phone className="w-3 h-3 text-[#6344E7] shrink-0" />
-                    <span className="truncate">{agent.assignedNumber || 'Not assigned'}</span>
-                  </div>
-                </div>
-                <div>
-                  <span className="text-[10px] text-[#8C879A] uppercase tracking-wider block font-bold">
-                    Voice
-                  </span>
-                  <div className="flex items-center gap-1 font-semibold text-[#0F0E17] mt-0.5 truncate">
-                    <Volume2 className="w-3 h-3 text-[#6344E7] shrink-0" />
-                    <span className="truncate">
-                      {agent.voice?.voiceId || agent.voice?.voiceName ? 'Enterprise voice' : 'Default voice'}
+              <dl className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
+                <div className="min-w-0">
+                  <dt className="text-meta text-fg-muted">Phone number</dt>
+                  <dd className="mt-0.5 flex min-w-0 items-center gap-1.5 text-ui text-ink" title={agent.assignedNumber || 'Not assigned'}>
+                    <Phone className="h-3.5 w-3.5 shrink-0 text-fg-subtle" aria-hidden="true" />
+                    <span className={`truncate ${agent.assignedNumber ? 'font-mono tabular-nums' : 'text-fg-muted'}`}>
+                      {agent.assignedNumber || 'Not assigned'}
                     </span>
-                  </div>
+                  </dd>
                 </div>
-              </div>
+                <div className="min-w-0">
+                  <dt className="text-meta text-fg-muted">Voice</dt>
+                  <dd className="mt-0.5 flex min-w-0 items-center gap-1.5 text-ui text-ink">
+                    <Volume2 className="h-3.5 w-3.5 shrink-0 text-fg-subtle" aria-hidden="true" />
+                    <span className="truncate">
+                      {agent.voice?.voiceId || agent.voice?.voiceName ? 'Custom voice' : 'Default voice'}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
 
-              <div className="grid grid-cols-3 gap-2 py-2.5 border-t border-[#E4E2EB] text-[11px] font-mono mb-4 text-center">
+              <dl className="mb-4 grid grid-cols-3 gap-2 rounded-control bg-canvas px-3 py-2.5 text-center">
                 <div>
-                  <span className="text-[#8C879A] block text-[10px]">Calls</span>
-                  <span className="font-bold text-[#0F0E17]">
+                  <dt className="text-meta text-fg-muted">Calls</dt>
+                  <dd className="font-mono text-ui font-semibold tabular-nums text-ink">
                     {(agent.stats?.totalCalls || 0).toLocaleString()}
-                  </span>
+                  </dd>
                 </div>
                 <div>
-                  <span className="text-[#8C879A] block text-[10px]">Success</span>
-                  <span className="font-bold text-[#047857]">{agent.stats?.successRate ?? 100}%</span>
+                  <dt className="text-meta text-fg-muted">Success</dt>
+                  <dd className="font-mono text-ui font-semibold tabular-nums text-ink">{agent.stats?.successRate ?? 100}%</dd>
                 </div>
                 <div>
-                  <span className="text-[#8C879A] block text-[10px]">Avg</span>
-                  <span className="font-bold text-[#0F0E17]">{agent.stats?.avgDuration || '—'}</span>
+                  <dt className="text-meta text-fg-muted">Avg call</dt>
+                  <dd className="font-mono text-ui font-semibold tabular-nums text-ink">{agent.stats?.avgDuration || '—'}</dd>
                 </div>
-              </div>
+              </dl>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#E4E2EB]">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-line">
               <div className="flex flex-wrap items-center gap-2">
                 <TactileButton
                   size="sm"
@@ -273,7 +277,7 @@ export function EmployeesModule({
                   aria-pressed={agent.status === 'active'}
                   data-testid={`agent-toggle-${agent.id}`}
                   data-status={agent.status}
-                  className="p-2 rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] transition-all"
+                  className="p-2 rounded-control text-fg-body hover:text-ink hover:bg-canvas border border-transparent hover:border-line transition-all"
                 >
                   {/* Icon follows state: a paused agent offers Play, not Pause. */}
                   {agent.status === 'active' ? (
@@ -286,7 +290,7 @@ export function EmployeesModule({
                   type="button"
                   onClick={() => duplicateAgent(agent.id)}
                   title="Duplicate"
-                  className="p-2 rounded-xl text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] transition-all"
+                  className="p-2 rounded-control text-fg-body hover:text-ink hover:bg-canvas border border-transparent hover:border-line transition-all"
                 >
                   <Copy className="w-3.5 h-3.5" />
                 </button>
@@ -296,7 +300,7 @@ export function EmployeesModule({
                     if (confirm(`Delete ${agent.name}?`)) deleteAgent(agent.id);
                   }}
                   title="Delete"
-                  className="p-2 rounded-xl text-[#DC2626] hover:bg-[#FEF2F2] border border-transparent hover:border-[#FECACA] transition-all"
+                  className="p-2 rounded-control text-danger-fg hover:bg-danger-soft border border-transparent hover:border-danger-line transition-all"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

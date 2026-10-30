@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Megaphone, Plus, Play, Pause, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Megaphone, Plus, Play, Pause, ShieldAlert } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
+import { PageHeader } from '../ui/PageHeader';
+import { EmptyState } from '../ui/EmptyState';
+import { Avatar } from '../ui/Avatar';
 import { CampaignCardSkeleton } from '../ui/Skeleton';
 import { DncRegistryPanel } from './DncRegistryPanel';
 import { CampaignSetup } from './CampaignSetup';
@@ -115,16 +118,46 @@ export function CampaignsModule() {
     } catch (error) { showToast(error.message || 'Could not cancel or refresh the campaign. Refresh to check its current status.', 'error'); }
     finally { actions.current.delete(campaign.id); setPending(new Set(actions.current)); }
   }
+  const sectionTabs = [['campaigns', 'Campaigns', Megaphone], ['dnd', 'Do not call registry', ShieldAlert]];
   return (
     <div className="min-w-0 space-y-6">
-      <Modal isOpen={Boolean(cancelTarget)} onClose={() => { if (!pending.has(cancelTarget?.id)) setCancelTarget(null); }} title="Cancel campaign?" maxWidth="max-w-lg"><div className="space-y-4"><p className="text-sm text-[#524E5E]">Stop future calls for {cancelTarget?.name}. Linked pending follow-up jobs will be cancelled. Calls already dispatched may continue.</p><TactileButton variant="primary" loading={pending.has(cancelTarget?.id)} disabled={readOnly || pending.has(cancelTarget?.id)} onClick={confirmCancel}>Confirm campaign cancellation</TactileButton></div></Modal>
-      <div className="flex flex-wrap gap-4 border-b border-[#E4E2EB]" role="group" aria-label="Campaign sections">
-        {[['campaigns', 'Campaigns', Megaphone], ['dnd', 'Do Not Call registry', ShieldAlert]].map(([id, label, Icon]) => <button key={id} type="button" onClick={() => setTab(id)} aria-pressed={tab === id} data-testid={`${id === 'dnd' ? 'dnd-registry' : 'campaigns'}-tab-button`} className={`flex min-h-11 items-center gap-2 border-b-2 px-1 pb-3 text-sm font-semibold ${tab === id ? 'border-[#FF5C35] text-[#B9381B]' : 'border-transparent text-[#524E5E]'}`}><Icon className="h-4 w-4" />{label}</button>)}
+      <Modal isOpen={Boolean(cancelTarget)} onClose={() => { if (!pending.has(cancelTarget?.id)) setCancelTarget(null); }} title="Cancel campaign?" maxWidth="max-w-lg">
+        <div className="space-y-4">
+          <p className="text-copy text-fg-body">No new calls will start for {cancelTarget?.name}, and its pending follow-ups are cancelled. Calls already ringing may finish.</p>
+          <TactileButton variant="danger" loading={pending.has(cancelTarget?.id)} disabled={readOnly || pending.has(cancelTarget?.id)} onClick={confirmCancel}>Confirm campaign cancellation</TactileButton>
+        </div>
+      </Modal>
+      <PageHeader
+        title="Campaigns"
+        description="Call a list of contacts with one of your agents. You check everything before any calls are placed."
+        actions={tab === 'campaigns' ? <TactileButton onClick={() => setOpen(true)} icon={Plus} variant="primary" disabled={readOnly}>New campaign</TactileButton> : null}
+      />
+      <div className="inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-control border border-line bg-surface-subtle p-0.5 no-scrollbar" role="group" aria-label="Campaign sections">
+        {sectionTabs.map(([id, label, Icon]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            aria-pressed={tab === id}
+            data-testid={`${id === 'dnd' ? 'dnd-registry' : 'campaigns'}-tab-button`}
+            className={`inline-flex min-h-[40px] sm:min-h-[32px] shrink-0 items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${tab === id ? 'bg-surface text-ink shadow-craft-xs' : 'text-fg-body hover:text-ink'}`}
+          >
+            <Icon className="h-4 w-4" aria-hidden="true" />{label}
+          </button>
+        ))}
       </div>
       {tab === 'dnd' ? <DncRegistryPanel readOnly={readOnly} /> : <>
-        {statisticsError && <p role="status" className="text-sm text-amber-800">Some campaign statistics could not refresh. Retrying automatically; the last available values are shown.</p>}
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><h2 className="text-xl font-bold tracking-tight">Outbound campaigns</h2><p className="mt-1 text-sm text-[#645D73]">Prepare contacts, review your settings, and launch from one page.</p></div><TactileButton onClick={() => setOpen(true)} icon={Plus} variant="primary" disabled={readOnly}>New campaign</TactileButton></div>
-        {isLoading && !campaigns.length ? <CampaignCardSkeleton count={3} /> : !campaigns.length ? <SolidCard className="space-y-3 py-12 text-center"><Megaphone className="mx-auto h-8 w-8 text-[#6344E7]" /><h3 className="font-semibold">Your first campaign starts here</h3><p className="mx-auto max-w-md text-sm text-[#645D73]">Upload a spreadsheet, paste contacts, or use a saved list. Review everything before any calls are placed.</p><TactileButton onClick={() => setOpen(true)} variant="secondary" disabled={readOnly}>Create first campaign</TactileButton></SolidCard> : <div className="space-y-4">{campaigns.map((campaign) => {
+        {statisticsError && <p role="status" className="rounded-control border border-warning-line bg-warning-soft px-3 py-2 text-ui text-warning-fg">Some campaign numbers could not refresh. We keep retrying and show the last numbers we have.</p>}
+        {isLoading && !campaigns.length ? <CampaignCardSkeleton count={3} /> : !campaigns.length ? (
+          <SolidCard padding="p-0">
+            <EmptyState
+              icon={Megaphone}
+              title="No campaigns yet"
+              description="Upload a spreadsheet, paste contacts or use a saved list. You review everything before any calls are placed."
+              action={<TactileButton onClick={() => setOpen(true)} variant="secondary" disabled={readOnly}>Create first campaign</TactileButton>}
+            />
+          </SolidCard>
+        ) : <div className="space-y-4">{campaigns.map((campaign) => {
           const stats = analytics[campaign.id];
           const groups = stats?.dispositions || {};
           const total = stats ? Object.values(groups).reduce((sum, n) => sum + n, 0) : campaign.totalContacts || 0;
@@ -132,16 +165,31 @@ export function CampaignsModule() {
           const active = (groups.dialing || 0) + (groups.placed || 0) + (groups.connected || 0);
           const review = (groups.requires_review || 0) + (groups.needs_review || 0) + (groups.blocked || 0);
           const agent = agents.find((item) => item.id === campaign.agentId);
+          const agentLabel = agent?.name || campaign.agentName || 'Agent';
+          const controllable = ['draft', 'running', 'paused', 'requires_review'].includes(campaign.status);
           return <SolidCard key={campaign.id} className="min-w-0 space-y-4">
-            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="min-w-0 break-words text-base font-bold">{campaign.name}</h3><StatusBadge status={campaign.status} size="xs" /></div><p className="mt-1 break-words text-sm text-[#645D73]">{agent?.name || campaign.agentName || 'Agent'}{campaign.description ? ` · ${campaign.description}` : ''}</p></div>{['draft', 'running', 'paused', 'requires_review'].includes(campaign.status) && <TactileButton disabled={readOnly || pending.has(campaign.id)} onClick={() => changeStatus(campaign)} icon={campaign.status === 'running' ? Pause : Play} variant="secondary">{pending.has(campaign.id) ? 'Updating…' : campaign.status === 'running' ? 'Pause campaign' : campaign.status === 'draft' ? 'Start campaign' : campaign.status === 'requires_review' ? 'Resume reviewed campaign' : 'Resume campaign'}</TactileButton>}</div>
-            {['draft', 'running', 'paused', 'requires_review'].includes(campaign.status) && <div className="flex justify-end"><TactileButton variant="ghost" disabled={readOnly || pending.has(campaign.id)} onClick={() => setCancelTarget(campaign)}>Cancel campaign</TactileButton></div>}
-            <dl className="grid grid-cols-2 gap-4 rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-4 sm:grid-cols-4">{[['Contacts', total], ['Connected', connected], ['Active calls', active], ['Needs review', review]].map(([label, value]) => <div key={label}><dt className="text-xs text-[#645D73]">{label}</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{Number(value).toLocaleString()}</dd></div>)}</dl>
-            {review > 0 && <p role="status" className="text-sm text-amber-800">{review} contact{review === 1 ? '' : 's'} need review. Check call history and account settings before creating another attempt.</p>}
-            <div className="rounded-xl border border-[#E4E2EB] p-3" data-testid="campaign-integrations"><p className="mb-1.5 text-xs font-semibold text-[#524E5E]">Integrations each call may use</p><IntegrationSelectionSummary selection={campaign.integrations} emptyText="None chosen: the agent’s saved integration settings apply to every call." /></div>
-            <p className="text-xs text-[#645D73]">Up to {campaign.concurrencyLimit || campaign.concurrency || 1} concurrent calls · {stats ? `${stats.attempts || 0} dial attempts` : 'Loading call statistics…'}</p>
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+              <div className="flex min-w-0 items-start gap-3">
+                <Avatar name={agentLabel} size="md" live={campaign.status === 'running' && active > 0} title={agentLabel} />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2"><h3 className="min-w-0 break-words text-title text-ink">{campaign.name}</h3><StatusBadge status={campaign.status} size="xs" /></div>
+                  <p className="mt-0.5 break-words text-ui text-fg-muted">Called by {agentLabel}{campaign.description ? ` · ${campaign.description}` : ''}</p>
+                </div>
+              </div>
+              {controllable && (
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <TactileButton disabled={readOnly || pending.has(campaign.id)} onClick={() => changeStatus(campaign)} icon={campaign.status === 'running' ? Pause : Play} variant="secondary" size="sm">{pending.has(campaign.id) ? 'Updating…' : campaign.status === 'running' ? 'Pause campaign' : campaign.status === 'draft' ? 'Start campaign' : campaign.status === 'requires_review' ? 'Resume reviewed campaign' : 'Resume campaign'}</TactileButton>
+                  <TactileButton variant="ghost" size="sm" disabled={readOnly || pending.has(campaign.id)} onClick={() => setCancelTarget(campaign)}>Cancel campaign</TactileButton>
+                </div>
+              )}
+            </div>
+            <dl className="grid grid-cols-2 gap-4 rounded-control border border-line bg-canvas p-4 sm:grid-cols-4">{[['Contacts', total], ['Connected', connected], ['On a call now', active], ['Needs review', review]].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-meta text-fg-muted">{label}</dt><dd className={`mt-1 font-mono text-heading tabular-nums ${label === 'Needs review' && value > 0 ? 'text-warning-fg' : 'text-ink'}`}>{Number(value).toLocaleString('en-IN')}</dd></div>)}</dl>
+            {review > 0 && <p role="status" className="flex items-start gap-2 rounded-control border border-warning-line bg-warning-soft px-3 py-2 text-ui text-warning-fg"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /><span>{review} contact{review === 1 ? ' needs' : 's need'} review. Check call history and your account before trying again.</span></p>}
+            <div className="rounded-control border border-line p-3" data-testid="campaign-integrations"><p className="mb-1.5 text-meta font-medium text-fg-body">Integrations each call may use</p><IntegrationSelectionSummary selection={campaign.integrations} emptyText="None chosen: every call uses the agent’s saved integration settings." /></div>
+            <p className="text-meta text-fg-muted">Up to <span className="font-mono tabular-nums">{campaign.concurrencyLimit || campaign.concurrency || 1}</span> calls at once · {stats ? <><span className="font-mono tabular-nums">{(stats.attempts || 0).toLocaleString('en-IN')}</span> calls attempted</> : 'Loading call numbers…'}</p>
           </SolidCard>;
         })}</div>}
-        <Modal isOpen={open} onClose={() => { if (!setupBusy) setOpen(false); }} title="New outbound campaign" subtitle="Set up your contacts and review the campaign on one page." maxWidth="max-w-6xl">
+        <Modal isOpen={open} onClose={() => { if (!setupBusy) setOpen(false); }} title="New campaign" subtitle="Add your contacts and review the campaign on one page." maxWidth="max-w-6xl">
           {open && <CampaignSetup onBusyChange={setSetupBusy} onComplete={() => setOpen(false)} />}
         </Modal>
       </>}

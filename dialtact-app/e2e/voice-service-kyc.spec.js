@@ -64,7 +64,7 @@ test('provider-confirmed approval replaces the onboarding form', async ({ page }
 
 test('number purchase requires phone-service KYC without an additional identity gate', async ({ page }) => {
   await page.getByTestId('nav-phone-numbers').click();
-  await page.getByRole('button', { name: 'Buy Phone Number', exact: true }).click();
+  await page.getByRole('button', { name: 'Buy phone number', exact: true }).click();
   await expect(page.getByTestId('buy-number-submit')).toHaveText('Choose number');
   await expect(page.getByRole('dialog')).toContainText('$4.00 / month');
   await expect(page.getByTestId('voice-service-kyc-card')).toHaveCount(0);
@@ -87,7 +87,7 @@ test('selection survives hosted verification and returning never purchases autom
     return route.fulfill({ json: { ...pending, sessionUrl: 'https://kyc.vobiz.ai/verify?token=synthetic-test' } });
   });
   await page.getByTestId('nav-phone-numbers').click();
-  await page.getByRole('button', { name: 'Buy Phone Number', exact: true }).click();
+  await page.getByRole('button', { name: 'Buy phone number', exact: true }).click();
   await page.getByTestId('buy-number-submit').click();
   await page.getByTestId('voice-service-kyc-start').click();
   await expect(page).toHaveURL(/kyc\.vobiz\.ai/);
@@ -98,6 +98,6 @@ test('selection survives hosted verification and returning never purchases autom
   await expect(page.getByTestId('confirm-selected-number')).toBeEnabled();
   expect(purchases).toHaveLength(0);
   await page.getByTestId('confirm-selected-number').click();
-  await expect(page.getByText('Number Successfully Provisioned!')).toBeVisible();
+  await expect(page.getByText('Your number is ready')).toBeVisible();
   expect(purchases).toHaveLength(1);
 });

@@ -156,10 +156,10 @@ export function VoiceServiceKycCard({ onApproved }) {
 
   if (loading && !status) {
     return (
-      <div className="rounded-2xl border border-[#E4E2EB] bg-[#FAF9FD] p-6 space-y-4" aria-busy="true">
+      <div className="rounded-card border border-line bg-canvas p-6 space-y-4" aria-busy="true">
         <div className="flex items-center gap-3">
-          <Loader2 className="w-5 h-5 animate-spin text-[#6344E7]" />
-          <p className="text-sm text-[#524E5E]">Checking phone service verification…</p>
+          <Loader2 className="w-5 h-5 animate-spin text-accent-fg" />
+          <p className="text-copy text-fg-body">Checking phone service verification…</p>
         </div>
       </div>
     );
@@ -167,10 +167,10 @@ export function VoiceServiceKycCard({ onApproved }) {
 
   if (status?.approved) {
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center space-y-2" data-testid="voice-service-kyc-approved">
-        <BadgeCheck className="w-9 h-9 text-emerald-700 mx-auto" />
-        <h3 className="text-base font-bold text-emerald-950">Phone service verified</h3>
-        <p className="text-xs text-emerald-900">You can continue with your number purchase and live calls.</p>
+      <div className="rounded-card border border-success-line bg-success-soft p-6 text-center space-y-2" data-testid="voice-service-kyc-approved">
+        <BadgeCheck className="w-9 h-9 text-success-fg mx-auto" />
+        <h3 className="text-title text-success-fg">Phone service verified</h3>
+        <p className="text-ui text-success-fg">You can continue with your number purchase and live calls.</p>
       </div>
     );
   }
@@ -181,26 +181,26 @@ export function VoiceServiceKycCard({ onApproved }) {
     : businessType ? 'Have the entity PAN and GST or CIN / registration details ready. The secure verification page will confirm the documents required for your entity.' : 'Choose the legal entity that will own the phone number.';
 
   return (
-    <div className="rounded-2xl border border-[#E4E2EB] bg-gradient-to-b from-white to-[#FAF9FD] p-5 sm:p-6 space-y-5" data-testid="voice-service-kyc-card">
+    <div className="rounded-card border border-line bg-gradient-to-b from-surface to-canvas p-5 sm:p-6 space-y-5" data-testid="voice-service-kyc-card">
       <div className="flex items-start gap-3">
-        <div className="w-11 h-11 rounded-xl bg-[#F3F0FF] border border-[#E4E2EB] flex items-center justify-center shrink-0">
-          <Shield className="w-5 h-5 text-[#6344E7]" />
+        <div className="w-11 h-11 rounded-control bg-accent-soft border border-line flex items-center justify-center shrink-0">
+          <Shield className="w-5 h-5 text-accent-fg" />
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-base font-bold text-[#0F0E17]">Verify phone service</h3>
-          <p className="mt-1 text-xs text-[#524E5E] leading-relaxed">
+          <h3 className="text-title text-ink">Verify phone service</h3>
+          <p className="mt-1 text-ui text-fg-body">
             Complete the secure identity check to activate phone numbers and live calls. The required documents depend on your legal entity type.
           </p>
-          <p className="mt-2 text-xs text-[#524E5E]">Use the legal name on your documents. Once this account is created, changing these legal details requires support.</p>
-          <p className="mt-2 text-[11px] font-semibold text-[#6344E7]">Status: {statusLabel(status?.status)}</p>
+          <p className="mt-2 text-ui text-fg-body">Use the legal name on your documents. Once this account is created, changing these legal details requires support.</p>
+          <p className="mt-2 text-meta font-medium text-fg-muted">Status: <span className="text-ink">{statusLabel(status?.status)}</span></p>
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-[11px] font-semibold text-[#524E5E]">
+        <label className="text-ui font-medium text-fg-body">
           Legal entity type
           <select
-            className="mt-1.5 block w-full rounded-lg border border-[#D8D5E2] bg-white px-3 py-2.5 text-sm text-[#0F0E17]"
+            className="mt-1.5 block w-full rounded-control border border-line-strong bg-surface px-3 py-2.5 text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
             value={businessType}
             disabled={starting || status?.identityLocked}
             onChange={(event) => setBusinessType(event.target.value)}
@@ -210,10 +210,10 @@ export function VoiceServiceKycCard({ onApproved }) {
             {BUSINESS_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select>
         </label>
-        <label className="text-[11px] font-semibold text-[#524E5E]">
+        <label className="text-ui font-medium text-fg-body">
           Legal name
           <input
-            className="mt-1.5 block w-full rounded-lg border border-[#D8D5E2] bg-white px-3 py-2.5 text-sm text-[#0F0E17]"
+            className="mt-1.5 block w-full rounded-control border border-line-strong bg-surface px-3 py-2.5 text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
             value={legalName}
             disabled={starting || status?.identityLocked}
             onChange={(event) => setLegalName(event.target.value)}
@@ -225,12 +225,12 @@ export function VoiceServiceKycCard({ onApproved }) {
         </label>
       </div>
 
-      <p className="rounded-xl bg-[#F7F6FA] p-3 text-xs leading-relaxed text-[#524E5E]">{documents} A separate phone service account is created for your workspace. Complete verification on the secure hosted page, then return here to confirm your number purchase.</p>
+      <p className="rounded-control bg-surface-subtle p-3 text-ui text-fg-body">{documents} A separate phone service account is created for your workspace. Complete verification on the secure hosted page, then return here to confirm your number purchase.</p>
 
       {status?.verifications && Object.keys(status.verifications).length > 0 && (
         <div className="flex flex-wrap gap-2" aria-label="Verification document status">
           {Object.entries(status.verifications).map(([key, value]) => (
-            <span key={key} className="rounded-full border border-[#E4E2EB] bg-white px-2.5 py-1 text-[10px] text-[#524E5E]">
+            <span key={key} className="rounded-pill border border-line bg-surface px-2.5 py-1 text-meta text-fg-body">
               {key.toUpperCase()}: {statusLabel(value)}
             </span>
           ))}
@@ -238,23 +238,23 @@ export function VoiceServiceKycCard({ onApproved }) {
       )}
 
       {status?.configured === false && (
-        <p className="text-xs text-amber-800" role="status">Phone service verification is not available yet. Contact support to continue.</p>
+        <p className="text-ui text-warning-fg" role="status">Phone service verification is not available yet. Contact support to continue.</p>
       )}
-      {error && <p className="text-xs text-red-800" role="alert" data-testid="voice-service-kyc-error">{error}</p>}
+      {error && <p className="text-ui text-danger-fg" role="alert" data-testid="voice-service-kyc-error">{error}</p>}
       {openedUrl && (
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3.5 space-y-1.5 text-xs" data-testid="voice-service-kyc-tab-banner">
-          <p className="font-semibold text-indigo-950">
+        <div className="rounded-control border border-info-line bg-info-soft p-3.5 space-y-1.5 text-ui" data-testid="voice-service-kyc-tab-banner">
+          <p className="font-semibold text-info-fg">
             Verification opened in a new tab
           </p>
-          <p className="text-indigo-900 text-[11px] leading-relaxed">
-            Complete your verification in the opened tab, then return here and click &ldquo;I finished — refresh status&rdquo;.
+          <p className="text-info-fg text-ui">
+            Complete your verification in the opened tab, then return here and select &ldquo;I have finished. Refresh status&rdquo;.
           </p>
           <div className="pt-1">
             <a
               href={openedUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#6344E7] hover:underline"
+              className="inline-flex items-center gap-1 text-meta font-semibold text-accent-fg hover:underline"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               Reopen verification page in new tab
@@ -280,11 +280,11 @@ export function VoiceServiceKycCard({ onApproved }) {
           type="button"
           onClick={() => refresh(true)}
           disabled={loading}
-          className="w-full inline-flex items-center justify-center gap-1.5 text-[11px] font-semibold text-[#6344E7] hover:underline py-1 disabled:opacity-60"
+          className="w-full min-h-[36px] inline-flex items-center justify-center gap-1.5 text-ui font-semibold text-accent-fg hover:underline py-1 disabled:opacity-60"
           data-testid="voice-service-kyc-refresh"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          I finished — refresh status
+          I have finished. Refresh status
         </button>
       </div>
     </div>

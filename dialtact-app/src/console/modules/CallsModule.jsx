@@ -1,11 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Search,
   Volume2,
-  Sparkles,
   FileText,
   RefreshCw,
-  Filter,
   PhoneCall,
   PhoneIncoming,
   PhoneOutgoing,
@@ -16,16 +13,22 @@ import {
   CreditCard,
   X,
   AlertTriangle,
+  ListChecks,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { CallIntegrationPicker, IntegrationSelectionSummary, useCallIntegrationOptions } from '../ui/CallIntegrationPicker';
-import { StatusBadge } from '../ui/StatusBadge';
+import { Badge, StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
+import { PageHeader } from '../ui/PageHeader';
+import { Tabs } from '../ui/Tabs';
+import { Toolbar, SearchInput } from '../ui/Toolbar';
+import { Avatar } from '../ui/Avatar';
+import { EmptyState } from '../ui/EmptyState';
 import { CallsTableSkeleton, CallDetailSkeleton, WaveformSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { api } from '../../services/api';
 import { showToast } from '../ui/ToastHost';
-import { PHONE_STACK_LABEL, bucketToApiStatus } from '../../lib/phoneLabels';
+import { bucketToApiStatus } from '../../lib/phoneLabels';
 import {
   CALL_STATUS_TABS,
   callStatus,
@@ -33,7 +36,20 @@ import {
   isCallbackCandidate,
   statusMeta,
 } from '../../lib/callStatus';
-import { callReference, endReasonLabel, isTechnicalFailure, pipelineLabel } from '../../lib/internalLabels';
+import {
+  callReference,
+  dispositionLabel,
+  endReasonLabel,
+  humanizeToken,
+  isTechnicalFailure,
+  pipelineLabel,
+  policyReasonLabel,
+  statusWord,
+  tagLabel,
+  tagTone,
+} from '../../lib/internalLabels';
+import { formatInr, formatUsd, relativeTime } from '../../lib/money';
+import { contactName, maskPhone } from '../../lib/phoneMask';
 
 const STATUS_ICON = {
   answered: PhoneIncoming,
@@ -45,43 +61,100 @@ const STATUS_ICON = {
   in_progress: PhoneCall,
 };
 
-const TONE_CLASS = {
-  success: 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]',
-  warning: 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]',
-  danger: 'bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA]',
-  info: 'bg-[#EEF2FF] text-[#4338CA] border-[#C7D2FE]',
-  muted: 'bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]',
-};
+/** callStatus tones → Badge tones (DESIGN.md: red only for failures). */
+const STATUS_TONE = { success: 'success', warning: 'warning', danger: 'danger', info: 'info', muted: 'neutral' };
 
-function StatusPill({ status, className = '' }) {
+const FIELD =
+  'h-11 sm:h-9 w-full min-w-0 rounded-control border border-line bg-surface px-3 text-base sm:text-ui text-ink placeholder:text-fg-subtle focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15 disabled:opacity-50';
+const SELECT =
+  'h-11 sm:h-9 min-w-0 max-w-full sm:max-w-[14rem] rounded-control border border-line bg-surface px-3 text-base sm:text-ui text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15 disabled:opacity-50';
+
+function CallStatusPill({ status, className = '' }) {
   const meta = statusMeta(status);
   const Icon = STATUS_ICON[status] || PhoneIncoming;
+  const tone = status === 'in_progress' ? 'live' : STATUS_TONE[meta.tone] || 'neutral';
   return (
-    <span
-      title={meta.hint}
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${
-        TONE_CLASS[meta.tone] || TONE_CLASS.muted
-      } ${className}`}
-    >
-      <Icon className="w-3 h-3" />
+    <Badge tone={tone} title={meta.hint} className={className}>
+      <Icon className="h-3 w-3" aria-hidden="true" />
       {meta.short}
-    </span>
+    </Badge>
   );
 }
 
 /** The AI service failed mid-call: the outage message played and the line closed. */
 function TechnicalIssuePill({ className = '' }) {
   return (
-    <span
+    <Badge
+      tone="danger"
       title="The AI service failed during this call. The caller heard the outage message and the call was ended."
       data-testid="technical-issue-pill"
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${TONE_CLASS.danger} ${className}`}
+      className={className}
     >
-      <AlertTriangle className="w-3 h-3" />
+      <AlertTriangle className="h-3 w-3" aria-hidden="true" />
       Technical issue
-    </span>
+    </Badge>
   );
 }
+
+/** Tags the owner must not miss (language switch, problems, follow-ups) come first. */
+function tagPriority(tag) {
+  const raw = String(tag || '').toLowerCase();
+  if (raw === 'followup:language_switch') return 0;
+  if (raw.startsWith('quality:') || raw.startsWith('action:')) return 1;
+  if (raw.startsWith('followup:')) return 2;
+  return 3;
+}
+
+function sortedTags(tags = []) {
+  return [...tags].sort((a, b) => tagPriority(a) - tagPriority(b));
+}
+
+function CallTags({ tags = [], limit = 3 }) {
+  if (!tags.length) return null;
+  const shown = sortedTags(tags).slice(0, limit);
+  const rest = tags.length - shown.length;
+  return (
+    <>
+      {shown.map((tag) => (
+        <Badge key={tag} tone={tagTone(tag)} size="xs" title={tagLabel(tag)}>
+          {tagLabel(tag)}
+        </Badge>
+      ))}
+      {rest > 0 && (
+        <span className="text-meta text-fg-muted" title={sortedTags(tags).slice(limit).map(tagLabel).join(', ')}>
+          +{rest} more
+        </span>
+      )}
+    </>
+  );
+}
+
+/** One plain sentence for what happened on a call, like the Home feed. */
+function callSentence(call) {
+  const who = contactName(call.callerName, call.callerPhone);
+  const agent = call.agentName && call.agentName !== 'Unassigned' ? call.agentName : null;
+  const outgoing = String(call.direction || '').toLowerCase() === 'outbound';
+  switch (callStatus(call)) {
+    case 'in_progress':
+      return { actor: agent, text: `is on a call with ${who}` };
+    case 'missed':
+      return { actor: null, text: `Missed call from ${who}` };
+    case 'voicemail':
+      return outgoing ? { actor: agent, text: `reached ${who}'s voicemail` } : { actor: null, text: `${who} reached voicemail` };
+    case 'declined':
+      return { actor: agent, text: `couldn't reach ${who}: busy or declined` };
+    case 'failed':
+      return { actor: agent, text: `couldn't connect to ${who}` };
+    default:
+      return outgoing ? { actor: agent, text: `called ${who}` } : { actor: agent, text: `answered ${who}` };
+  }
+}
+
+function money(amount, currency) {
+  return currency === 'INR' ? formatInr(Number(amount)) : formatUsd(Number(amount));
+}
+
+const TIER_LABEL = { low: 'Economy', medium: 'Standard', premium: 'Premium' };
 
 function RecordingPlayer({ call }) {
   const audioRef = React.useRef(null);
@@ -193,28 +266,28 @@ function RecordingPlayer({ call }) {
 
   if (!call || !ready) {
     return (
-      <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-1.5">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0F0E17]">
-          <Volume2 className="w-3.5 h-3.5 text-[#8C879A]" />
-          <span>Call recording</span>
+      <div className="rounded-control border border-line bg-canvas p-3.5 space-y-1">
+        <div className="flex items-center gap-1.5 text-ui font-semibold text-ink">
+          <Volume2 className="h-4 w-4 text-fg-subtle" aria-hidden="true" />
+          <span>Recording</span>
         </div>
-        <p className="text-[11px] text-[#8C879A]">
+        <p className="text-meta text-fg-muted">
           {call?.connected
-            ? 'Recording is being prepared. This section updates automatically.'
-            : 'Never connected, so there is no recording.'}
+            ? 'The recording is being prepared. This updates on its own.'
+            : 'The call never connected, so there is no recording.'}
         </p>
       </div>
     );
   }
 
   return (
-    <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-2.5">
-      <div className="flex items-center justify-between text-xs text-[#524E5E]">
-        <span className="flex items-center gap-1.5 font-semibold text-[#0F0E17]">
-          <Volume2 className="w-3.5 h-3.5 text-[#6344E7]" />
-          <span>Call recording</span>
+    <div className="rounded-control border border-line bg-canvas p-3.5 space-y-2.5">
+      <div className="flex items-center justify-between gap-2 text-ui">
+        <span className="flex items-center gap-1.5 font-semibold text-ink">
+          <Volume2 className="h-4 w-4 text-accent" aria-hidden="true" />
+          <span>Recording</span>
         </span>
-        <span className="font-mono text-[11px] text-[#524E5E]">{formatDuration(call.durationSec)}</span>
+        <span className="font-mono tabular-nums text-meta text-fg-body">{formatDuration(call.durationSec)}</span>
       </div>
 
       <audio
@@ -241,13 +314,13 @@ function RecordingPlayer({ call }) {
           {playing ? 'Pause' : 'Play'}
         </TactileButton>
         {loading ? (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex flex-1 items-center justify-center">
             <WaveformSkeleton />
           </div>
         ) : (
-          <div className="flex-1 h-1.5 rounded-full bg-[#E4E2EB] overflow-hidden">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-pill bg-line">
             <div
-              className="h-full bg-[#6344E7] transition-[width] duration-200"
+              className="h-full bg-accent transition-[width] duration-200"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -270,16 +343,20 @@ function RecordingPlayer({ call }) {
             finally { setLoading(false); }
           }}
           aria-label="Download recording"
-          className="p-2 rounded-lg border border-[#E4E2EB] bg-white text-[#524E5E] hover:text-[#0F0E17]"
+          title="Download recording"
+          className="inline-flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-control border border-line bg-surface text-fg-body hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50"
         >
-          <Download className="w-3.5 h-3.5" />
+          <Download className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
 
-      <span className="text-[10px] text-[#524E5E]">
-        {reasonLabel ? `${reasonLabel}` : ''}
-        {voiceLabel ? ` · ${voiceLabel}` : ''}
-      </span>
+      {(reasonLabel || voiceLabel) && (
+        <p className="text-meta text-fg-muted">
+          {reasonLabel || ''}
+          {reasonLabel && voiceLabel ? ' · ' : ''}
+          {voiceLabel || ''}
+        </p>
+      )}
     </div>
   );
 }
@@ -639,55 +716,47 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   const balanceInr = Number(wallet?.balanceInr) || 0;
   const walletEmpty = balanceUsd <= 0 && balanceInr <= 0;
 
+  const detailCaller = activeCall ? contactName(activeCall.callerName, activeCall.callerPhone) : '';
+  const detailSentence = activeCall ? callSentence(activeCall) : null;
+  const detailOutcome = activeCall ? dispositionLabel(outcome?.disposition || activeCall.disposition) : null;
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-            {embedded ? `${agentName || 'Agent'} calls` : 'Calls'}
-          </h2>
-          <p className="text-xs text-[#524E5E] mt-0.5 max-w-2xl">
-            {PHONE_STACK_LABEL}: transcripts, recordings, and wallet usage for real phone conversations.
-          </p>
-        </div>
-        <TactileButton
-          variant="secondary"
-          size="sm"
-          icon={RefreshCw}
-          loading={refreshing}
-          onClick={refreshCalls}
-        >
-          Refresh
-        </TactileButton>
-      </div>
+      <PageHeader
+        title={embedded ? `${agentName || 'Agent'} calls` : 'Calls'}
+        description="Every call your AI employees made or took, with recordings, transcripts and what each call cost."
+        actions={
+          <TactileButton
+            variant="secondary"
+            size="sm"
+            icon={RefreshCw}
+            loading={refreshing}
+            onClick={refreshCalls}
+          >
+            Refresh
+          </TactileButton>
+        }
+      />
 
       {!embedded && (
-        <div className="flex items-center gap-1 p-1 rounded-2xl bg-white border border-[#E4E2EB] w-fit">
-          {[
+        <Tabs
+          label="Calls view"
+          value={mainTab}
+          onChange={setMainTab}
+          items={[
             { id: 'history', label: 'Call history' },
-            { id: 'outbound', label: 'Place outgoing call' },
-          ].map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setMainTab(t.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold ${
-                mainTab === t.id ? 'bg-[#0F0E17] text-white' : 'text-[#524E5E] hover:text-[#0F0E17]'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+            { id: 'outbound', label: 'Place a call' },
+          ]}
+        />
       )}
 
       {!embedded && mainTab === 'outbound' && (
-        <SolidCard className="p-4 space-y-3">
+        <SolidCard className="space-y-4">
           <div>
-            <div className="text-xs font-bold text-[#0F0E17]">Outgoing call</div>
-            <p className="text-[11px] text-[#524E5E] mt-1">
-              Needs wallet balance, a published agent script, and a phone line as caller ID. Rate limits
-              apply.
+            <h2 className="text-title text-ink">Place a call</h2>
+            <p className="mt-0.5 text-ui text-fg-muted">
+              Your agent calls the number now. You need money in your wallet, a published agent and a phone line to call
+              from. Calls per minute are limited.
             </p>
           </div>
 
@@ -695,10 +764,10 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
           {walletEmpty && (
             <div
               data-testid="calls-payment-wall"
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-xl bg-[#FFFBEB] border border-[#FDE68A]"
+              className="flex flex-col gap-3 rounded-control border border-warning-line bg-warning-soft p-3 sm:flex-row sm:items-center sm:justify-between"
             >
-              <p className="text-xs text-[#78350F]">
-                Your wallet is empty. Add credit to place calls and receive callbacks.
+              <p className="text-ui text-warning-fg">
+                Your wallet is empty. Add funds to place calls and receive callbacks.
               </p>
               <TactileButton
                 variant="brand"
@@ -707,47 +776,49 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                 onClick={() => onRequireFunds?.()}
                 data-testid="calls-payment-wall-add"
               >
-                Add credit
+                Add funds
               </TactileButton>
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-            <select
-              value={agentId}
-              onChange={(e) => setAgentId(e.target.value)}
-              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-base sm:text-xs min-h-[40px] sm:min-h-[34px]"
-            >
-              {agents.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={fromNumber}
-              onChange={(e) => setFromNumber(e.target.value)}
-              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-base sm:text-xs min-h-[40px] sm:min-h-[34px] font-mono"
-            >
-              <option value="">Agent phone line</option>
-              {phoneNumbers.map((n) => (
-                <option key={n.id} value={n.number}>
-                  {n.label ? `${n.label} · ${n.number}` : n.number}
-                </option>
-              ))}
-            </select>
-            <input
-              value={toNumber}
-              onChange={(e) => setToNumber(e.target.value)}
-              placeholder="+1…"
-              className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-base sm:text-xs min-h-[40px] sm:min-h-[34px] font-mono"
-            />
-            <TactileButton variant="primary" size="sm" loading={dialBusy} onClick={placeCall} className="min-h-[40px] sm:min-h-[34px]">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto] lg:items-end">
+            <label className="min-w-0 space-y-1">
+              <span className="block text-meta font-medium text-fg-body">Agent</span>
+              <select value={agentId} onChange={(e) => setAgentId(e.target.value)} className={FIELD}>
+                {agents.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="min-w-0 space-y-1">
+              <span className="block text-meta font-medium text-fg-body">Call from</span>
+              <select value={fromNumber} onChange={(e) => setFromNumber(e.target.value)} className={`${FIELD} font-mono tabular-nums`}>
+                <option value="">Agent's own line</option>
+                {phoneNumbers.map((n) => (
+                  <option key={n.id} value={n.number}>
+                    {n.label ? `${n.label} · ${n.number}` : n.number}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="min-w-0 space-y-1">
+              <span className="block text-meta font-medium text-fg-body">Number to call</span>
+              <input
+                value={toNumber}
+                onChange={(e) => setToNumber(e.target.value)}
+                placeholder="+91 98765 43210"
+                inputMode="tel"
+                className={`${FIELD} font-mono tabular-nums`}
+              />
+            </label>
+            <TactileButton variant="primary" size="md" icon={PhoneCall} loading={dialBusy} onClick={placeCall} className="sm:col-span-2 lg:col-span-1">
               Call now
             </TactileButton>
           </div>
 
-          <div className="border-t border-[#E4E2EB] pt-3">
+          <div className="border-t border-line pt-4">
             <CallIntegrationPicker
               scope="call"
               agentId={outboundAgentId}
@@ -757,8 +828,8 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
               options={outboundIntegrationOptions}
             />
           </div>
-          <div className="rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] p-3" data-testid="outbound-integration-summary">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#524E5E] mb-1.5">This call will use</div>
+          <div className="rounded-control border border-line bg-canvas p-3" data-testid="outbound-integration-summary">
+            <div className="mb-1.5 text-meta font-medium text-fg-body">This call will use</div>
             <IntegrationSelectionSummary
               selection={callIntegrations}
               options={outboundIntegrationOptions.items}
@@ -770,205 +841,199 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
 
       {(embedded || mainTab === 'history') && (
         <>
-          {/* Canonical status tabs, driven by the server's status vocabulary. */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs">
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                aria-label="Call status"
-                data-testid="calls-status-filter"
-                value={historyBucket}
-                onChange={(event) => setHistoryBucket(event.target.value)}
-                className="rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 text-sm min-h-[44px]"
-              >
-                {CALL_STATUS_TABS.map((tab) => <option key={tab.id} value={tab.id}>{tab.label}</option>)}
-              </select>
-              <div className="flex items-center p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
-                {['All', 'Inbound', 'Outbound'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setFilterDirection(tab)}
-                    className={`px-3 py-1.5 min-h-[34px] rounded-lg text-xs font-semibold transition-all ${
-                      filterDirection === tab
-                        ? 'bg-white text-[#0F0E17] shadow-xs'
-                        : 'text-[#524E5E] hover:text-[#0F0E17]'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-1.5 text-xs">
-                <Filter className="w-3.5 h-3.5 text-[#8C879A]" />
-                <select
-                  value={filterAgentId}
-                  onChange={(e) => setFilterAgentId(e.target.value)}
-                  disabled={Boolean(lockedAgentId)}
-                  aria-label="Filter by agent"
-                  className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2 py-1.5 min-h-[36px] sm:min-h-[30px] text-base sm:text-xs disabled:opacity-50"
-                >
-                  <option value="all">All agents</option>
-                  {agents.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={tagFilter}
-                  onChange={(e) => setTagFilter(e.target.value)}
-                  aria-label="Filter by tag"
-                  data-testid="calls-tag-filter"
-                  className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2 py-1.5 min-h-[36px] sm:min-h-[30px] text-base sm:text-xs"
-                >
-                  <option value="">All tags</option>
-                  {availableTags.map(({ tag, count }) => (
-                    <option key={tag} value={tag}>
-                      {tag} ({count})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+          {/* Canonical status filter, driven by the server's status vocabulary. */}
+          <Toolbar>
+            <select
+              aria-label="Call status"
+              data-testid="calls-status-filter"
+              value={historyBucket}
+              onChange={(event) => setHistoryBucket(event.target.value)}
+              className={SELECT}
+            >
+              {CALL_STATUS_TABS.map((tab) => <option key={tab.id} value={tab.id}>{tab.label}</option>)}
+            </select>
+            <Tabs
+              label="Direction"
+              value={filterDirection}
+              onChange={setFilterDirection}
+              items={[
+                { id: 'All', label: 'All' },
+                { id: 'Inbound', label: 'Incoming' },
+                { id: 'Outbound', label: 'Outgoing' },
+              ]}
+            />
+            <select
+              value={filterAgentId}
+              onChange={(e) => setFilterAgentId(e.target.value)}
+              disabled={Boolean(lockedAgentId)}
+              aria-label="Filter by agent"
+              className={SELECT}
+            >
+              <option value="all">All agents</option>
+              {agents.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+              aria-label="Filter by tag"
+              data-testid="calls-tag-filter"
+              className={SELECT}
+            >
+              <option value="">All tags</option>
+              {availableTags.map(({ tag, count }) => (
+                <option key={tag} value={tag}>
+                  {tagLabel(tag)} ({count})
+                </option>
+              ))}
+            </select>
+            <Toolbar.Spacer />
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              label="Search calls"
+              placeholder="Search name, number, agent or outcome"
+              className="w-full sm:w-72"
+            />
+          </Toolbar>
 
-            <div className="relative min-w-[240px]">
-              <Search className="w-3.5 h-3.5 text-[#524E5E] absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by caller, agent, outcome..."
-                className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#0F0E17] placeholder-[#8C879A] focus:outline-none focus:border-[#6344E7] transition-colors"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            <div className={`${activeCall ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+            <div className={`min-w-0 ${activeCall ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
               <SolidCard padding="p-0" className="overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] font-bold text-[#8C879A] uppercase tracking-wider">
-                        <th className="py-3 px-4">Caller</th>
-                        <th className="py-3 px-3">Agent</th>
-                        <th className="py-3 px-3">Status</th>
-                        <th className="py-3 px-3 font-mono">Duration</th>
-                        <th className="py-3 px-3">Outcome</th>
-                        <th className="py-3 px-4 text-right">Time</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#E4E2EB]">
-                      {statusLoading || (isLoading && !calls.length) ? (
-                        <tr>
-                          <td colSpan={6} className="p-0">
-                            <CallsTableSkeleton rows={6} />
-                          </td>
-                        </tr>
-                      ) : filteredCalls.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="py-6 px-4 text-center text-[#8C879A]">
-                            No calls match this filter yet.
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredCalls.map((call) => {
-                          const isSelected = activeCall && activeCall.id === call.id;
-                          return (
-                            <tr
-                              key={call.id}
-                              data-testid={`call-row-${call.status}`}
-                              onClick={() => setSelectedCallId(call.id)}
-                              className={`cursor-pointer transition-colors ${
-                                isSelected ? 'bg-[#6344E7]/10 font-medium' : 'hover:bg-[#FAF9FD]'
-                              }`}
-                            >
-                              <td className="py-3.5 px-4">
-                                <div className="font-semibold text-[#0F0E17]">{call.callerName}</div>
-                                <div className="text-[10px] font-mono text-[#524E5E]">
-                                  {call.callerPhone || '—'}
-                                </div>
-                              </td>
-                              <td className="py-3.5 px-3 text-[#524E5E] font-medium">{call.agentName}</td>
-                              <td className="py-3.5 px-3">
-                                <StatusPill status={call.status} />
-                                {isTechnicalFailure(call.endReason) && (
-                                  <TechnicalIssuePill className="mt-1" />
+                {statusLoading || (isLoading && !calls.length) ? (
+                  <CallsTableSkeleton rows={6} />
+                ) : filteredCalls.length === 0 ? (
+                  <EmptyState
+                    compact
+                    icon={PhoneCall}
+                    title="No calls match these filters"
+                    description="Try another status, agent or tag, or clear the search."
+                  />
+                ) : (
+                  <ul className="divide-y divide-line" aria-label="Calls">
+                    {filteredCalls.map((call) => {
+                      const isSelected = activeCall && activeCall.id === call.id;
+                      const status = callStatus(call);
+                      const sentence = callSentence(call);
+                      const outcomeText = dispositionLabel(call.disposition) || call.summary || null;
+                      const masked = maskPhone(call.callerPhone);
+                      const named = contactName(call.callerName, null, '') !== '';
+                      return (
+                        <li key={call.id}>
+                          <button
+                            type="button"
+                            data-testid={`call-row-${call.status}`}
+                            aria-current={isSelected ? 'true' : undefined}
+                            onClick={() => setSelectedCallId(call.id)}
+                            className={`relative flex w-full gap-3 px-4 py-3.5 text-left transition-colors sm:px-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent before:absolute before:left-0 before:top-3 before:bottom-3 before:w-[3px] before:rounded-r-full ${
+                              isSelected ? 'bg-accent-soft before:bg-accent' : 'hover:bg-canvas before:bg-transparent'
+                            }`}
+                          >
+                            {sentence.actor ? (
+                              <Avatar name={call.agentName} size="sm" live={status === 'in_progress'} title={call.agentName} />
+                            ) : (
+                              <Avatar icon={STATUS_ICON[status] || PhoneIncoming} tone={status === 'missed' ? 'warning' : 'neutral'} size="sm" />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-copy text-ink break-words">
+                                {sentence.actor && <span className="font-semibold">{sentence.actor} </span>}
+                                <span className={sentence.actor ? 'text-fg-body' : ''}>{sentence.text}</span>
+                              </p>
+                              {outcomeText && (
+                                <p className="mt-0.5 line-clamp-2 text-ui text-fg-muted break-words" title={outcomeText}>
+                                  {outcomeText}
+                                </p>
+                              )}
+                              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-meta text-fg-muted">
+                                <time
+                                  dateTime={call.startedAt || undefined}
+                                  title={call.startedAt ? new Date(call.startedAt).toLocaleString('en-IN') : undefined}
+                                >
+                                  {call.startedAt ? relativeTime(call.startedAt) : 'Time unknown'}
+                                </time>
+                                {named && masked && <span>· {masked}</span>}
+                                {call.duration && call.duration !== '—' && (
+                                  <span className="font-mono tabular-nums">· {call.duration}</span>
                                 )}
-                              </td>
-                              <td className="py-3.5 px-3 font-mono font-bold text-[#0F0E17]">
-                                {call.duration}
-                              </td>
-                              <td className="py-3.5 px-3">
-                                <span className="text-[11px] text-[#524E5E] truncate max-w-[150px] block">
-                                  {call.outcome}
-                                </span>
-                                {call.statusTags?.length > 0 && (
-                                  <div className="flex flex-wrap gap-1 mt-1 max-w-[170px]">
-                                    {call.statusTags.slice(0, 3).map((tag) => (
-                                      <span
-                                        key={tag}
-                                        title={tag}
-                                        className="text-[9px] font-mono px-1 py-0.5 rounded bg-[#F0EEF6] text-[#524E5E] border border-[#E4E2EB]"
-                                      >
-                                        {tag.replace(/^[a-z]+:/, '')}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </td>
-                              <td className="py-3.5 px-4 text-right text-[11px] text-[#8C879A]">
-                                {call.startedAt ? new Date(call.startedAt).toLocaleString() : '—'}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                                {!sentence.actor && call.agentName && call.agentName !== 'Unassigned' && <span>· {call.agentName}</span>}
+                                <CallStatusPill status={call.status} />
+                                {isTechnicalFailure(call.endReason) && <TechnicalIssuePill />}
+                                <CallTags tags={call.statusTags} />
+                              </div>
+                            </div>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </SolidCard>
             </div>
 
             {activeCall && (
-              <div ref={detailRef} className="lg:col-span-5 space-y-4">
+              <div ref={detailRef} className="min-w-0 space-y-4 lg:col-span-5">
                 <SolidCard className="space-y-4">
-                  <div className="flex items-start justify-between pb-3 border-b border-[#E4E2EB]">
-                    <div>
-                      {/* A short reference for support, not the raw database id. */}
-                      <span className="text-[10px] font-mono text-[#8C879A] uppercase">
-                        {callReference(activeCall.id) ? `Call ${callReference(activeCall.id)}` : ''}
-                      </span>
-                      <h3 className="text-sm font-bold text-[#0F0E17] mt-0.5">
-                        {activeCall.callerName}
-                        {activeCall.callerPhone ? ` (${activeCall.callerPhone})` : ''}
-                      </h3>
+                  <div className="flex items-start gap-3 border-b border-line pb-4">
+                    <Avatar name={activeCall.agentName} live={callStatus(activeCall) === 'in_progress'} title={activeCall.agentName} />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-title text-ink break-words">{detailCaller}</h3>
+                      <p className="text-ui text-fg-muted">
+                        {activeCall.callerPhone && (
+                          <span className="font-mono tabular-nums text-fg-body">{activeCall.callerPhone}</span>
+                        )}
+                        {activeCall.callerPhone && callReference(activeCall.id) ? ' · ' : ''}
+                        {/* A short reference for support, not the raw database id. */}
+                        {callReference(activeCall.id) && (
+                          <span>
+                            Call <span className="font-mono tabular-nums">{callReference(activeCall.id)}</span>
+                          </span>
+                        )}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <StatusPill status={activeCall.status} />
-                      {isTechnicalFailure(activeCall.endReason) && <TechnicalIssuePill />}
-                      <button
-                        type="button"
-                        onClick={() => setSelectedCallId(null)}
-                        className="p-1 rounded-lg text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] transition-colors"
-                        title="Close details"
-                        aria-label="Close details"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCallId(null)}
+                      className="-mr-1 -mt-1 inline-flex h-11 w-11 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-control text-fg-muted hover:bg-surface-subtle hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      title="Close details"
+                      aria-label="Close details"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
                   </div>
 
-                  {/* Why this call ended up with this status, in plain language. */}
-                  <p className="text-[11px] text-[#524E5E]">
-                    {statusMeta(activeCall.status).hint}
-                    {!activeCall.connected ? ' This call never connected.' : ''}
-                    {activeCall.policyReason ? ` (${activeCall.policyReason.replace(/_/g, ' ')})` : ''}
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-copy text-ink">
+                      {detailSentence.actor && <span className="font-semibold">{detailSentence.actor} </span>}
+                      <span className={detailSentence.actor ? 'text-fg-body' : ''}>{detailSentence.text}</span>
+                      {detailOutcome && <span className="text-fg-body"> · {detailOutcome}</span>}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 text-meta text-fg-muted">
+                      <CallStatusPill status={activeCall.status} />
+                      {isTechnicalFailure(activeCall.endReason) && <TechnicalIssuePill />}
+                      {activeCall.startedAt && (
+                        <time dateTime={activeCall.startedAt} title={new Date(activeCall.startedAt).toLocaleString('en-IN')}>
+                          {relativeTime(activeCall.startedAt)}
+                        </time>
+                      )}
+                      {activeCall.duration && activeCall.duration !== '—' && (
+                        <span className="font-mono tabular-nums">· {activeCall.duration}</span>
+                      )}
+                    </div>
+                    {/* Why this call ended up with this status, in plain language. */}
+                    <p className="text-ui text-fg-muted">
+                      {statusMeta(activeCall.status).hint}
+                      {!activeCall.connected ? ' This call never connected.' : ''}
+                      {activeCall.policyReason ? ` (${policyReasonLabel(activeCall.policyReason)})` : ''}
+                    </p>
+                  </div>
 
                   <RecordingPlayer call={activeCall} />
 
-                  <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-1.5" data-testid="call-integrations">
-                    <div className="text-xs font-semibold text-[#524E5E]">Integrations for this call</div>
+                  <div className="rounded-control border border-line bg-canvas p-3.5 space-y-1.5" data-testid="call-integrations">
+                    <div className="text-ui font-semibold text-ink">Integrations used on this call</div>
                     <IntegrationSelectionSummary
                       selection={activeCallSelection}
                       options={detailIntegrationOptions.items}
@@ -979,50 +1044,52 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                     />
                   </div>
 
-                  {activeCall.connected && (
-                    <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-between text-xs">
-                      <span className="font-semibold text-[#524E5E]">Call cost</span>
-                      <span className="font-mono font-bold text-[#0F0E17]">
-                        {activeCall.billedAmount != null
-                          ? `${activeCall.billedCurrency === 'INR' ? '₹' : '$'}${Number(activeCall.billedAmount).toFixed(2)}`
-                          : activeCall.inProgress ? 'Finalized after the call' : 'Charge not available'}
-                      </span>
-                    </div>
-                  )}
-
-                  {activeCall.tier && (
-                    <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex items-center justify-between text-xs">
-                      <span className="font-semibold text-[#524E5E]">Voice Stack Tier</span>
-                      <span
-                        data-testid={`call-tier-${activeCall.tier}`}
-                        className="font-semibold text-[#6344E7] capitalize"
-                      >
-                        {{ low: 'Economical Tier', medium: 'Standard Regional Tier', premium: 'Flagship Live Tier' }[activeCall.tier] || activeCall.tier}
-                      </span>
-                    </div>
+                  {(activeCall.connected || activeCall.tier) && (
+                    <dl className="divide-y divide-line rounded-control border border-line bg-canvas text-ui">
+                      {activeCall.connected && (
+                        <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+                          <dt className="text-fg-body">Call cost</dt>
+                          <dd className="text-right font-semibold text-ink">
+                            {activeCall.billedAmount != null ? (
+                              <span className="font-mono tabular-nums">{money(activeCall.billedAmount, activeCall.billedCurrency)}</span>
+                            ) : activeCall.inProgress ? 'Worked out after the call' : 'Not available'}
+                          </dd>
+                        </div>
+                      )}
+                      {activeCall.tier && (
+                        <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+                          <dt className="text-fg-body">Voice quality</dt>
+                          <dd data-testid={`call-tier-${activeCall.tier}`} className="font-semibold text-ink">
+                            {TIER_LABEL[activeCall.tier] || humanizeToken(activeCall.tier)}
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
                   )}
 
                   {/* Callback: the server dials through the normal outbound path. */}
                   {canCallBack && (
                     <div
                       data-testid="call-callback-panel"
-                      className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-2.5"
+                      className="rounded-control border border-warning-line bg-warning-soft p-3.5 space-y-2.5"
                     >
-                      <div className="text-xs font-bold text-[#0F0E17]">Call this person back</div>
-                      <p className="text-[11px] text-[#524E5E]">
-                        Places a new call with {activeCall.agentName}. Uses your wallet balance and
-                        phone line, exactly like an outgoing call.
+                      <div className="text-ui font-semibold text-ink">Call {detailCaller} back</div>
+                      <p className="text-meta text-fg-body">
+                        {activeCall.agentName} places a new call from your phone line. It is charged to your wallet like
+                        any outgoing call.
                       </p>
-                      <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row">
                         <input
                           value={callbackTarget}
                           onChange={(e) => setCallbackTarget(e.target.value)}
                           placeholder={activeCall.callerPhone || '+91…'}
+                          aria-label="Number to call back"
+                          inputMode="tel"
                           data-testid="call-callback-number"
-                          className="flex-1 bg-white border border-[#E4E2EB] rounded-xl px-2.5 py-2 text-xs font-mono"
+                          className={`${FIELD} flex-1 font-mono tabular-nums`}
                         />
                         <TactileButton
-                          variant="brand"
+                          variant="primary"
                           size="sm"
                           icon={PhoneCall}
                           loading={callbackBusy}
@@ -1033,37 +1100,38 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                         </TactileButton>
                       </div>
                       {callbacks.length > 0 && (
-                        <div className="pt-2 border-t border-[#E4E2EB] space-y-1">
+                        <ul className="space-y-1 border-t border-warning-line pt-2">
                           {callbacks.map((cb) => (
-                            <div
-                              key={cb.callbackId}
-                              className="flex items-center justify-between text-[10px] font-mono text-[#524E5E]"
-                            >
+                            <li key={cb.callbackId} className="flex flex-wrap items-center justify-between gap-x-3 text-meta text-fg-body">
                               <span>
-                                {cb.toE164} · {cb.status}
+                                <span className="font-mono tabular-nums">{cb.toE164}</span> · {statusWord(cb.status).label}
                               </span>
-                              <span>{cb.createdAt ? new Date(cb.createdAt).toLocaleString() : ''}</span>
-                            </div>
+                              <time
+                                dateTime={cb.createdAt || undefined}
+                                title={cb.createdAt ? new Date(cb.createdAt).toLocaleString('en-IN') : undefined}
+                                className="text-fg-muted"
+                              >
+                                {cb.createdAt ? relativeTime(cb.createdAt) : ''}
+                              </time>
+                            </li>
                           ))}
-                        </div>
+                        </ul>
                       )}
                     </div>
                   )}
 
-                  <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-2">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-[#0F0E17]">
-                      <Sparkles className="w-3.5 h-3.5 text-[#6344E7]" />
-                      <span>AI summary</span>
+                  <div className="rounded-control border border-line bg-canvas p-3.5 space-y-2">
+                    <div className="flex items-center gap-1.5 text-ui font-semibold text-ink">
+                      <ListChecks className="h-4 w-4 text-accent" aria-hidden="true" />
+                      <span>Summary</span>
                     </div>
-                    <div className="text-xs text-[#524E5E] leading-relaxed">
+                    <div className="text-ui leading-relaxed text-fg-body">
                       {summaryText ? (
                         summaryText
                       ) : outcomeLoading ? (
                         <div className="flex items-center gap-2 py-1">
                           <WaveformSkeleton />
-                          <span className="text-[11px] font-mono text-[#6344E7] animate-pulse">
-                            Analyzing audio transcript &amp; outcomes…
-                          </span>
+                          <span className="text-meta text-fg-muted">Writing the summary…</span>
                         </div>
                       ) : activeCall.connected ? (
                         'No summary yet. It appears once the call finishes processing.'
@@ -1073,42 +1141,37 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                     </div>
 
                     {extracted && Object.keys(extracted).length > 0 && (
-                      <div className="pt-2 border-t border-[#E4E2EB] grid grid-cols-2 gap-2 text-[11px] font-mono">
+                      <dl className="grid grid-cols-1 gap-2 border-t border-line pt-2 sm:grid-cols-2">
                         {Object.entries(extracted).map(([k, v]) => (
-                          <div
-                            key={k}
-                            className="bg-white p-2 rounded-lg border border-[#E4E2EB] shadow-2xs"
-                          >
-                            <span className="text-[#8C879A] block text-[9px] uppercase tracking-wider">
-                              {k}
-                            </span>
-                            <span className="text-[#0F0E17] truncate block font-semibold">
+                          <div key={k} className="min-w-0 rounded-control border border-line bg-surface p-2">
+                            <dt className="text-meta text-fg-muted">{humanizeToken(k)}</dt>
+                            <dd className="truncate text-ui font-semibold text-ink" title={String(v)}>
                               {String(v)}
-                            </span>
+                            </dd>
                           </div>
                         ))}
-                      </div>
+                      </dl>
                     )}
 
                     {outcome?.disposition && (
-                      <div className="pt-2 border-t border-[#E4E2EB] flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-1.5 border-t border-line pt-2">
                         <StatusBadge status={outcome.disposition} size="xs" />
-                        {(outcome.status_tags || []).slice(0, 12).map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#F0EEF6] text-[#524E5E] border border-[#E4E2EB]"
-                          >
-                            {tag}
-                          </span>
+                        {sortedTags(outcome.status_tags || []).slice(0, 12).map((tag) => (
+                          <Badge key={tag} tone={tagTone(tag)} size="xs" title={tagLabel(tag)}>
+                            {tagLabel(tag)}
+                          </Badge>
                         ))}
                       </div>
                     )}
                   </div>
 
                   <div>
-                    <h4 className="text-xs font-bold text-[#0F0E17] mb-2.5 flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-[#524E5E]" />
-                      <span>Transcript ({transcriptLines.length} turns)</span>
+                    <h4 className="mb-2.5 flex items-center gap-1.5 text-ui font-semibold text-ink">
+                      <FileText className="h-4 w-4 text-fg-subtle" aria-hidden="true" />
+                      <span>Transcript</span>
+                      <span className="font-normal text-fg-muted">
+                        · <span className="font-mono tabular-nums">{transcriptLines.length}</span> {transcriptLines.length === 1 ? 'turn' : 'turns'}
+                      </span>
                     </h4>
                     {liveTranscription && (() => {
                       const hasSavedText = transcriptLines.length > 0 || Number(liveTranscription.segments || 0) > 0;
@@ -1116,26 +1179,25 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                       const label = partial
                         ? 'Partial — saved transcript available'
                         : ({ connecting: 'Connecting…', streaming: 'Listening', complete: 'Complete', failed: 'Could not transcribe this call' })[liveTranscription.status] || 'Status unavailable';
-                      return <p className={`mb-2 text-xs ${liveTranscription.status === 'failed' && !hasSavedText ? 'text-[#B91C1C]' : 'text-[#524E5E]'}`} role="status">Live transcription: {label}</p>;
+                      return <p className={`mb-2 text-ui ${liveTranscription.status === 'failed' && !hasSavedText ? 'text-danger-fg' : 'text-fg-body'}`} role="status">Live transcription: {label}</p>;
                     })()}
 
-                    <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                      {/* chisel: conversational turn bubble skeletons while transcript is resolving */}
+                    <div className="max-h-72 space-y-2.5 overflow-y-auto pr-1">
                       {activeCall.connected && transcriptLines.length === 0 && outcomeLoading ? (
-                        <div className="space-y-2 animate-pulse py-1">
-                          <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] mr-6 space-y-1.5">
-                            <div className="h-2.5 w-16 bg-[#E4E2EB] rounded" />
-                            <div className="h-3 w-4/5 bg-[#E4E2EB]/80 rounded" />
+                        <div className="space-y-2 py-1 animate-pulse motion-reduce:animate-none">
+                          <div className="mr-6 space-y-1.5 rounded-control border border-line bg-canvas p-3">
+                            <div className="h-2.5 w-16 rounded-pill bg-line" />
+                            <div className="h-3 w-4/5 rounded-pill bg-line/80" />
                           </div>
-                          <div className="p-3 rounded-xl bg-white border border-[#E4E2EB] ml-6 space-y-1.5">
-                            <div className="h-2.5 w-16 bg-[#E4E2EB] rounded" />
-                            <div className="h-3 w-3/4 bg-[#E4E2EB]/80 rounded" />
+                          <div className="ml-6 space-y-1.5 rounded-control border border-line bg-surface p-3">
+                            <div className="h-2.5 w-16 rounded-pill bg-line" />
+                            <div className="h-3 w-3/4 rounded-pill bg-line/80" />
                           </div>
                         </div>
                       ) : transcriptLines.length === 0 ? (
-                        <p className="text-xs text-[#8C879A]">
+                        <p className="text-ui text-fg-muted">
                           {activeCall.connected
-                            ? 'Transcript appears after the call finalizes.'
+                            ? 'The transcript appears once the call is processed.'
                             : 'This call never connected, so there is no transcript.'}
                         </p>
                       ) : null}
@@ -1145,27 +1207,21 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                         return (
                           <div
                             key={idx}
-                            className={`p-3 rounded-xl text-xs leading-relaxed ${
-                              isAgent
-                                ? 'bg-white border border-[#E4E2EB] ml-3 shadow-2xs'
-                                : 'bg-[#FAF9FD] border border-[#E4E2EB] mr-3'
+                            className={`rounded-control p-3 text-ui leading-relaxed ${
+                              isAgent ? 'ml-3 border border-line bg-surface' : 'mr-3 border border-line bg-canvas'
                             }`}
                           >
-                            <div className="flex items-center justify-between text-[10px] text-[#8C879A] mb-1 font-mono">
-                              <span
-                                className={`font-bold ${isAgent ? 'text-[#6344E7]' : 'text-[#0F0E17]'}`}
-                              >
-                                {isAgent ? activeCall.agentName : 'Caller'}
-                              </span>
+                            <div className={`mb-1 text-meta font-semibold ${isAgent ? 'text-accent-fg' : 'text-ink'}`}>
+                              {isAgent ? activeCall.agentName : 'Caller'}
                             </div>
-                            <p className="text-[#0F0E17]">{t.text}</p>
+                            <p className="text-ink break-words">{t.text}</p>
                           </div>
                         );
                       })}
                       {liveTranscription?.partial_text && (
-                        <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] mr-3 text-sm" aria-label="Caller speech in progress">
-                          <p className="mb-1 text-[10px] text-[#8C879A]">Caller · speaking</p>
-                          <p className="text-[#524E5E]">{liveTranscription.partial_text}</p>
+                        <div className="mr-3 rounded-control border border-line bg-canvas p-3 text-ui" aria-label="Caller speech in progress">
+                          <p className="mb-1 text-meta text-fg-muted">Caller · speaking</p>
+                          <p className="text-fg-body">{liveTranscription.partial_text}</p>
                         </div>
                       )}
                     </div>

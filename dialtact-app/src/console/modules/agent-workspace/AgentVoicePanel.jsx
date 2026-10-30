@@ -21,16 +21,21 @@ import {
 import { voiceAgent } from '../../../services/voiceAgent';
 import { api } from '../../../services/api';
 import { showToast } from '../../ui/ToastHost';
+import { BLOCKED_TENANT_TERMS, publicLabel } from '../../../lib/internalLabels';
+import { Badge } from '../../ui/StatusBadge';
 
 // Voice inventories come from the authenticated catalog; never invent offline choices.
 export const VOICE_CATALOG = [];
 
 const STACK_TIER_LABELS = {
-  low: 'Economical Tier',
-  medium: 'Standard Regional Tier',
-  premium: 'Flagship Live Tier',
+  low: 'Basic voice',
+  medium: 'Standard voice',
+  premium: 'Premium live voice',
 };
-const BLOCKED_TENANT_TERMS = /\b(vobiz|telnyx|nango|exotel|plivo|composio|sarvam|gemini|gnani|cartesia|openai|elevenlabs|deepgram|playht|murf|azure|bulbul|timbre|sonic|saaras|saarika)\b/i;
+// The admin-configured tier name wins so the console matches billing and pricing.
+function tierName(tier, profile) {
+  return publicText(profile?.label) || STACK_TIER_LABELS[tier] || tier;
+}
 
 function publicChoice(value) {
   return typeof value === 'string' && value.trim() && !BLOCKED_TENANT_TERMS.test(value);
@@ -39,8 +44,7 @@ function publicChoice(value) {
 // Provider metadata is display-only, but a misconfigured profile must never be
 // able to surface an internal stack or vendor name in the tenant UI.
 function publicText(value) {
-  const text = typeof value === 'string' ? value.trim() : '';
-  return text && !BLOCKED_TENANT_TERMS.test(text) ? text : '';
+  return publicLabel(value);
 }
 
 function publicPreviewUrl(value) {
@@ -55,9 +59,9 @@ function formatCategory(value) {
   const known = {
     conversation: 'Conversation',
     conversational: 'Conversational',
-    support: 'Customer Care',
-    care: 'Customer Care',
-    sales: 'Sales & Outreach',
+    support: 'Customer care',
+    care: 'Customer care',
+    sales: 'Sales and outreach',
     promotional: 'Promotional',
     operations: 'Operations',
     narration: 'Narration',
@@ -198,56 +202,56 @@ export const EXTENDED_LANGUAGES = [
     name: 'Telugu',
     nativeName: 'తెలుగు',
     flag: '🇮🇳',
-    badge: 'Native Neural',
+    badge: 'Regional voices',
   },
   {
     code: 'en-IN',
     name: 'English (India)',
     nativeName: 'Indian English',
     flag: '🇮🇳',
-    badge: 'Localized Accent',
+    badge: 'Indian accent',
   },
   {
     code: 'hi-IN',
     name: 'Hindi',
     nativeName: 'हिन्दी',
     flag: '🇮🇳',
-    badge: 'Regional Voices',
+    badge: 'Regional voices',
   },
   {
     code: 'ta-IN',
     name: 'Tamil',
     nativeName: 'தமிழ்',
     flag: '🇮🇳',
-    badge: 'Regional Dravidian',
+    badge: 'Regional voices',
   },
   {
     code: 'kn-IN',
     name: 'Kannada',
     nativeName: 'ಕನ್ನಡ',
     flag: '🇮🇳',
-    badge: 'Multilingual Voice',
+    badge: 'Multilingual voice',
   },
   {
     code: 'gu-IN',
     name: 'Gujarati',
     nativeName: 'ગુજરાતી',
     flag: '🇮🇳',
-    badge: 'Regional Voices',
+    badge: 'Regional voices',
   },
   {
     code: 'ml-IN',
     name: 'Malayalam',
     nativeName: 'മലയാളം',
     flag: '🇮🇳',
-    badge: 'Regional Dravidian',
+    badge: 'Regional voices',
   },
   {
     code: 'en-US',
     name: 'English (US)',
     nativeName: 'American English',
     flag: '🇺🇸',
-    badge: 'General American',
+    badge: 'American accent',
   },
 ];
 
@@ -329,7 +333,7 @@ export function AgentVoicePanel({
         onReloadVoiceStackSettings ? onReloadVoiceStackSettings() : Promise.resolve(),
       ]);
       if (results.some((result) => result.status === 'rejected' || result.value === null || result.value?.error)) {
-        showToast('Some voice options could not be refreshed. Check the catalogue messages and retry.', 'error');
+        showToast('Some voice options could not be refreshed. Check the messages below and try again.', 'error');
       } else {
         showToast('Voice options refreshed.', 'success');
       }
@@ -701,7 +705,7 @@ export function AgentVoicePanel({
 
       const previewUrl = publicPreviewUrl(voice?.previewUrl);
       if (!previewUrl) {
-        setAudioError('A stored sample is not available for this voice yet. Refresh the voice catalog and try again.');
+        setAudioError('There is no sample for this voice yet. Refresh the voice list and try again.');
         return;
       }
 
@@ -917,23 +921,23 @@ export function AgentVoicePanel({
     <div className="space-y-4" data-testid="agent-voice-panel">
       {/* 1. Primary Spoken Language & Accent Card */}
       <div
-        className="p-3.5 rounded-xl bg-white border border-[#E4E2EB] shadow-xs space-y-2.5"
+        className="p-4 sm:p-5 rounded-card bg-surface border border-line shadow-craft-xs space-y-3"
         data-testid="language-selection-card"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Languages className="w-4 h-4 text-[#6344E7]" />
-            <span className="text-xs font-bold text-[#0F0E17]">
-              Primary Spoken Language &amp; Accent
-            </span>
+            <Languages className="w-4 h-4 text-accent" aria-hidden="true" />
+            <h2 className="text-title text-ink">
+              Spoken language and accent
+            </h2>
           </div>
-          <span className="text-[11px] font-medium text-[#6344E7]">
+          <span className="text-ui font-medium text-accent-fg">
             Active: {activeLanguage.name} ({activeLanguage.code})
           </span>
         </div>
 
         {/* Compact Horizontal Pill Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
           {EXTENDED_LANGUAGES.map((lang) => {
             const isSelected = currentLanguage === lang.code;
             return (
@@ -944,22 +948,23 @@ export function AgentVoicePanel({
                 disabled={isSavingStackSelection || stackSelectionConflict}
                 aria-pressed={isSelected}
                 onClick={() => handleSelectLanguage(lang.code)}
-                className={`flex flex-col items-center justify-center p-2 rounded-lg text-center transition-all ${
+                title={`${lang.name} (${lang.code})`}
+                className={`flex min-w-0 flex-col items-center justify-center p-2 min-h-[64px] rounded-control text-center border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                   isSelected
-                    ? 'bg-[#6344E7]/10 border-2 border-[#6344E7] text-[#0F0E17] shadow-xs'
-                    : 'bg-[#FAF9FD] border border-[#E4E2EB] text-[#524E5E] hover:border-[#6344E7]/40 hover:bg-white'
+                    ? 'bg-accent-soft border-accent text-ink ring-1 ring-accent'
+                    : 'bg-canvas border-line text-fg-body hover:border-line-strong hover:bg-surface'
                 }`}
               >
                 <div className="flex items-center gap-1">
-                  <span className="text-sm">{lang.flag}</span>
-                  <span className="text-[11px] font-bold text-[#0F0E17]">
+                  <span className="text-copy">{lang.flag}</span>
+                  <span className="text-meta font-medium text-ink">
                     {lang.nativeName}
                   </span>
                 </div>
-                <span className="text-[10px] text-[#524E5E] truncate max-w-full">
+                <span className="text-meta text-fg-body truncate max-w-full">
                   {lang.name}
                 </span>
-                <span className="text-[9px] text-[#8C879A] mt-0.5 uppercase tracking-wider">
+                <span className="text-meta font-mono text-fg-muted mt-0.5">
                   {lang.code}
                 </span>
               </button>
@@ -969,48 +974,46 @@ export function AgentVoicePanel({
       </div>
 
       <section
-        className="rounded-xl border border-[#E4E2EB] bg-white p-4 shadow-xs space-y-4"
+        className="rounded-card border border-line bg-surface p-4 sm:p-5 shadow-craft-xs space-y-4"
         data-testid="voice-stack-selector"
         aria-busy={voiceStackCatalogLoading}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-sm font-bold text-[#0F0E17]">Voice setup</h2>
-            <p className="mt-1 text-xs text-[#524E5E]">
+            <h2 className="text-title text-ink">Voice setup</h2>
+            <p className="mt-1 text-ui text-fg-body">
               Saved setup:{' '}
-              <strong className="text-[#0F0E17]">
+              <strong className="text-ink">
                 {isStackOptedIn && agent?.defaultTier
-                  ? (STACK_TIER_LABELS[agent.defaultTier] || savedProfile?.label || agent.defaultTier)
-                  : 'Current voice configuration'}
+                  ? tierName(agent.defaultTier, savedProfile)
+                  : 'Current voice'}
               </strong>
               {isStackOptedIn && savedVoice ? ` · ${savedVoice.label}` : ''}
             </p>
-            <p className="mt-1 text-[11px] text-[#716C7F]">
+            <p className="mt-1 text-meta text-fg-muted">
               Saved changes apply to new calls. Calls already in progress keep their current setup.
             </p>
           </div>
           <div className="flex items-center gap-2">
             {isStackOptedIn && agent?.defaultTier === 'premium' && (
-              <span className="rounded-full border border-[#6344E7]/20 bg-[#6344E7]/5 px-2.5 py-1 text-[11px] font-semibold text-[#5233D6]">
-                Live voice controls below
-              </span>
+              <Badge tone="accent">Live voice controls below</Badge>
             )}
           </div>
         </div>
 
         {voiceStackCatalogLoading && (
-          <p className="text-xs text-[#716C7F]" role="status" data-testid="voice-stack-loading">
-            Loading approved voice options…
+          <p className="text-ui text-fg-muted" role="status" data-testid="voice-stack-loading">
+            Loading voice options…
           </p>
         )}
         {voiceStackCatalogError && (
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-danger-line bg-danger-soft px-3 py-2 text-ui text-danger-fg" role="alert">
             <span>{voiceStackCatalogError}</span>
             <button
               type="button"
               onClick={onRetryVoiceStackCatalog}
               disabled={voiceStackCatalogLoading}
-              className="rounded-md border border-red-300 px-2.5 py-1 font-semibold hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50"
+              className="rounded-control border border-danger-line px-2.5 py-1 font-semibold hover:bg-danger-soft focus:outline-none focus:ring-2 focus:ring-danger disabled:opacity-50"
               data-testid="voice-stack-catalog-retry"
             >
               Retry
@@ -1018,28 +1021,28 @@ export function AgentVoicePanel({
           </div>
         )}
         {!voiceStackCatalogLoading && !voiceStackCatalogError && !voiceCatalogLoading && selectableStackProfiles.length === 0 && (
-          <p className="rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] px-3 py-2.5 text-xs text-[#524E5E]" data-testid="voice-stack-empty">
-            No approved voice setup is available for this language yet. Your current saved setup is unchanged.
+          <p className="rounded-control border border-line bg-canvas px-3 py-2.5 text-ui text-fg-body" data-testid="voice-stack-empty">
+            No voice setup is ready for this language yet. Your saved setup has not changed.
           </p>
         )}
 
         {/* 3 Columns for the Stacks with Scrollable Voices */}
         {catalogStackProfiles.length > 0 && (
           <fieldset className="space-y-3" disabled={isSavingStackSelection || voiceStackCatalogLoading}>
-            <div className="flex items-center justify-between mb-2">
-              <legend className="text-xs font-semibold text-[#0F0E17]">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <legend className="text-ui font-semibold text-ink">
                 Choose a voice setup
               </legend>
               <button
                 type="button"
                 onClick={handleRefreshAllVoiceData}
                 disabled={isRefreshingVoiceData || voiceStackCatalogLoading}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-[#6344E7] hover:text-[#5233D6] bg-[#6344E7]/5 hover:bg-[#6344E7]/10 rounded-lg border border-[#6344E7]/20 transition-all cursor-pointer disabled:opacity-50"
-                title="Refresh Voice Stacks from backend"
+                className="flex items-center gap-1.5 px-2.5 py-1 min-h-[32px] text-ui font-medium text-fg-body hover:text-ink bg-surface hover:bg-canvas rounded-control border border-line transition-colors cursor-pointer disabled:opacity-50"
+                title="Refresh voice options"
                 data-testid="refresh-voice-stacks-btn"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingVoiceData || voiceStackCatalogLoading ? 'animate-spin' : ''}`} />
-                <span>{isRefreshingVoiceData || voiceStackCatalogLoading ? 'Refreshing…' : 'Refresh Stacks'}</span>
+                <span>{isRefreshingVoiceData || voiceStackCatalogLoading ? 'Refreshing…' : 'Refresh options'}</span>
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -1064,14 +1067,14 @@ export function AgentVoicePanel({
                 return (
                   <div
                     key={profile.tier}
-                    className={`flex flex-col rounded-xl border transition-all ${
+                    className={`flex min-w-0 flex-col rounded-card border transition-colors ${
                       isSelectedTier
-                        ? 'border-[#6344E7] bg-white ring-2 ring-[#6344E7]/20 shadow-xs'
-                        : 'border-[#E4E2EB] bg-white hover:border-[#B9B4C8]'
+                        ? 'border-accent bg-surface ring-2 ring-accent/20 shadow-craft-xs'
+                        : 'border-line bg-surface hover:border-line-strong'
                     } ${!ready ? 'opacity-70' : ''}`}
                   >
                     {/* Column Header */}
-                    <div className="p-3.5 border-b border-[#F0EEF6] bg-[#FAF9FD]/50 rounded-t-xl">
+                    <div className="p-3.5 border-b border-line bg-canvas/50 rounded-t-card">
                       <div className="flex items-start justify-between gap-2">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
                           <input
@@ -1082,77 +1085,69 @@ export function AgentVoicePanel({
                             disabled={!ready || isSavingStackSelection || stackSelectionConflict}
                             aria-describedby={`voice-stack-tier-status-${profile.tier}`}
                             onChange={() => handleStackTierChange(profile.tier)}
-                            className="mt-0.5 accent-[#6344E7]"
+                            className="mt-0.5 accent-accent"
                             data-testid={`voice-stack-tier-${profile.tier}`}
                           />
                           <div>
-                            <span className="block text-xs font-bold text-[#0F0E17]">
-                              {STACK_TIER_LABELS[profile.tier] || profile.label || profile.tier}
+                            <span className="block text-ui font-semibold text-ink">
+                              {tierName(profile.tier, profile)}
                             </span>
-                            <span className="text-[10px] text-[#716C7F]">
+                            <span className="text-meta text-fg-muted">
                               {profile.tier === 'low'
-                                ? 'Economical Composed Voice'
+                                ? 'Lowest price per minute'
                                 : profile.tier === 'medium'
-                                ? 'Standard Regional Expressive'
+                                ? 'Regional voices with more expression'
                                 : profile.tier === 'premium'
-                                ? 'Flagship Realtime Live'
-                                : (profile.description || `${profile.label || 'Custom'} Composed Stack`)}
+                                ? 'The most natural, real-time conversation'
+                                : (publicText(profile.description) || `${profile.label || 'Custom'} voice`)}
                             </span>
                           </div>
                         </label>
                         <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
-                            profile.tier === 'premium'
-                              ? 'bg-[#6344E7]/10 text-[#6344E7] border-[#6344E7]/25'
-                              : profile.tier === 'medium'
-                              ? 'bg-blue-50 text-blue-700 border-blue-200'
-                              : profile.tier === 'low'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : 'bg-purple-50 text-purple-700 border-purple-200'
-                          }`}
+                          className="shrink-0 rounded-pill px-2 py-0.5 text-meta font-medium border bg-neutral-soft text-neutral-fg border-neutral-line"
                         >
                           {profile.tier === 'low'
-                            ? 'Economical'
+                            ? 'Basic'
                             : profile.tier === 'medium'
                             ? 'Standard'
                             : profile.tier === 'premium'
-                            ? 'Flagship'
+                            ? 'Premium'
                             : (profile.label || 'Custom')}
                         </span>
                       </div>
                       <div
                         id={`voice-stack-tier-status-${profile.tier}`}
-                        className="mt-2 text-[11px] text-[#524E5E] font-medium"
+                        className="mt-2 text-meta text-fg-body font-medium"
                       >
                         {ready
                           ? `Phone calls: ${formatRetailRate(profile.retailRate)}`
-                          : 'Unavailable for this language until setup is approved.'}
+                          : 'Not available for this language yet.'}
                         {ready && profile.webRetailRate?.complete && <span className="mt-1 block">Web calls: {formatRetailRate(profile.webRetailRate)}</span>}
                       </div>
                     </div>
 
                     {/* Column Body: Scrollable Voice Section */}
                     <div className="p-3 flex-1 flex flex-col min-h-0">
-                      <div className="flex items-center justify-between text-[11px] font-semibold text-[#524E5E] mb-2">
+                      <div className="flex items-center justify-between text-meta font-semibold text-fg-body mb-2">
                         <span>Voices for {activeLanguage.name}</span>
-                        <span className="text-[10px] text-[#8C879A] font-normal">
+                        <span className="text-meta text-fg-muted font-normal">
                           {visibleVoices.length} {visibleVoices.length === 1 ? 'voice' : 'voices'} available
                         </span>
                       </div>
-                      <p className="mb-3 text-[10px] leading-relaxed text-[#716C7F]" data-testid={`voice-inventory-summary-${profile.tier}`}>
+                      <p className="mb-3 text-meta leading-relaxed text-fg-muted" data-testid={`voice-inventory-summary-${profile.tier}`}>
                         {visibleVoices.length} {activeLanguage.name} {visibleVoices.length === 1 ? 'voice matches' : 'voices match'} your filters
                         {category ? ` · ${formatCategory(category)}` : ' · All styles'}.
                       </p>
 
-                      {categories.length > 0 && <label className="mb-2 text-[11px] text-[#524E5E]">Voice style
+                      {categories.length > 0 && <label className="mb-2 text-meta text-fg-body">Voice style
                         <select aria-label={`Voice style for ${profile.label || profile.tier}`} value={category}
                           onChange={(event) => setTierVoiceCategories((previous) => ({ ...previous, [profile.tier]: event.target.value }))}
-                          className="mt-1 w-full rounded-md border border-[#E4E2EB] bg-white p-2">
+                          className="mt-1 w-full rounded-control border border-line bg-surface p-2 text-base sm:text-ui">
                           <option value="">All styles ({voices.filter((voice) => matchesGender(voice, gender)).length})</option>
                           {categories.map((style) => <option key={style} value={style}>{formatCategory(style)} ({voices.filter((voice) => voice.category === style && matchesGender(voice, gender)).length})</option>)}
                         </select>
                       </label>}
-                      <div className="mb-2 flex items-center gap-0.5 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] p-0.5" role="group" aria-label={`Voice gender for ${profile.label || profile.tier}`}>
+                      <div className="mb-2 flex items-center gap-0.5 rounded-control border border-line bg-canvas p-0.5" role="group" aria-label={`Voice gender for ${profile.label || profile.tier}`}>
                         {[
                           { id: 'all', label: `All (${genderCounts.all})` },
                           { id: 'female', label: `Female (${genderCounts.female})` },
@@ -1164,25 +1159,25 @@ export function AgentVoicePanel({
                             type="button"
                             aria-pressed={gender === option.id}
                             onClick={() => setTierVoiceGenders((previous) => ({ ...previous, [profile.tier]: option.id }))}
-                            className={`flex-1 rounded-md px-1 py-1 text-[10px] font-semibold transition-all ${
+                            className={`flex-1 rounded-[8px] px-1 py-1 min-h-[32px] text-meta font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                               gender === option.id
-                                ? 'bg-[#6344E7] text-white shadow-2xs'
-                                : 'text-[#524E5E] hover:text-[#0F0E17]'
+                                ? 'bg-surface text-ink shadow-craft-xs'
+                                : 'text-fg-body hover:text-ink'
                             }`}
                           >
                             {option.label}
                           </button>
                         ))}
                       </div>
-                      <div role="region" aria-label={`Voices for ${profile.label || profile.tier}`} tabIndex={0} className="max-h-60 overflow-y-auto space-y-1.5 pr-1 divide-y divide-[#F0EEF6]">
+                      <div role="region" aria-label={`Voices for ${profile.label || profile.tier}`} tabIndex={0} className="max-h-60 overflow-y-auto space-y-1.5 pr-1 divide-y divide-line">
                         {voices.length === 0 ? (
-                          <div className="py-6 text-center text-xs text-[#8C879A] italic">
-                            No approved voices available for {activeLanguage.name} in this tier.
+                          <div className="py-6 text-center text-ui text-fg-muted italic">
+                            No voices for {activeLanguage.name} at this level yet.
                           </div>
                         ) : visibleVoices.length === 0 ? (
-                          <div className="py-6 text-center text-xs text-[#8C879A] italic">
+                          <div className="py-6 text-center text-ui text-fg-muted italic">
                             No voices match the selected style and gender.
-                            <button type="button" className="mt-2 block w-full font-semibold not-italic text-[#6344E7]"
+                            <button type="button" className="mt-2 block w-full font-semibold not-italic text-accent"
                               onClick={() => {
                                 setTierVoiceCategories((previous) => ({ ...previous, [profile.tier]: '' }));
                                 setTierVoiceGenders((previous) => ({ ...previous, [profile.tier]: 'all' }));
@@ -1203,10 +1198,10 @@ export function AgentVoicePanel({
                               <div
                                 key={`${profile.tier}-${v.engineId || ''}-${v.id}`}
                                 onClick={() => ready && handleSelectTierVoice(profile, v)}
-                                className={`flex items-center justify-between gap-2 p-2 rounded-lg transition-colors cursor-pointer select-none ${
+                                className={`flex items-center justify-between gap-2 p-2 rounded-control transition-colors cursor-pointer select-none ${
                                   isVoiceSelected
-                                    ? 'bg-[#6344E7]/10 border border-[#6344E7]/30'
-                                    : 'hover:bg-[#FAF9FD]'
+                                    ? 'bg-accent-soft border border-accent/30'
+                                    : 'hover:bg-canvas'
                                 }`}
                               >
                                 <div className="flex items-center gap-2 min-w-0">
@@ -1221,8 +1216,8 @@ export function AgentVoicePanel({
                                     }}
                                     className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all ${
                                       isPlayingThis
-                                        ? 'bg-rose-600 text-white shadow-xs'
-                                        : 'bg-[#6344E7]/10 text-[#6344E7] hover:bg-[#6344E7] hover:text-white'
+                                        ? 'bg-danger text-white shadow-craft-xs'
+                                        : 'bg-accent-soft text-accent hover:bg-accent hover:text-white'
                                     }`}
                                   >
                                     {isPlayingThis ? (
@@ -1235,33 +1230,27 @@ export function AgentVoicePanel({
                                   {/* Voice Name & Details */}
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="text-xs font-bold text-[#0F0E17] truncate">
+                                      <span className="text-ui font-semibold text-ink truncate" title={v.label || v.name}>
                                         {v.label || v.name}
                                       </span>
                                       {v.gender && (
-                                        <span className="text-[9px] uppercase px-1 rounded bg-[#F0EEF6] text-[#524E5E] font-semibold">
+                                        <span className="text-meta px-1.5 rounded-pill bg-surface-subtle text-fg-body font-medium capitalize">
                                           {v.gender}
                                         </span>
                                       )}
                                       {(v.tag === 'Indian' || v.accent?.includes('Indian') || v.useCase?.includes('Indian')) && (
-                                        <span className="text-[9px] px-1 py-0.2 rounded font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span className="text-meta px-1.5 rounded-pill font-medium bg-neutral-soft text-neutral-fg border border-neutral-line">
                                           🇮🇳 Indian
                                         </span>
                                       )}
                                       {formatCategory(v.category) && (
-                                        <span className={`text-[9px] px-1 py-0.2 rounded font-medium ${
-                                          v.category === 'sales'
-                                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                            : v.category === 'operations'
-                                            ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                        }`}>
+                                        <span className="text-meta px-1.5 rounded-pill font-medium bg-info-soft text-info-fg border border-info-line">
                                           {formatCategory(v.category)}
                                         </span>
                                       )}
                                     </div>
-                                    <p className="text-[10px] text-[#716C7F] truncate">
-                                      {voiceMetaLine(v) || (profile.tier === 'premium' ? 'Live Neural' : 'Regional Voice')}
+                                    <p className="text-meta text-fg-muted truncate">
+                                      {voiceMetaLine(v) || (profile.tier === 'premium' ? 'Live voice' : 'Regional voice')}
                                     </p>
                                   </div>
                                 </div>
@@ -1275,10 +1264,10 @@ export function AgentVoicePanel({
                                     e.stopPropagation();
                                     handleSelectTierVoice(profile, v);
                                   }}
-                                  className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold transition-all ${
+                                  className={`shrink-0 flex items-center gap-1 px-2.5 py-1 min-h-[32px] rounded-control text-meta font-medium border transition-colors ${
                                     isVoiceSelected
-                                      ? 'bg-[#6344E7] text-white shadow-2xs'
-                                      : 'bg-[#FAF9FD] text-[#524E5E] hover:bg-[#6344E7]/15 hover:text-[#6344E7] border border-[#E4E2EB]'
+                                      ? 'bg-ink text-white border-ink'
+                                      : 'bg-surface text-fg-body hover:text-ink hover:border-line-strong border-line'
                                   }`}
                                 >
                                   {isSavingStackSelection && isVoiceSelected ? (
@@ -1307,28 +1296,28 @@ export function AgentVoicePanel({
 
         {/* Saved configuration indicator & status messages */}
         {!voiceStackCatalogLoading && !savedSelectionValid && !stackSelectionError && (
-          <p role="status" data-testid="voice-setup-needs-selection" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-            Choose a current voice setup below before testing this agent. If the choices changed, refresh them and select your voice again.
+          <p role="status" data-testid="voice-setup-needs-selection" className="rounded-control border border-warning-line bg-warning-soft px-3 py-2 text-ui text-warning-fg">
+            Choose a voice below before testing this employee. If the options have changed, refresh them and choose your voice again.
           </p>
         )}
-        {isStackOptedIn && savedSelection.tier && STACK_TIER_LABELS[savedSelection.tier] && (
-          <div className="mt-3 flex items-center justify-between border-t border-[#F0EEF6] pt-2.5">
-            <p className="text-[11px] text-[#716C7F]">
-              Saved configuration: <span className="font-semibold text-[#0F0E17]">{STACK_TIER_LABELS[savedSelection.tier]}</span>
+        {isStackOptedIn && savedSelection.tier && (
+          <div className="mt-3 flex items-center justify-between border-t border-line pt-2.5">
+            <p className="text-ui text-fg-muted">
+              Saved configuration: <span className="font-semibold text-ink">{tierName(savedSelection.tier, savedProfile)}</span>
               {savedVoice ? ` · ${savedVoice.label}` : ''}
             </p>
           </div>
         )}
 
         {stackSelectionError && (
-          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert" data-testid="voice-stack-save-error">
+          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-control border border-danger-line bg-danger-soft px-3 py-2 text-ui text-danger-fg" role="alert" data-testid="voice-stack-save-error">
             <span>{stackSelectionError}</span>
             {stackSelectionConflict && onReloadVoiceStackSettings && (
               <button
                 type="button"
                 onClick={handleReloadStackSettings}
                 disabled={isSavingStackSelection}
-                className="rounded-md border border-red-300 px-2.5 py-1 font-semibold hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50"
+                className="rounded-control border border-danger-line px-2.5 py-1 font-semibold hover:bg-danger-soft focus:outline-none focus:ring-2 focus:ring-danger disabled:opacity-50"
                 data-testid="voice-stack-conflict-reload"
               >
                 Reload saved settings
@@ -1337,7 +1326,7 @@ export function AgentVoicePanel({
           </div>
         )}
         {stackSelectionNotice && (
-          <p className="mt-2.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800" role="status" data-testid="voice-stack-save-status">
+          <p className="mt-2.5 rounded-control border border-success-line bg-success-soft px-3 py-2 text-ui text-success-fg" role="status" data-testid="voice-stack-save-status">
             {stackSelectionNotice}
           </p>
         )}
@@ -1346,23 +1335,23 @@ export function AgentVoicePanel({
       {showExistingLiveVoiceControls && (
         <>
       {/* 1. Header Bar: Compact Active Summary */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-white border border-[#E4E2EB] shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-card bg-surface border border-line shadow-craft-xs">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-[#6344E7]/10 flex items-center justify-center text-[#6344E7]">
+          <div className="w-9 h-9 rounded-control bg-accent-soft flex items-center justify-center text-accent">
             <Volume2 className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#0F0E17]">
-                Voice &amp; Language Configuration
+              <span className="text-title text-ink">
+                Voice and language
               </span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#FAF9FD] text-[#6344E7] border border-[#6344E7]/20">
-                {draftSelection?.tier === 'premium' ? STACK_TIER_LABELS.premium : 'Current voice setup'}
+              <span className="px-2 py-0.5 rounded-pill text-meta font-medium bg-accent-soft text-accent-fg border border-accent/20">
+                {draftSelection?.tier === 'premium' ? tierName('premium', currentStackProfile) : 'Current voice setup'}
               </span>
             </div>
-            <p className="text-[11px] text-[#524E5E]">
-              Selected: <strong className="text-[#0F0E17]">{activeVoice.name}</strong>
-              {publicText(activeVoice.tone) ? ` (${publicText(activeVoice.tone)})` : ''} · <strong className="text-[#0F0E17]">{activeLanguage.name}</strong> ({activeLanguage.code})
+            <p className="text-ui text-fg-body">
+              Selected: <strong className="text-ink">{activeVoice.name}</strong>
+              {publicText(activeVoice.tone) ? ` (${publicText(activeVoice.tone)})` : ''} · <strong className="text-ink">{activeLanguage.name}</strong> ({activeLanguage.code})
             </p>
           </div>
         </div>
@@ -1371,13 +1360,13 @@ export function AgentVoicePanel({
         <div className="flex items-center gap-2">
           {playingVoiceId && (
             <div
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#6344E7]/10 text-[#6344E7] text-xs font-semibold animate-pulse border border-[#6344E7]/25"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-control bg-accent-soft text-accent-fg text-ui font-medium border border-accent/25"
               data-testid="voice-playing-indicator"
             >
               <div className="flex items-center gap-0.5 h-3">
-                <span className="w-0.5 h-3 bg-[#6344E7] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-0.5 h-2 bg-[#6344E7] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-0.5 h-3.5 bg-[#6344E7] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <span className="w-0.5 h-3 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-0.5 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-0.5 h-3.5 bg-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
               <span>
                 Playing sample: {displayVoices.find((v) => v.id === playingVoiceId)?.name || 'Voice'}
@@ -1386,7 +1375,7 @@ export function AgentVoicePanel({
                 type="button"
                 onClick={handleStopAudio}
                 data-testid="stop-voice-audio-btn"
-                className="ml-1 p-0.5 rounded hover:bg-[#6344E7]/20 text-[#6344E7]"
+                className="ml-1 p-0.5 rounded-control hover:bg-accent/20 text-accent"
                 title="Stop audio"
               >
                 <Square className="w-3.5 h-3.5 fill-current" />
@@ -1399,31 +1388,31 @@ export function AgentVoicePanel({
 
       {audioError && (
         <div
-          className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-50 text-amber-800 text-xs border border-amber-200"
+          className="flex items-center gap-2 p-2.5 rounded-control bg-warning-soft text-warning-fg text-ui border border-warning-line"
           data-testid="voice-preview-error"
           role="alert"
         >
-          <Info className="w-4 h-4 shrink-0 text-amber-600" />
+          <Info className="w-4 h-4 shrink-0 text-warning" />
           <span>{audioError}</span>
         </div>
       )}
 
       {/* 2. Speaking Voices Showcase: Dense Roster List Format */}
       <div
-        className="p-3.5 rounded-xl bg-white border border-[#E4E2EB] shadow-xs space-y-3"
+        className="p-4 rounded-card bg-surface border border-line shadow-craft-xs space-y-3"
         data-testid="speaking-voice-showcase"
       >
         {voiceCatalogError && (
-          <p className="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">
+          <p className="text-meta text-danger-fg bg-danger-soft border border-danger-line rounded-control px-3 py-2" role="alert">
             {voiceCatalogError}
           </p>
         )}
         {activeVoiceProvider === 'gemini' && ['hi-IN', 'te-IN'].includes(currentLanguage) && (
           <p
-            className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2"
+            className="text-meta text-warning-fg bg-warning-soft border border-warning-line rounded-control px-3 py-2"
             data-testid="voice-localization-note"
           >
-            {currentLanguage === 'te-IN' ? 'Telugu (India) choices include regional support, concierge, and technical voices.' : 'Hindi-specific choices are regional voices.'} Each voice is labeled with its accent; preview it before selecting.
+            {currentLanguage === 'te-IN' ? 'Telugu voices include support, front-desk and technical styles.' : 'These Hindi voices are regional.'} Each voice shows its accent; play a sample before choosing.
           </p>
         )}
         {activeVoiceProvider === 'gemini' &&
@@ -1432,41 +1421,41 @@ export function AgentVoicePanel({
             (voice) => voice.provider === 'gemini' && voice.languageCode === currentLanguage
           ) && (
             <p
-              className="text-[11px] text-[#716C7F] bg-[#FAF9FD] border border-[#E4E2EB] rounded-lg px-3 py-2"
+              className="text-meta text-fg-muted bg-canvas border border-line rounded-control px-3 py-2"
               data-testid="voice-localization-note"
             >
-              This language has no dedicated regional voice in the current live catalog. The multilingual voice follows the selected language instruction.
+              There is no regional voice for this language yet. The multilingual voice speaks the language you chose.
             </p>
           )}
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#F0EEF6]">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-line">
           <div className="flex items-center gap-2">
-            <Mic className="w-4 h-4 text-[#6344E7]" />
-            <span className="text-xs font-bold text-[#0F0E17]">
-              Available Speaking Voices ({filteredVoices.length})
+            <Mic className="w-4 h-4 text-accent" />
+            <span className="text-title text-ink">
+              Speaking voices ({filteredVoices.length})
             </span>
             <button
               type="button"
               onClick={handleRefreshAllVoiceData}
               disabled={isRefreshingVoiceData || voiceCatalogLoading}
-              className="flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-[#6344E7] hover:text-[#5233D6] bg-[#6344E7]/5 hover:bg-[#6344E7]/10 rounded-md border border-[#6344E7]/20 transition-all cursor-pointer ml-1 disabled:opacity-50"
-              title="Refresh Speaking Voices and Playbacks"
+              className="flex items-center gap-1 px-2 py-0.5 min-h-[28px] text-meta font-medium text-fg-body hover:text-ink bg-surface hover:bg-canvas rounded-control border border-line transition-colors cursor-pointer ml-1 disabled:opacity-50"
+              title="Refresh voices and samples"
               data-testid="refresh-speaking-voices-btn"
             >
               <RefreshCw className={`w-3 h-3 ${isRefreshingVoiceData || voiceCatalogLoading ? 'animate-spin' : ''}`} />
               <span>{isRefreshingVoiceData || voiceCatalogLoading ? 'Refreshing…' : 'Refresh'}</span>
             </button>
-            <span className="text-[11px] text-[#8C879A]">
-              Click Play to listen · Click row to choose
+            <span className="text-meta text-fg-muted">
+              Play to listen, then choose a voice
             </span>
           </div>
 
           {/* Compact Category & Gender Filters */}
-          <div className="flex items-center gap-1.5 text-xs">
-            <div className="flex rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] p-0.5">
+          <div className="flex items-center gap-1.5 text-ui">
+            <div className="flex rounded-control bg-canvas border border-line p-0.5">
               {[
                 { id: 'all', label: `All (${voiceCategoryCounts.all})`, testId: 'voice-filter-all' },
                 { id: 'conversational', aliases: ['support', 'care'], label: `Conversational (${voiceCategoryCounts.conversational})`, testId: 'voice-filter-conversational' },
-                { id: 'promotional', aliases: ['sales', 'operations'], label: `Commercial / Promotional (${voiceCategoryCounts.promotional})`, testId: 'voice-filter-promotional' },
+                { id: 'promotional', aliases: ['sales', 'operations'], label: `Sales and promotions (${voiceCategoryCounts.promotional})`, testId: 'voice-filter-promotional' },
               ].map((c) => {
                 const isActive = activeCategory === c.id || (c.aliases && c.aliases.includes(activeCategory));
                 return (
@@ -1475,10 +1464,10 @@ export function AgentVoicePanel({
                     type="button"
                     data-testid={c.testId}
                     onClick={() => setActiveCategory(c.id)}
-                    className={`px-2 py-0.5 text-[11px] font-medium rounded-md transition-all ${
+                    className={`px-2 py-0.5 text-meta font-medium rounded-control transition-all ${
                       isActive
-                        ? 'bg-[#0F0E17] text-white shadow-2xs'
-                        : 'text-[#524E5E] hover:text-[#0F0E17]'
+                        ? 'bg-ink text-white shadow-craft-xs'
+                        : 'text-fg-body hover:text-ink'
                     }`}
                   >
                     {c.label}
@@ -1487,7 +1476,7 @@ export function AgentVoicePanel({
               })}
             </div>
 
-            <div className="flex rounded-lg bg-[#FAF9FD] border border-[#E4E2EB] p-0.5">
+            <div className="flex rounded-control bg-canvas border border-line p-0.5">
               {[
                 { id: 'all', label: `All (${showcaseGenderCounts.all})` },
                 { id: 'female', label: `Female (${showcaseGenderCounts.female})` },
@@ -1499,10 +1488,10 @@ export function AgentVoicePanel({
                   type="button"
                   data-testid={`voice-gender-${g.id}`}
                   onClick={() => setGenderFilter(g.id)}
-                  className={`px-2 py-0.5 text-[11px] font-medium rounded-md transition-all ${
+                  className={`px-2 py-0.5 text-meta font-medium rounded-control transition-all ${
                     genderFilter === g.id
-                      ? 'bg-[#6344E7] text-white shadow-2xs'
-                      : 'text-[#524E5E] hover:text-[#0F0E17]'
+                      ? 'bg-accent text-white shadow-craft-xs'
+                      : 'text-fg-body hover:text-ink'
                   }`}
                 >
                   {g.label}
@@ -1513,7 +1502,7 @@ export function AgentVoicePanel({
         </div>
 
         {/* Dense Voice List / Table */}
-        <div className="divide-y divide-[#F0EEF6] border border-[#E4E2EB] rounded-lg overflow-hidden">
+        <div className="divide-y divide-line border border-line rounded-control overflow-hidden">
           {filteredVoices.map((voice) => {
             const isSelected = currentVoiceId === voice.id;
             const isPlayingThis = playingVoiceId === voice.id;
@@ -1525,8 +1514,8 @@ export function AgentVoicePanel({
                 onClick={() => handleSelectVoice(voice)}
                 className={`group flex items-center justify-between gap-3 px-3 py-2.5 transition-colors cursor-pointer select-none ${
                   isSelected
-                    ? 'bg-[#6344E7]/8 border-l-4 border-l-[#6344E7]'
-                    : 'bg-white hover:bg-[#FAF9FD]'
+                    ? 'bg-accent-soft border-l-4 border-l-accent'
+                    : 'bg-surface hover:bg-canvas'
                 }`}
               >
                 {/* Left: Play/Stop Button + Avatar + Name + Tone */}
@@ -1542,8 +1531,8 @@ export function AgentVoicePanel({
                     }}
                     className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform active:scale-95 ${
                       isPlayingThis
-                        ? 'bg-rose-600 text-white shadow-xs'
-                        : 'bg-[#6344E7]/10 text-[#6344E7] hover:bg-[#6344E7] hover:text-white'
+                        ? 'bg-danger text-white shadow-craft-xs'
+                        : 'bg-accent-soft text-accent hover:bg-accent hover:text-white'
                     }`}
                   >
                     {isPlayingThis ? (
@@ -1556,38 +1545,38 @@ export function AgentVoicePanel({
                   {/* Equalizer animation when playing */}
                   {isPlayingThis && (
                     <div className="flex items-center gap-0.5 h-3.5 shrink-0">
-                      <span className="w-0.5 h-3 bg-[#6344E7] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-0.5 h-2 bg-[#6344E7] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-0.5 h-3.5 bg-[#6344E7] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <span className="w-0.5 h-3 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-0.5 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-0.5 h-3.5 bg-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                   )}
 
                   {/* Name & Tone */}
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-[#0F0E17]">
+                      <span className="text-ui font-semibold text-ink truncate" title={voice.name}>
                         {voice.name}
                       </span>
                       {voice.gender && (
-                        <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-[#F0EEF6] text-[#524E5E] capitalize">
+                        <span className="px-1.5 rounded-pill text-meta font-medium bg-surface-subtle text-fg-body capitalize">
                           {voice.gender}
                         </span>
                       )}
                       {(voice.tag === 'Indian' || voice.accent?.includes('Indian') || voice.useCase?.includes('Indian') || voice.tone?.includes('Telugu') || voice.tone?.includes('Hindi')) && (
-                        <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                        <span className="px-1.5 rounded-pill text-meta font-medium bg-neutral-soft text-neutral-fg border border-neutral-line">
                           🇮🇳 Indian
                         </span>
                       )}
-                      <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#6344E7]/10 text-[#6344E7] border border-[#6344E7]/20">
+                      <span className="px-1.5 rounded-pill text-meta font-medium bg-info-soft text-info-fg border border-info-line">
                         {formatCategory(voice.category) || 'General'}
                       </span>
                       {publicText(voice.tone) && (
-                        <span className="hidden sm:inline-block text-[11px] font-medium text-[#716C7F]">
+                        <span className="hidden sm:inline-block text-meta font-medium text-fg-muted">
                           · {publicText(voice.tone)}
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-[#716C7F] truncate max-w-xs md:max-w-md">
+                    <p className="text-meta text-fg-muted truncate max-w-xs md:max-w-md">
                       {voice.accent
                         ? `${voice.accent}${voice.languageCode ? ` · ${voice.languageCode}` : ''}`
                         : publicText(voice.useCase)}
@@ -1605,10 +1594,10 @@ export function AgentVoicePanel({
                       e.stopPropagation();
                       handleSelectTierVoice({ tier: 'premium' }, voice);
                     }}
-                    className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                    className={`flex items-center gap-1 px-3 py-1 min-h-[32px] text-ui font-medium rounded-control border transition-colors ${
                       isSelected
-                        ? 'bg-[#6344E7] text-white shadow-xs'
-                        : 'bg-[#FAF9FD] text-[#524E5E] hover:bg-[#6344E7]/10 hover:text-[#6344E7] border border-[#E4E2EB]'
+                        ? 'bg-ink text-white border-ink'
+                        : 'bg-surface text-fg-body hover:text-ink hover:border-line-strong border-line'
                     }`}
                   >
                     {isSelected ? (
@@ -1632,23 +1621,23 @@ export function AgentVoicePanel({
       {/* 3. Acoustic Calibration & Speech Dynamics (Admin Only - Hidden for Tenants) */}
       {isAdmin && (
         <div
-          className="p-3.5 rounded-xl bg-white border border-[#E4E2EB] shadow-xs space-y-3"
+          className="p-4 rounded-card bg-surface border border-line shadow-craft-xs space-y-3"
           data-testid="acoustic-calibration-card"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-[#6344E7]" />
-              <span className="text-xs font-bold text-[#0F0E17]">
-                Acoustic Calibration &amp; Speech Dynamics
+              <Sliders className="w-4 h-4 text-accent" />
+              <span className="text-title text-ink">
+                Speed and pitch
               </span>
             </div>
 
             <button
               type="button"
               onClick={() => setShowAcousticControls((v) => !v)}
-              className="flex items-center gap-1 text-[11px] font-semibold text-[#6344E7] hover:underline"
+              className="flex items-center gap-1 text-meta font-semibold text-accent hover:underline"
             >
-              <span>{showAcousticControls ? 'Hide Sliders' : 'Fine-Tune Speed & Pitch'}</span>
+              <span>{showAcousticControls ? 'Hide controls' : 'Adjust speed and pitch'}</span>
               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAcousticControls ? 'rotate-180' : ''}`} />
             </button>
           </div>
@@ -1657,9 +1646,9 @@ export function AgentVoicePanel({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
             {/* Speaking Pace */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#0F0E17]">Speaking Pace (Speed)</span>
-                <span className="font-mono font-bold text-[#6344E7] text-[11px]">
+              <div className="flex items-center justify-between text-ui">
+                <span className="font-semibold text-ink">Speaking speed</span>
+                <span className="font-mono font-medium text-accent text-meta">
                   {Number(currentSpeed || 1.0).toFixed(2)}x
                 </span>
               </div>
@@ -1680,25 +1669,25 @@ export function AgentVoicePanel({
                     },
                   }));
                 }}
-                className="w-full h-1.5 bg-[#E4E2EB] rounded-lg appearance-none cursor-pointer accent-[#6344E7]"
+                className="w-full h-1.5 bg-line rounded-control appearance-none cursor-pointer accent-accent"
               />
-              <div className="flex justify-between text-[10px] text-[#8C879A]">
+              <div className="flex justify-between text-meta text-fg-muted">
                 <span>0.5x (Slow)</span>
-                <span className="font-semibold text-[#6344E7]">1.0x (Industry Standard)</span>
+                <span className="font-semibold text-accent">1.0x (Industry Standard)</span>
                 <span>2.0x (Fast)</span>
               </div>
             </div>
 
             {/* Quick Presets */}
             <div className="space-y-1.5">
-              <span className="text-xs font-semibold text-[#0F0E17] block">
-                Pacing Presets
+              <span className="text-ui font-semibold text-ink block">
+                Quick settings
               </span>
               <div className="flex items-center gap-1.5">
                 {[
                   { label: 'Standard (1.0x)', speed: 1.0 },
-                  { label: 'Patient Support (0.9x)', speed: 0.9 },
-                  { label: 'Dynamic Sales (1.1x)', speed: 1.1 },
+                  { label: 'Slower, for support (0.9x)', speed: 0.9 },
+                  { label: 'Faster, for sales (1.1x)', speed: 1.1 },
                 ].map((p) => (
                   <button
                     key={p.label}
@@ -1712,10 +1701,10 @@ export function AgentVoicePanel({
                         },
                       }));
                     }}
-                    className={`px-2.5 py-1 rounded text-[11px] font-medium border transition-all ${
+                    className={`px-2.5 py-1 rounded-control text-meta font-medium border transition-all ${
                       Math.abs(currentSpeed - p.speed) < 0.01
-                        ? 'bg-[#6344E7] text-white border-[#6344E7]'
-                        : 'bg-[#FAF9FD] text-[#524E5E] border-[#E4E2EB] hover:bg-white'
+                        ? 'bg-accent text-white border-accent'
+                        : 'bg-canvas text-fg-body border-line hover:bg-surface'
                     }`}
                   >
                     {p.label}
@@ -1727,12 +1716,12 @@ export function AgentVoicePanel({
 
           {/* Detailed sliders if expanded */}
           {showAcousticControls && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#F0EEF6]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-line">
               {/* Pitch Offset - Disabled because providers manage pitch natively */}
               <div className="space-y-1.5 opacity-80">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#0F0E17]">Pitch Offset</span>
-                  <span className="font-mono text-[#8C879A] text-[11px]">
+                <div className="flex items-center justify-between text-ui">
+                  <span className="font-semibold text-ink">Pitch</span>
+                  <span className="font-mono text-fg-muted text-meta">
                     0.00 (Neutral)
                   </span>
                 </div>
@@ -1743,18 +1732,18 @@ export function AgentVoicePanel({
                   step="0.05"
                   value={0}
                   disabled
-                  className="w-full h-1.5 bg-[#E4E2EB] rounded-lg appearance-none cursor-not-allowed opacity-50"
+                  className="w-full h-1.5 bg-line rounded-control appearance-none cursor-not-allowed opacity-50"
                 />
-                <p className="text-[10px] text-[#716C7F] italic">
+                <p className="text-meta text-fg-muted italic">
                   Managed natively by provider voice persona (Not supported by provider API).
                 </p>
               </div>
 
               {/* Stability - Disabled because providers manage prosody natively */}
               <div className="space-y-1.5 opacity-80">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#0F0E17]">Tone Stability</span>
-                  <span className="font-mono text-[#8C879A] text-[11px]">
+                <div className="flex items-center justify-between text-ui">
+                  <span className="font-semibold text-ink">Steadiness</span>
+                  <span className="font-mono text-fg-muted text-meta">
                     0.75 (Balanced Natural)
                   </span>
                 </div>
@@ -1765,9 +1754,9 @@ export function AgentVoicePanel({
                   step="0.05"
                   value={0.75}
                   disabled
-                  className="w-full h-1.5 bg-[#E4E2EB] rounded-lg appearance-none cursor-not-allowed opacity-50"
+                  className="w-full h-1.5 bg-line rounded-control appearance-none cursor-not-allowed opacity-50"
                 />
-                <p className="text-[10px] text-[#716C7F] italic">
+                <p className="text-meta text-fg-muted italic">
                   Native acoustic model control (Not supported by provider API).
                 </p>
               </div>

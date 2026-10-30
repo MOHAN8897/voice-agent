@@ -51,7 +51,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
   const dial = async () => {
     setError(null);
     if (!toNumber.trim()) {
-      setError('Enter a destination number in E.164 (+91…).');
+      setError('Enter the number to call with its country code, like +91 98765 43210.');
       return;
     }
     if (walletEmpty) {
@@ -70,8 +70,8 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
       showToast('Outgoing call started', 'success');
       setToNumber('');
     } catch (e) {
-      setError(e.message || 'Could not place call');
-      showToast(e.message || 'Could not place call', 'error');
+      setError(e.message || 'The call could not be placed');
+      showToast(e.message || 'The call could not be placed', 'error');
     } finally {
       setDialBusy(false);
     }
@@ -80,32 +80,32 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
   return (
     <div className="space-y-4" data-testid="agent-dial-bulk">
       {/* Clean Tab Switcher */}
-      <div className="flex border-b border-[#E4E2EB] gap-6 text-xs font-semibold">
+      <div className="flex border-b border-line gap-6 text-ui font-medium" role="group" aria-label="Kind of outgoing call">
         <button
           type="button"
           onClick={() => { setActiveTab('single'); setError(null); }}
-          className={`pb-2.5 transition-colors border-b-2 flex items-center gap-1.5 ${
+          className={`pb-2.5 min-h-[40px] transition-colors border-b-2 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-t-control ${
             activeTab === 'single'
-              ? 'border-[#FF5C35] text-[#FF5C35]'
-              : 'border-transparent text-[#524E5E] hover:text-[#0F0E17]'
+              ? 'border-ink text-ink'
+              : 'border-transparent text-fg-body hover:text-ink'
           }`}
           data-testid="agent-outbound-tab-single"
         >
           <PhoneCall className="w-3.5 h-3.5" />
-          Single Call
+          Single call
         </button>
         <button
           type="button"
           onClick={() => { setActiveTab('bulk'); setError(null); }}
-          className={`pb-2.5 transition-colors border-b-2 flex items-center gap-1.5 ${
+          className={`pb-2.5 min-h-[40px] transition-colors border-b-2 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-t-control ${
             activeTab === 'bulk'
-              ? 'border-[#FF5C35] text-[#FF5C35]'
-              : 'border-transparent text-[#524E5E] hover:text-[#0F0E17]'
+              ? 'border-ink text-ink'
+              : 'border-transparent text-fg-body hover:text-ink'
           }`}
           data-testid="agent-outbound-tab-bulk"
         >
           <Megaphone className="w-3.5 h-3.5" />
-          Bulk Campaign
+          Bulk campaign
         </button>
       </div>
 
@@ -113,22 +113,22 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
       {activeTab === 'single' && (
         <SolidCard className="space-y-3">
           <div className="flex items-center gap-2">
-            <PhoneCall className="w-4 h-4 text-[#6344E7]" />
-            <h3 className="text-xs font-bold text-[#0F0E17]">Place outgoing call</h3>
+            <PhoneCall className="w-4 h-4 text-accent" />
+            <h3 className="text-title text-ink">Place outgoing call</h3>
           </div>
-          <p className="text-[11px] text-[#524E5E]">
-            One live-number dial using {agentName}&apos;s published script. Same path as fleet Calls.
+          <p className="text-ui text-fg-muted">
+            Call one number now. {agentName} uses their saved script, the same as any other outgoing call.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label className="block text-[11px] font-semibold text-[#0F0E17]">
+            <label className="block text-ui font-medium text-ink">
               From
               <select
-                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
+                className="mt-1 w-full rounded-control border border-line px-3 py-2 text-base sm:text-ui min-h-[42px] sm:min-h-[36px] bg-surface text-ink focus:border-accent focus:outline-none"
                 value={fromNumber}
                 onChange={(e) => setFromNumber(e.target.value)}
                 data-testid="agent-dial-from"
               >
-                <option value="">Default line</option>
+                <option value="">Default number</option>
                 {assigned.map((n) => (
                   <option key={n.id} value={n.number || n.e164}>
                     {n.number || n.e164}
@@ -136,10 +136,10 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
                 ))}
               </select>
             </label>
-            <label className="block text-[11px] font-semibold text-[#0F0E17]">
-              To (E.164)
+            <label className="block text-ui font-medium text-ink">
+              To (with country code)
               <input
-                className="mt-1 w-full rounded-xl border border-[#E4E2EB] px-3 py-2 text-base sm:text-xs min-h-[42px] sm:min-h-[36px] bg-white text-[#0F0E17]"
+                className="mt-1 w-full rounded-control border border-line px-3 py-2 text-base sm:text-ui min-h-[42px] sm:min-h-[36px] bg-surface text-ink focus:border-accent focus:outline-none"
                 placeholder="+9188…"
                 value={toNumber}
                 onChange={(e) => setToNumber(e.target.value)}
@@ -147,14 +147,14 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
               />
             </label>
           </div>
-          <div className="border-t border-[#E4E2EB] pt-3">
+          <div className="border-t border-line pt-3">
             <CallIntegrationPicker scope="call" agentId={agentId} value={callIntegrations}
               onChange={setCallIntegrations} disabled={dialBusy} options={integrationOptions} />
           </div>
-          <div className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-3" data-testid="agent-dial-integration-summary">
-            <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#524E5E]">This call will use</div>
+          <div className="rounded-control border border-line bg-canvas p-3" data-testid="agent-dial-integration-summary">
+            <div className="mb-1.5 text-meta font-medium text-fg-body">This call will use</div>
             <IntegrationSelectionSummary selection={callIntegrations} options={integrationOptions.items}
-              emptyText="No integrations chosen: the agent uses its saved integration settings." />
+              emptyText="No apps chosen for this call: the employee uses their saved app settings." />
           </div>
           <TactileButton
             variant="primary"
@@ -174,7 +174,7 @@ export function AgentDialBulkPanel({ agentId, agentName }) {
       {activeTab === 'bulk' && <SolidCard><CampaignSetup initialAgentId={agentId} onComplete={() => setActiveTab('single')} /></SolidCard>}
 
       {error && (
-        <p className="text-[11px] text-red-600" data-testid="agent-dial-bulk-error">
+        <p className="text-ui text-danger-fg" role="alert" data-testid="agent-dial-bulk-error">
           {error}
         </p>
       )}

@@ -329,8 +329,8 @@ test.describe('Comprehensive Verification of All Pages and Console Tabs', () => 
 
     // Assert key content inside Inbound Panel
     await expect(page.getByText('Assigned Phone Line')).toBeVisible();
-    await expect(page.getByText('Reception Status')).toBeVisible();
-    await expect(page.getByText('Verify Voice Line')).toBeVisible();
+    await expect(page.getByText('Answering right now')).toBeVisible();
+    await expect(page.getByText('Try it yourself')).toBeVisible();
 
     // Check no fatal error was thrown
     const hasFatal = errors.some(e => e.includes('is not a function'));

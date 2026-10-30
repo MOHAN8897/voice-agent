@@ -122,7 +122,7 @@ test('full script grows and shrinks with wrapping, without an internal scrollbar
     expect(await editor.evaluate(element => getComputedStyle(element).overflowY)).toBe('hidden');
     expect(await page.locator('main').evaluate(element => element.scrollHeight > element.clientHeight)).toBe(true);
   }
-  await page.getByRole('button', { name: 'Preview with Lead', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview with lead', exact: true }).click();
   await page.getByRole('button', { name: 'Back to script editor' }).click();
   await expect(editor).toHaveValue(script);
   await expect.poll(() => editor.evaluate(element => element.clientHeight >= element.scrollHeight - 2)).toBe(true);

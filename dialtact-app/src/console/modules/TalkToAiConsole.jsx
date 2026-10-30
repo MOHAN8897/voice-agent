@@ -3,6 +3,9 @@ import { useWorkspace } from '../context/WorkspaceContext';
 import { LazyDialtactScene } from '../../three/LazyDialtactScene';
 import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
+import { Avatar } from '../ui/Avatar';
+import { Badge } from '../ui/StatusBadge';
+import { PageHeader } from '../ui/PageHeader';
 import { createWebAgentSession } from '../../services/webAgentClient';
 import { showToast } from '../ui/ToastHost';
 import {
@@ -110,7 +113,7 @@ export function TalkToAiConsole({ embedded = false }) {
         'Microphone access is blocked. Check browser permissions or use a supported browser.'
       );
       showToast(
-        'Microphone API is not available. Ensure browser permissions are granted and the page is served over HTTPS.',
+        'Your browser can’t use the microphone here. Allow microphone access and make sure the page address starts with https.',
         'error'
       );
       return;
@@ -202,18 +205,16 @@ export function TalkToAiConsole({ embedded = false }) {
     <div className="space-y-5">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         {!embedded && (
-          <div>
-            <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">Live test</h2>
-            <p className="text-xs text-[#524E5E] mt-1 max-w-xl">
-              Practice call uses the same live phone AI as a real incoming or outgoing call. Wallet credits
-              apply. When the agent hangs up, you will see a short notice — the app stays open.
-            </p>
-          </div>
+          <PageHeader
+            className="min-w-0"
+            title="Test call"
+            description="A practice call works exactly like a real incoming or outgoing call and is paid from your wallet. When the employee hangs up you’ll see a short notice; the page stays open."
+          />
         )}
         <div className={`flex flex-wrap items-center gap-2 ${embedded ? 'w-full justify-end' : ''}`}>
           {embedded && activeAgent && (
-            <span className="text-xs text-[#524E5E] mr-auto">
-              Testing <span className="font-semibold text-[#0F0E17]">{activeAgent.name}</span>
+            <span className="text-ui text-fg-body mr-auto">
+              Testing <span className="font-semibold text-ink">{activeAgent.name}</span>
             </span>
           )}
           {!embedded && (
@@ -221,9 +222,10 @@ export function TalkToAiConsole({ embedded = false }) {
               value={activeAgent?.id || ''}
               onChange={(e) => setSelectedAgentId(e.target.value)}
               disabled={isLive}
-              className="bg-white border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs font-semibold text-[#0F0E17]"
+              aria-label="Choose an employee"
+              className="min-w-0 max-w-full bg-surface border border-line rounded-control px-3 py-2 text-base sm:text-ui font-medium text-ink"
             >
-              {!agents.length && <option value="">Create an agent first</option>}
+              {!agents.length && <option value="">Create an employee first</option>}
               {agents.map((ag) => (
                 <option key={ag.id} value={ag.id}>
                   {ag.name}
@@ -234,7 +236,7 @@ export function TalkToAiConsole({ embedded = false }) {
           {isLive ? (
             <TactileButton variant="danger" size="sm" onClick={handleEndSession}>
               <PhoneOff className="w-4 h-4" />
-              End session
+              End call
             </TactileButton>
           ) : (
             <TactileButton
@@ -245,46 +247,38 @@ export function TalkToAiConsole({ embedded = false }) {
               disabled={!activeAgent}
             >
               <PhoneCall className="w-4 h-4" />
-              Start live test
+              Start test call
             </TactileButton>
           )}
         </div>
       </div>
 
-      <div className="flex items-start gap-2 rounded-xl border border-[#E4E2EB] bg-[#F0EEF6]/60 px-3 py-2.5 text-xs text-[#524E5E]">
-        <Info className="w-4 h-4 text-[#6344E7] shrink-0 mt-0.5" />
+      <div className="flex items-start gap-2 rounded-card border border-info-line bg-info-soft px-4 py-3 text-ui text-info-fg">
+        <Info className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
         <span>
           {statusNote ||
-            `Wallet has ${Number(remaining || 0).toLocaleString()} remaining minutes. Publish the agent script before testing.`}
+            `Your wallet has ${Number(remaining || 0).toLocaleString()} minutes left. Save the employee’s script before testing.`}
           {callId ? ` · Call ${callId.slice(0, 8)}` : ''}
         </span>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 min-h-[520px]">
         <div className="xl:col-span-5 flex flex-col gap-4">
-          <SolidCard className="p-0 overflow-hidden flex flex-col flex-1 border-[#E4E2EB]">
-            <div className="relative bg-gradient-to-b from-[#F0EEF6] to-white px-5 pt-5 pb-3">
+          <SolidCard className="p-0 overflow-hidden flex flex-col flex-1 border-line">
+            <div className="relative bg-gradient-to-b from-surface-subtle to-surface px-5 pt-5 pb-3">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-[#0F0E17] text-white flex items-center justify-center text-sm font-bold shrink-0">
-                    {activeAgent?.name?.charAt(0) || 'A'}
-                  </div>
+                  <Avatar name={activeAgent?.name || 'A'} size="md" live={isLive} />
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-[#0F0E17] truncate">{activeAgent?.name || 'No agent'}</p>
-                    <p className="text-[11px] text-[#524E5E] truncate">{activeAgent?.role || 'Create an agent to test'}</p>
+                    <p className="text-copy font-semibold text-ink truncate" title={activeAgent?.name || undefined}>{activeAgent?.name || 'No employee'}</p>
+                    <p className="text-meta text-fg-body truncate">{activeAgent?.role || 'Create an employee to test'}</p>
                   </div>
                 </div>
-                <span
-                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
-                    isLive
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                      : 'bg-white text-[#524E5E] border-[#E4E2EB]'
-                  }`}
-                >
+                <Badge tone={isLive ? 'live' : 'neutral'} dot>
                   {isLive ? stateLabel : 'Not connected'}
-                </span>
+                </Badge>
               </div>
-              <div className="h-[220px] sm:h-[260px] rounded-2xl bg-[#0F0E17]/95 border border-[#262438] overflow-hidden relative">
+              <div className="h-[220px] sm:h-[260px] rounded-card bg-ink/95 border border-white/10 overflow-hidden relative">
                 <LazyDialtactScene
                   state={botState}
                   audioAmplitude={
@@ -298,22 +292,22 @@ export function TalkToAiConsole({ embedded = false }) {
                   <div
                     key={idx}
                     className={`w-1 rounded-full ${
-                      sessionState === 'CONNECTED' ? 'bg-[#6344E7]' : 'bg-[#D1CFDB]'
+                      sessionState === 'CONNECTED' ? 'bg-accent' : 'bg-line-strong'
                     }`}
                     style={{ height: `${Math.min(h, 32)}px` }}
                   />
                 ))}
               </div>
             </div>
-            <div className="p-4 border-t border-[#E4E2EB] bg-white">
+            <div className="p-4 border-t border-line bg-surface">
               <button
                 type="button"
                 onClick={handleToggleMic}
                 disabled={!isLive}
-                className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border disabled:opacity-40 ${
+                className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-control text-copy font-semibold border disabled:opacity-40 ${
                   isMuted
-                    ? 'bg-red-50 text-red-700 border-red-200'
-                    : 'bg-[#0F0E17] text-white border-[#0F0E17]'
+                    ? 'bg-danger-soft text-danger-fg border-danger-line'
+                    : 'bg-ink text-white border-ink'
                 }`}
               >
                 {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -324,27 +318,27 @@ export function TalkToAiConsole({ embedded = false }) {
         </div>
 
         <SolidCard className="xl:col-span-7 p-0 flex flex-col min-h-[480px] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[#E4E2EB] bg-[#FAF9FD] flex items-center gap-2 text-sm font-bold text-[#0F0E17]">
-            <MessageSquare className="w-4 h-4 text-[#6344E7]" />
-            Session log
+          <div className="px-4 py-3 border-b border-line bg-canvas flex items-center gap-2 text-title text-ink">
+            <MessageSquare className="w-4 h-4 text-accent" />
+            Conversation
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAF9FD]/30 min-h-[320px]">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-canvas/30 min-h-[320px]">
             {transcript.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center px-6 py-16">
-                <PhoneCall className="w-5 h-5 text-[#8C879A] mb-2" />
-                <p className="text-sm font-semibold text-[#0F0E17]">No live session yet</p>
-                <p className="text-xs text-[#524E5E] mt-1 max-w-xs">
-                  Start a live test, speak, and ask the agent to hang up to confirm the close flow.
+                <PhoneCall className="w-5 h-5 text-fg-muted mb-2" />
+                <p className="text-title text-ink">No test call yet</p>
+                <p className="text-ui text-fg-body mt-1 max-w-xs">
+                  Start a test call and speak. Ask the employee to hang up to check how the call ends.
                 </p>
               </div>
             ) : (
               transcript.map((msg) => (
-                <div key={msg.id} className="p-3 rounded-xl bg-white border border-[#E4E2EB] text-xs">
-                  <div className="flex justify-between text-[10px] text-[#8C879A] font-mono mb-1">
-                    <span className="font-bold text-[#6344E7]">{msg.speaker}</span>
-                    <span>{msg.time}</span>
+                <div key={msg.id} className="p-3 rounded-control bg-surface border border-line text-ui">
+                  <div className="flex justify-between text-meta text-fg-muted mb-1">
+                    <span className="font-semibold text-accent-fg">{msg.speaker}</span>
+                    <span className="font-mono tabular-nums">{msg.time}</span>
                   </div>
-                  <p className="text-[#0F0E17] leading-relaxed">{msg.text}</p>
+                  <p className="text-ink leading-relaxed">{msg.text}</p>
                 </div>
               ))
             )}

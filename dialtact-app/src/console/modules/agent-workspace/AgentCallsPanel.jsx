@@ -7,8 +7,8 @@ import { AgentDialBulkPanel } from './AgentDialBulkPanel';
 import { ErrorBoundary } from '../../ui/ErrorBoundary';
 
 const PANELS = [
-  { id: 'inbound', label: 'Inbound', icon: PhoneIncoming },
-  { id: 'outbound', label: 'Outbound', icon: PhoneOutgoing },
+  { id: 'inbound', label: 'Incoming', icon: PhoneIncoming },
+  { id: 'outbound', label: 'Outgoing', icon: PhoneOutgoing },
   { id: 'history', label: 'History', icon: History },
   { id: 'leads', label: 'Leads', icon: Users },
 ];
@@ -44,7 +44,7 @@ export function AgentCallsPanel({
     <div className="space-y-5" data-testid="agent-calls-panel">
       {/* Sub-navigation tabs */}
       <div
-        className="flex items-center gap-1 p-1 rounded-2xl bg-white border border-[#E4E2EB] w-fit flex-wrap shadow-craft-xs"
+        className="flex max-w-full items-center gap-0.5 overflow-x-auto no-scrollbar rounded-control border border-line bg-surface-subtle p-0.5 w-fit"
         role="tablist"
         aria-label="Call sections"
       >
@@ -61,13 +61,13 @@ export function AgentCallsPanel({
               aria-controls={`agent-calls-panel-${p.id}`}
               data-testid={`agent-calls-panel-tab-${p.id}`}
               onClick={() => setPanel(p.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex shrink-0 items-center gap-1.5 px-3 sm:px-4 py-1.5 min-h-[36px] rounded-[8px] text-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 isActive
-                  ? 'bg-[#0F0E17] text-white shadow-xs font-bold'
-                  : 'text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD]'
+                  ? 'bg-surface text-ink shadow-craft-xs'
+                  : 'text-fg-body hover:text-ink'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{p.label}</span>
             </button>
           );
@@ -83,8 +83,8 @@ export function AgentCallsPanel({
       >
         <ErrorBoundary
           key={panel}
-          title={`Unable to load ${panel} call section`}
-          description="An unexpected error occurred in this call section. You can retry or switch to another section."
+          title="This section could not load"
+          description="Something went wrong here. Try again or open another section."
         >
           {panel === 'inbound' && (
             <AgentInboundPanel

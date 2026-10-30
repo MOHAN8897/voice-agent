@@ -13,6 +13,8 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
+import { Badge } from '../ui/StatusBadge';
+import { relativeTime } from '../../lib/money';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
 import { DncTableSkeleton } from '../ui/Skeleton';
@@ -39,7 +41,8 @@ export function DncRegistryPanel({ readOnly = false }) {
   const [addMode, setAddMode] = useState('single'); // 'single' | 'bulk'
   const [singlePhone, setSinglePhone] = useState('');
   const [bulkPhones, setBulkPhones] = useState('');
-  const [addReason, setAddReason] = useState('manual_operator');
+  // Empty means "added by hand"; the request still falls back to manual_operator.
+  const [addReason, setAddReason] = useState('');
   const [addBusy, setAddBusy] = useState(false);
 
   // Deactivate / Audit Modal State
@@ -137,20 +140,20 @@ export function DncRegistryPanel({ readOnly = false }) {
     switch (source) {
       case 'opt_out':
       case 'call_opt_out':
-        return 'Live Call Opt-Out';
+        return 'Asked on a call';
       case 'bulk_upload':
-        return 'Bulk Upload';
+        return 'Bulk upload';
       case 'operator_ui':
       case 'manual':
       default:
-        return 'Manual Operator';
+        return 'Added by hand';
     }
   };
 
   const formatDate = (isoStr) => {
     if (!isoStr) return '—';
     try {
-      return new Date(isoStr).toLocaleString();
+      return new Date(isoStr).toLocaleString('en-IN');
     } catch {
       return isoStr;
     }
@@ -158,40 +161,40 @@ export function DncRegistryPanel({ readOnly = false }) {
 
   return (
     <div className="space-y-6" data-testid="dnc-registry-panel">
-      {loadError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><span>{loadError} Previously loaded results may be out of date.</span><TactileButton size="sm" variant="secondary" onClick={fetchEntries}>Retry registry</TactileButton></div>}
-      <p className="text-xs leading-relaxed text-[#524E5E]">
-        This workspace's opt-out list blocks these numbers in your campaigns. Verify national DND
-        preferences and valid consent separately through the authorised TRAI process.
+      {loadError && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-warning-line bg-warning-soft px-4 py-3 text-copy text-warning-fg"><span className="min-w-0">{loadError} The list below may be out of date.</span><TactileButton size="sm" variant="secondary" onClick={fetchEntries}>Retry</TactileButton></div>}
+      <p className="text-ui text-fg-body max-w-3xl">
+        Numbers on this list are never called by your campaigns. Check national DND preferences and
+        consent separately through the official TRAI process.
       </p>
       {/* Sub-navigation & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Tab Switcher */}
-        <div className="flex border-b border-[#E4E2EB] gap-6 text-xs font-semibold">
+        <div className="flex min-w-0 max-w-full overflow-x-auto no-scrollbar border-b border-line gap-6 text-ui font-medium">
           <button
             type="button"
             onClick={() => { setSubTab('active'); setPage(1); }}
-            className={`pb-2.5 transition-colors border-b-2 flex items-center gap-1.5 ${
+className={`min-h-[40px] pb-2.5 -mb-px transition-colors border-b-2 flex items-center gap-1.5 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-t-control ${
               subTab === 'active'
-                ? 'border-[#FF5C35] text-[#FF5C35]'
-                : 'border-transparent text-[#524E5E] hover:text-[#0F0E17]'
+                ? 'border-ink text-ink'
+                : 'border-transparent text-fg-body hover:text-ink'
             }`}
             data-testid="dnc-tab-active"
           >
             <ShieldAlert className="w-4 h-4" />
-            Active DND ({subTab === 'active' ? total : '—'})
+            On the list <span className="font-mono tabular-nums text-fg-muted">{subTab === 'active' ? total : '—'}</span>
           </button>
           <button
             type="button"
             onClick={() => { setSubTab('deactivated'); setPage(1); }}
-            className={`pb-2.5 transition-colors border-b-2 flex items-center gap-1.5 ${
+className={`min-h-[40px] pb-2.5 -mb-px transition-colors border-b-2 flex items-center gap-1.5 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-t-control ${
               subTab === 'deactivated'
-                ? 'border-[#FF5C35] text-[#FF5C35]'
-                : 'border-transparent text-[#524E5E] hover:text-[#0F0E17]'
+                ? 'border-ink text-ink'
+                : 'border-transparent text-fg-body hover:text-ink'
             }`}
             data-testid="dnc-tab-deactivated"
           >
             <History className="w-4 h-4" />
-            Deactivated / Audit History ({subTab === 'deactivated' ? total : '—'})
+            Removed (history) <span className="font-mono tabular-nums text-fg-muted">{subTab === 'deactivated' ? total : '—'}</span>
           </button>
         </div>
 
@@ -204,105 +207,109 @@ export function DncRegistryPanel({ readOnly = false }) {
           size="sm"
           data-testid="add-dnc-button"
         >
-          Add to Do Not Call
+          Add number
         </TactileButton>
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="w-4 h-4 text-[#8C879A] absolute left-3 top-1/2 -translate-y-1/2" />
+      <div className="flex items-center gap-2">
+        <label className="relative flex-1 min-w-0 max-w-sm">
+          <span className="sr-only">Search phone numbers</span>
+          <Search className="w-4 h-4 text-fg-subtle absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
           <input
             type="text"
-            placeholder="Search phone numbers..."
+            placeholder="Search phone numbers"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             data-testid="dnc-search-input"
-            className="w-full text-base sm:text-xs pl-9 pr-4 py-2.5 sm:py-2 min-h-[42px] sm:min-h-[36px] bg-white border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-[#FF5C35] text-[#0F0E17]"
+            className="w-full text-base sm:text-ui pl-9 pr-4 py-2 min-h-[44px] sm:min-h-[36px] bg-surface border border-line rounded-control focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-ink placeholder:text-fg-subtle"
           />
-        </div>
+        </label>
         <button
           type="button"
           onClick={() => fetchEntries()}
-          className="p-2 min-w-[42px] min-h-[42px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] rounded-xl border border-[#E4E2EB] transition-colors shrink-0"
-          title="Refresh registry"
+          className="p-2 min-w-[44px] min-h-[44px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center text-fg-body hover:text-ink bg-surface hover:bg-canvas rounded-control border border-line transition-colors shrink-0"
+          title="Refresh list"
+          aria-label="Refresh list"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
       {/* Registry Table */}
-      <SolidCard className="p-0 overflow-hidden">
+      <SolidCard padding="p-0" className="overflow-hidden min-w-0">
         {loading && entries.length === 0 ? (
           <DncTableSkeleton rows={5} />
         ) : entries.length === 0 ? (
           <div className="p-12 text-center space-y-2">
-            <PhoneOff className="w-8 h-8 text-[#8C879A] mx-auto opacity-50" />
-            <h4 className="text-sm font-bold text-[#0F0E17]">
-              {subTab === 'active' ? 'No active Do Not Call numbers' : 'No deactivated audit records'}
+            <span className="mx-auto mb-1 flex h-10 w-10 items-center justify-center rounded-control bg-surface-subtle" aria-hidden="true">
+              <PhoneOff className="w-5 h-5 text-fg-body" />
+            </span>
+            <h4 className="text-title text-ink">
+              {subTab === 'active' ? 'No numbers on the list' : 'No removed numbers'}
             </h4>
-            <p className="text-xs text-[#524E5E] max-w-sm mx-auto">
+            <p className="text-ui text-fg-muted max-w-sm mx-auto">
               {subTab === 'active'
-                ? 'Numbers opted out during live calls or added manually will appear here and be excluded from all campaigns.'
-                : 'Deactivated numbers with audit re-consent verification will be preserved here.'}
+                ? 'Numbers that ask not to be called, or that you add, will appear here and are skipped by every campaign.'
+                : 'Numbers you remove after the person agrees to calls again are kept here as a record.'}
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto touch-pan-x">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="w-full min-w-[720px] text-left border-collapse text-ui">
               <thead>
-                <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[#524E5E] font-semibold">
-                  <th className="py-3 px-4">Phone Number</th>
-                  <th className="py-3 px-4">Source</th>
-                  <th className="py-3 px-4">Reason / Notes</th>
-                  <th className="py-3 px-4">Date Added</th>
+                <tr className="border-b border-line bg-canvas text-meta text-fg-muted font-medium">
+                  <th className="py-2.5 px-4">Phone number</th>
+                  <th className="py-2.5 px-4">Source</th>
+                  <th className="py-2.5 px-4">Reason or note</th>
+                  <th className="py-2.5 px-4">Added</th>
                   {subTab === 'deactivated' && (
                     <>
-                      <th className="py-3 px-4">Deactivated At</th>
-                      <th className="py-3 px-4">Removal Reason</th>
-                      <th className="py-3 px-4">Re-consent</th>
+                      <th className="py-2.5 px-4">Removed</th>
+                      <th className="py-2.5 px-4">Why removed</th>
+                      <th className="py-2.5 px-4">Consent</th>
                     </>
                   )}
-                  {subTab === 'active' && <th className="py-3 px-4 text-right">Actions</th>}
+                  {subTab === 'active' && <th className="py-2.5 px-4 text-right">Actions</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E4E2EB]">
+              <tbody className="divide-y divide-line">
                 {entries.map((item) => {
                   const phone = item.phoneE164 || item.phone_e164;
                   return (
                     <tr
                       key={item.id || phone}
-                      className="hover:bg-[#FAF9FD] transition-colors text-[#0F0E17]"
+                      className="hover:bg-canvas transition-colors text-ink"
                       data-testid={`dnc-row-${phone}`}
                     >
-                      <td className="py-3 px-4 font-mono font-semibold">{phone}</td>
+                      <td className="py-3 px-4 font-mono tabular-nums font-semibold whitespace-nowrap">{phone}</td>
                       <td className="py-3 px-4">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FAF9FD] border border-[#E4E2EB] text-[#524E5E]">
-                          {formatSource(item.source)}
-                        </span>
+                        <Badge tone="neutral">{formatSource(item.source)}</Badge>
                       </td>
-                      <td className="py-3 px-4 text-[#524E5E] truncate max-w-xs">{item.reason || '—'}</td>
-                      <td className="py-3 px-4 text-[#524E5E]">{formatDate(item.addedAt || item.added_at)}</td>
+                      <td className="py-3 px-4 text-fg-body truncate max-w-xs" title={item.reason || undefined}>{item.reason === 'manual_operator' ? 'Added by hand' : item.reason || '—'}</td>
+                      <td className="py-3 px-4 text-fg-body whitespace-nowrap" title={formatDate(item.addedAt || item.added_at)}>{relativeTime(item.addedAt || item.added_at) || '—'}</td>
 
                       {subTab === 'deactivated' && (
                         <>
-                          <td className="py-3 px-4 text-[#524E5E]">{formatDate(item.removedAt || item.removed_at)}</td>
-                          <td className="py-3 px-4 font-medium text-[#0F0E17] max-w-xs truncate">
+                          <td className="py-3 px-4 text-fg-body whitespace-nowrap" title={formatDate(item.removedAt || item.removed_at)}>{relativeTime(item.removedAt || item.removed_at) || '—'}</td>
+                          <td className="py-3 px-4 font-medium text-ink max-w-xs truncate" title={item.removalReason || item.removal_reason || undefined}>
                             {item.removalReason || item.removal_reason || '—'}
                           </td>
                           <td className="py-3 px-4">
-                            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              Re-consented
-                            </span>
+                            <Badge tone="success">
+                              <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                              Agreed again
+                            </Badge>
                           </td>
                         </>
                       )}
 
                       {subTab === 'active' && (
                         <td className="py-3 px-4 text-right">
-                          <button
-                            type="button"
+                          <TactileButton
+                            variant="ghost"
+                            size="xs"
+                            icon={Trash2}
                             onClick={() => {
                               if (readOnly) return;
                               setDeactivateTarget(item);
@@ -311,11 +318,9 @@ export function DncRegistryPanel({ readOnly = false }) {
                             }}
                             disabled={readOnly}
                             data-testid={`deactivate-dnc-${phone}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Remove from DND
-                          </button>
+                            Remove from list
+                          </TactileButton>
                         </td>
                       )}
                     </tr>
@@ -331,87 +336,86 @@ export function DncRegistryPanel({ readOnly = false }) {
       <Modal
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
-        title="Add to Do Not Call Registry"
-        subtitle="Numbers on this list are permanently excluded from all outbound campaigns for this tenant."
+        title="Add to Do Not Call list"
+        subtitle="Numbers on this list are never called by any campaign in this workspace."
         maxWidth="max-w-lg"
       >
         <form onSubmit={handleAdd} className="space-y-4">
-          <div className="flex border-b border-[#E4E2EB] gap-4 text-xs font-semibold mb-2">
+          <div className="inline-flex items-center gap-0.5 rounded-control border border-line bg-surface-subtle p-0.5" role="tablist" aria-label="How to add">
             <button
               type="button"
+              role="tab"
+              aria-selected={addMode === 'single'}
               onClick={() => setAddMode('single')}
-              className={`pb-2 border-b-2 ${
-                addMode === 'single'
-                  ? 'border-[#FF5C35] text-[#FF5C35]'
-                  : 'border-transparent text-[#524E5E]'
+              className={`rounded-[8px] px-3 py-1.5 min-h-[32px] text-ui font-medium transition-colors ${
+                addMode === 'single' ? 'bg-surface text-ink shadow-craft-xs' : 'text-fg-body hover:text-ink'
               }`}
             >
-              Single Number
+              One number
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={addMode === 'bulk'}
               onClick={() => setAddMode('bulk')}
-              className={`pb-2 border-b-2 ${
-                addMode === 'bulk'
-                  ? 'border-[#FF5C35] text-[#FF5C35]'
-                  : 'border-transparent text-[#524E5E]'
+              className={`rounded-[8px] px-3 py-1.5 min-h-[32px] text-ui font-medium transition-colors ${
+                addMode === 'bulk' ? 'bg-surface text-ink shadow-craft-xs' : 'text-fg-body hover:text-ink'
               }`}
             >
-              Bulk Paste
+              Paste many
             </button>
           </div>
 
           {addMode === 'single' ? (
             <div>
-              <label className="block text-xs font-semibold text-[#0F0E17] mb-1">
-                Phone Number (E.164)
+              <label htmlFor="add-dnc-single" className="block text-ui font-medium text-ink mb-1">
+                Phone number, with country code
               </label>
               <input
                 type="text"
-                placeholder="+15551234567"
+                id="add-dnc-single"
+                placeholder="+919876543210"
                 value={singlePhone}
                 onChange={(e) => setSinglePhone(e.target.value)}
                 data-testid="add-dnc-single-phone"
-                className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#FF5C35] text-[#0F0E17]"
+                className="w-full text-base sm:text-ui px-3.5 py-2.5 min-h-[44px] sm:min-h-[38px] rounded-control bg-surface border border-line focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-ink placeholder:text-fg-subtle font-mono tabular-nums"
               />
             </div>
           ) : (
             <div>
-              <label className="block text-xs font-semibold text-[#0F0E17] mb-1">
-                Paste Phone Numbers (one per line)
+              <label htmlFor="add-dnc-bulk" className="block text-ui font-medium text-ink mb-1">
+                Phone numbers, one per line
               </label>
               <textarea
-                placeholder={'+15551234567\n+919876543210'}
+                id="add-dnc-bulk"
+                placeholder={'+919876543210\n+15551234567'}
                 value={bulkPhones}
                 onChange={(e) => setBulkPhones(e.target.value)}
                 rows={4}
                 data-testid="add-dnc-bulk-phones"
-                className="w-full text-xs font-mono px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#FF5C35] text-[#0F0E17]"
+                className="w-full text-base sm:text-ui px-3.5 py-2.5 min-h-[44px] sm:min-h-[38px] rounded-control bg-surface border border-line focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-ink placeholder:text-fg-subtle font-mono tabular-nums"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-[#0F0E17] mb-1">
-              Reason / Source Note
+            <label htmlFor="add-dnc-reason" className="block text-ui font-medium text-ink mb-1">
+              Reason or note <span className="font-normal text-fg-muted">(optional)</span>
             </label>
             <input
+              id="add-dnc-reason"
               type="text"
-              placeholder="manual_operator"
+              placeholder="For example: asked not to be called again"
               value={addReason}
               onChange={(e) => setAddReason(e.target.value)}
-              className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#FF5C35] text-[#0F0E17]"
+              className="w-full text-base sm:text-ui px-3.5 py-2.5 min-h-[44px] sm:min-h-[38px] rounded-control bg-surface border border-line focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-ink placeholder:text-fg-subtle"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E4E2EB]">
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17]"
-            >
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-line">
+            <TactileButton type="button" variant="ghost" size="sm" onClick={() => setIsAddOpen(false)}>
               Cancel
-            </button>
+            </TactileButton>
             <TactileButton
               type="submit"
               variant="primary"
@@ -419,7 +423,7 @@ export function DncRegistryPanel({ readOnly = false }) {
               loading={addBusy}
               data-testid="add-dnc-submit-btn"
             >
-              Add to Registry
+              Add to list
             </TactileButton>
           </div>
         </form>
@@ -429,55 +433,52 @@ export function DncRegistryPanel({ readOnly = false }) {
       <Modal
         isOpen={Boolean(deactivateTarget)}
         onClose={() => { if (!deactivateBusy) setDeactivateTarget(null); }}
-        title="Remove from Do Not Call Registry"
-        subtitle={`Confirm re-consent authorization for ${deactivateTarget?.phoneE164 || deactivateTarget?.phone_e164}`}
+        title="Remove from Do Not Call list"
+        subtitle={`Confirm that ${deactivateTarget?.phoneE164 || deactivateTarget?.phone_e164} has agreed to be called again`}
         maxWidth="max-w-lg"
       >
         <div className="space-y-4">
-          <div className="flex items-start gap-2.5 p-3.5 bg-amber-500/10 border border-amber-500/20 text-amber-900 rounded-xl text-xs leading-relaxed">
-            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2.5 p-3.5 bg-warning-soft border border-warning-line text-warning-fg rounded-control text-ui">
+            <AlertCircle className="w-4 h-4 text-warning-fg shrink-0 mt-0.5" aria-hidden="true" />
             <p>
-              <strong>Regulatory Notice:</strong> Removing a number enables campaigns to place calls to this phone again. To protect against compliance violations, you must document the reason and attest that the recipient has given new affirmative consent.
+              <strong className="font-semibold">Before you remove it:</strong> campaigns will be able to call this number again. Write down why, and confirm the person has clearly agreed to be called.
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#0F0E17] mb-1">
-              Removal reason (Required, min 5 chars)
+            <label htmlFor="dnc-removal-reason" className="block text-ui font-medium text-ink mb-1">
+              Why are you removing it? <span className="font-normal text-fg-muted">(at least 5 characters)</span>
             </label>
             <input
+              id="dnc-removal-reason"
               type="text"
-              placeholder="e.g. Recipient requested re-subscription via web form"
+              placeholder="For example: signed up again through our website"
               value={removalReason}
               maxLength={1000}
               onChange={(e) => setRemovalReason(e.target.value)}
               data-testid="dnc-deactivate-reason-input"
-              className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#FF5C35] text-[#0F0E17]"
+              className="w-full text-base sm:text-ui px-3.5 py-2.5 min-h-[44px] sm:min-h-[38px] rounded-control bg-surface border border-line focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-ink placeholder:text-fg-subtle"
             />
           </div>
 
           {/* Mandatory Re-consent Checkbox */}
-          <label className="flex items-start gap-3 p-3.5 rounded-xl border border-[#E4E2EB] hover:bg-[#FAF9FD] transition-colors cursor-pointer select-none">
+          <label className="flex items-start gap-3 p-3.5 rounded-control border border-line hover:bg-canvas transition-colors cursor-pointer select-none">
             <input
               type="checkbox"
               checked={reconsentConfirmed}
               onChange={(e) => setReconsentConfirmed(e.target.checked)}
               data-testid="dnc-reconsent-checkbox"
-              className="mt-0.5 w-4 h-4 rounded text-[#FF5C35] focus:ring-[#FF5C35] border-[#D1CFDB]"
+              className="mt-0.5 w-4 h-4 shrink-0 rounded accent-accent focus:ring-accent border-line-strong"
             />
-            <span className="text-xs font-medium text-[#0F0E17]">
+            <span className="text-ui font-medium text-ink">
               I confirm that this contact has provided new authorization to receive calls.
             </span>
           </label>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E4E2EB]">
-            <button
-              type="button"
-              onClick={() => setDeactivateTarget(null)}
-              className="px-4 py-2 text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17]"
-            >
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-line">
+            <TactileButton type="button" variant="ghost" size="sm" onClick={() => setDeactivateTarget(null)}>
               Cancel
-            </button>
+            </TactileButton>
             <TactileButton
               type="button"
               variant="primary"

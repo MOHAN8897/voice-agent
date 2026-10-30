@@ -22,6 +22,8 @@ import { SolidCard } from '../ui/SolidCard';
 import { StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
+import { Avatar } from '../ui/Avatar';
+import { EmptyState } from '../ui/EmptyState';
 import { AgentStudioHeaderSkeleton, AgentStudioEditorSkeleton, WaveformSkeleton } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { voiceAgent } from '../../services/voiceAgent';
@@ -52,6 +54,7 @@ import { AgentVoicePanel } from './agent-workspace/AgentVoicePanel';
 import { AgentSaveDock } from './agent-workspace/AgentSaveDock';
 import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { resolveEmployeeStep } from '../employeeFlowHash';
+import { humanizeToken } from '../../lib/internalLabels';
 
 /**
  * Canonical text for the dirty check, and the payload "Discard" restores.
@@ -279,6 +282,7 @@ export function AgentStudioModule({
   flowStep,
   onFlowStepChange,
   onBackToFleet,
+  liveAgentIds = null,
 }) {
   const {
     agents,
@@ -289,6 +293,7 @@ export function AgentStudioModule({
     updateAgent,
     updateAgentInWorkspace,
   } = useWorkspace();
+  const selectedOnCall = Boolean(selectedAgent && liveAgentIds?.has?.(selectedAgent.id));
   const voiceLanguage =
     (Array.isArray(selectedAgent?.languages) ? selectedAgent.languages[0] : null) ||
     selectedAgent?.language ||
@@ -966,7 +971,7 @@ export function AgentStudioModule({
         const review = await reviewAgentBrain(selectedAgent.id, formData);
         setScriptReview({ snapshot: snapForm(formData), agentId: selectedAgent.id, ...review });
         if (!review.ok) {
-          setSaveError('Review the blocking issues below before publishing. Your edits have been kept.');
+          setSaveError('Fix the issues below before saving. Your edits have been kept.');
           return false;
         }
         const updated = await updateAgent(selectedAgent.id, formData);
@@ -988,7 +993,7 @@ export function AgentStudioModule({
         const ok = await settingsSaveRef.current();
         if (!ok) {
           success = false;
-          setSaveError('Agent settings could not be fully saved. Your edits are kept; review Settings and retry.');
+          setSaveError('Some settings could not be saved. Your edits are kept; check Settings and try again.');
         }
       }
       if (success) {
@@ -997,7 +1002,7 @@ export function AgentStudioModule({
       }
       return success;
     } catch (e) {
-      setSaveError(e.message || 'Could not save agent');
+      setSaveError(e.message || 'Your changes could not be saved. Try again.');
       return false;
     } finally {
       setSaving(false);
@@ -1134,15 +1139,17 @@ export function AgentStudioModule({
 
   if (!isLoading && agents.length === 0) {
     return (
-      <SolidCard className="p-10 text-center space-y-4 max-w-lg mx-auto">
-        <FileCode2 className="w-10 h-10 text-[#6344E7] mx-auto" />
-        <h2 className="text-lg font-bold text-[#0F0E17]">No agents yet</h2>
-        <p className="text-sm text-[#524E5E]">
-          Create an AI employee first, then edit scripts, voice, and telephony routing here in Script Studio.
-        </p>
-        <TactileButton onClick={() => onNavigate?.('employees', { openCreate: true })}>
-          Create your first AI employee
-        </TactileButton>
+      <SolidCard padding="p-0" className="max-w-lg mx-auto">
+        <EmptyState
+          icon={FileCode2}
+          title="No AI employees yet"
+          description="Create an AI employee first, then edit their script, voice and phone settings here."
+          action={
+            <TactileButton onClick={() => onNavigate?.('employees', { openCreate: true })}>
+              Create your first AI employee
+            </TactileButton>
+          }
+        />
       </SolidCard>
     );
   }
@@ -1157,8 +1164,8 @@ export function AgentStudioModule({
       );
     }
     return (
-      <SolidCard className="p-10 text-center space-y-3 max-w-lg mx-auto">
-        <p className="text-sm text-[#524E5E]">Select an agent to edit.</p>
+      <SolidCard padding="p-0" className="max-w-lg mx-auto">
+        <EmptyState compact title="Choose an employee to edit" />
       </SolidCard>
     );
   }
@@ -1167,7 +1174,7 @@ export function AgentStudioModule({
     <div ref={workspaceContainerRef} className="space-y-6"
       style={{ paddingBottom: dirty ? 'calc(var(--agent-save-dock-height, 9rem) + 2rem)' : undefined }}>
       {saveError && (
-        <div role="alert" data-testid="agent-save-error" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">{saveError}</div>
+        <div role="alert" data-testid="agent-save-error" className="rounded-control border border-danger-line bg-danger-soft px-3 py-2 text-ui text-danger-fg">{saveError}</div>
       )}
       {/* Unsaved-changes guard. Every leave path (tab, agent switch, back, unload)
           funnels through confirmLeave, so nothing silently discards a script. */}
@@ -1177,11 +1184,11 @@ export function AgentStudioModule({
         isOpen={Boolean(pendingLeave)}
         onClose={() => settleLeave(false)}
         title="Unsaved changes"
-        subtitle="Your configurations have not been saved yet."
+        subtitle="Your changes have not been saved yet."
         maxWidth="max-w-md"
       >
         <div className="space-y-4" data-testid="agent-studio-leave-dialog">
-          <p className="text-xs text-[#524E5E]">
+          <p className="text-ui text-fg-body">
             Leaving now discards the unsaved changes you have made to this agent.
           </p>
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -1192,7 +1199,7 @@ export function AgentStudioModule({
                 settleLeave(true);
               }}
               data-testid="leave-discard"
-              className="mr-auto rounded-xl px-3 py-2 text-xs font-semibold text-[#B42318] hover:bg-[#FEF2F2]"
+              className="mr-auto rounded-control px-3 py-2 text-ui font-semibold text-danger-fg hover:bg-danger-soft"
             >
               Discard changes
             </button>
@@ -1200,7 +1207,7 @@ export function AgentStudioModule({
               type="button"
               onClick={() => settleLeave(false)}
               data-testid="leave-cancel"
-              className="rounded-xl px-3 py-2 text-xs font-semibold text-[#524E5E] hover:bg-[#FAF9FD]"
+              className="rounded-control px-3 py-2 text-ui font-semibold text-fg-body hover:bg-canvas"
             >
               Keep editing
             </button>
@@ -1212,17 +1219,16 @@ export function AgentStudioModule({
                 const ok = await handleSave();
                 if (ok) settleLeave(true);
               }}
-              className="rounded-xl bg-[#6344E7] px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+              className="rounded-control bg-ink px-3 py-2 text-ui font-semibold text-white hover:bg-ink/90 disabled:opacity-50"
             >
-              {saving ? 'Saving…' : 'Save & continue'}
+              {saving ? 'Saving…' : 'Save and continue'}
             </button>
           </div>
         </div>
       </Modal>
-      {/* Workbench Header: Agent Switcher, Status & Save */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs">
-        {/* Left: Agent Avatar & Selector */}
-        <div className="flex items-center gap-3.5">
+      {/* Workbench header: who this employee is, switcher, status, test call */}
+      <div className="flex flex-col gap-4 rounded-card border border-line bg-surface p-4 shadow-craft-xs sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="flex min-w-0 items-center gap-3">
           {onBackToFleet && (
             <button
               type="button"
@@ -1230,22 +1236,23 @@ export function AgentStudioModule({
                   if (await confirmLeave()) onBackToFleet?.();
                 })()}
               data-testid="agent-studio-back"
-              className="p-2 rounded-xl border border-[#E4E2EB] text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD]"
-              title="Back to fleet"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control border border-line text-fg-body hover:bg-canvas hover:text-ink"
+              title="Back to your team"
+              aria-label="Back to your team"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
           )}
-          <div className="w-12 h-12 rounded-2xl bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#0F0E17] font-bold text-lg shadow-2xs">
-            {selectedAgent.name.charAt(0)}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <Avatar name={selectedAgent.name} size="lg" live={selectedOnCall} />
+          <div className="min-w-0">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <select
                 value={selectedAgentId}
                 onChange={(e) => void selectAgent(e.target.value)}
                 data-testid="agent-studio-switcher"
-                className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-2.5 py-1.5 min-h-[40px] sm:min-h-[34px] text-base sm:text-sm font-bold text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                aria-label="Choose an employee"
+                title={`${selectedAgent.name} (${selectedAgent.role})`}
+                className="min-h-[40px] min-w-0 max-w-full rounded-control border border-line bg-canvas px-2.5 py-1.5 text-base font-semibold text-ink transition-colors focus:border-accent focus:outline-none sm:min-h-[36px] sm:max-w-[20rem] sm:text-copy"
               >
                 {agents.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -1253,16 +1260,22 @@ export function AgentStudioModule({
                   </option>
                 ))}
               </select>
-              <StatusBadge status={selectedAgent.status} size="xs" />
+              {selectedOnCall ? (
+                <StatusBadge status="live" label="On a call" tone="live" size="xs" />
+              ) : (
+                <StatusBadge status={selectedAgent.status} size="xs" />
+              )}
             </div>
-            <div className="text-xs text-[#524E5E] mt-1">
-              Assigned: <span className="font-mono font-semibold text-[#0F0E17]">{selectedAgent.assignedNumber || 'None (Pool)'}</span>
+            <div className="mt-1 flex min-w-0 items-center gap-1.5 text-ui text-fg-muted">
+              <span>Phone number:</span>
+              <span className={`truncate ${selectedAgent.assignedNumber ? 'font-mono tabular-nums text-ink' : ''}`}>
+                {selectedAgent.assignedNumber || 'None yet (shared pool)'}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Right Action Buttons */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <TactileButton
             variant="secondary"
             size="sm"
@@ -1279,15 +1292,15 @@ export function AgentStudioModule({
             Test call
           </TactileButton>
 
-          <span className="hidden sm:inline text-xs text-[#716C7F]" role="status">
-            {dirty ? 'Changes pending' : isSaved ? 'Changes saved' : 'All changes saved'}
+          <span className="text-ui text-fg-muted" role="status">
+            {dirty ? 'Unsaved changes' : isSaved ? 'Changes saved' : 'All changes saved'}
           </span>
         </div>
       </div>
 
       {/* Tabs Navigation Bar */}
       <div
-        className="sticky top-0 z-20 flex items-center gap-1 p-1.5 rounded-2xl bg-white border border-[#E4E2EB] overflow-x-auto scrollbar-none touch-pan-x shadow-craft-xs"
+        className="sticky top-0 z-20 flex items-center gap-1 p-1.5 rounded-card bg-surface border border-line overflow-x-auto scrollbar-none touch-pan-x shadow-craft-xs"
         role="tablist"
         aria-label="Agent workspace"
       >
@@ -1304,10 +1317,10 @@ export function AgentStudioModule({
               aria-controls={`agent-panel-${tab.id}`}
               data-testid={`agent-tab-${tab.id}`}
               onClick={() => selectTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 min-h-[40px] rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`flex shrink-0 items-center gap-2 px-4 py-2 min-h-[40px] rounded-control text-ui font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 isActive
-                  ? 'bg-[#0F0E17] text-white shadow-xs font-bold'
-                  : 'text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD]'
+                  ? 'bg-ink text-white shadow-craft-xs'
+                  : 'text-fg-body hover:text-ink hover:bg-canvas'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
@@ -1325,7 +1338,7 @@ export function AgentStudioModule({
           aria-labelledby="agent-tab-overview"
           className="animate-in fade-in duration-150"
         >
-          <ErrorBoundary title="Unable to load agent overview">
+          <ErrorBoundary title="Overview could not load">
             <AgentOverview agent={selectedAgent} onOpenTab={selectTab} />
           </ErrorBoundary>
         </div>
@@ -1340,8 +1353,8 @@ export function AgentStudioModule({
           className="flex flex-col gap-4 animate-in fade-in duration-150"
         >
           {generationReport?.status && generationReport.status !== 'ready' ? (
-            <div data-testid="agent-script-generation-status" className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] px-4 py-3 text-xs text-[#524E5E]" aria-live="polite">
-              <p className="font-semibold text-[#0F0E17]">
+            <div data-testid="agent-script-generation-status" className="rounded-control border border-line bg-canvas px-4 py-3 text-ui text-fg-body" aria-live="polite">
+              <p className="font-semibold text-ink">
                 Review the business details before calling
               </p>
               <p className="mt-1">
@@ -1357,23 +1370,23 @@ export function AgentStudioModule({
           <SolidCard>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
-                <h3 className="text-xs font-bold text-[#0F0E17]">Calling script</h3>
-                <p className="text-[11px] text-[#524E5E]">
+                <h3 className="text-title text-ink">Calling script</h3>
+                <p className="text-meta text-fg-body">
                   Your agent’s conversation guide. Save to use your changes on calls.
                 </p>
                 {brainLoading && (
-                  <p className="text-[11px] text-[#6344E7] mt-1">Loading your script…</p>
+                  <p className="text-meta text-accent mt-1">Loading your script…</p>
                 )}
                 {brainLoadError && (
-                  <div role="alert" className="text-[11px] text-red-600 mt-1">
+                  <div role="alert" className="text-meta text-danger-fg mt-1">
                     {brainLoadError}
                     <button type="button" onClick={() => setBrainLoadAttempt((n) => n + 1)} className="ml-2 underline" data-testid="retry-script-load">Retry loading</button>
                   </div>
                 )}
                 {!brainLoading && !brainLoadError && (
                   <div className="flex items-center gap-1.5 mt-1">
-                    <span className={`inline-block size-1.5 rounded-full ${publishedVersion ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                    <p data-testid="script-save-status" className="text-[11px] text-[#524E5E]" role="status">
+                    <span className={`inline-block size-1.5 rounded-full ${publishedVersion ? 'bg-success' : 'bg-warning'}`} />
+                    <p data-testid="script-save-status" className="text-meta text-fg-body" role="status">
                       {scriptDirty ? 'Unsaved changes' : publishedVersion ? 'Saved for calls' : 'Save your script to use it on calls'}
                     </p>
                   </div>
@@ -1384,15 +1397,15 @@ export function AgentStudioModule({
                 <button
                   type="button"
                   onClick={() => setScriptPreviewMode(!scriptPreviewMode)}
-                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors ${
+                  className={`px-2.5 py-1.5 rounded-control border text-ui font-semibold flex items-center gap-1.5 shadow-craft-xs transition-colors ${
                     scriptPreviewMode
-                      ? 'border-[#6344E7] bg-[#EEF2FF] text-[#4338CA]'
-                      : 'border-[#E4E2EB] bg-[#FAF9FD] hover:bg-[#F0EEF6] text-[#524E5E]'
+                      ? 'border-accent bg-accent-soft text-accent-fg'
+                      : 'border-line bg-canvas hover:bg-surface-subtle text-fg-body'
                   }`}
                   data-testid="preview-script-toggle"
                 >
                   <Eye className="w-3.5 h-3.5" />
-                  <span>{scriptPreviewMode ? 'Edit Script' : 'Preview with Lead'}</span>
+                  <span>{scriptPreviewMode ? 'Edit script' : 'Preview with lead'}</span>
                 </button>
 
                 {!scriptPreviewMode && (
@@ -1401,33 +1414,33 @@ export function AgentStudioModule({
                       type="button"
                       onClick={() => setVariablePickerOpen(!variablePickerOpen)}
                       disabled={brainLoading || !!brainLoadError || saving}
-                      className="px-2.5 py-1.5 rounded-lg border border-[#E4E2EB] bg-[#FAF9FD] hover:bg-[#F0EEF6] text-xs font-semibold text-[#6344E7] flex items-center gap-1.5 shadow-2xs transition-colors"
+                      className="px-2.5 py-1.5 rounded-control border border-line bg-canvas hover:bg-surface-subtle text-ui font-semibold text-accent flex items-center gap-1.5 shadow-craft-xs transition-colors"
                       data-testid="insert-variable-btn"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Insert variable +</span>
+                      <span>Insert variable</span>
                     </button>
 
                     {variablePickerOpen && (
-                      <div className="absolute right-0 top-full mt-1.5 w-72 bg-white border border-[#E4E2EB] rounded-xl shadow-xl z-30 p-2.5 text-xs space-y-2.5">
+                      <div className="absolute right-0 top-full mt-1.5 w-72 bg-surface border border-line rounded-control shadow-xl z-30 p-2.5 text-ui space-y-2.5">
                         {/* Fallback Syntax Toggle */}
-                        <label className="flex items-center justify-between p-2 bg-[#F5F3FF] rounded-lg border border-[#DDD6FE] cursor-pointer select-none">
+                        <label className="flex items-center justify-between p-2 bg-accent-soft rounded-control border border-accent/30 cursor-pointer select-none">
                           <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-[#5B21B6]">Include Fallback Defaults</span>
-                            <span className="text-[9px] text-[#6B7280]">e.g. {'{{contact.first_name | there}}'}</span>
+                            <span className="text-meta font-medium text-accent-fg">Include fallback words</span>
+                            <span className="text-meta text-fg-muted">e.g. {'{{contact.first_name | there}}'}</span>
                           </div>
                           <input
                             type="checkbox"
                             checked={useFallbackSyntax}
                             onChange={(e) => setUseFallbackSyntax(e.target.checked)}
-                            className="rounded text-[#6344E7] focus:ring-[#6344E7] cursor-pointer"
+                            className="rounded-control text-accent focus:ring-accent cursor-pointer"
                             data-testid="toggle-fallback-syntax"
                           />
                         </label>
 
                         {scriptVariableGroups.map((group, groupIndex) => (
-                          <div key={group.id} className={groupIndex > 0 ? 'border-t border-[#E4E2EB] pt-1.5' : ''}>
-                            <span className="text-[10px] font-bold uppercase text-[#8C879A] px-1 block mb-1">
+                          <div key={group.id} className={groupIndex > 0 ? 'border-t border-line pt-1.5' : ''}>
+                            <span className="text-meta font-medium text-fg-muted px-1 block mb-1">
                               {group.title}
                             </span>
                             <div className="space-y-0.5 max-h-40 overflow-y-auto pr-1">
@@ -1442,11 +1455,11 @@ export function AgentStudioModule({
                                       insertVariable(variable.token);
                                       setVariablePickerOpen(false);
                                     }}
-                                    className="w-full text-left px-2 py-1 rounded hover:bg-[#FAF9FD] flex items-center justify-between text-[#0F0E17] group"
+                                    className="w-full text-left px-2 py-1 rounded-control hover:bg-canvas flex items-center justify-between text-ink group"
                                     data-testid={testId}
                                   >
-                                    <span className="text-[11px]">{variable.label}</span>
-                                    <span className="text-[9px] font-mono text-[#6344E7] group-hover:underline truncate max-w-[140px] text-right">
+                                    <span className="text-meta">{variable.label}</span>
+                                    <span className="text-meta font-mono text-accent group-hover:underline truncate max-w-[140px] text-right">
                                       {variable.token}
                                     </span>
                                   </button>
@@ -1463,26 +1476,26 @@ export function AgentStudioModule({
             </div>
 
             {scriptReview?.agentId === selectedAgent?.id && scriptReview?.snapshot === snapForm(formData) && (scriptReview.error || !scriptReview.ok || scriptReview.issues?.length > 0) && (
-              <div role="alert" data-testid="script-review-result" className="mb-3 rounded-xl border border-amber-300 bg-amber-50/70 p-3 text-xs text-amber-900 space-y-1.5">
+              <div role="alert" data-testid="script-review-result" className="mb-3 rounded-control border border-warning-line bg-warning-soft p-3 text-ui text-warning-fg space-y-1.5">
                 <p className="font-semibold">{scriptReview.error || 'Check these details before saving'}</p>
                 {!!scriptReview.issues?.length && <ul className="list-disc pl-4 space-y-1">{scriptReview.issues.map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.message}</li>)}</ul>}
               </div>
             )}
             {scriptPreviewMode ? (
               <div className="space-y-3" data-testid="script-preview-panel">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-control bg-canvas border border-line">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-[#0F0E17]">Sample Lead:</span>
+                    <span className="text-meta font-medium text-ink">Sample lead:</span>
                     <div className="flex gap-1.5">
                       {SAMPLE_LEADS.map((lead, idx) => (
                         <button
                           key={lead.id}
                           type="button"
                           onClick={() => setSampleLeadIdx(idx)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                          className={`px-2.5 py-1 rounded-control text-ui font-semibold transition-all ${
                             sampleLeadIdx === idx
-                              ? 'bg-[#6344E7] text-white shadow-xs'
-                              : 'bg-white text-[#524E5E] border border-[#E4E2EB] hover:bg-[#F5F3FF]'
+                              ? 'bg-accent text-white shadow-craft-xs'
+                              : 'bg-surface text-fg-body border border-line hover:bg-accent-soft'
                           }`}
                           data-testid={`select-sample-lead-${idx}`}
                         >
@@ -1491,31 +1504,31 @@ export function AgentStudioModule({
                       ))}
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
+                  <span className="text-meta font-mono px-2 py-0.5 rounded-control bg-success-soft text-success-fg border border-success-line self-start sm:self-auto">
                     {SAMPLE_LEADS[sampleLeadIdx].badge}
                   </span>
                 </div>
 
                 <div className="relative">
-                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#EDE9FE] text-[#6344E7]">
+                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded-control text-meta font-medium bg-accent-soft text-accent">
                     Sample lead preview
                   </div>
-                  <div className="w-full min-h-[180px] bg-[#0F0E17] text-[#F3F4F6] border border-[#2E2B36] rounded-xl p-4 text-xs font-mono leading-relaxed whitespace-pre-wrap select-text">
+                  <div className="w-full min-h-[180px] bg-ink text-white/90 border border-white/10 rounded-control p-4 text-ui font-mono leading-relaxed whitespace-pre-wrap select-text">
                     {renderScriptPreview(formData.script, SAMPLE_LEADS[sampleLeadIdx].contact) || (
-                      <span className="text-[#6B7280] italic">No script text to preview. Switch back to edit and enter your script.</span>
+                      <span className="text-fg-muted italic">No script text to preview. Switch back to edit and enter your script.</span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] text-[#524E5E] bg-[#F8FAFC] p-2.5 rounded-lg border border-[#E2E8F0]">
-                  <span className="flex items-center gap-1 text-[#059669] font-medium">
+                <div className="flex items-center justify-between text-meta text-fg-body bg-canvas p-2.5 rounded-control border border-line">
+                  <span className="flex items-center gap-1 text-success-fg font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Dynamic lead variable tokens &amp; fallback defaults evaluated in real time</span>
+                    <span>Lead details and fallback words are filled in as the caller would hear them</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => setScriptPreviewMode(false)}
-                    className="font-semibold text-[#6344E7] hover:underline"
+                    className="font-semibold text-accent hover:underline"
                   >
                     Back to script editor
                   </button>
@@ -1547,7 +1560,7 @@ export function AgentStudioModule({
                   aria-activedescendant={variableSuggestions.length
                     ? `script-variable-option-${selectedVariableSuggestion}`
                     : undefined}
-                  className="script-paper w-full text-[13px] text-[#0F0E17] leading-6 focus:outline-none focus:ring-2 focus:ring-[#6344E7]/30"
+                  className="script-paper w-full text-ui text-ink leading-6 focus:outline-none focus:ring-2 focus:ring-accent/30"
                   data-testid="script-textarea"
                 />
                 {variableSuggestionTrigger && (
@@ -1555,11 +1568,11 @@ export function AgentStudioModule({
                     id="script-variable-suggestions"
                     role="listbox"
                     aria-label="Available script variables"
-                    className="absolute left-0 right-0 z-40 mt-1 max-h-56 overflow-y-auto rounded-xl border border-[#E4E2EB] bg-white p-2 shadow-xl"
+                    className="absolute left-0 right-0 z-40 mt-1 max-h-56 overflow-y-auto rounded-control border border-line bg-surface p-2 shadow-xl"
                     style={{ top: variableSuggestionTop }}
                     data-testid="script-variable-suggestions"
                   >
-                    <p className="px-2 py-1 text-[10px] text-[#8C879A]">
+                    <p className="px-2 py-1 text-meta text-fg-muted">
                       Insert a variable · use ↑/↓ and Enter
                     </p>
                     {variableSuggestions.length ? variableSuggestions.map((variable, index) => (
@@ -1572,18 +1585,18 @@ export function AgentStudioModule({
                         onMouseDown={(event) => event.preventDefault()}
                         onMouseEnter={() => setSelectedVariableSuggestion(index)}
                         onClick={() => selectVariableSuggestion(variable)}
-                        className={`flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left ${
-                          selectedVariableSuggestion === index ? 'bg-[#F5F3FF]' : 'hover:bg-[#FAF9FD]'
+                        className={`flex w-full items-center justify-between gap-3 rounded-control px-2.5 py-2 text-left ${
+                          selectedVariableSuggestion === index ? 'bg-accent-soft' : 'hover:bg-canvas'
                         }`}
                       >
                         <span className="min-w-0">
-                          <span className="block text-[11px] font-semibold text-[#0F0E17]">{variable.label}</span>
-                          <span className="block text-[9px] text-[#8C879A]">{variable.groupTitle}</span>
+                          <span className="block text-meta font-semibold text-ink">{variable.label}</span>
+                          <span className="block text-meta text-fg-muted">{variable.groupTitle}</span>
                         </span>
-                        <span className="shrink-0 truncate font-mono text-[10px] text-[#6344E7]">{variable.token}</span>
+                        <span className="shrink-0 truncate font-mono text-meta text-accent">{variable.token}</span>
                       </button>
                     )) : (
-                      <p className="px-2.5 py-2 text-[11px] text-[#524E5E]">No matching variables.</p>
+                      <p className="px-2.5 py-2 text-meta text-fg-body">No matching variables.</p>
                     )}
                   </div>
                 )}
@@ -1593,7 +1606,7 @@ export function AgentStudioModule({
             {/* Only show what is real. Token counts and latency are internal
                 engineering metrics; the server does not report them here, so
                 guessing would be worse than saying nothing. */}
-            <div className="flex items-center justify-between text-[11px] text-[#8C879A] mt-2">
+            <div className="flex items-center justify-between text-meta text-fg-muted mt-2">
               <span>
                 {formData.script.trim()
                   ? `${formData.script.trim().split(/\s+/).length} words`
@@ -1604,7 +1617,7 @@ export function AgentStudioModule({
                 onClick={() => setTestCallOpen(true)}
                 disabled={!voiceStackReady || dirty || saving || brainLoading || !!brainLoadError}
                 title={dirty ? 'Publish your changes before testing the agent.' : 'Test the published script'}
-                className="font-semibold text-[#5034CE] hover:underline"
+                className="font-semibold text-accent-fg hover:underline"
               >
                 Test published script
               </button>
@@ -1615,19 +1628,19 @@ export function AgentStudioModule({
           <div data-section="greeting"><SolidCard>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
               <div>
-                <h3 className="text-xs font-bold text-[#0F0E17] flex items-center gap-2">
-                  <Volume2 className="w-3.5 h-3.5 text-[#6344E7]" />
+                <h3 className="text-title text-ink flex items-center gap-2">
+                  <Volume2 className="w-3.5 h-3.5 text-accent" />
                   <span>Greeting the caller hears</span>
                 </h3>
-                <p className="text-[11px] text-[#524E5E]">
-                  The opening phrase the caller hears when they connect. Connected to the calling script and the acoustic voice preview.
+                <p className="text-meta text-fg-body">
+                  The first thing the caller hears when they pick up. It uses the voice and language you chose.
                 </p>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]">
+                <span className="text-meta font-mono px-2 py-0.5 rounded-control border bg-surface-subtle text-fg-body border-line">
                   {LANGUAGE_OPTIONS.find((l) => l.code === formData.language)?.label || formData.language}
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]">
+                <span className="text-meta font-mono px-2 py-0.5 rounded-control border bg-surface-subtle text-fg-body border-line">
                   {/^Voice \d+$/.test(String(formData.voice?.voiceName || '').trim())
                     ? formData.voice.voiceName
                     : 'Selected voice'}
@@ -1643,14 +1656,14 @@ export function AgentStudioModule({
               onChange={(e) => handleGreetingChange(e.target.value)}
               placeholder="Hi there! Thanks for calling. How can I help you today?"
               data-testid="agent-studio-greeting"
-              className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl p-3 text-xs text-[#0F0E17] font-medium leading-relaxed focus:outline-none focus:border-[#6344E7] transition-colors resize-none"
+              className="w-full bg-canvas border border-line rounded-control p-3 text-ui text-ink font-medium leading-relaxed focus:outline-none focus:border-accent transition-colors resize-none"
             />
           </SolidCard></div>
           <div data-section="closing"><SolidCard>
-            <label htmlFor="agent-farewell" className="block text-sm font-semibold text-[#0F0E17]">
+            <label htmlFor="agent-farewell" className="block text-copy font-semibold text-ink">
               Farewell the caller hears
             </label>
-            <p id="agent-farewell-help" className="mt-1 mb-3 text-xs text-[#524E5E]">
+            <p id="agent-farewell-help" className="mt-1 mb-3 text-ui text-fg-body">
               Write the closing words in the agent’s language. They are spoken live after an approved ending.
               A saved callback request gets a confirmation before this farewell. Leave blank to use the language default.
             </p>
@@ -1664,9 +1677,9 @@ export function AgentStudioModule({
               disabled={brainLoading || !!brainLoadError || saving}
               aria-describedby="agent-farewell-help"
               data-testid="agent-studio-farewell"
-              className="w-full rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-4 text-sm leading-relaxed text-[#0F0E17] focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-[#6344E7] max-sm:text-base"
+              className="w-full rounded-control border border-line bg-canvas p-4 text-copy leading-relaxed text-ink focus-visible:outline-2 focus-visible:-outline-offset-1 focus-visible:outline-accent max-sm:text-base"
             />
-            <p className="mt-2 text-right text-xs text-[#524E5E]">{(formData.farewell || '').length}/240 characters</p>
+            <p className="mt-2 text-right text-ui text-fg-body">{(formData.farewell || '').length}/240 characters</p>
           </SolidCard></div>
 
           {/* Objection Handling Rules */}
@@ -1675,19 +1688,19 @@ export function AgentStudioModule({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-bold text-[#0F0E17]">Objection &amp; Objective Handling</h3>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FAF5FF] text-[#7E22CE] border border-[#F3E8FF]">
-                    Concerns and conversation goals
+                  <h3 className="text-title text-ink">Concerns and goals</h3>
+                  <span className="text-meta font-medium px-2 py-0.5 rounded-pill bg-surface-subtle text-fg-body border border-line">
+                    Objections and objectives
                   </span>
                 </div>
-                <p className="text-[11px] text-[#524E5E] mt-0.5">
-                  Configure responses and goals in any language. Save changes to recompile the brain for future calls. Rules respect caller intent and available actions.
+                <p className="text-meta text-fg-body mt-0.5">
+                  Tell the employee how to answer common concerns and what each call should achieve. Write in any language; changes apply to calls after you save.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-3"><button type="button" onClick={() => handleAddObjection({ kind: 'objective' })} className="text-xs font-semibold text-[#6344E7]" data-testid="add-objective-btn">+ Add objective</button><button
+              <div className="flex flex-wrap gap-3"><button type="button" onClick={() => handleAddObjection({ kind: 'objective' })} className="text-ui font-semibold text-accent" data-testid="add-objective-btn">+ Add objective</button><button
                 type="button"
                 onClick={() => handleAddObjection()}
-                className="text-xs font-semibold text-[#6344E7] hover:text-[#5034CE] flex items-center gap-1 self-start sm:self-auto shrink-0"
+                className="text-ui font-semibold text-accent hover:text-accent-fg flex items-center gap-1 self-start sm:self-auto shrink-0"
                 data-testid="add-objection-btn"
               >
                 <Plus className="w-3 h-3" />
@@ -1697,9 +1710,9 @@ export function AgentStudioModule({
             </div>
 
             {/* Quick-add industry standard templates bar */}
-            <div className="mb-4 p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
-              <span className="text-[10px] font-bold uppercase text-[#8C879A] block mb-1.5">
-                Quick-add templates to review:
+            <div className="mb-4 p-2.5 rounded-control bg-canvas border border-line">
+              <span className="text-meta font-medium text-fg-muted block mb-1.5">
+                Start from a template, then review it:
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {OBJECTION_PRESETS.map((preset) => (
@@ -1707,10 +1720,10 @@ export function AgentStudioModule({
                     key={preset.id}
                     type="button"
                     onClick={() => handleAddObjection(preset)}
-                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-[#E4E2EB] bg-white hover:bg-[#F5F3FF] hover:border-[#DDD6FE] text-[#2E2B36] hover:text-[#6344E7] transition-all flex items-center gap-1 shadow-2xs"
+                    className="px-2.5 py-1 rounded-control text-ui font-medium border border-line bg-surface hover:bg-accent-soft hover:border-accent/30 text-ink hover:text-accent transition-all flex items-center gap-1 shadow-craft-xs"
                     data-testid={`preset-objection-${preset.id}`}
                   >
-                    <Plus className="w-3 h-3 text-[#6344E7]" />
+                    <Plus className="w-3 h-3 text-accent" />
                     <span>{preset.label}</span>
                   </button>
                 ))}
@@ -1720,38 +1733,38 @@ export function AgentStudioModule({
             {/* Rules list */}
             <div className="space-y-3">
               {(formData.objectionRules || []).length === 0 ? (
-                <div className="p-4 rounded-xl border border-dashed border-[#D2CEE0] text-center bg-[#FAF9FD]">
-                  <p className="text-xs text-[#524E5E]">No handling rules configured yet.</p>
-                  <p className="text-[11px] text-[#8C879A] mt-1">
-                    Add a concern or a conversation goal, then configure how the agent should handle it.
+                <div className="p-4 rounded-control border border-dashed border-line-strong text-center bg-canvas">
+                  <p className="text-ui text-fg-body">No concerns or goals yet.</p>
+                  <p className="text-meta text-fg-muted mt-1">
+                    Add a concern or a goal, then say how the employee should handle it.
                   </p>
                 </div>
               ) : (
                 (formData.objectionRules || []).map((rule, idx) => (
                   <div
                     key={idx}
-                    className="p-3.5 rounded-xl bg-white border border-[#E4E2EB] shadow-2xs relative group transition-all hover:border-[#D2CEE0]"
+                    className="p-3.5 rounded-control bg-surface border border-line shadow-craft-xs relative group transition-all hover:border-line-strong"
                     data-testid={`objection-rule-${idx}`}
                   >
                     <div className="flex items-center justify-between mb-2.5">
                       <div className="flex items-center gap-2">
-                        <select aria-label={`Rule ${idx + 1} type`} value={rule.kind || 'objection'} onChange={(event) => setFormData(previous => ({ ...previous, objectionRules: previous.objectionRules.map((item, index) => index === idx ? { ...item, kind: event.target.value } : item) }))} className="rounded-lg border border-[#E4E2EB] p-1 text-xs">
+                        <select aria-label={`Rule ${idx + 1} type`} value={rule.kind || 'objection'} onChange={(event) => setFormData(previous => ({ ...previous, objectionRules: previous.objectionRules.map((item, index) => index === idx ? { ...item, kind: event.target.value } : item) }))} className="rounded-control border border-line p-1 text-ui">
                           <option value="objection">Objection</option><option value="objective">Objective</option>
                         </select>
-                        <label className="flex items-center gap-1 text-xs"><input type="checkbox" aria-label={`Enable rule ${idx + 1}`} checked={rule.enabled !== false} onChange={(event) => setFormData(previous => ({ ...previous, objectionRules: previous.objectionRules.map((item, index) => index === idx ? { ...item, enabled: event.target.checked } : item) }))} />Enabled</label>
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FAF5FF] text-[#6344E7] border border-[#F3E8FF]">
-                          Rule #{idx + 1}
+                        <label className="flex items-center gap-1 text-ui"><input type="checkbox" aria-label={`Enable rule ${idx + 1}`} checked={rule.enabled !== false} onChange={(event) => setFormData(previous => ({ ...previous, objectionRules: previous.objectionRules.map((item, index) => index === idx ? { ...item, enabled: event.target.checked } : item) }))} />Enabled</label>
+                        <span className="text-meta font-medium px-2 py-0.5 rounded-control bg-accent-soft text-accent border border-accent/20">
+                          Rule {idx + 1}
                         </span>
                         {rule.category && rule.category !== 'custom' && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-[#F3F4F6] text-[#374151]">
-                            {rule.category.toUpperCase()}
+                          <span className="text-meta font-medium px-2 py-0.5 rounded-control bg-surface-subtle text-fg-body">
+                            {humanizeToken(rule.category)}
                           </span>
                         )}
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveObjection(idx)}
-                        className="p-1 text-[#DC2626] hover:bg-red-50 rounded transition-colors"
+                        className="p-1 text-danger-fg hover:bg-danger-soft rounded-control transition-colors"
                         title="Remove rule"
                         data-testid={`remove-objection-${idx}`}
                       >
@@ -1762,7 +1775,7 @@ export function AgentStudioModule({
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                       {/* Trigger */}
                       <div className="md:col-span-5">
-                        <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
+                        <span className="text-meta text-fg-muted font-medium block mb-1">
                           {rule.kind === 'objective' ? 'Situation / goal:' : 'Caller concern:'}
                         </span>
                         <input
@@ -1775,14 +1788,14 @@ export function AgentStudioModule({
                             next[idx] = { ...next[idx], trigger: e.target.value };
                             setFormData({ ...formData, objectionRules: next });
                           }}
-                          className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-lg px-2.5 py-1.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                          className="w-full bg-canvas border border-line rounded-control px-2.5 py-1.5 text-ui text-ink focus:outline-none focus:border-accent transition-colors"
                           data-testid={`objection-trigger-${idx}`}
                         />
                       </div>
 
                       {/* Response */}
                       <div className="md:col-span-5">
-                        <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
+                        <span className="text-meta text-fg-muted font-medium block mb-1">
                           {rule.kind === 'objective' ? 'Guidance to achieve the goal:' : 'Response guidance:'}
                         </span>
                         <textarea
@@ -1795,15 +1808,15 @@ export function AgentStudioModule({
                             next[idx] = { ...next[idx], response: e.target.value };
                             setFormData({ ...formData, objectionRules: next });
                           }}
-                          className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-lg px-2.5 py-1.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors resize-none"
+                          className="w-full bg-canvas border border-line rounded-control px-2.5 py-1.5 text-ui text-ink focus:outline-none focus:border-accent transition-colors resize-none"
                           data-testid={`objection-response-${idx}`}
                         />
                       </div>
 
                       {/* Action outcome */}
                       <div className="md:col-span-2">
-                        <span className="text-[10px] text-[#8C879A] uppercase font-bold block mb-1">
-                          Action Outcome:
+                        <span className="text-meta text-fg-muted font-medium block mb-1">
+                          Then:
                         </span>
                         <select
                           value={rule.action || 'continue_script'}
@@ -1812,13 +1825,13 @@ export function AgentStudioModule({
                             next[idx] = { ...next[idx], action: e.target.value };
                             setFormData({ ...formData, objectionRules: next });
                           }}
-                          className="w-full bg-[#FAF9FD] border border-[#E4E2EB] rounded-lg px-2 py-1.5 text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                          className="w-full bg-canvas border border-line rounded-control px-2 py-1.5 text-ui text-ink focus:outline-none focus:border-accent transition-colors"
                           data-testid={`objection-action-${idx}`}
                         >
-                          <option value="continue_script">Continue Script</option>
-                          <option value="offer_callback">Offer Callback</option>
-                          <option value="end_call">Request Call Ending</option>
-                          <option value="transfer_human">Transfer Human</option>
+                          <option value="continue_script">Continue the script</option>
+                          <option value="offer_callback">Offer a callback</option>
+                          <option value="end_call">End the call</option>
+                          <option value="transfer_human">Transfer to a person</option>
                         </select>
                       </div>
                     </div>
@@ -1842,7 +1855,7 @@ export function AgentStudioModule({
           data-testid="agent-panel-voice"
           className="space-y-6 animate-in fade-in duration-150"
         >
-          <ErrorBoundary title="Unable to load voice studio">
+          <ErrorBoundary title="Voice settings could not load">
             <AgentVoicePanel
               formData={formData}
               setFormData={setFormData}
@@ -1874,11 +1887,11 @@ export function AgentStudioModule({
           aria-labelledby="agent-tab-calls"
           className="space-y-4 animate-in fade-in duration-150"
         >
-          <div className="rounded-xl border border-[#E4E2EB] bg-[#F0EEF6]/70 px-3.5 py-2.5 text-xs font-semibold text-[#1F1D2B]">
-            Phone calls use your published script and wallet credits. Your saved voice setup applies to
+          <div className="rounded-card border border-info-line bg-info-soft px-4 py-3 text-ui text-info-fg">
+            Phone calls use your saved script and are paid from your wallet. Your saved voice is used for
             incoming and outgoing calls.
           </div>
-          <ErrorBoundary title="Unable to load agent calls panel">
+          <ErrorBoundary title="Calls could not load">
             <AgentCallsPanel
               agentId={selectedAgent.id}
               agentName={selectedAgent.name}
@@ -1897,7 +1910,7 @@ export function AgentStudioModule({
           aria-labelledby="agent-tab-settings"
           className="animate-in fade-in duration-150"
         >
-          <ErrorBoundary title="Unable to load agent settings">
+          <ErrorBoundary title="Settings could not load">
             <AgentSettingsPanel
               agent={selectedAgent}
               savingChanges={saving}
@@ -1928,11 +1941,11 @@ export function AgentStudioModule({
             requestAnimationFrame(() => testCallButtonRef.current?.focus());
           }}
           title={`Test call — ${selectedAgent?.name || 'Agent'}`}
-          subtitle="Talk to your agent in this browser or receive a phone call. Usage is billed from your wallet."
+          subtitle="Talk to your employee in this browser or get a call on your phone. Test calls are paid from your wallet."
           maxWidth="max-w-lg"
         >
           <div data-testid="agent-test-call-panel">
-            <ErrorBoundary title="Unable to initialize test call">
+            <ErrorBoundary title="The test call could not start">
                 <AgentTestCallPanel
                   agent={voiceStackAgent}
                   pricingProfile={voiceStackProfiles.find((profile) => profile.tier === (voiceStackAgent?.defaultTier || voiceStackAgent?.default_tier))}

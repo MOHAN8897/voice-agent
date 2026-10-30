@@ -15,6 +15,7 @@ import {
 import { TactileButton } from './ui/TactileButton';
 import { TopbarBalanceSkeleton } from './ui/Skeleton';
 import { useWorkspace } from './context/WorkspaceContext';
+import { walletAmounts } from '../lib/money';
 
 const EMPLOYEE_STEP_LABELS = {
   overview: 'Overview',
@@ -40,14 +41,9 @@ export function Topbar({
   const runningCampaign = campaigns.find((c) => c.status === 'running');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
-  const balanceInr = Number(wallet?.balanceInr) || 0;
-  const balanceUsd = Number(wallet?.balanceUsd) || 0;
-  const fx = Number(wallet?.fxRateInr) || 95.64;
-  const displayUsd = balanceUsd > 0 ? balanceUsd : balanceInr > 0 ? balanceInr / fx : 0;
-  const walletLabel = `$${displayUsd.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  // India-first: rupees are the primary figure; dollars only in the tooltip.
+  const money = walletAmounts(wallet);
+  const walletLabel = money.primary;
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -60,12 +56,12 @@ export function Topbar({
   }, []);
 
   const tabLabels = {
-    overview: 'Overview',
-    employees: 'AI Employees',
+    overview: 'Home',
+    employees: 'AI employees',
     'phone-numbers': 'Phone numbers',
-    calls: 'Call history & outbound',
+    calls: 'Calls',
     leads: 'Leads',
-    campaigns: 'Outbound campaigns',
+    campaigns: 'Campaigns',
     billing: 'Billing & usage',
     calculator: 'Usage calculator',
     integrations: 'Integrations',
@@ -79,31 +75,31 @@ export function Topbar({
   };
 
   return (
-    <header className="h-14 bg-white/95 backdrop-blur-md border-b border-[#E4E2EB] px-3 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30 shadow-2xs">
+    <header className="h-14 bg-white/95 backdrop-blur-md border-b border-line px-3 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30 shadow-2xs">
       <div className="flex items-center gap-2 min-w-0">
         <button
           type="button"
           onClick={onToggleMobileSidebar}
-          className="md:hidden min-w-[44px] min-h-[44px] -ml-1 p-2.5 rounded-xl text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] flex items-center justify-center transition-colors active:scale-95"
+          className="md:hidden min-w-[44px] min-h-[44px] -ml-1 p-2.5 rounded-control text-ink hover:bg-canvas border border-transparent hover:border-line flex items-center justify-center transition-colors active:scale-95"
           aria-label="Open navigation menu"
         >
-          <Menu className="w-5 h-5 text-[#0F0E17]" />
+          <Menu className="w-5 h-5 text-ink" />
         </button>
 
-        <h1 className="text-sm font-bold text-[#0F0E17] truncate">
-          {tabLabels[activeTab] || 'Console'}
+        <p className="text-sm font-bold text-ink truncate">
+          {tabLabels[activeTab] || 'Page not found'}
           {activeTab === 'employees' && employeeFlowStep && EMPLOYEE_STEP_LABELS[employeeFlowStep] && (
-            <span className="text-[#524E5E] font-semibold">
+            <span className="text-fg-body font-semibold">
               {' '}
               · {EMPLOYEE_STEP_LABELS[employeeFlowStep]}
             </span>
           )}
-        </h1>
+        </p>
 
         {runningCampaign && (
-          <div className="hidden lg:flex items-center gap-1.5 ml-2 px-2.5 py-0.5 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[11px] font-mono text-[#047857]">
-            <Radio className="w-3 h-3 animate-pulse text-[#10B981]" />
-            <span>Dialing: {runningCampaign.name}</span>
+          <div className="hidden lg:flex items-center gap-1.5 ml-2 px-2.5 py-0.5 rounded-full bg-success-soft border border-success-line text-meta text-success-fg">
+            <Radio className="w-3 h-3 animate-pulse motion-reduce:animate-none text-success" />
+            <span>Calling: {runningCampaign.name}</span>
           </div>
         )}
       </div>
@@ -113,12 +109,12 @@ export function Topbar({
         <button
           type="button"
           onClick={onOpenCommandPalette}
-          className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#6344E7]/40 hover:bg-white text-[#0F0E17] transition-all text-xs group shadow-2xs"
+          className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-control bg-canvas border border-line hover:border-line-strong hover:bg-white text-ink transition-all text-xs group shadow-2xs"
           aria-label="Search workspace"
         >
           <div className="flex items-center gap-2.5 min-w-0">
-            <Search className="w-4 h-4 text-[#6344E7] shrink-0 transition-transform group-hover:scale-110" />
-            <span className="font-medium text-[#4A4658] group-hover:text-[#0F0E17] truncate">
+            <Search className="w-4 h-4 text-accent shrink-0 transition-transform group-hover:scale-110" />
+            <span className="font-medium text-fg-body group-hover:text-ink truncate">
               Search workspace…
             </span>
           </div>
@@ -130,34 +126,35 @@ export function Topbar({
         <button
           type="button"
           onClick={onOpenCommandPalette}
-          className="md:hidden p-2 rounded-xl text-[#0F0E17] hover:bg-[#FAF9FD] border border-transparent hover:border-[#E4E2EB] flex items-center justify-center transition-colors"
+          className="md:hidden p-2 rounded-control text-ink hover:bg-canvas border border-transparent hover:border-line flex items-center justify-center transition-colors"
           aria-label="Search workspace"
           title="Search workspace"
         >
-          <Search className="w-4 h-4 text-[#6344E7]" />
+          <Search className="w-4 h-4 text-accent" />
         </button>
         <button
           type="button"
           data-testid="topbar-wallet"
           data-tour="topbar-wallet"
           onClick={() => openAddFunds?.(null)}
-          className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-[#FAF9FD] text-[#0F0E17] border border-[#E4E2EB] shadow-2xs transition-all active:scale-[0.98]"
-          title="Wallet balance — click to add funds"
+          className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-control text-xs font-semibold bg-white hover:bg-canvas text-ink border border-line shadow-2xs transition-all active:scale-[0.98]"
+          title={`Wallet balance ${money.primary} (${money.secondary}). Click to add funds`}
+          aria-label={`Wallet balance ${money.primary}. Add funds`}
         >
-          <CreditCard className="w-3.5 h-3.5 text-[#6344E7] shrink-0" />
+          <CreditCard className="w-3.5 h-3.5 text-accent shrink-0" />
           {isLoading && !wallet ? (
             <TopbarBalanceSkeleton />
           ) : (
-            <span className="font-mono text-[11px] sm:text-xs">{walletLabel}</span>
+            <span className="font-mono tabular-nums text-meta sm:text-ui">{walletLabel}</span>
           )}
         </button>
 
         <button
           type="button"
           onClick={onOpenBuyNumber}
-          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-[#FAF9FD] text-[#0F0E17] border border-[#E4E2EB] shadow-2xs transition-all active:scale-[0.98]"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-white hover:bg-canvas text-ink border border-line shadow-2xs transition-all active:scale-[0.98]"
         >
-          <Phone className="w-3.5 h-3.5 text-[#6344E7]" />
+          <Phone className="w-3.5 h-3.5 text-accent" />
           <span>Buy number</span>
         </button>
 
@@ -170,36 +167,36 @@ export function Topbar({
           <button
             type="button"
             onClick={() => setUserMenuOpen((o) => !o)}
-            className="flex items-center gap-1.5 pl-1 pr-2 py-1 min-h-[40px] rounded-xl border border-[#E4E2EB] bg-white hover:bg-[#FAF9FD] transition-all"
+            className="flex items-center gap-1.5 pl-1 pr-2 py-1 min-h-[40px] rounded-control border border-line bg-white hover:bg-canvas transition-all"
             aria-expanded={userMenuOpen}
             aria-haspopup="menu"
           >
             <div
-              className="w-8 h-8 rounded-lg bg-[#0F0E17] text-white flex items-center justify-center text-xs font-mono font-bold"
+              className="w-8 h-8 rounded-lg bg-ink text-white flex items-center justify-center text-xs font-mono font-bold"
               title={user?.email || user?.name || 'Account'}
             >
               {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-[#524E5E] transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3.5 h-3.5 text-fg-body transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {userMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl border border-[#E4E2EB] shadow-xl p-2 z-50 text-xs">
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-control border border-line shadow-xl p-2 z-50 text-xs">
               {(user?.name || user?.email) && (
-                <div className="px-2 py-2 mb-1 border-b border-[#E4E2EB]">
-                  <div className="font-bold text-[#0F0E17] truncate">{user?.name}</div>
-                  <div className="text-[11px] text-[#524E5E] truncate">{user?.email}</div>
+                <div className="px-2 py-2 mb-1 border-b border-line">
+                  <div className="font-bold text-ink truncate">{user?.name}</div>
+                  <div className="text-meta text-fg-body truncate">{user?.email}</div>
                 </div>
               )}
 
               {/* Mobile Wallet Quick Top-up Card */}
-              <div className="sm:hidden p-2.5 mb-1.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+              <div className="sm:hidden p-2.5 mb-1.5 rounded-control bg-canvas border border-line">
                 <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="text-[11px] text-[#524E5E] flex items-center gap-1">
-                    <CreditCard className="w-3 h-3 text-[#6344E7]" />
+                  <span className="text-meta text-fg-body flex items-center gap-1">
+                    <CreditCard className="w-3 h-3 text-accent" />
                     Balance:
                   </span>
-                  <span className="font-mono font-bold text-xs text-[#0F0E17]">{walletLabel}</span>
+                  <span className="font-mono font-bold text-xs text-ink">{walletLabel}</span>
                 </div>
                 <button
                   type="button"
@@ -207,25 +204,25 @@ export function Topbar({
                     setUserMenuOpen(false);
                     openAddFunds?.(null);
                   }}
-                  className="w-full py-1.5 px-2 rounded-lg bg-[#6344E7] text-white text-xs font-bold text-center hover:bg-[#5235D9] transition-colors shadow-2xs active:scale-[0.98]"
+                  className="w-full py-1.5 px-2 rounded-lg bg-accent text-white text-xs font-bold text-center hover:bg-accent-hover transition-colors shadow-2xs active:scale-[0.98]"
                 >
-                  + Add funds
+                  Add funds
                 </button>
               </div>
               <button
                 type="button"
                 onClick={() => go('settings')}
-                className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#FAF9FD] text-left font-medium text-[#0F0E17]"
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-canvas text-left font-medium text-ink"
               >
-                <Settings className="w-3.5 h-3.5 text-[#524E5E]" />
+                <Settings className="w-3.5 h-3.5 text-fg-body" />
                 Settings
               </button>
               <button
                 type="button"
                 onClick={() => go('billing')}
-                className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#FAF9FD] text-left font-medium text-[#0F0E17]"
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-canvas text-left font-medium text-ink"
               >
-                <CreditCard className="w-3.5 h-3.5 text-[#524E5E]" />
+                <CreditCard className="w-3.5 h-3.5 text-fg-body" />
                 Billing &amp; usage
               </button>
               <button
@@ -239,9 +236,9 @@ export function Topbar({
                     new CustomEvent('dialtact:open-tour', { detail: { force: true } })
                   );
                 }}
-                className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#FAF9FD] text-left font-medium text-[#0F0E17]"
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-canvas text-left font-medium text-ink"
               >
-                <Compass className="w-3.5 h-3.5 text-[#6344E7]" />
+                <Compass className="w-3.5 h-3.5 text-accent" />
                 Guided tour
               </button>
               {onBackToLanding && (
@@ -251,7 +248,7 @@ export function Topbar({
                     setUserMenuOpen(false);
                     onBackToLanding();
                   }}
-                  className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[#FAF9FD] text-left font-medium text-[#524E5E]"
+                  className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-canvas text-left font-medium text-fg-body"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   Marketing site
@@ -259,7 +256,7 @@ export function Topbar({
               )}
               {onSignOut && (
                 <>
-                  <div className="my-1 border-t border-[#E4E2EB]" />
+                  <div className="my-1 border-t border-line" />
                   <button
                     type="button"
                     onClick={() => {

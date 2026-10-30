@@ -252,9 +252,9 @@ test('callback requests stay visible on failure and clear after conversion', asy
     await page.getByRole('button', { name: 'Mark converted' }).click();
   }
   await expect(page.getByRole('status').filter({ hasText: 'Marked converted' })).toBeVisible();
-  await expect(page.getByText('No pending callback requests.', { exact: true })).toBeVisible();
+  await expect(page.getByText('No pending callback requests', { exact: true })).toBeVisible();
   await page.reload();
-  await expect(page.getByText('No pending callback requests.', { exact: true })).toBeVisible();
+  await expect(page.getByText('No pending callback requests', { exact: true })).toBeVisible();
 });
 
 test('publish failure keeps unsaved draft and shows error', async ({ page }) => {

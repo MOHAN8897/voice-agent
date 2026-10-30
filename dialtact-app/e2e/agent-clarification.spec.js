@@ -7,7 +7,7 @@ test('asks grouped questions and a follow-up, then uses all answers to create on
   await page.getByTestId('employee-brief-input').fill('Create a sales agent for Example online courses.');
   await page.getByTestId('employee-language-select').selectOption('en-IN');
   await page.getByTestId('create-next').click();
-  await expect(page.getByRole('dialog', { name: 'A few details for your agent' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'A few details for your employee' })).toBeVisible();
   await expect(page.getByTestId('create-next')).toBeDisabled();
   expect(state.builds).toHaveLength(0);
   await page.getByTestId('employee-answer-agent_name').fill('Meera');

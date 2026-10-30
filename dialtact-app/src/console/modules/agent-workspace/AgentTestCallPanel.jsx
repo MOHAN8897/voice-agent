@@ -17,6 +17,8 @@ import { SolidCard } from '../../ui/SolidCard';
 import { LazyDialtactScene } from '../../../three/LazyDialtactScene';
 import { createWebAgentSession } from '../../../services/webAgentClient';
 import { showToast } from '../../ui/ToastHost';
+import { Avatar } from '../../ui/Avatar';
+import { walletAmounts } from '../../../lib/money';
 
 function formatElapsed(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -203,7 +205,7 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
 
   const requireWallet = () => {
     if (!walletEmpty) return true;
-    showToast('Add wallet funds before testing. Sessions are billed from your balance.', 'error');
+    showToast('Add funds to your wallet before testing. Test calls are paid from your balance.', 'error');
     openAddFunds?.('Your wallet is empty — add funds to start a test call.');
     return false;
   };
@@ -218,7 +220,7 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
         /* fallback */
       }
     }
-    showToast('Agent is paused. Switch to Live before testing.', 'error');
+    showToast('This employee is paused. Turn them on before testing.', 'error');
     return false;
   };
 
@@ -254,15 +256,15 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
     // The clock starts on `ready` (server accepted the session and the voice loop is
     // live), not here — time spent handshaking is not billed time.
     startedAtRef.current = null;
-    setStatusNote('Connecting to agent…');
+    setStatusNote('Connecting…');
     session.subscribe((event, data) => {
       if (event === 'ready') {
         setSessionState('CONNECTED');
         startedAtRef.current = Date.now();
         speakingUntilRef.current = Date.now();
         setStatusNote(data?.microphoneMode === 'listen-only'
-          ? 'Connected in listen-only mode — allow microphone access to speak.'
-          : 'Connected — microphone and agent are live');
+          ? 'Connected, but you can only listen. Allow microphone access to speak.'
+          : 'Connected. Go ahead and speak.');
         push('Live session started. Agent follows your published script.');
       }
       if (event === 'audio') {
@@ -270,14 +272,14 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
         setBotState('SPEAKING');
       }
       if (event === 'hangup_initiated') {
-        setStatusNote('Agent is ending the call…');
+        setStatusNote('The employee is ending the call…');
         push('Hangup started.');
       }
       if (event === 'hangup_complete' || event === 'closed') {
         setSessionState('DISCONNECTED');
         setBotState('IDLE');
         startedAtRef.current = null;
-        setStatusNote('Call ended — usage deducted from wallet');
+        setStatusNote('Call ended. The cost was taken from your wallet.');
         refreshWallet?.();
         setTimeout(() => refreshWallet?.(), 1500);
       }
@@ -315,7 +317,7 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
     setBotState('IDLE');
     setIsMuted(false);
     startedAtRef.current = null;
-    setStatusNote('You ended the session.');
+    setStatusNote('You ended the call.');
     refreshWallet?.();
     setTimeout(() => refreshWallet?.(), 1500);
   };
@@ -325,7 +327,7 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
     const liveOk = await requireLive();
     if (!liveOk || !requireWallet()) return;
     if (!activeFromLine) {
-      showToast('Enable outgoing calls on a phone line in Phone lines before calling.', 'error');
+      showToast('Turn on outgoing calls for one of your phone numbers before calling.', 'error');
       return;
     }
     const rawDest = toE164.trim();
@@ -360,9 +362,9 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
         toE164: cleanDest,
         fromE164: activeFromLine || null,
       });
-      showToast('Live call initiated', 'success');
+      showToast('Calling now', 'success');
       push(`Dialing ${cleanDest}…`);
-      setStatusNote(`Calling ${cleanDest} — agent is speaking from its published script`);
+      setStatusNote(`Calling ${cleanDest}. The employee will use their saved script`);
     } catch (e) {
       const msg = e.message || 'Could not place call';
       showToast(msg, 'error');
@@ -379,9 +381,9 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
     setStatusBusy(true);
     try {
       await toggleAgentStatus(agent.id, isActive ? 'paused' : 'active');
-      showToast(isActive ? 'Agent paused' : 'Agent is live', 'success');
+      showToast(isActive ? 'Employee paused' : 'Employee is live', 'success');
     } catch (e) {
-      showToast(e.message || 'Could not change status', 'error');
+      showToast(e.message || 'The status could not be changed', 'error');
     } finally {
       setStatusBusy(false);
     }
@@ -397,7 +399,7 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
   return (
     <div className="space-y-4" data-testid="agent-test-call-panel-inner">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="inline-flex p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB]">
+        <div className="inline-flex p-0.5 gap-0.5 rounded-control bg-surface-subtle border border-line" role="group" aria-label="How to test">
           {[
             { id: 'browser', label: 'In browser' },
             { id: 'phone', label: 'Phone call' },
@@ -407,8 +409,9 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
               type="button"
               data-testid={`test-call-mode-${m.id}`}
               onClick={() => setMode(m.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                mode === m.id ? 'bg-white text-[#0F0E17] shadow-xs' : 'text-[#524E5E]'
+              aria-pressed={mode === m.id}
+              className={`px-3 py-1.5 min-h-[32px] rounded-[8px] text-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                mode === m.id ? 'bg-surface text-ink shadow-craft-xs' : 'text-fg-body hover:text-ink'
               }`}
             >
               {m.label}
@@ -420,29 +423,25 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
           data-testid="test-call-live-toggle"
           onClick={toggleLive}
           disabled={statusBusy || isLive}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all disabled:opacity-50 ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[32px] rounded-pill text-meta font-medium border transition-colors disabled:opacity-50 ${
             isActive
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-              : 'bg-amber-50 text-amber-900 border-amber-200'
+              ? 'bg-success-soft text-success-fg border-success-line'
+              : 'bg-warning-soft text-warning-fg border-warning-line'
           }`}
         >
           {isActive ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
-          {isActive ? 'Agent active' : 'Agent paused'}
+          {isActive ? 'Live: tap to pause' : 'Paused: tap to turn on'}
         </button>
       </div>
 
-      <div className="flex items-center justify-between text-[11px] text-[#524E5E] px-0.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-ui text-fg-body px-0.5">
         <span className="flex items-center gap-1">
-          <Wallet className="w-3.5 h-3.5 text-[#524E5E]" />
+          <Wallet className="w-3.5 h-3.5 text-fg-body" />
           <span>
             Wallet{' '}
-            {Number(wallet?.balanceInr || 0) > 0 ? (
-              <>
-                <strong className="text-[#0F0E17] font-semibold font-mono">₹{Number(wallet.balanceInr).toFixed(2)}</strong>
-                <span className="text-[#8C879A] text-[10px] ml-1 font-mono">(${displayUsd.toFixed(2)})</span>
-              </>
-            ) : (
-              <strong className="text-[#0F0E17] font-semibold font-mono">${displayUsd.toFixed(2)}</strong>
+            <strong className="text-ink font-semibold font-mono tabular-nums">{walletAmounts(wallet).primary}</strong>
+            {!walletAmounts(wallet).isEmpty && (
+              <span className="text-fg-muted text-meta ml-1 font-mono tabular-nums">({walletAmounts(wallet).secondary})</span>
             )}{' '}
             {remainingMinutes !== null ? `· ~${remainingMinutes} min` : ''}
           </span>
@@ -450,48 +449,46 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
         {walletEmpty && (
           <button
             type="button"
-            className="font-semibold text-[#6344E7]"
+            className="font-medium text-accent-fg hover:underline"
             onClick={() => openAddFunds?.('Add funds to run a test call.')}
           >
-            Recharge
+            Add funds
           </button>
         )}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-2.5 text-xs" data-testid="test-call-current-rate">
-        <span className="flex items-center gap-1.5 font-medium text-[#524E5E]"><Zap className="w-3.5 h-3.5 text-amber-500" />{mode === 'browser' ? 'Web call rate' : 'Phone call rate'}</span>
-        <span className="font-mono font-semibold text-[#0F0E17]">{rateAvailable ? `₹${activeRateInr.toFixed(2)}/min ($${activeRateUsd.toFixed(3)}/min)` : 'Rate unavailable'}</span>
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-line bg-canvas p-2.5 text-ui" data-testid="test-call-current-rate">
+        <span className="flex items-center gap-1.5 font-medium text-fg-body"><Zap className="w-3.5 h-3.5 text-fg-subtle" aria-hidden="true" />{mode === 'browser' ? 'Web call rate' : 'Phone call rate'}</span>
+        <span className="font-mono font-semibold tabular-nums text-ink">{rateAvailable ? `₹${activeRateInr.toFixed(2)}/min ($${activeRateUsd.toFixed(3)}/min)` : 'Price not available'}</span>
       </div>
 
       {mode === 'browser' ? (
-        <SolidCard className="p-0 overflow-hidden border-[#E4E2EB]" data-testid="test-call-browser-chrome">
-          <div className="relative bg-gradient-to-b from-[#F0EEF6] to-white px-4 pt-4 pb-3">
+        <SolidCard className="p-0 overflow-hidden border-line" data-testid="test-call-browser-chrome">
+          <div className="relative bg-gradient-to-b from-surface-subtle to-surface px-4 pt-4 pb-3">
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-[#0F0E17] text-white flex items-center justify-center text-sm font-bold shrink-0">
-                  {agent?.name?.charAt(0) || 'A'}
-                </div>
+                <Avatar name={agent?.name || 'Agent'} size="md" live={isLive} />
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-[#0F0E17] truncate">{agent?.name || 'Agent'}</p>
-                  <p className="text-[11px] text-[#524E5E] truncate">
+                  <p className="text-copy font-semibold text-ink truncate" title={agent?.name || undefined}>{agent?.name || 'Agent'}</p>
+                  <p className="text-meta text-fg-body truncate">
                     {sessionState === 'CONNECTING'
-                      ? 'Connecting with agent…'
+                      ? 'Connecting…'
                       : sessionState === 'CONNECTED'
-                        ? 'Connected with agent'
+                        ? 'On the call'
                         : 'Not connected'}
                   </p>
                 </div>
               </div>
               <div className="text-right shrink-0">
                 <p
-                  className="font-mono text-sm font-bold text-[#0F0E17] tabular-nums"
+                  className="font-mono text-copy font-semibold text-ink tabular-nums"
                   data-testid="test-call-timer"
                 >
                   {formatElapsed(elapsedMs)}
                 </p>
                 <p
-                  className={`text-[10px] font-semibold ${
-                    isLive ? 'text-emerald-700' : 'text-[#8C879A]'
+                  className={`text-meta font-semibold ${
+                    isLive ? 'text-success-fg' : 'text-fg-muted'
                   }`}
                 >
                   {stateLabel}
@@ -499,7 +496,7 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
               </div>
             </div>
 
-            <div className="h-[220px] sm:h-[260px] rounded-2xl bg-[#0F0E17]/95 border border-[#262438] overflow-hidden relative">
+            <div className="h-[220px] sm:h-[260px] rounded-card bg-ink/95 border border-white/10 overflow-hidden relative">
               <LazyDialtactScene
                 state={
                   sessionState === 'CONNECTING'
@@ -515,20 +512,20 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
               />
               {/* chisel: pulse animation with radial ripples (animate-ping) on microphone circle during connection handshake */}
               {sessionState === 'CONNECTING' && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#0F0E17]/70 backdrop-blur-xs">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-ink/70 backdrop-blur-xs">
                   <div className="relative flex items-center justify-center">
-                    <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-[#6344E7] opacity-60" />
-                    <span className="relative inline-flex rounded-full h-10 w-10 bg-[#6344E7] items-center justify-center text-white shadow-lg">
+                    <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-accent opacity-60" />
+                    <span className="relative inline-flex rounded-full h-10 w-10 bg-accent items-center justify-center text-white shadow-lg">
                       <Mic className="w-5 h-5 animate-pulse" />
                     </span>
                   </div>
-                  <p className="text-xs font-semibold text-white tracking-wide">Connecting WebRTC audio…</p>
+                  <p className="text-ui font-semibold text-white">Connecting audio…</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="p-4 border-t border-[#E4E2EB] bg-white space-y-2">
+          <div className="p-4 border-t border-line bg-surface space-y-2">
             {!isLive ? (
               <TactileButton
                 variant="brand"
@@ -564,25 +561,25 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
                   data-testid="test-call-end-browser"
                   className="flex-1 justify-center"
                 >
-                  End
+                  End call
                 </TactileButton>
               </div>
             )}
-            <p className="text-[11px] font-mono text-[#8C879A]">{statusNote || stateLabel}</p>
+            <p className="text-meta text-fg-muted" role="status">{statusNote || stateLabel}</p>
           </div>
         </SolidCard>
       ) : (
         <SolidCard className="space-y-3.5" data-testid="test-call-live-number">
-          <p className="text-xs text-[#524E5E] leading-relaxed">
-            Your phone will ring. Answer to speak with this agent using its published script.
+          <p className="text-ui text-fg-body leading-relaxed">
+            Your phone will ring. Answer it to talk to this employee using their saved script.
           </p>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-bold text-[#0F0E17]">
-                Phone Number to Call
+              <label className="block text-ui font-medium text-ink">
+                Phone number to call
               </label>
-              <span className="text-[10px] text-[#8C879A]">e.g. +91 98765 43210</span>
+              <span className="text-meta text-fg-muted">e.g. +91 98765 43210</span>
             </div>
             <input
               type="tel"
@@ -591,15 +588,15 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
               onChange={(e) => setToE164(e.target.value)}
               placeholder="+91 98765 43210"
               data-testid="test-call-phone-to"
-              className="w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-sm min-h-[42px] sm:min-h-[38px] text-[#0F0E17] focus:outline-none focus:border-[#6344E7] focus:ring-1 focus:ring-[#6344E7]"
+              className="w-full rounded-control border border-line bg-surface px-3 py-2 font-mono tabular-nums text-base sm:text-copy min-h-[42px] sm:min-h-[38px] text-ink focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
             />
-            <p className="text-[10px] text-[#8C879A] mt-1">
-              Enter your mobile or test phone number including the country code (+91 for India, +1 for US).
+            <p className="text-meta text-fg-muted mt-1">
+              Your mobile number with its country code (+91 for India, +1 for the US).
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#0F0E17] mb-1">
+            <label className="block text-ui font-medium text-ink mb-1">
               Call from
             </label>
             {availableOutboundNumbers.length > 0 ? (
@@ -609,34 +606,34 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
                   value={activeFromLine}
                   onChange={(e) => setSelectedFromLine(e.target.value)}
                   data-testid="test-call-phone-from-select"
-                  className="w-full rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 font-mono text-sm min-h-[42px] sm:min-h-[38px] text-[#0F0E17] focus:outline-none focus:border-[#6344E7]"
+                  className="w-full rounded-control border border-line bg-surface px-3 py-2 font-mono tabular-nums text-base sm:text-copy min-h-[42px] sm:min-h-[38px] text-ink focus:outline-none focus:border-accent"
                 >
                   {availableOutboundNumbers.map((num) => {
                     const val = num.e164 || num.number;
                     const isAgentAssigned =
                       num.assignedAgentId === agent?.id ||
                       (assignedLine && val === (assignedLine.e164 || assignedLine.number));
-                    const assigned = isAgentAssigned ? ' (Assigned to this agent)' : '';
+                    const assigned = isAgentAssigned ? ' (this employee’s number)' : '';
                     return (
                       <option key={num.id || val} value={val}>
-                        {val} • {assigned || (num.locality ? num.locality : 'Direct Line')}
+                        {val} • {assigned || (num.locality ? num.locality : 'Your number')}
                       </option>
                     );
                   })}
                 </select>
-                <p className="text-[10px] text-[#8C879A] mt-1">
-                  The caller ID that will display on the recipient&apos;s phone screen.
+                <p className="text-meta text-fg-muted mt-1">
+                  The number that shows on your phone when it rings.
                 </p>
               </>
             ) : (
               <div className="space-y-1.5">
-                <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 space-y-1">
-                  <div className="flex items-center gap-1.5 font-semibold text-amber-900">
-                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>No phone line is ready for outgoing calls</span>
+                <div className="rounded-control border border-warning-line bg-warning-soft p-3 text-ui text-warning-fg space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-warning-fg">
+                    <AlertCircle className="w-4 h-4 text-warning shrink-0" />
+                    <span>None of your numbers can make outgoing calls yet</span>
                   </div>
-                  <p className="text-[11px] text-amber-800 leading-normal">
-                    Enable outgoing calls on an active line in <strong>Phone lines</strong>, or test with your microphone in the <strong>In browser</strong> tab.
+                  <p className="text-ui text-warning-fg leading-normal">
+                    Turn on outgoing calls for a number in <strong>Phone numbers</strong>, or test with your microphone in the <strong>In browser</strong> tab.
                   </p>
                 </div>
                 <input
@@ -649,15 +646,15 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
           </div>
 
           {!isActive && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800 flex items-center justify-between">
-              <span>Agent is currently paused. Activate it to place live calls.</span>
+            <div className="rounded-control border border-warning-line bg-warning-soft p-2.5 text-ui text-warning-fg flex flex-wrap items-center justify-between gap-2">
+              <span>This employee is paused. Turn them on to make real calls.</span>
               <button
                 type="button"
                 onClick={toggleLive}
                 disabled={statusBusy}
-                className="font-bold text-[#6344E7] hover:underline ml-2 shrink-0"
+                className="font-semibold text-accent-fg hover:underline shrink-0"
               >
-                Make Live
+                Turn on
               </button>
             </div>
           )}
@@ -672,17 +669,17 @@ export function AgentTestCallPanel({ agent, language, pricingProfile }) {
             className="w-full justify-center min-h-[44px]"
             disabled={!isActive || !activeFromLine || statusBusy}
           >
-            {dialBusy ? 'Preparing your agent…' : 'Call phone'}
+            {dialBusy ? 'Getting your employee ready…' : 'Call phone'}
           </TactileButton>
         </SolidCard>
       )}
 
-      <div className="max-h-32 overflow-y-auto rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-2.5 space-y-1 text-[11px]">
+      <div className="max-h-32 overflow-y-auto rounded-control border border-line bg-canvas p-2.5 space-y-1 text-ui" aria-live="polite">
         {lines.length === 0 && (
-          <p className="text-[#8C879A]">Live call events and status updates will appear here.</p>
+          <p className="text-fg-muted">What happens on the call will show up here.</p>
         )}
         {lines.map((l) => (
-          <p key={l.id} className={l.role === 'system' ? 'text-[#524E5E]' : 'text-[#0F0E17]'}>
+          <p key={l.id} className={l.role === 'system' ? 'text-fg-body' : 'text-ink'}>
             {l.text}
           </p>
         ))}

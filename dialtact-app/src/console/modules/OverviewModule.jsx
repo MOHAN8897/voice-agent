@@ -1,145 +1,265 @@
-import React, { useState, useMemo } from 'react';
-import {
-  PhoneCall,
-  Clock,
-  Users,
-  Bot,
-  Play,
-  FileCode2,
-  Phone,
-  ChevronRight,
-  Sparkles
-} from 'lucide-react';
-import { MetricCard } from '../ui/MetricCard';
-import { SolidCard } from '../ui/SolidCard';
-import { StatusBadge } from '../ui/StatusBadge';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Activity, Bot, Phone } from 'lucide-react';
 import { TactileButton } from '../ui/TactileButton';
-import {
-  Skeleton,
-  MetricsGridSkeleton,
-  AgentCardsGridSkeleton,
-  TableRowsSkeleton,
-} from '../ui/Skeleton';
+import { Tabs } from '../ui/Tabs';
+import { SelectFilter } from '../ui/Toolbar';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
+import { showToast } from '../ui/ToastHost';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/api';
+import { dayBucket, walletAmounts } from '../../lib/money';
+import { useActivityFeed, useLiveRail } from './home/useActivity';
+import { FeedItem } from './home/FeedItem';
+import { NowRail, SummaryStrip } from './home/NowRail';
+import { Insights } from './home/Insights';
+import { GuidedStart } from './home/GuidedStart';
+import { ConfirmDialog, FollowUpDialog, RecordingDialog } from './home/FeedDialogs';
 
+const FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'needs_action', label: 'Needs action' },
+  { id: 'calls', label: 'Calls' },
+  { id: 'leads', label: 'Leads & bookings' },
+  { id: 'campaigns', label: 'Campaigns' },
+  { id: 'system', label: 'Billing & system' },
+];
+
+function greeting(date = new Date()) {
+  const h = date.getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function useNow(active) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), active ? 1000 : 30000);
+    return () => clearInterval(id);
+  }, [active]);
+  return now;
+}
+
+/**
+ * Console home (route id `overview`): a live activity feed of what the workspace's
+ * AI employees are doing, a "now" rail, and the previous Overview content under
+ * Insights. See DESIGN.md → Home for where each old element lives.
+ */
 export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber }) {
-  const { agents, calls, leads, phoneNumbers, wallet, setSelectedCallId, isLoading } =
-    useWorkspace();
+  const {
+    agents,
+    calls,
+    leads,
+    phoneNumbers,
+    wallet,
+    setSelectedCallId,
+    isLoading,
+    openAddFunds,
+    requireFunds,
+    outboundFromE164,
+  } = useWorkspace();
   const { user } = useAuth();
-  const displayName = user?.fullName || user?.name || user?.email?.split('@')[0] || 'there';
-  const [activityTimeframe, setActivityTimeframe] = useState('Today');
+  const displayName = (user?.fullName || user?.name || user?.email?.split('@')[0] || 'there').split(' ')[0];
 
-  const RANGE_DAYS = { Today: 1, '7 Days': 7, '30 Days': 30 };
+  const [filter, setFilter] = useState('all');
+  const [agentFilter, setAgentFilter] = useState('');
+  const live = useLiveRail(true);
+  const feed = useActivityFeed({ filter, agentId: agentFilter, fast: live.isLive });
+  const now = useNow(live.isLive);
 
-  // The toggle must actually filter, or it is a control that lies to the user.
-  const callsInRange = useMemo(() => {
-    const days = RANGE_DAYS[activityTimeframe] ?? 1;
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-    return calls.filter((c) => {
-      const raw = c.startedAt || c.started_at;
-      if (!raw) return false;
-      const d = new Date(raw).getTime();
-      return !Number.isNaN(d) && d >= cutoff;
-    });
-  }, [calls, activityTimeframe]);
+  const [busyAction, setBusyAction] = useState(null);
+  const [confirm, setConfirm] = useState(null);
+  const [confirmBusy, setConfirmBusy] = useState(false);
+  const [confirmError, setConfirmError] = useState('');
+  const [followUp, setFollowUp] = useState(null);
+  const [recording, setRecording] = useState(null);
 
-  const hourlyData = useMemo(() => {
-    const buckets = {};
-    for (let h = 8; h <= 17; h++) {
-      const label = `${String(h).padStart(2, '0')}:00`;
-      buckets[label] = { hour: label, inbound: 0, outbound: 0 };
+  const agentNames = useMemo(() => Object.fromEntries(agents.map((a) => [a.id, a.name])), [agents]);
+  const money = walletAmounts(wallet);
+  const isNewTenant = agents.length === 0 || (phoneNumbers.length === 0 && calls.length === 0);
+
+  const openCall = (callId) => {
+    setSelectedCallId(callId);
+    onNavigate('calls');
+  };
+  const openLeadsArea = (area, search = '') => {
+    try {
+      if (area) sessionStorage.setItem('dialtact_leads_area', area);
+      if (search) sessionStorage.setItem('dialtact_leads_search', search);
+    } catch {
+      /* storage unavailable: Leads opens on its default view */
     }
-    for (const c of callsInRange) {
-      const raw = c.startedAt || c.started_at;
-      if (!raw) continue;
-      const d = new Date(raw);
-      if (Number.isNaN(d.getTime())) continue;
-      const label = `${String(d.getHours()).padStart(2, '0')}:00`;
-      if (!buckets[label]) buckets[label] = { hour: label, inbound: 0, outbound: 0 };
-      const dir = (c.direction || '').toLowerCase();
-      if (dir === 'outbound') buckets[label].outbound += 1;
-      else buckets[label].inbound += 1;
+    onNavigate('leads');
+  };
+  const navigate = (tab, options = {}) => {
+    if (tab === 'leads' && options.leadName) return openLeadsArea('pipeline', options.leadName);
+    return onNavigate(tab, options);
+  };
+
+  const runConfirmed = async () => {
+    if (!confirm) return;
+    setConfirmBusy(true);
+    setConfirmError('');
+    try {
+      const message = await confirm.run();
+      setConfirm(null);
+      if (message) showToast(message, 'success');
+      feed.refresh();
+    } catch (e) {
+      setConfirmError(e?.message || 'That did not work. Nothing was changed.');
+    } finally {
+      setConfirmBusy(false);
     }
-    return Object.values(buckets);
-  }, [callsInRange]);
+  };
 
-  const maxCalls = Math.max(1, ...hourlyData.map((d) => d.inbound + d.outbound));
-  const totalMinutes = useMemo(() => {
-    return calls.reduce((acc, c) => {
-      // Prefer the numeric seconds; fall back to parsing the formatted string.
-      const seconds = Number(c.durationSec);
-      if (Number.isFinite(seconds) && seconds > 0) return acc + Math.round(seconds / 60);
-      const m = parseInt(String(c.duration || '0').split('m')[0], 10);
-      return acc + (Number.isFinite(m) ? m : 0);
-    }, 0);
-  }, [calls]);
+  const handleAction = async (item, action) => {
+    const who = item.contact?.name || item.contact?.phoneMasked || 'this contact';
+    switch (action.kind) {
+      case 'open_call':
+        return openCall(action.callId);
+      case 'open_calls':
+        return onNavigate('calls');
+      case 'play_recording':
+        return setRecording({ callId: action.callId, title: `${item.actor ? `${item.actor} ` : ''}${item.text}` });
+      case 'call_back':
+        if (requireFunds?.('Add credit to your wallet to call back.')) return undefined;
+        setConfirmError('');
+        return setConfirm({
+          title: 'Call back now?',
+          body: `Your agent will call ${who} now from your phone line. The call is charged to your wallet, and DND and calling hours still apply.`,
+          confirmLabel: 'Call now',
+          run: async () => {
+            const res = await api.request('POST', `/api/calls/${encodeURIComponent(action.callId)}/callback`, {
+              mode: 'manual',
+              dialRequestId: crypto.randomUUID(),
+              ...(outboundFromE164 ? { fromE164: outboundFromE164 } : {}),
+            });
+            if (res?.ok === false) throw new Error(res?.error?.message || res?.error || 'The call could not be placed.');
+            return `Calling ${who}. It will appear here when it connects.`;
+          },
+        });
+      case 'call_in_language':
+        if (requireFunds?.('Add credit to your wallet to call back.')) return undefined;
+        setConfirmError('');
+        return setConfirm({
+          title: `Call back in ${action.languageLabel}?`,
+          body: `${agentNames[action.agentId] || 'Your agent'} will call ${who} now and speak ${action.languageLabel}. The call is charged to your wallet.`,
+          confirmLabel: `Call in ${action.languageLabel}`,
+          run: async () => {
+            const ready = await api.languageSwitch.readiness(action.agentId, action.language);
+            if (!ready?.ready) throw new Error(ready?.message || `This agent can't call in ${action.languageLabel} yet.`);
+            const res = await api.languageSwitch.call(action.requestId, outboundFromE164 || null);
+            if (res?.ok === false) throw new Error(res?.error || 'The call could not be placed. The request is still open.');
+            return `Calling ${who} in ${action.languageLabel}.`;
+          },
+        });
+      case 'dismiss_language':
+        setBusyAction(`${item.id}:${action.kind}`);
+        try {
+          await api.languageSwitch.setStatus(action.requestId, 'dismissed');
+          showToast('Removed from the callback list.', 'success');
+          feed.refresh();
+        } catch (e) {
+          showToast(e?.message || 'Could not update this request.', 'error');
+        } finally {
+          setBusyAction(null);
+        }
+        return undefined;
+      case 'approve_followup':
+      case 'reject_followup':
+        return setFollowUp({ item, action });
+      case 'open_followups':
+      case 'open_callbacks':
+        return openLeadsArea('followups');
+      case 'open_language':
+        return openLeadsArea('language');
+      case 'open_lead':
+        return openLeadsArea('pipeline', action.name || '');
+      case 'open_campaign':
+        return onNavigate('campaigns');
+      case 'top_up':
+        return openAddFunds?.(null);
+      case 'reconnect_integration':
+      case 'open_integrations':
+        return onNavigate('integrations');
+      case 'open_numbers':
+        return onNavigate('phone-numbers');
+      case 'open_billing':
+        return onNavigate('billing');
+      default:
+        return undefined;
+    }
+  };
 
-  // Every hook above must run on every render, so the loading skeleton is returned
-  // *after* them. Returning early made the first render use fewer hooks than the next,
-  // which React rejects outright ("Rendered more hooks than during the previous
-  // render") and takes the whole console down with it.
+  // Group: live calls first ("Now"), then Today / Yesterday / Earlier.
+  const groups = useMemo(() => {
+    const out = [];
+    const byLabel = {};
+    for (const item of feed.items) {
+      const label = item.type === 'call.live' ? 'Now' : dayBucket(item.at, now);
+      if (!byLabel[label]) {
+        byLabel[label] = { label, items: [] };
+        out.push(byLabel[label]);
+      }
+      byLabel[label].items.push(item);
+    }
+    return out;
+    // `now` only matters across midnight; regroup at most every 30s.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feed.items, Math.floor(now / 30000)]);
+
+  const needsCount = feed.needsActionCount;
+  const summaryParts = [
+    live.calls.length ? `${live.calls.length} on a call now` : `${agents.length} agent${agents.length === 1 ? '' : 's'}`,
+    needsCount ? `${needsCount} thing${needsCount === 1 ? '' : 's'} need${needsCount === 1 ? 's' : ''} you` : 'nothing needs you',
+    `${money.primary} in wallet`,
+  ];
+
   if (isLoading && !agents.length && !calls.length) {
     return (
       <div className="space-y-6" data-testid="overview-loading" aria-busy="true">
-        <div className="p-6 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-pulse">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-7 w-64" />
-            <Skeleton className="h-3.5 w-96 max-w-full" />
-          </div>
-          <div className="flex gap-2.5">
-            <Skeleton className="h-9 w-28 rounded-xl" />
-            <Skeleton className="h-9 w-32 rounded-xl" />
-          </div>
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-64" />
+          <Skeleton className="h-4 w-96 max-w-full" />
         </div>
-
-        <MetricsGridSkeleton count={4} />
-
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-4 w-20" />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="space-y-3 rounded-card border border-line bg-surface p-5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex gap-3">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/3" />
+                </div>
+              </div>
+            ))}
           </div>
-          <AgentCardsGridSkeleton count={3} />
-        </div>
-
-        <div className="rounded-2xl border border-[#E4E2EB] bg-white p-4 space-y-3">
-          <div className="flex justify-between items-center">
-            <Skeleton className="h-5 w-36" />
-            <Skeleton className="h-4 w-24" />
+          <div className="hidden space-y-4 lg:block">
+            <Skeleton className="h-32 w-full rounded-card" />
+            <Skeleton className="h-40 w-full rounded-card" />
           </div>
-          <TableRowsSkeleton rows={4} cols={5} />
         </div>
       </div>
     );
   }
 
+  const agentOptions = [{ value: '', label: 'All agents' }, ...agents.map((a) => ({ value: a.id, label: a.name }))];
+  const showFeed = !(isNewTenant && feed.items.length === 0 && feed.pinned.filter((p) => p.type !== 'billing.low').length === 0);
+
   return (
-    <div className="space-y-6">
-      {/* Welcome & Primary Actions Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-2xl bg-white border border-[#E4E2EB] shadow-craft-xs">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
-            <span className="text-[11px] font-mono text-[#047857] font-semibold uppercase tracking-wider">
-              Autonomous Fleet Active
-            </span>
-          </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-[#0F0E17] tracking-tight">
-            Good afternoon, {displayName}
-          </h2>
-          <p className="text-xs text-[#524E5E] mt-1 max-w-xl leading-relaxed">
-            {agents.length} voice agent{agents.length === 1 ? '' : 's'},{' '}
-            {phoneNumbers.length} number{phoneNumbers.length === 1 ? '' : 's'},{' '}
-            {calls.length} recent call{calls.length === 1 ? '' : 's'},{' '}
-            {leads.length} lead{leads.length === 1 ? '' : 's'} — wallet{' '}
-            {`$${Number(wallet.balanceUsd ?? wallet.usdEquivalent ?? 0).toFixed(2)}`}
-            .
+    <div className="space-y-5" data-testid="home-activity">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-heading sm:text-display text-ink">
+            {greeting()}, {displayName}
+          </h1>
+          <p className="mt-1 text-copy text-fg-body" data-testid="home-summary-line">
+            {summaryParts.join(' · ')}
           </p>
         </div>
-
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
           <TactileButton
             onClick={onOpenBuyNumber}
             variant="secondary"
@@ -148,7 +268,7 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
             data-tour="buy-number"
             data-testid="overview-buy-number-btn"
           >
-            Buy Number
+            Buy number
           </TactileButton>
           <TactileButton
             onClick={onOpenCreateAgent}
@@ -158,290 +278,183 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
             data-tour="create-agent"
             data-testid="overview-create-agent-btn"
           >
-            Create Agent
+            Create agent
           </TactileButton>
         </div>
-      </div>
+      </header>
 
-      {/* KPI Metrics Ribbon */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        <MetricCard
-          title="Total Calls"
-          value={String(calls.length)}
-          trend="Synced"
-          trendLabel="from API archive"
-          icon={PhoneCall}
-        />
-        <MetricCard
-          title="Talk Time Minutes"
-          value={String(totalMinutes)}
-          trend="Metered"
-          trendLabel="from call logs"
-          icon={Clock}
-        />
-        <MetricCard
-          title="Wallet minutes"
-          value={String(Number(wallet?.remainingMinutes || 0))}
-          trend="Prepaid"
-          trendLabel={
-            wallet?.balanceUsd != null
-              ? `$${Number(wallet.balanceUsd).toFixed(2)} remaining`
-              : 'from billing API'
-          }
-          icon={Clock}
-        />
-        <MetricCard
-          title="Leads in pipeline"
-          value={String(leads.length)}
-          trend="CRM"
-          trendLabel="tenant-scoped"
-          icon={Users}
-        />
-        <MetricCard
-          title="Active AI Workforce"
-          value={`${agents.filter((a) => a.status === 'active').length} Agents`}
-          trend={`${agents.length} Total`}
-          trendLabel="fleet ready"
-          icon={Bot}
-        />
-      </div>
+      <SummaryStrip
+        live={live}
+        wallet={wallet}
+        needsActionCount={needsCount}
+        onShowNeeds={() => setFilter('needs_action')}
+        onShowCalls={() => setFilter('calls')}
+        onTopUp={() => openAddFunds?.(null)}
+      />
 
-      {/* Call Activity Chart & Active Workforce Split */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Interactive Hourly Call Volume Canvas */}
-        <SolidCard className="lg:col-span-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-            <div>
-              <h3 className="text-sm font-bold text-[#0F0E17]">Call Activity Distribution</h3>
-              <p className="text-xs text-[#524E5E]">Inbound reception vs. Outbound campaign calls</p>
-            </div>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 space-y-5">
+          {isNewTenant && (
+            <GuidedStart
+              agents={agents}
+              phoneNumbers={phoneNumbers}
+              calls={calls}
+              onOpenCreateAgent={onOpenCreateAgent}
+              onOpenBuyNumber={onOpenBuyNumber}
+              onNavigate={navigate}
+            />
+          )}
 
-            {/* Segmented Timeframe Toggle */}
-            <div className="flex items-center p-1 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB] self-start sm:self-auto">
-              {['Today', '7 Days', '30 Days'].map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setActivityTimeframe(t)}
-                  className={`px-3 py-1.5 min-h-[36px] flex items-center rounded-lg text-xs font-semibold transition-all ${
-                    activityTimeframe === t
-                      ? 'bg-white text-[#0F0E17] shadow-xs'
-                      : 'text-[#524E5E] hover:text-[#0F0E17]'
-                  }`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Activity Bar Chart */}
-          <div className="h-48 flex items-end justify-between gap-2 pt-6">
-            {hourlyData.map((d) => {
-              const inboundPct = (d.inbound / maxCalls) * 100;
-              const outboundPct = (d.outbound / maxCalls) * 100;
-
-              return (
-                <div key={d.hour} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end relative">
-                  <div className="w-full flex flex-col items-center gap-0.5 justify-end h-full">
-                    {/* Tooltip on hover */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-mono text-white bg-[#0F0E17] px-2 py-1 rounded-lg border border-[#0F0E17] absolute -translate-y-12 pointer-events-none whitespace-nowrap z-20 shadow-craft-sm">
-                      {d.hour}: {d.inbound} in / {d.outbound} out
-                    </div>
-
-                    {/* Outbound bar */}
-                    <div
-                      style={{ height: `${outboundPct}%` }}
-                      className="w-full max-w-[18px] bg-[#6344E7] rounded-t-sm transition-all group-hover:bg-[#5034CE]"
-                    />
-                    {/* Inbound bar */}
-                    <div
-                      style={{ height: `${inboundPct}%` }}
-                      className="w-full max-w-[18px] bg-[#0F0E17] rounded-b-sm transition-all group-hover:bg-[#232130]"
-                    />
-                  </div>
-                  <span className="text-[10px] font-mono text-[#524E5E]">{d.hour}</span>
+          {showFeed && (
+            <section aria-labelledby="home-feed-title" className="rounded-card border border-line bg-surface shadow-craft-xs">
+              <div className="space-y-3 border-b border-line px-4 pt-4 pb-3 sm:px-5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 id="home-feed-title" className="flex items-center gap-2 text-title text-ink">
+                    <Activity className="h-4 w-4 text-fg-body" aria-hidden="true" />
+                    Activity
+                  </h2>
+                  {agents.length > 1 && (
+                    <SelectFilter label="Agent" value={agentFilter} onChange={setAgentFilter} options={agentOptions} />
+                  )}
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Chart Legend */}
-          <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-[#E4E2EB] text-xs text-[#524E5E]">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-sm bg-[#0F0E17]" />
-              <span>Inbound Reception ({hourlyData.reduce((a, b) => a + b.inbound, 0)} calls)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-sm bg-[#6344E7]" />
-              <span>Outbound Campaigns ({hourlyData.reduce((a, b) => a + b.outbound, 0)} calls)</span>
-            </div>
-          </div>
-        </SolidCard>
-
-        {/* Right Col: Active AI Fleet Quick Strip */}
-        <SolidCard className="flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-[#0F0E17]">Active Fleet</h3>
-            <button
-              onClick={() => onNavigate('employees')}
-              className="text-xs text-[#6344E7] hover:text-[#5034CE] font-semibold flex items-center gap-1"
-            >
-              <span>View all</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="space-y-3 flex-1">
-            {agents.slice(0, 3).map((agent) => (
-              <div
-                key={agent.id}
-                className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#D1CFDB] transition-all"
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#0F0E17] font-bold text-xs">
-                      {agent.name.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-[#0F0E17]">{agent.name}</div>
-                      <div className="text-[10px] text-[#524E5E]">{agent.role}</div>
-                    </div>
-                  </div>
-                  <StatusBadge status={agent.status} size="xs" />
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] font-mono text-[#524E5E] pt-2 border-t border-[#E4E2EB]">
-                  <span>{agent.assignedNumber || 'No number'}</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onNavigate('employees', { agentId: agent.id, step: 'test' })}
-                      className="text-[#6344E7] hover:text-[#5034CE] font-semibold flex items-center gap-1"
-                    >
-                      <Play className="w-3 h-3" />
-                      <span>Test</span>
-                    </button>
-                    <button
-                      onClick={() => onNavigate('employees', { agentId: agent.id, step: 'script' })}
-                      className="text-[#524E5E] hover:text-[#0F0E17] font-semibold flex items-center gap-1"
-                    >
-                      <FileCode2 className="w-3 h-3" />
-                      <span>Build</span>
-                    </button>
-                  </div>
-                </div>
+                <Tabs
+                  variant="pills"
+                  label="Filter activity"
+                  value={filter}
+                  onChange={setFilter}
+                  items={FILTERS.map((f) => (f.id === 'needs_action' ? { ...f, count: needsCount } : f))}
+                />
               </div>
-            ))}
-          </div>
-        </SolidCard>
+
+              {feed.error && (
+                <p role="status" className="mx-4 mt-3 rounded-control bg-warning-soft px-3 py-2 text-ui text-warning-fg sm:mx-5">
+                  {feed.error}
+                </p>
+              )}
+
+              {feed.pinned.length > 0 && filter !== 'needs_action' && (
+                <div className="border-b border-line bg-warning-soft/40" data-testid="home-pinned">
+                  <h3 className="px-4 pt-3 text-ui font-semibold text-warning-fg sm:px-5">Needs you</h3>
+                  <ul className="divide-y divide-line" aria-label="Needs action">
+                    {feed.pinned.map((item) => (
+                      <FeedItem
+                        key={item.id}
+                        item={item}
+                        agentName={agentNames[item.agentId]}
+                        now={now}
+                        fresh={feed.freshIds.has(item.id)}
+                        busyAction={busyAction}
+                        onAction={handleAction}
+                      />
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {feed.loading && feed.items.length === 0 ? (
+                <div className="space-y-4 p-5" aria-busy="true">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex gap-3">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-2/3" />
+                        <Skeleton className="h-3 w-1/4" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : feed.items.length === 0 ? (
+                <EmptyState
+                  compact
+                  icon={Activity}
+                  title={filter === 'needs_action' ? 'Nothing needs you right now' : 'No activity here yet'}
+                  description={
+                    filter === 'all'
+                      ? 'Calls, bookings, callbacks and account updates will appear here as your agents work.'
+                      : 'Try another filter, or check back after your agents take a few calls.'
+                  }
+                />
+              ) : (
+                <div aria-live="polite" aria-relevant="additions">
+                  {groups.map((group) => (
+                    <div key={group.label}>
+                      <h3 className="sticky top-0 z-[1] bg-surface/95 px-4 pt-3 pb-1 text-meta font-medium text-fg-muted backdrop-blur-sm sm:px-5">
+                        {group.label}
+                      </h3>
+                      <ul className="divide-y divide-line">
+                        {group.items.map((item) => (
+                          <FeedItem
+                            key={item.id}
+                            item={item}
+                            agentName={agentNames[item.agentId]}
+                            now={now}
+                            fresh={feed.freshIds.has(item.id)}
+                            busyAction={busyAction}
+                            onAction={handleAction}
+                          />
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                  {feed.hasMore && (
+                    <div className="border-t border-line p-3 text-center">
+                      <TactileButton variant="ghost" size="sm" loading={feed.loadingMore} onClick={feed.loadMore}>
+                        Show older activity
+                      </TactileButton>
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
+
+          <Insights
+            agents={agents}
+            calls={calls}
+            leads={leads}
+            wallet={wallet}
+            onNavigate={navigate}
+            onInspectCall={openCall}
+          />
+        </div>
+
+        <aside aria-label="Right now" className="min-w-0 lg:sticky lg:top-4">
+          <NowRail
+            live={live}
+            now={now}
+            agents={agents}
+            wallet={wallet}
+            needsActionCount={needsCount}
+            onShowNeeds={() => setFilter('needs_action')}
+            onOpenCall={openCall}
+            onTopUp={() => openAddFunds?.(null)}
+            onNavigate={navigate}
+            onOpenCreateAgent={onOpenCreateAgent}
+            onOpenBuyNumber={onOpenBuyNumber}
+          />
+        </aside>
       </div>
 
-      {/* Recent Calls Live Feed & Leads Ticker Split */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Calls Feed */}
-        <SolidCard className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-bold text-[#0F0E17]">Recent Live Calls</h3>
-              <p className="text-xs text-[#524E5E]">Live transcript inspect and audio diagnostics</p>
-            </div>
-            <button
-              onClick={() => onNavigate('calls')}
-              className="text-xs text-[#6344E7] hover:text-[#5034CE] font-semibold flex items-center gap-1"
-            >
-              <span>All Calls</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-[#E4E2EB] text-[10px] font-bold text-[#8C879A] uppercase tracking-wider">
-                  <th className="pb-2.5">Caller / Contact</th>
-                  <th className="pb-2.5">Agent</th>
-                  <th className="pb-2.5">Direction</th>
-                  <th className="pb-2.5 font-mono">Duration</th>
-                  <th className="pb-2.5">Outcome</th>
-                  <th className="pb-2.5 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E4E2EB]">
-                {calls.slice(0, 4).map((call) => (
-                  <tr key={call.id} className="hover:bg-[#FAF9FD] transition-colors">
-                    <td className="py-3">
-                      <div className="font-semibold text-[#0F0E17]">{call.callerName}</div>
-                      <div className="text-[11px] font-mono text-[#524E5E]">{call.callerPhone}</div>
-                    </td>
-                    <td className="py-3 text-[#524E5E] font-medium">{call.agentName}</td>
-                    <td className="py-3">
-                      <StatusBadge status={call.direction} size="xs" />
-                    </td>
-                    <td className="py-3 font-mono text-[#0F0E17]">{call.formattedDuration}</td>
-                    <td className="py-3">
-                      <span className="text-xs text-[#524E5E] truncate max-w-[180px] block">
-                        {call.outcome}
-                      </span>
-                    </td>
-                    <td className="py-3 text-right">
-                      <button
-                        onClick={() => {
-                          setSelectedCallId(call.id);
-                          onNavigate('calls');
-                        }}
-                        className="text-xs font-semibold text-[#6344E7] hover:text-[#5034CE] hover:underline"
-                      >
-                        Inspect
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </SolidCard>
-
-        {/* Realtime Lead Stream */}
-        <SolidCard>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-bold text-[#0F0E17]">AI Lead Stream</h3>
-              <p className="text-xs text-[#524E5E]">Extracted BANT leads from calls</p>
-            </div>
-            <button
-              onClick={() => onNavigate('leads')}
-              className="text-xs text-[#6344E7] hover:text-[#5034CE] font-semibold flex items-center gap-1"
-            >
-              <span>Pipeline</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {leads.slice(0, 3).map((lead) => (
-              <div
-                key={lead.id}
-                onClick={() => onNavigate('leads')}
-                className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#D1CFDB] transition-all cursor-pointer group shadow-2xs"
-              >
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <div className="font-semibold text-xs text-[#0F0E17] group-hover:text-[#6344E7] transition-colors">
-                    {lead.name}
-                  </div>
-                  {/* Show the stage the API actually returns, not a score it does not. */}
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
-                    {lead.stage || 'New'}
-                  </span>
-                </div>
-                <div className="text-[11px] text-[#524E5E] truncate">{lead.company}</div>
-                <div className="text-[10px] text-[#8C879A] mt-1.5 flex items-center justify-between">
-                  <span>{lead.phone || 'No number yet'}</span>
-                  <span>{lead.updatedAt ? new Date(lead.updatedAt).toLocaleDateString() : 'New'}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </SolidCard>
-      </div>
+      <ConfirmDialog
+        open={Boolean(confirm)}
+        title={confirm?.title}
+        body={confirm?.body}
+        confirmLabel={confirm?.confirmLabel}
+        busy={confirmBusy}
+        error={confirmError}
+        onConfirm={runConfirmed}
+        onClose={() => setConfirm(null)}
+      />
+      <FollowUpDialog
+        target={followUp}
+        onClose={() => setFollowUp(null)}
+        onDone={(message) => {
+          setFollowUp(null);
+          showToast(message, 'success');
+          feed.refresh();
+        }}
+      />
+      <RecordingDialog callId={recording?.callId} title={recording?.title} onClose={() => setRecording(null)} />
     </div>
   );
 }

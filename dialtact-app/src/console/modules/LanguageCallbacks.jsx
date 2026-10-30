@@ -5,28 +5,28 @@ import { useWorkspace } from '../context/WorkspaceContext';
 import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
+import { Avatar } from '../ui/Avatar';
+import { Badge } from '../ui/StatusBadge';
+import { EmptyState } from '../ui/EmptyState';
+import { NeedsYouItem } from './NeedsYouItem';
+import { humanizeToken } from '../../lib/internalLabels';
 
-const field = 'min-h-11 rounded-xl border border-[#E4E2EB] bg-white px-3 py-2 text-sm text-[#0F0E17] focus:outline-none focus:ring-2 focus:ring-[#6344E7]/30';
+const field = 'mt-1 block min-h-11 min-w-0 max-w-full rounded-control border border-line bg-surface px-3 py-2 text-base sm:text-ui text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15';
 const STATUS_LABEL = { pending: 'Needs callback', calling: 'Callback placed', done: 'Done', dismissed: 'Removed' };
-const STATUS_STYLE = {
-  pending: 'border-[#FDE68A] bg-[#FFFBEB] text-[#92400E]',
-  calling: 'border-[#BFDBFE] bg-[#EFF6FF] text-[#1E40AF]',
-  done: 'border-[#A7F3D0] bg-[#ECFDF5] text-[#047857]',
-  dismissed: 'border-[#E4E2EB] bg-[#F0EEF6] text-[#524E5E]',
-};
-const formatDate = (value) => {
-  const date = new Date(value);
-  return value && Number.isFinite(date.getTime())
-    ? date.toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
-    : 'Not recorded';
-};
+const STATUS_TONE = { pending: 'warning', calling: 'info', done: 'success', dismissed: 'neutral' };
 
 function LanguageChip({ label, active = false, onClick, count }) {
-  const cls = `inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold ${active ? 'border-[#6344E7] bg-[#6344E7] text-white' : 'border-[#DDD6FE] bg-[#F5F3FF] text-[#5B21B6]'}`;
-  if (!onClick) return <span className={cls}><Languages className="h-3.5 w-3.5" aria-hidden="true" />{label}</span>;
+  const cls = `inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-pill border px-3 text-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${active ? 'border-ink bg-ink text-white' : 'border-line bg-surface text-fg-body hover:border-line-strong hover:text-ink'}`;
+  if (!onClick) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-pill border border-accent-soft bg-accent-soft px-2 py-0.5 text-meta font-medium text-accent-fg">
+        <Languages className="h-3 w-3" aria-hidden="true" />{label}
+      </span>
+    );
+  }
   return (
     <button type="button" aria-pressed={active} onClick={onClick} className={cls}>
-      {label}{typeof count === 'number' && <span className={active ? 'text-white/80' : 'text-[#7C6BC4]'}>{count}</span>}
+      {label}{typeof count === 'number' && <span className={`rounded-pill px-1.5 font-mono text-meta tabular-nums ${active ? 'bg-white/20 text-white' : 'bg-surface-subtle text-fg-body'}`}>{count}</span>}
     </button>
   );
 }
@@ -125,104 +125,113 @@ export function LanguageCallbacks({ agentId = null, readOnly = false }) {
   const allSelected = callable.length > 0 && callable.every((row) => selected.includes(row.id));
 
   return (
-    <SolidCard className="space-y-4" data-testid="language-callbacks">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 max-w-2xl">
-          <h3 className="text-base font-semibold text-[#0F0E17]">Callback needed in another language</h3>
-          <p className="mt-1 text-sm text-[#524E5E]">
-            These callers asked to speak a different language from the agent's. The agent stayed in its own language,
-            promised a call back in theirs and ended politely. Call them back with the same agent: the call uses the
-            requested language for the script, speech recognition, voice and opening line. A request is marked done
-            after a connected call in that language, and the contact's language is remembered.
-          </p>
+    <SolidCard padding="p-0" className="min-w-0 overflow-hidden" data-testid="language-callbacks">
+      <div className="space-y-4 px-4 pt-4 sm:px-5 sm:pt-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 max-w-2xl gap-3">
+            <Avatar icon={Languages} tone="accent" size="sm" />
+            <div className="min-w-0">
+              <h3 className="text-title text-ink">Callback needed in another language</h3>
+              <p className="mt-0.5 text-ui text-fg-muted">
+                These callers asked to talk in a language their agent doesn’t speak. The agent promised a call back and
+                ended politely. When you call back, the same agent speaks, listens and opens in the caller’s language.
+                The request is marked done after a connected call in that language, and the caller’s language is remembered.
+              </p>
+            </div>
+          </div>
+          <TactileButton type="button" variant="secondary" size="sm" icon={RefreshCw} onClick={load} disabled={loading || Boolean(busy)}>Refresh</TactileButton>
         </div>
-        <TactileButton type="button" variant="secondary" size="sm" icon={RefreshCw} onClick={load} disabled={loading || Boolean(busy)}>Refresh</TactileButton>
-      </div>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="text-xs font-medium text-[#524E5E]">Status
-          <select className={`${field} mt-1 block`} value={status} onChange={(event) => setStatus(event.target.value)}>
-            <option value="open">Needs callback</option><option value="done">Done</option><option value="dismissed">Removed</option><option value="all">All</option>
-          </select>
-        </label>
-        {!agentId && (
-          <label className="text-xs font-medium text-[#524E5E]">Agent
-            <select className={`${field} mt-1 block`} value={agentFilter} onChange={(event) => setAgentFilter(event.target.value)}>
-              <option value="">All agents</option>{agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="min-w-0 text-meta font-medium text-fg-body">Status
+            <select className={field} value={status} onChange={(event) => setStatus(event.target.value)}>
+              <option value="open">Needs callback</option><option value="done">Done</option><option value="dismissed">Removed</option><option value="all">All</option>
             </select>
           </label>
-        )}
-      </div>
-      {Object.keys(languageCounts).length > 0 && (
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by requested language">
-          <LanguageChip label="All languages" active={!language} count={rows.length} onClick={() => { setLanguage(''); setSelected([]); }} />
-          {Object.entries(languageCounts).map(([code, info]) => (
-            <LanguageChip key={code} label={info.label} count={info.count} active={language === code} onClick={() => { setLanguage(code); setSelected([]); }} />
-          ))}
+          {!agentId && (
+            <label className="min-w-0 text-meta font-medium text-fg-body">Agent
+              <select className={field} value={agentFilter} onChange={(event) => setAgentFilter(event.target.value)}>
+                <option value="">All agents</option>{agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}
+              </select>
+            </label>
+          )}
         </div>
-      )}
+        {Object.keys(languageCounts).length > 0 && (
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 no-scrollbar" role="group" aria-label="Filter by requested language">
+            <LanguageChip label="All languages" active={!language} count={rows.length} onClick={() => { setLanguage(''); setSelected([]); }} />
+            {Object.entries(languageCounts).map(([code, info]) => (
+              <LanguageChip key={code} label={info.label} count={info.count} active={language === code} onClick={() => { setLanguage(code); setSelected([]); }} />
+            ))}
+          </div>
+        )}
 
-      {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
-      {notice && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
+        {error && <p role="alert" className="rounded-control border border-danger-line bg-danger-soft p-3 text-ui text-danger-fg">{error}</p>}
+        {notice && <p role="status" className="rounded-control border border-success-line bg-success-soft p-3 text-ui text-success-fg">{notice}</p>}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E4E2EB] pt-3">
-        <label className="flex items-center gap-2 text-xs text-[#524E5E]">
-          <input type="checkbox" className="h-4 w-4 accent-[#6344E7]" disabled={readOnly || !callable.length} checked={allSelected}
-            onChange={(event) => setSelected(event.target.checked ? callable.map((row) => row.id) : [])} />
-          Select all{language ? ` ${languageCounts[language]?.label || ''}` : ''} requests ({callable.length})
-        </label>
-        <TactileButton type="button" variant="brand" size="sm" icon={Users} disabled={readOnly || !selectedRows.length || Boolean(busy)} onClick={() => setBulkOpen(true)}>
-          Call all selected{selectedRows.length ? ` (${selectedRows.length})` : ''}
-        </TactileButton>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+          <label className="flex min-h-11 items-center gap-2 text-ui text-fg-body sm:min-h-0">
+            <input type="checkbox" className="h-4 w-4 accent-accent" disabled={readOnly || !callable.length} checked={allSelected}
+              onChange={(event) => setSelected(event.target.checked ? callable.map((row) => row.id) : [])} />
+            Select all{language ? ` ${languageCounts[language]?.label || ''}` : ''} requests ({callable.length})
+          </label>
+          <TactileButton type="button" variant="brand" size="sm" icon={Users} disabled={readOnly || !selectedRows.length || Boolean(busy)} onClick={() => setBulkOpen(true)}>
+            Call all selected{selectedRows.length ? ` (${selectedRows.length})` : ''}
+          </TactileButton>
+        </div>
       </div>
 
-      {loading ? <p role="status" className="text-sm text-[#524E5E]">Loading language callbacks…</p> : visible.length === 0 && !error ? (
-        <p className="rounded-xl border border-dashed border-[#E4E2EB] p-6 text-center text-sm text-[#716C7F]">No callers are waiting for a call in another language.</p>
+      {loading ? <p role="status" className="px-4 py-6 text-ui text-fg-muted sm:px-5">Loading language callbacks…</p> : visible.length === 0 && !error ? (
+        <EmptyState compact icon={Languages} title="Nobody is waiting" description="No callers are waiting for a call in another language." />
       ) : (
-        <ul className="divide-y divide-[#E4E2EB]" data-testid="language-callback-list">
+        <ul className="mt-3 divide-y divide-line border-t border-line" data-testid="language-callback-list">
           {visible.map((row) => {
             const open = row.status === 'pending' || row.status === 'calling';
+            const who = row.contactName || 'Caller';
+            const agent = agentName(row.agentId);
             return (
-              <li key={row.id} className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex min-w-0 items-start gap-3">
-                  <input type="checkbox" aria-label={`Select ${row.contactName || row.phone}`} className="mt-1 h-4 w-4 shrink-0 accent-[#6344E7]"
+              <NeedsYouItem
+                key={row.id}
+                tone={row.error ? 'danger' : 'warning'}
+                needsYou={row.status === 'pending'}
+                leading={
+                  <input type="checkbox" aria-label={`Select ${row.contactName || row.phone}`} className="mt-2 h-4 w-4 shrink-0 accent-accent"
                     disabled={readOnly || !open} checked={selected.includes(row.id)} onChange={() => toggle(row)} />
-                  <div className="min-w-0 space-y-1.5">
-                    <p className="text-sm font-semibold text-[#0F0E17]">{row.contactName || 'Caller'} <span className="font-mono text-xs font-normal text-[#524E5E]">{row.phone}</span></p>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <LanguageChip label={`Wants ${row.requestedLanguageLabel}`} />
-                      <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold ${STATUS_STYLE[row.status] || STATUS_STYLE.dismissed}`}>{STATUS_LABEL[row.status] || row.status}</span>
-                    </div>
-                    <p className="text-xs text-[#716C7F]">{agentName(row.agentId)} · spoke {row.originalLanguageLabel} · {formatDate(row.createdAt)}</p>
-                    {row.requestText && <p className="break-words text-xs text-[#524E5E]">Caller said: “{row.requestText}”</p>}
-                    {row.error && <p className="text-xs text-red-700">Last attempt: {row.error}</p>}
-                  </div>
-                </div>
-                {open && (
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    <TactileButton type="button" size="sm" variant="primary" icon={PhoneCall} disabled={readOnly || Boolean(busy)} onClick={() => callNow(row)}>
-                      {busy === row.id ? 'Checking…' : `Call now in ${row.requestedLanguageLabel}`}
-                    </TactileButton>
-                    <TactileButton type="button" size="sm" variant="secondary" disabled={readOnly || Boolean(busy)} onClick={() => setRowStatus(row, 'done')}>Mark done</TactileButton>
-                    <TactileButton type="button" size="sm" variant="ghost" disabled={readOnly || Boolean(busy)} onClick={() => setRowStatus(row, 'dismissed')}>Remove</TactileButton>
-                  </div>
-                )}
-              </li>
+                }
+                agentName={agent}
+                actor={who}
+                text={`wants a call back in ${row.requestedLanguageLabel}`}
+                detail={<><span className="font-mono tabular-nums">{row.phone}</span> · spoke {row.originalLanguageLabel} with {agent}</>}
+                at={row.createdAt || null}
+                badges={<>
+                  <LanguageChip label={`Wants ${row.requestedLanguageLabel}`} />
+                  <Badge tone={STATUS_TONE[row.status] || 'neutral'} size="xs">{STATUS_LABEL[row.status] || humanizeToken(row.status)}</Badge>
+                </>}
+                actions={open ? <>
+                  <TactileButton type="button" size="xs" variant="primary" icon={PhoneCall} className="min-h-[36px] sm:min-h-0" disabled={readOnly || Boolean(busy)} onClick={() => callNow(row)}>
+                    {busy === row.id ? 'Checking…' : `Call now in ${row.requestedLanguageLabel}`}
+                  </TactileButton>
+                  <TactileButton type="button" size="xs" variant="secondary" className="min-h-[36px] sm:min-h-0" disabled={readOnly || Boolean(busy)} onClick={() => setRowStatus(row, 'done')}>Mark done</TactileButton>
+                  <TactileButton type="button" size="xs" variant="ghost" className="min-h-[36px] sm:min-h-0" disabled={readOnly || Boolean(busy)} onClick={() => setRowStatus(row, 'dismissed')}>Remove</TactileButton>
+                </> : null}
+              >
+                {row.requestText && <p className="mt-0.5 break-words text-ui text-fg-body">Caller said: “{row.requestText}”</p>}
+                {row.error && <p className="mt-0.5 text-ui text-danger-fg">Last attempt: {row.error}</p>}
+              </NeedsYouItem>
             );
           })}
         </ul>
       )}
 
       <Modal isOpen={bulkOpen} onClose={() => setBulkOpen(false)} title="Call selected contacts in their language" subtitle="Creates one campaign per agent and starts it now" maxWidth="max-w-lg">
-        <div className="space-y-4 text-sm text-[#524E5E]">
-          <p>{selectedRows.length} contact{selectedRows.length === 1 ? '' : 's'} will be called by the same agent that took their call, each in the language they asked for:</p>
+        <div className="space-y-4 text-copy text-fg-body">
+          <p><span className="font-mono tabular-nums">{selectedRows.length}</span> contact{selectedRows.length === 1 ? '' : 's'} will be called by the same agent that took their call, each in the language they asked for:</p>
           <div className="flex flex-wrap gap-2">
             {Object.entries(selectedRows.reduce((acc, row) => ({ ...acc, [row.requestedLanguageLabel]: (acc[row.requestedLanguageLabel] || 0) + 1 }), {}))
               .map(([label, count]) => <LanguageChip key={label} label={`${label} · ${count}`} />)}
           </div>
-          <p>Calling hours, retries and the Do Not Call list apply as for any campaign. If an agent can't speak one of these languages yet, nothing is created and you'll see why.</p>
-          <label className="flex items-start gap-3 rounded-xl border border-[#E4E2EB] p-3">
-            <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-[#6344E7]" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
+          <p>Calling hours, retries and the do-not-call list apply as for any campaign. If an agent can’t speak one of these languages yet, nothing is created and you’ll see why.</p>
+          <label className="flex items-start gap-3 rounded-control border border-line p-3">
+            <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 accent-accent" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
             <span>These callers asked for this callback, and I have consent to call them.</span>
           </label>
           <div className="flex justify-end gap-2">

@@ -10,27 +10,31 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import Nango from '@nangohq/frontend';
-import { SolidCard } from '../ui/SolidCard';
+import { SolidCard, Section } from '../ui/SolidCard';
+import { TactileButton } from '../ui/TactileButton';
+import { PageHeader } from '../ui/PageHeader';
+import { Badge } from '../ui/StatusBadge';
+import { EmptyState } from '../ui/EmptyState';
 import { api } from '../../services/api';
 import { FULL_INTEGRATIONS_CATALOG } from './integrationsCatalog';
 
-// Authentic category colors and glows
+// Third-party category and brand colours for app icon tiles only (intentionally not
+// design tokens: they identify the vendor). Status never uses these.
 export const CATEGORY_COLORS = {
   Scheduling: { bg: 'bg-[#0284C7]/10', text: 'text-[#0284C7]', border: 'border-[#0284C7]/30', glow: 'rgba(2, 132, 199, 0.12)', hex: '#0284C7' },
   CRM: { bg: 'bg-[#EA580C]/10', text: 'text-[#EA580C]', border: 'border-[#EA580C]/30', glow: 'rgba(234, 88, 12, 0.12)', hex: '#EA580C' },
-  Communication: { bg: 'bg-[#10B981]/10', text: 'text-[#10B981]', border: 'border-[#10B981]/30', glow: 'rgba(16, 185, 129, 0.12)', hex: '#10B981' },
+  Communication: { bg: 'bg-success/10', text: 'text-success-fg', border: 'border-success/30', glow: 'rgba(16, 185, 129, 0.12)', hex: '#10B981' },
   Email: { bg: 'bg-[#E11D48]/10', text: 'text-[#E11D48]', border: 'border-[#E11D48]/30', glow: 'rgba(225, 29, 72, 0.12)', hex: '#E11D48' },
   Finance: { bg: 'bg-[#6366F1]/10', text: 'text-[#6366F1]', border: 'border-[#6366F1]/30', glow: 'rgba(99, 102, 241, 0.12)', hex: '#6366F1' },
   Ecommerce: { bg: 'bg-[#84CC16]/10', text: 'text-[#65A30D]', border: 'border-[#84CC16]/30', glow: 'rgba(132, 204, 22, 0.12)', hex: '#84CC16' },
   'E-Commerce': { bg: 'bg-[#84CC16]/10', text: 'text-[#65A30D]', border: 'border-[#84CC16]/30', glow: 'rgba(132, 204, 22, 0.12)', hex: '#84CC16' },
   Support: { bg: 'bg-[#0D9488]/10', text: 'text-[#0D9488]', border: 'border-[#0D9488]/30', glow: 'rgba(13, 148, 136, 0.12)', hex: '#0D9488' },
   Productivity: { bg: 'bg-[#8B5CF6]/10', text: 'text-[#8B5CF6]', border: 'border-[#8B5CF6]/30', glow: 'rgba(139, 92, 246, 0.12)', hex: '#8B5CF6' },
-  Marketing: { bg: 'bg-[#F59E0B]/10', text: 'text-[#D97706]', border: 'border-[#F59E0B]/30', glow: 'rgba(245, 158, 11, 0.12)', hex: '#F59E0B' },
+  Marketing: { bg: 'bg-warning/10', text: 'text-warning-fg', border: 'border-warning/30', glow: 'rgba(245, 158, 11, 0.12)', hex: '#F59E0B' },
   Developer: { bg: 'bg-[#475569]/10', text: 'text-[#334155]', border: 'border-[#475569]/30', glow: 'rgba(71, 85, 105, 0.12)', hex: '#475569' },
   Database: { bg: 'bg-[#06B6D4]/10', text: 'text-[#0891B2]', border: 'border-[#06B6D4]/30', glow: 'rgba(6, 182, 212, 0.12)', hex: '#06B6D4' },
 };
 
-// Authentic brand accent colors and glows
 export const BRAND_COLORS = {
   GOOGLECALENDAR: { bg: 'bg-[#4285F4]/10', text: 'text-[#4285F4]', border: 'border-[#4285F4]/30', glow: 'rgba(66, 133, 244, 0.12)', hex: '#4285F4' },
   CALCOM: { bg: 'bg-[#111111]/10', text: 'text-[#111111]', border: 'border-[#111111]/30', glow: 'rgba(17, 17, 17, 0.12)', hex: '#111111' },
@@ -68,6 +72,8 @@ export const BRAND_COLORS = {
 };
 
 // Normalize provider and catalog app keys for resilient multi-tenant matching
+const FALLBACK_COLOR = { bg: 'bg-accent-soft', text: 'text-accent-fg', border: 'border-accent-soft', glow: 'rgba(99, 68, 231, 0.12)' };
+
 export function normalizeAppKey(key) {
   if (!key) return '';
   const clean = String(key).replace(/[-_\s]/g, '').toUpperCase();
@@ -137,7 +143,7 @@ export function IntegrationsModule() {
             ...fallback,
             ...item,
             iconName: item.iconName || fallback.iconName || 'Database',
-            color: item.color || fallback.color || 'text-brand bg-brand/10',
+            color: item.color || fallback.color || 'text-accent-fg bg-accent/10',
             actions: (item.actions && item.actions.length > 0) ? item.actions : (fallback.actions || []),
             description: item.description || fallback.description || '',
           };
@@ -194,7 +200,7 @@ export function IntegrationsModule() {
       }
       pendingAuthorizationRef.current = null;
       triggerConfetti();
-      setToastMessage(`Connected ${name} successfully!`);
+      setToastMessage(`Connected ${name}.`);
       setTimeout(() => setToastMessage(null), 4000);
       setConnectModalApp(null);
       await fetchIntegrations();
@@ -289,7 +295,7 @@ export function IntegrationsModule() {
       setIsRequestModalOpen(false);
       setRequestedAppName('');
       triggerConfetti();
-      setToastMessage('App request submitted! Our engineering team will review it.');
+      setToastMessage('Request sent. We will review it and get back to you.');
       setTimeout(() => setToastMessage(null), 4000);
     }, 900);
   };
@@ -373,328 +379,271 @@ export function IntegrationsModule() {
     }
   };
 
+  const timingLabel = (app) => (app?.timing === 'in_call' ? 'During calls' : 'After calls');
+  const iconTileClass = (app) => {
+    const brandColor = BRAND_COLORS[app?.id] || CATEGORY_COLORS[app?.category] || FALLBACK_COLOR;
+    return `${brandColor.bg} ${brandColor.text}`;
+  };
+  const tabClass = (active) =>
+    `shrink-0 inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 min-h-[36px] text-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+      active ? 'bg-surface text-ink shadow-craft-xs' : 'text-fg-body hover:text-ink'
+    }`;
+  const tabCountClass = (active) =>
+    `rounded-pill px-1.5 text-meta font-mono tabular-nums ${active ? 'bg-surface-subtle text-ink' : 'bg-surface text-fg-body'}`;
+  const overlayClass = 'fixed inset-0 z-50 flex items-center justify-center bg-ink/60 backdrop-blur-sm p-4 animate-in fade-in duration-200';
+  const dialogClass = 'bg-surface border border-line rounded-card w-full shadow-craft-lg animate-in zoom-in-95 duration-200';
+  const closeButtonClass = 'shrink-0 -mr-2 -mt-1 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-control text-fg-muted hover:text-ink hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors';
+  const inputClass = 'w-full px-3.5 py-2 min-h-[44px] sm:min-h-[38px] text-base sm:text-ui bg-surface border border-line rounded-control focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-ink placeholder:text-fg-subtle';
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-20 font-sans">
-      {/* Toast Notification */}
+      {/* Toast notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#0c0a1a] border border-brand/40 text-white px-4 py-3 rounded-2xl shadow-craft-lg flex items-center space-x-3 text-xs font-semibold animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 animate-radar">
-            <CheckCheck className="w-3.5 h-3.5" />
+        <div role="status" className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 bg-ink text-white px-4 py-3 rounded-control shadow-craft-lg flex items-center gap-3 text-ui font-medium animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="w-6 h-6 rounded-full bg-success/25 text-success-line flex items-center justify-center flex-shrink-0">
+            <CheckCheck className="w-3.5 h-3.5" aria-hidden="true" />
           </div>
-          <span className="tracking-wide">{toastMessage}</span>
+          <span className="min-w-0">{toastMessage}</span>
         </div>
       )}
 
-      {loadError && (
-        <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
-          {loadError}
-          <button type="button" onClick={fetchIntegrations} className="ml-3 underline">Retry</button>
-        </div>
-      )}
-
-      {/* Premium Hero Header with Fluid Aurora Ambient Lighting */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c0a1a] via-[#141226] to-[#1e173b] text-white p-6 sm:p-8 shadow-craft-lg border border-white/10">
-        {/* Subtle animated aurora mesh */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-brand/25 to-indigo-600/20 rounded-full blur-3xl pointer-events-none -mr-32 -mt-32 animate-aurora"></div>
-        <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-brand-accent/15 rounded-full blur-2xl pointer-events-none -mb-28"></div>
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2.5 max-w-2xl">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-brand-light">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-radar"></span>
-              <span className="font-bold tracking-wide">Enterprise Voice Tooling</span>
-              <span className="w-1 h-1 rounded-full bg-white/40"></span>
-              <span className="text-white/80">{catalog.length}+ Integrations Available</span>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
-              App Integrations & Voice Tools
-            </h1>
-            <p className="text-xs sm:text-sm text-[#D1CFDB] leading-relaxed">
-              Equip your AI voice agents with sub-second in-call tool dispatching and post-call automations. Connect calendar, CRM, e-commerce, messaging, and database services securely.
-            </p>
-
-            {/* Live Telemetry Chips */}
-            <div className="flex items-center space-x-4 pt-1 text-xs flex-wrap gap-y-2">
-              <div className="flex items-center space-x-1.5 text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                <span className="font-bold">{connectedCount} Connected</span>
-              </div>
-              <span className="text-white/20">•</span>
-              <div className="flex items-center space-x-1.5 text-[#D1CFDB]">
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span>Live In-Call (&lt;1.5s SLA)</span>
-              </div>
-              <span className="text-white/20">•</span>
-              <div className="flex items-center space-x-1.5 text-[#D1CFDB]">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-                <span>AES-256 Vault Encrypted</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action CTAs */}
-          <div className="flex items-center space-x-3 flex-shrink-0">
-            <button
+      <PageHeader
+        title="Integrations"
+        description="Connect the apps your agents use during and after calls, such as your calendar, CRM or helpdesk."
+        actions={
+          <>
+            <TactileButton
+              variant="secondary"
+              size="sm"
+              icon={Plus}
               onClick={() => setIsRequestModalOpen(true)}
               data-testid="request-app-btn"
-              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-xs font-bold text-white transition-all duration-200 flex items-center space-x-2 backdrop-blur-md hover:scale-105 active:scale-95 shadow-craft-xs"
             >
-              <Plus className="w-4 h-4 text-brand-accent" />
-              <span>Request Custom Integration</span>
-            </button>
-            <button
+              Request custom integration
+            </TactileButton>
+            <TactileButton
+              variant="ghost"
+              size="icon"
+              icon={RefreshCw}
               onClick={fetchIntegrations}
               disabled={loading}
-              className="p-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white/80 hover:text-white transition-all backdrop-blur-md hover:scale-105 active:scale-95"
-              title="Refresh Catalog"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-          </div>
+              title="Refresh list"
+              aria-label="Refresh list"
+              className={loading ? '[&_svg]:animate-spin' : ''}
+            />
+          </>
+        }
+      >
+        <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="integrations-summary">
+          <Badge tone={connectedCount > 0 ? 'success' : 'neutral'} dot>
+            {connectedCount} connected
+          </Badge>
+          {reauthAppKeys.size > 0 && (
+            <Badge tone="danger" dot>
+              {reauthAppKeys.size} need{reauthAppKeys.size === 1 ? 's' : ''} reconnecting
+            </Badge>
+          )}
+          <span className="text-ui text-fg-muted">{catalog.length} apps available</span>
         </div>
+      </PageHeader>
 
-        {/* View Mode Navigation Tabs: 3 clean tabs */}
-        <div className="relative z-10 flex items-center space-x-2 mt-6 pt-5 border-t border-white/10 overflow-x-auto scrollbar-none">
+      {loadError && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-warning-line bg-warning-soft px-4 py-3 text-copy text-warning-fg">
+          <span className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+            {loadError}
+          </span>
+          <TactileButton variant="secondary" size="sm" onClick={fetchIntegrations}>Retry</TactileButton>
+        </div>
+      )}
+
+      {/* View tabs */}
+      <div className="max-w-full overflow-x-auto no-scrollbar">
+        <div role="tablist" aria-label="Integrations view" className="inline-flex items-center gap-0.5 rounded-control border border-line bg-surface-subtle p-0.5">
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'all'}
             onClick={() => setActiveTab('all')}
             data-testid="tab-all-integrations"
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center space-x-2 ${
-              activeTab === 'all'
-                ? 'bg-white text-[#0F0E17] shadow-craft-sm scale-[1.02]'
-                : 'text-white/70 hover:text-white hover:bg-white/10'
-            }`}
+            className={tabClass(activeTab === 'all')}
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span>All Integrations</span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === 'all' ? 'bg-[#0F0E17]/10 text-[#0F0E17]' : 'bg-white/20 text-white'}`}>
-              {catalog.length}
-            </span>
+            All integrations
+            <span className={tabCountClass(activeTab === 'all')}>{catalog.length}</span>
           </button>
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'connected'}
             onClick={() => setActiveTab('connected')}
             data-testid="tab-connected"
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center space-x-2 ${
-              activeTab === 'connected'
-                ? 'bg-white text-[#0F0E17] shadow-craft-sm scale-[1.02]'
-                : 'text-white/70 hover:text-white hover:bg-white/10'
-            }`}
+            className={tabClass(activeTab === 'connected')}
           >
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Connected Integrations</span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${activeTab === 'connected' ? 'bg-emerald-100 text-emerald-800' : 'bg-emerald-500/20 text-emerald-300'}`}>
-              {connectedCount}
-            </span>
+            Connected
+            <span className={tabCountClass(activeTab === 'connected')}>{connectedCount}</span>
           </button>
           <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'guide'}
             onClick={() => setActiveTab('guide')}
             data-testid="tab-guide"
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center space-x-2 ${
-              activeTab === 'guide'
-                ? 'bg-white text-[#0F0E17] shadow-craft-sm scale-[1.02]'
-                : 'text-white/70 hover:text-white hover:bg-white/10'
-            }`}
+            className={tabClass(activeTab === 'guide')}
           >
-            <HelpCircle className="w-3.5 h-3.5 text-brand-accent" />
-            <span>How Connections Work</span>
+            How connections work
           </button>
         </div>
       </div>
 
-      {/* TAB 1 & 2: ALL & CONNECTED INTEGRATIONS */}
+      {/* All and connected integrations */}
       {activeTab !== 'guide' && (
         <>
-          {/* Unified Search & Dropdown Filter Toolbar */}
-          <div className="bg-white border border-[#E4E2EB] rounded-2xl p-4 shadow-craft-xs flex flex-col md:flex-row md:items-center justify-between gap-3.5">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-xl group">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#524E5E] group-focus-within:text-brand transition-colors" />
+          {/* Search and category filter */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <label className="relative flex min-w-0 flex-1 items-center sm:max-w-md">
+              <span className="sr-only">Search integrations</span>
+              <Search className="pointer-events-none absolute left-3 w-4 h-4 text-fg-subtle" aria-hidden="true" />
               <input
                 type="text"
                 data-testid="integration-search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={
-                  activeTab === 'connected'
-                    ? 'Search connected integrations (e.g. Google Calendar, Slack, HubSpot)...'
-                    : 'Search all available integrations and voice tools (e.g. Calendly, Shopify, Slack)...'
-                }
-                className="w-full pl-10 pr-9 py-2.5 sm:py-2 min-h-[42px] sm:min-h-[36px] text-base sm:text-xs bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 text-[#0F0E17] placeholder:text-[#524E5E] transition-all"
+                placeholder={activeTab === 'connected' ? 'Search connected apps' : 'Search apps, like Calendly or Shopify'}
+                className="w-full min-w-0 pl-9 pr-10 h-11 sm:h-9 text-base sm:text-ui bg-surface border border-line rounded-control focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 text-ink placeholder:text-fg-subtle"
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#524E5E] hover:text-[#0F0E17] p-1 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-full hover:bg-[#F0EEF6] transition-colors"
+                  aria-label="Clear search"
+                  className="absolute right-1 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-control text-fg-muted hover:text-ink hover:bg-canvas"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
-            </div>
+            </label>
 
-            {/* Controls: Filter Dropdown & Counter */}
-            <div className="flex items-center space-x-3 flex-wrap sm:flex-nowrap">
-              <div className="flex items-center space-x-2 w-full sm:w-auto">
-                <Sliders className="w-3.5 h-3.5 text-[#524E5E] hidden sm:block" />
+            <div className="flex min-w-0 items-center gap-2">
+              <label className="flex min-w-0 flex-1 items-center gap-2 text-ui text-fg-body sm:flex-initial">
+                <span className="sr-only">Category</span>
                 <select
                   data-testid="integration-filter-select"
                   value={filterMode}
                   onChange={(e) => setFilterMode(e.target.value)}
-                  className="bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-xs font-semibold text-[#0F0E17] focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 cursor-pointer min-h-[36px]"
+                  className="h-11 sm:h-9 w-full min-w-0 rounded-control border border-line bg-surface px-3 text-base sm:text-ui text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15 cursor-pointer"
                 >
-                  <option value="all">All Tool Uses (All {catalog.length} Integrations)</option>
-                  <option value="scheduling">📅 Calendar & Scheduling (Bookings & Slots)</option>
-                  <option value="crm">💼 CRM & Sales Leads (Contacts & Pipeline)</option>
-                  <option value="support">🎧 Customer Support & Helpdesk (Tickets & SLA)</option>
-                  <option value="ecommerce">🛍️ E-Commerce & Payments (Orders & Billing)</option>
-                  <option value="communication">💬 Team Communication & Messaging (Slack, SMS)</option>
-                  <option value="email">✉️ Email & Follow-Ups (Gmail, Campaigns)</option>
-                  <option value="database">📊 Databases & Spreadsheets (Airtable, Sheets)</option>
-                  <option value="productivity">📋 Task & Project Management (Asana, Monday)</option>
+                  <option value="all">All categories</option>
+                  <option value="scheduling">Calendar and scheduling</option>
+                  <option value="crm">CRM and sales</option>
+                  <option value="support">Customer support</option>
+                  <option value="ecommerce">E-commerce and payments</option>
+                  <option value="communication">Team messaging</option>
+                  <option value="email">Email</option>
+                  <option value="database">Databases and spreadsheets</option>
+                  <option value="productivity">Tasks and projects</option>
                 </select>
-              </div>
-
-              <div className="text-[11px] font-bold text-[#524E5E] bg-[#FAF9FD] border border-[#E4E2EB] px-3 py-2 rounded-xl whitespace-nowrap min-h-[36px] flex items-center">
-                <span>{filteredCatalog.length} {filteredCatalog.length === 1 ? 'tool' : 'tools'}</span>
-              </div>
+              </label>
+              <span className="shrink-0 text-ui text-fg-muted whitespace-nowrap">
+                <span className="font-mono tabular-nums">{filteredCatalog.length}</span> {filteredCatalog.length === 1 ? 'app' : 'apps'}
+              </span>
             </div>
           </div>
 
-          {/* Full Grid: Displays all available integrations immediately */}
+          {/* Grid of integrations */}
           {filteredCatalog.length === 0 ? (
-            <div className="text-center py-16 border border-dashed border-[#E4E2EB] rounded-3xl bg-white p-8 shadow-craft-xs">
-              {activeTab === 'connected' && !searchQuery ? (
-                <div>
-                  <div className="w-14 h-14 rounded-2xl bg-brand/10 text-brand flex items-center justify-center mx-auto mb-4">
-                    <Layers className="w-7 h-7" />
+            activeTab === 'connected' && !searchQuery ? (
+              <SolidCard padding="p-0"><EmptyState
+                icon={Layers}
+                title="No apps connected yet"
+                description="Connect your calendar, CRM or messaging app so your agents can book, look up and update things during calls."
+                action={
+                  <TactileButton variant="primary" size="sm" onClick={() => setActiveTab('all')}>
+                    Browse all {catalog.length} integrations
+                  </TactileButton>
+                }
+              /></SolidCard>
+            ) : (
+              <SolidCard padding="p-0"><EmptyState
+                icon={Search}
+                title="No apps match"
+                description={searchQuery ? `Nothing matches "${searchQuery}". Try a different word.` : 'Nothing matches this category.'}
+                action={
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <TactileButton variant="secondary" size="sm" onClick={() => { setSearchQuery(''); setFilterMode('all'); }}>
+                      Clear filters
+                    </TactileButton>
+                    <TactileButton variant="primary" size="sm" onClick={() => setIsRequestModalOpen(true)}>
+                      Request integration
+                    </TactileButton>
                   </div>
-                  <h3 className="text-base font-extrabold text-[#0F0E17]">No Integrations Connected Yet</h3>
-                  <p className="text-xs text-[#524E5E] mt-1.5 max-w-md mx-auto leading-relaxed">
-                    Connect Google Calendar, Slack, HubSpot, or any voice tools to equip your AI voice agent with real-time in-call actions.
-                  </p>
-                  <div className="mt-5 flex items-center justify-center space-x-3">
-                    <button
-                      onClick={() => setActiveTab('all')}
-                      className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl shadow-craft-xs flex items-center space-x-2 transition-all hover:scale-105 active:scale-95"
-                    >
-                      <Layers className="w-4 h-4" />
-                      <span>Browse All {catalog.length} Integrations</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="w-12 h-12 rounded-2xl bg-[#F0EEF6] flex items-center justify-center mx-auto mb-3 text-brand">
-                    <Search className="w-6 h-6 text-[#524E5E]" />
-                  </div>
-                  <h3 className="text-sm font-bold text-[#0F0E17]">No integrations match criteria</h3>
-                  <p className="text-xs text-[#524E5E] mt-1 max-w-sm mx-auto">
-                    {searchQuery
-                      ? `No voice tools match "${searchQuery}". Try a different keyword.`
-                      : 'No voice tools match the selected filter.'}
-                  </p>
-                  <div className="flex justify-center space-x-3 mt-4">
-                    <button
-                      onClick={() => { setSearchQuery(''); setFilterMode('all'); }}
-                      className="px-4 py-2 text-xs font-semibold text-brand hover:underline"
-                    >
-                      Reset Filters
-                    </button>
-                    <button
-                      onClick={() => setIsRequestModalOpen(true)}
-                      className="px-4 py-2 bg-[#0F0E17] text-white text-xs font-bold rounded-xl shadow-craft-xs"
-                    >
-                      Request Integration
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+                }
+              /></SolidCard>
+            )
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {filteredCatalog.map(app => {
                 const isConnected = connectedAppKeys.has(normalizeAppKey(app.id));
                 const needsReauth = !isConnected && reauthAppKeys.has(normalizeAppKey(app.id));
                 const isConnectingThis = connecting === app.id;
-                const brandColor = BRAND_COLORS[app.id] || CATEGORY_COLORS[app.category] || { 
-                  bg: 'bg-brand/10', 
-                  text: 'text-brand', 
-                  border: 'border-brand/20',
-                  glow: 'rgba(99, 68, 231, 0.12)'
-                };
 
                 return (
-                  <SolidCard 
-                    key={app.id} 
-                    className={`p-4 flex flex-col justify-between transition-all duration-300 hover:shadow-craft-md hover:-translate-y-1 group relative overflow-hidden bg-white animate-card-entrance ${
-                      isConnected ? 'border-emerald-500/40 ring-1 ring-emerald-500/20' : 'border-[#E4E2EB]'
+                  <SolidCard
+                    key={app.id}
+                    padding="p-4"
+                    className={`flex min-w-0 flex-col justify-between transition-[border-color,box-shadow] hover:shadow-craft-sm ${
+                      isConnected ? '!border-success-line' : needsReauth ? '!border-danger-line' : 'hover:!border-line-strong'
                     }`}
                   >
-                    <div>
-                      {/* Top Bar: Icon, Name, Category & Status */}
-                      <div className="flex items-start justify-between gap-2.5 mb-2.5">
-                        <div className="flex items-center space-x-2.5 min-w-0">
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 ${brandColor.bg} ${brandColor.text}`}>
-                            {getIcon(app.iconName, "w-4 h-4")}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center space-x-1.5">
-                              <h3 className="text-xs font-bold text-[#0F0E17] truncate group-hover:text-brand transition-colors">
-                                {app.name}
-                              </h3>
-                            </div>
-                            <div className="flex items-center space-x-1.5 text-[10px] text-[#524E5E] mt-0.5 flex-wrap gap-y-1">
-                              <span className="px-1.5 py-0.2 rounded-md font-bold bg-[#F0EEF6] text-[#0F0E17] border border-[#E4E2EB]">
-                                {app.category}
-                              </span>
-                              <span className="truncate font-medium">{app.timing === 'in_call' ? 'Live In-Call' : 'Post-Call'}</span>
-                              {app.auth_type === 'oauth' ? (
-                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200" title="1-Click OAuth 2.0 Sign-In (Zero API Key needed)">
-                                  ⚡ 1-Click OAuth
-                                </span>
-                              ) : (
-                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200" title="Direct API Key / Token Authentication">
-                                  🔑 Secure API Key
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                    <div className="min-w-0">
+                      {/* Icon, name, category */}
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-control flex items-center justify-center flex-shrink-0 ${iconTileClass(app)}`} aria-hidden="true">
+                          {getIcon(app.iconName, 'w-5 h-5')}
                         </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-copy font-semibold text-ink break-words" title={app.name}>
+                            {app.name}
+                          </h3>
+                          <p className="text-meta text-fg-muted">
+                            {app.category}{app.category ? ' · ' : ''}{timingLabel(app)}
+                          </p>
+                        </div>
+                      </div>
 
-                        {/* Status Badge */}
+                      {/* Status and sign-in method */}
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5">
                         {isConnected ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
-                            Active
-                          </span>
+                          <Badge tone="success" dot>Connected</Badge>
                         ) : needsReauth ? (
-                          <span
+                          <Badge
+                            tone="danger"
+                            dot
                             data-testid={`reauth-badge-${app.id.toLowerCase()}`}
-                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 flex-shrink-0"
                             title="The connected account's sign-in expired or was revoked. Agents cannot use it until you reconnect."
                           >
                             Reconnect needed
-                          </span>
+                          </Badge>
                         ) : (
-                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium border flex-shrink-0 ${
-                            app.timing === 'in_call' 
-                              ? 'bg-amber-50 border-amber-200 text-amber-700' 
-                              : 'bg-[#FAF9FD] border-[#E4E2EB] text-[#524E5E]'
-                          }`}>
-                            {app.timing === 'in_call' ? '⚡ Live' : '🕒 Async'}
-                          </span>
+                          <Badge tone="neutral">Not connected</Badge>
                         )}
+                        <Badge
+                          tone="neutral"
+                          title={app.auth_type === 'oauth' ? 'Connect by signing in to the app. No API key needed.' : 'Connect with an API key or token from the app.'}
+                        >
+                          {app.auth_type === 'oauth' ? 'Sign in' : 'API key'}
+                        </Badge>
                       </div>
 
-                      {/* Concise Description */}
-                      <p className="text-[11px] text-[#524E5E] line-clamp-2 leading-relaxed mb-3">
+                      {/* Description */}
+                      <p className="mt-3 text-ui text-fg-body line-clamp-2">
                         {app.description}
                       </p>
 
-                      {/* Top Action Tags */}
+                      {/* First actions */}
                       {app.actions && app.actions.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
+                        <div className="mt-3 flex flex-wrap gap-1.5">
                           {app.actions.slice(0, 2).map((act, i) => (
-                            <span key={i} className="text-[10px] bg-[#FAF9FD] border border-[#E4E2EB] px-1.5 py-0.5 rounded-md text-[#524E5E] font-medium truncate max-w-[140px]">
+                            <span key={i} title={act} className="text-meta bg-canvas border border-line px-2 py-0.5 rounded-pill text-fg-body truncate max-w-full">
                               {act}
                             </span>
                           ))}
@@ -702,50 +651,47 @@ export function IntegrationsModule() {
                       )}
                     </div>
 
-                    {/* Card Footer: Action Drawer Link & Connect / Disconnect Button */}
-                    <div className="pt-2.5 border-t border-[#E4E2EB]/70 flex items-center justify-between gap-2">
+                    {/* Footer: actions list and connect / disconnect */}
+                    <div className="mt-4 pt-3 border-t border-line flex items-center justify-between gap-2">
                       <button
+                        type="button"
                         onClick={() => setSelectedAppModal(app)}
-                        className="text-[11px] text-[#524E5E] hover:text-brand font-semibold flex items-center space-x-1 group/btn transition-colors"
+                        className="min-h-[36px] -ml-1 px-1 rounded-control text-ui text-fg-body hover:text-accent-fg font-medium flex items-center gap-1 group/btn transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                       >
                         <span>{app.actions?.length || 2} actions</span>
-                        <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-0.5 transition-transform" />
+                        <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" aria-hidden="true" />
                       </button>
 
-                      <div>
+                      <div className="shrink-0">
                         {isConnected ? (
-                          <button
+                          <TactileButton
+                            variant="ghost"
+                            size="sm"
                             onClick={() => promptDisconnect(app)}
                             data-testid={`disconnect-btn-${app.id.toLowerCase()}`}
-                            className="px-2.5 py-1 text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
-                            title="Disconnect Integration"
+                            title="Disconnect integration"
                           >
                             Disconnect
-                          </button>
+                          </TactileButton>
                         ) : app.oauth_ready === false ? (
                           <span
                             data-testid={`not-ready-${app.id.toLowerCase()}`}
-                            className="px-2.5 py-1 text-[11px] font-semibold text-[#524E5E] bg-slate-100 rounded-lg"
+                            className="inline-flex px-2.5 py-1 text-meta font-medium text-fg-body bg-surface-subtle rounded-pill"
                             title="Your administrator has not enabled this integration yet."
                           >
                             Not available yet
                           </span>
                         ) : (
-                          <button
+                          <TactileButton
+                            variant={needsReauth ? 'danger' : 'primary'}
+                            size="sm"
                             onClick={() => openConnectDialog(app)}
                             disabled={isConnectingThis}
+                            loading={isConnectingThis}
                             data-testid={`connect-btn-${app.id.toLowerCase()}`}
-                            className="px-3.5 py-1.5 bg-[#0F0E17] hover:bg-brand text-white text-[11px] font-bold rounded-xl shadow-craft-xs hover:shadow-craft-sm transition-all duration-200 flex items-center space-x-1 hover:scale-105 active:scale-95"
                           >
-                            {isConnectingThis ? (
-                              <>
-                                <RefreshCw className="w-3 h-3 animate-spin" />
-                                <span>Connecting...</span>
-                              </>
-                            ) : (
-                              <span>{needsReauth ? 'Reconnect' : 'Connect'}</span>
-                            )}
-                          </button>
+                            {isConnectingThis ? 'Connecting…' : needsReauth ? 'Reconnect' : 'Connect'}
+                          </TactileButton>
                         )}
                       </div>
                     </div>
@@ -757,143 +703,109 @@ export function IntegrationsModule() {
         </>
       )}
 
-      {/* TAB 3: HOW CONNECTIONS WORK & AUTHORIZATION ARCHITECTURE */}
+      {/* How connections work */}
       {activeTab === 'guide' && (
-        <div className="space-y-6 animate-in fade-in duration-300">
-          <div className="bg-white border border-[#E4E2EB] rounded-3xl p-6 sm:p-8 shadow-craft-xs space-y-6">
-            <div className="space-y-2">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-bold">
-                <ShieldCheck className="w-4 h-4 text-brand" />
-                <span>Zero-Trust Enterprise Architecture</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F0E17]">
-                How App Connections & Tenant Sign-In Work
-              </h2>
-              <p className="text-xs sm:text-sm text-[#524E5E] leading-relaxed max-w-3xl">
-                Every tool integration links your voice agents directly to your third-party SaaS accounts. Here is exactly how authorization, credentials, and live phone call tool calls operate.
+        <Section
+          title="How connections work"
+          description="What happens when you connect an app, and how your agents use it."
+        >
+          <ol className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <li className="p-4 rounded-control bg-canvas border border-line space-y-2">
+              <div className="w-7 h-7 rounded-full bg-surface border border-line text-ui font-semibold text-ink flex items-center justify-center" aria-hidden="true">1</div>
+              <h3 className="text-copy font-semibold text-ink">You sign in to the app</h3>
+              <p className="text-ui text-fg-body">
+                Select <strong className="font-semibold text-ink">Connect</strong> and sign in on the app's own page, such as Google, HubSpot or Slack, then approve the access it asks for.
               </p>
-            </div>
-
-            {/* Visual Step-by-Step Flow */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-              <div className="p-5 rounded-2xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-3 relative overflow-hidden">
-                <div className="w-8 h-8 rounded-xl bg-brand/10 text-brand font-bold text-xs flex items-center justify-center">
-                  1
-                </div>
-                <h3 className="font-bold text-sm text-[#0F0E17]">Personal / Workspace Sign-In</h3>
-                <p className="text-xs text-[#524E5E] leading-relaxed">
-                  In live production, clicking <strong>Connect</strong> opens the provider's official OAuth sign-in window (e.g., <em>Google, HubSpot, Slack</em>). You log in to your account and approve the requested calendar or CRM scopes.
-                </p>
-                <div className="text-[11px] text-brand font-semibold flex items-center space-x-1">
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Passwords never touch Dialtact</span>
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-3 relative overflow-hidden">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-xs flex items-center justify-center">
-                  2
-                </div>
-                <h3 className="font-bold text-sm text-[#0F0E17]">Encrypted Tenant Vault</h3>
-                <p className="text-xs text-[#524E5E] leading-relaxed">
-                  Once authorized, the OAuth token is bound exclusively to your unique tenant ID and stored in the secure credential vault. Agent actions are checked against your workspace and configuration.
-                </p>
-                <div className="text-[11px] text-emerald-600 font-semibold flex items-center space-x-1">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Cryptographically Isolated</span>
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-3 relative overflow-hidden">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 font-bold text-xs flex items-center justify-center">
-                  3
-                </div>
-                <h3 className="font-bold text-sm text-[#0F0E17]">Verified In-Call Actions</h3>
-                <p className="text-xs text-[#524E5E] leading-relaxed">
-                  When a caller asks to schedule an appointment during a phone call, the voice AI checks the connected calendar and confirms a booking only after the provider returns a verified result. Response time depends on the provider.
-                </p>
-                <div className="text-[11px] text-amber-600 font-semibold flex items-center space-x-1">
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>Provider-confirmed results</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Operating Modes Callout */}
-            <div className="p-5 rounded-2xl bg-[#0c0a1a] text-white border border-white/10 space-y-3">
-              <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs">
-                <Info className="w-4 h-4" />
-                <span>Verified connections</span>
-              </div>
-              <p className="text-xs text-[#D1CFDB] leading-relaxed">
-                A connection is enabled only after authorization is verified for your workspace. If authorization is cancelled or unavailable, the integration stays disconnected.
+              <p className="text-meta text-fg-muted flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                Dialtact never sees your password.
               </p>
-            </div>
+            </li>
+            <li className="p-4 rounded-control bg-canvas border border-line space-y-2">
+              <div className="w-7 h-7 rounded-full bg-surface border border-line text-ui font-semibold text-ink flex items-center justify-center" aria-hidden="true">2</div>
+              <h3 className="text-copy font-semibold text-ink">Access stays with your workspace</h3>
+              <p className="text-ui text-fg-body">
+                The access the app gives us is stored encrypted and only your workspace's agents can use it. You can disconnect at any time.
+              </p>
+              <p className="text-meta text-fg-muted flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                Stored encrypted, kept separate from other workspaces.
+              </p>
+            </li>
+            <li className="p-4 rounded-control bg-canvas border border-line space-y-2">
+              <div className="w-7 h-7 rounded-full bg-surface border border-line text-ui font-semibold text-ink flex items-center justify-center" aria-hidden="true">3</div>
+              <h3 className="text-copy font-semibold text-ink">Your agents use it on calls</h3>
+              <p className="text-ui text-fg-body">
+                When a caller asks to book a time, the agent checks your connected calendar and confirms only after the app says the booking went through. How quickly depends on the app.
+              </p>
+              <p className="text-meta text-fg-muted flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                Confirmed by the app before the caller hears it.
+              </p>
+            </li>
+          </ol>
+
+          <div className="mt-4 flex items-start gap-2 rounded-control border border-info-line bg-info-soft p-3 text-ui text-info-fg">
+            <Info className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+            <p>
+              A connection is switched on only after the sign-in is confirmed for your workspace. If you cancel the sign-in, the app stays disconnected.
+            </p>
           </div>
-        </div>
+        </Section>
       )}
 
-      {/* Interactive Connect Modal (Explains OAuth Sign-In vs API Key) */}
+      {/* Connect dialog */}
       {connectModalApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-[#E4E2EB] rounded-3xl p-6 sm:p-7 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-craft-lg space-y-5 animate-in zoom-in-95 duration-200">
-            {/* Modal Header */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3">
-                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${BRAND_COLORS[connectModalApp.id]?.bg || 'bg-brand/10'} ${BRAND_COLORS[connectModalApp.id]?.text || 'text-brand'}`}>
-                  {getIcon(connectModalApp.iconName, "w-6 h-6")}
+        <div className={overlayClass}>
+          <div role="dialog" aria-modal="true" aria-labelledby="integration-connect-title" className={`${dialogClass} p-5 sm:p-6 max-w-lg max-h-[90vh] overflow-y-auto space-y-5`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className={`w-11 h-11 rounded-control flex items-center justify-center shrink-0 ${iconTileClass(connectModalApp)}`} aria-hidden="true">
+                  {getIcon(connectModalApp.iconName, 'w-6 h-6')}
                 </div>
-                <div>
-                  <h3 className="font-extrabold text-[#0F0E17] text-base">Connect {connectModalApp.name}</h3>
-                  <div className="flex items-center space-x-1.5 text-xs text-[#524E5E] mt-0.5">
-                    <span>{connectModalApp.category}</span>
-                    <span>•</span>
-                    <span className="font-semibold text-brand">Voice Agent Enabled</span>
-                  </div>
+                <div className="min-w-0">
+                  <h3 id="integration-connect-title" className="text-title text-ink break-words">Connect {connectModalApp.name}</h3>
+                  <p className="text-ui text-fg-muted">
+                    {connectModalApp.category}{connectModalApp.category ? ' · ' : ''}{timingLabel(connectModalApp)}
+                  </p>
                 </div>
               </div>
-              <button 
+              <button
+                type="button"
                 onClick={() => setConnectModalApp(null)}
-                className="text-[#524E5E] hover:text-[#0F0E17] p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-xl hover:bg-[#F0EEF6] transition-colors"
+                className={closeButtonClass}
                 aria-label="Close connect dialog"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Authorization Module: Dedicated per Integration (No confusing tab switcher or unused API space) */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {connectModalApp.auth_type === 'oauth' ? (
-                <div className="space-y-3">
-                  <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
-                    <div className="flex items-center space-x-2 text-xs font-bold text-emerald-800">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      <span>1-Click OAuth 2.0 Sign-In</span>
-                    </div>
-                    <p className="text-xs text-emerald-950/80 leading-relaxed">
-                      Clicking continue will open <strong>{connectModalApp.name}</strong>'s official sign-in page. You approve permissions with your existing workspace account—zero manual API keys or secrets required.
-                    </p>
+                <div className="p-4 rounded-control bg-canvas border border-line space-y-1.5">
+                  <div className="flex items-center gap-2 text-ui font-semibold text-ink">
+                    <ShieldCheck className="w-4 h-4 text-fg-subtle" aria-hidden="true" />
+                    <span>Sign in with {connectModalApp.name}</span>
                   </div>
+                  <p className="text-ui text-fg-body">
+                    Continue opens <strong className="font-semibold text-ink">{connectModalApp.name}</strong>'s own sign-in page. Approve access with your existing account; no API key needed.
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="p-4 rounded-2xl bg-brand/10 border border-brand/20 space-y-2">
-                    <div className="flex items-center space-x-2 text-xs font-bold text-brand">
-                      <Key className="w-4 h-4 text-brand" />
-                      <span>Secure API Key Connection</span>
-                    </div>
-                    <p className="text-xs text-[#524E5E] leading-relaxed">
-                      <strong>{connectModalApp.name}</strong> uses workspace API credentials. Continue to the secure connection form to enter the fields required by this provider.
-                    </p>
+                <div className="p-4 rounded-control bg-canvas border border-line space-y-1.5">
+                  <div className="flex items-center gap-2 text-ui font-semibold text-ink">
+                    <Key className="w-4 h-4 text-fg-subtle" aria-hidden="true" />
+                    <span>Connect with an API key</span>
                   </div>
-
+                  <p className="text-ui text-fg-body">
+                    <strong className="font-semibold text-ink">{connectModalApp.name}</strong> connects with a key from your account. Continue to a secure form that asks for the details this app needs.
+                  </p>
                 </div>
               )}
 
-              {/* Account Alias Input */}
               <div className="space-y-1.5">
-                <label htmlFor="integration-account-alias" className="block text-xs font-bold text-[#0F0E17]">
-                  Account Label / Alias
+                <label htmlFor="integration-account-alias" className="block text-ui font-medium text-ink">
+                  Account label
                 </label>
                 <input
                   type="text"
@@ -901,228 +813,202 @@ export function IntegrationsModule() {
                   maxLength={255}
                   value={accountAlias}
                   onChange={(e) => setAccountAlias(e.target.value)}
-                  placeholder="e.g. sales-team@company.com or Primary CRM"
-                  className="w-full px-3.5 py-2.5 min-h-[42px] sm:min-h-[36px] text-base sm:text-xs bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 text-[#0F0E17]"
+                  placeholder="For example sales-team@company.com or Main CRM"
+                  className={inputClass}
                 />
+                <p className="text-meta text-fg-muted">A name to tell this account apart if you connect more than one.</p>
               </div>
 
-              {/* Scopes Preview */}
               <div className="space-y-1.5">
-                <span className="text-[11px] font-bold text-[#0F0E17] uppercase tracking-wider">
-                  Available Agent Actions:
-                </span>
-                <div className="space-y-1">
+                <h4 className="text-ui font-medium text-ink">What your agents can do</h4>
+                <ul className="space-y-1">
                   {(connectModalApp.actions || ['Check Status', 'Execute Action']).map((action, i) => (
-                    <div key={i} className="flex items-center space-x-2 text-xs text-[#524E5E]">
-                      <Check className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                      <span>{action}</span>
-                    </div>
+                    <li key={i} className="flex items-start gap-2 text-ui text-fg-body">
+                      <Check className="w-3.5 h-3.5 text-success-fg flex-shrink-0 mt-0.5" aria-hidden="true" />
+                      <span className="min-w-0 break-words">{action}</span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             </div>
 
             {connectionError && (
-              <p role="alert" data-testid="connection-error" className="text-sm text-red-700 bg-red-50 rounded-xl p-3">{connectionError}</p>
+              <p role="alert" data-testid="connection-error" className="text-ui text-danger-fg bg-danger-soft border border-danger-line rounded-control p-3">{connectionError}</p>
             )}
 
-            {/* Modal Actions */}
-            <div className="pt-3 border-t border-[#E4E2EB] flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <span className="text-[11px] text-[#524E5E] flex items-center space-x-1 justify-center sm:justify-start">
-                <Lock className="w-3 h-3 text-emerald-600" />
-                <span>Encrypted • Revocable anytime</span>
+            <div className="pt-4 border-t border-line flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <span className="text-meta text-fg-muted flex items-center gap-1.5 justify-center sm:justify-start">
+                <Lock className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>Stored encrypted. Disconnect at any time.</span>
               </span>
 
-              <div className="flex items-center space-x-2.5">
-                <button
-                  type="button"
+              <div className="flex items-center gap-2">
+                <TactileButton
+                  variant="ghost"
+                  size="md"
                   onClick={() => setConnectModalApp(null)}
-                  className="flex-1 sm:flex-initial px-3.5 py-2 min-h-[40px] text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17] transition-colors"
+                  className="flex-1 sm:flex-initial justify-center"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
+                </TactileButton>
+                <TactileButton
+                  variant="brand"
+                  size="md"
                   data-testid="confirm-connect-btn"
                   onClick={() => handleExecuteConnect(connectModalApp.id)}
                   disabled={connecting === connectModalApp.id}
-                  className="flex-1 sm:flex-initial px-5 py-2 min-h-[40px] bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl shadow-craft-xs flex items-center justify-center space-x-2 transition-all hover:scale-105 active:scale-95"
+                  loading={connecting === connectModalApp.id}
+                  className="flex-1 sm:flex-initial justify-center"
                 >
-                  {connecting === connectModalApp.id ? (
+                  {connecting === connectModalApp.id ? 'Opening…' : (
                     <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                      <span>Opening secure form...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Continue securely</span>
-                      <ArrowUpRight className="w-4 h-4" />
+                      Continue
+                      <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
                     </>
                   )}
-                </button>
+                </TactileButton>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Action Preview Modal */}
+      {/* Actions preview dialog */}
       {selectedAppModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-[#E4E2EB] rounded-3xl p-6 max-w-md w-full shadow-craft-lg space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3">
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${BRAND_COLORS[selectedAppModal.id]?.bg || 'bg-brand/10'} ${BRAND_COLORS[selectedAppModal.id]?.text || 'text-brand'}`}>
-                  {getIcon(selectedAppModal.iconName, "w-5 h-5")}
+        <div className={overlayClass}>
+          <div role="dialog" aria-modal="true" aria-labelledby="integration-actions-title" className={`${dialogClass} p-5 sm:p-6 max-w-md max-h-[90vh] overflow-y-auto space-y-4`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className={`w-10 h-10 rounded-control flex items-center justify-center shrink-0 ${iconTileClass(selectedAppModal)}`} aria-hidden="true">
+                  {getIcon(selectedAppModal.iconName, 'w-5 h-5')}
                 </div>
-                <div>
-                  <h3 className="font-extrabold text-[#0F0E17] text-sm">{selectedAppModal.name}</h3>
-                  <div className="flex items-center space-x-1.5 text-xs text-[#524E5E]">
-                    <span className="font-semibold text-emerald-600">{selectedAppModal.auth_type === 'api_key' ? '🔑 API Key Auth' : '⚡ 1-Click OAuth'}</span>
-                    <span>•</span>
-                    <span className={selectedAppModal.timing === 'in_call' ? 'text-amber-600 font-bold' : 'text-indigo-600 font-bold'}>
-                      {selectedAppModal.timing_label || (selectedAppModal.timing === 'in_call' ? 'Live In-Call (<1.5s)' : 'Async Post-Call')}
-                    </span>
-                  </div>
+                <div className="min-w-0">
+                  <h3 id="integration-actions-title" className="text-title text-ink break-words">{selectedAppModal.name}</h3>
+                  <p className="text-ui text-fg-muted">
+                    {selectedAppModal.auth_type === 'api_key' ? 'API key' : 'Sign in'} · {timingLabel(selectedAppModal)}
+                  </p>
                 </div>
               </div>
-              <button 
+              <button
+                type="button"
                 data-testid="action-modal-close-btn"
                 onClick={() => setSelectedAppModal(null)}
-                className="text-[#524E5E] hover:text-[#0F0E17] p-1 rounded-xl hover:bg-[#F0EEF6]"
+                aria-label="Close"
+                className={closeButtonClass}
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-[#524E5E] leading-relaxed">
+            <p className="text-ui text-fg-body">
               {selectedAppModal.description}
             </p>
 
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-[#0F0E17] uppercase tracking-wider">
-                Configured Voice Actions
+              <h4 className="text-ui font-medium text-ink">
+                What your agents can do
               </h4>
-              <div className="space-y-1.5">
+              <ul className="space-y-1.5">
                 {(selectedAppModal.actions || ['Check Status', 'Execute Action']).map((action, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] text-xs">
-                    <span className="font-semibold text-[#0F0E17]">{action}</span>
-                    <span className="text-[10px] text-[#524E5E] bg-[#F0EEF6] px-2 py-0.5 rounded-full font-medium">
-                      {selectedAppModal.timing === 'in_call' ? 'Sub-second Voice' : 'Durable Task'}
-                    </span>
-                  </div>
+                  <li key={idx} className="flex items-center justify-between gap-3 p-2.5 rounded-control bg-canvas border border-line text-ui">
+                    <span className="min-w-0 break-words font-medium text-ink">{action}</span>
+                    <Badge tone={selectedAppModal.timing === 'in_call' ? 'info' : 'neutral'}>
+                      {timingLabel(selectedAppModal)}
+                    </Badge>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
 
-            <div className="pt-2 border-t border-[#E4E2EB] flex justify-end">
-              <button
-                onClick={() => setSelectedAppModal(null)}
-                className="px-4 py-2 bg-[#FAF9FD] hover:bg-[#F0EEF6] text-[#0F0E17] text-xs font-bold rounded-xl border border-[#E4E2EB] transition-colors"
-              >
+            <div className="pt-3 border-t border-line flex justify-end">
+              <TactileButton variant="secondary" size="sm" onClick={() => setSelectedAppModal(null)}>
                 Close
-              </button>
+              </TactileButton>
             </div>
           </div>
         </div>
       )}
 
-      {/* Request App Modal */}
+      {/* Request app dialog */}
       {isRequestModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-[#E4E2EB] rounded-3xl p-6 max-w-md w-full shadow-craft-lg space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between">
-              <h3 className="font-extrabold text-[#0F0E17] text-sm flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-brand" />
-                <span>Request Custom Integration</span>
+        <div className={overlayClass}>
+          <div role="dialog" aria-modal="true" aria-labelledby="integration-request-title" className={`${dialogClass} p-5 sm:p-6 max-w-md space-y-4`}>
+            <div className="flex items-start justify-between gap-3">
+              <h3 id="integration-request-title" className="text-title text-ink">
+                Request custom integration
               </h3>
-              <button 
+              <button
+                type="button"
                 onClick={() => setIsRequestModalOpen(false)}
-                className="text-[#524E5E] hover:text-[#0F0E17] p-1 rounded-xl hover:bg-[#F0EEF6]"
+                aria-label="Close"
+                className={closeButtonClass}
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-[#524E5E] leading-relaxed">
-              Need to connect a private ERP, internal database, or unlisted SaaS tool? Tell us what you need and our platform team will prioritize it.
+            <p className="text-ui text-fg-body">
+              Need an app that is not listed, like a private ERP or an internal database? Tell us which one and we will look into it.
             </p>
 
-            <form onSubmit={handleRequestSubmit} className="space-y-3">
+            <form onSubmit={handleRequestSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#0F0E17] mb-1">
-                  App or Tool Name
+                <label htmlFor="integration-request-name" className="block text-ui font-medium text-ink mb-1.5">
+                  App or tool name
                 </label>
                 <input
+                  id="integration-request-name"
                   type="text"
                   required
                   value={requestedAppName}
                   onChange={(e) => setRequestedAppName(e.target.value)}
                   placeholder="e.g. NetSuite, Workday, Custom CRM..."
-                  className="w-full px-3.5 py-2 text-xs bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl focus:outline-none focus:border-brand focus:ring-4 focus:ring-brand/10 text-[#0F0E17]"
+                  className={inputClass}
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-[#E4E2EB]">
-                <button
-                  type="button"
-                  onClick={() => setIsRequestModalOpen(false)}
-                  className="px-3.5 py-2 text-xs text-[#524E5E] hover:text-[#0F0E17] font-semibold"
-                >
+              <div className="flex justify-end gap-2 pt-3 border-t border-line">
+                <TactileButton type="button" variant="ghost" size="sm" onClick={() => setIsRequestModalOpen(false)}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={requestSubmitted}
-                  className="px-4 py-2 bg-brand hover:bg-brand-hover text-white text-xs font-bold rounded-xl flex items-center space-x-1.5 shadow-craft-xs"
-                >
-                  {requestSubmitted ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Submitted!</span>
-                    </>
-                  ) : (
-                    <span>Submit Request</span>
-                  )}
-                </button>
+                </TactileButton>
+                <TactileButton type="submit" variant="brand" size="sm" disabled={requestSubmitted} icon={requestSubmitted ? Check : undefined}>
+                  {requestSubmitted ? 'Submitted' : 'Submit request'}
+                </TactileButton>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Disconnect Confirmation Modal */}
+      {/* Disconnect confirmation */}
       {disconnectApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white border border-[#E4E2EB] rounded-3xl p-6 max-w-sm w-full shadow-craft-lg space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center space-x-3 text-rose-600">
-              <div className="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center flex-shrink-0">
-                <Trash2 className="w-5 h-5 text-rose-600" />
+        <div className={overlayClass}>
+          <div role="alertdialog" aria-modal="true" aria-labelledby="integration-disconnect-title" className={`${dialogClass} p-5 sm:p-6 max-w-sm space-y-4`}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-control bg-danger-soft flex items-center justify-center flex-shrink-0" aria-hidden="true">
+                <Trash2 className="w-5 h-5 text-danger-fg" />
               </div>
-              <div>
-                <h3 className="font-extrabold text-[#0F0E17] text-sm">Disconnect {disconnectApp.name || disconnectApp.id}?</h3>
-                <p className="text-[11px] text-[#524E5E]">Revoke voice agent access</p>
+              <div className="min-w-0">
+                <h3 id="integration-disconnect-title" className="text-title text-ink break-words">Disconnect {disconnectApp.name || disconnectApp.id}?</h3>
+                <p className="text-ui text-fg-muted">Your agents will lose access</p>
               </div>
             </div>
-            <p className="text-xs text-[#524E5E] leading-relaxed">
-              Are you sure you want to disconnect this integration? Active voice agents will no longer have access to this tool during calls.
+            <p className="text-ui text-fg-body">
+              Your agents will no longer be able to use this app during or after calls. You can connect it again later.
             </p>
-            <div className="flex justify-end space-x-2 pt-2 border-t border-[#E4E2EB]">
-              <button
-                type="button"
-                onClick={() => setDisconnectApp(null)}
-                className="px-3.5 py-2 text-xs text-[#524E5E] hover:text-[#0F0E17] font-semibold"
-              >
+            <div className="flex justify-end gap-2 pt-3 border-t border-line">
+              <TactileButton type="button" variant="ghost" size="sm" onClick={() => setDisconnectApp(null)}>
                 Cancel
-              </button>
-              <button
+              </TactileButton>
+              <TactileButton
                 type="button"
+                variant="danger"
+                size="sm"
                 data-testid="confirm-disconnect-btn"
                 onClick={confirmDisconnect}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-craft-xs transition-colors"
               >
                 Disconnect
-              </button>
+              </TactileButton>
             </div>
           </div>
         </div>

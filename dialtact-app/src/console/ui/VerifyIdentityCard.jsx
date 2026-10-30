@@ -111,57 +111,57 @@ export function VerifyIdentityCard({ compact = false, variant = 'default', onApp
     if (variant === 'gate') {
       return (
         <div
-          className="rounded-2xl border border-[#E4E2EB] bg-[#FAF9FD] p-6 sm:p-8 space-y-6 animate-pulse"
+          className="rounded-card border border-line bg-canvas p-6 sm:p-8 space-y-6 animate-pulse"
           data-testid="kyc-status-loading"
           aria-busy="true"
         >
           <div className="flex flex-col items-center text-center space-y-3">
-            <div className="w-14 h-14 rounded-2xl bg-[#E4E2EB]" />
+            <div className="w-14 h-14 rounded-card bg-line" />
             <div className="space-y-2 max-w-sm w-full flex flex-col items-center">
-              <div className="h-5 w-48 bg-[#E4E2EB] rounded-md" />
-              <div className="h-3 w-64 bg-[#E4E2EB]/70 rounded" />
-              <div className="h-3 w-48 bg-[#E4E2EB]/60 rounded" />
+              <div className="h-5 w-48 bg-line rounded-control" />
+              <div className="h-3 w-64 bg-line/70 rounded" />
+              <div className="h-3 w-48 bg-line/60 rounded" />
             </div>
           </div>
-          <div className="h-10 w-full rounded-xl bg-[#E4E2EB] max-w-xs mx-auto" />
+          <div className="h-10 w-full rounded-control bg-line max-w-xs mx-auto" />
         </div>
       );
     }
     if (compact) {
       return (
         <div
-          className="rounded-xl border border-[#E4E2EB] bg-[#FAF9FD] p-3 flex items-center justify-between gap-3 animate-pulse"
+          className="rounded-control border border-line bg-canvas p-3 flex items-center justify-between gap-3 animate-pulse"
           data-testid="kyc-status-loading"
           aria-busy="true"
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#E4E2EB]" />
+            <div className="w-7 h-7 rounded-control bg-line" />
             <div className="space-y-1">
-              <div className="h-3 w-28 bg-[#E4E2EB] rounded" />
-              <div className="h-2 w-20 bg-[#E4E2EB]/60 rounded" />
+              <div className="h-3 w-28 bg-line rounded" />
+              <div className="h-2 w-20 bg-line/60 rounded" />
             </div>
           </div>
-          <div className="h-6 w-16 bg-[#E4E2EB] rounded-md" />
+          <div className="h-6 w-16 bg-line rounded-control" />
         </div>
       );
     }
     return (
       <div
-        className="rounded-2xl border border-[#E4E2EB] bg-[#FAF9FD] p-4 space-y-3 animate-pulse"
+        className="rounded-card border border-line bg-canvas p-4 space-y-3 animate-pulse"
         data-testid="kyc-status-loading"
         aria-busy="true"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#E4E2EB]" />
+            <div className="w-8 h-8 rounded-control bg-line" />
             <div className="space-y-1">
-              <div className="h-3.5 w-32 bg-[#E4E2EB] rounded" />
-              <div className="h-2.5 w-24 bg-[#E4E2EB]/60 rounded" />
+              <div className="h-3.5 w-32 bg-line rounded" />
+              <div className="h-2.5 w-24 bg-line/60 rounded" />
             </div>
           </div>
-          <div className="h-6 w-20 bg-[#E4E2EB] rounded-md" />
+          <div className="h-6 w-20 bg-line rounded-control" />
         </div>
-        <div className="h-8 w-28 bg-[#E4E2EB] rounded-lg" />
+        <div className="h-8 w-28 bg-line rounded-control" />
       </div>
     );
   }
@@ -177,20 +177,20 @@ export function VerifyIdentityCard({ compact = false, variant = 'default', onApp
   if (variant === 'gate' && !approved) {
     return (
       <div
-        className="rounded-2xl border border-[#E4E2EB] bg-gradient-to-b from-white to-[#FAF9FD] p-6 sm:p-8 space-y-6"
+        className="rounded-card border border-line bg-gradient-to-b from-surface to-canvas p-6 sm:p-8 space-y-6"
         data-testid="kyc-verify-card"
         data-variant="gate"
       >
         <div className="flex flex-col items-center text-center space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-[#F3F0FF] border border-[#E4E2EB] flex items-center justify-center">
-            <Shield className="w-7 h-7 text-[#6344E7]" strokeWidth={1.75} />
+          <div className="w-14 h-14 rounded-card bg-accent-soft border border-line flex items-center justify-center">
+            <Shield className="w-7 h-7 text-accent-fg" strokeWidth={1.75} />
           </div>
           <div className="space-y-1.5 max-w-sm">
-            <h3 className="text-base font-bold text-[#0F0E17] tracking-tight">
+            <h3 className="text-title text-ink">
               Verify your identity first
             </h3>
-            <p className="text-xs text-[#524E5E] leading-relaxed">
-              Phone numbers and live calls require a quick ID check. Takes about a minute —
+            <p className="text-ui text-fg-body">
+              Phone numbers and live calls require a quick ID check. It takes about a minute:
               government ID and a selfie. Your documents stay with the verification partner.
             </p>
           </div>
@@ -204,31 +204,31 @@ export function VerifyIdentityCard({ compact = false, variant = 'default', onApp
           ].map((step, i) => (
             <li
               key={step.n}
-              className={`rounded-xl border px-2 py-2.5 ${
+              className={`rounded-control border px-2 py-2.5 ${
                 i === 0
-                  ? 'border-[#6344E7]/30 bg-[#F3F0FF]'
-                  : 'border-[#E4E2EB] bg-white opacity-60'
+                  ? 'border-accent/30 bg-accent-soft'
+                  : 'border-line bg-surface opacity-60'
               }`}
             >
               <span
-                className={`inline-flex w-5 h-5 items-center justify-center rounded-full text-[10px] font-bold mb-1 ${
-                  i === 0 ? 'bg-[#6344E7] text-white' : 'bg-[#E4E2EB] text-[#524E5E]'
+                className={`inline-flex w-5 h-5 items-center justify-center rounded-full text-meta font-bold mb-1 ${
+                  i === 0 ? 'bg-accent text-white' : 'bg-line text-fg-body'
                 }`}
               >
                 {step.n}
               </span>
-              <p className="text-[10px] font-semibold text-[#0F0E17]">{step.t}</p>
+              <p className="text-meta font-medium text-ink">{step.t}</p>
             </li>
           ))}
         </ol>
 
         {!configured && (
-          <p className="text-[11px] text-center text-[#B45309]" data-testid="kyc-not-configured">
+          <p className="text-meta text-center text-warning-fg" data-testid="kyc-not-configured">
             Identity verification is not available yet. Contact support to continue.
           </p>
         )}
         {error && (
-          <p className="text-[11px] text-center text-red-800" role="alert" data-testid="kyc-error">
+          <p className="text-meta text-center text-danger-fg" role="alert" data-testid="kyc-error">
             {error}
           </p>
         )}
@@ -249,12 +249,12 @@ export function VerifyIdentityCard({ compact = false, variant = 'default', onApp
           <button
             type="button"
             onClick={refresh}
-            className="w-full text-[11px] font-semibold text-[#6344E7] hover:underline py-1"
+            className="w-full min-h-[36px] text-ui font-semibold text-accent-fg hover:underline py-1"
             data-testid="kyc-refresh-status"
           >
-            I finished — refresh status
+            I have finished. Refresh status
           </button>
-          <p className="text-[10px] text-center text-[#8C879A]">Status: {label}</p>
+          <p className="text-meta text-center text-fg-muted">Status: {label}</p>
         </div>
       </div>
     );
@@ -262,29 +262,29 @@ export function VerifyIdentityCard({ compact = false, variant = 'default', onApp
 
   return (
     <div
-      className={`rounded-xl border ${
-        approved ? 'border-emerald-200 bg-emerald-50' : 'border-[#E4E2EB] bg-[#FAF9FD]'
+      className={`rounded-card border ${
+        approved ? 'border-success-line bg-success-soft' : 'border-line bg-canvas'
       } ${compact ? 'p-3' : 'p-4'} space-y-2`}
       data-testid="kyc-verify-card"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2 min-w-0">
           {approved ? (
-            <BadgeCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+            <BadgeCheck className="w-4 h-4 text-success-fg shrink-0 mt-0.5" />
           ) : (
-            <Shield className="w-4 h-4 text-[#6344E7] shrink-0 mt-0.5" />
+            <Shield className="w-4 h-4 text-accent-fg shrink-0 mt-0.5" />
           )}
           <div className="min-w-0">
-            <p className="text-xs font-bold text-[#0F0E17]">
+            <p className="text-copy font-semibold text-ink">
               {approved ? 'Identity verified' : 'Verify your identity'}
             </p>
-            <p className="text-[11px] text-[#524E5E] leading-relaxed mt-0.5">
+            <p className="text-ui text-fg-body mt-0.5">
               {approved
                 ? 'You can buy phone numbers and place live calls.'
-                : status?.required ? 'Required by the current platform identity policy.' : 'Optional platform identity check, separate from phone service verification.'}
+                : status?.required ? 'Required before you can buy numbers or place live calls.' : 'Optional. This is separate from phone service verification.'}
             </p>
-            <p className="text-[10px] text-[#8C879A] mt-1 flex items-center gap-1">
-              {approved ? <Check className="w-3 h-3 text-emerald-600" /> : null}
+            <p className="text-meta text-fg-muted mt-1 flex items-center gap-1">
+              {approved ? <Check className="w-3 h-3 text-success-fg" /> : null}
               Status: {label}
             </p>
           </div>
@@ -304,12 +304,12 @@ export function VerifyIdentityCard({ compact = false, variant = 'default', onApp
         )}
       </div>
       {!configured && !approved && (
-        <p className="text-[11px] text-[#B45309]" data-testid="kyc-not-configured">
+        <p className="text-meta text-warning-fg" data-testid="kyc-not-configured">
           Identity verification is not available yet. Contact support to continue.
         </p>
       )}
       {error && (
-        <p className="text-[11px] text-red-800" role="alert" data-testid="kyc-error">
+        <p className="text-meta text-danger-fg" role="alert" data-testid="kyc-error">
           {error}
         </p>
       )}
@@ -317,7 +317,7 @@ export function VerifyIdentityCard({ compact = false, variant = 'default', onApp
         <button
           type="button"
           onClick={refresh}
-          className="text-[11px] font-semibold text-[#6344E7] hover:underline"
+          className="text-meta font-semibold text-accent-fg hover:underline"
           data-testid="kyc-refresh-status"
         >
           I finished verification — refresh status

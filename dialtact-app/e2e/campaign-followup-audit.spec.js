@@ -84,7 +84,7 @@ test('DND removal requires a meaningful reason and explicit renewed permission',
   await page.getByTestId('agent-tab-calls').click();
   await page.getByTestId('agent-calls-panel-tab-leads').click();
   await page.getByRole('button', { name: 'Do not call', exact: true }).click();
-  await page.getByRole('button', { name: 'Remove from DND', exact: true }).click();
+  await page.getByRole('button', { name: 'Remove from list', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await dialog.getByTestId('dnc-deactivate-reason-input').fill('     ');
   await dialog.getByTestId('dnc-reconsent-checkbox').check();
@@ -128,7 +128,7 @@ test('campaign cancellation stops future work only after tenant confirmation', a
   expect(state.cancellations).toHaveLength(0);
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm campaign cancellation', exact: true }).click();
   await expect(page.getByRole('dialog')).not.toBeVisible();
-  await expect(page.getByText('cancelled', { exact: true })).toBeVisible();
+  await expect(page.getByText('Cancelled', { exact: true })).toBeVisible();
   expect(state.cancellations).toHaveLength(1);
 });
 

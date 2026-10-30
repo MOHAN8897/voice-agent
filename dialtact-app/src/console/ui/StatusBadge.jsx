@@ -1,44 +1,56 @@
 import React from 'react';
+import { statusWord } from '../../lib/internalLabels';
 
 /**
- * StatusBadge UI Primitive
- * Semantic pill indicator with strict WCAG AA contrast for light backgrounds.
+ * Semantic tones. The only colours a status may use (DESIGN.md → Status colour rules):
+ *   success — done, connected, live          warning — needs the owner's attention
+ *   danger  — something is broken or failed  info    — a neutral fact worth noticing
+ *   neutral — everything else                accent  — brand emphasis, never a status
  */
-export function StatusBadge({ status, size = 'sm', className = '' }) {
-  const norm = String(status || '').toLowerCase();
+export const TONE_STYLES = {
+  success: { pill: 'bg-success-soft text-success-fg border-success-line', dot: 'bg-success' },
+  warning: { pill: 'bg-warning-soft text-warning-fg border-warning-line', dot: 'bg-warning' },
+  danger: { pill: 'bg-danger-soft text-danger-fg border-danger-line', dot: 'bg-danger' },
+  info: { pill: 'bg-info-soft text-info-fg border-info-line', dot: 'bg-info' },
+  neutral: { pill: 'bg-neutral-soft text-neutral-fg border-neutral-line', dot: 'bg-neutral' },
+  accent: { pill: 'bg-accent-soft text-accent-fg border-accent-soft', dot: 'bg-accent' },
+  live: { pill: 'bg-success-soft text-success-fg border-success-line', dot: 'bg-success animate-pulse' },
+};
 
-  let styles = 'bg-[#F0EEF6] text-[#524E5E] border-[#E4E2EB]';
-  let dotColor = 'bg-[#524E5E]';
-  let label = String(status || 'Unknown').replaceAll('_', ' ');
-
-  if (norm === 'active' || norm === 'qualified' || norm === 'converted' || norm === 'meeting booked' || norm === 'resolved') {
-    styles = 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]';
-    dotColor = 'bg-[#10B981]';
-  } else if (norm === 'paused' || norm === 'draft' || norm === 'idle' || norm === 'new' || norm === 'requires_review' || norm === 'blocked') {
-    styles = 'bg-[#FFFBEB] text-[#92400E] border-[#FDE68A]';
-    dotColor = 'bg-[#F59E0B]';
-  } else if (norm === 'inbound') {
-    styles = 'bg-[#EFF6FF] text-[#1E40AF] border-[#BFDBFE]';
-    dotColor = 'bg-[#3B82F6]';
-  } else if (norm === 'outbound') {
-    styles = 'bg-[#F5F3FF] text-[#5B21B6] border-[#DDD6FE]';
-    dotColor = 'bg-[#8B5CF6]';
-  } else if (norm === 'unqualified' || norm === 'failed' || norm === 'cancelled') {
-    styles = 'bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]';
-    dotColor = 'bg-[#EF4444]';
-  } else if (norm === 'running') {
-    styles = 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]';
-    dotColor = 'bg-[#10B981] animate-pulse';
-  }
-
-  const sizeClass = size === 'xs' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs';
-
+/**
+ * Badge — a small label with a semantic tone.
+ *
+ *   <Badge tone="warning">Needs review</Badge>
+ *   <Badge tone="success" dot>Live</Badge>
+ */
+export function Badge({ tone = 'neutral', dot = false, size = 'sm', className = '', children, ...props }) {
+  const style = TONE_STYLES[tone] || TONE_STYLES.neutral;
+  const sizeClass = size === 'xs' ? 'px-1.5 py-0.5 text-meta' : 'px-2 py-0.5 text-meta font-medium';
   return (
     <span
-      className={`inline-flex items-center gap-1.5 font-semibold rounded-md border ${sizeClass} ${styles} ${className}`}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-pill border font-medium ${sizeClass} ${style.pill} ${className}`}
+      {...props}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
-      <span>{label}</span>
+      {dot && <span aria-hidden="true" className={`h-1.5 w-1.5 shrink-0 rounded-full ${style.dot}`} />}
+      {children}
     </span>
   );
 }
+
+/**
+ * StatusBadge / StatusPill — maps any internal status (agent, call, lead stage,
+ * campaign, follow-up, number…) to plain words and the right tone via the shared
+ * humanizer. Existing props (`status`, `size`, `className`) are unchanged; `tone`
+ * and `label` override the mapping when a caller knows better.
+ */
+export function StatusBadge({ status, size = 'sm', className = '', tone = null, label = null, dot = true }) {
+  const word = statusWord(status);
+  const resolvedTone = tone || (String(status || '').toLowerCase() === 'in_progress' ? 'live' : word.tone);
+  return (
+    <Badge tone={resolvedTone} dot={dot} size={size} className={className}>
+      {label || word.label}
+    </Badge>
+  );
+}
+
+export const StatusPill = StatusBadge;

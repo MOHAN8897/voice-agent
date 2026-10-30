@@ -9,7 +9,7 @@ export function ImpersonationBanner() {
 
   return (
     <div
-      className="shrink-0 border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-950"
+      className="shrink-0 border-b border-warning-line bg-warning-soft px-4 py-2 text-ui text-warning-fg"
       data-testid="impersonation-banner"
       role="status"
     >
@@ -23,11 +23,11 @@ export function ImpersonationBanner() {
               in <strong>{imp.tenantName}</strong>
             </>
           ) : null}
-          . Actions are audited.
+          . Everything done in this session is recorded.
         </p>
         <button
           type="button"
-          className="rounded-md border border-amber-400 bg-white px-3 py-1 text-xs font-medium hover:bg-amber-100"
+          className="min-h-[36px] rounded-control border border-warning-line bg-surface px-3 py-1 text-ui font-medium hover:bg-warning-soft"
           onClick={() => logout()}
         >
           End support session

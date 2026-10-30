@@ -1,6 +1,7 @@
 import React from 'react';
 import { Calculator } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
+import { PageHeader } from '../ui/PageHeader';
 import { UsageCalculator } from '../../components/UsageCalculator';
 import { usePricingCatalog } from '../../lib/usePricingCatalog';
 
@@ -9,21 +10,16 @@ export function UsageCalculatorModule() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-          Usage calculator
-        </h2>
-        <p className="text-xs text-[#524E5E] mt-0.5">
-          Estimate a month of phone calls against the published per-minute rate, by calls or by talk
-          time. The wallet and invoices stay the source of truth for what was actually charged.
-        </p>
-      </div>
+      <PageHeader
+        title="Usage calculator"
+        description="Estimate a month of phone calls by number of calls or by talk time. Your wallet and invoices show what was actually charged."
+      />
 
-      <SolidCard padding="p-5 sm:p-6">
-        <div className="flex items-center gap-2 text-xs font-semibold text-[#0F0E17] mb-4">
-          <Calculator size={15} className="text-[#6344E7]" aria-hidden="true" />
+      <SolidCard padding="p-5 sm:p-6" className="min-w-0">
+        <h2 className="flex items-center gap-2 text-title text-ink mb-4">
+          <Calculator size={16} className="text-fg-subtle" aria-hidden="true" />
           Estimate by voice tier
-        </div>
+        </h2>
         <UsageCalculator
           catalog={pricing.data}
           loading={pricing.loading}
@@ -32,9 +28,9 @@ export function UsageCalculatorModule() {
         />
       </SolidCard>
 
-      <p className="text-[11px] text-[#8C879A]">
-        Estimates apply the published per-minute phone rate; GST is shown when tax is configured.
-        Each call locks its rate when it starts, and the wallet records the exact amount charged.
+      <p className="text-meta text-fg-muted">
+        Estimates use the published per-minute phone rate, with GST shown when it applies.
+        Each call keeps the rate it started with, and your wallet records the exact amount charged.
       </p>
     </div>
   );

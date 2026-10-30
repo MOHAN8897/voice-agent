@@ -5,8 +5,7 @@ import { TactileButton } from './TactileButton';
 
 /**
  * CampaignComplianceModal
- * Required compliance attestation dialog before launching any bulk voice campaign.
- * Mandates explicit affirmative consent representation per regulatory standards.
+ * Required consent confirmation before launching any bulk calling campaign.
  */
 export function CampaignComplianceModal({
   isOpen,
@@ -35,27 +34,27 @@ export function CampaignComplianceModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Confirm calling consent for India"
-      subtitle={campaignName ? `Review legal requirements for "${campaignName}"` : 'Attestation of legal calling consent'}
+      subtitle={campaignName ? `Check the legal requirements for “${campaignName}”` : 'Confirm you are allowed to call these contacts'}
       maxWidth="max-w-xl"
     >
       <div className="space-y-5">
-        {/* Shield Icon Header Badge */}
-        <div className="flex items-center gap-3 p-3.5 bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl">
-          <div className="w-10 h-10 rounded-lg bg-[#FF5C35]/10 text-[#FF5C35] flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-5 h-5 text-[#FF5C35]" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-[#0F0E17]">
-              Review recipient consent &amp; preferences
-            </h3>
-            <p className="text-xs text-[#524E5E]">
-              {contactCount > 0 ? `${contactCount} contact${contactCount === 1 ? '' : 's'} queued for outbound dialing` : 'Outbound campaign dispatch'}
+        <div className="flex items-center gap-3 rounded-control border border-line bg-canvas p-3.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-accent-soft text-accent-fg" aria-hidden="true">
+            <ShieldCheck className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-ui font-semibold text-ink">Check consent and calling preferences</h3>
+            <p className="text-meta text-fg-body">
+              {contactCount > 0 ? (
+                <>
+                  <span className="font-mono tabular-nums">{contactCount.toLocaleString('en-IN')}</span> contact{contactCount === 1 ? '' : 's'} ready to call
+                </>
+              ) : 'Campaign calls'}
             </p>
           </div>
         </div>
 
-        {/* Attestation Body */}
-        <div className="space-y-3.5 text-xs sm:text-sm text-[#2D2A38] bg-[#F7F6FA] p-4 rounded-xl border border-[#E9E7F0] leading-relaxed">
+        <div className="space-y-3.5 rounded-control border border-line bg-canvas p-4 text-ui leading-relaxed text-ink sm:text-copy">
           <p>
             &ldquo;I confirm that I have valid consent or another permitted basis for these commercial calls, have checked recipient preferences through the authorised DND/consent process, and will honour opt-outs under TRAI's TCCCPR framework.&rdquo;
           </p>
@@ -64,16 +63,14 @@ export function CampaignComplianceModal({
           </p>
         </div>
 
-        {/* Clarifying Disclaimer Note */}
-        <div className="flex items-start gap-2.5 text-xs text-[#645D73] bg-amber-500/5 p-3 rounded-xl border border-amber-500/20">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2.5 rounded-control border border-warning-line bg-warning-soft p-3 text-meta text-warning-fg">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <p>
-            <strong className="text-[#0F0E17]">Before launch:</strong> Your workspace suppression list does not verify national DND or consent records. This confirmation records your acknowledgement; it does not certify your campaign. Calls outside India also need review under the destination's rules.
+            <strong className="font-semibold">Before launch:</strong> your own do-not-call list does not check national DND or consent records. This confirmation records that you have checked; it does not certify your campaign. Calls outside India also need checking against that country's rules.
           </p>
         </div>
 
-        {/* Mandatory Affirmative Consent Checkbox */}
-        <label className="flex items-start gap-3 p-3.5 rounded-xl border border-[#E4E2EB] hover:bg-[#FAF9FD] transition-colors cursor-pointer select-none">
+        <label className="flex cursor-pointer select-none items-start gap-3 rounded-control border border-line p-3.5 transition-colors hover:bg-canvas">
           <input
             id="compliance-attestation-checkbox"
             data-testid="compliance-attestation-checkbox"
@@ -81,32 +78,25 @@ export function CampaignComplianceModal({
             checked={accepted}
             onChange={(e) => setAccepted(e.target.checked)}
             disabled={isSubmitting}
-            className="mt-0.5 w-4 h-4 rounded text-[#FF5C35] focus:ring-[#FF5C35] border-[#D1CFDB]"
+            className="mt-0.5 h-4 w-4 accent-accent"
           />
-          <span className="text-xs sm:text-sm font-medium text-[#0F0E17]">
+          <span className="text-ui font-medium text-ink sm:text-copy">
             I have reviewed these requirements and confirm
           </span>
         </label>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-4 py-2 text-xs sm:text-sm font-medium text-[#524E5E] hover:text-[#0F0E17] hover:bg-[#FAF9FD] rounded-xl transition-colors border border-transparent hover:border-[#E4E2EB]"
-          >
+        <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
+          <TactileButton type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
             Cancel
-          </button>
+          </TactileButton>
           <TactileButton
             type="button"
             id="confirm-launch-campaign-btn"
             data-testid="confirm-launch-campaign-btn"
             onClick={handleConfirm}
             disabled={!accepted || isSubmitting}
-            className="!px-5 !py-2.5 text-xs sm:text-sm"
           >
-            {isSubmitting ? 'Launching...' : 'Confirm & Launch Campaign'}
+            {isSubmitting ? 'Launching…' : 'Confirm and launch campaign'}
           </TactileButton>
         </div>
       </div>

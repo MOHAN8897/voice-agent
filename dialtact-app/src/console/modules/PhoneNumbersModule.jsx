@@ -12,7 +12,10 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
-import { StatusBadge } from '../ui/StatusBadge';
+import { Badge, StatusBadge } from '../ui/StatusBadge';
+import { PageHeader } from '../ui/PageHeader';
+import { formatInr, walletAmounts } from '../../lib/money';
+import { humanizeToken } from '../../lib/internalLabels';
 import { TactileButton } from '../ui/TactileButton';
 import { Modal } from '../ui/Modal';
 import { useWorkspace } from '../context/WorkspaceContext';
@@ -22,11 +25,6 @@ import { useAuth } from '../../context/AuthContext';
 import { VoiceServiceKycCard } from '../ui/VoiceServiceKycCard';
 import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
 import { CatalogSkeleton, PhoneNumberRowSkeleton } from '../ui/Skeleton';
-
-function formatInr(value) {
-  const n = Number(value) || 0;
-  return `₹${n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 /** "₹X / month", or "Free" when the admin set the monthly rent to zero. */
 function monthlyRentLabel(inr) {
@@ -66,16 +64,10 @@ const FALLBACK_COUNTRIES = [
 ];
 
 export function TelephonyPlatformBadge({ provider, size = 'sm' }) {
-  const padding = size === 'xs' ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]';
-
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 font-mono uppercase font-bold rounded-md bg-purple-50 text-purple-700 border border-purple-200 tracking-wide ${padding}`}
-      title="Enterprise High-Capacity Voice Line"
-    >
-      <span className="w-1.5 h-1.5 rounded-full bg-purple-600 shrink-0" />
-      Direct Voice Line
-    </span>
+    <Badge tone="neutral" size={size === 'xs' ? 'xs' : 'sm'} className="font-sans" title="Calls on this number go through Dialtact's phone network">
+      Dialtact line
+    </Badge>
   );
 }
 
@@ -420,83 +412,72 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
   return (
     <div className="space-y-6">
-      {/* Header & Quick Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-[#0F0E17] tracking-tight">
-            Phone lines ({phoneNumbers.length})
-          </h2>
-          <p className="text-xs text-[#524E5E] mt-0.5">
-            Buy a number and connect it to an AI agent. Each number has a monthly rent, renewed from your
-            wallet on its purchase date each month; call time is billed separately.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
+      <PageHeader
+        title={`Phone numbers (${phoneNumbers.length})`}
+        description="Buy a number and connect it to an agent. Each number has a monthly rent, renewed from your wallet on its purchase date; call time is billed separately."
+        actions={
           <TactileButton
             onClick={onOpenBuyModal}
             variant="primary"
             icon={Plus}
             size="md"
           >
-            Buy Phone Number
+            Buy phone number
           </TactileButton>
-        </div>
-      </div>
+        }
+      />
 
       {providerInfo ? (
         /* Active Telephony Infrastructure Banner */
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]" data-testid="numbers-provider-banner">
-          <div className="flex items-center gap-2.5">
-            <Radio className="w-4 h-4 text-[#6344E7] shrink-0" />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-[#0F0E17]">
-                  Voice Network: Enterprise High-Capacity Line
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-card bg-surface border border-line shadow-craft-xs" data-testid="numbers-provider-banner">
+          <div className="flex min-w-0 items-start gap-2.5">
+            <Radio className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-copy font-semibold text-ink">
+                  Phone network
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
-                  Live &amp; Operational
-                </span>
+                <Badge tone="success" dot>Working</Badge>
               </div>
-              <p className="text-[11px] text-[#524E5E] mt-0.5">
-                All numbers are routed through low-latency enterprise voice networks.
+              <p className="text-ui text-fg-muted mt-0.5">
+                Calls to and from your numbers go through Dialtact's phone network.
               </p>
             </div>
           </div>
           {providerInfo.phoneNumber && (
-            <div className="text-left sm:text-right text-[11px] text-[#524E5E] font-mono">
-              Caller ID: <span className="font-bold text-[#0F0E17]">{providerInfo.phoneNumber}</span>
+            <div className="text-left sm:text-right text-ui text-fg-body">
+              Caller ID: <span className="font-mono tabular-nums font-semibold text-ink">{providerInfo.phoneNumber}</span>
             </div>
           )}
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <SolidCard className="p-4">
-          <div className="text-[10px] font-bold text-[#8C879A] uppercase">Owned lines</div>
-          <div className="text-2xl font-bold text-[#0F0E17]">{phoneNumbers.length}</div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <SolidCard padding="p-3 sm:p-4">
+          <div className="text-meta text-fg-muted">Numbers you own</div>
+          <div className="mt-0.5 text-heading font-mono tabular-nums text-ink">{phoneNumbers.length}</div>
         </SolidCard>
-        <SolidCard className="p-4">
-          <div className="text-[10px] font-bold text-[#8C879A] uppercase">Available to assign</div>
-          <div className="text-2xl font-bold text-[#047857]">{unassignedCount}</div>
+        <SolidCard padding="p-3 sm:p-4">
+          <div className="text-meta text-fg-muted">Not assigned</div>
+          <div className="mt-0.5 text-heading font-mono tabular-nums text-ink">{unassignedCount}</div>
         </SolidCard>
-        <SolidCard className="p-4">
-          <div className="text-[10px] font-bold text-[#8C879A] uppercase">Linked to agents</div>
-          <div className="text-2xl font-bold text-[#6344E7]">{assignedCount}</div>
+        <SolidCard padding="p-3 sm:p-4">
+          <div className="text-meta text-fg-muted">Linked to agents</div>
+          <div className="mt-0.5 text-heading font-mono tabular-nums text-ink">{assignedCount}</div>
         </SolidCard>
       </div>
 
       {/* Money the current lines cost per month, from the server's rates. */}
-      <div className="text-[11px] text-[#524E5E]" data-testid="numbers-rent-summary">
+      <div className="text-ui text-fg-body" data-testid="numbers-rent-summary">
         Monthly rent for {rentedNumbers.length} rented line{rentedNumbers.length === 1 ? '' : 's'}:{' '}
-        <span className="font-mono font-semibold text-[#0F0E17]">{formatInr(monthlyRentInr)}</span>{' '}
+        <span className="font-mono tabular-nums font-semibold text-ink">{formatInr(monthlyRentInr)}</span>{' '}
         per month.
         {nextRenewal ? (
           <>
             {' '}Next renewal:{' '}
-            <span className="font-semibold text-[#0F0E17]">{formatRenewalDate(nextRenewal.nextRenewalAt)}</span>
+            <span className="font-semibold text-ink">{formatRenewalDate(nextRenewal.nextRenewalAt)}</span>
             {', '}
-            <span className="font-mono font-semibold text-[#0F0E17]">{formatInr(nextRenewal.nextRenewalInr)}</span>
+            <span className="font-mono tabular-nums font-semibold text-ink">{formatInr(nextRenewal.nextRenewalInr)}</span>
             {' '}for {nextRenewal.formatted || nextRenewal.number}.
           </>
         ) : null}{' '}
@@ -504,22 +485,22 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       </div>
 
       {/* Numbers Inventory Table Card */}
-      <SolidCard padding="p-0" className="overflow-hidden">
+      <SolidCard padding="p-0" className="overflow-hidden min-w-0">
         <div className="overflow-x-auto touch-pan-x">
-          <table className="w-full text-left text-xs">
+          <table className="w-full min-w-[920px] text-left text-ui">
             <thead>
-              <tr className="border-b border-[#E4E2EB] bg-[#FAF9FD] text-[10px] font-bold text-[#8C879A] uppercase tracking-wider">
-                <th className="py-3 px-5">Phone Number</th>
-                <th className="py-3 px-4">Telephony Platform</th>
-                <th className="py-3 px-4">Location / Type</th>
-                <th className="py-3 px-4">Assigned AI Employee</th>
-                <th className="py-3 px-4">Monthly rent</th>
-                <th className="py-3 px-4">Calls</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-5 text-right">Actions</th>
+              <tr className="border-b border-line bg-canvas text-meta font-medium text-fg-muted">
+                <th className="py-2.5 px-5">Phone number</th>
+                <th className="py-2.5 px-4">Network</th>
+                <th className="py-2.5 px-4">Location and type</th>
+                <th className="py-2.5 px-4">Assigned agent</th>
+                <th className="py-2.5 px-4">Monthly rent</th>
+                <th className="py-2.5 px-4">Calls</th>
+                <th className="py-2.5 px-4">Status</th>
+                <th className="py-2.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E4E2EB]">
+            <tbody className="divide-y divide-line">
               {/* chisel: layout-stable skeleton while loading; explicit empty state otherwise */}
               {isLoading && phoneNumbers.length === 0 ? (
                 <tr>
@@ -531,12 +512,12 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 <tr>
                   <td colSpan={8} className="py-12 text-center">
                     <div className="max-w-xs mx-auto space-y-2">
-                      <div className="w-10 h-10 rounded-2xl bg-[#F0EEF6] flex items-center justify-center text-[#6344E7] mx-auto">
-                        <Phone className="w-5 h-5" />
+                      <div className="w-10 h-10 rounded-control bg-surface-subtle flex items-center justify-center text-fg-body mx-auto">
+                        <Phone className="w-5 h-5" aria-hidden="true" />
                       </div>
-                      <p className="text-xs font-bold text-[#0F0E17]">No active phone lines</p>
-                      <p className="text-[11px] text-[#524E5E]">
-                        Buy a virtual number to begin routing calls to your AI employees.
+                      <p className="text-title text-ink">No phone numbers yet</p>
+                      <p className="text-ui text-fg-muted">
+                        Buy a number so callers can reach your agents.
                       </p>
                       <TactileButton onClick={onOpenBuyModal} variant="primary" size="sm" icon={Plus}>
                         Buy number
@@ -546,22 +527,22 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 </tr>
               ) : (
                 phoneNumbers.map((num) => (
-                  <tr key={num.id} className="hover:bg-[#FAF9FD] transition-colors">
+                  <tr key={num.id} className="hover:bg-canvas transition-colors">
                     {/* Number & Capabilities */}
                     <td className="py-4 px-5">
-                    <div className="font-mono font-bold text-sm text-[#0F0E17] flex items-center gap-2 flex-wrap">
-                      <Phone className="w-3.5 h-3.5 text-[#6344E7]" />
+                    <div className="font-mono tabular-nums font-semibold text-copy text-ink flex items-center gap-2 whitespace-nowrap">
+                      <Phone className="w-3.5 h-3.5 shrink-0 text-fg-subtle" aria-hidden="true" />
                       <span>{num.number}</span>
-                      {num.isDevSandbox && (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200">
-                          {num.label || 'Shared test line'}
-                        </span>
-                      )}
                     </div>
-                    <div className="flex items-center gap-1.5 mt-1">
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      {num.isDevSandbox && (
+                        <Badge tone="info" size="xs">
+                          {num.label || 'Shared test line'}
+                        </Badge>
+                      )}
                       {num.capabilities?.map((cap) => (
-                        <span key={cap} className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#F0EEF6] text-[#524E5E] border border-[#E4E2EB]">
-                          {cap}
+                        <span key={cap} className="text-meta px-1.5 py-0.5 rounded-pill bg-surface-subtle text-fg-body border border-line">
+                          {String(cap).length <= 3 ? String(cap).toUpperCase() : humanizeToken(cap)}
                         </span>
                       ))}
                     </div>
@@ -576,8 +557,8 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
                   {/* Locality */}
                   <td className="py-4 px-4">
-                    <div className="font-semibold text-[#0F0E17]">{num.locality}</div>
-                    <div className="text-[11px] text-[#524E5E]">{num.country} • {num.type}</div>
+                    <div className="font-medium text-ink">{num.locality}</div>
+                    <div className="text-meta text-fg-muted">{num.country} · {num.type}</div>
                   </td>
 
                   {/* Assigned Agent Dropdown */}
@@ -592,9 +573,10 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                           showToast(err.message || 'Could not assign number', 'error');
                         }
                       }}
-                      className="bg-[#FAF9FD] border border-[#E4E2EB] hover:border-[#D1CFDB] rounded-xl px-2.5 py-1.5 text-xs text-[#0F0E17] font-medium focus:outline-none focus:border-[#6344E7] transition-colors"
+                      aria-label={`Agent for ${num.number}`}
+                      className="max-w-[14rem] bg-surface border border-line hover:border-line-strong rounded-control px-2.5 py-1.5 min-h-[36px] text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
                     >
-                      <option value="">Unassigned (Pool)</option>
+                      <option value="">Not assigned</option>
                       {agents.map((agent) => (
                         <option key={agent.id} value={agent.id}>
                           {agent.name} ({agent.role})
@@ -604,27 +586,27 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   </td>
 
                   {/* Monthly rent and next renewal */}
-                  <td className="py-4 px-4 text-[#524E5E]" data-testid="number-rent">
+                  <td className="py-4 px-4 text-fg-body" data-testid="number-rent">
                     {num.rentBilled ? (
                       <>
-                        <span className="font-mono">{monthlyRentLabel(num.nextRenewalInr ?? num.monthlyInr)}</span>
+                        <span className="font-mono tabular-nums text-ink whitespace-nowrap">{monthlyRentLabel(num.nextRenewalInr ?? num.monthlyInr)}</span>
                         {num.nextRenewalAt ? (
-                          <span className="block text-[10px] text-[#8C879A]">
-                            renews on {formatRenewalDate(num.nextRenewalAt)}
+                          <span className="block text-meta text-fg-muted">
+                            Renews on {formatRenewalDate(num.nextRenewalAt)}
                           </span>
                         ) : (
-                          <span className="block text-[10px] text-[#8C879A]">auto-renewal off</span>
+                          <span className="block text-meta text-fg-muted">Auto-renewal off</span>
                         )}
                       </>
                     ) : (
-                      <span className="text-[10px] text-[#8C879A]">No rent</span>
+                      <span className="text-meta text-fg-muted">No rent</span>
                     )}
                   </td>
 
                   {/* Line-level inbound/outbound switches */}
                   <td className="py-4 px-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="flex items-center gap-1.5 text-[10px] text-[#524E5E]">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="flex items-center gap-2 text-ui text-fg-body whitespace-nowrap">
                         <input
                           type="checkbox"
                           checked={num.inboundEnabled !== false}
@@ -638,11 +620,11 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                             }
                           }}
                           data-testid={`number-inbound-${num.id}`}
-                          className="w-3 h-3 accent-[#6344E7]"
+                          className="w-4 h-4 accent-accent"
                         />
                         Accepts calls
                       </label>
-                      <label className="flex items-center gap-1.5 text-[10px] text-[#524E5E]">
+                      <label className="flex items-center gap-2 text-ui text-fg-body whitespace-nowrap">
                         <input
                           type="checkbox"
                           checked={num.outboundEnabled !== false}
@@ -656,7 +638,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                             }
                           }}
                           data-testid={`number-outbound-${num.id}`}
-                          className="w-3 h-3 accent-[#6344E7]"
+                          className="w-4 h-4 accent-accent"
                         />
                         Can call out
                       </label>
@@ -667,12 +649,12 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   <td className="py-4 px-4">
                     <StatusBadge status={num.status} size="xs" />
                     {num.status === 'suspended_unpaid' && (
-                      <p className="mt-1 max-w-[12rem] text-[10px] leading-snug text-[#92400E]">
+                      <p className="mt-1 max-w-[12rem] text-meta text-danger-fg">
                         Paused: the monthly rental could not be charged. Add funds and it reactivates automatically.
                       </p>
                     )}
                     {num.status === 'release_pending' && (
-                      <p className="mt-1 max-w-[12rem] text-[10px] leading-snug text-[#524E5E]">
+                      <p className="mt-1 max-w-[12rem] text-meta text-fg-muted">
                         Release in progress with the phone network (up to 24 hours).
                       </p>
                     )}
@@ -681,8 +663,9 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   {/* Actions */}
                   <td className="py-4 px-5 text-right">
                     {num.status !== 'release_pending' && !num.isDevSandbox && (
-                      <button
-                        type="button"
+                      <TactileButton
+                        variant="danger"
+                        size="xs"
                         onClick={async () => {
                           if (!confirm(`Release ${num.number}? Calls to it stop, the rest of this month's rental is not refunded, and you may not be able to get this number back.`)) return;
                           try {
@@ -692,10 +675,9 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                             showToast(err.message || 'Could not release number', 'error');
                           }
                         }}
-                        className="text-xs font-semibold text-[#DC2626] hover:underline"
                       >
                         Release
-                      </button>
+                      </TactileButton>
                     )}
                   </td>
                 </tr>
@@ -714,7 +696,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
             ? 'Number ready'
             : pendingNumber && !kycApproved
               ? 'Verify phone service'
-              : 'Buy Virtual Telephone Number'
+              : 'Buy a phone number'
         }
         subtitle={
           purchasedSuccess
@@ -726,26 +708,26 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         maxWidth="max-w-2xl"
       >
         <div className="space-y-5">
-          {pendingNumber && !purchasedSuccess && <div className="rounded-xl border border-[#DCD7EE] bg-[#FAF9FD] p-4 space-y-2" data-testid="selected-number-review">
-            <p className="text-sm font-semibold">Selected number: <span className="font-mono">{pendingNumber.number}</span></p>
-            <p className="text-sm">{priceKnown ? `${rentLabel}, renews on ${firstRenewalLabel}` : 'Price unavailable — reload before buying.'}</p>
-            <p className="text-xs leading-relaxed text-[#524E5E]">Monthly rental is deducted from your prepaid wallet (GST was applied when you added funds) only when you confirm the purchase, and renews monthly. Call usage is billed separately. The number is not reserved during verification; availability and pricing are checked again before purchase.</p>
+          {pendingNumber && !purchasedSuccess && <div className="rounded-control border border-line-strong bg-canvas p-4 space-y-2" data-testid="selected-number-review">
+            <p className="text-copy font-semibold text-ink">Selected number: <span className="font-mono tabular-nums">{pendingNumber.number}</span></p>
+            <p className="text-copy text-ink">{priceKnown ? `${rentLabel}, renews on ${firstRenewalLabel}` : 'Price unavailable. Reload before buying.'}</p>
+            <p className="text-ui text-fg-body">Monthly rental is deducted from your prepaid wallet (GST was applied when you added funds) only when you confirm the purchase, and renews monthly. Call usage is billed separately. The number is not reserved during verification; availability and pricing are checked again before purchase.</p>
             <div className="flex flex-wrap items-center gap-3">
-              <button type="button" className="min-h-11 text-sm font-semibold text-[#6344E7]" onClick={forgetNumber}>Choose a different number</button>
+              <button type="button" className="min-h-11 text-ui font-semibold text-accent-fg hover:underline" onClick={forgetNumber}>Choose a different number</button>
               {kycApproved && <TactileButton variant="primary" disabled={buying || catalogLoading || !priceKnown || !canAffordNumber || !availableCatalog.some((item) => item.number === pendingNumber.number)} onClick={() => handleBuyNumber(availableCatalog.find((item) => item.number === pendingNumber.number))} data-testid="confirm-selected-number">{buying ? 'Buying…' : 'Confirm number purchase'}</TactileButton>}
             </div>
-            {kycApproved && !catalogLoading && !catalogError && !availableCatalog.some((item) => item.number === pendingNumber.number) && <p className="text-xs text-amber-800" role="status">This number is no longer available. Choose another number below.</p>}
+            {kycApproved && !catalogLoading && !catalogError && !availableCatalog.some((item) => item.number === pendingNumber.number) && <p className="text-ui text-warning-fg" role="status">This number is no longer available. Choose another number below.</p>}
           </div>}
           {purchasedSuccess ? (
             <div className="p-8 text-center space-y-2">
-              <CheckCircle2 className="w-10 h-10 text-[#047857] mx-auto animate-bounce" />
-              <h3 className="text-base font-bold text-[#0F0E17]">Number Successfully Provisioned!</h3>
-              <p className="font-mono text-sm text-[#6344E7]">{purchasedSuccess}</p>
-              <p className="text-xs text-[#524E5E]">Inbound calls will now route directly to your selected AI agent.</p>
+              <CheckCircle2 className="w-10 h-10 text-success-fg mx-auto" aria-hidden="true" />
+              <h3 className="text-title text-ink">Your number is ready</h3>
+              <p className="font-mono tabular-nums text-copy text-ink">{purchasedSuccess}</p>
+              <p className="text-ui text-fg-body">Incoming calls now go to the agent you chose.</p>
             </div>
           ) : pendingNumber && !kycApproved ? (
             kycLoading || kycMode === 'checking' ? (
-              <div className="rounded-2xl border border-[#E4E2EB] bg-[#FAF9FD] p-6 text-sm text-[#524E5E]" role="status" aria-busy="true">
+              <div className="rounded-card border border-line bg-canvas p-6 text-copy text-fg-body" role="status" aria-busy="true">
                 Checking verification status…
               </div>
             ) : kycMode === 'voice' ? (
@@ -753,7 +735,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
             ) : kycMode === 'platform' ? (
               <VerifyIdentityCard variant="gate" onApproved={() => setKycApproved(true)} />
             ) : kycMode === 'error' ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950" role="alert">
+              <div className="rounded-card border border-warning-line bg-warning-soft p-5 text-copy text-warning-fg" role="alert">
                 {kycStatusError || 'Could not load verification status. Close and reopen this window to retry.'}
               </div>
             ) : null
@@ -763,13 +745,13 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 <div
                   data-testid="buy-number-error"
                   role="alert"
-                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900 flex items-start gap-2"
+                  className="rounded-control border border-danger-line bg-danger-soft px-3 py-2 text-ui text-danger-fg flex items-start gap-2"
                 >
                   <p className="flex-1">{buyError}</p>
                   <button
                     type="button"
                     aria-label="Dismiss"
-                    className="shrink-0 p-1 rounded-md hover:bg-red-100"
+                    className="shrink-0 -m-1 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-control hover:bg-surface/60"
                     onClick={() => setBuyError(null)}
                   >
                     <X className="w-3.5 h-3.5" />
@@ -779,33 +761,33 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
               {buying && buyPhase && (
                 <div role="status" aria-live="polite" data-testid="buy-number-phase"
-                  className="rounded-lg border border-[#DCD7EE] bg-[#FAF9FD] px-3 py-2 text-xs text-[#0F0E17]">
+                  className="rounded-control border border-info-line bg-info-soft px-3 py-2 text-ui text-info-fg">
                   {buyPhase === 'provisioning'
                     ? 'Payment received. Activating your number with the phone network; this can take up to a minute. Keep this window open.'
-                    : 'Confirming availability and placing your order...'}
+                    : 'Checking the number is still free and placing your order…'}
                 </div>
               )}
 
               {/* Monthly rent and affordability, both from the server. */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
-                <div className="text-[11px] text-[#524E5E]">
-                  <span className="font-semibold text-[#0F0E17]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-control bg-canvas border border-line">
+                <div className="text-ui text-fg-body">
+                  <span className="font-semibold text-ink">
                     {priceKnown ? `${rentLabel}, renews on ${firstRenewalLabel}` : 'Price unavailable'}
                   </span>
                   {', the first month deducted from your prepaid wallet when you confirm.'}
-                  <span className="block mt-0.5 text-[10px] text-[#8C879A]">
+                  <span className="block mt-0.5 text-meta text-fg-muted">
                     Wallet credit already includes GST, charged when funds were added; no further tax is added here.
                     The rent renews on the same date each month at the price in force that day. If the wallet cannot cover it, the line is paused (not released) until you top up.
                     Call usage is billed separately. Verification is required before purchase.
                   </span>
-                  <span className="block mt-0.0">
-                    Wallet: {balanceInr > 0 ? formatInr(balanceInr) : `$${balanceUsd.toFixed(2)}`}
+                  <span className="block mt-1">
+                    Wallet: <span className="font-mono tabular-nums font-semibold text-ink">{walletAmounts(wallet).primary}</span>
                   </span>
                 </div>
                 {priceKnown && !canAffordNumber && (
                   <button
                     type="button"
-                    className="shrink-0 text-[11px] font-semibold text-[#B45309] hover:underline"
+                    className="shrink-0 min-h-[36px] text-ui font-semibold text-accent-fg hover:underline"
                     onClick={() => openAddFunds?.('buy-number')}
                   >
                     Add credit to buy a number
@@ -813,18 +795,19 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 )}
               </div>
 
-              {kycLoading && <p role="status" className="text-sm text-[#524E5E]">Checking phone service verification…</p>}
-              {kycStatusError && <p role="alert" className="text-sm text-red-800">{kycStatusError}</p>}
+              {kycLoading && <p role="status" className="text-copy text-fg-body">Checking phone service verification…</p>}
+              {kycStatusError && <p role="alert" className="text-copy text-danger-fg">{kycStatusError}</p>}
 
               {/* Search Filters */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-control bg-canvas border border-line">
                 {/* Country */}
                 <div>
-                  <label className="block text-[10px] font-bold text-[#8C879A] uppercase mb-1">Country</label>
+                  <label htmlFor="buy-number-country" className="block text-meta font-medium text-fg-body mb-1">Country</label>
                   <select
+                    id="buy-number-country"
                     value={selectedCountry}
                     onChange={(e) => setSelectedCountry(e.target.value)}
-                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                    className="w-full bg-surface border border-line rounded-control px-3 py-2 min-h-[44px] sm:min-h-[36px] text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
                     data-testid="buy-number-country"
                   >
                     {countries.map((c) => (
@@ -837,43 +820,46 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
                 {/* Type */}
                 <div>
-                  <label className="block text-[10px] font-bold text-[#8C879A] uppercase mb-1">Number Type</label>
+                  <label htmlFor="buy-number-type" className="block text-meta font-medium text-fg-body mb-1">Number type</label>
                   <select
+                    id="buy-number-type"
                     value={selectedType}
                     onChange={(e) => setSelectedType(e.target.value)}
-                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                    className="w-full bg-surface border border-line rounded-control px-3 py-2 min-h-[44px] sm:min-h-[36px] text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
                   >
-                    <option value="Local DID">Local DID (Area Code)</option>
-                    <option value="Toll-Free">Toll-Free (800 / 888)</option>
-                    <option value="All">All Types</option>
+                    <option value="Local DID">Local (area code)</option>
+                    <option value="Toll-Free">Toll-free (800 / 888)</option>
+                    <option value="All">All types</option>
                   </select>
                 </div>
 
                 {/* Area Code */}
                 <div>
-                  <label className="block text-[10px] font-bold text-[#8C879A] uppercase mb-1">Area Code / Prefix</label>
+                  <label htmlFor="buy-number-area" className="block text-meta font-medium text-fg-body mb-1">Area code or prefix</label>
                   <input
+                    id="buy-number-area"
                     type="text"
                     value={searchAreaCode}
                     onChange={(e) => setSearchAreaCode(e.target.value)}
-                    placeholder="e.g. 415, 212, 800"
-                    className="w-full bg-white border border-[#E4E2EB] rounded-lg p-2 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] focus:outline-none focus:border-[#6344E7] transition-colors"
+                    placeholder="For example 415, 212, 800"
+                    className="w-full bg-surface border border-line rounded-control px-3 py-2 min-h-[44px] sm:min-h-[36px] text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
                   />
                 </div>
               </div>
 
               {/* Direct Agent Binding Dropdown */}
-              <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <span className="text-xs font-bold text-[#0F0E17] block">Assign Directly to AI Employee</span>
-                  <span className="text-[11px] text-[#524E5E]">Optional: Route all inbound traffic immediately to this agent.</span>
+              <div className="p-3 rounded-control bg-canvas border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <label htmlFor="buy-number-agent" className="text-ui font-medium text-ink block">Assign to an agent</label>
+                  <span className="text-meta text-fg-muted">Optional. Incoming calls go straight to this agent.</span>
                 </div>
                 <select
+                  id="buy-number-agent"
                   value={targetAgentId}
                   onChange={(e) => setTargetAgentId(e.target.value)}
-                  className="bg-white border border-[#E4E2EB] rounded-xl px-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-[34px] text-base sm:text-xs text-[#0F0E17] font-semibold focus:outline-none focus:border-[#6344E7] transition-colors"
+                  className="w-full sm:w-auto sm:max-w-[16rem] bg-surface border border-line rounded-control px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-[36px] text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
                 >
-                  <option value="">Leave Unassigned (Pool)</option>
+                  <option value="">Leave unassigned</option>
                   {agents.map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.name} ({a.role})
@@ -887,14 +873,14 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 {catalogLoading ? (
                   <CatalogSkeleton rows={4} />
                 ) : catalogError ? (
-                  <div className="p-6 text-center text-xs text-red-800 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+                  <div className="p-4 text-ui text-danger-fg bg-danger-soft border border-danger-line rounded-control flex items-start gap-2">
                     <p className="flex-1">{catalogError}</p>
-                    <button type="button" aria-label="Dismiss" onClick={() => setCatalogError(null)}>
+                    <button type="button" aria-label="Dismiss" className="-m-1 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-control" onClick={() => setCatalogError(null)}>
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ) : filteredCatalog.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-[#524E5E]">
+                  <div className="p-8 text-center text-ui text-fg-muted">
                     No phone numbers are available for <strong>{selectedCountry}</strong> right
                     now. Try another country or check back later.
                   </div>
@@ -902,29 +888,29 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   filteredCatalog.map((item) => (
                     <div
                       key={item.formatted || item.number || item.e164}
-                      className="p-3.5 rounded-xl bg-white border border-[#E4E2EB] hover:border-[#D1CFDB] flex items-center justify-between gap-4 transition-all shadow-2xs"
+                      className="p-3.5 rounded-control bg-surface border border-line hover:border-line-strong flex flex-wrap items-center justify-between gap-3 transition-colors shadow-craft-xs"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#F0EEF6] border border-[#E4E2EB] flex items-center justify-center text-[#6344E7]">
-                          <Phone className="w-3.5 h-3.5" />
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="w-8 h-8 shrink-0 rounded-control bg-surface-subtle border border-line flex items-center justify-center text-fg-body">
+                          <Phone className="w-3.5 h-3.5" aria-hidden="true" />
                         </div>
-                        <div>
-                          <div className="font-mono font-bold text-sm text-[#0F0E17] flex items-center gap-2">
+                        <div className="min-w-0">
+                          <div className="font-mono tabular-nums font-semibold text-copy text-ink flex flex-wrap items-center gap-2">
                             <span>{item.number}</span>
                             <TelephonyPlatformBadge
                               provider={item.provider || providerInfo?.activeProvider || 'vobiz'}
                               size="xs"
                             />
                           </div>
-                          <div className="text-[10px] text-[#524E5E]">{item.locality || item.region || 'National'} • {item.type}</div>
+                          <div className="text-meta text-fg-muted">{item.locality || item.region || 'National'} · {item.type}</div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-mono font-semibold text-[#524E5E]">
+                      <div className="flex items-center gap-3 ml-auto">
+                        <span className="text-ui font-mono tabular-nums font-medium text-fg-body whitespace-nowrap">
                           {rentLabel}
                           {item.source === 'inventory' ? (
-                            <span className="ml-1 text-[10px] text-[#047857]">In stock</span>
+                            <span className="ml-1.5 font-sans text-meta text-success-fg">In stock</span>
                           ) : null}
                         </span>
                         <TactileButton

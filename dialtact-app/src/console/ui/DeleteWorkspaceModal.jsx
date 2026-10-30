@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Modal } from './Modal';
 import { api } from '../../services/api';
+import { walletAmounts } from '../../lib/money';
 
 /**
  * Destructive workspace deletion modal ("Danger Zone").
@@ -166,24 +167,24 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Delete Workspace"
-      subtitle={`Step ${step} of 2 — ${step === 1 ? 'Grace period & workspace backup' : 'Confirm deletion'}`}
+      title="Delete workspace"
+      subtitle={`Step ${step} of 2: ${step === 1 ? 'grace period and backup' : 'confirm deletion'}`}
       maxWidth="max-w-xl"
     >
-      <div className="p-5 sm:p-6 space-y-5">
+      <div className="space-y-5">
         {loadingPreflight && (
           <div className="py-12 flex flex-col items-center justify-center text-center gap-3">
-            <Loader2 className="w-6 h-6 animate-spin text-rose-600" />
-            <p className="text-xs text-[#524E5E]">Checking workspace resources and active services…</p>
+            <Loader2 className="w-6 h-6 animate-spin text-danger-fg" />
+            <p className="text-ui text-fg-body">Checking what is in this workspace…</p>
           </div>
         )}
 
         {preflightError && !loadingPreflight && (
-          <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-900 text-xs flex gap-3">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          <div className="p-4 rounded-control border border-danger-line bg-danger-soft text-danger-fg text-xs flex gap-3">
+            <AlertCircle className="w-4 h-4 text-danger-fg shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold">Unable to run preflight check</p>
-              <p className="mt-0.5 text-rose-800">{preflightError}</p>
+              <p className="font-semibold">We could not check this workspace</p>
+              <p className="mt-0.5 text-danger-fg">{preflightError}</p>
             </div>
           </div>
         )}
@@ -194,76 +195,76 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
             {step === 1 && (
               <div className="space-y-4">
                 {isBlocked ? (
-                  <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-950 text-xs space-y-2">
-                    <div className="flex items-center gap-2 font-bold text-rose-700">
+                  <div className="p-4 rounded-control border border-danger-line bg-danger-soft text-danger-fg text-xs space-y-2">
+                    <div className="flex items-center gap-2 font-bold text-danger-fg">
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       Deletion is currently blocked
                     </div>
-                    <ul className="list-disc pl-5 space-y-1 text-rose-900">
+                    <ul className="list-disc pl-5 space-y-1 text-danger-fg">
                       {preflight.blockingReasons.map((r, i) => (
                         <li key={i}>{r}</li>
                       ))}
                     </ul>
-                    <p className="text-[11px] text-rose-800 mt-2">
+                    <p className="text-meta text-danger-fg mt-2">
                       You must resolve these items before this workspace can be deleted.
                     </p>
                   </div>
                 ) : (
                   <>
                     {/* Clear 14-day Grace Period Banner */}
-                    <div className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/70 text-amber-950 text-xs space-y-2">
-                      <div className="flex items-center gap-2 font-bold text-amber-900">
-                        <Clock className="w-4 h-4 text-amber-700 shrink-0" />
-                        <span>14-Day Quarantine Grace Period</span>
+                    <div className="p-3.5 rounded-control border border-warning-line bg-warning-soft text-warning-fg text-xs space-y-2">
+                      <div className="flex items-center gap-2 font-bold text-warning-fg">
+                        <Clock className="w-4 h-4 text-warning-fg shrink-0" />
+                        <span>14-day grace period</span>
                       </div>
-                      <p className="text-[11px] text-amber-900 leading-relaxed">
-                        When you confirm deletion, your workspace enters a{' '}
-                        <strong>14-day safety grace period</strong>. During this window:
+                      <p className="text-ui text-warning-fg">
+                        When you confirm, your workspace is kept for{' '}
+                        <strong>14 days</strong> before it is deleted. During that time:
                       </p>
-                      <ul className="list-disc pl-5 space-y-1 text-[11px] text-amber-900">
+                      <ul className="list-disc pl-5 space-y-1 text-ui text-warning-fg">
                         <li>
-                          <strong>Calls are paused:</strong> Voice assistants and telephony trunks are
-                          deactivated immediately.
+                          <strong>Calls stop:</strong> your agents and phone numbers stop taking and
+                          making calls straight away.
                         </li>
                         <li>
-                          <strong>1-Click Restoration:</strong> You can cancel deletion and reactivate
-                          your entire workspace at any time within 14 days.
+                          <strong>You can change your mind:</strong> cancel the deletion and get your
+                          whole workspace back at any time within 14 days.
                         </li>
                         <li>
-                          <strong>Permanent Purge:</strong> After 14 days, all voice prompts, call logs,
-                          contacts, and configurations are permanently erased.
+                          <strong>Then it is gone:</strong> after 14 days, all agent prompts, call logs,
+                          contacts and settings are permanently erased.
                         </li>
                       </ul>
                     </div>
 
                     {/* Resource Counters Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] text-center">
-                        <div className="text-lg font-bold text-[#0F0E17]">{preflight.agentsCount}</div>
-                        <div className="text-[10px] text-[#524E5E] font-medium">Voice Agents</div>
+                      <div className="p-3 rounded-control bg-canvas border border-line text-center">
+                        <div className="text-heading font-mono tabular-nums text-ink">{preflight.agentsCount}</div>
+                        <div className="text-meta text-fg-muted">Agents</div>
                       </div>
-                      <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] text-center">
-                        <div className="text-lg font-bold text-[#0F0E17]">{preflight.phoneNumbersCount}</div>
-                        <div className="text-[10px] text-[#524E5E] font-medium">Phone Numbers</div>
+                      <div className="p-3 rounded-control bg-canvas border border-line text-center">
+                        <div className="text-heading font-mono tabular-nums text-ink">{preflight.phoneNumbersCount}</div>
+                        <div className="text-meta text-fg-muted">Phone numbers</div>
                       </div>
-                      <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] text-center">
-                        <div className="text-lg font-bold text-[#0F0E17]">{preflight.integrationsCount || 0}</div>
-                        <div className="text-[10px] text-[#524E5E] font-medium">Integrations</div>
+                      <div className="p-3 rounded-control bg-canvas border border-line text-center">
+                        <div className="text-heading font-mono tabular-nums text-ink">{preflight.integrationsCount || 0}</div>
+                        <div className="text-meta text-fg-muted">Integrations</div>
                       </div>
-                      <div className="p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] text-center">
-                        <div className="text-lg font-bold text-[#0F0E17]">{preflight.activeCallsCount}</div>
-                        <div className="text-[10px] text-[#524E5E] font-medium">Active Calls</div>
+                      <div className="p-3 rounded-control bg-canvas border border-line text-center">
+                        <div className="text-heading font-mono tabular-nums text-ink">{preflight.activeCallsCount}</div>
+                        <div className="text-meta text-fg-muted">Calls in progress</div>
                       </div>
                     </div>
 
                     {/* Warnings List */}
                     {preflight.warnings && preflight.warnings.length > 0 && (
-                      <div className="p-3 rounded-xl border border-rose-200 bg-rose-50/50 text-rose-950 text-xs space-y-1">
-                        <div className="flex items-center gap-1.5 font-bold text-rose-800">
+                      <div className="p-3 rounded-control border border-danger-line bg-danger-soft text-danger-fg text-xs space-y-1">
+                        <div className="flex items-center gap-1.5 font-bold text-danger-fg">
                           <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                          <span>Resources Affected</span>
+                          <span>What will be affected</span>
                         </div>
-                        <ul className="list-disc pl-5 space-y-0.5 text-rose-900 text-[11px]">
+                        <ul className="list-disc pl-5 space-y-0.5 text-danger-fg text-meta">
                           {preflight.warnings.map((warn, i) => (
                             <li key={i}>{warn}</li>
                           ))}
@@ -273,42 +274,43 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
 
                     {/* Balance Forfeiture Confirmation Checkbox */}
                     {hasBalance && (
-                      <label className="flex items-start gap-2.5 p-3 rounded-xl border border-rose-200 bg-rose-50/60 cursor-pointer text-xs">
+                      <label className="flex items-start gap-2.5 p-3 rounded-control border border-danger-line bg-danger-soft cursor-pointer text-xs">
                         <input
                           type="checkbox"
                           checked={forfeitConfirmed}
                           onChange={(e) => setForfeitConfirmed(e.target.checked)}
-                          className="mt-0.5 rounded border-[#E4E2EB] text-rose-600 focus:ring-rose-500"
+                          className="mt-0.5 rounded border-line text-danger-fg focus:ring-danger"
                         />
-                        <span className="text-rose-950 font-medium">
-                          I agree to forfeit my remaining wallet balance of $
-                          {(preflight.walletBalanceUsd || 0).toFixed(2)} upon deletion completion.
+                        <span className="text-danger-fg font-medium">
+                          I agree to give up my remaining wallet balance of{' '}
+                          {walletAmounts({ balanceUsd: preflight.walletBalanceUsd || 0 }).primary}{' '}
+                          (${(preflight.walletBalanceUsd || 0).toFixed(2)}) when the deletion is complete.
                         </span>
                       </label>
                     )}
 
                     {/* Multi-Method Backup & Export Section */}
-                    <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-2.5">
+                    <div className="p-3.5 rounded-control bg-canvas border border-line space-y-2.5">
                       <div>
-                        <div className="text-xs font-bold text-[#0F0E17]">
-                          Backup & Export Workspace Data
+                        <div className="text-copy font-semibold text-ink">
+                          Back up your workspace
                         </div>
-                        <p className="text-[11px] text-[#524E5E]">
-                          Before proceeding, export your agents and workspace records to keep a local copy:
+                        <p className="text-ui text-fg-body">
+                          Before you continue, download a copy of your agents and records:
                         </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {/* 1. Agent Configurations JSON */}
-                        <div className="p-2.5 rounded-lg bg-white border border-[#E4E2EB] flex flex-col justify-between gap-2">
+                        <div className="p-2.5 rounded-control bg-surface border border-line flex flex-col justify-between gap-2">
                           <div className="flex items-start gap-2">
-                            <FileJson className="w-4 h-4 text-[#6344E7] shrink-0 mt-0.5" />
+                            <FileJson className="w-4 h-4 text-accent-fg shrink-0 mt-0.5" />
                             <div>
-                              <div className="text-[11px] font-semibold text-[#0F0E17]">
-                                Agent Configs (JSON)
+                              <div className="text-meta font-semibold text-ink">
+                                Agent settings (JSON)
                               </div>
-                              <div className="text-[10px] text-[#524E5E] leading-tight">
-                                Prompts, voice stack, greetings & scripts
+                              <div className="text-meta text-fg-body leading-tight">
+                                Prompts, voices, greetings and scripts
                               </div>
                             </div>
                           </div>
@@ -316,7 +318,7 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                             type="button"
                             disabled={exportingAgents}
                             onClick={handleExportAgents}
-                            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#E4E2EB] hover:border-[#6344E7] bg-white text-[11px] font-semibold text-[#0F0E17] hover:text-[#6344E7] transition-colors disabled:opacity-50"
+                            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-control border border-line hover:border-accent bg-surface text-meta font-semibold text-ink hover:text-accent-fg transition-colors disabled:opacity-50"
                           >
                             {exportingAgents ? (
                               <>
@@ -325,7 +327,7 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                               </>
                             ) : (
                               <>
-                                <Download className="w-3 h-3 text-[#6344E7]" />
+                                <Download className="w-3 h-3 text-accent-fg" />
                                 Download JSON
                               </>
                             )}
@@ -333,15 +335,15 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                         </div>
 
                         {/* 2. Full Workspace Archive ZIP */}
-                        <div className="p-2.5 rounded-lg bg-white border border-[#E4E2EB] flex flex-col justify-between gap-2">
+                        <div className="p-2.5 rounded-control bg-surface border border-line flex flex-col justify-between gap-2">
                           <div className="flex items-start gap-2">
-                            <Archive className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                            <Archive className="w-4 h-4 text-success-fg shrink-0 mt-0.5" />
                             <div>
-                              <div className="text-[11px] font-semibold text-[#0F0E17]">
-                                Full Archive (ZIP)
+                              <div className="text-meta font-semibold text-ink">
+                                Full archive (ZIP)
                               </div>
-                              <div className="text-[10px] text-[#524E5E] leading-tight">
-                                Call logs CSV, contacts, invoices & agents
+                              <div className="text-meta text-fg-body leading-tight">
+                                Call logs (CSV), contacts, invoices and agents
                               </div>
                             </div>
                           </div>
@@ -349,7 +351,7 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                             type="button"
                             disabled={exportingArchive}
                             onClick={handleExportArchive}
-                            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[#E4E2EB] hover:border-emerald-600 bg-white text-[11px] font-semibold text-[#0F0E17] hover:text-emerald-700 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-control border border-line hover:border-success bg-surface text-meta font-semibold text-ink hover:text-success-fg transition-colors disabled:opacity-50"
                           >
                             {exportingArchive ? (
                               <>
@@ -358,7 +360,7 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                               </>
                             ) : (
                               <>
-                                <Download className="w-3 h-3 text-emerald-600" />
+                                <Download className="w-3 h-3 text-success-fg" />
                                 Export Takeout
                               </>
                             )}
@@ -367,8 +369,8 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                       </div>
 
                       {exportNotice && (
-                        <p className="text-[11px] font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                        <p className="text-meta font-medium text-success-fg bg-success-soft border border-success-line rounded-control px-2.5 py-1.5 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-success-fg" />
                           <span>{exportNotice}</span>
                         </p>
                       )}
@@ -376,11 +378,11 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                   </>
                 )}
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#E4E2EB]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-line">
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17] transition-colors"
+                    className="min-h-[40px] px-4 py-2 rounded-control text-ui font-semibold text-fg-body hover:text-ink hover:bg-canvas transition-colors"
                   >
                     Cancel
                   </button>
@@ -388,7 +390,7 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                     type="button"
                     disabled={isBlocked || (hasBalance && !forfeitConfirmed)}
                     onClick={() => setStep(2)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 transition-all shadow-sm"
+                    className="inline-flex min-h-[40px] items-center gap-1.5 px-4 py-2 rounded-control text-ui font-semibold text-white bg-danger-fg hover:bg-danger disabled:opacity-50 transition-colors shadow-craft-xs"
                   >
                     Proceed to Confirmation
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -400,27 +402,27 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
             {/* ---------------- STEP 2: REASON & TYPE "delete" ---------------- */}
             {step === 2 && (
               <form onSubmit={handleSubmitDelete} className="space-y-4">
-                <div className="p-3.5 rounded-xl border border-rose-200 bg-rose-50/70 text-rose-950 text-xs space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-rose-800">
-                    <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span>Workspace Deletion Confirmation</span>
+                <div className="p-3.5 rounded-control border border-danger-line bg-danger-soft text-danger-fg text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-danger-fg">
+                    <ShieldAlert className="w-4 h-4 text-danger-fg shrink-0" />
+                    <span>Confirm deletion</span>
                   </div>
-                  <p className="text-[11px] text-rose-900 leading-relaxed">
-                    No password or email verification code is required. Simply select the reason for
-                    leaving and type the word <strong>delete</strong> below to begin the 14-day quarantine.
+                  <p className="text-ui text-danger-fg">
+                    Tell us why you are leaving and type the word <strong>delete</strong> below to start
+                    the 14-day grace period.
                   </p>
                 </div>
 
                 {submitError && (
-                  <p className="text-[11px] font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 flex items-center gap-1.5">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-600" />
+                  <p className="text-meta font-medium text-danger-fg bg-danger-soft border border-danger-line rounded-control px-3 py-2 flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-danger-fg" />
                     <span>{submitError}</span>
                   </p>
                 )}
 
                 {/* Reason survey */}
                 <div>
-                  <label htmlFor="delete-reason" className="block text-[11px] font-semibold text-[#0F0E17] mb-1">
+                  <label htmlFor="delete-reason" className="block text-ui font-medium text-ink mb-1">
                     Why are you deleting this workspace?
                   </label>
                   <select
@@ -428,10 +430,10 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     required
-                    className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#6344E7] text-[#0F0E17]"
+                    className="w-full text-base sm:text-ui px-3.5 py-2.5 rounded-control bg-surface border border-line focus:outline-none focus:border-accent text-ink"
                   >
                     <option value="">Select a reason…</option>
-                    <option value="pricing">Pricing / Too expensive</option>
+                    <option value="pricing">Too expensive</option>
                     <option value="missing_features">Missing required features</option>
                     <option value="switched_providers">Switching to another provider</option>
                     <option value="project_completed">Project or trial completed</option>
@@ -442,7 +444,7 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
 
                 {/* Optional additional notes */}
                 <div>
-                  <label htmlFor="delete-feedback" className="block text-[11px] font-semibold text-[#0F0E17] mb-1">
+                  <label htmlFor="delete-feedback" className="block text-ui font-medium text-ink mb-1">
                     Additional feedback (optional)
                   </label>
                   <textarea
@@ -451,14 +453,14 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                     onChange={(e) => setFeedback(e.target.value)}
                     placeholder="Tell us what we could have done better…"
                     rows={2}
-                    className="w-full text-xs px-3.5 py-2 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-[#6344E7] text-[#0F0E17] resize-none"
+                    className="w-full text-base sm:text-ui px-3.5 py-2 rounded-control bg-surface border border-line focus:outline-none focus:border-accent text-ink resize-none"
                   />
                 </div>
 
                 {/* Confirmation input: Type "delete" */}
                 <div>
-                  <label htmlFor="confirm-delete-word" className="block text-[11px] font-semibold text-[#0F0E17] mb-1">
-                    Type the word <span className="text-rose-600 font-bold">delete</span> to confirm
+                  <label htmlFor="confirm-delete-word" className="block text-ui font-medium text-ink mb-1">
+                    Type the word <span className="text-danger-fg font-bold">delete</span> to confirm
                   </label>
                   <input
                     id="confirm-delete-word"
@@ -467,16 +469,16 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                     onChange={(e) => setConfirmationName(e.target.value)}
                     placeholder="delete"
                     autoFocus
-                    className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] focus:outline-none focus:border-rose-600 text-[#0F0E17] font-mono"
+                    className="w-full text-base sm:text-ui px-3.5 py-2.5 rounded-control bg-surface border border-line focus:outline-none focus:border-danger text-ink font-mono"
                   />
                 </div>
 
-                <div className="flex justify-between items-center pt-2 border-t border-[#E4E2EB]">
+                <div className="flex justify-between items-center pt-2 border-t border-line">
                   <button
                     type="button"
                     onClick={() => setStep(1)}
                     disabled={submitting}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#524E5E] hover:text-[#0F0E17] transition-colors"
+                    className="inline-flex min-h-[40px] items-center gap-1.5 px-3 py-2 rounded-control text-ui font-semibold text-fg-body hover:text-ink hover:bg-canvas transition-colors"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     Back
@@ -488,7 +490,7 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
                       confirmationName.trim().toLowerCase() !== 'delete' ||
                       !reason
                     }
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 transition-all shadow-sm"
+                    className="inline-flex min-h-[40px] items-center gap-1.5 px-5 py-2.5 rounded-control text-ui font-semibold text-white bg-danger-fg hover:bg-danger disabled:opacity-50 transition-colors shadow-craft-xs"
                   >
                     {submitting ? (
                       <>

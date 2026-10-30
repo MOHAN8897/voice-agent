@@ -81,44 +81,44 @@ export function AgentInboundPanel({ agentId, agentName, onNavigateToSettings }) 
   return (
     <div className="space-y-5" data-testid="agent-inbound-panel">
       {/* Hero Summary Card */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-w-0">
         {/* Assigned Line Card */}
-        <SolidCard className="space-y-3 p-5">
+        <SolidCard padding="p-5" className="space-y-3 min-w-0">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#524E5E] uppercase tracking-wider">
-              Assigned Phone Line
+            <span className="text-ui font-medium text-fg-body">
+              Assigned phone line
             </span>
-            <div className="w-8 h-8 rounded-lg bg-[#FF5C35]/10 text-[#FF5C35] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-control bg-accent-soft text-accent flex items-center justify-center">
               <PhoneIncoming className="w-4 h-4" />
             </div>
           </div>
           {assigned ? (
             <div>
-              <div className="text-lg font-bold font-mono text-[#0F0E17]">
+              <div className="text-heading font-mono tabular-nums text-ink truncate" title={assigned.number}>
                 {assigned.number}
               </div>
               <div className="flex items-center gap-2 mt-1">
                 <StatusBadge status={isInboundEnabled ? 'active' : 'paused'} size="xs" />
-                <span className="text-[11px] text-[#524E5E]">
-                  {isInboundEnabled ? 'Live for inbound calls' : 'Inbound calls paused'}
+                <span className="text-meta text-fg-body">
+                  {isInboundEnabled ? 'Taking incoming calls' : 'Incoming calls paused'}
                 </span>
               </div>
             </div>
           ) : (
             <div>
-              <div className="text-sm font-semibold text-[#8C879A]">
+              <div className="text-copy font-semibold text-fg-muted">
                 No phone number assigned
               </div>
-              <p className="text-[11px] text-[#524E5E] mt-1">
-                Callers cannot reach this agent via phone until a number is linked.
+              <p className="text-meta text-fg-body mt-1">
+                Callers can’t reach this employee by phone until you give them a number.
               </p>
               {onNavigateToSettings && (
                 <button
                   type="button"
                   onClick={onNavigateToSettings}
-                  className="mt-2 text-xs font-semibold text-[#FF5C35] hover:underline inline-flex items-center gap-1"
+                  className="mt-2 text-ui font-semibold text-accent hover:underline inline-flex items-center gap-1"
                 >
-                  Assign number in Settings <ArrowRight className="w-3 h-3" />
+                  Assign a number in settings <ArrowRight className="w-3 h-3" />
                 </button>
               )}
             </div>
@@ -126,44 +126,44 @@ export function AgentInboundPanel({ agentId, agentName, onNavigateToSettings }) 
         </SolidCard>
 
         {/* Live Operating Status */}
-        <SolidCard className="space-y-3 p-5">
+        <SolidCard padding="p-5" className="space-y-3 min-w-0">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#524E5E] uppercase tracking-wider">
-              Reception Status
+            <span className="text-ui font-medium text-fg-body">
+              Answering right now
             </span>
-            <div className="w-8 h-8 rounded-lg bg-[#6344E7]/10 text-[#6344E7] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-control bg-accent-soft text-accent flex items-center justify-center">
               <Clock className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="text-sm font-bold text-[#0F0E17]">
-              {decision?.afterHours ? 'Outside Business Hours' : 'Open / Accepting Calls'}
+            <div className="text-title text-ink">
+              {decision?.afterHours ? 'Outside business hours' : 'Open and taking calls'}
             </div>
-            <p className="text-[11px] text-[#524E5E] mt-1 line-clamp-2">
-              {decision?.reason === 'in_hours' && 'Agent will answer caller inquiries directly.'}
-              {decision?.reason === 'after_hours_voicemail' && 'Outside hours: routed to agent voicemail.'}
-              {decision?.reason === 'after_hours_transfer' && `Outside hours: transfers to ${profile?.transferNumber || 'team'}.`}
-              {decision?.reason === 'after_hours_hangup' && 'Outside hours: line is closed.'}
-              {(!decision || decision?.reason === 'no_hours_configured') && '24/7 reception: agent answers all incoming calls.'}
+            <p className="text-meta text-fg-body mt-1 line-clamp-2">
+              {decision?.reason === 'in_hours' && 'The employee answers callers directly.'}
+              {decision?.reason === 'after_hours_voicemail' && 'Outside hours, callers can leave a voicemail.'}
+              {decision?.reason === 'after_hours_transfer' && `Outside hours, calls go to ${profile?.transferNumber || 'your team'}.`}
+              {decision?.reason === 'after_hours_hangup' && 'Outside hours, the line is closed.'}
+              {(!decision || decision?.reason === 'no_hours_configured') && 'Open all day, every day: the employee answers every incoming call.'}
             </p>
           </div>
-          <div className="text-[10px] text-[#8C879A] font-mono">
-            {profile?.timezone || 'America/New_York'}
+          <div className="text-meta text-fg-muted">
+            Timezone: {profile?.timezone || 'America/New_York'}
           </div>
         </SolidCard>
 
         {/* Quick Inbound Test */}
-        <SolidCard className="space-y-3 p-5 flex flex-col justify-between">
+        <SolidCard padding="p-5" className="space-y-3 min-w-0 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#524E5E] uppercase tracking-wider">
-              Verify Voice Line
+            <span className="text-ui font-medium text-fg-body">
+              Try it yourself
             </span>
-            <div className="w-8 h-8 rounded-lg bg-[#16A34A]/10 text-[#16A34A] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-control bg-success-soft text-success-fg flex items-center justify-center">
               <PhoneCall className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-[11px] text-[#524E5E]">
-            Simulate a real incoming caller in your browser to hear the opening greeting and response rules.
+          <p className="text-meta text-fg-body">
+            Call your employee from this browser to hear the greeting and how they answer.
           </p>
           <TactileButton
             variant="primary"
@@ -172,18 +172,18 @@ export function AgentInboundPanel({ agentId, agentName, onNavigateToSettings }) 
             onClick={() => openTestCall?.(agentId)}
             className="w-full justify-center !py-2"
           >
-            Test Inbound Call
+            Test incoming call
           </TactileButton>
         </SolidCard>
       </div>
 
       {/* Inbound Call Configuration & Rules Overview */}
       <SolidCard className="space-y-4">
-        <div className="flex items-center justify-between border-b border-[#E4E2EB] pb-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-line pb-3">
           <div>
-            <h3 className="text-sm font-bold text-[#0F0E17]">Inbound Call Rules</h3>
-            <p className="text-xs text-[#524E5E] mt-0.5">
-              Operating schedule and automated routing enforced when customers dial this agent.
+            <h3 className="text-title text-ink">Incoming call rules</h3>
+            <p className="text-ui text-fg-body mt-0.5">
+              When this employee answers, and what happens to calls outside those hours.
             </p>
           </div>
           {onNavigateToSettings && (
@@ -193,44 +193,44 @@ export function AgentInboundPanel({ agentId, agentName, onNavigateToSettings }) 
               icon={Settings}
               onClick={onNavigateToSettings}
             >
-              Edit in Settings
+              Edit in settings
             </TactileButton>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-1.5">
-            <div className="font-semibold text-[#0F0E17] flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-[#FF5C35]" />
-              Operating Hours Schedule
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-ui">
+          <div className="p-3.5 rounded-control bg-canvas border border-line space-y-1.5">
+            <div className="font-semibold text-ink flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-accent" />
+              Business hours
             </div>
-            <p className="text-[11px] text-[#524E5E]">
-              {hoursText || 'Always Available (24 hours a day, 7 days a week)'}
+            <p className="text-ui text-fg-body">
+              {hoursText || 'Always open (24 hours a day, 7 days a week)'}
             </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB] space-y-1.5">
-            <div className="font-semibold text-[#0F0E17] flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5 text-[#6344E7]" />
-              Outside-Hours Fallback
+          <div className="p-3.5 rounded-control bg-canvas border border-line space-y-1.5">
+            <div className="font-semibold text-ink flex items-center gap-1.5">
+              <Phone className="w-3.5 h-3.5 text-accent" />
+              Outside business hours
             </div>
-            <p className="text-[11px] text-[#524E5E] capitalize">
+            <p className="text-ui text-fg-body">
               {profile?.afterHoursAction === 'transfer'
-                ? `Transfer to ${profile?.transferNumber || 'Unconfigured'}`
+                ? `Transfer to ${profile?.transferNumber || 'a number you haven’t set yet'}`
                 : profile?.afterHoursAction === 'voicemail'
-                ? 'Record Voicemail Message'
-                : 'Polite Hangup'}
+                ? 'Take a voicemail'
+                : 'Say goodbye and hang up'}
             </p>
           </div>
         </div>
 
         {decision?.greetingPhrase && (
-          <div className="p-3.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-[#524E5E] space-y-1">
-            <span className="font-semibold text-[#0F0E17] flex items-center gap-1.5">
-              <Volume2 className="w-3.5 h-3.5 text-amber-600" />
-              After-Hours Spoken Notice
+          <div className="p-3.5 rounded-control bg-warning-soft border border-warning-line text-ui text-fg-body space-y-1">
+            <span className="font-semibold text-ink flex items-center gap-1.5">
+              <Volume2 className="w-3.5 h-3.5 text-warning" />
+              What callers hear outside hours
             </span>
-            <p className="italic text-[#0F0E17] text-[11px]">
+            <p className="italic text-ink text-ui">
               &ldquo;{decision.greetingPhrase}&rdquo;
             </p>
           </div>

@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { showToast } from './ToastHost';
 import { openRazorpayWalletCheckout } from '../../utils/razorpayCheckout';
+import { walletAmounts } from '../../lib/money';
 
 /** Presets in the currency the account is charged in. */
 const PRESETS = {
@@ -276,25 +277,25 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
     >
       <div data-testid="add-funds-modal" className="space-y-4">
         {banner && !done && (
-          <div className="flex items-start gap-2 p-3 rounded-xl bg-[#FFFBEB] border border-[#FDE68A]">
-            <AlertCircle className="w-4 h-4 text-[#B45309] mt-0.5 shrink-0" />
-            <p className="text-xs text-[#78350F]">{banner}</p>
+          <div className="flex items-start gap-2 p-3 rounded-control bg-warning-soft border border-warning-line">
+            <AlertCircle className="w-4 h-4 text-warning-fg mt-0.5 shrink-0" />
+            <p className="text-ui text-warning-fg">{banner}</p>
           </div>
         )}
 
         {done ? (
           <div className="text-center py-6 space-y-3">
-            <CheckCircle2 className="w-10 h-10 text-[#047857] mx-auto" />
-            <p className="text-sm font-bold text-[#0F0E17]">
+            <CheckCircle2 className="w-10 h-10 text-success-fg mx-auto" />
+            <p className="text-title text-ink">
               {money(done.credited, 'INR')} added to your wallet.
             </p>
-            <p className="text-xs text-[#524E5E]">
-              Balance: {money(wallet?.balanceInr ?? 0, 'INR')}
+            <p className="text-ui text-fg-body">
+              Balance: <span className="font-mono tabular-nums">{walletAmounts(wallet).primary}</span>
             </p>
             {done.invoiceNumber ? (
-              <p className="text-[11px] text-[#8C879A]">
+              <p className="text-meta text-fg-muted">
                 GST invoice <span className="font-mono font-semibold">{done.invoiceNumber}</span> is
-                available under Billing → Invoices &amp; tax receipts.
+                available under Billing → Invoices and tax receipts.
               </p>
             ) : null}
             <TactileButton variant="brand" size="md" onClick={onClose}>
@@ -303,32 +304,32 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
+            <div className="flex items-center justify-between p-3 rounded-control bg-canvas border border-line">
               <div className="flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-[#6344E7]" />
+                <Wallet className="w-4 h-4 text-fg-subtle" aria-hidden="true" />
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#8C879A]">Balance</div>
-                  <div className="text-sm font-bold text-[#0F0E17]">{money(wallet?.balanceInr ?? 0, 'INR')}</div>
+                  <div className="text-meta text-fg-muted">Balance</div>
+                  <div className="text-copy font-semibold font-mono tabular-nums text-ink">{walletAmounts(wallet).primary}</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#8C879A]">≈ call time</div>
-                <div className="text-sm font-bold text-[#0F0E17]">{minutes} min</div>
+                <div className="text-meta text-fg-muted">About</div>
+                <div className="text-copy font-semibold font-mono tabular-nums text-ink">{minutes} min</div>
               </div>
             </div>
 
             {!razorpay.enabled && (
-              <p className="text-[11px] text-[#B45309]" data-testid="add-funds-razorpay-off">
+              <p className="text-ui text-warning-fg" data-testid="add-funds-razorpay-off">
                 Card payments are temporarily unavailable. Please try again later or contact support.
               </p>
             )}
 
             <div>
-              <label htmlFor="add-funds-amount" className="block text-xs font-bold text-[#0F0E17] mb-1.5">
+              <label htmlFor="add-funds-amount" className="block text-ui font-medium text-ink mb-1.5">
                 Amount ({chargeCurrency}) {quote?.priceIncludesTax ? 'including GST' : 'before GST'}
               </label>
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-bold text-[#524E5E]">{symbol}</span>
+                <span className="text-copy font-semibold text-fg-body">{symbol}</span>
                 <input
                   id="add-funds-amount"
                   type="number"
@@ -343,7 +344,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
                     setQuote(null);
                   }}
                   data-testid="add-funds-amount"
-                  className="flex-1 bg-[#FAF9FD] border border-[#E4E2EB] rounded-xl px-3 py-2 text-base sm:text-sm min-h-[42px] sm:min-h-[38px] font-mono text-[#0F0E17]"
+                  className="flex-1 min-w-0 bg-surface border border-line rounded-control px-3 py-2 text-base sm:text-copy min-h-[44px] sm:min-h-[40px] font-mono tabular-nums text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
@@ -358,10 +359,11 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
                       setQuote(null);
                     }}
                     data-testid={`add-funds-preset-${p}`}
-                    className={`min-w-[44px] min-h-[38px] sm:min-h-[34px] px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all flex items-center justify-center ${
+                    aria-pressed={Number(amount) === p}
+                    className={`min-w-[44px] min-h-[44px] sm:min-h-[36px] px-3 py-1.5 rounded-control text-ui font-mono tabular-nums font-semibold border transition-colors flex items-center justify-center ${
                       Number(amount) === p
-                        ? 'bg-[#0F0E17] text-white border-[#0F0E17]'
-                        : 'bg-white text-[#524E5E] border-[#E4E2EB] hover:border-[#6344E7]'
+                        ? 'bg-ink text-white border-ink'
+                        : 'bg-surface text-fg-body border-line hover:border-line-strong hover:bg-canvas'
                     }`}
                   >
                     {symbol}
@@ -369,14 +371,14 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-[#8C879A] mt-1.5">
+              <p className="text-meta text-fg-muted mt-1.5">
                 Minimum {money(minAmount, chargeCurrency)} · maximum {money(maxAmount, chargeCurrency)}
                 {quote?.creditInr != null ? ` · ${minutes} min at ${money(rateInr, 'INR')}/min` : ''}.
               </p>
             </div>
 
             {(Number(amount) < minAmount || Number(amount) > maxAmount) && (
-              <p className="text-[11px] text-[#B91C1C]">
+              <p className="text-meta text-danger-fg">
                 Enter between {money(minAmount, chargeCurrency)} and {money(maxAmount, chargeCurrency)}.
               </p>
             )}
@@ -384,56 +386,56 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
             {/* Server-quoted breakdown: what is taxed, what is credited. */}
             {razorpay.enabled && Number(amount) >= minAmount ? (
               <div
-                className="rounded-xl border border-[#E4E2EB] bg-white overflow-hidden"
+                className="rounded-control border border-line bg-surface overflow-hidden"
                 data-testid="add-funds-breakdown"
                 aria-live="polite"
               >
-                <div className="flex items-center justify-between px-3 py-2 border-b border-[#E4E2EB] bg-[#FAF9FD]">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#524E5E]">Charge breakdown</span>
-                  {quoteBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin text-[#8C879A]" /> : null}
+                <div className="flex items-center justify-between px-3 py-2 border-b border-line bg-canvas">
+                  <span className="text-meta font-medium text-fg-body">Charge breakdown</span>
+                  {quoteBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin text-fg-muted" /> : null}
                 </div>
-                <dl className="divide-y divide-[#F0EEF5] text-xs">
+                <dl className="divide-y divide-line text-ui">
                   <div className="flex items-center justify-between px-3 py-2">
-                    <dt className="text-[#524E5E]">Wallet credit (taxable value)</dt>
-                    <dd className="font-mono font-semibold text-[#0F0E17]">
+                    <dt className="text-fg-body">Wallet credit (taxable value)</dt>
+                    <dd className="font-mono tabular-nums font-semibold text-ink">
                       {quote ? money(quote.creditInr, 'INR') : '—'}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between px-3 py-2">
-                    <dt className="text-[#524E5E]">
+                    <dt className="text-fg-body">
                       {quote?.taxKind === 'export'
                         ? 'GST (export of services, zero-rated)'
                         : `${taxLabel(quote?.taxKind)} ${quote?.ratePercent ? `@ ${quote.ratePercent}%` : ''}`}
                     </dt>
-                    <dd className="font-mono font-semibold text-[#0F0E17]">
+                    <dd className="font-mono tabular-nums font-semibold text-ink">
                       {quote ? money(quote.tax, chargeCurrency) : '—'}
                     </dd>
                   </div>
                   {quote?.taxKind === 'cgst_sgst' ? (
                     <div className="flex items-center justify-between px-3 py-2">
-                      <dt className="text-[#8C879A] pl-3">CGST / SGST</dt>
-                      <dd className="font-mono text-[#524E5E]">
+                      <dt className="text-fg-muted pl-3">CGST / SGST</dt>
+                      <dd className="font-mono tabular-nums text-fg-body">
                         {money(quote.cgst, chargeCurrency)} + {money(quote.sgst, chargeCurrency)}
                       </dd>
                     </div>
                   ) : null}
-                  <div className="flex items-center justify-between px-3 py-2 bg-[#FAF9FD]">
-                    <dt className="font-semibold text-[#0F0E17]">Total payable</dt>
-                    <dd className="font-mono text-sm font-bold text-[#0F0E17]" data-testid="add-funds-total">
+                  <div className="flex items-center justify-between px-3 py-2 bg-canvas">
+                    <dt className="font-semibold text-ink">Total payable</dt>
+                    <dd className="font-mono tabular-nums text-copy font-bold text-ink" data-testid="add-funds-total">
                       {quote ? money(quote.total, chargeCurrency) : '—'}
                     </dd>
                   </div>
                 </dl>
-                <p className="px-3 py-2 text-[10px] text-[#8C879A] border-t border-[#F0EEF5]">
+                <p className="px-3 py-2 text-meta text-fg-muted border-t border-line">
                   GST is a statutory charge and is not wallet credit. Your invoice shows the same
                   split and is downloadable under Billing.
                 </p>
               </div>
             ) : null}
 
-            {quote?.checkoutTerms && <p className="whitespace-pre-wrap text-xs leading-relaxed text-[#524E5E]" data-testid="checkout-tax-terms">{quote.checkoutTerms}</p>}
+            {quote?.checkoutTerms && <p className="whitespace-pre-wrap text-ui text-fg-body" data-testid="checkout-tax-terms">{quote.checkoutTerms}</p>}
             {quoteError ? (
-              <p className="text-[11px] text-[#B45309]" role="status">
+              <p className="text-meta text-warning-fg" role="status">
                 {quoteError}
               </p>
             ) : null}
@@ -442,7 +444,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
               <div
                 data-testid="add-funds-confirming"
                 role="status"
-                className="rounded-xl border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-xs text-[#78350F]"
+                className="rounded-control border border-warning-line bg-warning-soft px-3 py-2 text-ui text-warning-fg"
               >
                 {pendingNote || CONFIRMING_MESSAGE}
                 <TactileButton variant="secondary" size="sm" className="mt-3" disabled={busy || !pendingPayment.current}
@@ -454,7 +456,7 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
               <div
                 data-testid="add-funds-error"
                 role="alert"
-                className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900"
+                className="rounded-control border border-danger-line bg-danger-soft px-3 py-2 text-ui text-danger-fg"
               >
                 {error}
               </div>
@@ -473,8 +475,8 @@ export function AddFundsModal({ isOpen, onClose, reason = null, initialAmount = 
               {busy ? 'Opening checkout…' : `Pay ${totalLabel}`}
             </TactileButton>
 
-            <div className="flex items-start justify-center gap-1.5 text-[10px] text-[#8C879A] text-center">
-              <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <div className="flex items-start justify-center gap-1.5 text-meta text-fg-muted text-center">
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
               <span>
                 {isInternational
                   ? `Secure card checkout in ${chargeCurrency}. We never see your card details.`

@@ -52,17 +52,17 @@ export function GracePeriodBanner() {
 
   return (
     <div
-      className="shrink-0 border-b border-rose-300 bg-rose-50 px-4 py-2.5 text-xs text-rose-950 font-medium"
+      className="shrink-0 border-b border-danger-line bg-danger-soft px-4 py-2.5 text-ui text-danger-fg"
       data-testid="grace-period-banner"
       role="alert"
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+        <div className="flex min-w-0 items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-danger-fg shrink-0 mt-0.5" aria-hidden="true" />
           <span>
-            This workspace is quarantined and scheduled for permanent deletion on{' '}
-            <strong>{purgeDateStr}</strong>.
-            {msg && <span className="ml-2 font-semibold text-rose-700">({msg})</span>}
+            This workspace will be permanently deleted on{' '}
+            <strong className="font-semibold">{purgeDateStr}</strong>. You can still export your data or cancel the deletion.
+            {msg && <span className="ml-2 font-semibold text-danger-fg">({msg})</span>}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -70,7 +70,7 @@ export function GracePeriodBanner() {
             type="button"
             disabled={busy}
             onClick={handleExport}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1 text-xs font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-60 transition-colors"
+            className="inline-flex min-h-[36px] items-center gap-1.5 rounded-control border border-danger-line bg-surface px-3 py-1 text-ui font-semibold text-danger-fg hover:bg-danger-soft disabled:opacity-60 transition-colors"
           >
             <Download className="w-3.5 h-3.5" />
             Export data
@@ -80,7 +80,7 @@ export function GracePeriodBanner() {
               type="button"
               disabled={busy}
               onClick={handleCancel}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-60 transition-colors shadow-sm"
+              className="inline-flex min-h-[36px] items-center gap-1.5 rounded-control bg-danger-fg px-3 py-1 text-ui font-semibold text-white hover:bg-danger disabled:opacity-60 transition-colors shadow-craft-xs"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Cancel deletion
