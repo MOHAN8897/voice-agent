@@ -13,9 +13,12 @@ from server.db.connection import get_session_factory
 from server.db.models.saas_models import User
 from server.services.saas.platform_admins import effective_membership_role
 from server.services.saas.tenant_guard import (
+    DELETION_LIFECYCLE_STATUSES,
     SubscriberPrincipal,
+    as_aware_utc,
     assert_membership,
     assert_session_tenant,
+    tenant_in_deletion_grace,
 )
 
 
@@ -73,7 +76,7 @@ async def principal_from_verified_token(token: str, *, request_path: str = "") -
     user_id = uuid.UUID(claims.user_id)
     tenant_id = uuid.UUID(claims.tenant_id)
     async with factory() as session:
-        await assert_session_tenant(session, user_id, tenant_id)
+        tenant = await assert_session_tenant(session, user_id, tenant_id)
         membership = await assert_membership(session, user_id, tenant_id)
         user = await session.get(User, user_id)
         if user is None or user.deleted_at is not None or user.status == "disabled":
@@ -87,28 +90,8 @@ async def principal_from_verified_token(token: str, *, request_path: str = "") -
                 detail={"error": {"code": "email_not_verified", "message": "Verify your email first"}},
             )
 
-        # --- Fail-closed quarantine enforcement ---
-        # Quarantined/deleting/deleted tenants are denied access to all endpoints
-        # EXCEPT the cancel and export endpoints which must remain reachable during
-        # the grace period so owners can restore or download their data.
-        _QUARANTINE_EXEMPT = (
-            "/api/tenant/delete/cancel",
-            "/api/tenant/export",
-        )
-        from server.db.models.entities import Tenant as _Tenant
-        tenant = await session.get(_Tenant, tenant_id)
         if tenant is not None and tenant.status != "active":
-            path_exempt = any(request_path.startswith(p) for p in _QUARANTINE_EXEMPT)
-            if not path_exempt:
-                scheduled_purge_at = getattr(tenant, "scheduled_purge_at", None)
-                raise HTTPException(
-                    status_code=403,
-                    detail={
-                        "error": "tenant_quarantined",
-                        "message": "This workspace is quarantined pending deletion.",
-                        "scheduledPurgeAt": scheduled_purge_at.isoformat() if scheduled_purge_at else None,
-                    },
-                )
+            enforce_tenant_lifecycle(tenant, request_path)
 
         role = effective_membership_role(user.email, membership.role)
         return SubscriberPrincipal(
@@ -116,8 +99,65 @@ async def principal_from_verified_token(token: str, *, request_path: str = "") -
             tenant_id=tenant_id,
             role=role,
             email=user.email,
+            auth_time=claims.auth_time,
+            impersonator=claims.impersonator,
         )
 
+
+# Reachable while a workspace is pending deletion, so the owner can see what will be
+# restored, restore it, or take their data out. Everything else fails closed.
+_DELETION_GRACE_EXEMPT_PATHS = frozenset({
+    "/api/tenant/restore",
+    "/api/tenant/restore-status",
+    "/api/tenant/delete/cancel",
+    "/api/auth/logout-all",
+})
+_DELETION_GRACE_EXEMPT_PREFIXES = ("/api/tenant/export",)
+
+
+def _grace_exempt(path: str) -> bool:
+    path = (path or "").rstrip("/") or "/"
+    return path in _DELETION_GRACE_EXEMPT_PATHS or any(
+        path == p or path.startswith(p + "/") for p in _DELETION_GRACE_EXEMPT_PREFIXES
+    )
+
+
+def enforce_tenant_lifecycle(tenant, request_path: str) -> None:
+    """Fail closed for any workspace that is not active.
+
+    - Pending deletion, inside the grace period: only the restore / export endpoints
+      answer; everything else is 403 ``tenant_quarantined`` (the console shows the
+      restore screen on that code).
+    - Deleted, being torn down, or past the grace period: 403 ``workspace_deleted`` on
+      every path, including restore — there is nothing left to restore.
+    - Any other non-active state (e.g. past_due): 403 ``tenant_inactive``. It must not
+      say "quarantined", or the console would tell the user their workspace is being
+      deleted when it is not.
+    """
+    scheduled_purge_at = as_aware_utc(getattr(tenant, "scheduled_purge_at", None))
+    if tenant_in_deletion_grace(tenant):
+        if _grace_exempt(request_path):
+            return
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "tenant_quarantined",
+                "message": "This workspace is scheduled for deletion. Restore it to continue.",
+                "scheduledPurgeAt": scheduled_purge_at.isoformat() if scheduled_purge_at else None,
+            },
+        )
+    if tenant.status in DELETION_LIFECYCLE_STATUSES:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "workspace_deleted",
+                "message": "This workspace was permanently deleted and can no longer be restored.",
+            },
+        )
+    raise HTTPException(
+        status_code=403,
+        detail={"error": "tenant_inactive", "message": "This workspace is not active."},
+    )
 
 
 async def optional_subscriber_context(

@@ -24,15 +24,12 @@ const ADMIN_WORKSPACE_ROUTES = new Set([
   "/dev/admin",
   "/dev/admin/calls",
   "/dev/admin/analytics",
-  "/dev/admin/users",
   "/dev/admin/verification",
-  "/dev/admin/tenants",
-  "/dev/admin/numbers",
 ]);
 
 const ADMIN_GROUPS: Array<{
   label: string;
-  items: Array<{ href: string; label: string; icon: ReactNode; live?: boolean }>;
+  items: Array<{ href: string; label: string; icon: ReactNode; live?: boolean; match?: string[] }>;
 }> = [
   { label: "Workspace", items: [{ href: "/dev", label: "Overview", icon: <IconOverview className="h-4 w-4" /> }] },
   {
@@ -61,14 +58,12 @@ const ADMIN_GROUPS: Array<{
         icon: <IconPhone className="h-4 w-4" />,
       },
       {
-        href: "/dev/admin/numbers",
-        label: "Phone numbers",
-        icon: <IconPhone className="h-4 w-4" />,
-      },
-      {
-        href: "/dev/admin/tenants",
-        label: "Tenants & users",
+        // Workspaces, users and phone numbers on one page. The old routes redirect
+        // here; the per-workspace page under /dev/admin/tenants/<id> still exists.
+        href: "/dev/admin/accounts",
+        label: "Accounts",
         icon: <IconAgents className="h-4 w-4" />,
+        match: ["/dev/admin/tenants", "/dev/admin/users", "/dev/admin/numbers"],
       },
       {
         href: "/dev/admin/verification",
@@ -133,7 +128,7 @@ export function AdminNav() {
               const active =
                 item.href === "/dev"
                   ? pathname === "/dev" || pathname === "/dev/admin"
-                  : pathname.startsWith(item.href);
+                  : pathname.startsWith(item.href) || Boolean(item.match?.some((m) => pathname.startsWith(m)));
               return (
                 <SkeuoNavItem
                   key={item.href}

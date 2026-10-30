@@ -530,8 +530,13 @@ class VobizClient:
         country: str = "IN",
         limit: int = 10,
         number_type: str = "Local DID",
+        search: str | None = None,
     ) -> list[dict[str, Any]]:
-        """List live, unassigned Vobiz inventory numbers eligible for purchase."""
+        """List live, unassigned Vobiz inventory numbers eligible for purchase.
+
+        ``search`` is Vobiz's documented substring match on the E.164 number
+        (list-inventory-numbers); callers still filter the rows they get back.
+        """
         country_norm = country.strip().upper()
         requested = max(0, min(int(limit), 1000))
         if requested == 0:
@@ -546,6 +551,9 @@ class VobizClient:
             params: dict[str, Any] = {"page": page, "per_page": per_page}
             if country_norm and country_norm != "ALL":
                 params["country"] = country_norm
+            search_digits = re.sub(r"\D+", "", str(search or ""))
+            if search_digits:
+                params["search"] = search_digits
             data = await self._request(
                 "GET", f"/Account/{auth_id}/inventory/numbers", params=params
             )

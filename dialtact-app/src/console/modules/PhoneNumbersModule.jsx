@@ -25,6 +25,7 @@ import { useAuth } from '../../context/AuthContext';
 import { VoiceServiceKycCard } from '../ui/VoiceServiceKycCard';
 import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
 import { CatalogSkeleton, PhoneNumberRowSkeleton } from '../ui/Skeleton';
+import { Tabs } from '../ui/Tabs';
 
 /** "₹X / month", or "Free" when the admin set the monthly rent to zero. */
 function monthlyRentLabel(inr) {
@@ -50,6 +51,24 @@ function formatRenewalDate(value) {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+/** Number types the buy dialog filters by, with what each means for the caller. */
+export const NUMBER_CATEGORIES = [
+  { id: 'all', label: 'All', help: 'Every number available in this country right now.' },
+  { id: 'mobile', label: 'Mobile', help: 'A 10-digit mobile-series number. It is not tied to a city.' },
+  { id: 'landline', label: 'Landline', help: 'A city landline with an STD code, such as 080 for Bengaluru. Callers see a local business number.' },
+  { id: 'toll_free', label: 'Toll-free', help: 'Callers ring it free of charge, such as 1800 numbers in India.' },
+];
+
+function catalogCategory(item) {
+  if (item.category) return item.category;
+  return String(item.type || '').toLowerCase().includes('toll') ? 'toll_free' : 'other';
+}
+
+function categoryName(item) {
+  const id = catalogCategory(item);
+  return item.categoryLabel || NUMBER_CATEGORIES.find((c) => c.id === id)?.label || 'Other';
+}
+
 const FALLBACK_COUNTRIES = [
   { code: 'US', name: 'United States', dial: '+1' },
   { code: 'GB', name: 'United Kingdom', dial: '+44' },
@@ -73,6 +92,9 @@ export function TelephonyPlatformBadge({ provider, size = 'sm' }) {
 
 export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyModal, onNavigate }) {
   const { user } = useAuth();
+  // A workspace scheduled for deletion may only restore or export; every other API
+  // answers 403 and the client signs out. Do not call them from this page.
+  const workspaceLocked = user?.tenantStatus === 'quarantined';
   const purchaseIntentKey = user?.tenantId && user?.id ? `dialtact_number_intent:${user.tenantId}:${user.id}` : null;
   const resumedIntent = useRef(null);
   const restoredCountry = useRef(false);
@@ -86,6 +108,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     assignNumberToAgent,
     releasePhoneNumber,
     buyNumberPreselectedAgent,
+    setBuyNumberPreselectedAgent,
     reloadCatalog,
     updateNumberRouting,
     wallet,
@@ -98,8 +121,15 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   // Buy Modal Form State — default based on active carrier
   const [selectedCountry, setSelectedCountry] = useState('IN');
   const [countries, setCountries] = useState(FALLBACK_COUNTRIES);
-  const [selectedType, setSelectedType] = useState('Local DID');
+  const [numberCategory, setNumberCategory] = useState('all');
   const [searchAreaCode, setSearchAreaCode] = useState('');
+  // The server filters by area too (it reads further into the inventory), so wait
+  // for typing to settle before asking it.
+  const [areaQuery, setAreaQuery] = useState('');
+  useEffect(() => {
+    const id = window.setTimeout(() => setAreaQuery(searchAreaCode.trim()), 400);
+    return () => window.clearTimeout(id);
+  }, [searchAreaCode]);
   const [targetAgentId, setTargetAgentId] = useState(buyNumberPreselectedAgent || '');
   const [purchasedSuccess, setPurchasedSuccess] = useState(null);
   const [buyError, setBuyError] = useState(null);
@@ -156,6 +186,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   };
 
   useEffect(() => {
+    if (workspaceLocked) return undefined;
     let cancelled = false;
     api.telephony
       ?.getProvider?.()
@@ -173,21 +204,21 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [workspaceLocked]);
 
   useEffect(() => {
-    if (!isBuyModalOpen) return;
+    if (!isBuyModalOpen || workspaceLocked) return;
     setBuyError(null);
     setCatalogLoading(true);
     setCatalogError(null);
-    reloadCatalog?.(selectedCountry)
+    reloadCatalog?.(selectedCountry, { category: numberCategory, area: areaQuery })
       .catch((e) => setCatalogError(e.message || 'Could not load numbers for this country'))
       .finally(() => setCatalogLoading(false));
-  }, [isBuyModalOpen, selectedCountry, reloadCatalog]);
+  }, [isBuyModalOpen, selectedCountry, numberCategory, areaQuery, reloadCatalog, workspaceLocked]);
 
   // The active carrier owns its gate. Didit remains a separate optional identity flow.
   useEffect(() => {
-    if (!isBuyModalOpen) return undefined;
+    if (!isBuyModalOpen || workspaceLocked) return undefined;
     let cancelled = false;
     setKycLoading(true);
     setKycMode('checking');
@@ -218,9 +249,10 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     return () => {
       cancelled = true;
     };
-  }, [isBuyModalOpen]);
+  }, [isBuyModalOpen, workspaceLocked]);
 
   useEffect(() => {
+    if (workspaceLocked) return undefined;
     let cancelled = false;
     api.telephony
       .getCountries()
@@ -233,7 +265,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [workspaceLocked]);
 
   // Inline alerts should not sit forever — toast pattern: 5s, dismissible.
   useEffect(() => {
@@ -267,6 +299,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   // quote something `/api/telephony/buy` or `/api/billing/topup` would reject.
   const [catalog, setCatalog] = useState(null);
   useEffect(() => {
+    if (workspaceLocked) return undefined;
     let cancelled = false;
     api.billing
       .getCatalog()
@@ -277,7 +310,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [workspaceLocked]);
   // USD is the only quoted currency. A missing catalog means we do not know the
   // price, so we must not invent one — the buy button stays honest by asking the
   // server, which is the authority anyway.
@@ -295,24 +328,23 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   const rentLabel = priceKnown ? monthlyRentLabel(numberPriceInr) : 'Price unavailable';
   const firstRenewalLabel = formatRenewalDate(addOneMonth(new Date()));
 
+  const areaNeedle = searchAreaCode.trim().toLowerCase();
+  const areaDigits = areaNeedle.replace(/\D/g, '').replace(/^0+/, '');
   const filteredCatalog = availableCatalog.filter((item) => {
-    const cc = (item.country || '').toUpperCase();
-    const matchesCountry = cc === selectedCountry.toUpperCase();
-    const normType = (t) => {
-      const s = String(t || '').toLowerCase();
-      if (s.includes('toll')) return 'toll';
-      return 'local';
-    };
-    const matchesType =
-      selectedType === 'All' ||
-      !item.type ||
-      normType(item.type) === normType(selectedType);
+    const cc = String(item.country || '').toUpperCase();
+    const matchesCountry = cc === String(selectedCountry || '').toUpperCase();
+    const matchesType = numberCategory === 'all' || catalogCategory(item) === numberCategory;
+    const text = [item.areaLabel, item.city, item.region, item.locality, item.stdCode, item.areaCode]
+      .map((v) => String(v || '').toLowerCase())
+      .join(' ');
+    const national = String(item.number || '').replace(/\D/g, '').slice(String(item.country || '').toUpperCase() === 'IN' ? 2 : 1);
     const matchesArea =
-      !searchAreaCode ||
-      (item.areaCode && item.areaCode.includes(searchAreaCode)) ||
-      (item.number && item.number.includes(searchAreaCode));
+      !areaNeedle ||
+      text.includes(areaNeedle) ||
+      (areaDigits && (String(item.stdCode || '').replace(/^0+/, '') === areaDigits || national.startsWith(areaDigits)));
     return matchesCountry && matchesType && matchesArea;
   });
+  const activeCategory = NUMBER_CATEGORIES.find((c) => c.id === numberCategory) || NUMBER_CATEGORIES[0];
 
   const completeNumberPurchase = async (catalogItem) => {
     setBuyError(null);
@@ -367,6 +399,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       await refreshWallet?.();
       setTimeout(() => {
         setPurchasedSuccess(null);
+        setBuyNumberPreselectedAgent?.(null);
         onCloseBuyModal();
       }, 1800);
     } catch (e) {
@@ -400,6 +433,12 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       setBuying(false);
       setBuyPhase(null);
     }
+  };
+
+  const closeBuyModal = () => {
+    forgetNumber();
+    setBuyNumberPreselectedAgent?.(null);
+    onCloseBuyModal();
   };
 
   const handleBuyNumber = async (catalogItem) => {
@@ -690,7 +729,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       {/* BUY VIRTUAL NUMBER MODAL */}
       <Modal
         isOpen={isBuyModalOpen}
-        onClose={() => { forgetNumber(); onCloseBuyModal(); }}
+        onClose={closeBuyModal}
         title={
           purchasedSuccess
             ? 'Number ready'
@@ -708,6 +747,11 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         maxWidth="max-w-2xl"
       >
         <div className="space-y-5">
+          {workspaceLocked ? (
+            <div className="rounded-card border border-warning-line bg-warning-soft p-5 text-copy text-warning-fg" role="alert" data-testid="buy-number-workspace-locked">
+              This workspace is scheduled for deletion, so new numbers cannot be bought. Restore the workspace from the banner at the top of the page to buy a number.
+            </div>
+          ) : (<>
           {pendingNumber && !purchasedSuccess && <div className="rounded-control border border-line-strong bg-canvas p-4 space-y-2" data-testid="selected-number-review">
             <p className="text-copy font-semibold text-ink">Selected number: <span className="font-mono tabular-nums">{pendingNumber.number}</span></p>
             <p className="text-copy text-ink">{priceKnown ? `${rentLabel}, renews on ${firstRenewalLabel}` : 'Price unavailable. Reload before buying.'}</p>
@@ -798,52 +842,54 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
               {kycLoading && <p role="status" className="text-copy text-fg-body">Checking phone service verification…</p>}
               {kycStatusError && <p role="alert" className="text-copy text-danger-fg">{kycStatusError}</p>}
 
-              {/* Search Filters */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-control bg-canvas border border-line">
-                {/* Country */}
-                <div>
-                  <label htmlFor="buy-number-country" className="block text-meta font-medium text-fg-body mb-1">Country</label>
-                  <select
-                    id="buy-number-country"
-                    value={selectedCountry}
-                    onChange={(e) => setSelectedCountry(e.target.value)}
-                    className="w-full bg-surface border border-line rounded-control px-3 py-2 min-h-[44px] sm:min-h-[36px] text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
-                    data-testid="buy-number-country"
-                  >
-                    {countries.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.name} ({c.dial})
-                      </option>
-                    ))}
-                  </select>
+              {/* Search filters: country, number type and city or area code */}
+              <div className="space-y-3 p-3.5 rounded-control bg-canvas border border-line">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Country */}
+                  <div>
+                    <label htmlFor="buy-number-country" className="block text-meta font-medium text-fg-body mb-1">Country</label>
+                    <select
+                      id="buy-number-country"
+                      value={selectedCountry}
+                      onChange={(e) => setSelectedCountry(e.target.value)}
+                      className="w-full bg-surface border border-line rounded-control px-3 py-2 min-h-[44px] sm:min-h-[36px] text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
+                      data-testid="buy-number-country"
+                    >
+                      {countries.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.name} ({c.dial})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* City or area code */}
+                  <div>
+                    <label htmlFor="buy-number-area" className="block text-meta font-medium text-fg-body mb-1">City or area code</label>
+                    <input
+                      id="buy-number-area"
+                      type="text"
+                      value={searchAreaCode}
+                      onChange={(e) => setSearchAreaCode(e.target.value)}
+                      placeholder={selectedCountry === 'IN' ? 'For example Bengaluru or 080' : 'For example 415'}
+                      className="w-full bg-surface border border-line rounded-control px-3 py-2 min-h-[44px] sm:min-h-[36px] text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
+                      data-testid="buy-number-area"
+                    />
+                  </div>
                 </div>
 
-                {/* Type */}
-                <div>
-                  <label htmlFor="buy-number-type" className="block text-meta font-medium text-fg-body mb-1">Number type</label>
-                  <select
-                    id="buy-number-type"
-                    value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value)}
-                    className="w-full bg-surface border border-line rounded-control px-3 py-2 min-h-[44px] sm:min-h-[36px] text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
-                  >
-                    <option value="Local DID">Local (area code)</option>
-                    <option value="Toll-Free">Toll-free (800 / 888)</option>
-                    <option value="All">All types</option>
-                  </select>
-                </div>
-
-                {/* Area Code */}
-                <div>
-                  <label htmlFor="buy-number-area" className="block text-meta font-medium text-fg-body mb-1">Area code or prefix</label>
-                  <input
-                    id="buy-number-area"
-                    type="text"
-                    value={searchAreaCode}
-                    onChange={(e) => setSearchAreaCode(e.target.value)}
-                    placeholder="For example 415, 212, 800"
-                    className="w-full bg-surface border border-line rounded-control px-3 py-2 min-h-[44px] sm:min-h-[36px] text-base sm:text-ui text-ink focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-colors"
+                {/* Number type */}
+                <div data-testid="buy-number-type">
+                  <span id="buy-number-type-label" className="block text-meta font-medium text-fg-body mb-1">Number type</span>
+                  <Tabs
+                    variant="pills"
+                    size="sm"
+                    label="Number type"
+                    value={numberCategory}
+                    onChange={setNumberCategory}
+                    items={NUMBER_CATEGORIES.map((c) => ({ id: c.id, label: c.label, testId: `buy-number-type-${c.id}` }))}
                   />
+                  <p className="mt-1.5 text-meta text-fg-muted" data-testid="buy-number-type-help">{activeCategory.help}</p>
                 </div>
               </div>
 
@@ -880,9 +926,16 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                     </button>
                   </div>
                 ) : filteredCatalog.length === 0 ? (
-                  <div className="p-8 text-center text-ui text-fg-muted">
-                    No phone numbers are available for <strong>{selectedCountry}</strong> right
-                    now. Try another country or check back later.
+                  <div className="p-8 text-center text-ui text-fg-muted" data-testid="buy-number-empty">
+                    {numberCategory === 'all' && !areaNeedle ? (
+                      <>No phone numbers are available for <strong>{selectedCountry}</strong> right now. Try another country or check back later.</>
+                    ) : (
+                      <>
+                        No {numberCategory === 'all' ? '' : `${activeCategory.label.toLowerCase()} `}numbers
+                        {areaNeedle ? <> match <strong>{searchAreaCode.trim()}</strong></> : null} in <strong>{selectedCountry}</strong> right now.
+                        {' '}Try All types or clear the city filter.
+                      </>
+                    )}
                   </div>
                 ) : (
                   filteredCatalog.map((item) => (
@@ -902,7 +955,17 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                               size="xs"
                             />
                           </div>
-                          <div className="text-meta text-fg-muted">{item.locality || item.region || 'National'} · {item.type}</div>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-meta text-fg-muted">
+                            <Badge tone={catalogCategory(item) === 'landline' ? 'info' : 'neutral'} size="xs" data-testid="buy-number-category">
+                              {categoryName(item)}
+                            </Badge>
+                            <span>{item.areaLabel || item.locality || item.region || 'National'}</span>
+                          </div>
+                          {item.requirements?.length ? (
+                            <ul className="mt-1 space-y-0.5 text-meta text-warning-fg" data-testid="buy-number-requirements">
+                              {item.requirements.map((req) => <li key={req}>{req}</li>)}
+                            </ul>
+                          ) : null}
                         </div>
                       </div>
 
@@ -930,6 +993,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
               </div>
             </>
           )}
+          </>)}
         </div>
       </Modal>
     </div>

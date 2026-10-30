@@ -47,6 +47,14 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
     sessionStorage.removeItem('dialtact_leads_search');
     return wanted.slice(0, 120);
   });
+  // One-shot "open this lead" from the home feed's detail panel.
+  const [openLeadId] = useState(() => {
+    if (agentId || typeof window === 'undefined') return '';
+    const wanted = sessionStorage.getItem('dialtact_leads_open') || '';
+    sessionStorage.removeItem('dialtact_leads_open');
+    return wanted.slice(0, 64);
+  });
+  const leadOpened = useRef(false);
   const [filters, setFilters] = useState({ search: initialLeadSearch, stage: '', owner: '', phone: '', days: '', sort: 'updated' });
   const [search, setSearch] = useState(initialLeadSearch);
   const [offset, setOffset] = useState(0);
@@ -89,6 +97,13 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
   const rows = page.key === key ? page.leads : [];
   const total = page.key === key ? page.total : 0;
   const counts = page.key === key ? page.stageCounts : {};
+  useEffect(() => {
+    if (!openLeadId || leadOpened.current || loading) return;
+    const hit = rows.find((lead) => lead.id === openLeadId);
+    if (hit) { leadOpened.current = true; openDetail(hit); }
+    else if (page.key === key) leadOpened.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openLeadId, rows, loading]);
   const selectedRows = rows.filter((lead) => selected.includes(lead.id) && !lead.doNotCall);
   const callableRows = rows.filter((lead) => Boolean(lead.phone?.trim()) && !lead.doNotCall);
   const ownerName = (lead) => agents.find((agent) => agent.id === lead.agentId)?.name || (lead.agentId ? 'Former agent' : 'Unassigned');

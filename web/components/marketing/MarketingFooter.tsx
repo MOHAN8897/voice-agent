@@ -11,7 +11,7 @@ export function MarketingFooter() {
           </p>
         </div>
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-surface-border-subtle pt-8 text-sm text-text-subtle md:flex-row">
-          <p>© {new Date().getFullYear()} Vāṇi Voice Platform</p>
+          <p>© {new Date().getFullYear()} Dialtact Voice Platform</p>
           <p className="font-mono text-xs">Memory · Disposition · Call archive</p>
         </div>
       </div>

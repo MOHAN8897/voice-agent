@@ -23,7 +23,7 @@ export function ConsoleSyncBanner() {
         <div className="min-w-0">
           <p className="font-semibold">Some information could not be loaded</p>
           <ul className="mt-1 text-ui text-warning-fg list-disc pl-4 space-y-0.5 break-words">
-            {issues.slice(0, 4).map((msg) => (
+            {[...new Set(issues)].slice(0, 4).map((msg) => (
               <li key={msg}>{msg}</li>
             ))}
             {issues.length > 4 && <li>…and {issues.length - 4} more</li>}

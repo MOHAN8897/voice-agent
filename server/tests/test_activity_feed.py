@@ -285,6 +285,59 @@ async def test_booking_intent_alone_is_not_reported_as_booked(db):
     assert item["text"] == "talked with Mohan about booking an appointment"
 
 
+async def test_item_detail_rebuilds_every_item_with_its_source_call(db):
+    tid, aid = await _tenant(db)
+    other, _ = await _tenant(db, "Hima")
+    calls = await _seed_everything(db, tid, aid)
+    page = await feed.build_feed(tid, limit=60)
+    everything = page["items"] + page["pinned"]
+    for listed in everything:
+        detail = await feed.item_detail(tid, listed["id"])
+        assert detail is not None, listed["id"]
+        assert detail["item"]["id"] == listed["id"] and detail["item"]["type"] == listed["type"]
+        # Another workspace can never open this tenant's item.
+        if not listed["id"].startswith("alert:"):
+            assert await feed.item_detail(other, listed["id"]) is None, listed["id"]
+
+    booked = next(i for i in everything if i["type"] == "call.booked")
+    detail = await feed.item_detail(tid, booked["id"])
+    call = detail["call"]
+    assert call["call_id"] == str(calls["booked"].call_id)
+    assert call["agent_name"] == "Meera" and call["outcome_label"] == "Site visit planned"
+    assert "tenant_id" not in call
+    actions = detail["related"]["integrationActions"]
+    assert actions and actions[0]["type"] == "integration.action"
+
+    completed = next(i for i in everything if i["type"] == "call.completed")
+    related = (await feed.item_detail(tid, completed["id"]))["related"]
+    assert [r["type"] for r in related["callbacks"]] == ["callback.requested"]
+
+    callback = next(i for i in everything if i["type"] == "callback.requested")
+    detail = await feed.item_detail(tid, callback["id"])
+    assert detail["call"]["call_id"] == str(calls["completed"].call_id)
+    assert detail["facts"]["status"] == "requested"
+    assert all(r["id"] != callback["id"] for r in detail["related"]["callbacks"])
+
+    lead = next(i for i in everything if i["type"] == "lead.created")
+    detail = await feed.item_detail(tid, lead["id"])
+    assert detail["lead"]["name"] == "Anita" and detail["lead"]["stage"] == "new"
+
+    finished = next(i for i in everything if i["type"] == "campaign.completed")
+    detail = await feed.item_detail(tid, finished["id"])
+    assert detail["campaign"]["progress"] == {"total": 2, "done": 1}
+    assert detail["campaign"]["statusCounts"] == {"completed": 1, "pending": 1}
+
+    topup = next(i for i in everything if i["type"] == "billing.topup")
+    assert (await feed.item_detail(tid, topup["id"]))["facts"]["amount"] == "₹2,000"
+    channel = next(i for i in everything if i["type"] == "channel.renewal_failed")
+    assert (await feed.item_detail(tid, channel["id"]))["facts"]["channelsAfter"] == 2
+
+    for bogus in ("", "call:", "call:not-a-uuid", f"call:{uuid.uuid4()}", "nonsense:1", f"lead:{uuid.uuid4()}:new"):
+        assert await feed.item_detail(tid, bogus) is None, bogus
+    # Browser practice sessions are not activity.
+    assert await feed.item_detail(tid, f"call:{calls['test'].call_id}") is None
+
+
 async def test_new_tenant_feed_is_empty_but_explains_wallet(db):
     tid, _ = await _tenant(db)
     page = await feed.build_feed(tid)
@@ -329,5 +382,10 @@ async def test_routes_are_registered_and_tenant_scoped(db, monkeypatch):
         assert client.get("/api/activity/feed?filter=bogus").status_code in (400, 422)
         live = client.get("/api/activity/live")
         assert live.status_code == 200 and len(live.json()["calls"]) == 1
+        item_id = body["items"][0]["id"]
+        detail = client.get("/api/activity/item", params={"id": item_id})
+        assert detail.status_code == 200, detail.text
+        assert detail.json()["item"]["id"] == item_id
+        assert client.get("/api/activity/item", params={"id": f"call:{uuid.uuid4()}"}).status_code == 404
     finally:
         app.dependency_overrides.pop(require_subscriber_jwt, None)

@@ -289,7 +289,16 @@ export function normalizeCatalogItem(item) {
   // No invented fallback: a missing price must surface as unknown, not as $5.
   const monthlyUsd = item.monthlyUsd ?? item.fee ?? (item.monthlyCents != null ? item.monthlyCents / 100 : null);
   const rawType = String(item.type || '').toLowerCase();
-  const normalizedType = rawType.includes('toll') ? 'Toll-Free' : 'Local DID';
+  // The server classifies each number (mobile / landline / toll_free / other)
+  // from the numbering plan; older responses without it fall back to the type.
+  const category = ['mobile', 'landline', 'toll_free', 'other'].includes(item.category)
+    ? item.category
+    : rawType.includes('toll') ? 'toll_free' : null;
+  const normalizedType = category === 'toll_free' || (!category && rawType.includes('toll'))
+    ? 'Toll-Free'
+    : category === 'landline' ? 'Landline'
+      : category === 'mobile' ? 'Mobile'
+        : 'Local DID';
   return {
     e164,
     number: e164,
@@ -299,6 +308,13 @@ export function normalizeCatalogItem(item) {
     provider: item.provider || item.source || 'vobiz',
     areaCode: item.areaCode || '',
     locality: item.locality || '',
+    category,
+    categoryLabel: item.categoryLabel || '',
+    areaLabel: item.areaLabel || '',
+    city: item.city || '',
+    stdCode: item.stdCode || '',
+    region: typeof item.region === 'string' ? item.region : '',
+    requirements: Array.isArray(item.requirements) ? item.requirements.filter((r) => typeof r === 'string') : [],
     fee: monthlyUsd,
     monthlyUsd,
     monthlyInr: item.monthlyInr ?? null,

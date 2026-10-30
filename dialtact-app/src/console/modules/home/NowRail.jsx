@@ -5,6 +5,7 @@ import { Section } from '../../ui/SolidCard';
 import { StatusBadge } from '../../ui/StatusBadge';
 import { TactileButton } from '../../ui/TactileButton';
 import { formatClock, walletAmounts } from '../../../lib/money';
+import { AnimatedCount } from './AnimatedCount';
 
 function Stat({ label, value, onClick }) {
   const Tag = onClick ? 'button' : 'div';
@@ -25,8 +26,8 @@ export function SummaryStrip({ live, wallet, needsActionCount, onShowNeeds, onSh
   const money = walletAmounts(wallet);
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:hidden" data-testid="home-summary-strip">
-      <Stat label="On calls now" value={live.calls.length} onClick={onShowCalls} />
-      <Stat label="Needs you" value={needsActionCount} onClick={onShowNeeds} />
+      <Stat label="On calls now" value={<AnimatedCount value={live.calls.length} />} onClick={onShowCalls} />
+      <Stat label="Needs you" value={<AnimatedCount value={needsActionCount} />} onClick={onShowNeeds} />
       <Stat label="Calls today" value={live.today?.calls ?? '—'} />
       <Stat label="Wallet" value={money.primary} onClick={onTopUp} />
     </div>
@@ -130,13 +131,21 @@ export function NowRail({
       <button
         type="button"
         onClick={onShowNeeds}
-        className={`flex w-full items-center justify-between rounded-card border p-4 text-left shadow-craft-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+        className={`flex w-full items-center justify-between rounded-card border p-4 text-left shadow-craft-xs transition-[background-color,border-color,transform] duration-200 ease-out active:scale-[0.99] motion-reduce:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
           needsActionCount > 0 ? 'border-warning-line bg-warning-soft' : 'border-line bg-surface'
         }`}
         data-testid="home-needs-action"
       >
         <span>
-          <span className="block text-title text-ink">{needsActionCount > 0 ? `${needsActionCount} need${needsActionCount === 1 ? 's' : ''} you` : 'Nothing needs you'}</span>
+          <span className="block text-title text-ink">
+            {needsActionCount > 0 ? (
+              <>
+                <AnimatedCount value={needsActionCount} /> need{needsActionCount === 1 ? 's' : ''} you
+              </>
+            ) : (
+              'Nothing needs you'
+            )}
+          </span>
           <span className="block text-ui text-fg-body">Callbacks, approvals and account issues</span>
         </span>
         <ChevronRight className="h-5 w-5 text-fg-body" />

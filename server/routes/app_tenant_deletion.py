@@ -3,7 +3,9 @@
 Implements:
   GET  /api/tenant/delete-preflight   — preflight check (warnings vs blocking)
   POST /api/tenant/delete             — quarantine + schedule teardown
-  POST /api/tenant/delete/cancel      — cancel during grace period / restore
+  GET  /api/tenant/restore-status     — what a restore brings back, and who may do it
+  POST /api/tenant/restore            — owner restore during the grace period
+  POST /api/tenant/delete/cancel      — legacy alias of /api/tenant/restore
   POST /api/tenant/export             — enqueue data takeout (GDPR Art. 20)
   GET  /api/tenant/export/{job_id}    — poll export status + pre-signed URL
 
@@ -58,10 +60,13 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["tenant-deletion"])
 
-_GRACE_EXEMPT_PATHS = frozenset({
-    "/api/tenant/delete/cancel",
-    "/api/tenant/export",
-})
+# Restoring a deleted workspace is a sudo action: the owner must have signed in
+# (password or Google) within this window, or re-enter their password now.
+RESTORE_REAUTH_MAX_AGE_SECONDS = 15 * 60
+
+# Teardown jobs a restore must stop. "failed" jobs are never reclaimed by the worker,
+# but cancelling them keeps the record honest about why the workspace still exists.
+_CANCELLABLE_TEARDOWN_STATUSES = ("queued", "running", "failed")
 
 
 def _utcnow() -> datetime:
@@ -498,9 +503,17 @@ async def request_delete_tenant(
             .values(inbound_enabled=False, outbound_enabled=False)
         )
 
-        # Pause campaigns
+        # Pause campaigns, remembering which ones were running so a restore can say
+        # exactly what the owner has to resume.
+        paused_campaign_ids: list[str] = []
         try:
             from server.db.models.phase5_models import Campaign
+            running = await session.execute(
+                select(Campaign.campaign_id).where(
+                    Campaign.tenant_id == principal.tenant_id, Campaign.status == "active"
+                )
+            )
+            paused_campaign_ids = [str(cid) for cid in running.scalars().all()]
             await session.execute(
                 update(Campaign)
                 .where(Campaign.tenant_id == principal.tenant_id, Campaign.status == "active")
@@ -536,6 +549,7 @@ async def request_delete_tenant(
             idempotency_key=idempotency_key,
             payload={
                 "active_numbers_snapshot": active_numbers_snapshot,
+                "paused_campaign_ids": paused_campaign_ids,
                 "initiated_by": str(principal.user_id),
                 "scheduled_purge_at": purge_at.isoformat(),
             },
@@ -615,20 +629,185 @@ def _send_deletion_scheduled_email_bg(
 
 
 # ---------------------------------------------------------------------------
-# POST /api/tenant/delete/cancel
+# Restore during the grace period
 # ---------------------------------------------------------------------------
-@router.post("/api/tenant/delete/cancel")
-async def cancel_delete_tenant(
+class RestoreTenantBody(BaseModel):
+    # Verify-only: needed only when the session is not a fresh sign-in.
+    current_password: str | None = Field(None, max_length=200)
+
+
+def _restore_block_reason(principal: SubscriberPrincipal) -> str | None:
+    """Why this caller may not restore, or None. Owner-only, never by impersonation."""
+    if principal.role not in ("owner", "customer_admin", "platform_admin"):
+        return "not_owner"
+    if principal.impersonator:
+        return "impersonation"
+    return None
+
+
+def _has_fresh_auth(principal: SubscriberPrincipal, now: datetime) -> bool:
+    if not principal.auth_time:
+        return False
+    age = now.timestamp() - float(principal.auth_time)
+    return -60 <= age <= RESTORE_REAUTH_MAX_AGE_SECONDS
+
+
+def _user_has_password(user: User | None) -> bool:
+    return bool(user and user.password_hash and not user.password_hash.startswith("!"))
+
+
+async def _open_teardown_jobs(session, tenant_id: uuid.UUID) -> list[TenantTeardownJob]:
+    rows = await session.execute(
+        select(TenantTeardownJob).where(
+            TenantTeardownJob.tenant_id == tenant_id,
+            TenantTeardownJob.status.in_(_CANCELLABLE_TEARDOWN_STATUSES),
+        )
+    )
+    return list(rows.scalars().all())
+
+
+def _restore_snapshot(jobs: list[TenantTeardownJob]) -> tuple[list[dict], list[str]]:
+    numbers: dict[str, dict] = {}
+    campaigns: list[str] = []
+    for job in jobs:
+        payload = job.payload or {}
+        for num in payload.get("active_numbers_snapshot") or []:
+            key = str(num.get("phone_number_id") or "")
+            if key:
+                numbers[key] = num
+        for cid in payload.get("paused_campaign_ids") or []:
+            if str(cid) not in campaigns:
+                campaigns.append(str(cid))
+    return list(numbers.values()), campaigns
+
+
+@router.get("/api/tenant/restore-status")
+async def restore_status(
     principal: Annotated[SubscriberPrincipal, Depends(require_subscriber_jwt)],
-    request: Request,
 ) -> dict[str, Any]:
-    """Cancel deletion during grace period and restore workspace to active state."""
-    _assert_owner(principal)
+    """What restoring this workspace brings back, and whether this caller may do it.
+
+    Reachable by every member while the workspace is pending deletion, so a member
+    who signs in sees an explanation instead of a wall of errors.
+    """
+    from server.db.models.entities import Agent
+    from server.services.saas.tenant_guard import as_aware_utc, tenant_in_deletion_grace
+
+    factory = get_session_factory()
+    if factory is None:
+        raise HTTPException(status_code=503, detail={"error": "db_unavailable"})
+    now = _utcnow()
+    async with factory() as session:
+        tenant = await session.get(Tenant, principal.tenant_id)
+        if tenant is None:
+            raise HTTPException(status_code=404, detail={"error": "tenant_not_found"})
+        if tenant.status == "active":
+            return {"status": "active", "tenantName": tenant.name}
+
+        purge_at = as_aware_utc(tenant.scheduled_purge_at)
+        in_grace = tenant_in_deletion_grace(tenant, now)
+        block = _restore_block_reason(principal)
+        if block is None and not in_grace:
+            block = "grace_expired"
+        user = await session.get(User, principal.user_id)
+
+        jobs = await _open_teardown_jobs(session, principal.tenant_id)
+        numbers_snapshot, paused_campaigns = _restore_snapshot(jobs)
+        requested_at = min(
+            (as_aware_utc(j.created_at) for j in jobs if j.created_at), default=None
+        )
+
+        agent_count = (
+            await session.execute(
+                select(func.count()).select_from(Agent).where(Agent.tenant_id == principal.tenant_id)
+            )
+        ).scalar() or 0
+        numbers_count = len(numbers_snapshot)
+        if not jobs:
+            numbers_count = (
+                await session.execute(
+                    select(func.count()).select_from(PhoneNumber).where(
+                        PhoneNumber.tenant_id == principal.tenant_id,
+                        PhoneNumber.status == "active",
+                    )
+                )
+            ).scalar() or 0
+        wallet = (
+            await session.execute(
+                select(BillingWallet).where(BillingWallet.tenant_id == principal.tenant_id)
+            )
+        ).scalar_one_or_none()
+        try:
+            from server.db.models.integration_models import TenantIntegration
+
+            integrations_count = (
+                await session.execute(
+                    select(func.count()).select_from(TenantIntegration).where(
+                        TenantIntegration.tenant_id == principal.tenant_id
+                    )
+                )
+            ).scalar() or 0
+        except Exception:
+            integrations_count = 0
+
+        return {
+            "status": tenant.status,
+            "tenantName": tenant.name,
+            "scheduledPurgeAt": purge_at.isoformat() if purge_at else None,
+            "deletionRequestedAt": requested_at.isoformat() if requested_at else None,
+            "daysRemaining": max(0, (purge_at - now).days) if (purge_at and in_grace) else 0,
+            "inGracePeriod": in_grace,
+            "canRestore": block is None,
+            "restoreBlockedReason": block,
+            "reauthRequired": not _has_fresh_auth(principal, now),
+            "hasPassword": _user_has_password(user),
+            "deletedByYou": tenant.deleted_by_user_id == principal.user_id,
+            "restorePreview": {
+                "agents": agent_count,
+                "phoneNumbers": numbers_count,
+                "campaignsPaused": len(paused_campaigns),
+                "integrations": integrations_count,
+                "walletBalanceUsd": (wallet.balance_cents or 0) / 100.0 if wallet else 0.0,
+                "walletBalanceInr": (wallet.balance_inr_paise or 0) / 100.0 if wallet else 0.0,
+            },
+        }
+
+
+async def _restore_tenant(
+    principal: SubscriberPrincipal,
+    request: Request,
+    body: RestoreTenantBody | None,
+) -> dict[str, Any]:
+    """Owner restore inside the grace period. Atomic and idempotent.
+
+    One transaction holds the tenant row lock while it flips the status, cancels
+    every open teardown job (not just one: a leftover queued job on a tenant with no
+    purge date is claimed by the worker immediately), re-enables the numbers that
+    were live, and writes the audit event. Campaigns stay paused: restarting outbound
+    dialling without the owner looking first is not a sensible default.
+    """
+    from server.services.saas.tenant_guard import tenant_deletion_is_final
+
+    block = _restore_block_reason(principal)
+    if block == "not_owner":
+        raise HTTPException(
+            status_code=403,
+            detail={"error": "forbidden", "message": "Only workspace owners may perform this action."},
+        )
+    if block == "impersonation":
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "forbidden",
+                "message": "A support session cannot restore a workspace. The owner must sign in.",
+            },
+        )
 
     factory = get_session_factory()
     if factory is None:
         raise HTTPException(status_code=503, detail={"error": "db_unavailable"})
 
+    now = _utcnow()
     async with factory() as session:
         tenant_result = await session.execute(
             select(Tenant)
@@ -639,28 +818,56 @@ async def cancel_delete_tenant(
         if tenant is None:
             raise HTTPException(status_code=404, detail={"error": "tenant_not_found"})
 
+        if tenant.status == "active" and tenant.deleted_at is None:
+            # Idempotent: a double click, a retry after a dropped response, or a second
+            # tab all land here. Still sweep any stray open job so nothing purges later.
+            stray = await _open_teardown_jobs(session, principal.tenant_id)
+            for job in stray:
+                job.status = "cancelled"
+                job.locked_by = None
+                job.locked_until = None
+                job.updated_at = now
+            if stray:
+                await session.commit()
+            return {
+                "status": "active",
+                "alreadyActive": True,
+                "message": "Workspace is already active.",
+            }
+
+        if tenant_deletion_is_final(tenant, now):
+            raise HTTPException(
+                status_code=410,
+                detail={
+                    "error": "grace_period_expired",
+                    "message": "The grace period has ended and this workspace can no longer be restored.",
+                },
+            )
         if tenant.status != "quarantined":
             raise HTTPException(
                 status_code=400,
-                detail={
-                    "error": "invalid_status",
-                    "message": (
-                        "Deletion can only be cancelled while the workspace is quarantined "
-                        "and within the grace period."
-                    ),
-                },
+                detail={"error": "invalid_status", "message": "This workspace is not pending deletion."},
             )
 
-        now = _utcnow()
-        purge_at = getattr(tenant, "scheduled_purge_at", None)
-        if purge_at is None or purge_at <= now:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "error": "grace_period_expired",
-                    "message": "The grace period has expired. Deletion can no longer be cancelled.",
-                },
-            )
+        # --- Fresh authentication (sudo) ---
+        if not _has_fresh_auth(principal, now):
+            user = await session.get(User, principal.user_id)
+            password = (body.current_password if body else None) or ""
+            if not password:
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "error": "reauth_required",
+                        "message": "Confirm it's you: enter your password or sign in again to restore this workspace.",
+                        "hasPassword": _user_has_password(user),
+                    },
+                )
+            await _check_delete_rate_limit(f"restore:{principal.user_id}")
+            if not _user_has_password(user) or not verify_portal_password(user.password_hash, password):
+                raise HTTPException(
+                    status_code=400,
+                    detail={"error": "invalid_credentials", "message": "Incorrect password."},
+                )
 
         # --- Restore tenant ---
         tenant.status = "active"
@@ -668,45 +875,44 @@ async def cancel_delete_tenant(
         tenant.scheduled_purge_at = None
         tenant.restored_at = now
 
-        # Cancel pending teardown job and read active_numbers_snapshot
-        job_result = await session.execute(
-            select(TenantTeardownJob).where(
-                TenantTeardownJob.tenant_id == principal.tenant_id,
-                TenantTeardownJob.status.in_(["queued", "running"]),
-            )
-        )
-        job = job_result.scalar_one_or_none()
-        snapshot: list[dict] = []
-        if job:
-            snapshot = (job.payload or {}).get("active_numbers_snapshot", [])
+        # Cancel EVERY open teardown job and collect their snapshots.
+        jobs = await _open_teardown_jobs(session, principal.tenant_id)
+        snapshot, paused_campaigns = _restore_snapshot(jobs)
+        for job in jobs:
             job.status = "cancelled"
+            job.locked_by = None
+            job.locked_until = None
             job.updated_at = now
 
-        # Re-enable numbers that were active before quarantine
+        # Re-enable numbers that were live before quarantine (never a released one).
+        restored_numbers = 0
         if snapshot:
             for num in snapshot:
-                num_id_raw = num.get("phone_number_id")
-                if not num_id_raw:
-                    continue
                 try:
-                    num_uuid = uuid.UUID(str(num_id_raw))
-                except ValueError:
+                    num_uuid = uuid.UUID(str(num.get("phone_number_id")))
+                except (TypeError, ValueError):
                     continue
-                await session.execute(
+                res = await session.execute(
                     update(PhoneNumber)
-                    .where(PhoneNumber.id == num_uuid)
+                    .where(
+                        PhoneNumber.id == num_uuid,
+                        PhoneNumber.tenant_id == principal.tenant_id,
+                        PhoneNumber.status != "released",
+                    )
                     .values(
                         inbound_enabled=num.get("inbound_enabled", True),
                         outbound_enabled=num.get("outbound_enabled", True),
                     )
                 )
-        else:
-            # Fall back: re-enable all numbers for this tenant
-            await session.execute(
+                restored_numbers += getattr(res, "rowcount", 0) or 0
+        elif not jobs:
+            # No snapshot to go on (legacy quarantine): re-enable the active numbers.
+            res = await session.execute(
                 update(PhoneNumber)
-                .where(PhoneNumber.tenant_id == principal.tenant_id)
+                .where(PhoneNumber.tenant_id == principal.tenant_id, PhoneNumber.status == "active")
                 .values(inbound_enabled=True, outbound_enabled=True)
             )
+            restored_numbers = getattr(res, "rowcount", 0) or 0
 
         session.add(
             AuthEvent(
@@ -719,7 +925,43 @@ async def cancel_delete_tenant(
 
         await session.commit()
 
-    return {"status": "active", "message": "Workspace successfully restored."}
+    logger.info(
+        "tenant.restored tenant=%s by=%s jobs_cancelled=%d numbers=%d",
+        principal.tenant_id,
+        principal.user_id,
+        len(jobs),
+        restored_numbers,
+    )
+    return {
+        "status": "active",
+        "alreadyActive": False,
+        "message": "Workspace restored.",
+        "restored": {
+            "phoneNumbers": restored_numbers,
+            "campaignsPaused": len(paused_campaigns),
+            "teardownJobsCancelled": len(jobs),
+        },
+    }
+
+
+@router.post("/api/tenant/restore")
+async def restore_tenant(
+    principal: Annotated[SubscriberPrincipal, Depends(require_subscriber_jwt)],
+    request: Request,
+    body: RestoreTenantBody | None = None,
+) -> dict[str, Any]:
+    """Restore a workspace pending deletion (owner; fresh sign-in or password)."""
+    return await _restore_tenant(principal, request, body)
+
+
+@router.post("/api/tenant/delete/cancel")
+async def cancel_delete_tenant(
+    principal: Annotated[SubscriberPrincipal, Depends(require_subscriber_jwt)],
+    request: Request,
+    body: RestoreTenantBody | None = None,
+) -> dict[str, Any]:
+    """Legacy alias of POST /api/tenant/restore."""
+    return await _restore_tenant(principal, request, body)
 
 
 # ---------------------------------------------------------------------------

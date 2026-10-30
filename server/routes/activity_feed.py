@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from server.auth.subscriber_dependencies import require_subscriber_jwt
@@ -50,3 +50,20 @@ async def activity_live(
         return await feed.live_snapshot(subscriber_workspace_tenant_id(principal), since=since)
     except (ProgrammingError, OperationalError):
         return {"calls": [], "ringing": 0, "today": None, "unavailable": True}
+
+
+@router.get("/api/activity/item")
+async def activity_item(
+    id: str = Query(..., min_length=3, max_length=160),  # noqa: A002 -- the feed item id.
+    principal: SubscriberPrincipal = Depends(require_subscriber_jwt),  # noqa: B008
+):
+    """One feed item in full, for the console's detail panel. Read-only and tenant-scoped."""
+    require_subscriber_permission(principal, "app.calls.read")
+    try:
+        detail = await feed.item_detail(subscriber_workspace_tenant_id(principal), id)
+    except (ProgrammingError, OperationalError):
+        detail = None
+    if detail is None:
+        raise HTTPException(status_code=404, detail={"error": {
+            "code": "not_found", "message": "This activity is no longer available."}})
+    return detail

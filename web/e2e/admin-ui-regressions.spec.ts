@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
   expect((await login.json()).ok).toBe(true);
 });
 
-test("admin workspace keeps all six operations grouped and reachable", async ({ page }) => {
+test("admin workspace keeps its operations grouped and reachable", async ({ page }) => {
   await page.route("**/api/dev/admin/analytics*", (route) =>
     route.fulfill({
       status: 200,
@@ -47,7 +47,7 @@ test("admin workspace keeps all six operations grouped and reachable", async ({ 
 
   const navigation = page.getByRole("navigation", { name: "Admin sections" });
   await expect(page.getByRole("heading", { name: "SaaS overview" })).toBeVisible();
-  for (const label of ["Overview", "Web & analytics", "Users", "Verification", "Tenants", "Phone numbers"]) {
+  for (const label of ["Overview", "Web & analytics", "Verification", "Accounts"]) {
     await expect(navigation.getByRole("link", { name: label, exact: true })).toBeVisible();
   }
   for (const group of ["Workspace", "Customer operations", "Trust", "Insights"]) {
@@ -58,13 +58,15 @@ test("admin workspace keeps all six operations grouped and reachable", async ({ 
   await expect(page.locator("table thead > th")).toHaveCount(0);
 
   const routes = [
-    ["Tenants", "/dev/admin/tenants", "Tenants"],
-    ["Users", "/dev/admin/users", "Users"],
-    ["Phone numbers", "/dev/admin/numbers", "Phone numbers"],
     ["Verification", "/dev/admin/verification", "Identity verification"],
     ["Web & analytics", "/dev/admin/analytics", "Web & analytics"],
     ["Overview", "/dev/admin", "SaaS overview"],
   ] as const;
+  // Workspaces, users and numbers share one page; the old routes redirect there.
+  await navigation.getByRole("link", { name: "Accounts", exact: true }).click();
+  await expect(page).toHaveURL(/\/dev\/admin\/accounts$/);
+  await expect(page.getByRole("heading", { name: "Accounts", exact: true })).toBeVisible();
+  await page.goBack();
   for (const [label, href, heading] of routes) {
     await navigation.getByRole("link", { name: label, exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`${href.replaceAll("/", "\\/")}$`));

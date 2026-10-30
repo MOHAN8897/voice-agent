@@ -105,7 +105,11 @@ export function EmployeesModule({
       >
         <AgentStudioModule
           onNavigate={onNavigate}
-          onOpenBuyNumber={onOpenBuyNumber}
+          onOpenBuyNumber={() => {
+            // Buying from an employee's settings assigns the new number to that employee.
+            setBuyNumberPreselectedAgent?.(selectedAgentId || null);
+            onOpenBuyNumber?.();
+          }}
           flowStep={employeeFlowStep}
           onFlowStepChange={(step) => onEmployeeFlowStepChange?.(step, selectedAgentId)}
           onBackToFleet={onBackToFleet}

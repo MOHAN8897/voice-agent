@@ -41,6 +41,7 @@ export function Tabs({ items, value, onChange, label, className = '', variant = 
             tabIndex={active ? 0 : -1}
             onKeyDown={(event) => onKeyDown(event, index)}
             onClick={() => onChange(item.id)}
+            data-testid={item.testId}
             className={
               pills
                 ? `shrink-0 inline-flex items-center gap-1.5 rounded-pill border px-3 ${size === 'sm' ? 'py-1' : 'py-1.5 min-h-[36px]'} text-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${

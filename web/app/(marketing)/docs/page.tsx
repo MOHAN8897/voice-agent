@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Documentation",
-  description: "API reference and integration guide for the Vāṇi voice platform.",
+  description: "API reference and integration guide for the Dialtact voice platform.",
 };
 
 const SECTIONS = [
@@ -40,7 +40,7 @@ export default function DocsPage() {
       <div className="mx-auto max-w-content px-6">
         <div className="max-w-2xl">
           <p className="label-caps text-accent">Documentation</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-text">Build on Vāṇi</h1>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-text">Build on Dialtact</h1>
           <p className="mt-4 text-lg text-text-muted">
             REST and WebSocket contracts for calls, brains, memory, and telephony.
           </p>

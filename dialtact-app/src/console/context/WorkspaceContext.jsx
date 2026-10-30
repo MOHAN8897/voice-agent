@@ -16,6 +16,11 @@ const WorkspaceContext = createContext(null);
 export function WorkspaceProvider({ children }) {
   const auth = useAuth();
   const tenantStatus = auth?.user?.tenantStatus;
+  // loadWorkspaceData is a stable callback, so it reads the status through a ref: a
+  // captured value froze at the first render and kept skipping (or not skipping) the
+  // sync after a workspace was deleted or restored.
+  const tenantStatusRef = useRef(tenantStatus);
+  tenantStatusRef.current = tenantStatus;
   const [agents, setAgents] = useState([]);
   const [phoneNumbers, setPhoneNumbers] = useState([]);
   const [calls, setCalls] = useState([]);
@@ -163,7 +168,7 @@ export function WorkspaceProvider({ children }) {
     if (!api.getToken()) {
       return;
     }
-    if (tenantStatus === 'quarantined') {
+    if (tenantStatusRef.current === 'quarantined') {
       setIsLoading(false);
       return;
     }
@@ -304,14 +309,14 @@ export function WorkspaceProvider({ children }) {
   }), [refreshSlice]);
 
   const reloadCatalog = useCallback(
-    async (country = catalogCountry) => {
+    async (country = catalogCountry, filters = {}) => {
       setAvailableCatalog([]);
       setCatalogCountry(country);
       if (!api.getToken()) {
         throw new Error('Sign in to view live phone number availability.');
       }
       try {
-        const fetched = await api.telephony.getCatalog(country);
+        const fetched = await api.telephony.getCatalog(country, filters);
         setAvailableCatalog(fetched?.length ? fetched : []);
       } catch (e) {
         setAvailableCatalog([]);

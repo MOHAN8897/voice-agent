@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
+import { legacyAccountsUrl } from "@/lib/adminAccountsRedirect";
 
-export default async function AdminUsersRoute({ searchParams }: {
+/** Moved to the combined Accounts page; kept so bookmarks still work. */
+export default async function LegacyUsersRoute({
+  searchParams,
+}: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(await searchParams)) {
-    for (const item of Array.isArray(value) ? value : value ? [value] : []) params.append(key, item);
-  }
-  params.set("section", "users");
-  redirect(`/dev/admin/tenants?${params}`);
+  redirect(legacyAccountsUrl("users", await searchParams));
 }

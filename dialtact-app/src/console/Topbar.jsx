@@ -152,6 +152,7 @@ export function Topbar({
         <button
           type="button"
           onClick={onOpenBuyNumber}
+          data-testid="topbar-buy-number"
           className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold bg-white hover:bg-canvas text-ink border border-line shadow-2xs transition-all active:scale-[0.98]"
         >
           <Phone className="w-3.5 h-3.5 text-accent" />

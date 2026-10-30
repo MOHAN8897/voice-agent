@@ -50,6 +50,8 @@ import {
 } from '../../lib/internalLabels';
 import { formatInr, formatUsd, relativeTime } from '../../lib/money';
 import { contactName, maskPhone } from '../../lib/phoneMask';
+import { normalizeCall } from '../../services/apiNormalize';
+import { fetchCallRecord } from './home/activityDetail';
 
 const STATUS_ICON = {
   answered: PhoneIncoming,
@@ -527,7 +529,28 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
     [calls, lockedAgentId]
   );
 
-  const scopedCalls = statusCalls ?? bucketCalls;
+  const baseCalls = statusCalls ?? bucketCalls;
+  // A call opened from a deep link (Home feed) may be older than the first page of
+  // history: fetch that one row and show it at the top so it can be selected.
+  const [linkedCall, setLinkedCall] = useState(null);
+  const linkedRequest = React.useRef('');
+  const selectedListed = Boolean(selectedCallId) && baseCalls.some((c) => c.id === selectedCallId);
+  useEffect(() => {
+    if (!selectedCallId || selectedListed || isLoading || statusLoading) return undefined;
+    if (linkedCall?.id === selectedCallId || linkedRequest.current === selectedCallId) return undefined;
+    linkedRequest.current = selectedCallId;
+    let active = true;
+    fetchCallRecord(selectedCallId)
+      .then((row) => { if (active && row) setLinkedCall(normalizeCall(row, agentsByIdRef.current)); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [selectedCallId, selectedListed, isLoading, statusLoading, linkedCall]);
+  const scopedCalls = useMemo(
+    () => (linkedCall && !baseCalls.some((c) => c.id === linkedCall.id) && (!lockedAgentId || linkedCall.agentId === lockedAgentId)
+      ? [linkedCall, ...baseCalls]
+      : baseCalls),
+    [linkedCall, baseCalls, lockedAgentId]
+  );
   hasLiveCallRef.current = scopedCalls.some((call) => callStatus(call) === 'in_progress');
 
   const filteredCalls = useMemo(

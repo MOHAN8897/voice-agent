@@ -1,5 +1,11 @@
-import { AdminWorkspace } from "@/components/admin/AdminWorkspace";
+import { redirect } from "next/navigation";
+import { legacyAccountsUrl } from "@/lib/adminAccountsRedirect";
 
-export default function AdminNumbersRoute() {
-  return <AdminWorkspace view="numbers" />;
+/** Moved to the combined Accounts page; kept so bookmarks still work. */
+export default async function LegacyNumbersRoute({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  redirect(legacyAccountsUrl("numbers", await searchParams));
 }

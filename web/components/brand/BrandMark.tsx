@@ -13,9 +13,9 @@ export function BrandMark({ href = "/", compact = false, className = "" }: Brand
         className="flex h-8 w-8 items-center justify-center rounded-lg border border-accent/30 bg-accent-dim font-mono text-sm font-semibold text-accent"
         aria-hidden
       >
-        V
+        D
       </span>
-      {!compact && <span className="text-xl font-semibold tracking-tight text-text">Vāṇi</span>}
+      {!compact && <span className="text-xl font-semibold tracking-tight text-text">Dialtact</span>}
     </span>
   );
 

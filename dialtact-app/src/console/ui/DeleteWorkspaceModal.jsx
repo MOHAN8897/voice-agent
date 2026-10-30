@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Modal } from './Modal';
 import { api } from '../../services/api';
+import { authService } from '../../services/authService';
 import { walletAmounts } from '../../lib/money';
 
 /**
@@ -151,8 +152,16 @@ export function DeleteWorkspaceModal({ isOpen, onClose, tenantName }) {
         forfeitBalanceConfirmed: forfeitConfirmed,
       });
 
-      // Successful quarantine: clear session tokens and redirect to login
+      // Successful quarantine: sign out properly (revokes the refresh cookie too, so a
+      // reload cannot silently sign back in) and land on the sign-in screen, where
+      // signing in again as the owner opens the restore screen.
       if (typeof window !== 'undefined') {
+        try {
+          await authService.signOut();
+        } catch {
+          /* local session is cleared below either way */
+        }
+        authService.clearSession();
         sessionStorage.removeItem('dialtact_auth_token');
         localStorage.removeItem('dialtact_auth_token');
         window.location.href = '/login?notice=workspace_quarantined';

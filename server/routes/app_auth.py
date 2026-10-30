@@ -113,6 +113,21 @@ class OnboardingSurveyBody(BaseModel):
         return v
 
 
+# Shown once the password (or Google identity) has been verified, so it confirms
+# nothing to someone who does not already control the account.
+WORKSPACE_DELETED_MESSAGE = (
+    "This workspace was permanently deleted after its grace period ended, "
+    "so it can no longer be restored."
+)
+
+
+def _workspace_deleted_error() -> HTTPException:
+    return HTTPException(
+        status_code=403,
+        detail={"error": {"code": "workspace_deleted", "message": WORKSPACE_DELETED_MESSAGE}},
+    )
+
+
 def _client_ip(request: Request) -> str | None:
     return request.client.host if request.client else None
 
@@ -232,6 +247,8 @@ async def auth_login(body: LoginBody, request: Request, response: Response):
                     }
                 },
             )
+        if code == "workspace_deleted":
+            raise _workspace_deleted_error()
         if code in ("invalid_credentials", "account_disabled", "tenant_inactive"):
             raise HTTPException(
                 status_code=401,
@@ -268,12 +285,14 @@ async def auth_refresh(request: Request, response: Response, body: RefreshBody |
                 else "Your session reached its maximum length. Please sign in again."
             )
             raise HTTPException(status_code=401, detail={"error": {"code": code, "message": message}})
-        if code == "tenant_inactive":
+        if code in ("tenant_inactive", "workspace_deleted"):
             clear_refresh_cookie(response)
-            raise HTTPException(
-                status_code=401,
-                detail={"error": {"code": code, "message": "This workspace is no longer active."}},
+            message = (
+                WORKSPACE_DELETED_MESSAGE
+                if code == "workspace_deleted"
+                else "This workspace is no longer active."
             )
+            raise HTTPException(status_code=401, detail={"error": {"code": code, "message": message}})
         clear_refresh_cookie(response)
         raise HTTPException(status_code=401, detail={"error": {"code": "invalid_refresh", "message": "Invalid refresh token"}})
 
@@ -650,7 +669,9 @@ async def auth_google_callback(
         # origin (api-dev vs app-dev / Vite). SPA redeems handoff via same-origin /api.
         hid = create_auth_handoff(data)
         return RedirectResponse(f"{front}/#auth/callback?handoff={hid}")
-    except ValueError:
+    except ValueError as e:
+        if str(e) == "workspace_deleted":
+            return RedirectResponse(f"{front}/?auth_error=workspace_deleted")
         return RedirectResponse(f"{front}/?auth_error=google")
 
 
@@ -679,6 +700,8 @@ async def auth_google(body: GoogleTokenBody, response: Response):
         return _attach_refresh(response, data)
     except ValueError as e:
         code = str(e)
+        if code == "workspace_deleted":
+            raise _workspace_deleted_error()
         status = 401 if "invalid" in code else 400
         raise HTTPException(status_code=status, detail={"error": {"code": code, "message": code}})
 

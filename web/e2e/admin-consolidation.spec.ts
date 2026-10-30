@@ -38,7 +38,7 @@ test("overview is the first page with real currency totals and visible chart bar
   await expect(sidebar.locator("ul a").first()).toHaveText("Overview");
   await expect(sidebar.getByRole("link", { name: "Agents & brain" })).toHaveCount(0);
   await expect(sidebar.getByRole("link", { name: "SaaS phone AI" })).toHaveCount(0);
-  await expect(sidebar.getByRole("link", { name: "Tenants & users", exact: true })).toHaveCount(1);
+  await expect(sidebar.getByRole("link", { name: "Accounts", exact: true })).toHaveCount(1);
   await expect(page.getByText("₹5,678.00", { exact: true })).toBeVisible();
   const chart = page.getByRole("img", { name: "Calls per day" });
   expect((await chart.locator("div[style]").last().boundingBox())!.height).toBeGreaterThan(100);
@@ -54,15 +54,19 @@ test("overview is the first page with real currency totals and visible chart bar
   expect(errors).toEqual([]);
 });
 
-test("retired admin pages redirect and users keep their workspace filter", async ({ page }) => {
+test("retired admin pages redirect to Accounts and keep their workspace filter", async ({ page }) => {
   await page.goto("/dev/admin/users?tenantId=synthetic-tenant");
-  await expect(page).toHaveURL(/\/dev\/admin\/tenants\?.*section=users/);
-  await expect(page.getByRole("heading", { name: "Users & Memberships", exact: true })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name: "Tenants & users" })).toHaveAttribute("aria-current", "page");
-  const customerNav = page.getByRole("navigation", { name: "Customer sections" });
-  await expect(customerNav.getByRole("link", { name: "Users & memberships" })).toHaveAttribute("href", /tenantId=synthetic-tenant/);
-  await customerNav.getByRole("link", { name: "Workspaces", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Tenants", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/dev\/admin\/accounts\?.*tab=users.*tenantId=synthetic-tenant/);
+  await expect(page.getByRole("heading", { name: "Accounts", exact: true })).toBeVisible();
+  await expect(page.getByTestId("accounts-tab-users")).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("accounts-scope")).toBeVisible();
+  await page.goto("/dev/admin/numbers");
+  await expect(page).toHaveURL(/\/dev\/admin\/accounts\?tab=numbers$/);
+  await page.goto("/dev/admin/tenants?section=users");
+  await expect(page).toHaveURL(/\/dev\/admin\/accounts\?tab=users$/);
+  await page.goto("/dev/admin/tenants");
+  await expect(page).toHaveURL(/\/dev\/admin\/accounts\?tab=workspaces$/);
+  await expect(page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name: "Accounts" })).toHaveCount(0);
   for (const path of ["/dev/agents", "/dev/agents/old-agent/brain", "/dev/admin"]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/dev$/);

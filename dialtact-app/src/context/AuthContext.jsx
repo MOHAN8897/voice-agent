@@ -353,6 +353,43 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // Workspace lifecycle, as reported by any API response. Pending deletion keeps the
+  // session and switches the console to the restore screen; a workspace past its grace
+  // period ends the session with an explanation on the sign-in screen.
+  useEffect(() => {
+    const onPending = (ev) => {
+      const purgeAt = ev?.detail?.scheduledPurgeAt || null;
+      setUser((prev) => {
+        if (!prev || prev.tenantStatus === 'quarantined') return prev;
+        const next = {
+          ...prev,
+          tenantStatus: 'quarantined',
+          scheduledPurgeAt: purgeAt || prev.scheduledPurgeAt,
+        };
+        authService.saveSession(next);
+        return next;
+      });
+    };
+    const onDeleted = () => {
+      const leave = () => {
+        api.clearToken();
+        authService.clearSession();
+        setUser(null);
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login?notice=workspace_deleted';
+        }
+      };
+      // Revoke the refresh cookie too, or the next page load signs straight back in.
+      authService.signOut().catch(() => {}).finally(leave);
+    };
+    window.addEventListener('dialtact:workspace-pending-deletion', onPending);
+    window.addEventListener('dialtact:workspace-deleted', onDeleted);
+    return () => {
+      window.removeEventListener('dialtact:workspace-pending-deletion', onPending);
+      window.removeEventListener('dialtact:workspace-deleted', onDeleted);
+    };
+  }, []);
+
   // Learn the server's session bounds from any auth response.
   useEffect(() => subscribeSessionPolicy(adoptSessionPolicy), [adoptSessionPolicy]);
 

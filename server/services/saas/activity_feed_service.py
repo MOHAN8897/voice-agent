@@ -733,36 +733,40 @@ async def _campaign_items(session, M, *, tenant_id, agent, before, fetch, names)
             if str(status or "") not in ("pending", "queued", "in_progress", "dialing", "scheduled", "retry"):
                 bucket["done"] += int(count)
 
-    def actions(cid: Any) -> list[dict]:
-        return [{"kind": "open_campaign", "label": "Open campaign", "campaignId": str(cid)}]
-
     out: list[dict[str, Any]] = []
+    empty = {"total": 0, "done": 0}
     for run, camp in started:
-        p = progress.get(str(camp.campaign_id), {"total": 0, "done": 0})
-        running = run.ended_at is None and str(camp.status) == "running"
-        text = f"started calling for “{camp.name}”"
-        out.append(_item(key=f"campaign:{run.run_id}:start", type_="campaign.started", category="campaigns",
-                         at=run.started_at, tone="live" if running else "info",
-                         actor=names.get(str(camp.agent_id)), text=text, agent_id=camp.agent_id,
-                         detail=(f"{p['done']} of {p['total']} contacts done" if p["total"] else None),
-                         refs={"campaignId": str(camp.campaign_id)}, actions=actions(camp.campaign_id),
-                         meta={"progress": p, "status": camp.status}))
+        out.append(_campaign_item("start", camp, run, progress.get(str(camp.campaign_id), empty), names))
     for run, camp in finished:
-        p = progress.get(str(camp.campaign_id), {"total": 0, "done": 0})
-        out.append(_item(key=f"campaign:{run.run_id}:end", type_="campaign.completed", category="campaigns",
-                         at=run.ended_at, tone="success", actor=None,
-                         text=f"Campaign “{camp.name}” finished", agent_id=camp.agent_id,
-                         detail=(f"{p['done']} of {p['total']} contacts called" if p["total"] else None),
-                         refs={"campaignId": str(camp.campaign_id)}, actions=actions(camp.campaign_id),
-                         meta={"progress": p, "status": camp.status}))
+        out.append(_campaign_item("end", camp, run, progress.get(str(camp.campaign_id), empty), names))
     for camp in created:
-        out.append(_item(key=f"campaign:{camp.campaign_id}:created", type_="campaign.created", category="campaigns",
-                         at=camp.created_at, tone="neutral", actor=None,
-                         text=f"Campaign “{camp.name}” was created", agent_id=camp.agent_id,
-                         refs={"campaignId": str(camp.campaign_id)}, actions=actions(camp.campaign_id),
-                         meta={"status": camp.status,
-                               "progress": progress.get(str(camp.campaign_id), {"total": 0, "done": 0})}))
+        out.append(_campaign_item("created", camp, None, progress.get(str(camp.campaign_id), empty), names))
     return out
+
+
+def _campaign_item(kind: str, camp: Any, run: Any, p: dict[str, int], names: dict[str, str]) -> dict[str, Any]:
+    """One campaign event: a run started (``start``), a run ended (``end``) or the campaign was created."""
+    actions = [{"kind": "open_campaign", "label": "Open campaign", "campaignId": str(camp.campaign_id)}]
+    refs = {"campaignId": str(camp.campaign_id)}
+    meta = {"progress": p, "status": camp.status}
+    if kind == "start":
+        running = run.ended_at is None and str(camp.status) == "running"
+        return _item(key=f"campaign:{run.run_id}:start", type_="campaign.started", category="campaigns",
+                     at=run.started_at, tone="live" if running else "info",
+                     actor=names.get(str(camp.agent_id)), text=f"started calling for “{camp.name}”",
+                     agent_id=camp.agent_id,
+                     detail=(f"{p['done']} of {p['total']} contacts done" if p["total"] else None),
+                     refs=refs, actions=actions, meta=meta)
+    if kind == "end":
+        return _item(key=f"campaign:{run.run_id}:end", type_="campaign.completed", category="campaigns",
+                     at=run.ended_at, tone="success", actor=None,
+                     text=f"Campaign “{camp.name}” finished", agent_id=camp.agent_id,
+                     detail=(f"{p['done']} of {p['total']} contacts called" if p["total"] else None),
+                     refs=refs, actions=actions, meta=meta)
+    return _item(key=f"campaign:{camp.campaign_id}:created", type_="campaign.created", category="campaigns",
+                 at=camp.created_at, tone="neutral", actor=None,
+                 text=f"Campaign “{camp.name}” was created", agent_id=camp.agent_id,
+                 refs=refs, actions=actions, meta=meta)
 
 
 def _tool_item(row: Any, names: dict[str, str]) -> dict[str, Any]:
@@ -1057,4 +1061,306 @@ async def live_snapshot(tenant_id: uuid.UUID, *, since: datetime | None = None) 
                   "talkSeconds": int(agg[1] or 0), "leads": leads, "bookings": bookings},
         "since": _iso(since),
         "serverTime": _iso(now),
+    }
+
+
+# -- One item, in full (the console's detail panel) -----------------------------------------
+
+#: Related rows shown per kind in the detail panel.
+DETAIL_RELATED_CAP = 10
+_CAMPAIGN_OPEN_STATUSES = ("pending", "queued", "in_progress", "dialing", "scheduled", "retry")
+
+
+def _channel_label(kind: str) -> str:
+    return {"purchase": "Channels bought", "renewal": "Renewal", "renewal_failed": "Renewal failed",
+            "lapsed": "Channels lapsed", "downgrade_applied": "Channels reduced"}.get(kind, "Channel change")
+
+
+def _wallet_label(kind: str) -> str:
+    if kind in _TOPUP_KINDS:
+        return "Top-up"
+    if kind in _RENT_KINDS:
+        return "Phone line rent"
+    if kind in _REFUND_KINDS:
+        return "Refund"
+    return "Wallet change"
+
+
+async def _call_record(session, M, tenant_id: uuid.UUID, call_id: str | None) -> dict[str, Any] | None:
+    """The same row ``GET /api/calls`` returns for one call (or ringing attempt), tenant-scoped."""
+    cid = _as_uuid(call_id)
+    if cid is None:
+        return None
+    from server.call import call_timeline
+    from server.call.call_store import _attempt_row_to_dict, _row_to_dict
+
+    row = await session.get(M["Call"], cid)
+    if row is not None and row.tenant_id == tenant_id and not row.is_test:
+        return call_timeline._call_to_item(_row_to_dict(row))
+    attempt = await session.get(M["CallAttempt"], cid)
+    if attempt is not None and attempt.tenant_id == tenant_id:
+        return call_timeline._attempt_to_item(_attempt_row_to_dict(attempt))
+    return None
+
+
+async def _enrich_call_record(record: dict[str, Any], tenant_id: uuid.UUID) -> dict[str, Any]:
+    """Summary, recording, contact numbers and the wallet charge, exactly as the Calls page gets them."""
+    try:
+        from server.routes import calls as calls_routes
+
+        enriched = await asyncio.to_thread(calls_routes._enrich_timeline_item, record)
+        if enriched.get("connected") and enriched.get("call_id"):
+            enriched.update(await asyncio.to_thread(calls_routes._integration_fields, str(enriched["call_id"])))
+        await calls_routes._attach_tenant_wallet_charges([enriched], str(tenant_id))
+        return enriched
+    except Exception:  # noqa: BLE001 -- the panel still shows the database fields.
+        logger.debug("activity_feed.detail_enrich_failed")
+        return record
+
+
+async def _related_to_call(session, M, tenant_id: uuid.UUID, call_id: str,
+                           names: dict[str, str]) -> dict[str, list[dict[str, Any]]]:
+    """Callbacks, follow-ups, language callbacks and integration actions that came from one call."""
+    cid = _as_uuid(call_id)
+    C, F, L, T = M["CallCallback"], M["FollowUpJob"], M["LanguageSwitchRequest"], M["ToolExecution"]
+    cap = DETAIL_RELATED_CAP
+    callbacks: list[dict[str, Any]] = []
+    language: list[dict[str, Any]] = []
+    if cid is not None:
+        callbacks = [_callback_item(r, names) for r in (await session.execute(select(C).where(
+            C.tenant_id == tenant_id, C.mode == "requested",
+            or_(C.original_call_id == cid, C.original_attempt_id == cid),
+        ).order_by(C.created_at.desc()).limit(cap))).scalars().all()]
+        language = [_language_item(r, names) for r in (await session.execute(select(L).where(
+            L.tenant_id == tenant_id, L.original_call_id == cid,
+        ).order_by(L.updated_at.desc()).limit(cap))).scalars().all()]
+    followups = [_followup_item(r, names) for r in (await session.execute(select(F).where(
+        F.tenant_id == tenant_id, F.source_id == str(call_id),
+    ).order_by(F.updated_at.desc()).limit(cap))).scalars().all()]
+    tools = [_tool_item(r, names) for r in (await session.execute(select(T).where(
+        T.tenant_id == tenant_id, T.call_id == str(call_id),
+        T.status.in_(("succeeded", "failed", "timed_out_pending")),
+    ).order_by(T.started_at.asc()).limit(cap))).scalars().all()]
+    return {"callbacks": callbacks, "followUps": followups, "languageRequests": language,
+            "integrationActions": tools}
+
+
+async def _lead_calls(session, M, tenant_id: uuid.UUID, lead: Any, names: dict[str, str]) -> list[dict[str, Any]]:
+    """The lead's latest calls: the assessed call plus calls its callbacks, follow-ups and attempts point at."""
+    phone = str(lead.phone or "").strip()
+    call_ids: set[uuid.UUID] = set()
+    try:
+        from server.db.models.followup_models import LeadAssessment
+
+        source = await session.scalar(select(LeadAssessment.source_call_id).where(
+            LeadAssessment.tenant_id == tenant_id, LeadAssessment.lead_id == lead.lead_id))
+        if _as_uuid(source):
+            call_ids.add(_as_uuid(source))
+    except Exception:  # noqa: BLE001 -- the scoring table may not exist yet.
+        await session.rollback()
+    items: list[dict[str, Any]] = []
+    if phone:
+        C, F, L, A = M["CallCallback"], M["FollowUpJob"], M["LanguageSwitchRequest"], M["CallAttempt"]
+        call_ids |= set((await session.execute(select(C.original_call_id).where(
+            C.tenant_id == tenant_id, C.to_e164 == phone, C.original_call_id.is_not(None)).limit(20))).scalars())
+        call_ids |= set((await session.execute(select(L.original_call_id).where(
+            L.tenant_id == tenant_id, L.phone_e164 == phone, L.original_call_id.is_not(None)).limit(20))).scalars())
+        call_ids |= {u for r in (await session.execute(select(F.source_id).where(
+            F.tenant_id == tenant_id, F.phone == phone).limit(20))).scalars() if (u := _as_uuid(r))}
+        attempts = (await session.execute(select(A).where(
+            A.tenant_id == tenant_id, A.linked_call_id.is_(None), or_(A.from_number == phone, A.to_number == phone),
+            A.status.in_(("missed", "declined", "voicemail", "failed")),
+        ).order_by(A.started_at.desc()).limit(5))).scalars().all()
+        items.extend(_attempt_item(r, names) for r in attempts)
+    if call_ids:
+        Call = M["Call"]
+        rows = (await session.execute(select(Call).where(
+            Call.tenant_id == tenant_id, Call.call_id.in_(list(call_ids)), Call.is_test.is_(False),
+        ).order_by(Call.started_at.desc()).limit(5))).scalars().all()
+        items.extend(_call_item(r, names) if r.ended_at is not None else _live_item(r, names, _now()) for r in rows)
+    items.sort(key=lambda i: i["_at"], reverse=True)
+    return items[:5]
+
+
+def _row_by_id(value: str) -> uuid.UUID | None:
+    return _as_uuid(str(value or "").split(":")[0])
+
+
+async def item_detail(tenant_id: uuid.UUID, item_id: str) -> dict[str, Any] | None:
+    """Everything the console's detail panel shows for one feed item, or ``None`` if it is not this tenant's.
+
+    The item is rebuilt from its source row, so a deep link works even when the item
+    is no longer on the first feed page. Read-only: nothing here dials, charges or writes.
+    """
+    item_id = str(item_id or "").strip()[:160]
+    kind, _, rest = item_id.partition(":")
+    factory = get_session_factory()
+    if factory is None or not rest:
+        return None
+    M = _models()
+    now = _now()
+    item: dict[str, Any] | None = None
+    record: dict[str, Any] | None = None
+    related: dict[str, list[dict[str, Any]]] = {}
+    lead_out: dict[str, Any] | None = None
+    campaign_out: dict[str, Any] | None = None
+    facts: dict[str, Any] = {}
+    source_call: str | None = None
+    rid = _row_by_id(rest)
+
+    async with factory() as session:
+        names = await _agent_names(session, M, tenant_id)
+
+        async def owned(model):
+            row = await session.get(model, rid) if rid is not None else None
+            return row if row is not None and row.tenant_id == tenant_id else None
+
+        if kind in ("call", "live"):
+            row = await owned(M["Call"])
+            if row is None or row.is_test:
+                return None
+            item = _live_item(row, names, now) if row.ended_at is None else _call_item(row, names)
+            source_call = str(row.call_id)
+        elif kind == "attempt":
+            row = await owned(M["CallAttempt"])
+            if row is None:
+                return None
+            item = _attempt_item(row, names)
+            source_call = str(row.attempt_id)
+        elif kind == "callback":
+            row = await owned(M["CallCallback"])
+            if row is None:
+                return None
+            item = _callback_item(row, names)
+            source_call = item["refs"].get("callId") or (str(row.original_attempt_id) if row.original_attempt_id else None)
+            facts = {"status": row.status, "requestedAt": _iso(row.created_at), "updatedAt": _iso(row.updated_at)}
+        elif kind == "followup":
+            row = await owned(M["FollowUpJob"])
+            if row is None:
+                return None
+            item = _followup_item(row, names)
+            source_call = row.source_id
+            payload = row.payload or {}
+            facts = {"status": row.status, "kind": row.kind, "dueAt": _iso(row.due_at),
+                     "expiresAt": _iso(row.expires_at), "requestedAt": _iso(row.created_at),
+                     "requestedWhen": payload.get("requestedWhen") or payload.get("requestText"),
+                     "timezone": payload.get("timezone")}
+        elif kind == "language":
+            row = await owned(M["LanguageSwitchRequest"])
+            if row is None:
+                return None
+            item = _language_item(row, names)
+            source_call = item["refs"].get("callId")
+            facts = {"status": row.status, "language": _language_name(row.requested_language),
+                     "originalLanguage": _language_name(row.original_language),
+                     "requestedAt": _iso(row.created_at), "updatedAt": _iso(row.updated_at),
+                     "requestText": row.request_text}
+        elif kind == "lead":
+            row = await owned(M["Lead"])
+            if row is None:
+                return None
+            item = _lead_item(row, names)
+            lead_out = {"leadId": str(row.lead_id), "name": row.name, "phone": row.phone, "email": row.email,
+                        "stage": row.stage, "notes": row.notes, "agentId": row.agent_id,
+                        "createdAt": _iso(row.created_at), "updatedAt": _iso(row.updated_at)}
+            related["calls"] = await _lead_calls(session, M, tenant_id, row, names)
+        elif kind == "campaign":
+            _, _, which = rest.partition(":")
+            Campaign, Run, Contact = M["Campaign"], M["CampaignRun"], M["CampaignContact"]
+            run = None
+            if which in ("start", "end"):
+                run = await session.get(Run, rid) if rid is not None else None
+                camp = await session.get(Campaign, run.campaign_id) if run is not None else None
+            else:
+                camp = await session.get(Campaign, rid) if rid is not None else None
+            if camp is None or camp.tenant_id != tenant_id:
+                return None
+            counts = dict((await session.execute(select(Contact.status, func.count()).where(
+                Contact.campaign_id == camp.campaign_id).group_by(Contact.status))).all())
+            total = sum(int(v) for v in counts.values())
+            done = sum(int(v) for k, v in counts.items() if str(k or "") not in _CAMPAIGN_OPEN_STATUSES)
+            p = {"total": total, "done": done}
+            item = _campaign_item(which if which in ("start", "end") else "created", camp, run, p, names)
+            campaign_out = {"campaignId": str(camp.campaign_id), "name": camp.name, "status": camp.status,
+                            "description": camp.description, "agentId": str(camp.agent_id),
+                            "createdAt": _iso(camp.created_at), "concurrency": camp.concurrency,
+                            "progress": p, "statusCounts": {str(k or "unknown"): int(v) for k, v in counts.items()},
+                            "run": ({"startedAt": _iso(run.started_at), "endedAt": _iso(run.ended_at),
+                                     "status": run.status} if run is not None else None)}
+        elif kind == "tool":
+            row = await owned(M["ToolExecution"])
+            if row is None:
+                return None
+            item = _tool_item(row, names)
+            source_call = row.call_id
+            facts = {"status": row.status, "app": _tool_app(row.action), "startedAt": _iso(row.started_at),
+                     "completedAt": _iso(row.completed_at)}
+        elif kind == "number":
+            row = await owned(M["PhoneNumber"])
+            if row is None:
+                return None
+            item = _number_item(row, names)
+            facts = {"number": row.e164, "status": row.status, "addedAt": _iso(row.created_at),
+                     "agentName": names.get(str(row.agent_id)) if row.agent_id else None,
+                     "inbound": bool(row.inbound_enabled), "outbound": bool(row.outbound_enabled)}
+        elif kind == "wallet":
+            row = await owned(M["BillingWalletTransaction"])
+            item = _wallet_item(row) if row is not None else None
+            if item is None:
+                return None
+            paise = abs(int(row.amount_inr_paise or 0))
+            cents = abs(int(row.amount_cents or 0))
+            facts = {"amount": money_inr(paise) if paise else (f"${cents / 100:,.2f}" if cents else None),
+                     "kindLabel": _wallet_label(row.kind), "at": _iso(row.created_at)}
+        elif kind == "channel":
+            row = await owned(M["TenantChannelEvent"])
+            if row is None:
+                return None
+            item = _channel_item(row)
+            paise = abs(int(row.amount_inr_paise or 0))
+            facts = {"kindLabel": _channel_label(row.kind), "channelsBefore": row.channels_before,
+                     "channelsAfter": row.channels_after, "amount": money_inr(paise) if paise else None,
+                     "at": _iso(row.created_at)}
+        elif kind == "alert":
+            alerts = await _system_alerts(session, M, tenant_id=tenant_id)
+            item = next((a for a in alerts if a["id"] == item_id), None)
+            if item is None:
+                return None
+            if item["type"] == "billing.low":
+                facts = {"balance": money_inr(int(item["meta"].get("balanceInrPaise") or 0))}
+        else:
+            return None
+
+        if source_call:
+            record = await _call_record(session, M, tenant_id, source_call)
+            if record is not None:
+                related.update(await _related_to_call(session, M, tenant_id, source_call, names))
+                # The item itself is not "related" to itself.
+                for key in ("callbacks", "followUps", "languageRequests", "integrationActions"):
+                    related[key] = [r for r in related.get(key, []) if r["id"] != item["id"]]
+
+    if lead_out is not None:
+        try:
+            from server.services.saas.lead_scoring import enrich_leads
+
+            enriched = (await enrich_leads([dict(lead_out)], tenant_id))[0] or {}
+            lead_out["assessment"] = enriched.get("assessment")
+            lead_out["doNotCall"] = bool(enriched.get("doNotCall"))
+        except Exception:  # noqa: BLE001 -- the score is optional.
+            lead_out["assessment"] = None
+
+    await _enrich_calls([item, *(r for rows in related.values() for r in rows)], str(tenant_id))
+    if record is not None:
+        record = await _enrich_call_record(record, tenant_id)
+        record.pop("tenant_id", None)
+        record["agent_name"] = names.get(str(record.get("agent_id") or ""))
+        record["outcome_label"] = _DISPOSITION_LABEL.get(str(record.get("disposition") or "").lower())
+    return {
+        "item": _public(item),
+        "call": record,
+        "related": {k: [_public(r) for r in v] for k, v in related.items()},
+        "lead": lead_out,
+        "campaign": campaign_out,
+        "facts": {k: v for k, v in facts.items() if v is not None},
+        "generatedAt": _iso(now),
     }

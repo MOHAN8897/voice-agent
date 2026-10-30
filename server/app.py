@@ -46,6 +46,7 @@ from server.routes.app_followups import router as app_followups_router
 from server.routes.stripe_webhook import router as stripe_webhook_router
 from server.routes.razorpay_webhook import router as razorpay_webhook_router
 from server.routes.dev_admin import router as dev_admin_router
+from server.routes.dev_admin_accounts import router as dev_admin_accounts_router
 from server.routes.app_billing import router as app_billing_router
 from server.routes.app_channels import router as app_channels_router
 from server.routes.admin_channels import router as admin_channels_router
@@ -626,6 +627,7 @@ app.include_router(app_followups_router)
 app.include_router(stripe_webhook_router)
 app.include_router(razorpay_webhook_router)
 app.include_router(dev_admin_router)
+app.include_router(dev_admin_accounts_router)
 app.include_router(app_billing_router)
 app.include_router(app_channels_router)
 app.include_router(admin_channels_router)

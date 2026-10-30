@@ -64,12 +64,21 @@ def _clear_overrides():
     app_mod.app.dependency_overrides.clear()
 
 
-def _make_client(user_id: uuid.UUID, tenant_id: uuid.UUID, role: str = "owner", email: str = "owner@example.com") -> TestClient:
+def _make_client(
+    user_id: uuid.UUID,
+    tenant_id: uuid.UUID,
+    role: str = "owner",
+    email: str = "owner@example.com",
+    *,
+    fresh_auth: bool = False,
+) -> TestClient:
     principal = SubscriberPrincipal(
         user_id=user_id,
         tenant_id=tenant_id,
         role=role,
         email=email,
+        # Restore is a sudo action: it needs a sign-in from the last few minutes.
+        auth_time=int(_utcnow().timestamp()) if fresh_auth else None,
     )
     token, _ = create_access_token(
         AccessTokenClaims(
@@ -523,7 +532,7 @@ async def test_grace_period_cancel_restore(monkeypatch):
     """Calling /api/tenant/delete/cancel during grace period restores active state, re-enables snapshot numbers, and cancels job."""
     uid = uuid.uuid4()
     tid = uuid.uuid4()
-    client = _make_client(uid, tid, role="owner")
+    client = _make_client(uid, tid, role="owner", fresh_auth=True)
 
     now = _utcnow()
     tenant = Tenant(
@@ -558,11 +567,20 @@ async def test_grace_period_cancel_restore(monkeypatch):
 
         async def execute(self, q):
             class MockResult:
+                rowcount = 1
+
                 def scalar_one_or_none(self_inner):
                     q_str = str(q)
                     if "tenant_teardown_jobs" in q_str:
                         return job
                     return tenant
+
+                def scalars(self_inner):
+                    class _All:
+                        def all(_s):
+                            return [job] if job.status in ("queued", "running", "failed") else []
+
+                    return _All()
 
             return MockResult()
 

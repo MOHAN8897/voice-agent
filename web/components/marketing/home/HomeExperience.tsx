@@ -47,7 +47,7 @@ const FEATURES = [
 
 const FAQS = [
   {
-    q: "Who is Vāṇi built for?",
+    q: "Who is Dialtact built for?",
     a: "Teams in Andhra Pradesh, Telangana, and across India who serve Telugu-speaking customers on the phone — real estate, admissions, healthcare, dealerships, and D2C.",
   },
   {

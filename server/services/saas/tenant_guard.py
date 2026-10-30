@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -17,7 +18,50 @@ from server.db.models.saas_models import TenantMembership
 # Statuses that mean the tenant can no longer back a session. `cancelled` is what
 # the admin soft-delete sets (dev_admin.delete_tenant also stamps deleted_at), so it
 # belongs here — leaving it out let login/refresh mint a token for a deleted workspace.
-UNUSABLE_TENANT_STATUSES = frozenset({"suspended", "deleted", "cancelled", "pending_deletion"})
+# `deleting` is a teardown in progress: the data is already being destroyed.
+UNUSABLE_TENANT_STATUSES = frozenset({"suspended", "deleted", "cancelled", "pending_deletion", "deleting"})
+
+# A workspace the owner deleted that is still inside its grace period. It may back a
+# session, but only so the owner can restore it or export data (see
+# subscriber_dependencies._DELETION_GRACE_EXEMPT_PATHS); every other API refuses it.
+RESTORABLE_TENANT_STATUS = "quarantined"
+
+# Statuses that belong to the self-serve deletion lifecycle.
+DELETION_LIFECYCLE_STATUSES = frozenset({"quarantined", "deleting", "deleted", "pending_deletion"})
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def as_aware_utc(value: datetime | None) -> datetime | None:
+    """Timestamps from some drivers (SQLite in tests) come back naive; treat as UTC."""
+    if value is None:
+        return None
+    return value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
+
+
+def tenant_in_deletion_grace(tenant: Tenant | None, now: datetime | None = None) -> bool:
+    """Quarantined for deletion and the grace period has not run out yet.
+
+    The purge date alone decides it. (Whether such a tenant may back a *session* is
+    tenant_is_usable's question, which also rejects a stamped deleted_at.)
+    """
+    if tenant is None:
+        return False
+    if tenant.status != RESTORABLE_TENANT_STATUS:
+        return False
+    purge_at = as_aware_utc(getattr(tenant, "scheduled_purge_at", None))
+    return purge_at is not None and purge_at > (now or _utcnow())
+
+
+def tenant_deletion_is_final(tenant: Tenant | None, now: datetime | None = None) -> bool:
+    """The workspace was deleted by its owner and can no longer be restored."""
+    if tenant is None:
+        return False
+    if tenant.status in ("deleting", "deleted", "pending_deletion"):
+        return True
+    return tenant.status == RESTORABLE_TENANT_STATUS and not tenant_in_deletion_grace(tenant, now)
 
 
 def tenant_is_usable(tenant: Tenant | None) -> bool:
@@ -27,10 +71,17 @@ def tenant_is_usable(tenant: Tenant | None) -> bool:
     Issue-time (login/refresh) and verify-time (assert_session_tenant) must agree on
     this. When they disagreed, login happily minted a token for a soft-deleted
     tenant and every later request failed the deleted_at check with 404 "Not found".
+
+    A quarantined workspace is usable only inside its grace period, and only so the
+    restore screen can be reached; past the purge date it is gone.
     """
     if tenant is None:
         return False
-    return tenant.deleted_at is None and tenant.status not in UNUSABLE_TENANT_STATUSES
+    if tenant.deleted_at is not None or tenant.status in UNUSABLE_TENANT_STATUSES:
+        return False
+    if tenant.status == RESTORABLE_TENANT_STATUS:
+        return tenant_in_deletion_grace(tenant)
+    return True
 
 
 async def resolve_usable_tenant(
@@ -46,6 +97,10 @@ async def resolve_usable_tenant(
     every console request 404'd on it. Ordering by created_at (then tenant_id as a
     tie-break, since created_at need not be unique) keeps the choice stable, and
     skipping unusable tenants keeps a deleted workspace from being selected at all.
+
+    A live workspace always wins over one pending deletion; the pending one is chosen
+    only when it is all the user has, which is what lands its owner on the restore
+    screen after signing in again.
     """
     result = await session.execute(
         select(TenantMembership, Tenant)
@@ -53,10 +108,30 @@ async def resolve_usable_tenant(
         .where(TenantMembership.user_id == user_id)
         .order_by(TenantMembership.created_at, TenantMembership.tenant_id)
     )
+    pending: tuple[TenantMembership, Tenant] | None = None
     for membership, tenant in result.all():
-        if tenant_is_usable(tenant):
-            return membership, tenant
-    return None
+        if not tenant_is_usable(tenant):
+            continue
+        if tenant.status == RESTORABLE_TENANT_STATUS:
+            if pending is None:
+                pending = (membership, tenant)
+            continue
+        return membership, tenant
+    return pending
+
+
+async def user_lost_workspace_to_deletion(session: AsyncSession, user_id: uuid.UUID) -> bool:
+    """True when one of the user's workspaces was deleted and is past restoring.
+
+    Lets sign-in say "this workspace was permanently deleted" instead of the generic
+    "invalid email or password" once the password itself has been verified.
+    """
+    result = await session.execute(
+        select(TenantMembership, Tenant)
+        .join(Tenant, Tenant.tenant_id == TenantMembership.tenant_id)
+        .where(TenantMembership.user_id == user_id)
+    )
+    return any(tenant_deletion_is_final(tenant) for _m, tenant in result.all())
 
 
 @dataclass(frozen=True)
@@ -65,6 +140,11 @@ class SubscriberPrincipal:
     tenant_id: uuid.UUID
     role: str
     email: str
+    # Epoch seconds of the interactive sign-in behind this token; None after a silent
+    # refresh. Used to require a fresh authentication for workspace restore.
+    auth_time: int | None = None
+    # Support handoff actor, when this session is an impersonation.
+    impersonator: str | None = None
 
     @classmethod
     def from_claims(cls, claims: AccessTokenClaims) -> SubscriberPrincipal:
@@ -73,6 +153,8 @@ class SubscriberPrincipal:
             tenant_id=uuid.UUID(claims.tenant_id),
             role=claims.role,
             email=claims.email,
+            auth_time=claims.auth_time,
+            impersonator=claims.impersonator,
         )
 
 

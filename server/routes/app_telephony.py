@@ -586,9 +586,34 @@ async def list_numbers(principal: SubscriberPrincipal = Depends(require_subscrib
 @router.get("/api/telephony/numbers/search")
 async def search_numbers(
     country: str | None = None,
+    category: str | None = None,
+    area: str | None = None,
     principal: SubscriberPrincipal = Depends(require_subscriber_jwt),
 ):
+    """Numbers a tenant can buy now.
+
+    ``category`` filters by mobile | landline | toll_free | other (or all), and
+    ``area`` by city, state or STD/area code. Every row carries its category,
+    a plain label and area, and any extra step the carrier lists for it.
+    """
     require_subscriber_permission(principal, "app.telephony.write")
+    from server.services.saas.number_categories import (
+        classify_number,
+        matches_area,
+        normalize_category,
+        number_requirements,
+        provider_search_hint,
+    )
+
+    try:
+        wanted_category = normalize_category(category)
+    except ValueError:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": {"code": "invalid_category", "message": "Number type must be all, mobile, landline, toll_free or other."}},
+        ) from None
+    area = (area or "").strip()[:64] or None
+    filtering = bool(wanted_category or area)
     from server.services.telnyx_client import TelnyxClient
     from server.services.saas.telephony_countries import normalize_buy_country
     from server.services.saas.billing_rates import load_current_rates
@@ -659,10 +684,17 @@ async def search_numbers(
             e164 = str(item.get("e164") or "")
             if not e164 or e164 in seen:
                 continue
+            classified = classify_number(e164, country=country, region=item.get("region"))
+            if wanted_category and classified["category"] != wanted_category:
+                continue
+            if not matches_area(item, classified, area):
+                continue
             seen.add(e164)
             priced.append(
                 {
                     **item,
+                    **classified,
+                    "requirements": number_requirements(item),
                     "monthlyUsd": monthly_usd,
                     "monthlyInr": monthly_inr,
                     "fee": monthly_usd,
@@ -677,7 +709,16 @@ async def search_numbers(
             from server.services.vobiz_client import VobizClient
             # Fetch a wider page so assigned numbers/reservations filtered below
             # do not make the tenant catalog look empty prematurely.
-            numbers = await VobizClient().search_available_numbers(country=country, limit=100)
+            search_hint = provider_search_hint(wanted_category, area, country)
+            if filtering:
+                # A type or area filter is applied to the rows we get back, so read
+                # further into the inventory; the documented substring search narrows
+                # it at the carrier when the filter maps onto number digits.
+                numbers = await VobizClient().search_available_numbers(
+                    country=country, limit=300, search=search_hint
+                )
+            else:
+                numbers = await VobizClient().search_available_numbers(country=country, limit=100)
         else:
             numbers = await TelnyxClient().search_available_numbers(country=country, limit=10)
     except Exception as exc:
@@ -713,8 +754,15 @@ async def search_numbers(
                 or item.get("auth_id") not in (None, "")
             ):
                 continue
+        classified = classify_number(e164, country=country, region=item.get("region"))
+        if wanted_category and classified["category"] != wanted_category:
+            continue
+        if not matches_area(item, classified, area):
+            continue
         if e164:
             seen.add(e164)
+        item.update(classified)
+        item["requirements"] = number_requirements(item)
         item["monthlyInr"] = monthly_inr
         item["monthlyUsd"] = monthly_usd
         item["fee"] = monthly_usd
@@ -724,7 +772,11 @@ async def search_numbers(
         if not is_admin and "telnyxNumberId" in item:
             item["telnyxNumberId"] = None
         if not is_admin:
-            for internal_key in ("id", "account_id", "auth_id", "carrierNumberId", "providerNumberId"):
+            # Carrier cost and ids are internal; the tenant price is monthlyInr above.
+            for internal_key in (
+                "id", "account_id", "auth_id", "carrierNumberId", "providerNumberId",
+                "setup_fee", "monthly_fee", "release_fee", "currency",
+            ):
                 item.pop(internal_key, None)
         priced.append(item)
         if len(priced) >= 10:
@@ -735,6 +787,8 @@ async def search_numbers(
         "didMonthlyInr": monthly_inr,
         "didMonthlyUsd": monthly_usd,
         "activeProvider": active_prov if is_admin else "direct_voice",
+        "category": wanted_category or "all",
+        "area": area or "",
     }
 
 

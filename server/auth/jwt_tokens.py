@@ -19,6 +19,11 @@ class AccessTokenClaims:
     email: str
     impersonator: str | None = None
     remember: bool = False
+    # Epoch seconds of the interactive sign-in (OIDC ``auth_time``) that produced this
+    # token. Set only when the user just proved who they are (password, Google, reset
+    # link); a silent refresh does not carry it, so a refreshed session never counts as
+    # a fresh authentication for sensitive actions such as restoring a workspace.
+    auth_time: int | None = None
 
 
 def create_access_token(
@@ -45,6 +50,8 @@ def create_access_token(
         # Session property, not an authorization grant: it only tells /auth/me which
         # client-side idle timer to mirror. The refresh token carries the enforcement.
         payload["rmb"] = True
+    if claims.auth_time:
+        payload["auth_time"] = int(claims.auth_time)
     token = jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
     return token, expires_in
 
@@ -69,4 +76,12 @@ def decode_access_token(token: str) -> AccessTokenClaims | None:
         email=str(email or ""),
         impersonator=str(imp) if imp else None,
         remember=bool(payload.get("rmb")),
+        auth_time=_int_or_none(payload.get("auth_time")),
     )
+
+
+def _int_or_none(value: Any) -> int | None:
+    try:
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None

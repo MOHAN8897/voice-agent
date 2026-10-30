@@ -120,6 +120,10 @@ async def process_one_teardown() -> bool:
                 # Grace period must have elapsed
                 (Tenant.scheduled_purge_at.is_(None))
                 | (Tenant.scheduled_purge_at <= now),
+                # Never purge a live workspace. A restore clears scheduled_purge_at, so
+                # an open job it failed to cancel would otherwise match the clause
+                # above and be claimed at once.
+                Tenant.status != "active",
             )
             .with_for_update(skip_locked=True)
             .limit(1)

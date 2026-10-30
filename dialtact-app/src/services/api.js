@@ -140,9 +140,13 @@ export function parseApiError(data, status) {
     data?.error ||
     (detail && typeof detail === 'object' && (detail.error || detail)) ||
     null;
-  const code = typeof err === 'object' ? err?.code : undefined;
+  // Some routes answer `{detail: {error: "code", message: "..."}}` (flat code string).
+  const flatCode =
+    typeof err === 'string' && detail && typeof detail === 'object' && detail.error === err ? err : undefined;
+  const code = typeof err === 'object' ? err?.code : flatCode;
   const message =
     (typeof err === 'object' && (err?.message || err?.code)) ||
+    (flatCode && typeof detail.message === 'string' && detail.message) ||
     (typeof err === 'string' ? err : null) ||
     (typeof detail === 'string' ? detail : null) ||
     data?.message ||
@@ -679,19 +683,19 @@ export const api = {
       const isAuthRoute = path.includes('/auth/');
       const parsed = parseApiError(data, response.status);
 
-      if (
-        data?.error === 'tenant_quarantined' ||
-        data?.detail?.error === 'tenant_quarantined' ||
-        parsed?.code === 'tenant_quarantined'
-      ) {
-        if (
-          typeof window !== 'undefined' &&
-          !path.includes('/tenant/delete/cancel') &&
-          !path.includes('/tenant/export')
-        ) {
-          sessionStorage.removeItem(AUTH_TOKEN_KEY);
-          window.location.href = '/login?notice=workspace_quarantined';
-        }
+      // Workspace lifecycle answers. A workspace pending deletion keeps its session:
+      // the console swaps to the restore screen instead. (This used to drop the access
+      // token and hard-redirect to the sign-in page, so the owner signed in, the first
+      // console request bounced them out again, and restore was never reachable.)
+      const lifecycleCode = data?.detail?.error || data?.error || parsed?.code;
+      if (typeof window !== 'undefined' && lifecycleCode === 'tenant_quarantined') {
+        window.dispatchEvent(
+          new CustomEvent('dialtact:workspace-pending-deletion', {
+            detail: { scheduledPurgeAt: data?.detail?.scheduledPurgeAt || null },
+          })
+        );
+      } else if (typeof window !== 'undefined' && lifecycleCode === 'workspace_deleted') {
+        window.dispatchEvent(new CustomEvent('dialtact:workspace-deleted'));
       }
       const fail = () => {
         // Only trigger session termination if token refresh was actually attempted against
@@ -1181,8 +1185,11 @@ export const api = {
     async saveAgentProfile(agentId, profile) {
       return await api.agents.saveTelephonyProfile(agentId, profile);
     },
-    async getCatalog(country = 'US') {
-      const data = await api.request('GET', `/api/telephony/numbers/search?country=${encodeURIComponent(country)}`);
+    async getCatalog(country = 'US', { category = '', area = '' } = {}) {
+      const qs = new URLSearchParams({ country });
+      if (category && category !== 'all') qs.set('category', category);
+      if (area && String(area).trim()) qs.set('area', String(area).trim());
+      const data = await api.request('GET', `/api/telephony/numbers/search?${qs.toString()}`);
       const rows = data.numbers || [];
       return rows.map((item) =>
         normalizeCatalogItem({
@@ -1572,7 +1579,17 @@ export const api = {
       });
     },
     async cancelDelete() {
-      return await api.request('POST', '/api/tenant/delete/cancel');
+      return await api.request('POST', '/api/tenant/restore');
+    },
+    async getRestoreStatus() {
+      return await api.request('GET', '/api/tenant/restore-status');
+    },
+    async restoreWorkspace({ currentPassword } = {}) {
+      return await api.request(
+        'POST',
+        '/api/tenant/restore',
+        currentPassword ? { current_password: currentPassword } : {}
+      );
     },
     async createExport() {
       return await api.request('POST', '/api/tenant/export');

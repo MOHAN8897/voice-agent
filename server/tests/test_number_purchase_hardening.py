@@ -538,6 +538,9 @@ async def test_teardown_requeues_while_carrier_release_is_pending(db, monkeypatc
     from server.services.saas import teardown_worker
 
     async with db() as session:
+        # Teardown only ever runs for a workspace past its deletion grace period.
+        tenant = await session.get(Tenant, TID)
+        tenant.status = "pending_deletion"
         job = TenantTeardownJob(tenant_id=TID, status="queued", stage="carrier_numbers")
         session.add(job)
         await session.commit()

@@ -11,7 +11,7 @@ export default function HomePage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Vāṇi",
+    name: "Dialtact",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     description: "Voice control plane for businesses serving Telugu-speaking customers.",

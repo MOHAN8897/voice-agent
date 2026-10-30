@@ -34,7 +34,7 @@ from server.db.models.saas_models import (
     User,
 )
 from server.services.saas.email_service import send_password_reset_email, send_verification_email
-from server.services.saas.tenant_guard import resolve_usable_tenant
+from server.services.saas.tenant_guard import resolve_usable_tenant, user_lost_workspace_to_deletion
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +94,7 @@ async def _issue_tokens(
     access_ttl_seconds: int | None = None,
     absolute_expires_at: datetime | None = None,
     remember_me: bool = False,
+    auth_time: datetime | None = None,
 ) -> dict[str, Any]:
     # Support handoffs are always short-lived; a support session must not outlive the
     # 30-minute window regardless of what the tenant's account asked for.
@@ -105,6 +106,9 @@ async def _issue_tokens(
         email=user.email,
         impersonator=impersonator,
         remember=remember_me,
+        # Only an interactive sign-in stamps auth_time; impersonation never counts as
+        # the account holder authenticating.
+        auth_time=int(auth_time.timestamp()) if (auth_time and not impersonator) else None,
     )
     access, expires_in = create_access_token(claims, ttl_seconds=access_ttl_seconds)
     raw_refresh = secrets.token_urlsafe(48)
@@ -383,7 +387,7 @@ async def login_or_create_oauth_user(
                 )
             )
             await _log_event(session, f"signup_{provider}", user_id=user.user_id, tenant_id=tenant.tenant_id)
-            tokens = await _issue_tokens(session, user, tenant.tenant_id, signup_role)
+            tokens = await _issue_tokens(session, user, tenant.tenant_id, signup_role, auth_time=_utcnow())
             await session.commit()
             await _seed_admin_wallet(tenant.tenant_id, user.user_id, norm)
             return {
@@ -391,6 +395,10 @@ async def login_or_create_oauth_user(
                 **_session_public(user, tenant, signup_role),
             }
         picked = await resolve_usable_tenant(session, user.user_id)
+        if picked is None and await user_lost_workspace_to_deletion(session, user.user_id):
+            # Same answer as the password path. Silently creating a fresh, empty
+            # workspace here made the deleted one look like it had been wiped early.
+            raise ValueError("workspace_deleted")
         if picked is None:
             tenant = Tenant(
                 name=f"{user.full_name or 'My'}'s Workspace",
@@ -420,7 +428,7 @@ async def login_or_create_oauth_user(
         if user.status == "pending_verification":
             user.status = "active"
             user.updated_at = _utcnow()
-        tokens = await _issue_tokens(session, user, tenant.tenant_id, role)
+        tokens = await _issue_tokens(session, user, tenant.tenant_id, role, auth_time=_utcnow())
         await _log_event(session, f"login_{provider}", user_id=user.user_id, tenant_id=tenant.tenant_id)
         onboarded = await check_user_completed_onboarding(session, user.user_id)
         await session.commit()
@@ -580,6 +588,8 @@ async def login(
                 .select_from(TenantMembership)
                 .where(TenantMembership.user_id == user.user_id)
             )
+            if total and await user_lost_workspace_to_deletion(session, user.user_id):
+                raise ValueError("workspace_deleted")
             raise ValueError("tenant_inactive" if total else "no_tenant")
         membership, tenant = picked
         role = _role_for_user(user.email, membership.role)
@@ -596,7 +606,7 @@ async def login(
             ip=ip,
         )
         tokens = await _issue_tokens(
-            session, user, tenant.tenant_id, role, remember_me=remember_me
+            session, user, tenant.tenant_id, role, remember_me=remember_me, auth_time=_utcnow()
         )
         onboarded = await check_user_completed_onboarding(session, user.user_id)
         await session.commit()
@@ -709,10 +719,11 @@ async def refresh(refresh_token: str) -> dict[str, Any]:
             # Every workspace for this user is soft-deleted or closed, so there is
             # nothing to re-issue against. The client must sign in again rather than
             # retry into a dead tenant.
+            lost = await user_lost_workspace_to_deletion(session, user.user_id)
             if not is_race_replay:
                 row.revoked_at = now
                 await session.commit()
-            raise ValueError("tenant_inactive")
+            raise ValueError("workspace_deleted" if lost else "tenant_inactive")
         membership, tenant = picked
         role = _role_for_user(user.email, membership.role)
         if membership.role != role:
@@ -856,7 +867,8 @@ async def _reissue_session(session: AsyncSession, user: User) -> dict[str, Any]:
     role = _role_for_user(user.email, membership.role)
     if membership.role != role:
         membership.role = role
-    tokens = await _issue_tokens(session, user, membership.tenant_id, role)
+    # The caller just proved identity (current password or a single-use reset link).
+    tokens = await _issue_tokens(session, user, membership.tenant_id, role, auth_time=_utcnow())
     onboarded = await check_user_completed_onboarding(session, user.user_id)
     return {**tokens, **_session_public(user, tenant, role, has_completed_onboarding=onboarded)}
 
@@ -1018,9 +1030,24 @@ async def delete_tenant(tenant_id: uuid.UUID, user_id: uuid.UUID) -> uuid.UUID:
         tenant = await session.get(Tenant, tenant_id)
         if tenant is None:
             raise ValueError("not_found")
-        tenant.status = "pending_deletion"
-        tenant.deleted_at = _utcnow()
-        job = TenantTeardownJob(tenant_id=tenant_id, status="queued", created_at=_utcnow(), updated_at=_utcnow())
+        # Same lifecycle as POST /api/tenant/delete: quarantine with a grace period the
+        # owner can restore from. This legacy path used to set pending_deletion +
+        # deleted_at with no purge date, which the teardown worker claims immediately —
+        # an unrecoverable purge with no grace period at all.
+        now = _utcnow()
+        purge_at = now + timedelta(days=get_settings().tenant_deletion_grace_days)
+        tenant.status = "quarantined"
+        tenant.deleted_by_user_id = user_id
+        tenant.scheduled_purge_at = purge_at
+        tenant.restored_at = None
+        job = TenantTeardownJob(
+            tenant_id=tenant_id,
+            status="queued",
+            stage="queued",
+            payload={"initiated_by": str(user_id), "scheduled_purge_at": purge_at.isoformat()},
+            created_at=now,
+            updated_at=now,
+        )
         session.add(job)
         await _log_event(session, "tenant_delete_requested", user_id=user_id, tenant_id=tenant_id)
         await session.commit()

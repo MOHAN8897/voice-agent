@@ -27,6 +27,17 @@ export function CampaignsModule() {
   const [pending, setPending] = useState(new Set());
   const [setupBusy, setSetupBusy] = useState(false);
   const [cancelTarget, setCancelTarget] = useState(null);
+  // One-shot "show this campaign" from the home feed's detail panel.
+  const [focusId] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    const wanted = sessionStorage.getItem('dialtact_campaigns_focus') || '';
+    sessionStorage.removeItem('dialtact_campaigns_focus');
+    return wanted.slice(0, 64);
+  });
+  useEffect(() => {
+    if (!focusId) return;
+    document.getElementById(`campaign-${focusId}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [focusId, campaigns.length]);
   const actions = useRef(new Set());
   const statisticsRequests = useRef(new Map());
   const fetcher = useRef(fetchCampaignAnalytics);
@@ -167,7 +178,7 @@ export function CampaignsModule() {
           const agent = agents.find((item) => item.id === campaign.agentId);
           const agentLabel = agent?.name || campaign.agentName || 'Agent';
           const controllable = ['draft', 'running', 'paused', 'requires_review'].includes(campaign.status);
-          return <SolidCard key={campaign.id} className="min-w-0 space-y-4">
+          return <SolidCard key={campaign.id} id={`campaign-${campaign.id}`} aria-current={focusId === campaign.id ? 'true' : undefined} className={`min-w-0 space-y-4 scroll-mt-4 ${focusId === campaign.id ? 'ring-2 ring-accent ring-offset-2 ring-offset-canvas' : ''}`}>
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div className="flex min-w-0 items-start gap-3">
                 <Avatar name={agentLabel} size="md" live={campaign.status === 'running' && active > 0} title={agentLabel} />

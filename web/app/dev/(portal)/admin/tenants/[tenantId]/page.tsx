@@ -291,7 +291,7 @@ export default function TenantCockpitPage() {
         { method: "DELETE" }
       );
       setTeardownOpen(false);
-      router.push("/dev/admin/tenants");
+      router.push("/dev/admin/accounts?tab=workspaces");
     });
   }
 
@@ -399,8 +399,8 @@ export default function TenantCockpitPage() {
         }
         actions={
           <div className="flex flex-wrap gap-2">
-            <Link href="/dev/admin/tenants">
-              <SkeuoButton variant="ghost">All tenants</SkeuoButton>
+            <Link href="/dev/admin/accounts?tab=workspaces">
+              <SkeuoButton variant="ghost">All accounts</SkeuoButton>
             </Link>
             <SkeuoButton
               variant="primary"
@@ -428,7 +428,7 @@ export default function TenantCockpitPage() {
                 Delete tenant
               </SkeuoButton>
             )}
-            <Link href={`/dev/admin/users?tenantId=${tenantId}`}>
+            <Link href={`/dev/admin/accounts?tab=users&tenantId=${tenantId}`}>
               <SkeuoButton variant="ghost">Users</SkeuoButton>
             </Link>
             <Link href={`/dev/admin/activity?tenantId=${tenantId}`}>
@@ -591,7 +591,7 @@ export default function TenantCockpitPage() {
                   <Link href={`/dev/admin/billing?tenantId=${tenantId}`}>
                     <SkeuoButton variant="ghost">Adjust on billing page</SkeuoButton>
                   </Link>
-                  <Link href={`/dev/admin/numbers?tenantId=${tenantId}`}>
+                  <Link href={`/dev/admin/accounts?tab=numbers&tenantId=${tenantId}`}>
                     <SkeuoButton variant="ghost">Numbers inventory</SkeuoButton>
                   </Link>
                 </div>
@@ -604,7 +604,7 @@ export default function TenantCockpitPage() {
               title="Members & roles"
               description="Invite or change roles from Users; this tab is the tenant lens."
               actions={
-                <Link href={`/dev/admin/users?tenantId=${tenantId}`}>
+                <Link href={`/dev/admin/accounts?tab=users&tenantId=${tenantId}`}>
                   <SkeuoButton variant="primary">Manage users</SkeuoButton>
                 </Link>
               }

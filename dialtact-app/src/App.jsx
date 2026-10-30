@@ -88,10 +88,12 @@ function AppInner() {
     }
     const params = new URLSearchParams(window.location.search);
     const notice = params.get('notice');
-    if (notice === 'workspace_quarantined') {
+    if (notice === 'workspace_quarantined' || notice === 'workspace_deleted') {
       setAuthModalMode('signin');
       setQuarantineNotice(
-        'This workspace is scheduled for permanent deletion. Sign in as the owner during the 14-day grace period to restore access or export data.'
+        notice === 'workspace_deleted'
+          ? 'This workspace was permanently deleted after its grace period ended, so it can no longer be restored.'
+          : 'Your workspace is scheduled for deletion. You have 14 days to change your mind: sign in as the owner to restore it or download your data.'
       );
       setIsAuthModalOpen(true);
       window.setTimeout(() => {
@@ -105,7 +107,9 @@ function AppInner() {
       const msg =
         authErr === 'google_state'
           ? 'Google sign-in expired. Please try again.'
-          : 'Google sign-in failed. Check API GOOGLE_OAUTH_* settings and redirect URI.';
+          : authErr === 'workspace_deleted'
+            ? 'This workspace was permanently deleted after its grace period ended, so it can no longer be restored.'
+            : 'Google sign-in failed. Check API GOOGLE_OAUTH_* settings and redirect URI.';
       window.setTimeout(() => {
         window.history.replaceState({}, '', window.location.pathname + window.location.hash);
       }, 0);
