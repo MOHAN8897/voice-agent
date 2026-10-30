@@ -48,8 +48,16 @@ _YEAR = re.compile(r"\b((?:19|20)\d{2})\b")
 _LONG_ID = re.compile(r"(?<!\d)(\d{7,9})(?!\d)")
 _CARDINAL_RUN = re.compile(r"(?<!\d)(\d{3,6})(?!\d)")
 _SKIP_NEAR_PLOT = re.compile(r"\b(plot|flat|unit|block|floor|phase)\s*$", re.I)
+# Phone-shaped numbers only: +country formats, 0-prefixed STD landlines and bare
+# 10-13 digit runs. The old pattern removed every 5-12 digit run, so order IDs
+# ("FC10234" became "FC"), PIN codes and plain amounts ("15000") vanished from
+# speech; shorter ids are read digit by digit by _space_id_digits instead.
 _PHONE_SPOKEN = re.compile(
-    r"(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{5,12}\b|(?<!\d)\d{10}(?!\d)"
+    r"(?<![\w-])(?:"
+    r"\+\d{1,3}[\s.-]?\(?\d{2,5}\)?(?:[\s.-]?\d{2,5}){1,3}"
+    r"|\(?0\d{2,4}\)?[\s.-]?\d{3,4}[\s.-]?\d{3,4}"
+    r"|\d{10,13}"
+    r")(?![\w-])"
 )
 _PHONE_PHRASE = re.compile(
     r"\b(?:call|phone|mobile|whatsapp|reach)(?:\s+us)?\s+at\s+[\d\s\-+().]{8,}",

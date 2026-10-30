@@ -64,9 +64,12 @@ async def resolve_outbound_from_e164(
                 PhoneNumber.tenant_id == tenant_id,
                 PhoneNumber.agent_id == agent_uuid,
                 PhoneNumber.released_at.is_(None),
-            )
+                # A suspended (unpaid rental) or releasing line must never be
+                # picked — and silently re-enabled — as caller ID.
+                PhoneNumber.status.in_(("active", "pending")),
+            ).limit(1)
         )
-        row = result.scalar_one_or_none()
+        row = result.scalars().first()
         if row:
             if not row.outbound_enabled:
                 row.outbound_enabled = True
@@ -128,12 +131,18 @@ async def assert_concurrent_limit(tenant_id: uuid.UUID, limits: dict) -> None:
     from server.config.env import get_settings
 
     settings = get_settings()
-    platform_cap = max(1, min(20, int(settings.saas_max_concurrent_pstn or 20)))
-    max_pstn = max(1, min(platform_cap, int(limits.get("max_concurrent_pstn") or platform_cap)))
     factory = get_session_factory()
     if factory is None:
         return
     async with factory() as session:
+        from server.db.models.entities import Tenant
+        from server.services.saas import concurrency_service as channels
+
+        tenant = await session.get(Tenant, tenant_id)
+        if tenant is not None:
+            max_pstn = (await channels.channel_cap(session, tenant, settings=settings))["cap"]
+        else:
+            max_pstn = channels.legacy_caps(settings, limits)[0]
         active = await session.execute(
             select(func.count())
             .select_from(Call)
@@ -144,12 +153,13 @@ async def assert_concurrent_limit(tenant_id: uuid.UUID, limits: dict) -> None:
             )
         )
         count = int(active.scalar_one() or 0)
-        if count >= max_pstn:
-            raise HTTPException(
-                status_code=429,
-                detail={"error": {"code": "concurrency_limit", "message": "Too many active calls", "retry_after": 15}},
-                headers={"Retry-After": "15"},
-            )
+    if count >= max_pstn:
+        await channels.record_daily(factory, tenant_id, active=count, cap=max_pstn, rejected=1)
+        raise HTTPException(
+            status_code=429,
+            detail={"error": {"code": "concurrency_limit", "message": "All concurrent call channels are in use", "retry_after": 15}},
+            headers={"Retry-After": "15"},
+        )
 
 
 async def subscriber_outbound(

@@ -467,6 +467,13 @@ class CallLifecycleService:
         record["applied_rate_inr_paise_per_min"] = snap_rate_inr_paise
         record["applied_fx_rate_inr"] = snap_fx
         record["rate_version"] = snap_ver
+        # Pin the tier stack revision admitted with this call. Admin edits bump
+        # the profile revision; in-progress calls keep the stack they started on.
+        record["voice_profile_revision"] = (
+            int(composed_snapshot.get("profileRevision") or 0)
+            if isinstance(composed_snapshot, dict) and composed_snapshot.get("profileRevision") is not None
+            else None
+        )
 
         meta["rate_snapshot"] = {
             "usdCentsPerMin": snap_rate_cents,
@@ -512,7 +519,14 @@ class CallLifecycleService:
                     max_allowed_call_duration_sec,
                 )
                 tid = uuid.UUID(str(agent["tenant_id"]))
-                max_dur = await max_allowed_call_duration_sec(tid, channel=channel, global_cap_sec=900)
+                # Size the watchdog from this call's pinned price, not the
+                # current rate card: a price edit mid-call must not change it.
+                max_dur = await max_allowed_call_duration_sec(
+                    tid, channel=channel, global_cap_sec=900,
+                    rate_usd_micros_per_min=snap_rate_micros,
+                    rate_inr_paise_per_min=snap_rate_inr_paise,
+                    fx_rate_inr=snap_fx,
+                )
             except Exception as e:
                 logger.debug(f"[CALL] max duration calc skipped: {e}")
                 max_dur = 900

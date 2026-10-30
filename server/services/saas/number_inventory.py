@@ -99,13 +99,18 @@ async def move_to_inventory(
             from server.services.vobiz_client import VobizApiError
 
             client = await vobiz_client_for_tenant(pn.vobiz_account_tenant_id or pn.tenant_id)
-            try:
-                await client.release_owned_number(pn.e164)
-            except VobizApiError as exc:
-                if exc.status != 404:
-                    raise
-            numbers = await client.list_account_numbers(search=pn.e164, limit=100)
-            still_owned = any(n.get("e164") == pn.e164 for n in numbers)
+            # Vobiz "Unrent" puts the DID in pending_release for 24h (cancellable)
+            # and charges a release fee. Never send a second DELETE for a number
+            # we already released: re-check ownership instead.
+            if pn.status != "release_pending":
+                try:
+                    await client.release_owned_number(pn.e164)
+                except VobizApiError as exc:
+                    # 404: already gone. 403 "account does not own this number":
+                    # nothing left to release on this account.
+                    if exc.status not in (403, 404):
+                        raise
+            still_owned = await _vobiz_still_owns(client, pn.e164)
             pn.status = "release_pending" if still_owned else "released"
             pn.inbound_enabled = pn.outbound_enabled = False
             pn.agent_id = None
@@ -151,6 +156,47 @@ async def move_to_inventory(
             "telnyxNumberId": pn.telnyx_number_id,
             "carrierNumberId": getattr(pn, "carrier_number_id", None),
         }
+
+
+async def _vobiz_still_owns(client, e164: str) -> bool:
+    """True while the DID is still on the account (active or pending_release)."""
+    numbers = await client.list_account_numbers(search=e164, limit=100)
+    return any(n.get("e164") == e164 for n in numbers)
+
+
+async def reconcile_release_pending_numbers(limit: int = 25) -> int:
+    """Finalise tenant DIDs whose carrier release has completed.
+
+    A standard Vobiz release keeps the DID on the account in ``pending_release``
+    for 24 hours. Until it leaves the account the local row stays
+    ``release_pending`` (still counted, never routed). Returns rows finalised.
+    """
+    factory = get_session_factory()
+    if factory is None:
+        return 0
+    async with factory() as session:
+        rows = (
+            await session.execute(
+                select(PhoneNumber.id).where(
+                    PhoneNumber.status == "release_pending",
+                    PhoneNumber.released_at.is_(None),
+                ).limit(limit)
+            )
+        ).scalars().all()
+    done = 0
+    for number_id in rows:
+        try:
+            result = await move_to_inventory(number_id=number_id)
+        except Exception as exc:  # one bad row must not stop the rest
+            import logging
+
+            logging.getLogger(__name__).warning(
+                "release reconcile failed number_id=%s error_type=%s", number_id, type(exc).__name__
+            )
+            continue
+        if result.get("status") == "released":
+            done += 1
+    return done
 
 
 async def list_inventory_for_sale(*, country: str | None = None) -> list[dict]:

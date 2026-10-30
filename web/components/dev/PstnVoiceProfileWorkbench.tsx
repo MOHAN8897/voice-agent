@@ -36,6 +36,7 @@ import {
 import { TierResolvesToCard } from "@/components/dev/voice-stack/TierResolvesToCard";
 import { PrewarmGreetingCard } from "@/components/dev/voice-stack/PrewarmGreetingCard";
 import { PlatformPricesPanel } from "@/components/dev/voice-stack/PlatformPricesPanel";
+import { ChannelPricingPanel } from "@/components/dev/voice-stack/ChannelPricingPanel";
 import { TelephonyTrunkPanel } from "@/components/dev/voice-stack/TelephonyTrunkPanel";
 import { TranscriptionPanel } from "@/components/dev/voice-stack/TranscriptionPanel";
 
@@ -115,6 +116,7 @@ export function PstnVoiceProfileWorkbench() {
   const [catalogRefreshing, setCatalogRefreshing] = useState(false);
   const [voiceCategory, setVoiceCategory] = useState("");
   const [agentsByTier, setAgentsByTier] = useState<Record<string, number> | null>(null);
+  const [activeCallsByTier, setActiveCallsByTier] = useState<Record<string, number> | null>(null);
   const [pendingSave, setPendingSave] = useState<PendingSave | null>(null);
   const [pendingDisable, setPendingDisable] = useState(false);
   const editsRef = useRef<Record<string, TierDraft>>({});
@@ -144,6 +146,14 @@ export function PstnVoiceProfileWorkbench() {
   const agentPhrase = agentCount === null
     ? "Agents on this tier"
     : `${agentCount} agent${agentCount === 1 ? "" : "s"} on this tier`;
+  const activeCallCount = activeCallsByTier ? (activeCallsByTier[selected] ?? 0) : null;
+  // Calls are admitted with a pinned stack revision and rate version, so a save
+  // never changes a call that is already connected.
+  const inProgressPhrase = activeCallCount === null
+    ? "Calls already in progress keep their current settings and price."
+    : activeCallCount === 0
+      ? "No calls are in progress on this tier."
+      : `${activeCallCount} call${activeCallCount === 1 ? " is" : "s are"} in progress on this tier and will finish on the current settings and price.`;
 
   const allDisplayTiers = useMemo(() => {
     const list: string[] = ["low", "medium", "premium"];
@@ -195,6 +205,9 @@ export function PstnVoiceProfileWorkbench() {
       const payload = await response.json();
       if (payload?.available && payload.agentsByTier && typeof payload.agentsByTier === "object") {
         setAgentsByTier(payload.agentsByTier as Record<string, number>);
+      }
+      if (payload?.available && payload.activeCallsByTier && typeof payload.activeCallsByTier === "object") {
+        setActiveCallsByTier(payload.activeCallsByTier as Record<string, number>);
       }
     } catch {
       // The count only informs confirmations; saving never depends on it.
@@ -420,6 +433,8 @@ export function PstnVoiceProfileWorkbench() {
       const runtimeChanged = selectedRow?.native !== true
         && runtimeSignature(selectedRow?.composedProfile) !== runtimeSignature(payload);
       setPendingSave({ kind: runtimeChanged ? "offline" : "live", tier: selected, payload });
+      // Refresh the in-progress call count shown in the confirmation.
+      void loadUsage();
       return;
     }
     void commitSave(payload, selected, false);
@@ -1799,6 +1814,7 @@ export function PstnVoiceProfileWorkbench() {
         hidden={activeSection !== "pricing"}
       >
         <PlatformPricesPanel rows={rows} onSaved={() => loadProfiles(false)} />
+        <div className="mt-6"><ChannelPricingPanel /></div>
       </div>
 
       <div
@@ -1824,8 +1840,8 @@ export function PstnVoiceProfileWorkbench() {
         busy={busy}
         title={pendingSave?.kind === "offline" ? `Take ${selectedName} offline?` : `Apply changes to ${selectedName}?`}
         description={pendingSave?.kind === "offline"
-          ? `These speech, conversation or voice changes need fresh verification. Saving takes ${selectedName} offline until it is verified and enabled again. ${agentPhrase} cannot place calls on it until then.${pendingSave.blockers?.length ? ` Blocking: ${pendingSave.blockers.join("; ")}.` : ""}`
-          : `${selectedName} is live. ${agentPhrase} will use the new settings on their next call.`}
+          ? `These speech, conversation or voice changes need fresh verification. Saving takes ${selectedName} offline until it is verified and enabled again. ${agentPhrase} cannot place new calls on it until then. ${inProgressPhrase}${pendingSave.blockers?.length ? ` Blocking: ${pendingSave.blockers.join("; ")}.` : ""}`
+          : `${selectedName} is live. Changes apply to new calls only: ${agentPhrase} will use the new settings on their next call. ${inProgressPhrase}`}
         confirmLabel={pendingSave?.kind === "offline" ? "Save and take offline" : "Save and apply"}
         cancelLabel="Keep editing"
         onCancel={() => setPendingSave(null)}
@@ -1838,7 +1854,7 @@ export function PstnVoiceProfileWorkbench() {
         open={pendingDisable}
         busy={busy}
         title={`Disable ${selectedName}?`}
-        description={`${selectedName} will be hidden from tenants. ${agentPhrase} cannot place calls on it until it is enabled again.`}
+        description={`${selectedName} will be hidden from tenants. ${agentPhrase} cannot place new calls on it until it is enabled again. ${inProgressPhrase}`}
         confirmLabel="Disable tier"
         cancelLabel="Cancel"
         onCancel={() => setPendingDisable(false)}

@@ -52,6 +52,8 @@ class CallContext:
     callback_name: str = ""
     callback_phone: str = ""
     callback_when: str = ""
+    # The server asked once for a missing callback day/time; a vague answer is then accepted.
+    callback_time_prompted: bool = False
     language_callback_summary: str = ""
     language_callback_language: str = ""
     pipeline: str = "realtime_text"

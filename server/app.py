@@ -45,6 +45,8 @@ from server.routes.stripe_webhook import router as stripe_webhook_router
 from server.routes.razorpay_webhook import router as razorpay_webhook_router
 from server.routes.dev_admin import router as dev_admin_router
 from server.routes.app_billing import router as app_billing_router
+from server.routes.app_channels import router as app_channels_router
+from server.routes.admin_channels import router as admin_channels_router
 from server.routes.app_leads import router as app_leads_router
 from server.routes.dev_stack import router as dev_stack_router
 from server.routes.dev_environment import router as dev_environment_router
@@ -300,7 +302,14 @@ async def lifespan(app: FastAPI):
     if _followup_factory() is not None:
         from server.services.saas.followup_service import worker_loop
         app.state.followup_task = asyncio.create_task(worker_loop())
+        # Concurrent call channels renew every 30 days (grace, then lapse).
+        from server.services.saas.concurrency_service import renewal_loop as _channel_renewal_loop
+        app.state.channel_renewal_task = asyncio.create_task(_channel_renewal_loop())
     yield
+    channel_task = getattr(app.state, "channel_renewal_task", None)
+    if channel_task:
+        channel_task.cancel()
+        await asyncio.gather(channel_task, return_exceptions=True)
     followup_task = getattr(app.state, "followup_task", None)
     if followup_task:
         followup_task.cancel()
@@ -614,6 +623,8 @@ app.include_router(stripe_webhook_router)
 app.include_router(razorpay_webhook_router)
 app.include_router(dev_admin_router)
 app.include_router(app_billing_router)
+app.include_router(app_channels_router)
+app.include_router(admin_channels_router)
 app.include_router(app_leads_router)
 app.include_router(dev_stack_router)
 app.include_router(dev_environment_router)

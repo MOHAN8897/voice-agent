@@ -20,7 +20,7 @@ test.beforeEach(async ({ page }) => {
         activeNumbers: 2, failedPurchases: 0, walletBalanceCents: 1234, walletBalanceInrPaise: 567800 },
       callsByDay: [{ date: "2026-10-24", calls: 0, seconds: 0 }, { date: "2026-10-25", calls: 2, seconds: 120 }, { date: "2026-10-26", calls: 10, seconds: 600 }],
       callsByStatus: { completed: 12 }, callsByDirection: { outbound: 12 }, callsByChannel: { pstn: { calls: 12, seconds: 720 } },
-      topUpsByDay: [{ date: "2026-10-26", cents: 1000, inrPaise: 50000 }], topTenantsByCalls: [{ name: "Test workspace", calls: 12 }] };
+      topUpsByDay: [{ date: "2026-10-26", cents: 1000, inrPaise: 50000 }], topTenantsByCalls: [{ tenantId: "synthetic-tenant", name: "Test workspace", calls: 12 }] };
     else if (path.endsWith("/purchases")) data = { purchases: [] };
     else if (path.endsWith("/tenants")) data = { tenants: [{ tenantId: "synthetic-tenant", name: "Test workspace", status: "active", plan: "starter" }], total: 1 };
     else if (path.endsWith("/users")) data = { users: [], total: 0 };

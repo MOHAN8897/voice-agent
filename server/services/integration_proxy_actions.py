@@ -73,7 +73,10 @@ async def execute_extended_action(client: httpx.AsyncClient, base: str, headers:
         fields = {"project": {"key": params["project_key"]}, "summary": params["summary"], "issuetype": {"name": params.get("issue_type") or "Task"}}
         if params.get("description"):
             fields["description"] = {"version": 1, "type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": params["description"]}]}]}
-        endpoint, payload, result_key = "/rest/api/3/issue", {"fields": fields}, "issue_id"
+        from server.services.nango_service import jira_api_root
+
+        jira_root = await jira_api_root(client, base, headers)
+        endpoint, payload, result_key = jira_root[len(root):] + "/rest/api/3/issue", {"fields": fields}, "issue_id"
     elif action == "INTERCOM_CREATE_CONVERSATION":
         contact_id = params.get("contact_id")
         if not contact_id:
@@ -89,11 +92,11 @@ async def execute_extended_action(client: httpx.AsyncClient, base: str, headers:
         for source, target in (("email", "emails"), ("phone", "phones")):
             if params.get(source):
                 payload[target] = [{"value": value, "primary": index == 0} for index, value in enumerate(params[source])]
-        endpoint = "/api/v2/persons"
+        endpoint = "/v2/persons"  # Nango base_url is {api_domain}/api
     elif action == "PIPEDRIVE_CREATE_DEAL":
         if "value" in params and not params.get("currency"):
             return {"status": "error", "message": "Specify the deal currency before saving an amount."}
-        endpoint, payload = "/api/v2/deals", params
+        endpoint, payload = "/v2/deals", params
     elif action == "MICROSOFTTEAMS_SEND_MESSAGE":
         endpoint = f"/v1.0/teams/{path_segment(params['team_id'])}/channels/{path_segment(params['channel_id'])}/messages"
         payload, result_key = {"body": {"contentType": "text", "content": params["message"]}}, "message_id"

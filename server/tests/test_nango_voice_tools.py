@@ -391,7 +391,7 @@ async def test_tenant_tool_cache_get_connection_id_query():
 
     mock_session = AsyncMock()
     mock_res = MagicMock()
-    mock_res.scalar_one_or_none.return_value = SimpleNamespace(connection_id="conn_12345", metadata_={"gateway_verified": True})
+    mock_res.scalars.return_value.all.return_value = [SimpleNamespace(connection_id="conn_12345", metadata_={"gateway_verified": True})]
     mock_session.execute.return_value = mock_res
 
     mock_factory = MagicMock()

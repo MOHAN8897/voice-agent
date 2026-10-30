@@ -118,10 +118,18 @@ def _in_script(line: str, lang: str) -> bool:
     return profile.get(base, 0) > 0 and not (set(profile) - {base})
 
 
-async def caller_lines(languages: list[str], stack) -> dict:
+def turn_text(turn) -> str:
+    """A scenario turn is an English source line, or {"text", "lang"} for a fixed-language line."""
+    return turn["text"] if isinstance(turn, dict) else turn
+
+
+async def caller_lines(languages: list[str], stack, *, sources: list[str] | None = None,
+                       cache_path: Path = CALLER_LINES) -> dict:
     """English source lines, rendered once per language by Sarvam and cached as fixtures."""
-    cache = json.loads(CALLER_LINES.read_text(encoding="utf-8")) if CALLER_LINES.is_file() else {}
-    sources = sorted({t for s in SCENARIOS for t in s["turns"] if t != "{ask}"} | {b["ask"] for b in BUSINESSES.values()})
+    cache = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.is_file() else {}
+    if sources is None:
+        sources = sorted({turn_text(t) for s in SCENARIOS for t in s["turns"] if turn_text(t) != "{ask}"}
+                         | {b["ask"] for b in BUSINESSES.values()})
     from server.providers import get_provider_registry
     from server.providers.base import LLMConfig
     adapter = get_provider_registry().get_llm("sarvam")
@@ -166,14 +174,37 @@ async def caller_lines(languages: list[str], stack) -> dict:
             finally:
                 ACTOR.reset(token)
         cache[lang] = have
-        FIXTURES.mkdir(exist_ok=True)
-        CALLER_LINES.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
     return cache
 
 
-async def create_agent(business: str, lang: str, out: Path) -> dict:
-    """Tenant + agent + published brain + follow-up policy, written directly (no LLM build)."""
+async def compile_brain(spec: dict, lang: str, pipeline: str) -> str:
+    """'brief' is the admin compiler; 'employee' is the tenant console's extract/write/review pipeline."""
+    config = {"employeeName": spec["agent"], "agentRole": spec["role"], "callDirection": spec["direction"],
+              "industry": spec["industry"], "mode": "instant_lead", "naturalSpokenStyle": True}
+    if pipeline == "employee":
+        from server.brain.employee_script_pipeline import GenerationStageError
+        from server.services.saas.employee_brain_build import compile_brief_for_employee
+        for attempt in range(5):
+            try:
+                brain, *_ = await compile_brief_for_employee(brief=spec["brief"], language=lang, generation_config=config)
+                return brain
+            except GenerationStageError as exc:
+                # The generation provider rate-limits per minute; a sim run waits instead of dying.
+                if not exc.transient or attempt == 4:
+                    raise
+                progress("compile_retry", business=spec["agent"], language=lang, attempt=attempt + 1)
+                await asyncio.sleep(30 * (attempt + 1))
     from server.brain.agent_script_compiler import compile_agent_from_brief
+    brain, *_ = await compile_agent_from_brief(brief=spec["brief"], language=lang, direction=spec["direction"],
+                                               generation_config=config)
+    return brain
+
+
+async def create_agent(business: str, lang: str, out: Path, *, specs: dict | None = None,
+                       pipeline: str = "brief") -> dict:
+    """Tenant + agent + published brain + follow-up policy, written directly to the sim schema."""
     from server.brain.compiled_brain_artifact import checksum_instructions
     from server.brain.sections import STATIC_OUTPUT_RULES_VERSION
     from server.db.connection import get_session_factory
@@ -183,15 +214,12 @@ async def create_agent(business: str, lang: str, out: Path) -> dict:
     from server.db.models.saas_models import TenantMembership, User
     from server.services.saas.followup_policy import FollowUpConfig
 
-    spec = BUSINESSES[business]
-    cache = out / "brains" / f"{business}-{lang}.txt"
+    spec = (specs or BUSINESSES)[business]
+    cache = out / "brains" / f"{business}-{lang}{'' if pipeline == 'brief' else '-' + pipeline}.txt"
     if cache.is_file():
         brain = cache.read_text(encoding="utf-8")
     else:
-        brain, *_ = await compile_agent_from_brief(
-            brief=spec["brief"], language=lang, direction=spec["direction"],
-            generation_config={"employeeName": spec["agent"], "agentRole": spec["role"], "callDirection": spec["direction"],
-                               "industry": spec["industry"], "mode": "instant_lead", "naturalSpokenStyle": True})
+        brain = await compile_brain(spec, lang, pipeline)
         cache.parent.mkdir(parents=True, exist_ok=True)
         cache.write_text(brain, encoding="utf-8")
     tid, uid, aid = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
@@ -259,6 +287,10 @@ def install_boundaries():
                                        "farewell": bool(ctx and ctx.agent_hangup_armed)})
             self.voice.playback.until = time.monotonic() + 0.015
             await self.voice._emit_agent_wire(b"\0" * 320)
+            if case is not None and case.get("slow_tts"):
+                # Hold "playback" so a caller hangup lands while the agent is still speaking.
+                self.voice.playback.until = time.monotonic() + 1.5
+                await asyncio.sleep(1.5)
 
         async def finish(self):
             return None
@@ -293,7 +325,8 @@ async def db_evidence(case: dict) -> dict:
             ("callbacks", CallCallback, [CallCallback.tenant_id == tid, CallCallback.original_call_id == cid]),
             ("jobs", FollowUpJob, [FollowUpJob.tenant_id == tid, FollowUpJob.agent_id == aid]),
             ("dnd", DncEntry, [DncEntry.tenant_id == tid, DncEntry.phone_e164 == case["phone"]]),
-            ("leads", Lead, [Lead.tenant_id == tid]),
+            # Agents are shared across cases, so leads must be this call's caller, not the tenant's.
+            ("leads", Lead, [Lead.tenant_id == tid, Lead.phone == case["phone"]]),
         ]:
             rows = (await db.scalars(select(cls).where(*filters))).all()
             out[name] = [{a.key: getattr(r, a.key) for a in inspect(r).mapper.column_attrs} for r in rows]
@@ -365,10 +398,35 @@ async def run_case(agent: dict, scenario: dict, lines: dict, playback_cls, index
         for turn, english in enumerate(scenario["turns"], 1):
             if voice._phase == PHASE_ENDED or ctx.status != "active":
                 break
-            source = english.format(ask=agent["ask"])
-            caller = lines[lang].get(source, source)
+            source = turn_text(english).format(ask=agent["ask"])
+            turn_lang = english.get("lang", lang) if isinstance(english, dict) else lang
+            caller = lines.get(turn_lang, {}).get(source, source)
             case["turn_index"] = turn
             start = len(case["speech"])
+            if scenario.get("hangup_mid_turn") == turn:
+                # The caller hangs up while the agent is still speaking this turn.
+                error = None
+                case["slow_tts"] = True
+                task = asyncio.create_task(voice._run_turn(caller))
+                deadline = time.monotonic() + 120
+                while len(case["speech"]) == start and not task.done() and time.monotonic() < deadline:
+                    await asyncio.sleep(0.05)
+                case["hung_up_during_speech"] = len(case["speech"]) > start and not task.done()
+                await call_lifecycle_service.end(cid, reason="pstn_hangup")
+                try:
+                    await asyncio.wait_for(task, timeout=60)
+                except asyncio.CancelledError:
+                    pass
+                except Exception as exc:
+                    error = f"{type(exc).__name__}: {str(exc)[:300]}"
+                spoken = case["speech"][start:]
+                case["turns"].append({"turn": turn, "caller": caller, "caller_en": source,
+                                      "reply": " ".join(s["text"] for s in spoken if not s["farewell"]).strip(),
+                                      "farewell": "", "armed": ctx.agent_hangup_armed, "error": error,
+                                      "caller_hung_up": True})
+                if error:
+                    case["errors"].append(error)
+                break
             for _attempt in range(2):
                 try:
                     await asyncio.wait_for(voice._run_turn(caller), timeout=120)
@@ -447,9 +505,14 @@ def evaluate(case: dict, scenario: dict) -> dict:
             if unproven_claim(t["reply"], receipts):
                 failures.append("unproven_action_claim")
                 break
-    expected_disposition = {"dnd": {"not_interested"}, "refusal": {"not_interested"},
-                            "callback": {"callback_required", "interested", "new_lead"},
-                            "order": {"converted"}}.get(scenario["id"])
+    if expect.get("no_repeat"):
+        replies = [" ".join(t["reply"].split()).casefold() for t in case["turns"] if t["reply"]]
+        if any(a == b for a, b in zip(replies, replies[1:])):
+            failures.append("verbatim_repeat")
+    expected_disposition = scenario.get("dispositions") or {
+        "dnd": {"not_interested"}, "refusal": {"not_interested"},
+        "callback": {"callback_required", "interested", "new_lead"},
+        "order": {"converted"}}.get(scenario["id"])
     if expected_disposition and disposition not in expected_disposition:
         failures.append(f"disposition:{disposition}")
     speech = [dict(check_reply(t["reply"], language=case["language"], tts_provider="sarvam", tts_model="bulbul:v3").__dict__)

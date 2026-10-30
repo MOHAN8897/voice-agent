@@ -48,6 +48,36 @@ def _phone_number_status(provider_number_id: str | None) -> str:
     return "active" if provider_number_id else "pending"
 
 
+#: Number upkeep (carrier release reconciliation, monthly rental renewal) runs
+#: from the provision worker's idle path at most this often per process.
+_MAINTENANCE_INTERVAL_SECONDS = 600
+_last_maintenance_at: float | None = None
+
+
+async def run_number_maintenance_if_due() -> bool:
+    """Finalise carrier releases and charge due rentals; throttled, never raises."""
+    import time
+
+    global _last_maintenance_at
+    now = time.monotonic()
+    if _last_maintenance_at is not None and now - _last_maintenance_at < _MAINTENANCE_INTERVAL_SECONDS:
+        return False
+    _last_maintenance_at = now
+    try:
+        from server.services.saas.number_inventory import reconcile_release_pending_numbers
+
+        await reconcile_release_pending_numbers()
+    except Exception as exc:
+        logger.warning("number release reconcile failed error_type=%s", type(exc).__name__)
+    try:
+        from server.services.saas.number_rental import renew_due_numbers
+
+        await renew_due_numbers()
+    except Exception as exc:
+        logger.warning("number rental renewal failed error_type=%s", type(exc).__name__)
+    return True
+
+
 async def enqueue_provision(purchase_id: uuid.UUID) -> None:
     factory = get_session_factory()
     if factory is None:
@@ -90,13 +120,17 @@ async def process_one_job() -> bool:
             _queued_job_statement()
         )
         job = result.scalar_one_or_none()
-        if job is None:
-            return False
-        job.status = "running"
-        job.attempts += 1
-        job.updated_at = _utcnow()
+        purchase_id = None
+        if job is not None:
+            # Claimed under FOR UPDATE SKIP LOCKED in this same transaction.
+            job.status = "running"
+            job.attempts += 1
+            job.updated_at = _utcnow()
+            purchase_id = job.purchase_id
         await session.commit()
-        purchase_id = job.purchase_id
+    if purchase_id is None:
+        await run_number_maintenance_if_due()
+        return False
 
     async with factory() as session:
         purchase = await session.get(NumberPurchase, purchase_id)
@@ -159,6 +193,12 @@ async def process_one_job() -> bool:
             type(e).__name__,
         )
         provider_status = getattr(e, "status", None)
+        if provider_status is None:
+            # Our own gates (KYC revoked → 403, verification unavailable → 503)
+            # raise HTTPException / VoiceKycError with ``status_code``. A
+            # definitive 4xx refusal before any carrier call must refund, not
+            # park the paid purchase in "needs_attention" forever.
+            provider_status = getattr(e, "status_code", None)
         vobiz_result_may_exist = provider == "vobiz" and (
             provider_number_id is not None
             or provider_status is None

@@ -834,32 +834,8 @@ async def buy_number(
         raise
     except ValueError as e:
         code = str(e)
-        await _log_purchase_refusal_code(
-            request, principal, body, pay, code, _purchase_error_status(code)
-        )
-        if code == "verification_required":
-            status = 403
-        elif code in ("stripe_not_configured", "stripe_removed"):
-            status = 400
-        elif code == "insufficient_balance":
-            status = 402
-        elif code == "carrier_balance_exhausted":
-            # 503: our carrier account is out of funds, not the customer's problem.
-            status = 503
-        elif code == "carrier_not_configured":
-            status = 503
-        elif code == "carrier_inventory_unavailable":
-            status = 503
-        elif code == "carrier_order_failed":
-            status = 502
-        elif code == "tenant_not_found":
-            status = 404
-        elif code == "kyc_required":
-            status = 403
-        elif code == "voice_kyc_required":
-            status = 403
-        else:
-            status = 400
+        status = _purchase_error_status(code)
+        await _log_purchase_refusal_code(request, principal, body, pay, code, status)
         messages = {
             "stripe_removed": "Card checkout is no longer supported. Use wallet credits to buy a number.",
             "stripe_not_configured": "Card checkout is not supported. Use wallet credits to buy a number.",
@@ -934,14 +910,21 @@ _REFUSAL_HINTS = {
 
 
 def _purchase_error_status(code: str) -> int:
-    if code in ("verification_required", "kyc_required"):
+    """One mapping for the HTTP response and the audit row, so they never disagree."""
+    if code in ("verification_required", "kyc_required", "voice_kyc_required"):
         return 403
     if code in ("stripe_not_configured", "stripe_removed"):
         return 400
     if code == "insufficient_balance":
         return 402
-    if code == "carrier_balance_exhausted":
-        # Our carrier account is out of funds, not the customer's problem.
+    if code in ("number_reserved", "number_unavailable"):
+        return 409
+    if code == "tenant_not_found":
+        return 404
+    if code == "carrier_order_failed":
+        return 502
+    if code in ("carrier_balance_exhausted", "carrier_not_configured", "carrier_inventory_unavailable"):
+        # Our carrier account or provider, not the customer's problem.
         return 503
     return 400
 
@@ -998,9 +981,17 @@ async def _log_purchase_refusal(
     await _log_purchase_refusal_code(request, principal, body, pay, code, status)
 
 
+def _parse_uuid_or_404(raw: str | None) -> uuid.UUID:
+    """Malformed ids are indistinguishable from someone else's: 404, never 500."""
+    try:
+        return uuid.UUID(str(raw or ""))
+    except ValueError:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}}) from None
+
+
 @router.get("/api/telephony/purchases/{purchase_id}")
 async def get_purchase_status(purchase_id: str, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
-    row = await get_purchase(uuid.UUID(purchase_id), principal.tenant_id)
+    row = await get_purchase(_parse_uuid_or_404(purchase_id), principal.tenant_id)
     if row is None:
         raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
     return row
@@ -1038,12 +1029,13 @@ async def assign_number(
             pn.agent_id = None
             await session.commit()
             return {"ok": True, "agentId": None}
-        agent = await session.get(Agent, uuid.UUID(agent_id))
+        agent = await session.get(Agent, _parse_uuid_or_404(agent_id))
         if agent is None or agent.tenant_id != workspace_tid:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
         pn.agent_id = agent.agent_id
-        pn.outbound_enabled = True
-        pn.inbound_enabled = True
+        if pn.status in ("active", "pending"):
+            pn.outbound_enabled = True
+            pn.inbound_enabled = True
         await session.commit()
     return {"ok": True, "agentId": str(agent.agent_id)}
 
@@ -1060,12 +1052,19 @@ async def update_routing(
     if factory is None:
         raise HTTPException(status_code=503, detail="Database required")
     async with factory() as session:
-        pn = await session.get(PhoneNumber, uuid.UUID(number_id))
-        if pn is None or pn.tenant_id != workspace_tid:
+        pn = await session.get(PhoneNumber, _parse_uuid_or_404(number_id))
+        if pn is None or pn.tenant_id != workspace_tid or pn.released_at is not None:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
+        if pn.status not in ("active", "pending") and (body.inboundEnabled or body.outboundEnabled):
+            # A suspended (unpaid) or releasing line cannot be switched back on
+            # from the console; paying the rental or support restores it.
+            raise HTTPException(
+                status_code=409,
+                detail={"error": {"code": "number_not_active", "message": "This line is not active."}},
+            )
         if body.agentId is not None:
             if body.agentId:
-                agent = await session.get(Agent, uuid.UUID(body.agentId))
+                agent = await session.get(Agent, _parse_uuid_or_404(body.agentId))
                 if agent is None or agent.tenant_id != workspace_tid:
                     raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
                 pn.agent_id = agent.agent_id
@@ -1272,7 +1271,7 @@ async def release_number(number_id: str, principal: SubscriberPrincipal = Depend
         raise HTTPException(status_code=503, detail="Database required")
     workspace_tid = subscriber_workspace_tenant_id(principal)
     async with factory() as session:
-        pn = await session.get(PhoneNumber, uuid.UUID(number_id))
+        pn = await session.get(PhoneNumber, _parse_uuid_or_404(number_id))
         if pn is None or pn.tenant_id != workspace_tid or pn.released_at is not None:
             raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Not found"}})
         e164 = pn.e164
@@ -1296,7 +1295,9 @@ async def release_number(number_id: str, principal: SubscriberPrincipal = Depend
         payload={"e164": e164, "provider": "vobiz" if carrier_id else "telnyx"},
         source="subscriber",
     )
-    return {"ok": True, "inventory": moved}
+    # Tenant-scope Vobiz DIDs report "release_pending" during the carrier's
+    # 24h cancellable cool-down; the console shows that state rather than "gone".
+    return {"ok": True, "status": (moved or {}).get("status"), "inventory": moved}
 
 
 @router.delete("/api/telephony/contacts/{contact_id}")

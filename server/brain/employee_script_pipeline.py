@@ -192,6 +192,8 @@ Correct obvious spelling and casing in ordinary prose; preserve proper names, nu
 currencies, dates, links and policies. Every fact, workflow, goal and permitted step
 must carry an exact supporting quote from the brief or a user's answer (never from a
 question). Preserve negation, conditions, ordering, exact disclosures and prohibitions.
+Write each forbidden_actions text as the prohibition itself, starting with Never or
+Do not (evidence stays the exact quote), so it can never read as an instruction.
 Ask concise, business-specific questions for missing or conflicting information that
 would materially change the script. Group related gaps, at most eight questions.
 Ask about identity, purpose, the actual offer, prices/discount conditions, delivery,
@@ -222,6 +224,8 @@ Preserve any supplied exact opening/disclosure. The call to action uses only per
 steps. If no action is permitted, answer from known facts and close when the caller is
 done. A tool action is complete only after tool success. Include concise handling of
 price, trust, later, not interested, refund, already-have-it and send-details as relevant.
+Write objection_handling as separate lines, one 'If the caller ...: ...' branch per
+objection, so the agent applies only the branch the caller raised.
 Unknown details: say unavailable, no invented callback, payment, booking or message.
 Respect opt-out and wrong numbers; busy/hesitation follows platform call-end policy,
 never invent a separate hangup rule. Honest brief AI disclosure if asked. No markdown,
@@ -373,6 +377,71 @@ def clarification_response(extracted: ExtractedBrief) -> dict[str, Any]:
             "questions": [item.model_dump() for item in extracted.missing_critical_info]}
 
 
+_NATIVE_BLOCKS = {
+    "hi": (0x0900, 0x097F), "mr": (0x0900, 0x097F), "bn": (0x0980, 0x09FF), "pa": (0x0A00, 0x0A7F),
+    "gu": (0x0A80, 0x0AFF), "ta": (0x0B80, 0x0BFF), "te": (0x0C00, 0x0C7F), "kn": (0x0C80, 0x0CFF),
+    "ml": (0x0D00, 0x0D7F),
+}
+
+
+def _romanized_indic_opening(opening: str, language: str, brief: str = "", names: tuple[str, ...] = ()) -> bool:
+    """An Indic agent's generated opening written mostly in Latin letters.
+
+    Romanized Hindi ("Namaste, main Priya bol rahi hoon") and an English sentence
+    with one native word ("வணக்கம், I am Priya calling from ...") both contradict
+    the language pack's native-script rule. Agent/company names may stay in Latin;
+    a tenant's own exact opening copied from the brief is left alone.
+    """
+    block = _NATIVE_BLOCKS.get((language or "").split("-")[0].lower())
+    text = (opening or "").strip()
+    if not block or not text or " ".join(text.split()) in " ".join((brief or "").split()):
+        return False
+    for name in names:
+        if name:
+            text = re.sub(re.escape(name), " ", text, flags=re.I)
+    # Everyday English business words are fine in Latin; a mostly-Latin opening is not.
+    native = sum(block[0] <= ord(char) <= block[1] for char in text)
+    latin = sum(char.isascii() and char.isalpha() for char in text)
+    return bool(native + latin) and native / (native + latin) < 0.3
+
+
+_PROHIBITION = re.compile(r"^(?:never|do not|don't|dont|must not|should not|no|avoid|not)\b", re.I)
+
+
+def _guardrails(extracted: ExtractedBrief) -> str:
+    """Forbidden actions rendered as prohibitions.
+
+    Extraction returns the forbidden ACTION ("Call back if they ask not to be called
+    again"); printed bare under GUARDRAILS it read as an instruction to do exactly that.
+    """
+    lines = []
+    for item in extracted.forbidden_actions:
+        text = item.text.strip()
+        if text:
+            lines.append(text if _PROHIBITION.match(text) else f"Never do this: {text[0].lower()}{text[1:]}")
+    lines.append("Platform safety, tool permissions and call-end policy take precedence.")
+    return "\n".join(lines)
+
+
+def _business_requirements(extracted: ExtractedBrief) -> str:
+    """Workflow lines plus the extracted permitted next steps.
+
+    The platform rules only allow "a permitted next step"; the extracted list of
+    permitted steps used to reach the writer only, so the live agent could not see
+    which steps the business actually allows (and a reviewer rewrite could drop them).
+    """
+    lines = [item.text for item in extracted.workflow]
+    known = {" ".join(line.casefold().split()) for line in lines}
+    steps = [item.text for item in extracted.permitted_next_steps
+             if " ".join(item.text.casefold().split()) not in known]
+    if steps:
+        # Permission to offer a step is not a tool that performs it.
+        lines.append("Permitted next steps to offer: " + "; ".join(step.rstrip(". ") for step in steps)
+                     + ". Offering or noting a step never completes it: without a successful tool result, "
+                     "say the request is noted for the team to confirm, never that it is booked or done.")
+    return "\n".join(lines) or "Follow only the applicable business workflow."
+
+
 async def compile_employee_script(*, brief: str, language: str,
                                   generation_config: dict[str, Any] | None = None,
                                   answers: list[ClarificationAnswer] | None = None,
@@ -405,9 +474,13 @@ async def compile_employee_script(*, brief: str, language: str,
     if not review.passed:
         raise BriefValidationError([brief_issue("script_needs_review", "The script could not be checked against your details. Review the brief and try again.", field="brief")])
     final = review.fixed_script
-    if not _opening_line_is_language_compatible(final.opening, language):
-        # A reviewer can approve the wrong Indic script. Give it one concrete
-        # validator finding; never publish the mismatch or invent a new brief.
+    identity_names = (extracted.agent_name or "", extracted.company_name or "")
+    romanized = _romanized_indic_opening(final.opening, language, brief, identity_names)
+    if romanized or not _opening_line_is_language_compatible(final.opening, language):
+        # A reviewer can approve the wrong Indic script, or write the whole opening
+        # and examples in Latin letters ("Namaste, main Priya bol rahi hoon"), which
+        # contradicts the language pack's native-script rule the live agent follows.
+        # Give it one concrete validator finding; never invent a new brief.
         repair = await _completion(
             "employee_script_review", REVIEW_RULES,
             {**data, "script": final.model_dump(), "validation_feedback": [
@@ -416,7 +489,15 @@ async def compile_employee_script(*, brief: str, language: str,
                 "and all approved facts. Use ASCII digits for factual numbers.")
             ]}, ScriptReview, temperature=0.2, tokens=6000, correlation_id=correlation_id,
         )
-        if repair.passed:
+        # A romanized opening is only replaced by one that really is in native script;
+        # a failed repair keeps it (the pack still steers live replies) rather than
+        # failing agent creation.
+        repaired_text = " ".join(repair.fixed_script.model_dump().values())
+        source_text = brief + "\n" + "\n".join(item.answer for item in answers or [] if not item.unavailable)
+        introduces_unsupported = (not _numbers(repaired_text).issubset(_numbers(source_text) | _numbers(language))
+                                  or not _links(repaired_text).issubset(_links(source_text)))
+        if repair.passed and not (romanized and (
+                _romanized_indic_opening(repair.fixed_script.opening, language, brief, identity_names) or introduces_unsupported)):
             final = repair.fixed_script
     assert extracted.agent_name is not None and extracted.primary_goal is not None
     name = extracted.agent_name
@@ -435,8 +516,8 @@ async def compile_employee_script(*, brief: str, language: str,
         # The platform owns the farewell. A model-written CLOSING used to tell
         # the agent to say goodbye, contradicting the call-end policy.
         ("CLOSING", closing_policy_section(language)),
-        ("BUSINESS REQUIREMENTS", "\n".join(item.text for item in extracted.workflow) or "Follow only the applicable business workflow."),
-        ("GUARDRAILS", "\n".join(item.text for item in extracted.forbidden_actions) + "\nPlatform safety, tool permissions and call-end policy take precedence."),
+        ("BUSINESS REQUIREMENTS", _business_requirements(extracted)),
+        ("GUARDRAILS", _guardrails(extracted)),
     ]
     script = "\n\n".join(f"--- {title} ---\n{body.strip()}" for title, body in sections)
     script = canonicalize_superseded_facts(script)

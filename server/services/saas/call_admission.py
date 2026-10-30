@@ -144,13 +144,30 @@ async def reserve(tenant_id: uuid.UUID, request_id: str, *, provider: str, paylo
                 PstnDialRequest.created_at > _now() - timedelta(seconds=1)))).scalar_one()
             if recent >= cps:
                 raise HTTPException(429, detail={"error": {"code": "call_pacing", "message": "Calls are being paced. Please wait before starting another call.", "retry_after": 1}}, headers={"Retry-After": "1"})
-        platform_cap = max(1, min(20, int(settings.saas_max_concurrent_pstn or 20)))
-        tenant_cap = max(1, min(platform_cap, int((tenant.limits or {}).get("max_concurrent_pstn") or platform_cap)))
-        if await active_capacity(db, tenant_id) >= tenant_cap:
-            raise HTTPException(429, detail={"error": {"code": "concurrency_limit", "message": "All concurrent call slots are in use", "retry_after": 5}}, headers={"Retry-After": "5"})
+        # Channel cap: legacy limits until the admin configures channel pricing,
+        # then included + paid channels within the platform's Vobiz capacity.
+        from server.services.saas import concurrency_service as channels
+
+        caps = await channels.channel_cap(db, tenant, settings=settings)
+        active = await active_capacity(db, tenant_id)
+        over = None
+        if active >= caps["cap"]:
+            over = "tenant"
+        elif not caps["legacy"]:
+            await channels.lock_platform(db)
+            if await channels.platform_active_calls(db) >= caps["platformCapacity"]:
+                over = "platform"
+        if over:
+            await db.rollback()
+            # Campaign dials are re-queued by the runner; everything else is refused.
+            queued = str(request_id).startswith("camp:")
+            await channels.record_daily(factory, tenant_id, active=active, cap=caps["cap"],
+                                        rejected=0 if queued else 1, queued=1 if queued else 0)
+            raise channels.capacity_exception(over)
         db.add(PstnDialRequest(request_key=key, tenant_id=tenant_id, fingerprint=fingerprint,
             destination_hash=destination_hash, provider=provider, status="reserved", created_at=_now(), updated_at=_now()))
         await db.commit()
+    await channels.record_daily(factory, tenant_id, active=active + 1, cap=caps["cap"], admitted=1)
     return key, None
 
 

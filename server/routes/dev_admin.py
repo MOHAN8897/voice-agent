@@ -1372,7 +1372,7 @@ async def admin_analytics(days: int = Query(30, ge=1, le=365), session: SessionD
         )
         top_tenants = (
             await db.execute(
-                select(Tenant.name, func.count(Call.call_id))
+                select(Tenant.tenant_id, Tenant.name, func.count(Call.call_id))
                 .select_from(Call)
                 .join(Tenant, Tenant.tenant_id == Call.tenant_id)
                 .where(Call.started_at >= since, Call.started_at < until, Call.is_test.is_(False))
@@ -1408,7 +1408,9 @@ async def admin_analytics(days: int = Query(30, ge=1, le=365), session: SessionD
             {"date": str(r[0]), "cents": int(r[1] or 0), "inrPaise": int(r[2] or 0)}
             for r in topups
         ],
-        "topTenantsByCalls": [{"name": str(r[0]), "calls": int(r[1] or 0)} for r in top_tenants],
+        "topTenantsByCalls": [
+            {"tenantId": str(r[0]), "name": str(r[1]), "calls": int(r[2] or 0)} for r in top_tenants
+        ],
         "emptyDay": day0,
     }
 

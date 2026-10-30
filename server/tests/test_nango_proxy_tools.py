@@ -97,7 +97,8 @@ async def test_proxy_zoom_create_meeting():
         assert res["join_url"] == "https://zoom.us/j/999888"
         mock_post.assert_called_once()
         call_url = mock_post.call_args[0][0]
-        assert "/proxy/v2/users/me/meetings" in call_url
+        # Nango's zoom base_url already ends in /v2.
+        assert call_url.endswith("/proxy/users/me/meetings")
 
 
 @pytest.mark.asyncio
@@ -202,7 +203,9 @@ async def test_proxy_twilio_sms_get_status():
         "to": "+919876543210",
     }
 
-    with patch("httpx.AsyncClient.get", new_callable=AsyncMock, return_value=fake_resp) as mock_get:
+    accounts = MagicMock(status_code=200)
+    accounts.json.return_value = {"accounts": [{"sid": "AC123", "status": "active"}]}
+    with patch("httpx.AsyncClient.get", new_callable=AsyncMock, side_effect=[accounts, fake_resp]) as mock_get:
         res = await nango_service._execute_proxy_tool(
             provider_key="twilio",
             connection_id="conn-123",
@@ -212,8 +215,9 @@ async def test_proxy_twilio_sms_get_status():
         assert res["status"] == "success"
         assert res["delivery_status"] == "delivered"
         assert res["message_sid"] == "SM12345"
-        mock_get.assert_called_once()
+        assert mock_get.call_count == 2
+        assert mock_get.call_args_list[0][0][0].endswith("/proxy/2010-04-01/Accounts.json")
         call_url = mock_get.call_args[0][0]
-        assert "/proxy/Messages/SM12345.json" in call_url
+        assert call_url.endswith("/proxy/2010-04-01/Accounts/AC123/Messages/SM12345.json")
 
 

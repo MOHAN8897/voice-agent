@@ -54,6 +54,16 @@ STAGES = [
     "done",
 ]
 
+_RELEASE_PENDING_RETRY_SECONDS = 1800  # carrier release cool-down is ~24h
+
+class CarrierReleasePending(RuntimeError):
+    """Customer DIDs are released but still in the carrier's cool-down window."""
+
+    def __init__(self, count: int = 0) -> None:
+        super().__init__(f"Customer number release is still pending ({count})")
+        self.count = count
+
+
 _LOCK_TTL_SECONDS = 600  # Worker lock expiry (10 min — spec §6.1; must exceed slowest stage)
 _WORKER_ID = f"{socket.gethostname()}:{os.getpid()}"
 
@@ -211,6 +221,19 @@ async def process_one_teardown() -> bool:
 
         logger.info("teardown: completed job=%s tenant=%s", job_id, tenant_id)
 
+    except CarrierReleasePending:
+        # Not a failure: the carrier is finishing the release. A failed job is
+        # never reclaimed, so requeue it and look again after the back-off.
+        async with factory() as session:
+            job_row = await session.get(TenantTeardownJob, job_id)
+            if job_row:
+                job_row.status = "queued"
+                job_row.locked_by = None
+                job_row.locked_until = _utcnow() + timedelta(seconds=_RELEASE_PENDING_RETRY_SECONDS)
+                job_row.last_error = {"stage": stage_ptr, "error": "carrier_release_pending"}
+                job_row.updated_at = _utcnow()
+            await session.commit()
+        logger.info("teardown: carrier release pending job=%s tenant=%s", job_id, tenant_id)
     except Exception as exc:
         err_msg = type(exc).__name__  # Never log raw exception message (may contain secrets)
         logger.exception(
@@ -310,13 +333,16 @@ async def _stage_carrier_numbers(factory, tenant_id: _uuid_mod.UUID) -> None:
         )
         numbers = numbers_result.scalars().all()
 
+    pending_release = 0
     for number in numbers:
         try:
             if number.vobiz_account_scope == "tenant":
                 from server.services.saas.number_inventory import move_to_inventory
                 result = await move_to_inventory(number_id=number.id)
                 if result.get("status") != "released":
-                    raise RuntimeError("Customer number release is still pending")
+                    # Carrier keeps the DID in pending_release for ~24h. Keep
+                    # going so every number starts its cool-down in this pass.
+                    pending_release += 1
                 continue
             # Release from carrier (idempotent, handles 404s)
             from server.services.saas.platform_phone_stack import release_number_from_carrier
@@ -331,6 +357,16 @@ async def _stage_carrier_numbers(factory, tenant_id: _uuid_mod.UUID) -> None:
                 "teardown: carrier release failed number_id=%s (non-fatal)",
                 getattr(number, "id", None) or getattr(number, "phone_number_id", None),
             )
+
+    if pending_release:
+        raise CarrierReleasePending(pending_release)
+
+    # Every customer DID has left the carrier account: delete the tenant's
+    # carrier child account so its credentials stop working, and wipe the
+    # encrypted token we stored. Failure keeps the job retrying at this stage.
+    from server.services.saas.voice_kyc_service import close_customer_subaccount
+
+    await close_customer_subaccount(tenant_id)
 
     # Mark all as released in DB
     async with factory() as session:

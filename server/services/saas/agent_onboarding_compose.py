@@ -102,7 +102,7 @@ Call flow:
 
 Rules:
 - Do not invent prices, policies, or appointments.
-- If unsure, offer a callback.
+- If a detail is not in this script, say you do not have it. Do not volunteer a callback; a caller's own callback request is noted by the platform.
 - Clarify uncertain names or times. Do not read phone numbers aloud."""
 
 

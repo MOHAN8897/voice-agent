@@ -94,20 +94,115 @@ async def _assert_number_purchase_eligibility(
         raise ValueError("number_limit")
 
 
-async def _active_reservation_conflict(e164: str) -> bool:
+#: Purchase states that have taken money and may still become a carrier order.
+IN_FLIGHT_PURCHASE_STATUSES = ("paid", "provisioning", "needs_attention")
+
+
+async def _active_reservation_conflict(e164: str) -> dict | None:
+    """Who currently holds ``e164``: a live reservation or an in-flight purchase.
+
+    Returns ``{"tenant_id", "purchase_id", "status"}`` or None. The purchase table
+    is checked as well as the reservation table so a hold that was removed while
+    its purchase was still in flight can never let a second tenant buy the DID.
+    """
     factory = get_session_factory()
     if factory is None:
-        return False
+        return None
     async with factory() as session:
-        result = await session.execute(
-            select(NumberReservation).where(
-                NumberReservation.e164 == e164,
-                or_(NumberReservation.expires_at > _utcnow(), NumberReservation.purchase_id.in_(
-                    select(NumberPurchase.id).where(NumberPurchase.status.in_(["paid", "provisioning", "needs_attention"])),
-                )),
+        row = (
+            await session.execute(
+                select(
+                    NumberReservation.tenant_id,
+                    NumberReservation.purchase_id,
+                    NumberPurchase.status,
+                )
+                .join(NumberPurchase, NumberPurchase.id == NumberReservation.purchase_id, isouter=True)
+                .where(
+                    NumberReservation.e164 == e164,
+                    or_(
+                        NumberReservation.expires_at > _utcnow(),
+                        NumberPurchase.status.in_(IN_FLIGHT_PURCHASE_STATUSES),
+                    ),
+                )
+                .limit(1)
             )
-        )
-        return result.scalar_one_or_none() is not None
+        ).first()
+        if row is None:
+            row = (
+                await session.execute(
+                    select(NumberPurchase.tenant_id, NumberPurchase.id, NumberPurchase.status)
+                    .where(
+                        NumberPurchase.e164 == e164,
+                        NumberPurchase.status.in_(IN_FLIGHT_PURCHASE_STATUSES),
+                    )
+                    .order_by(NumberPurchase.created_at.desc())
+                    .limit(1)
+                )
+            ).first()
+        if row is None:
+            return None
+        return {"tenant_id": row[0], "purchase_id": row[1], "status": row[2]}
+
+
+async def _replay_if_same_tenant(conflict, principal: SubscriberPrincipal, e164: str) -> dict | None:
+    """Idempotent replay: a double-click or client retry gets the original purchase.
+
+    Only the same tenant's in-flight purchase is replayed; nothing is debited again.
+    Anyone else's hold is a conflict.
+    """
+    if not isinstance(conflict, dict):
+        return None
+    if conflict.get("tenant_id") != principal.tenant_id or not conflict.get("purchase_id"):
+        return None
+    if conflict.get("status") not in IN_FLIGHT_PURCHASE_STATUSES:
+        return None
+    from server.services.saas.billing_rates import load_current_rates
+
+    rates = await load_current_rates()
+    return {
+        "purchaseId": str(conflict["purchase_id"]),
+        "e164": e164,
+        "status": conflict["status"],
+        "provisioning": True,
+        "payment": "wallet",
+        "replayed": True,
+        "didMonthlyUsd": round(rates["did_monthly_usd_cents"] / 100.0, 2),
+        "didMonthlyInr": round(rates["did_monthly_inr_paise"] / 100.0, 2),
+    }
+
+
+def _money_minor_units(value) -> int | None:
+    """Carrier fee (major units, number or numeric string) in minor units."""
+    if isinstance(value, bool) or value is None:
+        return None
+    try:
+        return int(round(float(str(value).strip().replace(",", "")) * 100))
+    except (TypeError, ValueError):
+        return None
+
+
+def carrier_charge_exceeds_retail(row: dict, rates: dict) -> bool:
+    """True when the carrier's first charge for this DID exceeds what we collect.
+
+    Vobiz debits ``setup_fee + monthly_fee`` from the parent account at purchase,
+    while the tenant pays one month of the platform's flat retail rate. A premium
+    or vanity number whose carrier price is above that rate would be sold at a
+    loss, so it is neither listed nor sold. Unknown currency or fees are allowed
+    (the configured carrier-balance gate still applies).
+    """
+    if not isinstance(row, dict):
+        return False
+    setup = _money_minor_units(row.get("setup_fee")) or 0
+    monthly = _money_minor_units(row.get("monthly_fee"))
+    if monthly is None and not setup:
+        return False
+    carrier_minor = setup + (monthly or 0)
+    currency = str(row.get("currency") or "").strip().upper()
+    if currency == "INR":
+        return carrier_minor > int(rates.get("did_monthly_inr_paise") or 0)
+    if currency == "USD":
+        return carrier_minor > int(rates.get("did_monthly_usd_cents") or 0)
+    return False
 
 
 async def create_purchase_checkout(
@@ -136,7 +231,26 @@ async def get_purchase(purchase_id: uuid.UUID, tenant_id: uuid.UUID) -> dict | N
                 select(ProvisionJob).where(ProvisionJob.purchase_id == row.id)
             )
         ).scalar_one_or_none()
-        last_error = job.last_error if job is not None and job.last_error else None
+        raw_error = job.last_error if job is not None and isinstance(job.last_error, dict) else None
+        # Only the stable code reaches the browser; exception class names and
+        # provider details stay in the operator log.
+        last_error = (
+            {"code": str(raw_error.get("code") or raw_error.get("message") or "provision_failed")}
+            if raw_error
+            else None
+        )
+        refunded = None
+        if row.status == "failed":
+            from server.db.models.saas_models import BillingWalletTransaction
+
+            refunded = (
+                await session.execute(
+                    select(BillingWalletTransaction.id).where(
+                        BillingWalletTransaction.tenant_id == row.tenant_id,
+                        BillingWalletTransaction.reference_id == f"did_refund:{row.id}",
+                    ).limit(1)
+                )
+            ).first() is not None
         return {
             "purchaseId": str(row.id),
             "e164": row.e164,
@@ -144,6 +258,7 @@ async def get_purchase(purchase_id: uuid.UUID, tenant_id: uuid.UUID) -> dict | N
             "phoneNumberId": str(row.phone_number_id) if row.phone_number_id else None,
             "assignAgentId": str(row.assign_agent_id) if row.assign_agent_id else None,
             "lastError": last_error,
+            "refunded": refunded,
         }
 
 
@@ -253,7 +368,13 @@ async def _assert_vobiz_inventory_number_available(e164: str, country_code: str)
             type(exc).__name__,
         )
         raise ValueError("carrier_inventory_unavailable") from exc
-    if not any(str(row.get("e164") or "") == e164 for row in rows):
+    match = next((row for row in rows if str(row.get("e164") or "") == e164), None)
+    if match is None:
+        raise ValueError("number_unavailable")
+    from server.services.saas.billing_rates import load_current_rates
+
+    if carrier_charge_exceeds_retail(match, await load_current_rates()):
+        logger.warning("vobiz inventory number priced above retail; refusing sale")
         raise ValueError("number_unavailable")
 
 
@@ -389,7 +510,11 @@ async def purchase_with_wallet(
     if factory is None:
         raise RuntimeError("database_required")
     e164 = normalize_e164(e164)
-    if await _active_reservation_conflict(e164):
+    conflict = await _active_reservation_conflict(e164)
+    if conflict:
+        replay = await _replay_if_same_tenant(conflict, principal, e164)
+        if replay is not None:
+            return replay
         raise ValueError("number_reserved")
 
     # Customer wallet first — same gate for inventory transfer and Telnyx order.
@@ -486,12 +611,23 @@ async def purchase_with_wallet(
             user_id=principal.user_id,
             purchase_id=purchase_id,
         )
+        lost_race = False
         try:
             await session.commit()
         except IntegrityError:
-            # Lost the race to a concurrent buyer of the same number.
+            # Lost the race to a concurrent buyer of the same number. Nothing was
+            # committed, so the debit rolled back with the reservation.
             await session.rollback()
-            raise ValueError("number_reserved") from None
+            lost_race = True
+    if lost_race:
+        # A concurrent double-submit by this same tenant won the race: return
+        # that purchase rather than an error for a number the user now owns.
+        replay = await _replay_if_same_tenant(
+            await _active_reservation_conflict(e164), principal, e164
+        )
+        if replay is not None:
+            return replay
+        raise ValueError("number_reserved")
 
     # The reservation, purchase, wallet debit, transaction and durable provision
     # job were committed together. The worker can now claim the queued row.

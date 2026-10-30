@@ -259,9 +259,8 @@ async def ensure_customer_subaccount(
                 aliased = _alias_email(email, tenant_id)
                 if aliased.lower() != email.lower():
                     logger.info(
-                        "Subaccount email conflict tenant=%s, retrying with aliased email=%s",
+                        "Subaccount email conflict tenant=%s, retrying with aliased email",
                         tenant_id,
-                        aliased,
                     )
                     email = aliased
                     result = await parent.create_customer_subaccount(
@@ -446,7 +445,11 @@ async def refresh_kyc_status(
         identity = await parent.get_customer_subaccount(str(account.auth_id))
         if (identity.get("auth_id") != account.auth_id or identity.get("parent_auth_id") != parent.auth_id):
             raise VoiceKycError("voice_account_ownership_mismatch")
-        enabled = identity.get("enabled") is True and identity.get("is_active") is True
+        # Vobiz's Update Sub-account API deprecates ``enabled`` ("accepted but has
+        # no effect"); ``is_active`` is the switch that actually stops a child
+        # account. Require is_active, and still treat an explicit enabled=false
+        # as disabled so a stale flag can never widen access.
+        enabled = identity.get("is_active") is True and identity.get("enabled") is not False
         data = await parent.get_customer_kyc_status(str(account.auth_id))
     except Exception as exc:
         logger.warning("Tenant voice KYC status unavailable tenant=%s error_type=%s", tenant_id, type(exc).__name__)
@@ -680,6 +683,63 @@ async def provision_tenant_number(tenant_id: UUID, e164: str) -> dict:
     if not number_id:
         raise VoiceKycError("voice_number_confirmation_pending")
     return {"phone_number_id": number_id}
+
+
+async def close_customer_subaccount(tenant_id: UUID) -> str:
+    """Delete the tenant's Vobiz child account and wipe its stored credentials.
+
+    Used by tenant teardown only after every tenant-scope DID is released at the
+    carrier. Idempotent: an already-deleted child (404) or a tenant without one
+    still ends with no credentials stored. Returns the final local status.
+    """
+    from sqlalchemy import func
+
+    from server.db.models.phase5_models import PhoneNumber
+    from server.services.vobiz_client import VobizApiError, VobizClient
+
+    factory = get_session_factory()
+    if factory is None:
+        raise VoiceKycError("database_required")
+    async with factory() as session:
+        row = await session.get(VobizSubaccount, tenant_id)
+        if row is None:
+            return "none"
+        if row.provisioning_status == "deleted":
+            return "deleted"
+        remaining = await session.scalar(
+            select(func.count(PhoneNumber.id)).where(
+                PhoneNumber.vobiz_account_scope == "tenant",
+                PhoneNumber.vobiz_account_tenant_id == tenant_id,
+                PhoneNumber.released_at.is_(None),
+            )
+        )
+        if int(remaining or 0) > 0:
+            raise VoiceKycError("voice_numbers_still_owned", status_code=409)
+        auth_id = row.auth_id
+        parent_auth_id = row.parent_auth_id
+    if auth_id:
+        parent = VobizClient()
+        if parent_auth_id and parent_auth_id != parent.auth_id:
+            # Never act on a child of a different parent with these credentials.
+            raise VoiceKycError("voice_parent_account_changed")
+        try:
+            await parent.delete_customer_subaccount(auth_id)
+        except VobizApiError as exc:
+            if exc.status != 404:
+                raise VoiceKycError("voice_account_delete_failed") from exc
+    async with factory() as session:
+        row = await session.get(VobizSubaccount, tenant_id, with_for_update=True)
+        if row is not None:
+            row.encrypted_auth_token = None
+            row.encrypted_kyc_url = None
+            row.kyc_session_status = None
+            row.account_enabled = False
+            row.kyc_calls_blocked = True
+            row.provisioning_status = "deleted"
+            row.last_error_code = None
+            row.updated_at = _utcnow()
+            await session.commit()
+    return "deleted"
 
 
 def verify_voice_webhook(raw: bytes, signature: str) -> None:

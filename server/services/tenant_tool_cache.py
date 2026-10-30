@@ -93,8 +93,14 @@ async def get_connection_id(tenant_id: str, app_name: str, session_factory: Any 
                     TenantIntegration.status == "ACTIVE",
                 )
             )
-            record = res.scalar_one_or_none()
-            return record.connection_id if record and (record.metadata_ or {}).get("gateway_verified") is True else None
+            # Legacy aliases (e.g. "gmail" and "GMAIL") can leave two ACTIVE rows;
+            # scalar_one_or_none() raised on them and silently disabled the tool.
+            # Use the single verified row, and refuse to guess between several.
+            verified = {
+                r.connection_id for r in res.scalars().all()
+                if r.connection_id and (r.metadata_ or {}).get("gateway_verified") is True
+            }
+            return next(iter(verified)) if len(verified) == 1 else None
     except Exception as exc:
         logger.warning("[TENANT_TOOL_CACHE] connection lookup failed: %s", type(exc).__name__)
         return None

@@ -78,7 +78,7 @@ export function PlatformPricesPanel({ rows, onSaved }: { rows: TierProfileRow[];
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(await responseError(res));
-      setPricesStatus("Platform prices saved as a new rate version. New calls and wallet calculations use it.");
+      setPricesStatus("Platform prices saved as a new rate version. New calls use it; calls in progress keep their starting price.");
       await loadPrices();
       await onSaved();
     } catch (err) {
@@ -186,7 +186,7 @@ export function PlatformPricesPanel({ rows, onSaved }: { rows: TierProfileRow[];
 
       <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
         <p className="text-xs text-text-subtle">
-          All entered rates apply immediately to platform calls and wallet balance calculations.
+          Saving publishes a new rate version that applies to new calls only. Calls already in progress finish at the price they started with, and each charge records the rate version it used.
         </p>
         <Button
           type="button"

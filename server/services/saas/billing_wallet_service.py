@@ -330,6 +330,14 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
                     desc = "Phone number provisioning"
                 elif tx.kind == "did_refund":
                     desc = "Phone number release refund"
+                elif tx.kind == "did_rental":
+                    desc = "Phone number monthly rental"
+                elif tx.kind == "channel_purchase":
+                    desc = "Concurrent call channels (prorated to period end)"
+                elif tx.kind == "channel_renewal":
+                    desc = "Concurrent call channels: 30-day renewal"
+                elif tx.kind == "channel_refund":
+                    desc = "Concurrent call channels refund"
                 elif tx.kind in ("admin_grant", "admin_debit"):
                     desc = "Manual balance adjustment"
                 elif tx.kind == "forfeiture":
@@ -394,6 +402,9 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
                     "agentName": agent_name,
                     "tier": tier,
                     "tierLabel": tier_label,
+                    # Which price version and stack revision this call was charged at.
+                    "rateVersion": getattr(call_obj, "rate_version", None) if call_obj else None,
+                    "voiceProfileRevision": getattr(call_obj, "voice_profile_revision", None) if call_obj else None,
                 }
             )
         return rows
@@ -445,10 +456,16 @@ async def max_allowed_call_duration_sec(
     tenant_id: uuid.UUID,
     channel: str = "pstn",
     global_cap_sec: int = 900,
+    *,
+    rate_usd_micros_per_min: int | None = None,
+    rate_inr_paise_per_min: int | None = None,
+    fx_rate_inr: float | None = None,
 ) -> int:
     """Calculate maximum duration in seconds that the tenant's wallet balance can cover.
 
     Caps at global_cap_sec (default 900s / 15 mins). If SaaS auth is disabled, returns global_cap_sec.
+    When the call's pinned (snapshot) rate is passed, it is used instead of the
+    env default, so the watchdog matches what the call will actually be charged.
     """
     settings = get_settings()
     if not settings.saas_auth_enabled:
@@ -458,18 +475,25 @@ async def max_allowed_call_duration_sec(
     except Exception:
         return global_cap_sec
 
-    rate_cents = int(settings.pstn_rate_usd_cents_per_min if channel == "pstn" else settings.web_agent_rate_usd_cents_per_min)
-    rate_cents = max(1, rate_cents)
+    fx = float(fx_rate_inr or getattr(settings, "fx_rate_inr", 0) or 95.64) or 95.64
+    if rate_usd_micros_per_min and int(rate_usd_micros_per_min) > 0:
+        rate_cents = max(0.0001, int(rate_usd_micros_per_min) / 10_000.0)
+    else:
+        rate_cents = int(settings.pstn_rate_usd_cents_per_min if channel == "pstn" else settings.web_agent_rate_usd_cents_per_min)
+        rate_cents = max(1, rate_cents)
     rate_cents_per_sec = rate_cents / 60.0
 
-    fx = float(getattr(settings, "fx_rate_inr", 0) or 95.64) or 95.64
-    rate_paise_per_sec = max(0.01, (rate_cents * fx) / 60.0)
+    if rate_inr_paise_per_min and int(rate_inr_paise_per_min) > 0:
+        rate_paise_per_sec = max(0.01, int(rate_inr_paise_per_min) / 60.0)
+    else:
+        rate_paise_per_sec = max(0.01, (rate_cents * fx) / 60.0)
 
     balance_cents = max(0, int(wallet.balance_cents or 0))
     balance_paise = max(0, int(wallet.balance_inr_paise or 0))
 
-    dur_usd = int(balance_cents / rate_cents_per_sec) if balance_cents > 0 else 0
-    dur_inr = int(balance_paise / rate_paise_per_sec) if balance_paise > 0 else 0
+    # Small epsilon so an exact fit (₹10 at ₹5/min = 120 s) is not floored to 119.
+    dur_usd = int(balance_cents / rate_cents_per_sec + 1e-9) if balance_cents > 0 else 0
+    dur_inr = int(balance_paise / rate_paise_per_sec + 1e-9) if balance_paise > 0 else 0
     affordable_sec = dur_usd + dur_inr
 
     return min(global_cap_sec, max(0, affordable_sec))
@@ -921,6 +945,70 @@ async def bill_call_usage_if_applicable(call_id: str) -> None:
         billing_mode,
         paise,
     )
+
+
+async def debit_exact_in_session(
+    session,
+    tenant_id: uuid.UUID,
+    *,
+    kind: str,
+    reference_id: str,
+    want_cents: int,
+    want_paise: int,
+    user_id: uuid.UUID | None = None,
+    insufficient_message: str = "Add funds to your wallet to continue.",
+) -> dict:
+    """Debit a fixed price from one wallet leg, all or nothing, inside the caller's transaction.
+
+    The price is the same in both currencies, so whichever leg can cover it is
+    used (the wallet's primary currency first). Never partial: an insufficient
+    balance raises 402 and nothing is written. Idempotent on `reference_id` —
+    a retry returns ``duplicate`` without debiting again.
+    """
+    want_cents = max(0, int(want_cents))
+    want_paise = max(0, int(want_paise))
+    dup = (await session.execute(
+        select(BillingWalletTransaction).where(BillingWalletTransaction.reference_id == reference_id)
+    )).scalar_one_or_none()
+    if dup is not None:
+        return {"ok": True, "duplicate": True, "amountCents": -int(dup.amount_cents or 0),
+                "amountInrPaise": -int(dup.amount_inr_paise or 0)}
+    if want_cents == 0 and want_paise == 0:
+        return {"ok": True, "amountCents": 0, "amountInrPaise": 0, "free": True}
+    wallet = await session.get(BillingWallet, tenant_id, with_for_update=True)
+    if wallet is None:
+        wallet = BillingWallet(tenant_id=tenant_id, balance_cents=0, balance_inr_paise=0, updated_at=_utcnow())
+        session.add(wallet)
+        await session.flush()
+    have_cents = int(wallet.balance_cents or 0)
+    have_paise = int(wallet.balance_inr_paise or 0)
+    primary = (wallet.currency or "usd").lower()
+    if primary == "inr" and want_paise and have_paise >= want_paise:
+        take_cents, take_paise = 0, want_paise
+    elif want_cents and have_cents >= want_cents:
+        take_cents, take_paise = want_cents, 0
+    elif want_paise and have_paise >= want_paise:
+        take_cents, take_paise = 0, want_paise
+    else:
+        raise HTTPException(
+            status_code=402,
+            detail={"error": {"code": "insufficient_balance", "message": insufficient_message}},
+        )
+    wallet.balance_cents = have_cents - take_cents
+    wallet.balance_inr_paise = have_paise - take_paise
+    wallet.updated_at = _utcnow()
+    session.add(
+        BillingWalletTransaction(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            amount_cents=-take_cents,
+            amount_inr_paise=-take_paise,
+            kind=kind,
+            reference_id=reference_id,
+            created_at=_utcnow(),
+        )
+    )
+    return {"ok": True, "amountCents": take_cents, "amountInrPaise": take_paise}
 
 
 async def debit_did_purchase_in_session(

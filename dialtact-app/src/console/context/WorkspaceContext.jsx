@@ -667,7 +667,12 @@ export function WorkspaceProvider({ children }) {
         // The wallet was refunded server-side; re-read it so the balance the user
         // sees is the balance they actually have.
         await onFailed?.();
-        return { ...purchase, ok: false, failureReason: purchase.lastError?.message || 'provision_failed' };
+        return {
+          ...purchase,
+          ok: false,
+          failureReason: purchase.lastError?.code || 'provision_failed',
+          refunded: purchase.refunded === true,
+        };
       }
       if (status === 'needs_attention') {
         return { ...purchase, ok: false, failureReason: 'Phone service confirmation needs support. Your purchase is reserved; please do not buy it again.' };
@@ -677,10 +682,11 @@ export function WorkspaceProvider({ children }) {
     return { purchaseId, status: 'pending', ok: false, failureReason: 'pending' };
   };
 
-  const buyPhoneNumber = async (catalogItem, assignToAgentId = null) => {
+  const buyPhoneNumber = async (catalogItem, assignToAgentId = null, { onPhase = null } = {}) => {
     if (!api.getToken()) {
       throw new Error('Sign in before buying a phone number.');
     }
+    onPhase?.('ordering');
     const provisioned = await api.telephony.buyNumber(catalogItem, assignToAgentId);
     // Only poll for carrier async provision. Inventory transfers already return a
     // phoneNumberId — stashing them leaves a forever "Provisioning…" banner.
@@ -705,8 +711,11 @@ export function WorkspaceProvider({ children }) {
     }
     if (provisioned?.provisioning && provisioned?.purchaseId) {
       // The provider order is async; poll until the server confirms the number
-      // exists or reports the failure and wallet refund.
+      // exists or reports the failure and wallet refund. Up to ~45s: carrier
+      // registration can take a minute, and "still pending" is not a failure.
+      onPhase?.('provisioning');
       return await waitForPurchase(provisioned.purchaseId, {
+        attempts: 30,
         onFailed: refreshWallet,
       });
     }

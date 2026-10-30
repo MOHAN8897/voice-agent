@@ -19,6 +19,7 @@ from server.services.nango_service import nango_service
 from server.services.tool_schema_registry import (
     _normalize,
     default_action_timing,
+    is_write_action,
     tool_definition,
     validate_tool_arguments,
 )
@@ -127,8 +128,9 @@ class DialtactToolRouter:
                 await self._record_execution_complete(tenant_id, execution_id, audit_status, result=result)
             return result
         except (asyncio.TimeoutError, asyncio.CancelledError) as exc:
-            result = {"status": "unknown" if action_type == "write" else "timeout",
-                      "message": "The result could not be confirmed. Check the existing action before trying again."}
+            result = ({"status": "unknown", "message": "The result could not be confirmed. Check the existing action before trying again."}
+                      if action_type == "write" else
+                      {"status": "timeout", "message": "The lookup took too long. Nothing was changed; do not guess the answer, offer to follow up or try once more."})
             if execution_id:
                 await asyncio.shield(self._record_execution_complete(
                     tenant_id, execution_id, "timed_out_pending", result=result, error="Outcome unknown after interruption",
@@ -144,8 +146,7 @@ class DialtactToolRouter:
             return result
 
     def _get_action_metadata(self, action_name: str) -> dict[str, str]:
-        verbs = {"CREATE", "UPDATE", "DELETE", "CANCEL", "RESCHEDULE", "SEND", "BOOK", "INSERT", "ADD", "SAVE", "CONFIRM"}
-        return {"type": "write" if verbs.intersection(action_name.upper().split("_")) else "read"}
+        return {"type": "write" if is_write_action(action_name) else "read"}
 
     def _generate_idempotency_key(self, tenant_id: str, call_id: str, tool_name: str, args: dict[str, Any]) -> str:
         identity = args

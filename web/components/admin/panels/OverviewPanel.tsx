@@ -39,7 +39,7 @@ type Analytics = {
   callsByDirection: Record<string, number>;
   callsByChannel?: Record<string, { calls: number; seconds: number }>;
   topUpsByDay: Array<{ date: string; cents: number; inrPaise: number }>;
-  topTenantsByCalls: Array<{ name: string; calls: number }>;
+  topTenantsByCalls: Array<{ tenantId: string; name: string; calls: number }>;
 };
 
 type Purchase = {
@@ -242,8 +242,8 @@ export function AdminOverviewPage() {
                   <SkeuoTh className="text-right">Calls</SkeuoTh>
                 </SkeuoTableHead>
                 <SkeuoTableBody>
-                  {data.topTenantsByCalls.map((t, index) => (
-                    <SkeuoTableRow key={`${t.name}-${index}`}>
+                  {data.topTenantsByCalls.map((t) => (
+                    <SkeuoTableRow key={t.tenantId}>
                       <SkeuoTd>{t.name}</SkeuoTd>
                       <SkeuoTd className="text-right font-mono">{t.calls}</SkeuoTd>
                     </SkeuoTableRow>

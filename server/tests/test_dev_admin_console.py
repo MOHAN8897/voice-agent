@@ -119,7 +119,7 @@ def test_analytics_returns_only_real_columns():
     for d in out["callsByDay"]:
         assert {"date", "calls", "seconds"} == set(d)
     for t in out["topTenantsByCalls"]:
-        assert {"name", "calls"} == set(t)
+        assert {"tenantId", "name", "calls"} == set(t)
 
 
 def test_analytics_window_is_honoured():

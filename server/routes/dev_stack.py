@@ -346,7 +346,30 @@ async def dev_composed_voice_profile_usage(session: SessionData = Depends(requir
     except Exception as exc:
         logger.warning("[VOICE] Could not count agents per tier: %s", exc)
         return {"environment": app_env, "agentsByTier": {}, "available": False}
-    return {"environment": app_env, "agentsByTier": counts, "available": True}
+    # Calls in progress keep the stack and price they were admitted with (both
+    # are pinned on the call row); the admin sees how many that is per tier.
+    active: dict[str, int] = {}
+    try:
+        from datetime import datetime, timedelta, timezone
+
+        from server.db.models.entities import Call
+
+        since = datetime.now(timezone.utc) - timedelta(hours=6)
+        async with factory() as db:
+            rows = await db.execute(
+                select(Call.tier, func.count())
+                .where(Call.environment == app_env, Call.ended_at.is_(None), Call.started_at >= since)
+                .group_by(Call.tier)
+            )
+            for raw_tier, count in rows.all():
+                try:
+                    tier = canonical_voice_tier(raw_tier or "medium")
+                except VoiceProfileError:
+                    tier = str(raw_tier or "")
+                active[tier] = active.get(tier, 0) + int(count or 0)
+    except Exception as exc:
+        logger.warning("[VOICE] Could not count active calls per tier: %s", exc)
+    return {"environment": app_env, "agentsByTier": counts, "activeCallsByTier": active, "available": True}
 
 
 @router.put("/api/dev/stack/voice-profiles/{tier}/activation")

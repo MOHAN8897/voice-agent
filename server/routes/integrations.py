@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -65,7 +66,18 @@ async def list_integrations(
         # Reconcile with live Nango connections if configured
         if nango_service.is_configured():
             try:
-                live_conns = await nango_service.get_tenant_connections(tenant_id)
+                all_conns = await nango_service.get_tenant_connections(tenant_id, include_auth_errors=True)
+                failed_ids = {c.get("connection_id") for c in all_conns if c.get("connection_id") and nango_service.connection_has_auth_error(c)}
+                live_conns = [c for c in all_conns if not nango_service.connection_has_auth_error(c)]
+                if failed_ids:
+                    async with session_factory() as session:
+                        await session.execute(update(TenantIntegration).where(
+                            TenantIntegration.tenant_id == _safe_tenant_uuid(tenant_id),
+                            TenantIntegration.status == "ACTIVE",
+                            TenantIntegration.connection_id.in_(sorted(failed_ids)),
+                        ).values(status="ERROR", metadata_={"gateway_verified": False, "needs_reauth": True}))
+                        await session.commit()
+                    invalidate_tenant_tools(str(tenant_id))
                 if live_conns:
                     grouped: dict[str, list[dict]] = {}
                     for connection in live_conns:
@@ -120,7 +132,7 @@ async def list_integrations(
         async with session_factory() as session:
             stmt = select(TenantIntegration).where(
                 TenantIntegration.tenant_id == _safe_tenant_uuid(tenant_id),
-                TenantIntegration.status == "ACTIVE",
+                TenantIntegration.status.in_(("ACTIVE", "ERROR")),
             )
             res = await session.execute(stmt)
             integrations = res.scalars().all()
@@ -131,9 +143,14 @@ async def list_integrations(
                         "app_name": item.app_name,
                         "account_identifier": item.account_identifier,
                         "status": item.status,
+                        # Agents cannot use an ERROR connection; the console
+                        # shows it as "Reconnect needed" instead of hiding it.
+                        "needs_reauth": item.status == "ERROR",
                         "updated_at": item.updated_at.isoformat() if item.updated_at else None,
                     }
-                    for item in integrations if (item.metadata_ or {}).get("gateway_verified") is True
+                    for item in integrations
+                    if (item.status == "ACTIVE" and (item.metadata_ or {}).get("gateway_verified") is True)
+                    or (item.status == "ERROR" and (item.metadata_ or {}).get("needs_reauth") is True)
                 ]
             }
     except Exception as exc:
@@ -264,6 +281,7 @@ async def activate_integration(
                     )
                 )
                 existing = chk.scalar_one_or_none()
+                superseded = existing.connection_id if existing and existing.connection_id and existing.connection_id != conn_id else None
                 if existing:
                     existing.app_name = resolved_app
                     existing.status = "ACTIVE"
@@ -287,6 +305,8 @@ async def activate_integration(
         except Exception as exc:
             logger.error("[INTEGRATIONS] Failed to activate integration: %s", type(exc).__name__)
             raise HTTPException(status_code=500, detail="Failed to activate integration")
+        if superseded:
+            await _revoke_superseded_connection(tenant_id, resolved_app, superseded)
 
     return {
         "status": "ACTIVE",
@@ -295,13 +315,34 @@ async def activate_integration(
     }
 
 
+async def _revoke_superseded_connection(tenant_id: str, app_name: str, connection_id: str) -> None:
+    """Best effort: a reconnect creates a new gateway connection; delete the old
+    one so its still-valid provider grant does not linger unused."""
+    try:
+        live = await nango_service.get_tenant_connections(tenant_id, include_auth_errors=True)
+        owned = any(
+            c.get("connection_id") == connection_id
+            and c.get("provider_config_key") == nango_service.get_provider_key(app_name)
+            for c in live
+        )
+        if owned and not await nango_service.delete_connection(connection_id=connection_id, app_name=app_name):
+            logger.warning("[INTEGRATIONS] Superseded connection not revoked for %s", app_name)
+    except Exception as exc:  # noqa: BLE001 - activation already succeeded
+        logger.warning("[INTEGRATIONS] Superseded connection cleanup skipped: %s", type(exc).__name__)
+
+
 @router.post("/api/integrations/nango-webhook")
 async def nango_webhook(request: Request) -> dict[str, Any]:
     """Authenticate the raw payload and reconcile an exact live connection."""
     secret = get_settings().nango_webhook_signing_key
     if not secret:
         raise HTTPException(status_code=503, detail="Integration webhook verification not configured")
-    signature = request.headers.get("x-nango-hmac-sha256") or ""
+    # Nango keeps signing with the old key for ~5 minutes after a rotation;
+    # honour the same window when the previous key is configured.
+    secrets_to_try = [secret] + [k for k in (os.environ.get("NANGO_WEBHOOK_SIGNING_KEY_PREVIOUS"),) if k]
+    # Only X-Nango-Hmac-Sha256 is accepted. The legacy X-Nango-Signature is a
+    # plain SHA-256 that Nango documents must not be used for verification.
+    signature = (request.headers.get("x-nango-hmac-sha256") or "").strip().lower()
     if not signature:
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
     raw = bytearray()
@@ -309,8 +350,7 @@ async def nango_webhook(request: Request) -> dict[str, Any]:
         raw.extend(chunk)
         if len(raw) > 65536:
             raise HTTPException(status_code=413, detail="Webhook too large")
-    expected = hmac.new(secret.encode(), bytes(raw), hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(expected, signature):
+    if not any(hmac.compare_digest(hmac.new(key.encode(), bytes(raw), hashlib.sha256).hexdigest(), signature) for key in secrets_to_try):
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
     try:
         body = json.loads(raw)
@@ -320,7 +360,7 @@ async def nango_webhook(request: Request) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="Invalid webhook payload") from None
     event_type = str(body.get("type") or "").lower()
     operation = str(body.get("operation") or "").lower()
-    if event_type != "auth" or operation not in {"creation", "override", "deletion"}:
+    if event_type != "auth" or operation not in {"creation", "override", "refresh", "deletion"}:
         return {"status": "ignored"}
     tags = body.get("tags") or {}
     end_user = body.get("endUser") or {}
@@ -344,6 +384,10 @@ async def nango_webhook(request: Request) -> dict[str, Any]:
         raise HTTPException(status_code=503, detail="Integration storage unavailable")
     success = body.get("success") is True and operation != "deletion"
     if success and not await nango_service.verify_or_sync_connection(tenant_id, app_name, connection_id):
+        if operation == "refresh":
+            # A recovery notice we cannot confirm yet keeps the tool disabled;
+            # the next console visit or webhook reconciles it.
+            return {"status": "ignored"}
         raise HTTPException(status_code=503, detail="Connection verification pending")
     try:
         async with factory() as session:
@@ -355,7 +399,20 @@ async def nango_webhook(request: Request) -> dict[str, Any]:
                 TenantIntegration.app_name == app_name,
             ).with_for_update())
             record = result.scalar_one_or_none()
-            if success:
+            if operation == "refresh":
+                # Refresh webhooks never create a record. A failure disables the
+                # tool until credentials work again; a later success (sent only
+                # after a prior failure) restores the same connection.
+                if record is None or record.connection_id != connection_id or record.status in {"DISCONNECTED", "DISCONNECTING"}:
+                    return {"status": "ignored"}
+                if success:
+                    if record.status == "ERROR":
+                        record.status = "ACTIVE"
+                        record.metadata_ = {"gateway_verified": True}
+                else:
+                    record.status = "ERROR"
+                    record.metadata_ = {**(record.metadata_ or {}), "gateway_verified": False, "needs_reauth": True}
+            elif success:
                 if record is not None and (record.connection_id != connection_id or record.status in {"DISCONNECTED", "DISCONNECTING"}):
                     return {"status": "ignored"}
                 if record is None:
@@ -366,6 +423,8 @@ async def nango_webhook(request: Request) -> dict[str, Any]:
                 record.metadata_ = {"gateway_verified": True}
             elif record is not None and record.connection_id == connection_id:
                 record.status = "DISCONNECTED" if operation == "deletion" else "ERROR"
+                if operation != "deletion":
+                    record.metadata_ = {**(record.metadata_ or {}), "gateway_verified": False, "needs_reauth": True}
             await session.commit()
     except Exception as exc:
         logger.warning("[INTEGRATIONS] Webhook persistence failed: %s", type(exc).__name__)

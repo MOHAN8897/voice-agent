@@ -841,6 +841,13 @@ class LiveTurnOrchestrator:
                             )
                             assistant_text = finalize_live_spoken_text(transcript, recovered, ctx=ctx)
                             gated.update(replace_speech=True, recovery_required=True)
+                        if (not approved_close and isinstance(raw_close, dict) and raw_close.get("callback_time_needed")
+                                and assistant_text.strip() and "?" not in assistant_text):
+                            # The server held the close to collect a callback time, but the reply
+                            # (written before that decision) only acknowledged it. Ask once.
+                            from server.call.call_end_policy import callback_time_question_for
+                            assistant_text = f"{assistant_text.rstrip()} {callback_time_question_for(language_code)}"
+                            gated["replace_speech"] = True
                         turn_proofs |= proof_set(chunk.get("action_proofs") or ())
                         if chunk.get("order_proof"):
                             turn_proofs.add(PROOF_ORDER_CONFIRMED)
@@ -1808,6 +1815,9 @@ class LiveTurnOrchestrator:
                     "to book a slot. Without a calendar result, never say a time is free, possible, available "
                     "or confirmed; say you will note their preferred time for the team to confirm. If the caller "
                     "says they will call back themselves, accept that warmly and do not ask for a callback time. "
+                    "If they ask to be called back without any day or time, ask once for a convenient day or "
+                    "time; if they stay vague, accept that without asking again. "
+                    "Never announce that you are ending, closing or hanging up the call; the platform does that. "
                     "When the caller asks to be called back, say you are noting their requested time for a "
                     "callback; the platform saves it and confirms it in the closing line. Never say you are "
                     "not allowed to call back, and never promise the exact call is already scheduled. "

@@ -599,8 +599,17 @@ async def profile_for_number(e164: str | None) -> dict[str, Any] | None:
         agent_status = str(agent.status or "active") if agent else "active"
         tenant_id = str(pn.tenant_id) if pn.tenant_id else (str(agent.tenant_id) if agent and agent.tenant_id else "")
 
+    # Line-level state travels with the profile so the carrier answer path can
+    # honour the console's per-line inbound toggle, rental suspension and
+    # release-in-progress — the agent profile alone knows none of these.
+    line_state = {
+        "number_status": str(pn.status or ""),
+        "number_inbound_enabled": bool(pn.inbound_enabled),
+        "number_outbound_enabled": bool(pn.outbound_enabled),
+    }
     prof = await get_profile(agent_id)
     if prof is not None:
+        prof.update(line_state)
         prof["agent_status"] = agent_status
         prof["vobiz_account_scope"] = pn.vobiz_account_scope or "platform"
         prof["vobiz_account_tenant_id"] = str(pn.vobiz_account_tenant_id or pn.tenant_id)
@@ -615,7 +624,17 @@ async def profile_for_number(e164: str | None) -> dict[str, Any] | None:
         "agent_status": agent_status,
         "inbound_enabled": True,
         "outbound_enabled": True,
+        **line_state,
     }
+
+
+def number_line_accepts_inbound(profile: dict[str, Any] | None) -> bool:
+    """False when the DID itself is switched off, suspended or being released."""
+    if not profile or "number_status" not in profile:
+        return True
+    if profile.get("number_inbound_enabled") is False:
+        return False
+    return profile.get("number_status") in ("active", "pending")
 
 
 async def profile_for_agent_ids(agent_ids: list[str]) -> dict[str, dict[str, Any] | None]:

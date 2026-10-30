@@ -74,7 +74,13 @@ async def test_call_lifecycle_attaches_wallet_duration_and_cleans_watchdog(monke
     call_id = res["call_id"]
     ctx = get_ctx(call_id)
     assert ctx is not None
-    assert ctx.max_duration_sec == 120
+    # The watchdog is sized from this call's pinned (snapshot) rate, which is
+    # what the call is charged, not the env default rate.
+    from server.call.call_ledger import call_ledger
+
+    snap = call_ledger.read_meta(call_id)["rate_snapshot"]
+    cents_per_min = snap["usdMicrosPerMin"] / 10_000
+    assert ctx.max_duration_sec == min(900, int(30 / (cents_per_min / 60) + 1e-9))
     assert call_id in _max_duration_tasks
     assert not _max_duration_tasks[call_id].done()
 

@@ -214,6 +214,11 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
             and payload.get("disposition") in {None, "no_outcome", "new_lead", "interested"}:
         payload["disposition"] = "callback_required"
         facts["callback_requested"] = "true"
+    elif str(meta.get("end_reason") or "") == "not_interested" \
+            and payload.get("disposition") in {None, "no_outcome", "new_lead", "interested"}:
+        # The call closed on a verified whole-offer refusal ("we already have solar");
+        # a summary model calling that a new lead contradicts the server's own close.
+        payload["disposition"] = "not_interested"
     payload["disclosure_status"] = _detect_disclosure_delivery(transcript, meta)
     stored_pref = str((call_ledger.read_meta(call_id) or {}).get("contact_preference") or meta.get("contact_preference") or "none").strip().lower()
     payload["contact_preference"] = stored_pref
@@ -344,6 +349,10 @@ async def _generate_outcome(
                 "(concrete appointment), callback_required (explicit follow-up), not_interested "
                 "(clear rejection), wrong_number, converted (goal achieved), no_outcome "
                 "(<3 turns or inconclusive). "
+                "not_interested needs the caller to reject the offer or further contact: an answered "
+                "support or information question, unclear audio or a caller who simply said thanks is "
+                "new_lead (details captured) or no_outcome, never not_interested. site_visit_planned "
+                "needs an agreed visit or appointment day/time, not just an offer of one. "
                 "tags: choose 2-6 tags that best describe what the caller wanted and how the "
                 "call went. Use only this allow-list: "
                 + ", ".join(sorted(MODEL_STATUS_TAGS))

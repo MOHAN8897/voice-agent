@@ -305,6 +305,16 @@ export function IntegrationsModule() {
     return set;
   }, [connections]);
 
+  // Connections whose credentials can no longer be refreshed. Agents cannot use
+  // them, so the card asks for a reconnect instead of silently showing "Connect".
+  const reauthAppKeys = useMemo(() => {
+    const set = new Set();
+    connections.forEach(c => {
+      if (c.status === 'ERROR' && c.needs_reauth && c.app_name) set.add(normalizeAppKey(c.app_name));
+    });
+    return set;
+  }, [connections]);
+
   const connectedCount = useMemo(() => {
     return catalog.filter(item => connectedAppKeys.has(normalizeAppKey(item.id))).length;
   }, [catalog, connectedAppKeys]);
@@ -408,7 +418,7 @@ export function IntegrationsModule() {
             <div className="flex items-center space-x-4 pt-1 text-xs flex-wrap gap-y-2">
               <div className="flex items-center space-x-1.5 text-emerald-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                <span className="font-bold">{connections.length} Connected</span>
+                <span className="font-bold">{connectedCount} Connected</span>
               </div>
               <span className="text-white/20">•</span>
               <div className="flex items-center space-x-1.5 text-[#D1CFDB]">
@@ -603,6 +613,7 @@ export function IntegrationsModule() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
               {filteredCatalog.map(app => {
                 const isConnected = connectedAppKeys.has(normalizeAppKey(app.id));
+                const needsReauth = !isConnected && reauthAppKeys.has(normalizeAppKey(app.id));
                 const isConnectingThis = connecting === app.id;
                 const brandColor = BRAND_COLORS[app.id] || CATEGORY_COLORS[app.category] || { 
                   bg: 'bg-brand/10', 
@@ -654,6 +665,14 @@ export function IntegrationsModule() {
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
                             Active
+                          </span>
+                        ) : needsReauth ? (
+                          <span
+                            data-testid={`reauth-badge-${app.id.toLowerCase()}`}
+                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 flex-shrink-0"
+                            title="The connected account's sign-in expired or was revoked. Agents cannot use it until you reconnect."
+                          >
+                            Reconnect needed
                           </span>
                         ) : (
                           <span className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium border flex-shrink-0 ${
@@ -724,7 +743,7 @@ export function IntegrationsModule() {
                                 <span>Connecting...</span>
                               </>
                             ) : (
-                              <span>Connect</span>
+                              <span>{needsReauth ? 'Reconnect' : 'Connect'}</span>
                             )}
                           </button>
                         )}

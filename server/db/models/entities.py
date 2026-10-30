@@ -170,6 +170,10 @@ class Call(Base):
     applied_rate_inr_paise_per_min: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     applied_fx_rate_inr: Mapped[float | None] = mapped_column(Numeric(10, 4), nullable=True)
     rate_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: Voice profile (tier stack) revision admitted for this call. An admin edit
+    #: to the tier mid-call bumps the profile revision; this call keeps the stack
+    #: it started with, and this column says which one that was.
+    voice_profile_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
     #: Owner-facing taxonomy produced after the call (see server/call/outcome_schema.py).
     #: GIN-indexed so the console can filter a tenant's history by tag.
     status_tags: Mapped[list[str]] = mapped_column(ARRAY(String(48)), default=list, server_default="{}")

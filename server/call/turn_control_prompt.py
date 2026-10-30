@@ -20,6 +20,8 @@ technician visit, caller phoning business, or request for confirmation.
 A callback with a business question must continue and answer the question.
 Pure callback requests can close with intent=defer, reason=done.
 Refusal can close only if it rejects the entire offer with no other request.
+'We already have it' or 'already bought elsewhere' with no other request
+rejects the entire offer (intent=refusal, reason=refused).
 Rejecting one product while wanting another must continue. Questions remain
 requests even without question marks. Judge the whole turn, not its last clause.
 'I want cards. What are wedding prices? I am not ordering wedding cards' must
@@ -39,7 +41,7 @@ Return one small JSON object:
  "contact_evidence":"exact quote or empty", "when":"exact quote or empty",
  "finish":false,"finish_evidence":"exact quote or empty",
  "open_request":"exact unanswered question/task or empty",
- "action_request":"none|read|write"}
+ "action_request":"none|read|write", "agent_asked_time":false}
 
 Choose by WHO will PHONE WHOM:
 - business_callback: caller REQUESTS that the BUSINESS phones them later.
@@ -51,12 +53,16 @@ Choose by WHO will PHONE WHOM:
   Even if they ask another question, cancellation must clear the earlier callback.
 - opt_out: an affirmative prohibition on FUTURE phone contact from the business.
 - opt_in: permission for future calls, including asking NOT to block their number.
-- keep: no change. Email/message confirmation, appointments and technician visits
-  are NOT telephone callback requests. Declining one product is not opt_out.
+- keep: no change. Email/message confirmation, appointments, site surveys and
+  technician visits (even with a day such as 'Saturday works') are NOT telephone
+  callback requests. Declining one product is not opt_out.
 When caller_callback and opt_in are both present, choose caller_callback.
 
 finish means the CURRENT conversation is finished: explicit goodbye, end-this-call,
-no further needs, rejection of the whole offer, or a pure callback deferral.
+no further needs, rejection of the whole offer (including 'we already have one'
+or 'already bought elsewhere' with no other request), or a pure callback deferral.
+agent_asked_time is true only when agent_previous already asked the caller for a
+day or time to be called back.
 Ending THIS call is NEVER opt_out. Do not put 'end this call' in contact_evidence;
 put it in finish_evidence. A future-call prohibition is separate from finishing.
 open_request must include any question/task the caller still wants answered now.

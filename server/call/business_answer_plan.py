@@ -64,6 +64,10 @@ def validate_answers(raw: Any, rows: list[str], caller: str) -> list[dict]:
             continue
         answer = {"question": str(item.get("question") or "")[:200], "status": "not_stated"}
         index = item.get("row_id")
+        # source_rows is sent as a JSON object, whose keys are strings, so models
+        # commonly echo "4" for row 4. Rejecting it marked every stated fact unknown.
+        if isinstance(index, str) and index.strip().isdigit():
+            index = int(index.strip())
         topic, value = str(item.get("topic_quote") or ""), str(item.get("value_quote") or "")
         if type(index) is int and 0 <= index < len(rows) and topic and value and topic in rows[index] and value in rows[index]:
             answer.update(status="stated", source=rows[index], topic=topic, value=value)

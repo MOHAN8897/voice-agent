@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from typing import Any
 
 from server.utils.logger import log_pstn
@@ -49,7 +50,24 @@ No external integration does not prevent built-in SAVE_ENQUIRY when available.
 Don't add a sales/demo/order question to an information answer or after refusal.
 Keep the correction brief, natural and complete; no new business claims.
 Preserve safety refusals; never add harmful instructions or reveal internal data.
+Your output is spoken to the caller as-is. Never describe, critique or explain the
+draft, and never mention the draft, the caller, the agent, this check or its data
+fields. If unsure whether a correction is needed, return exactly __OK__.
 """
+
+# A reviewer that critiques instead of correcting ("The draft does not fully
+# answer the caller's ...") must never reach TTS. These are words a phone agent
+# never says to the person on the line.
+_WORD = "(?<![A-Za-z_]){}(?![A-Za-z_])"
+_META_COMMENTARY = re.compile("|".join(_WORD.format(term) for term in (
+    "(?:the|this|your|proposed) (?:draft|reply|response)", "draft (?:does|did|is|should|fails|needs)",
+    "the caller(?:'s)?", "the agent", "business_answer_plan", "not_stated", "action_permissions",
+    "business_source", "known_caller_memory", "turn_control",
+)), re.I)
+
+
+def is_meta_commentary(text: str) -> bool:
+    return bool(_META_COMMENTARY.search(text or ""))
 
 
 async def review_spoken_turn(ctx: Any, *, caller: str, draft: str, language: str) -> str:
@@ -112,6 +130,9 @@ async def review_spoken_turn(ctx: Any, *, caller: str, draft: str, language: str
     # It is a protocol marker, never caller-facing text in any language.
     output = output.replace("__OK__", "").strip()
     if not output or output.startswith(("{", "[", "```")):
+        return draft
+    if is_meta_commentary(output) and not is_meta_commentary(draft):
+        log_pstn("speech.fact_review_meta_rejected", call_id=ctx.call_id, output_chars=len(output))
         return draft
     log_pstn("speech.fact_corrected", call_id=ctx.call_id, input_chars=len(draft), output_chars=len(output))
     return output

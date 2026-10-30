@@ -83,6 +83,9 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   const [purchasedSuccess, setPurchasedSuccess] = useState(null);
   const [buyError, setBuyError] = useState(null);
   const [buying, setBuying] = useState(false);
+  // ordering: wallet debit + carrier order accepted; provisioning: waiting for
+  // the carrier to confirm the line. Shown so a slow carrier never looks frozen.
+  const [buyPhase, setBuyPhase] = useState(null);
   const [catalogLoading, setCatalogLoading] = useState(false);
   const [catalogError, setCatalogError] = useState(null);
   const [kycApproved, setKycApproved] = useState(false);
@@ -306,17 +309,23 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     setBuying(true);
     setPurchasedSuccess(null);
     try {
-      const bought = await buyPhoneNumber(catalogItem, targetAgentId || null);
+      const bought = await buyPhoneNumber(catalogItem, targetAgentId || null, { onPhase: setBuyPhase });
       if (bought?.checkoutUrl) {
         return;
       }
       if (bought?.ok === false) {
-        const failed =
-          bought.failureReason === 'pending'
-            ? 'The order is still being placed. It will appear in your lines shortly.'
-            : bought.failureReason === 'carrier_balance_exhausted'
-              ? 'Phone numbers are temporarily unavailable. Your wallet was not charged.'
-              : 'Purchase failed — the number could not be provisioned. Your wallet has been refunded.';
+        let failed;
+        if (bought.failureReason === 'pending') {
+          failed = 'Your number is paid for and still being activated. It will appear in your lines shortly. Do not buy it again.';
+        } else if (bought.status === 'needs_attention') {
+          failed = bought.failureReason;
+        } else if (bought.failureReason === 'carrier_balance_exhausted') {
+          failed = 'Phone numbers are temporarily unavailable. Your wallet was not charged.';
+        } else if (bought.refunded) {
+          failed = 'Purchase failed. The number could not be activated and the rental charge has been refunded to your wallet.';
+        } else {
+          failed = 'Purchase failed. The number could not be activated; your refund is being processed. Contact support if it does not appear in your wallet shortly.';
+        }
         setBuyError(failed);
         if (bought.failureReason !== 'pending') await refreshWallet?.();
         return;
@@ -358,6 +367,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
       }
     } finally {
       setBuying(false);
+      setBuyPhase(null);
     }
   };
 
@@ -597,21 +607,37 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   {/* Status */}
                   <td className="py-4 px-4">
                     <StatusBadge status={num.status} size="xs" />
+                    {num.status === 'suspended_unpaid' && (
+                      <p className="mt-1 max-w-[12rem] text-[10px] leading-snug text-[#92400E]">
+                        Paused: the monthly rental could not be charged. Add funds and it reactivates automatically.
+                      </p>
+                    )}
+                    {num.status === 'release_pending' && (
+                      <p className="mt-1 max-w-[12rem] text-[10px] leading-snug text-[#524E5E]">
+                        Release in progress with the phone network (up to 24 hours).
+                      </p>
+                    )}
                   </td>
 
                   {/* Actions */}
                   <td className="py-4 px-5 text-right">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (confirm(`Release ${num.number}? It will be returned to the carrier pool.`)) {
-                          releasePhoneNumber(num.id);
-                        }
-                      }}
-                      className="text-xs font-semibold text-[#DC2626] hover:underline"
-                    >
-                      Release
-                    </button>
+                    {num.status !== 'release_pending' && !num.isDevSandbox && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!confirm(`Release ${num.number}? Calls to it stop, the rest of this month's rental is not refunded, and you may not be able to get this number back.`)) return;
+                          try {
+                            await releasePhoneNumber(num.id);
+                            showToast('Number released', 'success');
+                          } catch (err) {
+                            showToast(err.message || 'Could not release number', 'error');
+                          }
+                        }}
+                        className="text-xs font-semibold text-[#DC2626] hover:underline"
+                      >
+                        Release
+                      </button>
+                    )}
                   </td>
                 </tr>
               )))}
@@ -644,7 +670,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
           {pendingNumber && !purchasedSuccess && <div className="rounded-xl border border-[#DCD7EE] bg-[#FAF9FD] p-4 space-y-2" data-testid="selected-number-review">
             <p className="text-sm font-semibold">Selected number: <span className="font-mono">{pendingNumber.number}</span></p>
             <p className="text-sm">{priceKnown ? `$${numberPriceUsd.toFixed(2)} / month` : 'Price unavailable — reload before buying.'}</p>
-            <p className="text-xs leading-relaxed text-[#524E5E]">Monthly rental is charged to your wallet only when you confirm the purchase. Call usage is billed separately. The number is not reserved during verification; availability and pricing are checked again before purchase.</p>
+            <p className="text-xs leading-relaxed text-[#524E5E]">Monthly rental is deducted from your prepaid wallet (GST was applied when you added funds) only when you confirm the purchase, and renews monthly. Call usage is billed separately. The number is not reserved during verification; availability and pricing are checked again before purchase.</p>
             <div className="flex flex-wrap items-center gap-3">
               <button type="button" className="min-h-11 text-sm font-semibold text-[#6344E7]" onClick={forgetNumber}>Choose a different number</button>
               {kycApproved && <TactileButton variant="primary" disabled={buying || catalogLoading || !priceKnown || !canAffordNumber || !availableCatalog.some((item) => item.number === pendingNumber.number)} onClick={() => handleBuyNumber(availableCatalog.find((item) => item.number === pendingNumber.number))} data-testid="confirm-selected-number">{buying ? 'Buying…' : 'Confirm number purchase'}</TactileButton>}
@@ -692,15 +718,26 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                 </div>
               )}
 
+              {buying && buyPhase && (
+                <div role="status" aria-live="polite" data-testid="buy-number-phase"
+                  className="rounded-lg border border-[#DCD7EE] bg-[#FAF9FD] px-3 py-2 text-xs text-[#0F0E17]">
+                  {buyPhase === 'provisioning'
+                    ? 'Payment received. Activating your number with the phone network; this can take up to a minute. Keep this window open.'
+                    : 'Confirming availability and placing your order...'}
+                </div>
+              )}
+
               {/* Price and affordability, both from the server. USD only. */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-xl bg-[#FAF9FD] border border-[#E4E2EB]">
                 <div className="text-[11px] text-[#524E5E]">
                   <span className="font-semibold text-[#0F0E17]">
                     {priceKnown ? `$${numberPriceUsd.toFixed(2)} / month` : 'Price unavailable'}
                   </span>
-                  {', charged to your wallet when you buy.'}
+                  {', deducted from your prepaid wallet when you confirm.'}
                   <span className="block mt-0.5 text-[10px] text-[#8C879A]">
-                    Monthly rental. Call usage is billed separately. Verification is required before purchase.
+                    Wallet credit already includes GST, charged when funds were added; no further tax is added here.
+                    Rental renews monthly from your wallet. If the wallet cannot cover it, the line is paused (not released) until you top up.
+                    Call usage is billed separately. Verification is required before purchase.
                   </span>
                   <span className="block mt-0.0">
                     Wallet: ${balanceUsd.toFixed(2)}

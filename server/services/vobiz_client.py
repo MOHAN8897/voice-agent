@@ -226,6 +226,22 @@ class VobizClient:
             timeout=httpx.Timeout(connect=3.0, read=8.0, write=5.0, pool=3.0),
         )
 
+    async def delete_customer_subaccount(self, sub_auth_id: str) -> dict[str, Any]:
+        """Permanently delete a child account and its credentials (parent auth).
+
+        Documented as irreversible; callers must release the child's DIDs first
+        because the docs do not say what happens to numbers still on it.
+        """
+        sub = str(sub_auth_id or "").strip()
+        if not sub.startswith("SA_"):
+            raise ValueError("invalid_sub_auth_id")
+        return await self._request(
+            "DELETE",
+            f"/accounts/{quote(self.auth_id, safe='')}/sub-accounts/{quote(sub, safe='')}",
+            retry=False,
+            timeout=httpx.Timeout(connect=3.0, read=8.0, write=5.0, pool=3.0),
+        )
+
     async def ensure_default_application(self, *, name: str, app_id: str | None = None) -> str:
         """Use the account's default app for inbound DIDs; never a parent's app ID."""
         path = f"/Account/{quote(self.auth_id, safe='')}/Application/"

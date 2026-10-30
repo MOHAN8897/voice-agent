@@ -21,6 +21,7 @@ import {
 } from '../ui/Skeleton';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { showToast } from '../ui/ToastHost';
+import { ChannelsPanel } from './ChannelsPanel';
 
 /** Plain-language labels for wallet ledger kinds. */
 const TRANSACTION_LABEL = {
@@ -30,6 +31,10 @@ const TRANSACTION_LABEL = {
   usage_campaign: 'Outbound campaign',
   did_purchase: 'Phone number rental',
   did_refund: 'Phone number refund',
+  did_rental: 'Phone number monthly rental',
+  channel_purchase: 'Call channels',
+  channel_renewal: 'Call channels renewal',
+  channel_refund: 'Call channels refund',
   admin_seed: 'Welcome balance',
   admin_grant: 'Balance added',
   admin_debit: 'Balance removed',
@@ -178,6 +183,7 @@ function describeTransactionKind(row) {
   }
   if (!row) return 'Adjustment';
   if (row.kind === 'usage_web_test' || row.kind === 'usage_web') return 'Browser test call';
+  if (TRANSACTION_LABEL[row.kind] && String(row.kind).startsWith('channel_')) return TRANSACTION_LABEL[row.kind];
   if (row.isCampaign) return 'Outbound campaign';
   if (row.direction === 'outbound') return 'Outbound call';
   if (row.direction === 'inbound') return 'Inbound call';
@@ -930,6 +936,9 @@ export function BillingModule() {
           )}
         </SolidCard>
       </div>
+
+      {/* Concurrent call channels: limit, purchase, and usage analytics. */}
+      <ChannelsPanel onCharged={() => { refreshBilling(); refreshWallet(); }} />
 
       <SolidCard padding="p-0" className="overflow-hidden">
         <div className="p-4 border-b border-[#E4E2EB] flex items-center justify-between gap-3">

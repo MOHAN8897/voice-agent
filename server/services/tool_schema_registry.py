@@ -1086,6 +1086,26 @@ for _tool in _SCHEMAS["HUBSPOT"]:
         _tool["parameters"]["required"] = ["dealname", "pipeline", "dealstage"]
 for _tool in _SCHEMAS["SENDGRID"]:
     _tool["parameters"]["required"] = ["to", "subject", "body", "from_email"]
+# Fields the provider endpoint cannot work without must be required up front;
+# otherwise the call fails after the caller was told it is being done.
+for _tool in _SCHEMAS["DISCORD"]:
+    if _tool["name"] == "DISCORD_SEND_MESSAGE":
+        _tool["parameters"]["required"] = ["channel_id", "content"]
+for _tool in _SCHEMAS["MONDAY"]:
+    if _tool["name"] == "MONDAY_CREATE_ITEM":
+        _tool["parameters"]["required"] = ["board_id", "item_name"]
+for _tool in _SCHEMAS["TODOIST"]:
+    if _tool["name"] == "TODOIST_CREATE_TASK":
+        _tool["parameters"]["properties"]["priority"].update(minimum=1, maximum=4)
+for _tool in _SCHEMAS["WOOCOMMERCE"]:
+    # GET_ORDER / CHECK_STOCK need one of two identifiers; the handler rejects
+    # neither before any request (top-level anyOf is not portable across
+    # realtime model function-schema dialects).
+    if _tool["name"] == "WOOCOMMERCE_UPDATE_ORDER_STATUS":
+        _tool["parameters"]["properties"]["status"]["enum"] = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"]
+for _tool in _SCHEMAS["CALCOM"]:
+    if _tool["name"] in {"CALCOM_CREATE_BOOKING", "CALCOM_GET_AVAILABLE_SLOTS"}:
+        _tool["parameters"]["properties"]["time_zone"] = {"type": "string", "description": "Caller IANA timezone, default Asia/Kolkata"}
 for _tools in _SCHEMAS.values():
     for _tool in _tools:
         for _name, _prop in _tool["parameters"].get("properties", {}).items():
@@ -1272,6 +1292,18 @@ def get_response_keys_for_tool(tool_name: str) -> tuple:
         if upper.startswith(app_key) or upper.startswith(app_key.replace("_", "")):
             return keys
     return ("status", "summary")
+
+
+_WRITE_VERBS = frozenset({"CREATE", "UPDATE", "DELETE", "CANCEL", "RESCHEDULE", "SEND", "BOOK", "INSERT", "ADD", "SAVE", "CONFIRM"})
+
+
+def is_write_action(action_name: str) -> bool:
+    """Shared read/write classification for idempotency claims and retry policy.
+
+    Reads may be retried by the gateway; writes never are, because a retried
+    POST can create a second booking, email or record at the provider.
+    """
+    return bool(_WRITE_VERBS.intersection(action_name.upper().replace("-", "_").split("_")))
 
 
 def list_supported_apps() -> list[str]:

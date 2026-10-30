@@ -109,6 +109,22 @@ def callback_acknowledgement_for(language: str | None) -> str:
     }.get(lang, "I've saved your details and your request for a follow-up call.")
 
 
+def callback_time_question_for(language: str | None) -> str:
+    """Asked once when a caller wants a callback but gave no day or time."""
+    lang = normalize_compile_language(language)
+    return {
+        "te-IN": "మీకు ఏ time కి call చేయమంటారు?",
+        "hi-IN": "आपको किस समय call करना ठीक रहेगा?",
+        "ta-IN": "உங்களுக்கு எந்த நேரத்தில் call பண்ணலாம்?",
+        "kn-IN": "ನಿಮಗೆ ಯಾವ ಸಮಯಕ್ಕೆ ಕಾಲ್ ಮಾಡಲಿ?",
+        "ml-IN": "ഏത് സമയത്ത് വിളിക്കണം?",
+        "gu-IN": "તમને કયા સમયે કૉલ કરીએ?",
+        "mr-IN": "तुम्हाला कोणत्या वेळी कॉल करू?",
+        "bn-IN": "আপনাকে কখন কল করব?",
+        "pa-IN": "ਤੁਹਾਨੂੰ ਕਿਸ ਵੇਲੇ ਕਾਲ ਕਰੀਏ?",
+    }.get(lang, "When would be a good time to call you back?")
+
+
 def do_not_call_acknowledgement_for(language: str | None) -> str:
     """Spoken confirmation that the caller's opt-out was recorded."""
     return {

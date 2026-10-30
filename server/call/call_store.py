@@ -62,6 +62,7 @@ def _row_to_dict(row: Call) -> dict[str, Any]:
         "applied_rate_inr_paise_per_min": row.applied_rate_inr_paise_per_min,
         "applied_fx_rate_inr": float(row.applied_fx_rate_inr) if row.applied_fx_rate_inr is not None else None,
         "rate_version": row.rate_version,
+        "voice_profile_revision": getattr(row, "voice_profile_revision", None),
         "status_tags": list(row.status_tags or []),
         "last_heartbeat_at": row.last_heartbeat_at.isoformat() if row.last_heartbeat_at else None,
     }
@@ -150,6 +151,7 @@ class CallStore:
                 applied_rate_inr_paise_per_min=record.get("applied_rate_inr_paise_per_min"),
                 applied_fx_rate_inr=record.get("applied_fx_rate_inr"),
                 rate_version=record.get("rate_version"),
+                voice_profile_revision=record.get("voice_profile_revision"),
                 status_tags=record.get("status_tags") or [],
                 last_heartbeat_at=record.get("last_heartbeat_at") or _utcnow(),
             )

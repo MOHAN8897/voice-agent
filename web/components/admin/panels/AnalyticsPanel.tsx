@@ -39,7 +39,7 @@ type Analytics = {
   callsByDirection: Record<string, number>;
   callsByChannel?: Record<string, ChannelStats>;
   topUpsByDay: Array<{ date: string; cents: number; inrPaise: number }>;
-  topTenantsByCalls: Array<{ name: string; calls: number }>;
+  topTenantsByCalls: Array<{ tenantId: string; name: string; calls: number }>;
 };
 
 const WINDOWS = [7, 30, 90] as const;
@@ -259,7 +259,7 @@ export function AdminAnalyticsPage() {
                 </SkeuoTableHead>
                 <SkeuoTableBody>
                   {data.topTenantsByCalls.map((t) => (
-                    <SkeuoTableRow key={t.name}>
+                    <SkeuoTableRow key={t.tenantId}>
                       <SkeuoTd>{t.name}</SkeuoTd>
                       <SkeuoTd className="text-right font-mono">{t.calls}</SkeuoTd>
                     </SkeuoTableRow>

@@ -1515,6 +1515,10 @@ def _sales_next_step(brief: str, *, inbound: bool, native_en: bool) -> str:
     return "the next step explicitly permitted in BUSINESS WORKFLOW and COMPANY & OFFER"
 
 
+_OBJECTION_CUE = re.compile(r"\b(?:objections?|too expensive|costly|think about it|discuss with)\b", re.I)
+_ASK_OPT_OUT = re.compile(r"\b(?:if|when)\s+(?:they|the caller|callers?|customers?)\s+asks?\s+(?:us\s+)?(?:not|never)\s+to\b[^.]*", re.I)
+
+
 def _conversation_plan(
     brief: str,
     *,
@@ -1557,7 +1561,16 @@ def _conversation_plan(
             "Use verified previous-conversation context only when it exists. Otherwise ask what is pending; "
             "never invent a prior conversation. Do not restart an opening already delivered."
         )
-    if re.search(r"\b(enquir|inquir|question|doubt|ask|explain|tell me)\b", scope, re.I):
+    selling = role in ("sales", "lead_qualification") or bool(_OBJECTION_CUE.search(scope))
+    # "If they ask not to be called again" is an opt-out clause, not an enquiry desk.
+    enquiry_scope = _ASK_OPT_OUT.sub(" ", scope)
+    if selling:
+        beats.append(
+            "Expect objections as well as questions. For each objection use the matching business line from "
+            "COMPANY & OFFER or BUSINESS WORKFLOW once; if the same objection returns, acknowledge it and offer "
+            "the permitted next step once or accept their decision. Never repeat an earlier answer word for word."
+        )
+    elif re.search(r"\b(enquir\w*|inquir\w*|questions?|doubts?|asks?|explain|tell me)\b", enquiry_scope, re.I):
         beats.append(
             "Expect questions rather than objections. Answer in plain words, one idea per sentence. "
             "An answered information question needs no extra question or pitch. Clarify only genuinely missing information."
@@ -1811,6 +1824,24 @@ def _user_visible_script(
     )
 
 
+# One busy/callback rule for every platform section. Earlier wording ("do not assume
+# a callback is allowed") contradicted CALL CAPABILITIES and the speech contract,
+# which always note a caller's own callback request.
+_BUSY_RULE = (
+    "If they are busy, acknowledge it without pitching. Volunteer a callback only when the business "
+    "workflow permits it; a caller's own request to be called back is always noted for the platform to save."
+)
+_OBJECTION_RULE = (
+    "Use the business script's own handling for the caller's actual concern (its OBJECTION HANDLING "
+    "and BUSINESS WORKFLOW lines win over generic wording). Apply only the branch that matches what the "
+    "caller actually said; never speak other branches (family, already have it, do-not-call) aloud. "
+    "Acknowledge the concern in one sentence; "
+    "do not restart the full pitch. If the same objection comes back, do not repeat your earlier answer: "
+    "acknowledge it, then either offer the permitted next step once or accept their decision. "
+    "After handling the objection, continue only if the caller is still open to the next step."
+)
+
+
 def _platform_call_rules(
     *,
     agent_name: str,
@@ -1829,14 +1860,14 @@ def _platform_call_rules(
             "Collect only fields required by the explicit business workflow and still unknown on this call. "
             "Never turn optional fields into a checklist or invent permission to collect contact details.\n"
             "Acknowledge details briefly. Do not read the dialed number aloud.\n"
-            "If they are busy, follow only a source-permitted next step; do not assume a callback is allowed.\n\n"
+            f"{_BUSY_RULE}\n\n"
         )
     elif role in ("appointment", "follow_up"):
         lead_capture = (
             "--- LEAD CAPTURE ---\n"
             "Ask for scheduling or contact details only when the explicit business workflow requires them. "
             "Skip details already supplied. Do not read the dialed number aloud.\n"
-            "If they are busy, follow only a source-permitted next step.\n\n"
+            f"{_BUSY_RULE}\n\n"
         )
     if inbound:
         workflow = (
@@ -1856,7 +1887,7 @@ def _platform_call_rules(
             "Do not generate or replay it after the opening-delivered note.\n"
             "2. Wait for the caller's actual reply and address it before the next applicable script objective.\n"
             "3. Ask a discovery question or offer a next step only when the business workflow permits it.\n"
-            "4. If busy, acknowledge and use only a permitted next step. If they decline this offer, answer any other product or service they ask about; make the close decision only when they clearly refuse all help or ask to end.\n\n"
+            f"4. {_BUSY_RULE} If they decline this offer, answer any other product or service they ask about; make the close decision only when they clearly refuse all help or ask to end.\n\n"
         )
         first_turn_guard = "Never use help-desk language on the first turn.\n"
 
@@ -1892,8 +1923,7 @@ def _platform_call_rules(
         f"in speech-text sessions a brief acknowledgement is allowed. Never speak a farewell. "
         f"The platform speaks the approved farewell and disconnects when playback finishes.\n\n"
         f"--- OBJECTION HANDLING ---\n"
-        f"Acknowledge the concern in one sentence; do not restart the full pitch. "
-        f"After handling the objection, continue only if the caller is still open to the next step.\n\n"
+        f"{_OBJECTION_RULE}\n\n"
         f"--- GUARDRAILS ---\n"
         f"Never invent prices, availability, or policies.\n"
         f"Never greet twice in one call.\n"
@@ -1980,7 +2010,7 @@ def _legacy_deterministic_script(
         "--- GUARDRAILS ---\n"
         "Never invent prices, availability, policies, salaries, or prior conversations.\n"
         "Never claim a message, ticket, booking, or other action happened unless an available tool performed it.\n"
-        "If unsure, say you will confirm and offer a real next step.\n"
+        "If unsure, say you do not have that detail; offer only a next step an available action can perform.\n"
         "Make the close decision when the caller says goodbye, asks to end, or asks not to be contacted.\n\n"
         "--- CLOSING ---\n"
         "Make the close decision only when the caller is finished, clearly refuses all help, or asks to end. "

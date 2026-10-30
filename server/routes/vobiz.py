@@ -115,12 +115,19 @@ async def _vobiz_callback_tenant_id(payload: dict[str, Any]) -> str | None:
     return tenant_id or None
 
 
-def _signature_matches(auth_token: str, request: Request) -> bool:
+def _signature_matches(auth_token: str, request: Request, *, master: bool = False) -> bool:
+    """Vobiz V3/V2 callback signature: base64(HMAC-SHA256(token, url[.]nonce)).
+
+    ``master`` checks the ``X-Vobiz-Signature-MA-V3/V2`` headers that Vobiz adds
+    to sub-account callbacks, signed with the parent (main) account token and the
+    same nonce headers (https://www.vobiz.ai/docs/concepts/validating-callbacks).
+    """
     if not auth_token:
         return False
     base_url = public_api_base().rstrip("/") + request.url.path
+    infix = "ma-" if master else ""
     for version, separator in (("v3", "."), ("v2", "")):
-        signature = request.headers.get(f"x-vobiz-signature-{version}")
+        signature = request.headers.get(f"x-vobiz-signature-{infix}{version}")
         nonce = request.headers.get(f"x-vobiz-signature-{version}-nonce")
         if not signature or not nonce:
             continue
@@ -140,10 +147,15 @@ async def _verify_vobiz_request(request: Request, payload: dict[str, Any]) -> No
     is_prod = str(getattr(settings, "app_environment", "") or "").lower() in ("production", "staging")
     signature_present = any(
         request.headers.get(f"x-vobiz-signature-{version}")
+        or request.headers.get(f"x-vobiz-signature-ma-{version}")
         or request.headers.get(f"x-vobiz-signature-{version}-nonce")
         for version in ("v2", "v3")
     )
     if _signature_matches(auth_token, request):
+        return
+    # Sub-account callbacks: the parent-signed MA variant proves the call came
+    # from our own Vobiz account tree without decrypting the child token.
+    if _signature_matches(auth_token, request, master=True):
         return
 
     tenant_id = await _vobiz_callback_tenant_id(payload)
@@ -341,6 +353,15 @@ async def vobiz_answer(request: Request):
         except Exception as e:
             logger.warning("Phone wallet check failed error_type=%s", type(e).__name__)
             return Response(content='<Response><Hangup /></Response>', media_type="application/xml")
+
+    # 4a. The line itself must be live: the console's per-line inbound switch,
+    # an unpaid-rental suspension or a release in progress all stop answering.
+    if direction == "inbound" and profile:
+        from server.services.saas.telephony_profile import number_line_accepts_inbound
+
+        if not number_line_accepts_inbound(profile):
+            log_pstn("vobiz.inbound.declined", call_uuid=call_uuid, reason="number_disabled")
+            return Response(content='<Response><Hangup reason="busy" /></Response>', media_type="application/xml")
 
     # 4. Inbound policy check (business hours, voicemail, transfer, decline)
     if direction == "inbound" and profile:
