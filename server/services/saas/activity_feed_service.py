@@ -1,7 +1,7 @@
 """Tenant activity feed: one stream of what the workspace's AI employees are doing.
 
 The console home renders this as a live feed ("Meera is on a call with Ravi",
-"Hima booked a site visit", "Call to 98••• needs a callback in Hindi"). Nothing
+"Hima booked a site visit", "Call to +91 98765 43123 needs a callback in Hindi"). Nothing
 here is new data: every item is derived from rows the platform already writes
 (calls, ringing attempts, callback requests, follow-up jobs, language-switch
 requests, leads, campaigns, tool executions, wallet transactions, phone numbers,
@@ -16,9 +16,9 @@ Rules this module keeps:
   queries regardless of history size — no per-item queries.
 * **No internal vocabulary.** Items carry a plain-language sentence. Raw tags,
   dispositions and end reasons never reach the client as text.
-* **No new PII.** Contact numbers are masked (``+91 98••• ••123``); the console
-  already lists full numbers on the Calls page for anyone who needs them. Dial
-  actions reference the call or request id, never the number.
+* **Readable numbers.** Contact numbers are the tenant's own customers, so they are
+  shown in full but formatted (``+91 98765 43123``), never as raw digit strings.
+  Dial actions reference the call or request id, never the number.
 """
 from __future__ import annotations
 
@@ -102,24 +102,44 @@ def _iso(value: datetime | None) -> str | None:
     return value.isoformat() if value else None
 
 
-def mask_phone(value: Any) -> str | None:
-    """``+919876543123`` → ``+91 98••• ••123``. Short or odd values are masked whole."""
+def format_phone(value: Any) -> str | None:
+    """Format a contact number for display: ``+919398247132`` → ``+91 93982 47132``.
+
+    These are the tenant's own customers, so console users get the full number;
+    raw digit strings are always grouped. Mirrors ``dialtact-app/src/lib/phoneMask.js``.
+    """
     raw = str(value or "").strip()
     if not raw:
         return None
     digits = "".join(ch for ch in raw if ch.isdigit())
+    if not digits:
+        return raw
     if len(digits) < 7:
-        return "•" * max(3, len(digits))
+        return digits
+    plus = raw.startswith("+")
     # Indian numbers arrive as +91XXXXXXXXXX, 91XXXXXXXXXX or a bare 10-digit mobile.
-    if digits.startswith("91") and len(digits) == 12 and (raw.startswith("+") or digits[2] in "6789"):
+    if digits.startswith("91") and len(digits) == 12 and (plus or digits[2] in "6789"):
         local = digits[2:]
-        return f"+91 {local[:2]}••• ••{local[-3:]}"
-    if not raw.startswith("+") and len(digits) == 10 and digits[0] in "6789":
-        return f"+91 {digits[:2]}••• ••{digits[-3:]}"
-    if raw.startswith("+") and digits.startswith("1") and len(digits) == 11:
-        return f"+1 {digits[1:4]}•••{digits[-3:]}"
-    prefix = ("+" if raw.startswith("+") else "") + digits[:3]
-    return f"{prefix}•••{digits[-3:]}"
+        return f"+91 {local[:5]} {local[5:]}"
+    if not plus and len(digits) == 10 and digits[0] in "6789":
+        return f"+91 {digits[:5]} {digits[5:]}"
+    # Indian landline with trunk zero, e.g. 04023456789.
+    if not plus and len(digits) == 11 and digits[0] == "0":
+        return f"+91 {digits[1:3]} {digits[3:7]} {digits[7:]}"
+    if plus and digits.startswith("1") and len(digits) == 11:
+        return f"+1 {digits[1:4]} {digits[4:7]} {digits[7:]}"
+    groups: list[str] = []
+    rest = digits
+    while len(rest) > 4:
+        groups.append(rest[:3])
+        rest = rest[3:]
+    if rest:
+        groups.append(rest)
+    return ("+" if plus else "") + " ".join(groups)
+
+
+# Kept for old imports; numbers are no longer masked for tenant users.
+mask_phone = format_phone
 
 
 def _as_uuid(value: Any) -> uuid.UUID | None:
@@ -244,16 +264,18 @@ def _item(*, key: str, type_: str, category: str, at: datetime | None, tone: str
 
 def _contact(name: Any = None, phone: Any = None) -> dict[str, Any]:
     clean = str(name or "").strip() or None
-    # Some records store the number itself as the name; never let it through unmasked.
+    # Some records store the number itself as the name; show it formatted, not as raw digits.
     if clean and sum(ch.isdigit() for ch in clean) >= 7 and not any(ch.isalpha() for ch in clean):
-        return {"name": None, "phoneMasked": mask_phone(phone) or mask_phone(clean)}
-    return {"name": clean, "phoneMasked": mask_phone(phone)}
+        formatted = format_phone(phone) or format_phone(clean)
+        return {"name": None, "phone": formatted}
+    formatted = format_phone(phone)
+    return {"name": clean, "phone": formatted}
 
 
 def _who(contact: dict | None, fallback: str = "a caller") -> str:
     if not contact:
         return fallback
-    return contact.get("name") or contact.get("phoneMasked") or fallback
+    return contact.get("name") or contact.get("phone") or fallback
 
 
 # -- Models (imported lazily so the module imports without a database) -------------------
@@ -322,6 +344,8 @@ def _ledger_details(call_id: str, tenant_id: str) -> dict[str, Any]:
         request = meta.get("callback_request") if isinstance(meta.get("callback_request"), dict) else {}
         if request.get("requestedWhen"):
             out["requested_when"] = str(request["requestedWhen"])[:160]
+        if isinstance(request.get("resolvedWindow"), dict):
+            out["resolved_window"] = request["resolvedWindow"]
     try:
         from server.call.post_call_pipeline import read_outcome
         from server.call.outcome_schema import normalize_extracted_fields
@@ -329,7 +353,8 @@ def _ledger_details(call_id: str, tenant_id: str) -> dict[str, Any]:
         outcome = read_outcome(call_id) or {}
         summary = str(outcome.get("summary_en") or "").strip()
         if summary:
-            out["summary"] = summary[:240]
+            # The whole summary; the feed row clamps it visually with a More toggle.
+            out["summary"] = summary
         fields = normalize_extracted_fields(outcome.get("extracted_fields"))
         if not out.get("name") and (fields.get("name") or "").strip():
             out["name"] = fields["name"].strip()[:120]
@@ -446,15 +471,19 @@ def _attempt_item(row: Any, agent_names: dict[str, str]) -> dict[str, Any]:
     contact = _contact(None, phone)
     who = _who(contact)
     attempt_id = str(row.attempt_id)
+    from server.call.hangup_causes import outcome_for_item
+    outcome = outcome_for_item({"status": status, "direction": row.direction, "end_reason": row.end_reason,
+                                "policy_reason": row.policy_reason})
     if status == "voicemail":
         text = f"Call {'to' if outbound else 'from'} {who} went to voicemail"
     elif outbound:
-        text = f"Couldn't reach {who}"
+        label = str(outcome.get("outcome_label") or "").lower()
+        text = f"Couldn't reach {who}" + (f": {label}" if label and label != "failed" else "")
     else:
         text = f"Missed call from {who}"
     return _item(
         key=f"attempt:{attempt_id}", type_="call.missed", category="calls", at=row.started_at, tone="warning",
-        actor=None, text=text, agent_id=row.agent_id, contact=contact,
+        actor=None, text=text, detail=outcome.get("outcome_reason"), agent_id=row.agent_id, contact=contact,
         actions=[{"kind": "call_back", "label": "Call back", "callId": attempt_id},
                  {"kind": "open_calls", "label": "Open calls", "status": "missed"}],
         refs={"callId": attempt_id, "attemptId": attempt_id}, meta={"direction": row.direction},
@@ -615,12 +644,22 @@ def _callback_item(row: Any, names: dict[str, str]) -> dict[str, Any]:
         def render(it: dict[str, Any], info: dict[str, Any]) -> None:
             if info.get("name"):
                 it["contact"] = {**(it["contact"] or {}), "name": info["name"]}
-                it["text"] = it["text"].replace(contact.get("phoneMasked") or "\0", info["name"], 1)
+                it["text"] = it["text"].replace(contact.get("phone") or "\0", info["name"], 1)
             if info.get("requested_when"):
-                it["detail"] = f"Asked for: {info['requested_when']}"
+                it["detail"] = _asked_for(info["requested_when"], info.get("resolved_window"))
                 it["meta"]["requestedWhen"] = info["requested_when"]
+                if info.get("resolved_window"):
+                    it["meta"]["resolvedWindow"] = info["resolved_window"]
         item["_enrich"] = render
     return item
+
+
+def _asked_for(requested: str, resolved: dict | None) -> str:
+    """'Asked for: రేపు ఈవెనింగ్ → Sat 31 Oct, 5:00–7:30 pm'."""
+    text = f"Asked for: {requested}"
+    if isinstance(resolved, dict) and resolved.get("display"):
+        text += f" → {resolved['display']}"
+    return text
 
 
 def _followup_item(row: Any, names: dict[str, str]) -> dict[str, Any]:
@@ -631,19 +670,29 @@ def _followup_item(row: Any, names: dict[str, str]) -> dict[str, Any]:
     common = {"followUpId": str(row.id), "updatedAt": _iso(row.updated_at), "expiresAt": _iso(row.expires_at),
               "dueAt": _iso(row.due_at), "timezone": payload.get("timezone")}
     refs = {"followUpId": str(row.id), "callId": row.source_id}
-    kind_word = "missed-call follow-up" if row.kind == "missed" else "callback"
+    kind_word = {"missed": "missed-call follow-up", "recall": "recall"}.get(row.kind, "callback")
+    resolved = payload.get("resolvedWindow") if isinstance(payload.get("resolvedWindow"), dict) else None
+    if row.kind == "recall":
+        outcome_word = {"no_answer": "didn't answer", "busy": "was busy", "declined": "declined",
+                        "failed": "couldn't be reached"}.get(str(payload.get("outcome") or ""), "wasn't reached")
+        review_detail = f"Last call: {who} {outcome_word}"
+    else:
+        review_detail = f"Caller asked: {requested}" + (f" → {resolved['display']}" if resolved else "") if requested else None
     if row.status == "needs_review":
         return _item(key=f"followup:{row.id}:review", type_="followup.review", category="calls", at=row.updated_at,
                      tone="warning", actor=None, text=f"A {kind_word} to {who} needs your approval",
-                     detail=f"Caller asked: {requested}" if requested else None, agent_id=row.agent_id,
-                     contact=contact, needs_action=True, refs=refs, meta={"requestedWhen": requested},
+                     detail=review_detail, agent_id=row.agent_id,
+                     contact=contact, needs_action=True, refs=refs,
+                     meta={"requestedWhen": requested, "resolvedWindow": resolved},
                      actions=[{"kind": "approve_followup", "label": "Approve", **common},
                               {"kind": "reject_followup", "label": "Don't call", **common},
                               {"kind": "open_followups", "label": "Open follow-ups"}])
     if row.status == "scheduled":
         return _item(key=f"followup:{row.id}:scheduled", type_="callback.due", category="calls", at=row.updated_at,
                      tone="info", actor=names.get(str(row.agent_id)), text=f"will call {who} back",
-                     agent_id=row.agent_id, contact=contact, refs=refs, meta={"dueAt": _iso(row.due_at)},
+                     detail=_asked_for(requested, resolved) if requested and resolved else None,
+                     agent_id=row.agent_id, contact=contact, refs=refs,
+                     meta={"dueAt": _iso(row.due_at), "resolvedWindow": resolved},
                      actions=[{"kind": "reject_followup", "label": "Cancel", **common},
                               {"kind": "open_followups", "label": "Open follow-ups"}])
     if row.status == "dialed":
@@ -1244,6 +1293,7 @@ async def item_detail(tenant_id: uuid.UUID, item_id: str) -> dict[str, Any] | No
             facts = {"status": row.status, "kind": row.kind, "dueAt": _iso(row.due_at),
                      "expiresAt": _iso(row.expires_at), "requestedAt": _iso(row.created_at),
                      "requestedWhen": payload.get("requestedWhen") or payload.get("requestText"),
+                     "resolvedWindow": (payload.get("resolvedWindow") or {}).get("summary"),
                      "timezone": payload.get("timezone")}
         elif kind == "language":
             row = await owned(M["LanguageSwitchRequest"])

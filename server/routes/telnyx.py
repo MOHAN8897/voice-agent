@@ -491,17 +491,28 @@ async def _finalize_inbound_attempt(call_control_id: str, hangup_cause: Any) -> 
         reason = str(hangup_cause or row.get("status") or "hangup")
         policy = (row.get("inbound_policy") or {}) if isinstance(row.get("inbound_policy"), dict) else {}
         route = str(policy.get("route") or "")
+        direction = "outbound" if str(row.get("direction") or "").lower() == "outbound" else "inbound"
         if route == "voicemail":
             status = "voicemail"
         else:
-            status = classify_call_status(
-                direction="inbound",
-                duration_sec=0,
-                end_reason=reason,
-                disposition=None,
-            )
+            from server.call.hangup_causes import classify_hangup, reason_for_cause
+
+            if reason_for_cause(hangup_cause, row.get("sip_response_code")) is not None or direction == "outbound":
+                # Map carrier causes (user_busy, timeout, call_rejected, …) to a plain outcome.
+                outcome = classify_hangup(
+                    hangup_cause, direction=direction, answered=bool(row.get("answered")),
+                    connected=False, sip_code=row.get("sip_response_code"),
+                )
+                status, reason = outcome.status, outcome.end_reason
+            else:
+                status = classify_call_status(
+                    direction=direction,
+                    duration_sec=0,
+                    end_reason=reason,
+                    disposition=None,
+                )
         await call_attempt_store.finalize_by_control(
-            call_control_id, status=status, end_reason=reason
+            call_control_id, status=status, end_reason=reason[:50]
         )
     except Exception as exc:
         log_pstn("call_attempt.finalize_failed", control=call_control_id, error=str(exc)[:200])

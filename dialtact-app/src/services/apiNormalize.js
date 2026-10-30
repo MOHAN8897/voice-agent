@@ -246,6 +246,10 @@ export function normalizeCall(row, agentsById = {}) {
     summary: row.summary || null,
     statusTags: Array.isArray(row.status_tags) ? row.status_tags : [],
     policyReason: row.policy_reason || row.policyReason || null,
+    // Plain outcome for calls that never connected: "No answer", "Busy", "Declined",
+    // "Failed", "Missed call", with one sentence saying why.
+    outcomeLabel: row.outcome_label || row.outcomeLabel || null,
+    outcomeReason: row.outcome_reason || row.outcomeReason || null,
     billedAmount: row.tenant_charge?.amount ?? null,
     billedCurrency: row.tenant_charge?.currency ?? null,
     endReason: row.end_reason || row.endReason,

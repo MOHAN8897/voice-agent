@@ -114,7 +114,8 @@ test('backend profile changes refresh on focus without rewriting a script draft'
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(page.getByTestId('voice-select-btn-voice-medium')).toBeVisible();
   await expect(page.getByTestId('voice-stack-selector')).toContainText('Updated approved voice');
-  await expect(page.getByTestId('agent-test-call')).toBeDisabled();
+  // A profile revision bump keeps a saved voice that still exists valid (the backend accepts it).
+  await expect(page.getByTestId('agent-test-call')).toBeEnabled();
   await page.getByTestId('voice-select-btn-voice-medium').click();
   await expect(page.getByTestId('agent-test-call')).toBeEnabled();
   expect(state.writes[0].voiceSettings.profileRevision).toBe(state.profiles[1].profileRevision);

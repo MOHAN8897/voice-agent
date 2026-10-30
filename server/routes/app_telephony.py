@@ -26,12 +26,20 @@ from server.services.saas.number_purchase_service import (
     purchase_with_wallet,
 )
 from server.services.saas.dev_tester_workspace import ensure_dev_tester_phone_line
+from server.services.saas.number_purchase_errors import (
+    PLATFORM_CODES,
+    TENANT_REFUSAL_MESSAGES,
+    tenant_refusal_message,
+)
 from server.services.saas.tenant_guard import (
     SubscriberPrincipal,
     require_subscriber_permission,
     subscriber_workspace_tenant_id,
 )
 from server.services.saas.voice_catalog import phone_voice_catalog
+from server.services.saas.voice_setup_errors import VOICE_SETUP_MESSAGES as _VOICE_SETUP_MESSAGES
+
+TENANT_VOICE_SETUP_CODES = frozenset(_VOICE_SETUP_MESSAGES)
 from server.services.saas.telephony_orchestrator import subscriber_outbound
 from server.config.constants import constants
 from server.utils.rate_limiter import RateLimiter, raise_rate_limited
@@ -105,7 +113,7 @@ async def telephony_outbound(body: OutboundCallBody, principal: SubscriberPrinci
             # Travels with the call's contact into the ledger meta, so tool
             # discovery, execution and post-call dispatch read the same set.
             contact = {"integration_selection": selection}
-    return await subscriber_outbound(
+    result = await subscriber_outbound(
         principal,
         agent_id=body.agentId,
         from_e164=body.fromE164,
@@ -113,6 +121,47 @@ async def telephony_outbound(body: OutboundCallBody, principal: SubscriberPrinci
         dial_request_id=body.dialRequestId,
         contact=contact,
     )
+    _raise_if_not_placed(result)
+    return result
+
+
+# A refused call is an error, not a 200: the console, scripts and integrations
+# all branch on the HTTP status. Codes without an explicit status map here.
+_NOT_PLACED_STATUS = {
+    "voice_service_unavailable": 503,
+    "voice_preparation_failed": 503,
+    "live_transcription_unavailable": 503,
+    "phone_service_unavailable": 503,
+    "prewarm_failed": 503,
+    "dial_in_progress": 409,
+    "dial_pending": 409,
+    "dial_request_conflict": 409,
+    "predial_policy_changed": 409,
+    "dial_store_unavailable": 503,
+}
+
+
+def _raise_if_not_placed(result) -> None:
+    if not isinstance(result, dict) or result.get("ok") is not False:
+        return
+    code = str(result.get("code") or "call_not_placed")
+    try:
+        status = int(result.get("status") or 0)
+    except (TypeError, ValueError):
+        status = 0
+    if not 400 <= status < 600:
+        # No code means the carrier outcome is unknown, which is a gateway fault.
+        status = _NOT_PLACED_STATUS.get(code, 409 if code in TENANT_VOICE_SETUP_CODES else 502)
+    retry_after = result.get("retry_after")
+    error = {
+        "code": code,
+        "message": str(result.get("error") or "The call could not be placed. Please try again."),
+        "retryable": status in (429, 503),
+    }
+    if retry_after:
+        error["retry_after"] = retry_after
+    headers = {"Retry-After": str(int(retry_after))} if retry_after else None
+    raise HTTPException(status_code=status, detail={"error": error}, headers=headers)
 
 
 @router.post("/api/calls/outbound")
@@ -739,6 +788,9 @@ async def search_numbers(
                 },
             ) from None
         numbers = []
+    from server.services.saas.number_purchase_service import carrier_charge_exceeds_retail
+
+    hidden_above_retail = 0
     for row in numbers:
         item = dict(row) if isinstance(row, dict) else {"e164": str(row)}
         e164 = str(item.get("e164") or item.get("phone_number") or "")
@@ -758,6 +810,12 @@ async def search_numbers(
         if wanted_category and classified["category"] != wanted_category:
             continue
         if not matches_area(item, classified, area):
+            continue
+        if active_prov == "vobiz" and carrier_charge_exceeds_retail(item, rates):
+            # The purchase path refuses a number whose carrier price is above the
+            # platform rent, so listing it would only lead to a refusal. Hidden
+            # here; the admin Number purchases page reports how many and why.
+            hidden_above_retail += 1
             continue
         if e164:
             seen.add(e164)
@@ -789,6 +847,7 @@ async def search_numbers(
         "activeProvider": active_prov if is_admin else "direct_voice",
         "category": wanted_category or "all",
         "area": area or "",
+        **({"hiddenAboveRetail": hidden_above_retail} if is_admin else {}),
     }
 
 
@@ -908,7 +967,21 @@ async def buy_number(
 
     allowed, retry = _buy_limiter.allow(f"buy:{principal.tenant_id}")
     if not allowed:
-        raise_rate_limited(retry, "Number purchase rate limit reached.")
+        # Same contract as every other refusal: a stable code and tenant copy that
+        # says no money moved (the generic limiter text did not, and auto-hid).
+        # The wait is in the Retry-After header; the copy already says "a minute".
+        retry_after = max(1, int(retry or 1))
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": {
+                    "code": "rate_limited",
+                    "message": tenant_refusal_message("rate_limited"),
+                    "charged": False,
+                }
+            },
+            headers={"Retry-After": str(retry_after)},
+        )
     pay = (body.payMethod or "wallet").strip().lower()
     # Every attempt is logged, including the ones that stop at the KYC gate. A
     # refused purchase is the thing an operator needs to see, and it never reaches
@@ -935,43 +1008,40 @@ async def buy_number(
         await _log_purchase_refusal(
             request, principal, body, pay, exc, getattr(exc, "status_code", 500)
         )
+        # The KYC gate raises its own HTTPException; give the tenant the shared
+        # purchase copy (which says they were not charged) under the same code.
+        detail = exc.detail if isinstance(exc.detail, dict) else None
+        err = (detail or {}).get("error") if isinstance((detail or {}).get("error"), dict) else None
+        if err and err.get("code") in TENANT_REFUSAL_MESSAGES:
+            raise HTTPException(
+                status_code=exc.status_code,
+                detail={"error": {**err, "message": tenant_refusal_message(err["code"]), "charged": False}},
+                headers=getattr(exc, "headers", None),
+            ) from None
         raise
     except ValueError as e:
         code = str(e)
         status = _purchase_error_status(code)
-        await _log_purchase_refusal_code(request, principal, body, pay, code, status)
-        messages = {
-            "stripe_removed": "Card checkout is no longer supported. Use wallet credits to buy a number.",
-            "stripe_not_configured": "Card checkout is not supported. Use wallet credits to buy a number.",
-            "verification_required": "Verify your email before buying a number.",
-            "kyc_required": "Verify your identity before buying a phone number.",
-            "voice_kyc_required": "Complete phone service verification before buying a number.",
-            "carrier_balance_exhausted": (
-                "Phone numbers are temporarily unavailable. Your wallet was not charged."
-            ),
-            "carrier_not_configured": "Telephony line service is being updated. Please contact support.",
-            "carrier_inventory_unavailable": "Phone number inventory is temporarily unavailable. Your wallet was not charged.",
-            "carrier_order_failed": "Unable to complete number order with provider. Your wallet was not charged.",
-            "number_reserved": "This number is reserved by another checkout. Try a different number.",
-            "number_unavailable": "This number is no longer available.",
-            "number_limit": "This workspace has reached its phone number limit.",
-            "tenant_not_found": "Workspace not found.",
-            "invalid_e164": "Enter a valid E.164 number.",
-            "invalid_agent": "Choose a valid agent to assign this number to.",
-            "insufficient_balance": "Add funds to your wallet before buying a number.",
-        }
+        await _log_purchase_refusal_code(
+            request, principal, body, pay, code, status, context=getattr(e, "context", None)
+        )
         raise HTTPException(
             status_code=status,
-            detail={"error": {"code": code, "message": messages.get(code, code)}},
+            detail={"error": {"code": code, "message": tenant_refusal_message(code), "charged": False}},
         )
     except Exception as exc:
         logger.exception("Unexpected error in buy_number: %s", exc)
+        await _log_purchase_refusal_code(
+            request, principal, body, pay, "purchase_temporarily_unavailable", 503,
+            context={"errorType": type(exc).__name__},
+        )
         raise HTTPException(
             status_code=503,
             detail={
                 "error": {
                     "code": "purchase_temporarily_unavailable",
-                    "message": "Phone line service is momentarily unavailable. Your account was not charged. Please try again shortly.",
+                    "message": tenant_refusal_message("purchase_temporarily_unavailable"),
+                    "charged": False,
                 }
             },
         )
@@ -1004,7 +1074,12 @@ _REFUSAL_HINTS = {
     "voice_kyc_required": "phone service verification not approved",
     "verification_required": "email not verified",
     "insufficient_balance": "wallet could not cover the number",
-    "carrier_balance_exhausted": "carrier account out of funds — operator action",
+    "carrier_balance_exhausted": "Vobiz parent balance cannot cover this number — top up Vobiz",
+    "carrier_price_above_retail": "Vobiz price for this number is above the platform rent — raise rent",
+    "carrier_not_configured": "Vobiz credentials missing — operator action",
+    "carrier_inventory_unavailable": "Vobiz inventory check failed (timeout/5xx)",
+    "voice_verification_unavailable": "Vobiz KYC status could not be read",
+    "purchase_temporarily_unavailable": "unexpected error in the purchase path",
     "number_reserved": "another checkout holds this number",
     "number_unavailable": "number no longer available at the carrier",
     "number_limit": "workspace number limit reached",
@@ -1021,7 +1096,7 @@ def _purchase_error_status(code: str) -> int:
         return 400
     if code == "insufficient_balance":
         return 402
-    if code in ("number_reserved", "number_unavailable"):
+    if code in ("number_reserved", "number_unavailable", "carrier_price_above_retail"):
         return 409
     if code == "tenant_not_found":
         return 404
@@ -1040,6 +1115,8 @@ async def _log_purchase_refusal_code(
     pay: str,
     code: str,
     status: int,
+    *,
+    context: dict | None = None,
 ) -> None:
     from server.services.saas.activity_log import record_event
 
@@ -1052,6 +1129,9 @@ async def _log_purchase_refusal_code(
         payload={
             "error": code,
             "hint": _REFUSAL_HINTS.get(code, code),
+            # Operator-only numbers (carrier price, parent balance); never sent
+            # to the tenant.
+            **({"context": context} if context else {}),
             "httpStatus": status,
             "e164": body.e164,
             "country": body.country,
@@ -1060,8 +1140,9 @@ async def _log_purchase_refusal_code(
         },
         source="subscriber",
         # 402 is the customer's wallet; 5xx is ours. Only ours is an "error".
-        outcome="error" if status >= 500 else "ok",
-        severity="warning" if status < 500 else "error",
+        # A rent below carrier price is ours too, even though the tenant sees 409.
+        outcome="error" if status >= 500 or code in PLATFORM_CODES else "ok",
+        severity="error" if status >= 500 or code in PLATFORM_CODES else "warning",
         request=request,
     )
 

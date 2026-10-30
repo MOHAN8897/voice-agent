@@ -584,6 +584,31 @@ class CallAttemptStore:
             await session.refresh(row)
             return _attempt_row_to_dict(row)
 
+    async def ensure_attempt(self, control_id: str, **fields: Any) -> dict[str, Any] | None:
+        """Create the attempt row when it does not exist yet; never overwrite one.
+
+        Dial replays and duplicate webhooks call this repeatedly, so a later call
+        must not reset an attempt that already rang out back to ``in_progress``.
+        """
+        control = str(control_id or "").strip()
+        if not control or not fields.get("tenant_id"):
+            return None
+        factory = get_session_factory()
+        if factory is None:
+            existing = _ATTEMPT_MEM.get(control)
+            if existing is not None:
+                return dict(existing)
+            return await self.upsert_by_control(control, **fields)
+        async with factory() as session:
+            row = (
+                await session.execute(
+                    select(CallAttempt).where(CallAttempt.provider_call_control_id == control)
+                )
+            ).scalar_one_or_none()
+            if row is not None:
+                return _attempt_row_to_dict(row)
+        return await self.upsert_by_control(control, **fields)
+
     async def finalize_by_control(
         self,
         control_id: str,
@@ -602,6 +627,10 @@ class CallAttemptStore:
             rec = _ATTEMPT_MEM.get(control)
             if not rec:
                 return None
+            if rec.get("linked_call_id") and not linked_call_id:
+                # A duplicate/late hangup must not turn a connected call into "missed".
+                rec.setdefault("ended_at", now.isoformat())
+                return dict(rec)
             rec["status"] = status
             rec["end_reason"] = end_reason
             rec["ended_at"] = now.isoformat()
@@ -618,6 +647,12 @@ class CallAttemptStore:
             row = result.scalar_one_or_none()
             if row is None:
                 return None
+            if row.linked_call_id is not None and not linked_call_id:
+                if row.ended_at is None:
+                    row.ended_at = now
+                    await session.commit()
+                    await session.refresh(row)
+                return _attempt_row_to_dict(row)
             row.status = status
             row.end_reason = end_reason
             row.ended_at = now

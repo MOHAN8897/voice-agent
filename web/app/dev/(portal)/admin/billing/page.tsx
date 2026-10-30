@@ -232,13 +232,15 @@ type TaxReport = {
   };
 };
 
-const STATUSES = ["", "paid", "failed", "refunded", "pending"] as const;
+const STATUSES = ["", "active", "provisioning", "needs_attention", "failed", "refunded"] as const;
 const TONE: Record<string, "success" | "warning" | "error" | "muted"> = {
   paid: "success",
   active: "success",
   failed: "error",
   refunded: "muted",
   pending: "warning",
+  provisioning: "warning",
+  needs_attention: "error",
 };
 
 export default function AdminBillingPage() {
@@ -2103,6 +2105,13 @@ export default function AdminBillingPage() {
       </DevCard>
 
       <DevCard title="Number purchases">
+        <p className="mb-3 text-xs text-text-muted">
+          Full details (why a purchase failed, refunds, Vobiz balance and rent problems) are on{" "}
+          <Link href="/dev/admin/purchases" className="text-accent-primary underline">
+            Number purchases
+          </Link>
+          .
+        </p>
         <div className="mb-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-1">
@@ -2171,7 +2180,7 @@ export default function AdminBillingPage() {
                 </SkeuoTd>
                 <SkeuoTd className="text-xs text-text-muted">{formatWhen(p.createdAt)}</SkeuoTd>
                 <SkeuoTd className="space-x-2 text-right">
-                  {p.status === "failed" && (
+                  {p.status === "needs_attention" && (
                     <SkeuoButton
                       type="button"
                       size="sm"
@@ -2181,7 +2190,7 @@ export default function AdminBillingPage() {
                       Retry
                     </SkeuoButton>
                   )}
-                  {(p.status === "paid" || p.status === "failed") && (
+                  {(p.status === "needs_attention" || p.status === "failed") && (
                     <SkeuoButton
                       type="button"
                       size="sm"

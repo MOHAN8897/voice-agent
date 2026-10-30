@@ -204,7 +204,7 @@ export function Insights({ agents, calls, leads, wallet, onNavigate, onInspectCa
                       return call.duration;
                     case 'outcome':
                       return (
-                        <span className="block max-w-[200px] truncate">
+                        <span className="block max-w-[200px] truncate" title={call.summary || undefined}>
                           {dispositionLabel(call.disposition) || call.summary || statusWord(call.status).label}
                         </span>
                       );

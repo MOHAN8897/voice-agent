@@ -10,6 +10,7 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  AlertTriangle,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { Badge, StatusBadge } from '../ui/StatusBadge';
@@ -23,6 +24,12 @@ import { showToast } from '../ui/ToastHost';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { VoiceServiceKycCard } from '../ui/VoiceServiceKycCard';
+import { NUMBER_GONE_CODES, PURCHASE_COPY, buyRefusalMessage, purchaseOutcomeMessage } from '../lib/numberPurchaseCopy';
+
+/** Messages about money (charged, refunded, safe) are never auto-dismissed. */
+const buyErrorSticky = (message) => /charged|refund|payment is safe|paid for/i.test(String(message || ''));
+/** Stable key of a catalog row; the refusal is shown under the row that was tried. */
+const catalogRowKey = (item) => item?.formatted || item?.number || item?.e164 || '';
 import { VerifyIdentityCard } from '../ui/VerifyIdentityCard';
 import { CatalogSkeleton, PhoneNumberRowSkeleton } from '../ui/Skeleton';
 import { Tabs } from '../ui/Tabs';
@@ -133,6 +140,11 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
   const [targetAgentId, setTargetAgentId] = useState(buyNumberPreselectedAgent || '');
   const [purchasedSuccess, setPurchasedSuccess] = useState(null);
   const [buyError, setBuyError] = useState(null);
+  // Which catalog row the current buyError belongs to. The list sits at the bottom
+  // of a scrolling dialog, so an alert rendered only at the top was off-screen
+  // when the tenant bought a number further down: the refusal looked like nothing.
+  const [buyErrorRow, setBuyErrorRow] = useState(null);
+  const buyErrorRef = useRef(null);
   const [buying, setBuying] = useState(false);
   // ordering: wallet debit + carrier order accepted; provisioning: waiting for
   // the carrier to confirm the line. Shown so a slow carrier never looks frozen.
@@ -269,10 +281,21 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
 
   // Inline alerts should not sit forever — toast pattern: 5s, dismissible.
   useEffect(() => {
-    if (!buyError) return undefined;
+    // A purchase outcome says whether money moved; it stays until dismissed.
+    if (!buyError || buyErrorSticky(buyError)) return undefined;
     const id = window.setTimeout(() => setBuyError(null), 5000);
     return () => window.clearTimeout(id);
   }, [buyError]);
+
+  // Wherever the alert lands (under the row, or at the top when the row is gone),
+  // bring it into view so a refusal is never silent.
+  useEffect(() => {
+    if (!buyError) return;
+    const el = buyErrorRef.current;
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [buyError, buyErrorRow]);
 
   useEffect(() => {
     if (!catalogError) return undefined;
@@ -377,20 +400,15 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
         return;
       }
       if (bought?.ok === false) {
-        let failed;
-        if (bought.failureReason === 'pending') {
-          failed = 'Your number is paid for and still being activated. It will appear in your lines shortly. Do not buy it again.';
-        } else if (bought.status === 'needs_attention') {
-          failed = bought.failureReason;
-        } else if (bought.failureReason === 'carrier_balance_exhausted') {
-          failed = 'Phone numbers are temporarily unavailable. Your wallet was not charged.';
-        } else if (bought.refunded) {
-          failed = 'Purchase failed. The number could not be activated and the rental charge has been refunded to your wallet.';
-        } else {
-          failed = 'Purchase failed. The number could not be activated; your refund is being processed. Contact support if it does not appear in your wallet shortly.';
-        }
-        setBuyError(failed);
+        // Paid, then not active: the server's message says what happened to the
+        // money (refunded, being refunded, or safe while support finishes setup).
+        setBuyError(
+          bought.failureReason === 'pending' ? PURCHASE_COPY.stillActivating : purchaseOutcomeMessage(bought)
+        );
         if (bought.failureReason !== 'pending') await refreshWallet?.();
+        if (bought.status === 'failed') {
+          Promise.resolve(reloadCatalog?.(selectedCountry, { category: numberCategory, area: areaQuery })).catch(() => {});
+        }
         return;
       }
       setPurchasedSuccess(catalogItem.formatted || catalogItem.number);
@@ -405,15 +423,24 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     } catch (e) {
       if (e.status === 402 || e.code === 'insufficient_balance') {
         const msg = priceKnown
-          ? `${e.message} A phone number costs ${monthlyRentLabel(numberPriceInr)}.`
-          : e.message;
+          ? `A phone number costs ${monthlyRentLabel(numberPriceInr)}. ${buyRefusalMessage(e)}`
+          : buyRefusalMessage(e);
         setBuyError(msg);
         await refreshWallet?.();
-      } else if (e.status === 403 || e.code === 'kyc_required' || e.code === 'voice_kyc_required') {
+      } else if (e.code === 'voice_verification_unavailable') {
+        // Verification could not be read; it is not "unverified". Keep the user here.
+        setBuyError(buyRefusalMessage(e));
+      } else if (
+        e.code === 'kyc_required' ||
+        e.code === 'voice_kyc_required' ||
+        // An uncoded 403 is a verification gate; an email-verification refusal is
+        // not, and has its own server copy (falls through to the default branch).
+        (e.status === 403 && !['verification_required', 'email_not_verified'].includes(e.code))
+      ) {
         setKycApproved(false);
         const message = e.code === 'voice_kyc_required'
-          ? 'Complete phone service verification to buy a number.'
-          : 'Your account needs an additional verification step before buying a number.';
+          ? 'Please complete phone service verification to buy a number. You were not charged.'
+          : 'Your account needs one more verification step before buying a number. You were not charged.';
         if (e.code === 'voice_kyc_required') {
           setKycMode('voice');
         } else {
@@ -421,13 +448,14 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
           setKycStatusError(message);
         }
         setBuyError(message);
-      } else if (e.code === 'carrier_balance_exhausted' || e.status === 503) {
-        setBuyError(
-          e.message ||
-            'Phone numbers are temporarily unavailable. Your wallet was not charged.'
-        );
       } else {
-        setBuyError(e.message || 'Could not start number purchase');
+        // The server's copy already says the wallet was not charged; anything that
+        // looks internal (or a lost connection) gets a plain fallback instead.
+        setBuyError(buyRefusalMessage(e));
+        if (NUMBER_GONE_CODES.has(e.code)) {
+          // The chosen number is not for sale any more; drop it from the list.
+          Promise.resolve(reloadCatalog?.(selectedCountry, { category: numberCategory, area: areaQuery })).catch(() => {});
+        }
       }
     } finally {
       setBuying(false);
@@ -441,13 +469,41 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
     onCloseBuyModal();
   };
 
-  const handleBuyNumber = async (catalogItem) => {
+  const handleBuyNumber = async (catalogItem, { fromRow = true } = {}) => {
     if (purchaseLock.current) return;
     purchaseLock.current = true;
+    setBuyErrorRow(fromRow ? catalogRowKey(catalogItem) : null);
     setBuying(true);
     try { await completeNumberPurchase(catalogItem); }
     finally { purchaseLock.current = false; setBuying(false); }
   };
+
+  const buyErrorOnRow = Boolean(
+    buyError && buyErrorRow && filteredCatalog.some((item) => catalogRowKey(item) === buyErrorRow)
+  );
+  const renderBuyError = () => (
+    <div
+      ref={buyErrorRef}
+      data-testid="buy-number-error"
+      role="alert"
+      className={`scroll-my-3 rounded-control border px-3 py-2 text-ui flex items-start gap-2 ${
+        buyErrorSticky(buyError)
+          ? 'border-warning-line bg-warning-soft text-warning-fg'
+          : 'border-danger-line bg-danger-soft text-danger-fg'
+      }`}
+    >
+      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+      <p className="flex-1">{buyError}</p>
+      <button
+        type="button"
+        aria-label="Dismiss"
+        className="shrink-0 -m-1 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-control hover:bg-surface/60"
+        onClick={() => setBuyError(null)}
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -758,7 +814,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
             <p className="text-ui text-fg-body">Monthly rental is deducted from your prepaid wallet (GST was applied when you added funds) only when you confirm the purchase, and renews monthly. Call usage is billed separately. The number is not reserved during verification; availability and pricing are checked again before purchase.</p>
             <div className="flex flex-wrap items-center gap-3">
               <button type="button" className="min-h-11 text-ui font-semibold text-accent-fg hover:underline" onClick={forgetNumber}>Choose a different number</button>
-              {kycApproved && <TactileButton variant="primary" disabled={buying || catalogLoading || !priceKnown || !canAffordNumber || !availableCatalog.some((item) => item.number === pendingNumber.number)} onClick={() => handleBuyNumber(availableCatalog.find((item) => item.number === pendingNumber.number))} data-testid="confirm-selected-number">{buying ? 'Buying…' : 'Confirm number purchase'}</TactileButton>}
+              {kycApproved && <TactileButton variant="primary" disabled={buying || catalogLoading || !priceKnown || !canAffordNumber || !availableCatalog.some((item) => item.number === pendingNumber.number)} onClick={() => handleBuyNumber(availableCatalog.find((item) => item.number === pendingNumber.number), { fromRow: false })} data-testid="confirm-selected-number">{buying ? 'Buying…' : 'Confirm number purchase'}</TactileButton>}
             </div>
             {kycApproved && !catalogLoading && !catalogError && !availableCatalog.some((item) => item.number === pendingNumber.number) && <p className="text-ui text-warning-fg" role="status">This number is no longer available. Choose another number below.</p>}
           </div>}
@@ -785,23 +841,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
             ) : null
           ) : (
             <>
-              {buyError && (
-                <div
-                  data-testid="buy-number-error"
-                  role="alert"
-                  className="rounded-control border border-danger-line bg-danger-soft px-3 py-2 text-ui text-danger-fg flex items-start gap-2"
-                >
-                  <p className="flex-1">{buyError}</p>
-                  <button
-                    type="button"
-                    aria-label="Dismiss"
-                    className="shrink-0 -m-1 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-control hover:bg-surface/60"
-                    onClick={() => setBuyError(null)}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
+              {buyError && !buyErrorOnRow && renderBuyError()}
 
               {buying && buyPhase && (
                 <div role="status" aria-live="polite" data-testid="buy-number-phase"
@@ -941,6 +981,7 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                   filteredCatalog.map((item) => (
                     <div
                       key={item.formatted || item.number || item.e164}
+                      data-testid="buy-number-row"
                       className="p-3.5 rounded-control bg-surface border border-line hover:border-line-strong flex flex-wrap items-center justify-between gap-3 transition-colors shadow-craft-xs"
                     >
                       <div className="flex min-w-0 items-center gap-3">
@@ -987,6 +1028,9 @@ export function PhoneNumbersModule({ isBuyModalOpen, onCloseBuyModal, onOpenBuyM
                           {buying ? 'Please wait…' : kycApproved ? 'Buy number' : 'Choose number'}
                         </TactileButton>
                       </div>
+                      {buyErrorOnRow && buyErrorRow === catalogRowKey(item) ? (
+                        <div className="basis-full">{renderBuyError()}</div>
+                      ) : null}
                     </div>
                   ))
                 )}

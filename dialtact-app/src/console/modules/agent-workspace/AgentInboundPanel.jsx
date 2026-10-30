@@ -28,6 +28,8 @@ export function AgentInboundPanel({ agentId, agentName, onNavigateToSettings }) 
   const [profile, setProfile] = useState(null);
   const [decision, setDecision] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [reload, setReload] = useState(0);
 
   // Find assigned number for this agent
   const assigned = phoneNumbers.find((n) => n.assignedAgentId === agentId);
@@ -37,31 +39,24 @@ export function AgentInboundPanel({ agentId, agentName, onNavigateToSettings }) 
     if (!agentId) return;
 
     setLoading(true);
+    setLoadError('');
+    // The saved rules come from the server. A failed read used to fall back to
+    // built-in defaults ("always open", "hang up", a US timezone), which looked
+    // exactly like the tenant's settings had been lost. Say it failed instead.
     const loadProfile = async () => {
       try {
-        let data = null;
-        if (typeof api.telephony?.getAgentProfile === 'function') {
-          data = await api.telephony.getAgentProfile(agentId);
-        } else if (typeof api.agents?.getTelephonyProfile === 'function') {
-          const [prof, eff] = await Promise.all([
-            api.agents.getTelephonyProfile(agentId).catch(() => ({ profile: {} })),
-            typeof api.agents?.getEffectiveTelephony === 'function'
-              ? api.agents.getEffectiveTelephony(agentId).catch(() => null)
-              : Promise.resolve(null),
-          ]);
-          data = {
-            profile: prof?.profile || {},
-            decision: eff?.decision || null,
-          };
-        }
+        const [prof, eff] = await Promise.all([
+          api.agents.getTelephonyProfile(agentId),
+          api.agents.getEffectiveTelephony(agentId).catch(() => null),
+        ]);
         if (!active) return;
-        setProfile(data?.profile || {});
-        setDecision(data?.decision || null);
+        setProfile(prof?.profile || {});
+        setDecision(eff?.decision || null);
       } catch (err) {
-        console.warn('Could not load agent telephony profile:', err);
         if (active) {
-          setProfile({});
+          setProfile(null);
           setDecision(null);
+          setLoadError(err?.message || 'Your incoming call rules could not be loaded.');
         }
       } finally {
         if (active) setLoading(false);
@@ -73,10 +68,12 @@ export function AgentInboundPanel({ agentId, agentName, onNavigateToSettings }) 
     return () => {
       active = false;
     };
-  }, [agentId]);
+  }, [agentId, reload]);
 
   const isInboundEnabled = profile?.inboundEnabled !== false;
-  const hoursText = businessHoursSummary(profile?.businessHours, profile?.timezone || 'America/New_York');
+  const timezone = profile?.timezone || 'Asia/Kolkata';
+  const hoursText = businessHoursSummary(profile?.businessHours, timezone);
+  const rulesKnown = Boolean(profile) && !loading;
 
   return (
     <div className="space-y-5" data-testid="agent-inbound-panel">
@@ -148,7 +145,7 @@ export function AgentInboundPanel({ agentId, agentName, onNavigateToSettings }) 
             </p>
           </div>
           <div className="text-meta text-fg-muted">
-            Timezone: {profile?.timezone || 'America/New_York'}
+            {rulesKnown ? `Timezone: ${timezone}` : loading ? 'Loading your saved rules…' : 'Saved rules unavailable'}
           </div>
         </SolidCard>
 
@@ -198,7 +195,21 @@ export function AgentInboundPanel({ agentId, agentName, onNavigateToSettings }) 
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-ui">
+        {loadError ? (
+          <div className="flex flex-col gap-2 rounded-control border border-warning-line bg-warning-soft p-3.5 text-ui text-warning-fg sm:flex-row sm:items-center sm:justify-between"
+            role="alert" data-testid="agent-inbound-load-error">
+            <span className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              Your saved incoming call rules could not be loaded, so they are not shown here. Nothing was changed.
+            </span>
+            <TactileButton variant="secondary" size="sm" onClick={() => setReload((n) => n + 1)}>Try again</TactileButton>
+          </div>
+        ) : !rulesKnown ? (
+          <div className="p-3.5 rounded-control bg-canvas border border-line text-ui text-fg-muted" role="status" aria-busy="true">
+            Loading your saved rules…
+          </div>
+        ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-ui" data-testid="agent-inbound-rules">
           <div className="p-3.5 rounded-control bg-canvas border border-line space-y-1.5">
             <div className="font-semibold text-ink flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-accent" />
@@ -219,10 +230,15 @@ export function AgentInboundPanel({ agentId, agentName, onNavigateToSettings }) 
                 ? `Transfer to ${profile?.transferNumber || 'a number you haven’t set yet'}`
                 : profile?.afterHoursAction === 'voicemail'
                 ? 'Take a voicemail'
-                : 'Say goodbye and hang up'}
+                : profile?.afterHoursAction === 'hangup'
+                ? 'Say goodbye and hang up'
+                : profile?.afterHoursAction === 'always'
+                ? 'Keep answering every call'
+                : 'Take a voicemail'}
             </p>
           </div>
         </div>
+        )}
 
         {decision?.greetingPhrase && (
           <div className="p-3.5 rounded-control bg-warning-soft border border-warning-line text-ui text-fg-body space-y-1">

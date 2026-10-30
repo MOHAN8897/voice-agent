@@ -7,6 +7,7 @@ import { showToast } from '../ui/ToastHost';
 import { CallIntegrationPicker, IntegrationSelectionSummary, useCallIntegrationOptions } from '../ui/CallIntegrationPicker';
 import { humanizeToken } from '../../lib/internalLabels';
 import { relativeTime } from '../../lib/money';
+import { useSessionDraft } from '../lib/sessionDraft';
 
 const input = 'mt-1 w-full min-h-11 min-w-0 rounded-control border border-line-strong bg-surface px-3 py-2 text-base sm:text-ui text-ink placeholder:text-fg-subtle focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15 disabled:opacity-50';
 const fields = ['phone', 'full_name', 'first_name', 'last_name', 'email', 'company', 'job_title', 'country', 'city', 'state', 'timezone', 'notes', 'ignore'];
@@ -23,35 +24,61 @@ function fileData(file) {
   });
 }
 
-export function CampaignSetup({ initialAgentId = '', initialContacts = [], initialSource = '', onComplete, onBusyChange }) {
+export function CampaignSetup({ initialAgentId = '', initialContacts = [], initialSource = '', draftKey = null, onComplete, onBusyChange }) {
   const { agents, phoneNumbers, outboundFromE164, createCampaign } = useWorkspace();
-  const [config, setConfig] = useState({ name: '', description: '', agentId: initialAgentId || agents[0]?.id || '', fromE164: outboundFromE164 || '', defaultCountry: 'IN' });
-  const [source, setSource] = useState(initialContacts.length ? 'leads' : initialSource || 'upload');
+  // With a draftKey, the options typed so far survive switching tabs or pages (this
+  // browser tab only) and are cleared on launch or save. A chosen file and the
+  // contact check are not kept: the file must be picked again, then re-checked.
+  const fromLeads = initialContacts.length > 0;
+  const [draft, patchDraft, resetDraft] = useSessionDraft(draftKey && !fromLeads ? 'campaign-setup' : null, draftKey, {
+    config: { name: '', description: '', agentId: initialAgentId || '', fromE164: '', defaultCountry: 'IN' },
+    source: initialSource || 'upload',
+    text: '',
+    listId: '',
+    dateRangeEnabled: false,
+    dateRange: { startsAt: '', expiresAt: '' },
+    duplicateStrategy: 'keep_first',
+    pacing: { concurrency: 3, maxAttempts: 2, retryDelayMinutes: 30 },
+    windowEnabled: true,
+    callingWindow: { start: '09:00', end: '18:00', timezone: 'Asia/Kolkata' },
+    integrations: null,
+    integrationsAgentId: '',
+  });
+  const draftSetter = (field) => (value) =>
+    patchDraft((prev) => ({ [field]: typeof value === 'function' ? value(prev[field]) : value }));
+  const config = {
+    ...draft.config,
+    agentId: draft.config.agentId || initialAgentId || agents[0]?.id || '',
+    fromE164: draft.config.fromE164 || outboundFromE164 || '',
+  };
+  const setConfig = (fn) => patchDraft((prev) => ({ config: typeof fn === 'function' ? fn(prev.config) : fn }));
+  const source = fromLeads ? 'leads' : draft.source;
+  const setSource = draftSetter('source');
   const [audience, setAudience] = useState({ jobs: [], total: 0 });
   const [audienceSelected, setAudienceSelected] = useState([]);
   const [audienceLoading, setAudienceLoading] = useState(false);
   const [audienceError, setAudienceError] = useState('');
   const [audienceReload, setAudienceReload] = useState(0);
-  const [dateRangeEnabled, setDateRangeEnabled] = useState(false);
-  const [dateRange, setDateRange] = useState({ startsAt: '', expiresAt: '' });
+  const { dateRangeEnabled, dateRange, text, listId, duplicateStrategy, pacing, windowEnabled, callingWindow } = draft;
+  const setDateRangeEnabled = draftSetter('dateRangeEnabled');
+  const setDateRange = draftSetter('dateRange');
   const [file, setFile] = useState(null);
-  const [text, setText] = useState('');
+  const setText = draftSetter('text');
   const [lists, setLists] = useState([]);
-  const [listId, setListId] = useState('');
+  const setListId = draftSetter('listId');
   const [listError, setListError] = useState('');
   const [parsed, setParsed] = useState(null);
   const [mapping, setMapping] = useState({});
   const [validation, setValidation] = useState(null);
   const [variables, setVariables] = useState(null);
-  const [duplicateStrategy, setDuplicateStrategy] = useState('keep_first');
+  const setDuplicateStrategy = draftSetter('duplicateStrategy');
   const [variablePolicy, setVariablePolicy] = useState('review');
   const [consent, setConsent] = useState(false);
-  const [pacing, setPacing] = useState({ concurrency: 3, maxAttempts: 2, retryDelayMinutes: 30 });
-  const [windowEnabled, setWindowEnabled] = useState(true);
-  const [callingWindow, setCallingWindow] = useState({ start: '09:00', end: '18:00', timezone: 'Asia/Kolkata' });
+  const setPacing = draftSetter('pacing');
+  const setWindowEnabled = draftSetter('windowEnabled');
+  const setCallingWindow = draftSetter('callingWindow');
   const [previewIndex, setPreviewIndex] = useState(0);
   // Integrations every campaign call may use; null keeps the agent's saved settings.
-  const [integrations, setIntegrations] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState('');
   const lock = useRef(false);
@@ -63,7 +90,9 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], initi
   const agent = agents.find((a) => a.id === currentAgent);
   const followupSource = source === 'callbacks' || source === 'missed';
   const integrationOptions = useCallIntegrationOptions(currentAgent);
-  useEffect(() => { setIntegrations(null); }, [currentAgent]);
+  // Integrations belong to the agent they were picked for.
+  const integrations = draft.integrationsAgentId === currentAgent ? draft.integrations : null;
+  const setIntegrations = (value) => patchDraft({ integrations: value, integrationsAgentId: currentAgent });
 
   useEffect(() => {
     if (!followupSource || !currentAgent) return;
@@ -188,6 +217,7 @@ export function CampaignSetup({ initialAgentId = '', initialContacts = [], initi
         integrations: integrations || undefined });
       const excluded = created.dndExcludedCount || 0;
       showToast(created.status === 'running' ? `Campaign queued: ${Math.max(0, created.totalContacts - excluded)} eligible contacts.` : 'Campaign saved as a draft.', 'success');
+      resetDraft();
       onComplete?.(created);
     });
   }

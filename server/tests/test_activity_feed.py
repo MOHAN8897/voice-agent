@@ -172,7 +172,8 @@ async def test_every_item_type_appears_from_seeded_rows(db):
     assert not any("usage" in (i["text"] or "").lower() for i in everything)
     booked = next(i for i in everything if i["type"] == "call.booked")
     assert booked["actor"] == "Meera" and "site visit with Ravi Kumar" in booked["text"]
-    # Contact numbers are masked; the dial action carries the call id, not the number.
+    # Contact numbers are shown in full but formatted (never as raw digit strings);
+    # the dial action carries the call id, not the number.
     language = next(i for i in everything if i["type"] == "language.callback")
     assert language["needsAction"] and "Hindi" in language["text"]
     assert language["actions"][0]["kind"] == "call_in_language"
@@ -180,7 +181,8 @@ async def test_every_item_type_appears_from_seeded_rows(db):
     for raw in ("+919876543123", "+919811122233", "+919800000002", "+919800000001"):
         assert raw not in serialized
     missed = next(i for i in everything if i["type"] == "call.missed")
-    assert missed["contact"]["phoneMasked"] == "+91 98••• ••233"
+    assert missed["contact"]["phone"] == "+91 98111 22233"
+    assert "+91 98111 22233" in missed["text"]
     assert missed["actions"][0] == {"kind": "call_back", "label": "Call back", "callId": missed["refs"]["callId"]}
     # Internal vocabulary never reaches the sentence.
     for item in everything:
@@ -269,7 +271,7 @@ async def test_live_endpoint_lists_calls_in_progress_and_today(db):
     snap = await feed.live_snapshot(tid, since=_now() - timedelta(hours=5))
     assert [c["callId"] for c in snap["calls"]] == [str(live_call.call_id)]
     assert snap["calls"][0]["agentName"] == "Meera"
-    assert snap["calls"][0]["contact"] == {"name": "Ravi", "phoneMasked": "+91 98••• ••123"}
+    assert snap["calls"][0]["contact"] == {"name": "Ravi", "phone": "+91 98765 43123"}
     assert snap["today"]["calls"] == 1 and snap["today"]["talkSeconds"] == 200 and snap["today"]["bookings"] == 1
 
 
@@ -345,18 +347,22 @@ async def test_new_tenant_feed_is_empty_but_explains_wallet(db):
     assert [p["type"] for p in page["pinned"]] == ["billing.low"]
 
 
-def test_indian_numbers_mask_the_same_with_or_without_country_code():
+def test_indian_numbers_format_the_same_with_or_without_country_code():
     for raw in ("+918897123470", "918897123470", "8897123470"):
-        assert feed.mask_phone(raw) == "+91 88••• ••470", raw
-    # A number stored as the contact's name is masked too.
-    assert feed._contact("918897123470", None) == {"name": None, "phoneMasked": "+91 88••• ••470"}
+        assert feed.format_phone(raw) == "+91 88971 23470", raw
+    # A number stored as the contact's name is shown formatted, not as a raw digit string.
+    assert feed._contact("918897123470", None) == {"name": None, "phone": "+91 88971 23470"}
     assert feed._contact("Mohan", "+918897123470")["name"] == "Mohan"
 
 
-def test_mask_and_money_helpers():
-    assert feed.mask_phone("+919876543123") == "+91 98••• ••123"
-    assert feed.mask_phone("+12025550123") == "+1 202•••123"
-    assert feed.mask_phone("") is None
+def test_phone_format_and_money_helpers():
+    assert feed.format_phone("+919876543123") == "+91 98765 43123"
+    assert feed.format_phone("+12025550123") == "+1 202 555 0123"
+    assert feed.format_phone("04023456789") == "+91 40 2345 6789"
+    assert feed.format_phone("+442071838750") == "+442 071 838 750"
+    assert feed.format_phone("") is None
+    # Old name still works for existing imports.
+    assert feed.mask_phone is feed.format_phone
     assert feed.money_inr(12_345_600) == "₹1,23,456"
     assert feed.money_inr(12_050) == "₹120.50"
 

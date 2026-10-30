@@ -104,6 +104,18 @@ def _principal():
     return SubscriberPrincipal(uuid.uuid4(), uuid.uuid4(), "owner", "buyer@example.test")
 
 
+def _rent_covers_inventory(monkeypatch):
+    """Rent above every fixture's carrier price (setup + monthly, up to ₹1,100).
+
+    Numbers whose carrier price exceeds the rent are hidden from the catalog
+    (they cannot be sold); these tests are about categories, not pricing.
+    """
+    async def rates():
+        return {"did_monthly_usd_cents": 1300, "did_monthly_inr_paise": 120000}
+
+    monkeypatch.setattr("server.services.saas.billing_rates.load_current_rates", rates)
+
+
 @pytest.mark.asyncio
 async def test_catalog_returns_category_and_area_and_hides_carrier_cost(monkeypatch):
     async def provider_search(_client, *, country, limit):
@@ -111,6 +123,7 @@ async def test_catalog_returns_category_and_area_and_hides_carrier_cost(monkeypa
         return [dict(BENGALURU), dict(SERIES_92), dict(TOLL_FREE)]
 
     _configure_catalog_route(monkeypatch, search=provider_search)
+    _rent_covers_inventory(monkeypatch)
     result = await app_telephony.search_numbers(country="IN", principal=_principal())
 
     rows = {row["e164"]: row for row in result["numbers"]}
@@ -122,7 +135,7 @@ async def test_catalog_returns_category_and_area_and_hides_carrier_cost(monkeypa
     assert result["category"] == "all"
     for row in result["numbers"]:
         # Tenant price is the platform rent; the carrier's cost stays internal.
-        assert row["monthlyInr"] == 400.0
+        assert row["monthlyInr"] == 1200.0
         assert not {"setup_fee", "monthly_fee", "release_fee", "currency"}.intersection(row)
 
 
@@ -135,6 +148,7 @@ async def test_catalog_filters_by_category_and_area(monkeypatch):
         return [dict(BENGALURU), dict(AHMEDABAD), dict(SERIES_92), dict(TOLL_FREE)]
 
     _configure_catalog_route(monkeypatch, search=provider_search)
+    _rent_covers_inventory(monkeypatch)
 
     landlines = await app_telephony.search_numbers(country="IN", category="landline", principal=_principal())
     assert {r["e164"] for r in landlines["numbers"]} == {BENGALURU["e164"], AHMEDABAD["e164"]}

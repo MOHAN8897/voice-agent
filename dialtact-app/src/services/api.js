@@ -134,6 +134,15 @@ export function stripEntityTags(script) {
     .trim();
 }
 
+/** 5xx answers that carry a specific, tenant-readable refusal (not a backend fault). */
+const DEFINITE_REFUSAL_CODES = new Set([
+  'voice_service_unavailable',
+  'voice_preparation_failed',
+  'live_transcription_unavailable',
+  'phone_service_unavailable',
+  'prewarm_failed',
+]);
+
 export function parseApiError(data, status) {
   const detail = data?.detail;
   const err =
@@ -708,7 +717,14 @@ export const api = {
         // otherwise a stale outcome mislabels ordinary 4xx responses.
         const refreshFaulted =
           triedRefresh && !refreshOk && Boolean(api._lastRefreshOutcome?.isServerFault);
-        const isServerDegraded = response.status >= 500 || refreshFaulted;
+        // A refused call because a voice vendor is down, or a number purchase refused
+        // before charging, is a definite answer from a healthy backend, not a degraded
+        // workspace: show its message, no banner.
+        const refusedBeforeCharge =
+          data?.charged === false || data?.detail?.charged === false || data?.detail?.error?.charged === false;
+        const isServerDegraded =
+          (response.status >= 500 && !DEFINITE_REFUSAL_CODES.has(parsed.code) && !refusedBeforeCharge) ||
+          refreshFaulted;
 
         const e = new Error(
           isConfirmedAuthDead

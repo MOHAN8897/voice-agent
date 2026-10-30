@@ -17,7 +17,7 @@ import { TactileButton } from '../../ui/TactileButton';
 import { Skeleton } from '../../ui/Skeleton';
 import { api } from '../../../services/api';
 import { formatClock, formatInr, formatUsd, relativeTime } from '../../../lib/money';
-import { maskPhone } from '../../../lib/phoneMask';
+import { formatPhone, looksLikePhone } from '../../../lib/phoneMask';
 import { callReference, endReasonLabel, statusWord, tagLabel, tagTone } from '../../../lib/internalLabels';
 import { ItemAvatar, ItemSentence, PRIMARY_KINDS, iconFor } from './FeedItem';
 import { fetchItemDetail, itemTargets } from './activityDetail';
@@ -205,7 +205,8 @@ function money(charge) {
 function CallBlock({ call, item, now, title }) {
   const outbound = call.direction === 'outbound';
   const phone = outbound ? call.called_phone : call.caller_phone;
-  const contactName = item.contact?.name || (call.customer && !/^\+?[\d\s()-]{7,}$/.test(call.customer) ? call.customer : null);
+  const contactName = item.contact?.name || (call.customer && !looksLikePhone(call.customer) ? call.customer : null);
+  const phoneLabel = formatPhone(phone) || item.contact?.phone || null;
   const live = call.in_progress || call.status === 'in_progress';
   const elapsed = live && call.started_at ? (now - new Date(call.started_at).getTime()) / 1000 : null;
   const duration = elapsed != null ? formatClock(elapsed) : call.duration_sec ? formatClock(call.duration_sec) : null;
@@ -215,8 +216,14 @@ function CallBlock({ call, item, now, title }) {
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
         <Field label="Agent">{call.agent_name || 'Agent'}</Field>
         <Field label="Contact">
-          {contactName || maskPhone(phone) || 'Unknown caller'}
-          {phone && <span className="block font-mono text-meta tabular-nums text-fg-body">{phone}</span>}
+          {contactName ? (
+            <>
+              {contactName}
+              {phoneLabel && <span className="block font-mono text-meta tabular-nums text-fg-body">{phoneLabel}</span>}
+            </>
+          ) : (
+            phoneLabel ? <span className="font-mono tabular-nums">{phoneLabel}</span> : 'Unknown caller'
+          )}
         </Field>
         <Field label="Direction">{outbound ? 'Outgoing' : 'Incoming'}</Field>
         <Field label="Status"><StatusBadge status={call.status} size="xs" /></Field>
@@ -292,7 +299,7 @@ function LeadBlock({ lead }) {
             </span>
           ) : 'Not scored yet'}
         </Field>
-        <Field label="Phone" mono>{lead.phone}</Field>
+        <Field label="Phone" mono>{formatPhone(lead.phone)}</Field>
         <Field label="Email">{lead.email}</Field>
         <Field label="Updated">{fullDate(lead.updatedAt)}</Field>
       </dl>
@@ -308,6 +315,7 @@ function LeadBlock({ lead }) {
 const FACT_LABELS = {
   status: 'Status',
   requestedWhen: 'Asked for',
+  resolvedWindow: 'Call window',
   dueAt: 'Will call',
   expiresAt: 'Expires',
   requestedAt: 'Requested',

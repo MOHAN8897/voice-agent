@@ -252,3 +252,46 @@ test('Converted is tenant-confirmed, counted, and filterable', async ({ page }) 
   await page.getByRole('combobox', { name: 'Stage', exact: true }).selectOption('Converted');
   await expect(page.getByTestId('lead-metric-matching-leads')).toHaveText('1');
 });
+
+test('a whole lead row, card and list item opens the lead; controls inside keep their own job', async ({ page }) => {
+  await leadsFixture(page);
+  const row = page.getByTestId('lead-row-lead-0');
+  // Clicking a plain cell (the stage cell) opens the lead.
+  await row.locator('td').nth(2).click();
+  await expect(page.getByRole('dialog')).toContainText('Customer 00');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  // The checkbox selects without opening.
+  await row.getByRole('checkbox').check();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(row.getByRole('checkbox')).toBeChecked();
+
+  // Selecting text in the row (copying a number) does not open it.
+  const phone = row.getByText('+1 202 555 0100');
+  const box = await phone.boundingBox();
+  await page.mouse.move(box.x + 1, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width - 1, box.y + box.height / 2, { steps: 5 });
+  await page.mouse.up();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  // Keyboard: the row is focusable and Enter opens it.
+  await page.evaluate(() => window.getSelection()?.removeAllRanges());
+  await row.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog')).toContainText('Customer 00');
+  await page.keyboard.press('Escape');
+
+  // Board view: the whole card opens the lead.
+  await page.getByRole('button', { name: 'Board view' }).click();
+  await page.getByTestId('lead-card-lead-1').getByText('Enquiry 1 needs a demo').click();
+  await expect(page.getByRole('dialog')).toContainText('Customer 01');
+  await page.keyboard.press('Escape');
+
+  // Mobile list: the whole item opens the lead.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'List view' }).click();
+  await page.getByTestId('lead-item-lead-3').getByText('Enquiry 3 needs a demo').click();
+  await expect(page.getByRole('dialog')).toContainText('Customer 03');
+});

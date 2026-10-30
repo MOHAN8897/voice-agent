@@ -243,7 +243,8 @@ export function AgentSettingsPanel({
       const baseSnapshot = initialSnapshot ? JSON.parse(initialSnapshot) : {};
       const needsConsent = followup?.enabled && (!baseSnapshot.followup?.enabled ||
         (followup.callbackMode === 'automatic' && baseSnapshot.followup?.callbackMode !== 'automatic') ||
-        (followup.missedMode === 'automatic' && baseSnapshot.followup?.missedMode !== 'automatic'));
+        (followup.missedMode === 'automatic' && baseSnapshot.followup?.missedMode !== 'automatic') ||
+        (followup.recallOutboundMode === 'automatic' && baseSnapshot.followup?.recallOutboundMode !== 'automatic'));
       if (needsConsent && !followupAcknowledged) throw new Error('Confirm follow-up call permission and wallet charges before saving.');
 
       // 1. Update Agent identity, status, and recording disclosures in a single call
@@ -655,7 +656,7 @@ export function AgentSettingsPanel({
       </SolidCard></div>
       </div>
       </fieldset>
-      {['all', 'followups'].includes(category) && <fieldset disabled={readOnly || savingChanges || saving}><FollowUpSettingsCard config={followup} onChange={setFollowup} acknowledged={followupAcknowledged} onAcknowledge={setFollowupAcknowledged} needsConsent={Boolean(followup?.enabled && (!JSON.parse(initialSnapshot || '{}').followup?.enabled || (followup.callbackMode === 'automatic' && JSON.parse(initialSnapshot || '{}').followup?.callbackMode !== 'automatic') || (followup.missedMode === 'automatic' && JSON.parse(initialSnapshot || '{}').followup?.missedMode !== 'automatic')))} error={followupError} /></fieldset>}
+      {['all', 'followups'].includes(category) && <fieldset disabled={readOnly || savingChanges || saving}><FollowUpSettingsCard config={followup} onChange={setFollowup} acknowledged={followupAcknowledged} onAcknowledge={setFollowupAcknowledged} needsConsent={Boolean(followup?.enabled && (!JSON.parse(initialSnapshot || '{}').followup?.enabled || (followup.callbackMode === 'automatic' && JSON.parse(initialSnapshot || '{}').followup?.callbackMode !== 'automatic') || (followup.missedMode === 'automatic' && JSON.parse(initialSnapshot || '{}').followup?.missedMode !== 'automatic') || (followup.recallOutboundMode === 'automatic' && JSON.parse(initialSnapshot || '{}').followup?.recallOutboundMode !== 'automatic')))} error={followupError} /></fieldset>}
     </div>
   );
 }

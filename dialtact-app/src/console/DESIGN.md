@@ -110,8 +110,12 @@ Shadow: `shadow-craft-xs` on cards; `shadow-craft-lg` only on floating menus.
   the secondary figure where a screen already had them (`walletAmounts().secondary`).
 - **Time** via `relativeTime()` ("4 min ago", "Yesterday 6:10 pm") with the full date
   in a `title`; live timers via `formatClock()` ("2:14").
-- Contact phone numbers in summaries are masked (`+91 98••• ••123`); full numbers
-  stay on the detail screens that already show them.
+- Contact phone numbers are shown in full, formatted, everywhere in the console
+  (`+91 93982 47132`, `+1 202 555 0123`) via `formatPhone()` / `contactName()` in
+  `src/lib/phoneMask.js` (the backend feed uses the matching `format_phone`). They are
+  the tenant's own customers, so every tenant user may see them. Never show a raw
+  digit string (`919398247132`), including a number stored as a contact's name; set
+  numbers in `font-mono tabular-nums`.
 
 ## 6. Primitives
 

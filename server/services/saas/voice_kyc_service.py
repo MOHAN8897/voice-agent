@@ -373,11 +373,20 @@ async def start_kyc_session(
                 raise ValueError("Invalid hosted verification session")
         except Exception as exc:
             logger.warning("Tenant voice KYC session failed tenant=%s error_type=%s", tenant_id, type(exc).__name__)
+            # Keep the reason on the row so the admin Verification page can show
+            # that the hosted link, not the tenant, is what failed.
+            status_code = getattr(exc, "status", None)
+            row.last_error_code = (
+                f"kyc_session_http_{status_code}" if isinstance(status_code, int) else "kyc_session_failed"
+            )[:64]
+            row.updated_at = _utcnow()
+            await session.commit()
             raise VoiceKycError("voice_kyc_session_failed") from exc
         row.kyc_session_id = session_id
         row.encrypted_kyc_url = encrypt_subaccount_token(tenant_id, session_url)
         row.kyc_session_expires_at = expires
         row.kyc_session_status = "link_ready"
+        row.last_error_code = None
         await session.commit()
     return {**status, "sessionUrl": session_url}
 
@@ -412,11 +421,14 @@ async def refresh_kyc_status(
     if account.provisioning_status != "active" or not account.auth_id or not account.encrypted_auth_token:
         carrier_ready = _carrier_setup_configured()
         is_sub_active = account.provisioning_status == "active" and bool(account.auth_id)
-        computed_status = (
-            "not_started"
-            if account.auth_id is None and account.provisioning_status not in {"creating", "failed"}
-            else account.provisioning_status
-        )
+        if account.provisioning_status in {"provisioning_unknown", "credentials_lost"}:
+            # The carrier may have created the account; a retry would be refused
+            # with "needs review". Say so instead of offering "Start verification".
+            computed_status = "needs_review"
+        elif account.auth_id is None and account.provisioning_status not in {"creating", "failed"}:
+            computed_status = "not_started"
+        else:
+            computed_status = account.provisioning_status
         return {
             "required": True,
             "configured": carrier_ready,
@@ -831,6 +843,26 @@ async def admin_set_voice_kyc_status(
         return _public_status(row)
 
 
+def voice_kyc_admin_error(provisioning_status: str | None, code: str | None) -> str | None:
+    """Operator explanation of why a tenant's voice KYC setup is stuck."""
+    code = str(code or "")
+    if provisioning_status in {"provisioning_unknown", "credentials_lost"} or code in {
+        "provider_result_unknown", "provider_credentials_missing",
+    }:
+        return (
+            "Vobiz sub-account creation did not return a usable result (timeout or missing credentials). "
+            "Check the Vobiz console for a sub-account with this email before letting the tenant retry."
+        )
+    if code.startswith("provider_http_"):
+        return f"Vobiz refused sub-account creation (HTTP {code.removeprefix('provider_http_')}). The tenant can retry after correcting their details."
+    if code.startswith("kyc_session_http_") or code == "kyc_session_failed":
+        detail = code.removeprefix("kyc_session_http_") if code.startswith("kyc_session_http_") else "no response"
+        return f"Vobiz could not create the hosted KYC link ({detail}). The sub-account exists; the tenant can retry."
+    if code:
+        return code.replace("_", " ")
+    return None
+
+
 async def list_voice_verifications(status: str | None = None) -> list[dict]:
     """List tenant carrier subaccount KYC records for platform ops / admin panel."""
     factory = get_session_factory()
@@ -884,6 +916,9 @@ async def list_voice_verifications(status: str | None = None) -> list[dict]:
             "provisioningStatus": sub.provisioning_status,
             "verifications": sub.verifications or {},
             "subaccountAuthId": sub.auth_id,
+            "kycSessionStatus": sub.kyc_session_status,
+            "lastErrorCode": sub.last_error_code,
+            "lastError": voice_kyc_admin_error(sub.provisioning_status, sub.last_error_code),
             "updatedAt": sub.updated_at.isoformat() if sub.updated_at else None,
             "createdAt": sub.created_at.isoformat() if sub.created_at else None,
         })

@@ -10,6 +10,7 @@ import { showToast } from '../ui/ToastHost';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
+import { outboundCallErrorMessage } from '../lib/outboundCall';
 import { dayBucket, walletAmounts } from '../../lib/money';
 import { useActivityFeed, useLiveRail } from './home/useActivity';
 import { FeedItem } from './home/FeedItem';
@@ -221,7 +222,7 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
   };
 
   const handleAction = async (item, action) => {
-    const who = item.contact?.name || item.contact?.phoneMasked || 'this contact';
+    const who = item.contact?.name || item.contact?.phone || 'this contact';
     switch (action.kind) {
       case 'open_call':
         return openCall(action.callId);
@@ -237,12 +238,17 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
           body: `Your agent will call ${who} now from your phone line. The call is charged to your wallet, and DND and calling hours still apply.`,
           confirmLabel: 'Call now',
           run: async () => {
-            const res = await api.request('POST', `/api/calls/${encodeURIComponent(action.callId)}/callback`, {
-              mode: 'manual',
-              dialRequestId: crypto.randomUUID(),
-              ...(outboundFromE164 ? { fromE164: outboundFromE164 } : {}),
-            });
-            if (res?.ok === false) throw new Error(res?.error?.message || res?.error || 'The call could not be placed.');
+            let res;
+            try {
+              res = await api.request('POST', `/api/calls/${encodeURIComponent(action.callId)}/callback`, {
+                mode: 'manual',
+                dialRequestId: crypto.randomUUID(),
+                ...(outboundFromE164 ? { fromE164: outboundFromE164 } : {}),
+              });
+            } catch (e) {
+              throw new Error(outboundCallErrorMessage(e));
+            }
+            if (res?.ok === false) throw new Error(outboundCallErrorMessage({ code: res?.code, message: res?.error?.message || res?.error || 'The call could not be placed.' }));
             return `Calling ${who}. It will appear here when it connects.`;
           },
         });
@@ -256,8 +262,13 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
           run: async () => {
             const ready = await api.languageSwitch.readiness(action.agentId, action.language);
             if (!ready?.ready) throw new Error(ready?.message || `This agent can't call in ${action.languageLabel} yet.`);
-            const res = await api.languageSwitch.call(action.requestId, outboundFromE164 || null);
-            if (res?.ok === false) throw new Error(res?.error || 'The call could not be placed. The request is still open.');
+            let res;
+            try {
+              res = await api.languageSwitch.call(action.requestId, outboundFromE164 || null);
+            } catch (e) {
+              throw new Error(outboundCallErrorMessage(e));
+            }
+            if (res?.ok === false) throw new Error(outboundCallErrorMessage({ code: res?.code, message: res?.error || 'The call could not be placed. The request is still open.' }));
             return `Calling ${who} in ${action.languageLabel}.`;
           },
         });

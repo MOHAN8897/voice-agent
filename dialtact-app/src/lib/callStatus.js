@@ -28,7 +28,7 @@ export const CALL_STATUS_META = {
     label: 'Missed',
     short: 'Missed',
     tone: 'warning',
-    hint: 'Nobody picked up, or the caller hung up immediately.',
+    hint: 'Nobody picked up: a missed incoming call, or an outgoing call that rang out.',
   },
   outbound: {
     label: 'Outgoing',
@@ -90,10 +90,10 @@ export function statusLabel(status) {
 export const CALL_STATUS_TABS = [
   { id: 'all', label: 'All calls' },
   { id: 'answered', label: 'Answered' },
-  { id: 'missed', label: 'Missed' },
+  { id: 'missed', label: 'Missed / no answer' },
   { id: 'voicemail', label: 'Voicemail' },
   { id: 'outbound', label: 'Outgoing' },
-  { id: 'declined', label: 'Declined' },
+  { id: 'declined', label: 'Busy / declined' },
   { id: 'failed', label: 'Failed' },
   { id: 'in_progress', label: 'Live' },
 ];

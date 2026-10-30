@@ -501,9 +501,13 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
         )
     )
 
+    from server.services import provider_health as _ph
+    from server.services.call_setup_failures import prepare_with_retry, setup_failure, unavailable_result
+
+    _health_ctx = _ph.set_call_context(call_id=prewarm_external_id, tenant_id=getattr(session, "tenant_id", None))
     try:
-        await pstn_prewarm_registry.prepare(
-            "telnyx", prewarm_external_id,
+        await prepare_with_retry(
+            pstn_prewarm_registry, "telnyx", prewarm_external_id,
             _outbound_prewarm_meta(
                 body, tier=tier or "medium", language=language,
                 source_session_id=source_session_id, inherit_config=inherit_config,
@@ -511,12 +515,20 @@ async def _outbound_telnyx(body: OutboundTestBody, session: SessionData) -> dict
             ),
         )
     except Exception as exc:
+        failure = setup_failure(exc)
         log_pstn("dial.preparation.failed", control=prewarm_external_id,
-                 error_type=type(exc).__name__)
-        if prepared_voice_opening_required:
+                 error_type=type(exc).__name__,
+                 failed_provider=failure.provider if failure else None,
+                 category=failure.category if failure else None)
+        if prepared_voice_opening_required or (failure and failure.category in _ph.HARD_CATEGORIES):
+            if failure:
+                return unavailable_result(failure, call_id=prewarm_external_id,
+                                          tenant_id=getattr(session, "tenant_id", None))
             return {"ok": False, "error": "Opening audio could not be prepared. Call was not placed.",
                     "code": "prewarm_failed"}
         logger.warning("[PSTN-Telnyx] Composed prewarm failed (%s), proceeding with live synthesis on answer", type(exc).__name__)
+    finally:
+        _ph.reset_call_context(_health_ctx)
     bound = False
     try:
         blocked = await _predial_block(body)
@@ -726,9 +738,13 @@ async def _outbound_vobiz(
         prewarm_required=prepared_voice_opening_required,
     )
 
+    from server.services import provider_health as _ph
+    from server.services.call_setup_failures import prepare_with_retry, setup_failure, unavailable_result
+
+    _health_ctx = _ph.set_call_context(call_id=tracking_id, tenant_id=session.tenant_id)
     try:
-        await pstn_prewarm_registry.prepare(
-            "vobiz", tracking_id,
+        await prepare_with_retry(
+            pstn_prewarm_registry, "vobiz", tracking_id,
             {**_outbound_prewarm_meta(
                 body, tier=tier or "medium", language=language,
                 source_session_id=source_session_id, inherit_config=inherit_config,
@@ -736,15 +752,24 @@ async def _outbound_vobiz(
             ), "tenant_id": session.tenant_id},
         )
     except Exception as exc:
-        log_pstn("vobiz.prewarm_failed", control=tracking_id, error_type=type(exc).__name__)
-        if prepared_voice_opening_required:
+        failure = setup_failure(exc)
+        log_pstn("vobiz.prewarm_failed", control=tracking_id, error_type=type(exc).__name__,
+                 failed_provider=failure.provider if failure else None,
+                 category=failure.category if failure else None)
+        # A vendor that is out of credits / rejecting its key cannot carry the
+        # call after answer either, so never ring someone into silence.
+        if prepared_voice_opening_required or (failure and failure.category in _ph.HARD_CATEGORIES):
             from server.services.saas.voice_setup_errors import voice_setup_error
 
-            setup_error = voice_setup_error(exc)
+            setup_error = voice_setup_error(exc) or (voice_setup_error(exc.__cause__) if isinstance(exc.__cause__, Exception) else None)
             if setup_error:
                 return {"ok": False, "error": setup_error["message"], "code": setup_error["code"], "status": 409}
+            if failure:
+                return unavailable_result(failure, call_id=tracking_id, tenant_id=session.tenant_id)
             return {"ok": False, "error": "The agent could not get ready. No phone call was placed. Please try again.", "code": "voice_preparation_failed"}
         logger.warning("[PSTN] Composed prewarm failed (%s), proceeding with live synthesis on answer", type(exc).__name__)
+    finally:
+        _ph.reset_call_context(_health_ctx)
 
     ans_url = f"{base_api}/api/vobiz/answer?token={token}&outbound_id={tracking_id}"
     hup_url = f"{base_api}/api/vobiz/hangup?token={token}&outbound_id={tracking_id}"

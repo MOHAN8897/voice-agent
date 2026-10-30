@@ -855,6 +855,10 @@ async def generate_response(
 
         except APIStatusError as e:
             status = getattr(e, "status_code", 500)
+            if status in (401, 402, 403, 429) or status >= 500:
+                from server.services.provider_health import record_http_failure
+
+                record_http_failure("openai", "llm", status, getattr(e, "body", None))
             if status in (401, 403):
                 raise AppError(ErrorCode.AUTH_ERROR, provider="openai", status_code=status, cause=e) from e
             if status == 429:

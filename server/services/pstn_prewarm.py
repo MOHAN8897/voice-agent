@@ -115,6 +115,7 @@ class _PrewarmEntry:
     realtime_key: str = ""
     bundle: PstnPrewarmBundle | None = None
     error: str | None = None
+    exc: BaseException | None = None
 
 
 class PstnPrewarmRegistry:
@@ -134,7 +135,9 @@ class PstnPrewarmRegistry:
             await asyncio.wait_for(asyncio.shield(entry.task), timeout=timeout_sec)
             bundle = entry.bundle
             if bundle is None or not bundle.greeting_text or not bundle.greeting_wire_frames:
-                raise RuntimeError("Opening audio preparation failed; call was not placed")
+                # Chain the real cause so callers can tell a vendor outage
+                # (Sarvam out of credits) from a local preparation fault.
+                raise RuntimeError("Opening audio preparation failed; call was not placed") from entry.exc
         except BaseException:
             await self.cancel(provider, external_id)
             raise
@@ -211,6 +214,7 @@ class PstnPrewarmRegistry:
                 entry = self._entries.get(key)
                 if entry is not None and entry.task is asyncio.current_task():
                     entry.error = err[:200]
+                    entry.exc = exc
             await _destroy_realtime(rt_key)
             log_pstn("prewarm.failed", control=external_id, provider=provider, error=err[:200])
             logger.warning("[PSTN] prewarm failed %s %s: %s", provider, external_id, err[:200])

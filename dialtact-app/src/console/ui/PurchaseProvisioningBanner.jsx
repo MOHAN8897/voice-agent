@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '../../services/api';
 import { useWorkspace } from '../context/WorkspaceContext';
-import { statusWord } from '../../lib/internalLabels';
+import { PURCHASE_COPY, purchaseOutcomeMessage } from '../lib/numberPurchaseCopy';
 
 const STORAGE_PURCHASE = 'dialtact_pending_purchase';
 const STORAGE_ASSIGN_AGENT = 'dialtact_pending_assign_agent';
@@ -47,30 +47,25 @@ export function PurchaseProvisioningBanner() {
           );
           return;
         }
-        if (status === 'failed') {
+        if (status === 'failed' || status === 'refunded' || status === 'needs_attention') {
           sessionStorage.removeItem(STORAGE_PURCHASE);
           sessionStorage.removeItem(STORAGE_ASSIGN_AGENT);
-          setVariant('error');
-          setMessage('We could not set up your number. Check your wallet and try again, or contact support.');
-          return;
-        }
-        if (status === 'needs_attention') {
-          sessionStorage.removeItem(STORAGE_PURCHASE);
-          sessionStorage.removeItem(STORAGE_ASSIGN_AGENT);
-          setVariant('error');
-          setMessage('Your number needs help from support to finish setting up. Contact support before buying another one.');
+          // Calm, not alarming: the message says where the money is.
+          setVariant('warning');
+          setMessage(purchaseOutcomeMessage(row));
+          if (status !== 'needs_attention') loadWorkspaceData?.();
           return;
         }
         setVariant('info');
-        setMessage(`Setting up your number… (${statusWord(status || 'paid').label})`);
+        setMessage(`Setting up ${row?.e164 ? `number ${row.e164}` : 'your number'}. This usually takes under a minute.`);
         if (attempts < maxAttempts) {
           setTimeout(tick, 5000);
         } else {
-          setMessage('Setting up your number is taking longer than usual. Use Retry sync in the banner above.');
+          setMessage(PURCHASE_COPY.stillActivating);
         }
-      } catch (e) {
+      } catch {
         if (attempts < maxAttempts) setTimeout(tick, 5000);
-        else setMessage(e.message || 'We could not check on your number purchase.');
+        else setMessage(PURCHASE_COPY.checkingFailed);
       }
     };
 
@@ -93,12 +88,14 @@ export function PurchaseProvisioningBanner() {
       ? 'border-success-line bg-success-soft text-success-fg'
       : variant === 'error'
         ? 'border-danger-line bg-danger-soft text-danger-fg'
+        : variant === 'warning'
+          ? 'border-warning-line bg-warning-soft text-warning-fg'
         : 'border-info-line bg-info-soft text-info-fg';
 
-  const Icon = variant === 'success' ? CheckCircle2 : variant === 'error' ? AlertCircle : Loader2;
+  const Icon = variant === 'success' ? CheckCircle2 : variant === 'error' || variant === 'warning' ? AlertCircle : Loader2;
 
   return (
-    <div className={`mb-4 rounded-card border px-4 py-3 flex items-start gap-2 text-copy ${styles}`} role="status">
+    <div className={`mb-4 rounded-card border px-4 py-3 flex items-start gap-2 text-copy ${styles}`} role="status" data-testid="purchase-provisioning-banner">
       <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${variant === 'info' ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
       <span>{message}</span>
     </div>

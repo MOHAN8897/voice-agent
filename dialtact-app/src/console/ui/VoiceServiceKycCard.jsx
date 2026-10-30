@@ -22,6 +22,7 @@ function statusLabel(status) {
   if (status === 'failed') return 'Needs more information';
   if (status === 'not_started') return 'Not started';
   if (status === 'creating') return 'Setting up';
+  if (status === 'account_disabled') return 'Paused';
   return 'Needs support';
 }
 
@@ -175,7 +176,8 @@ export function VoiceServiceKycCard({ onApproved }) {
     );
   }
 
-  const canStart = status?.configured === true && !loading && !['creating', 'provisioning_unknown', 'credentials_lost'].includes(status?.status);
+  const needsSupport = ['needs_review', 'provisioning_unknown', 'credentials_lost'].includes(status?.status);
+  const canStart = status?.configured === true && !loading && status?.status !== 'creating' && !needsSupport;
   const documents = ['individual', 'proprietorship', 'huf'].includes(businessType)
     ? 'Have your PAN and Aadhaar ready. Aadhaar verification uses DigiLocker with your consent.'
     : businessType ? 'Have the entity PAN and GST or CIN / registration details ready. The secure verification page will confirm the documents required for your entity.' : 'Choose the legal entity that will own the phone number.';
@@ -237,6 +239,16 @@ export function VoiceServiceKycCard({ onApproved }) {
         </div>
       )}
 
+      {needsSupport && (
+        <p className="rounded-control border border-warning-line bg-warning-soft p-3 text-ui text-warning-fg" role="status" data-testid="voice-service-kyc-needs-support">
+          Your phone service setup needs a quick check from our team before verification can continue. Please contact support; there is no need to start again.
+        </p>
+      )}
+      {status?.status === 'failed' && (
+        <p className="text-ui text-fg-body" role="status">
+          Verification needs more information. Check your legal name and entity type, then start verification again.
+        </p>
+      )}
       {status?.configured === false && (
         <p className="text-ui text-warning-fg" role="status">Phone service verification is not available yet. Contact support to continue.</p>
       )}

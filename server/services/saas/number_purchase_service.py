@@ -202,6 +202,31 @@ def _money_minor_units(value) -> int | None:
         return None
 
 
+def carrier_charge_minor(row: dict | None) -> tuple[int, str] | None:
+    """Carrier's first charge for a DID (setup + monthly) in minor units, with currency.
+
+    None when the row carries no usable fee. Vobiz debits exactly this from the
+    parent account when the number is bought.
+    """
+    if not isinstance(row, dict):
+        return None
+    setup = _money_minor_units(row.get("setup_fee")) or 0
+    monthly = _money_minor_units(row.get("monthly_fee"))
+    if monthly is None and not setup:
+        return None
+    currency = str(row.get("currency") or "").strip().upper()
+    return setup + (monthly or 0), currency
+
+
+def retail_minor_for(currency: str, rates: dict) -> int | None:
+    """The platform's monthly rent in the carrier's currency (minor units)."""
+    if currency == "INR":
+        return int(rates.get("did_monthly_inr_paise") or 0)
+    if currency == "USD":
+        return int(rates.get("did_monthly_usd_cents") or 0)
+    return None
+
+
 def carrier_charge_exceeds_retail(row: dict, rates: dict) -> bool:
     """True when the carrier's first charge for this DID exceeds what we collect.
 
@@ -211,19 +236,14 @@ def carrier_charge_exceeds_retail(row: dict, rates: dict) -> bool:
     loss, so it is neither listed nor sold. Unknown currency or fees are allowed
     (the configured carrier-balance gate still applies).
     """
-    if not isinstance(row, dict):
+    charge = carrier_charge_minor(row)
+    if charge is None:
         return False
-    setup = _money_minor_units(row.get("setup_fee")) or 0
-    monthly = _money_minor_units(row.get("monthly_fee"))
-    if monthly is None and not setup:
+    carrier_minor, currency = charge
+    retail = retail_minor_for(currency, rates)
+    if retail is None:
         return False
-    carrier_minor = setup + (monthly or 0)
-    currency = str(row.get("currency") or "").strip().upper()
-    if currency == "INR":
-        return carrier_minor > int(rates.get("did_monthly_inr_paise") or 0)
-    if currency == "USD":
-        return carrier_minor > int(rates.get("did_monthly_usd_cents") or 0)
-    return False
+    return carrier_minor > retail
 
 
 async def create_purchase_checkout(
@@ -261,7 +281,7 @@ async def get_purchase(purchase_id: uuid.UUID, tenant_id: uuid.UUID) -> dict | N
             else None
         )
         refunded = None
-        if row.status == "failed":
+        if row.status in ("failed", "refunded"):
             from server.db.models.saas_models import BillingWalletTransaction
 
             refunded = (
@@ -272,6 +292,13 @@ async def get_purchase(purchase_id: uuid.UUID, tenant_id: uuid.UUID) -> dict | N
                     ).limit(1)
                 )
             ).first() is not None
+        from server.services.saas.number_purchase_errors import tenant_purchase_message
+
+        message = tenant_purchase_message(
+            row.status, (last_error or {}).get("code"), refunded
+        )
+        if last_error is not None:
+            last_error["message"] = message
         return {
             "purchaseId": str(row.id),
             "e164": row.e164,
@@ -280,6 +307,8 @@ async def get_purchase(purchase_id: uuid.UUID, tenant_id: uuid.UUID) -> dict | N
             "assignAgentId": str(row.assign_agent_id) if row.assign_agent_id else None,
             "lastError": last_error,
             "refunded": refunded,
+            # Plain-language state for the console; never a carrier detail.
+            "message": message,
         }
 
 
@@ -310,14 +339,19 @@ def normalize_e164(raw: str) -> str:
     return candidate
 
 
-async def assert_carrier_can_buy(e164: str) -> None:
-    """The account DID must be ordered from Telnyx in the same breath.
+async def assert_carrier_can_buy(e164: str, *, carrier_row: dict | None = None) -> None:
+    """The DID must be orderable from the carrier before the buyer is debited.
 
-    Without this, a workspace whose Telnyx balance is empty has its wallet debited,
+    Without this, a workspace whose carrier balance is empty has its wallet debited,
     sees a "paid" purchase, and only discovers the carrier refused when the
     provision job fails — then gets an async refund. Checking first turns that
     into an honest, synchronous failure before any money moves.
+
+    ``carrier_row`` is the live Vobiz inventory row for this DID; when it carries
+    the carrier price, the parent balance must cover that exact price (Vobiz debits
+    setup + monthly at purchase and answers HTTP 500 when it cannot).
     """
+    from server.services.saas.number_purchase_errors import PurchaseRefused
     from server.services.telephony import active_telephony_provider, provider_configured
 
     provider = active_telephony_provider()
@@ -333,6 +367,12 @@ async def assert_carrier_can_buy(e164: str) -> None:
                 type(exc).__name__,
             )
             return
+        if not isinstance(balance, dict) or balance.get("ok") is False or balance.get("fallback"):
+            # get_balance reports a failed read as balance 0 plus a flag rather
+            # than raising. Unknown is not "empty": let the purchase through; the
+            # worker refunds if Vobiz then refuses the debit.
+            logger.warning("vobiz balance unavailable, allowing purchase")
+            return
         remaining = _carrier_remaining(balance)
         curr = str(balance.get("currency") or "INR").upper()
         if remaining is not None:
@@ -342,13 +382,30 @@ async def assert_carrier_can_buy(e164: str) -> None:
                 min_bal = CARRIER_MIN_BALANCE_USD * fx
             else:
                 min_bal = CARRIER_MIN_BALANCE_USD
-            if remaining < min_bal:
+            required = min_bal
+            charge = carrier_charge_minor(carrier_row) if carrier_row else None
+            if charge is not None and charge[1] == curr:
+                required = max(min_bal, charge[0] / 100.0)
+            if remaining < required:
                 logger.warning(
-                    "vobiz balance too low for DID order remaining=%s %s",
+                    "vobiz balance too low for DID order remaining=%s required=%s %s",
                     remaining,
+                    required,
                     curr,
                 )
-                raise ValueError("carrier_balance_exhausted")
+                from server.services.provider_health import CREDITS, provider_health
+
+                provider_health.record_failure(
+                    "vobiz", "telephony", CREDITS,
+                    detail=f"Vobiz balance {remaining:.2f} {curr} is below the {required:.2f} {curr} needed to buy a number",
+                    summary="account balance too low to buy phone numbers — top up Vobiz (calls may still work)",
+                )
+                raise PurchaseRefused(
+                    "carrier_balance_exhausted",
+                    carrierBalance=round(remaining, 2),
+                    carrierRequired=round(required, 2),
+                    currency=curr,
+                )
         return
 
     from server.services.telnyx_client import TelnyxClient
@@ -372,11 +429,21 @@ async def assert_carrier_can_buy(e164: str) -> None:
             "telnyx balance too low for DID order remaining=%s",
             remaining,
         )
+        from server.services.provider_health import CREDITS, provider_health
+
+        provider_health.record_failure("telnyx", "telephony", CREDITS,
+                                       detail=f"Telnyx balance {remaining:.2f} USD is too low to buy a number",
+                                       summary="account balance too low to buy phone numbers — top up Telnyx")
         raise ValueError("carrier_balance_exhausted")
 
 
-async def _assert_vobiz_inventory_number_available(e164: str, country_code: str) -> None:
-    """Require a fresh match from Vobiz's unassigned inventory before wallet debit."""
+async def _assert_vobiz_inventory_number_available(e164: str, country_code: str) -> dict:
+    """Require a fresh match from Vobiz's unassigned inventory before wallet debit.
+
+    Returns the inventory row (its carrier price feeds the balance check).
+    """
+    from server.services.saas.number_purchase_errors import PurchaseRefused
+
     from server.services.vobiz_client import VobizClient, VobizConfigError
 
     try:
@@ -394,9 +461,20 @@ async def _assert_vobiz_inventory_number_available(e164: str, country_code: str)
         raise ValueError("number_unavailable")
     from server.services.saas.billing_rates import load_current_rates
 
-    if carrier_charge_exceeds_retail(match, await load_current_rates()):
+    rates = await load_current_rates()
+    if carrier_charge_exceeds_retail(match, rates):
         logger.warning("vobiz inventory number priced above retail; refusing sale")
-        raise ValueError("number_unavailable")
+        charge = carrier_charge_minor(match) or (0, "")
+        retail = retail_minor_for(charge[1], rates)
+        # Same tenant copy as "unavailable"; the distinct code tells the operator
+        # the rent is set below the carrier's price.
+        raise PurchaseRefused(
+            "carrier_price_above_retail",
+            carrierPrice=round(charge[0] / 100.0, 2),
+            retailPrice=round(retail / 100.0, 2) if retail is not None else None,
+            currency=charge[1] or None,
+        )
+    return match
 
 
 #: Typical local DID order needs ~$1 prepaid; $0.56 still 402s at Telnyx.
@@ -544,13 +622,14 @@ async def purchase_with_wallet(
     from server.services.telephony import active_telephony_provider
 
     active_provider = active_telephony_provider()
+    carrier_row: dict | None = None
     if active_provider == "vobiz":
         from server.services.saas.voice_kyc_service import assert_voice_kyc_approved
 
         await assert_voice_kyc_approved(principal.tenant_id, action="buy a phone number")
         # The account-owned-number endpoint is not an availability check. Only
         # an exact match in unassigned provider inventory can proceed to debit.
-        await _assert_vobiz_inventory_number_available(e164, country_code)
+        carrier_row = await _assert_vobiz_inventory_number_available(e164, country_code)
     else:
         transferred = await _purchase_from_inventory(
             principal,
@@ -562,7 +641,7 @@ async def purchase_with_wallet(
             return transferred
 
     # Never debit a buyer for a DID the active provider cannot order.
-    await assert_carrier_can_buy(e164)
+    await assert_carrier_can_buy(e164, carrier_row=carrier_row)
     inventory_tid = await ensure_platform_inventory_tenant()
     async with factory() as session:
         owned = (

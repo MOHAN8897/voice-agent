@@ -9,6 +9,14 @@ ROLE_PLATFORM_ADMIN = "platform_admin"
 ROLE_CUSTOMER_ADMIN = "customer_admin"
 ROLE_VOICE_ENGINEER = "voice_engineer"
 ROLE_CUSTOMER_VIEWER = "customer_viewer"
+# Admin-portal roles held by stored platform-admin accounts (see admin_accounts).
+ROLE_SUPER_ADMIN = "super_admin"
+ROLE_SUPPORT_AGENT = "support_agent"
+ROLE_BILLING_ADMIN = "billing_admin"
+ROLE_STACK_ENGINEER = "stack_engineer"
+
+#: The permission that lets an admin invite, change, suspend and remove other admins.
+PERMISSION_MANAGE_ADMINS = "dev.admin.admins"
 
 DEV_ROLES = frozenset({ROLE_ADMINISTRATOR, ROLE_DEVELOPER, ROLE_PLATFORM_ADMIN})
 APP_WRITE_ROLES = frozenset({ROLE_ADMINISTRATOR, ROLE_DEVELOPER, ROLE_CUSTOMER_ADMIN, ROLE_PLATFORM_ADMIN})
@@ -54,6 +62,31 @@ _PERMISSIONS: dict[str, FrozenSet[str]] = {
         {ROLE_CUSTOMER_ADMIN, ROLE_ADMINISTRATOR, ROLE_DEVELOPER, ROLE_PLATFORM_ADMIN}
     ),
 }
+
+
+
+def _grant_admin_portal_roles() -> None:
+    """Fold the admin-portal roles into the matrix.
+
+    `super_admin` holds everything the legacy all-powerful roles hold, plus the
+    right to manage other admins. The narrower roles get only the dev areas their
+    job needs, so a support agent cannot touch provider stacks or wallets.
+    """
+    for name, allowed in list(_PERMISSIONS.items()):
+        if ROLE_ADMINISTRATOR in allowed or ROLE_DEVELOPER in allowed:
+            _PERMISSIONS[name] = allowed | {ROLE_SUPER_ADMIN}
+    narrow = {
+        ROLE_SUPPORT_AGENT: ("dev.admin.support", "dev.admin.tenants", "dev.admin.users"),
+        ROLE_BILLING_ADMIN: ("dev.admin.billing", "dev.admin.tenants"),
+        ROLE_STACK_ENGINEER: ("dev.stack.read", "dev.stack.write", "dev.promote", "dev.platform_brain"),
+    }
+    for role, names in narrow.items():
+        for name in names:
+            _PERMISSIONS[name] = _PERMISSIONS[name] | {role}
+    _PERMISSIONS[PERMISSION_MANAGE_ADMINS] = frozenset({ROLE_SUPER_ADMIN})
+
+
+_grant_admin_portal_roles()
 
 
 def require_role_permission(role: str, permission: str) -> None:

@@ -37,13 +37,11 @@ from server.db.models.saas_models import (
     BillingWallet,
     BillingWalletTransaction,
     NumberPurchase,
-    ProvisionJob,
     RefreshToken,
     TenantMembership,
     User,
 )
 from server.services.saas.admin_audit import record_admin_action
-from server.services.saas.provision_worker import enqueue_provision
 
 router = APIRouter()
 
@@ -1864,63 +1862,52 @@ async def list_purchases(
 
 @router.post("/api/dev/admin/purchases/{purchase_id}/retry-provision")
 async def retry_provision(purchase_id: str, session: SessionData = Depends(require_dev_session)):
+    """Legacy endpoint; same guards as the Number purchases page.
+
+    A failed purchase has already been refunded, so it can never be requeued here
+    (that would hand out a number nobody paid for).
+    """
     require_permission(session, "dev.admin.billing")
     _require_db()
-    pid = uuid.UUID(purchase_id)
-    async with get_session_factory()() as db:
-        purchase = await db.get(NumberPurchase, pid)
-        if purchase is None:
-            raise HTTPException(status_code=404, detail="Not found")
-        purchase.status = "paid"
-        job = (await db.execute(select(ProvisionJob).where(ProvisionJob.purchase_id == pid))).scalar_one_or_none()
-        if job:
-            job.status = "queued"
-        await db.commit()
-    await enqueue_provision(pid)
+    from server.services.saas import number_purchase_admin as purchases_admin
+
+    try:
+        pid = uuid.UUID(purchase_id)
+        result = await purchases_admin.retry_purchase(pid)
+    except ValueError as exc:
+        status = getattr(exc, "status_code", 404)
+        message = getattr(exc, "message", "Not found")
+        raise HTTPException(status_code=status, detail=message) from None
     await record_admin_action(
         actor=session.subject,
         action="purchase.retry_provision",
         resource_type="purchase",
         resource_id=purchase_id,
-        tenant_id=purchase.tenant_id,
+        tenant_id=result.get("tenantId"),
     )
     return {"ok": True}
 
 
 @router.post("/api/dev/admin/purchases/{purchase_id}/refund")
 async def refund_purchase(purchase_id: str, session: SessionData = Depends(require_dev_session)):
+    """Legacy endpoint; refuses active numbers and in-flight jobs, refunds once."""
     require_permission(session, "dev.admin.billing")
-    settings = get_settings()
     _require_db()
-    pid = uuid.UUID(purchase_id)
-    refund_wallet = False
-    refund_tenant = None
-    refund_user = None
-    async with get_session_factory()() as db:
-        purchase = await db.get(NumberPurchase, pid)
-        if purchase is None:
-            raise HTTPException(status_code=404, detail="Not found")
-        refund_tenant = purchase.tenant_id
-        refund_user = purchase.user_id
-        refund_wallet = True
-        purchase.status = "refunded"
-        await db.commit()
+    from server.services.saas import number_purchase_admin as purchases_admin
 
-    if refund_wallet and refund_tenant:
-        from server.services.saas.billing_wallet_service import refund_did_purchase
-
-        await refund_did_purchase(
-            refund_tenant,
-            user_id=refund_user,
-            purchase_id=pid,
-        )
-
+    try:
+        pid = uuid.UUID(purchase_id)
+        result = await purchases_admin.refund_purchase(pid)
+    except ValueError as exc:
+        status = getattr(exc, "status_code", 404)
+        message = getattr(exc, "message", "Not found")
+        raise HTTPException(status_code=status, detail=message) from None
     await record_admin_action(
         actor=session.subject,
         action="purchase.refund",
         resource_type="purchase",
         resource_id=purchase_id,
-        tenant_id=refund_tenant,
+        tenant_id=result.get("tenantId"),
     )
     return {"ok": True}
 
@@ -3706,6 +3693,8 @@ async def list_kyc(
             "provider": "vobiz",
             "verifications": v["verifications"],
             "sessionId": v.get("subaccountAuthId"),
+            # Why setup is stuck (sub-account or hosted KYC link), in operator words.
+            "setupIssue": v.get("lastError"),
             "decision": {
                 "source": "vobiz_subaccount",
                 "actor": "carrier_hosted_kyc",

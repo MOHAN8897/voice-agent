@@ -22,7 +22,14 @@ class _Viewer(_Session):
 
 def test_support_admin_permission_is_restricted_to_dev_admin_roles():
     allowed = rbac._PERMISSIONS["dev.admin.support"]
-    assert allowed == {rbac.ROLE_ADMINISTRATOR, rbac.ROLE_DEVELOPER, rbac.ROLE_PLATFORM_ADMIN}
+    assert allowed == {
+        rbac.ROLE_ADMINISTRATOR,
+        rbac.ROLE_DEVELOPER,
+        rbac.ROLE_PLATFORM_ADMIN,
+        # Admin-portal roles for stored platform-admin accounts.
+        rbac.ROLE_SUPER_ADMIN,
+        rbac.ROLE_SUPPORT_AGENT,
+    }
     assert rbac.role_has_permission(rbac.ROLE_PLATFORM_ADMIN, "dev.admin.support")
     assert not rbac.role_has_permission(rbac.ROLE_CUSTOMER_ADMIN, "dev.admin.support")
     assert not rbac.role_has_permission(rbac.ROLE_CUSTOMER_VIEWER, "dev.admin.support")

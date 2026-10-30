@@ -35,8 +35,11 @@ def _isolate_test_database(tmp_path_factory):
     previous_saas_auth = os.environ.get("SAAS_AUTH_ENABLED")
     os.environ["SAAS_AUTH_ENABLED"] = "false"
     test_secrets = {key: os.environ.get(key) for key in ("OPENAI_API_KEY", "SARVAM_API_KEY")}
+    # Backup Sarvam keys from .env must never reach a unit test's request.
+    backup_sarvam = {f"SARVAM_API_KEY_{i}": os.environ.pop(f"SARVAM_API_KEY_{i}", None) for i in range(1, 10)}
+    test_secrets.update({k: v for k, v in backup_sarvam.items() if v is not None})
     Settings.model_config["env_file"] = None
-    for key in test_secrets:
+    for key in ("OPENAI_API_KEY", "SARVAM_API_KEY"):
         os.environ[key] = "unit-test-placeholder"
     try:
         from server.config.env import get_settings
@@ -101,6 +104,19 @@ def _stub_realtime_openai_ws(request):
     yield
     realtime_text_manager.reset_for_tests()
     realtime_text_manager._adapter_factory = OpenAIRealtimeTextAdapter
+
+
+@pytest.fixture(autouse=True)
+def _isolate_provider_health():
+    """Key cool-downs and provider incidents are per-process state."""
+    from server.services.provider_health import provider_health
+    from server.services.sarvam_keys import sarvam_key_pool
+
+    sarvam_key_pool.reset()
+    provider_health.reset()
+    yield
+    sarvam_key_pool.reset()
+    provider_health.reset()
 
 
 @pytest.fixture(autouse=True)

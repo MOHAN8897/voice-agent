@@ -15,9 +15,12 @@ export function voiceSetupData() {
   return { user, token, profiles, agent };
 }
 
-export async function setupVoiceWorkspace(page, { staleSelection = false, failSave = false, catalogVoices = 0 } = {}) {
+export async function setupVoiceWorkspace(page, { staleSelection = false, removedVoice = false, failSave = false, catalogVoices = 0 } = {}) {
   const data = voiceSetupData();
+  // An admin edit bumped the profile revision; the saved voice is still offered.
   if (staleSelection) data.agent.voiceSettings.profileRevision = 1;
+  // The saved voice was taken out of the catalog.
+  if (removedVoice) data.agent.voiceSettings.voiceId = 'voice-medium-removed';
   if (catalogVoices) data.profiles[0].engines[0].models[0].voices = Array.from({ length: catalogVoices }, (_, index) => ({
     id: `voice-low-${index + 1}`, label: `Voice ${index + 1}`, languages: ['te-IN'],
     category: index % 2 ? 'Conversational' : 'Normal', gender: index % 2 ? 'female' : 'male',

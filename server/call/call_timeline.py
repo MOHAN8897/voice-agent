@@ -15,6 +15,7 @@ from server.call.call_status import (
     status_for_record,
 )
 from server.call.call_store import call_attempt_store, call_store
+from server.call.hangup_causes import outcome_for_item
 
 #: Upper bound on rows each source contributes to a page. A page needs only the
 #: first ``offset + limit`` rows of each source to be merged and sliced correctly.
@@ -24,7 +25,11 @@ _MAX_FETCH = 2000
 def _attempt_to_item(row: dict[str, Any]) -> dict[str, Any]:
     """A ringing event, shaped like a call so the console needs one renderer."""
     status = status_for_record(row)
-    return {
+    outbound = str(row.get("direction") or "").lower() == "outbound"
+    # ``caller_phone`` is the other party the console shows: for an outbound
+    # attempt that is the number we dialled, not our own caller ID.
+    remote, local = (row.get("to_number"), row.get("from_number")) if outbound else (row.get("from_number"), row.get("to_number"))
+    item = {
         "call_id": row.get("attempt_id"),
         "attempt_id": row.get("attempt_id"),
         "is_attempt": True,
@@ -43,18 +48,20 @@ def _attempt_to_item(row: dict[str, Any]) -> dict[str, Any]:
         "end_reason": row.get("end_reason"),
         "policy_reason": row.get("policy_reason"),
         "disposition": None,
-        "caller_phone": row.get("from_number"),
-        "called_phone": row.get("to_number"),
+        "caller_phone": remote,
+        "called_phone": local,
         "summary": None,
         "status_tags": [],
         "has_recording": False,
         "has_transcript": False,
     }
+    item.update(outcome_for_item(item))
+    return item
 
 
 def _call_to_item(row: dict[str, Any]) -> dict[str, Any]:
     status = status_for_record(row)
-    return {
+    item = {
         "call_id": row.get("call_id"),
         "attempt_id": None,
         "is_attempt": False,
@@ -81,6 +88,8 @@ def _call_to_item(row: dict[str, Any]) -> dict[str, Any]:
         "has_recording": bool(row.get("has_recording")),
         "has_transcript": bool(row.get("summary")) or bool(row.get("has_transcript")),
     }
+    item.update(outcome_for_item(item))
+    return item
 
 
 def _sort_key(item: dict[str, Any]) -> str:

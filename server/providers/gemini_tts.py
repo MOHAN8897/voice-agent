@@ -246,6 +246,8 @@ class GeminiTTSAdapter:
                 ) as response,
             ):
                 if response.status_code >= 400:
+                    from server.services.provider_health import record_http_failure
+                    record_http_failure("gemini", "tts", response.status_code, await response.aread())
                     raise RuntimeError(f"Gemini TTS HTTP {response.status_code}")
                 async for payload in _sse_payloads(response):
                     feedback = payload.get("promptFeedback") or {}
@@ -360,6 +362,8 @@ class GeminiTTSAdapter:
                 raise RuntimeError("Gemini TTS transport failed") from exc
 
         if response.status_code >= 400:
+            from server.services.provider_health import record_http_failure
+            record_http_failure("gemini", "tts", response.status_code, response.content)
             raise RuntimeError(f"Gemini TTS HTTP {response.status_code}")
         try:
             payload = response.json()

@@ -12,11 +12,14 @@ import { humanizeToken, statusWord } from '../../lib/internalLabels';
 import { showToast } from '../ui/ToastHost';
 import { CampaignSetup } from './CampaignSetup';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { formatPhone } from '../../lib/phoneMask';
 
 const field = 'mt-1 block min-h-11 w-full min-w-0 rounded-control border border-line bg-surface px-3 text-base sm:text-ui text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15 disabled:opacity-50';
 const STATUS_LABEL = { active: 'Active', planning: 'Working out the time' };
 const statusLabel = (value) => STATUS_LABEL[value] || statusWord(value).label;
-const KIND_LABEL = { callback: 'Callback request', missed: 'Missed call' };
+const KIND_LABEL = { callback: 'Callback request', missed: 'Missed call', recall: 'Recall' };
+/** What happened on the outgoing call a recall follows up. */
+const RECALL_OUTCOME = { no_answer: "didn't answer", busy: 'was busy', declined: 'declined the call', failed: "couldn't be reached" };
 const kindLabel = (value) => KIND_LABEL[value] || humanizeToken(value);
 /** Why a follow-up is in its current state, in plain words. */
 const REASON_LABEL = {
@@ -35,8 +38,23 @@ const REASON_LABEL = {
   carrier_result_pending: 'Waiting for the call result',
   retry_unanswered: 'Retrying after no answer',
   lead_converted: 'Lead already converted',
+  requested_window_resolved: 'Booked at the start of the time they asked for',
+  requested_time_resolved: 'Booked for the time they asked for',
+  unanswered_outbound: 'Calling back after an unanswered call',
+  number_daily_cap: 'Daily call limit for this number reached; moved to the next day',
+  number_invalid: 'Number is invalid or not in service',
+  contact_already_reached: 'Already reached on another call',
+  explicit_callback_takes_priority: 'The caller asked for a callback instead',
+  already_queued_for_number: 'Already queued for this number',
 };
 const reasonLabel = (value) => REASON_LABEL[value] || humanizeToken(value);
+/** ISO instant -> value for a datetime-local input in the browser's timezone. */
+const toLocalInput = (iso) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime()) || d.getTime() <= Date.now()) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 const instant = (value, zone) => value ? new Date(value).toLocaleString('en-IN', { timeZone: zone || undefined, dateStyle: 'medium', timeStyle: 'short' }) : 'Choose a time';
 
 export function FollowUpQueue({ agentId, readOnly = false }) {
@@ -80,7 +98,14 @@ export function FollowUpQueue({ agentId, readOnly = false }) {
     } catch (error) { setImportError(error.message || 'Could not import earlier calls.'); }
     finally { setImporting(false); }
   }
-  const open = (row, action) => { setEditing({ row, action }); setDue(''); setConfirmed(false); setEditError(''); };
+  const open = (row, action) => {
+    setEditing({ row, action });
+    // Prefill the review with the window resolved from what the caller said ("tomorrow evening").
+    const suggested = row.resolvedWindow?.scheduledAt;
+    setDue(action === 'schedule' && suggested ? toLocalInput(suggested) : '');
+    setConfirmed(false);
+    setEditError('');
+  };
   const save = async (e) => {
     e.preventDefault(); if (busy || !confirmed || readOnly) return;
     setBusy(true); setEditError('');
@@ -136,12 +161,12 @@ export function FollowUpQueue({ agentId, readOnly = false }) {
               <NeedsYouItem
                 key={row.id}
                 agentName={agent}
-                icon={row.kind === 'missed' ? PhoneMissed : PhoneCall}
+                icon={row.kind === 'missed' || row.kind === 'recall' ? PhoneMissed : PhoneCall}
                 tone={review ? 'warning' : 'info'}
                 needsYou={review}
                 at={row.createdAt || row.updatedAt || null}
-                actor={<span className="font-mono tabular-nums">{row.phone || 'Number unavailable'}</span>}
-                text={row.kind === 'missed' ? 'called and was missed' : row.kind === 'callback' ? 'asked for a call back' : `needs a follow-up (${humanizeToken(row.kind).toLowerCase()})`}
+                actor={<span className="font-mono tabular-nums">{formatPhone(row.phone) || 'Number unavailable'}</span>}
+                text={row.kind === 'missed' ? 'called and was missed' : row.kind === 'callback' ? 'asked for a call back' : row.kind === 'recall' ? `${RECALL_OUTCOME[row.outcome] || "wasn't reached"}: calling back` : `needs a follow-up (${humanizeToken(row.kind).toLowerCase()})`}
                 detail={<>Due {instant(row.dueAt, row.timezone)}{row.timezone && <span className="text-meta"> ({row.timezone})</span>}</>}
                 meta={<>
                   {agent && <span>· {agent}</span>}
@@ -158,7 +183,7 @@ export function FollowUpQueue({ agentId, readOnly = false }) {
                   <TactileButton size="xs" variant="secondary" className="min-h-[36px] sm:min-h-0" disabled={readOnly} onClick={() => open(row, 'cancel')}>Cancel follow-up</TactileButton>
                 </> : null}
               >
-                {row.requestedWhen && <p className="mt-0.5 max-w-xl break-words text-ui text-fg-body">Caller requested: {row.requestedWhen}</p>}
+                {row.requestedWhen && <p className="mt-0.5 max-w-xl break-words text-ui text-fg-body" data-testid="followup-requested-when">Caller requested: {row.requestedWhen}{row.resolvedWindow?.display && <> → <span className="font-medium text-ink">{row.resolvedWindow.display}</span></>}</p>}
                 {row.campaignId && <a href="#dashboard/campaigns" className="mt-1 inline-block text-ui font-medium text-accent-fg hover:text-accent hover:underline">Managed by {row.campaignName || 'a campaign'} · resume it after reviewing this follow-up</a>}
               </NeedsYouItem>
             );

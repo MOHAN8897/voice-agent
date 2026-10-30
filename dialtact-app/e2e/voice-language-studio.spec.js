@@ -304,10 +304,10 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
       voiceSettings: { stackSelectionVersion: 1, realtimeVoice: 'te-in-csagent-4' },
     });
     expect(voiceStackPatchBody.voiceSettings).not.toHaveProperty('voiceId');
-    // A live voice choice is persisted with the voice save, but its script
-    // metadata still needs one publish before a test call may reuse it.
-    await expect(page.getByTestId('agent-studio-unsaved')).toBeVisible();
-    await expect(page.getByTestId('agent-test-call')).toBeDisabled();
+    // The live voice is saved on the agent (calls read voice_settings first), so
+    // it is not an unsaved script edit: no save dock that Discard could use to
+    // roll the screen back to the previous voice.
+    await expect(page.getByTestId('agent-studio-unsaved')).toHaveCount(0);
     await page.reload();
     await page.getByTestId('agent-tab-voice').click();
     await expect(page.getByTestId('voice-select-btn-te-in-csagent-4')).toContainText('Selected');
@@ -492,7 +492,9 @@ test.describe('Voice and Language Configuration in Agent Console', () => {
     await expect(page.locator('[data-testid="language-selection-card"]')).toContainText(/Active: Telugu \(te-IN\)/i);
     const defaultTeluguVoice = page.locator('[data-testid="voice-card-te-in-csagent-5"]');
     await expect(defaultTeluguVoice).toBeVisible();
-    await expect(defaultTeluguVoice).toContainText(/Selected/i);
+    // Re-clicking the language the agent already speaks changes nothing: it used
+    // to swap the voice in the form, which then looked like an unsaved change.
+    await expect(page.getByTestId('agent-studio-unsaved')).toHaveCount(0);
 
     const voiceOptions = await page.evaluate(async () => {
       const { fetchPhoneVoiceOptions } = await import('/src/lib/voiceStack.js');

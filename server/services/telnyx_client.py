@@ -75,6 +75,9 @@ class TelnyxClient:
                 async with httpx.AsyncClient(timeout=timeout) as client:
                     r = await client.request(method, url, headers=self._headers(), **kwargs)
                 if r.status_code >= 400:
+                    from server.services.provider_health import record_vendor_answer
+
+                    record_vendor_answer("telnyx", "telephony", r.status_code, r.text[:800])
                     raise TelnyxApiError(f"Telnyx API {r.status_code}", status=r.status_code, body=r.text[:800])
                 if not r.content:
                     return {}

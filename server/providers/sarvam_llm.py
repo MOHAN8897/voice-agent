@@ -15,6 +15,7 @@ from server.providers.base import LLMConfig
 from server.providers.llm_protocol import IncompleteTurnError
 from server.providers.openai_messages import message_text
 from server.services.dev_secrets_store import dev_secrets_store
+from server.services.sarvam_keys import rejection_error, request_with_failover, stream_with_failover
 
 SARVAM_CHAT_COMPLETIONS_V2_URL = "https://api.sarvam.ai/v2/chat/completions"
 SARVAM_CHAT_COMPLETIONS_V1_URL = "https://api.sarvam.ai/v1/chat/completions"
@@ -28,6 +29,15 @@ SARVAM_V1_CHAT_MODELS = frozenset({"sarvam-105b", "sarvam-105b-conversations"})
 _WHITESPACE_TAIL_LIMIT = 240
 _WHITESPACE_STALL_LIMIT = 640
 _WHITESPACE_MIN_VISIBLE = 600
+
+
+def _record_transport_failure(category: str, detail: str) -> None:
+    from server.services.provider_health import provider_health
+
+    try:
+        provider_health.record_failure("sarvam", "llm", category, detail=detail)
+    except Exception:
+        pass
 
 
 def sarvam_chat_api_modes(model: str) -> list[str]:
@@ -172,6 +182,11 @@ class SarvamLLMAdapter:
         # Session-affinity caching routes multi-turn conversations together for prefix context reuse.
         return True
 
+    def _has_any_key(self) -> bool:
+        from server.services.sarvam_keys import sarvam_key_pool
+
+        return bool(self._provided_api_key or sarvam_key_pool.keys())
+
     def _api_key(self) -> str:
         settings = get_settings()
         return (
@@ -230,8 +245,8 @@ class SarvamLLMAdapter:
             pool=timeout_s,
         )
 
-    def _headers(self, kwargs: dict[str, Any] | None = None) -> dict[str, str]:
-        key = self._api_key()
+    def _headers(self, kwargs: dict[str, Any] | None = None, *, key: str | None = None) -> dict[str, str]:
+        key = key or self._api_key()
         if not key:
             raise RuntimeError("SARVAM_API_KEY is not configured")
         headers = {
@@ -347,7 +362,7 @@ class SarvamLLMAdapter:
         schema: dict | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[dict]:
-        if not self._api_key():
+        if not self._has_any_key():
             raise RuntimeError("SARVAM_API_KEY is not configured")
         model = self._model(kwargs)
         url = self._url(model, kwargs)
@@ -371,15 +386,18 @@ class SarvamLLMAdapter:
         buffer_output = bool(kwargs.get("tools") or kwargs.get("buffer_response"))
         async with httpx.AsyncClient(timeout=self._timeout()) as client:
             try:
-                async with client.stream(
-                    "POST",
-                    url,
-                    headers=self._headers(kwargs),
-                    json=body,
+                async with stream_with_failover(
+                    "llm",
+                    "Sarvam Chat Completions",
+                    lambda key: client.stream("POST", url, headers=self._headers(kwargs, key=key), json=body),
+                    provided_key=self._provided_api_key,
                 ) as response:
                     if response.status_code >= 400:
                         await response.aread()
-                        raise RuntimeError(f"Sarvam Chat Completions HTTP {response.status_code}")
+                        raise rejection_error(
+                            f"Sarvam Chat Completions HTTP {response.status_code}",
+                            component="llm", status=response.status_code, body=response.content,
+                        )
                     async for line in response.aiter_lines():
                         if not line or line.startswith(":"):
                             continue
@@ -482,8 +500,10 @@ class SarvamLLMAdapter:
             except asyncio.CancelledError:
                 raise
             except httpx.TimeoutException as exc:
+                _record_transport_failure("timeout", "Sarvam Chat Completions request timed out")
                 raise TimeoutError("Sarvam Chat Completions request timed out") from exc
             except httpx.HTTPError as exc:
+                _record_transport_failure("unavailable", "Sarvam Chat Completions transport failed")
                 raise RuntimeError("Sarvam Chat Completions transport failed") from exc
 
         full_text = (
@@ -572,7 +592,7 @@ class SarvamLLMAdapter:
         max_output_tokens: int | None = None,
         api_mode: str | None = None,
     ) -> dict:
-        if not self._api_key():
+        if not self._has_any_key():
             raise RuntimeError("SARVAM_API_KEY is not configured")
         model = (config.model if config else "").strip()
         if not model:
@@ -594,19 +614,25 @@ class SarvamLLMAdapter:
             body["max_tokens"] = config.max_tokens
         async with httpx.AsyncClient(timeout=self._timeout()) as client:
             try:
-                response = await client.post(
-                    url,
-                    headers=self._headers(kwargs),
-                    json=body,
+                response, _slot = await request_with_failover(
+                    "llm",
+                    "Sarvam Chat Completions",
+                    lambda key: client.post(url, headers=self._headers(kwargs, key=key), json=body),
+                    provided_key=self._provided_api_key,
                 )
             except asyncio.CancelledError:
                 raise
             except httpx.TimeoutException as exc:
+                _record_transport_failure("timeout", "Sarvam Chat Completions request timed out")
                 raise TimeoutError("Sarvam Chat Completions request timed out") from exc
             except httpx.HTTPError as exc:
+                _record_transport_failure("unavailable", "Sarvam Chat Completions transport failed")
                 raise RuntimeError("Sarvam Chat Completions transport failed") from exc
         if response.status_code >= 400:
-            raise RuntimeError(f"Sarvam Chat Completions HTTP {response.status_code}")
+            raise rejection_error(
+                f"Sarvam Chat Completions HTTP {response.status_code}",
+                component="llm", status=response.status_code, body=getattr(response, "content", None),
+            )
         try:
             payload = response.json()
         except (ValueError, json.JSONDecodeError) as exc:
@@ -619,6 +645,11 @@ class SarvamLLMAdapter:
         message = choices[0].get("message") if isinstance(choices[0], dict) else None
         if not isinstance(message, dict):
             raise TypeError("Sarvam Chat Completions returned a malformed response")
+        if isinstance(choices[0], dict) and str(choices[0].get("finish_reason") or "") == "length":
+            # Reasoning can use up the budget before the JSON closes; retry bigger, never save half.
+            from server.providers.base import StructuredOutputTruncated
+
+            raise StructuredOutputTruncated("sarvam", body.get("max_tokens") or max_output_tokens, "length")
         content = message.get("content")
         if not isinstance(content, str) or not content.strip():
             raise RuntimeError("Sarvam Chat Completions returned an empty structured response")

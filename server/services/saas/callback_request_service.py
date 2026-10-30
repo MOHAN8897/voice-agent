@@ -61,14 +61,34 @@ async def prepare_callback_close(ctx: Any, decision: dict[str, Any], language: s
     return result
 
 
+def resolve_requested_window(texts: list[str], at: datetime, config: dict | None = None,
+                             spread_key: str = "") -> dict[str, Any] | None:
+    """The concrete window for a vague callback time, in the agent's follow-up timezone."""
+    from server.services.saas.followup_policy import FollowUpConfig
+    from server.services.saas.followup_service import resolve_vague_time
+    try:
+        cfg = FollowUpConfig.model_validate(config or {})
+    except Exception:  # noqa: BLE001 - a stale/invalid saved policy falls back to defaults.
+        cfg = FollowUpConfig()
+    return resolve_vague_time(cfg, at, *texts, spread_key=spread_key)
+
+
 def _public(row: CallCallback) -> dict[str, Any]:
     meta = call_ledger.read_meta(str(row.original_call_id)) if row.original_call_id else {}
     details = meta.get("callback_request") or {}
+    resolved = details.get("resolvedWindow")
+    if resolved is None and row.created_at and (details.get("requestedWhen") or details.get("requestText")):
+        # Requests saved before windows were resolved: anchor on when the caller asked.
+        created = row.created_at if row.created_at.tzinfo else row.created_at.replace(tzinfo=timezone.utc)
+        resolved = resolve_requested_window(
+            [details.get("requestedWhen") or "", details.get("requestText") or ""], created,
+            spread_key=str(row.callback_id))
     return {
         "id": str(row.callback_id), "callId": str(row.original_call_id),
         "agentId": row.agent_id, "phone": row.to_e164, "status": row.status,
         "requestedWhen": details.get("requestedWhen") or "Requested during the call",
         "requestText": details.get("requestText") or "",
+        "resolvedWindow": resolved,
         "createdAt": row.created_at.isoformat() if row.created_at else None,
     }
 
@@ -105,6 +125,7 @@ async def record_callback_request(ctx: Any, request_text: str, *, review_only: b
         return None
     generation = int(getattr(ctx, "callback_generation", 0) or meta.get("callback_generation") or 0)
     key = f"requested:{call_id}" + (f":{generation}" if generation else "")
+    policy_config: dict | None = None
     async with factory() as session:
         call = (await session.execute(select(Call).where(
             Call.call_id == call_id, Call.tenant_id == tenant_id,
@@ -141,6 +162,15 @@ async def record_callback_request(ctx: Any, request_text: str, *, review_only: b
                         await session.flush()
                 except Exception as exc:
                     logger.warning("callback.scheduling_unavailable kind=%s", type(exc).__name__)
+                try:
+                    from server.db.models.followup_models import AgentFollowUpPolicy
+                    async with session.begin_nested():
+                        policy = await session.scalar(select(AgentFollowUpPolicy).where(
+                            AgentFollowUpPolicy.tenant_id == tenant_id,
+                            AgentFollowUpPolicy.agent_id == uuid.UUID(str(ctx.agent_id))))
+                        policy_config = dict(policy.config or {}) if policy is not None else None
+                except Exception as exc:
+                    logger.warning("callback.policy_unavailable kind=%s", type(exc).__name__)
                 await session.commit()
             except IntegrityError:
                 await session.rollback()
@@ -149,11 +179,15 @@ async def record_callback_request(ctx: Any, request_text: str, *, review_only: b
                     raise
         callback_id, status = str(row.callback_id), row.status
     # Re-read after the database await so concurrent transcript/media metadata survives.
+    requested_when_text = str(getattr(ctx, "callback_when", "") or request_text)[:400]
+    resolved = resolve_requested_window([requested_when_text, request_text], datetime.now(timezone.utc),
+                                        policy_config, spread_key=callback_id)
     meta = call_ledger.read_meta(str(call_id))
     meta["callback_request"] = {
         "id": callback_id, "status": status,
-        "requestedWhen": str(getattr(ctx, "callback_when", "") or request_text)[:400],
+        "requestedWhen": requested_when_text,
         "requestText": request_text[:800],
+        **({"resolvedWindow": resolved} if resolved else {}),
     }
     meta.update(callback_cancelled=False, callback_withdrawal_pending=False)
     call_ledger.write_meta(str(call_id), meta)

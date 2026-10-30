@@ -272,6 +272,7 @@ export function AgentVoicePanel({
   onSaveVoiceStackSelection,
   onReloadVoiceStackSettings,
   onVoiceStackReadyChange,
+  onSavedVoiceApplied,
   phoneVoices = [],
   activeVoiceProvider = 'openai',
   defaultVoiceId = 'te-in-csagent-5',
@@ -399,7 +400,11 @@ export function AgentVoicePanel({
     (draftSelection?.tier === 'premium' && !currentStackProfile?.engines?.length) ||
     (!isStackOptedIn && !draftSelection?.tier);
 
-  const savedSelectionValid = Boolean(savedProfile && savedVoice && savedSelection.profileRevision === savedProfile.profileRevision);
+  // Admin edits (labels, prices, knobs) bump a profile's revision on every save.
+  // The server keeps a saved choice valid while its engine/model/voice still
+  // resolve in the current catalog (resolve_agent_selection), so the console
+  // must too: comparing revisions here made a still-saved voice look lost.
+  const savedSelectionValid = Boolean(savedProfile && savedVoice);
   const voiceStackReady = savedSelectionValid && !voiceStackCatalogLoading && !isSavingStackSelection && !hasUnsavedStackSelection &&
     !stackLanguageNeedsSave && !stackSelectionError && !stackSelectionConflict;
   useEffect(() => {
@@ -744,42 +749,42 @@ export function AgentVoicePanel({
     setPlayingType(null);
   }, []);
 
-  // Live voice selection
+  // A live (Flagship) voice that the server has just saved. The saved value is
+  // also written into the script form's baseline so it never shows up as an
+  // "unsaved change" that Discard would roll back to the previous voice.
   const handleSelectVoice = useCallback(
     (voice) => {
-      setDraftSelection({
-        tier: 'premium',
-        profileRevision: 1,
-        engineId: '',
-        modelId: '',
+      const voicePatch = {
+        provider: 'phone_ai',
+        realtimeVoice: voice.id,
         voiceId: voice.id,
-      });
-      setFormData((prev) => ({
-        ...prev,
-        defaultTier: 'premium',
-        voice: {
-          ...prev.voice,
-          provider: 'phone_ai',
-          realtimeVoice: voice.id,
-          voiceId: voice.id,
-          voiceName: voice.name || voice.id,
-          language: currentLanguage,
-        },
-        voiceSettings: {
-          stackSelectionVersion: 1,
-          realtimeVoice: voice.id,
-        },
-      }));
+        voiceName: voice.name || voice.id,
+        language: currentLanguage,
+      };
+      if (onSavedVoiceApplied) {
+        onSavedVoiceApplied({ voice: voicePatch });
+      } else {
+        setFormData((prev) => ({ ...prev, voice: { ...prev.voice, ...voicePatch } }));
+      }
       const tone = publicText(voice.tone);
       showToast(`Speaking voice set to ${voice.name}${tone ? ` (${tone})` : ''}`, 'info');
     },
-    [currentLanguage, setFormData]
+    [currentLanguage, setFormData, onSavedVoiceApplied]
   );
 
-  // Stack Tier Voice selection (automatically applies voice and saves tier setup)
+  // Every voice pick is saved straight away through the revision-checked PATCH.
+  // A pick made while an earlier one is still saving is queued (latest wins)
+  // instead of being dropped, which used to leave the screen showing a voice the
+  // server never received.
+  const savingPickRef = useRef(false);
+  const pendingPickRef = useRef(null);
+  const selectTierVoiceRef = useRef(null);
+  const savedSelectionRef = useRef(savedSelection);
+  savedSelectionRef.current = savedSelection;
+
   const handleSelectTierVoice = useCallback(
     async (profile, voice) => {
-      if (isSavingStackSelection || stackSelectionConflict) return;
+      if (stackSelectionConflict) return;
       setStackSelectionError(null);
       setStackSelectionNotice(null);
       const isPremium = profile.tier === 'premium' && !profile.engines?.length;
@@ -791,26 +796,41 @@ export function AgentVoicePanel({
         voiceId: voice.id,
       };
       setDraftSelection(newSelection);
+      if (savingPickRef.current) {
+        pendingPickRef.current = { profile, voice };
+        return;
+      }
+      savingPickRef.current = true;
       setIsSavingStackSelection(true);
       try {
         const result = await onSaveVoiceStackSelection?.(isPremium
           ? { tier: 'premium', realtimeVoice: voice.id }
           : newSelection);
-        if (!confirmStackSave(result)) return;
-        if (isPremium) {
-          handleSelectVoice(voice);
+        if (!confirmStackSave(result)) {
+          // Rejected: show what is actually saved, not the choice that failed.
+          if (!result?.conflict && !result?.savedButUnconfirmed) setDraftSelection(savedSelectionRef.current);
+          pendingPickRef.current = null;
           return;
         }
-        // This selection was already persisted by the dedicated voice save.
-        // Keep it out of the unpublished script form and its dirty guard.
+        if (isPremium) handleSelectVoice(voice);
+        // A composed selection was persisted by the dedicated voice save and
+        // stays out of the unpublished script form and its dirty guard.
       } catch {
+        setDraftSelection(savedSelectionRef.current);
+        pendingPickRef.current = null;
         setStackSelectionError('Voice setup could not be saved. Your saved choice is unchanged. Try again.');
       } finally {
+        savingPickRef.current = false;
         setIsSavingStackSelection(false);
+        const next = pendingPickRef.current;
+        pendingPickRef.current = null;
+        // Run the newest handler: it carries the revision the first save returned.
+        if (next) setTimeout(() => selectTierVoiceRef.current?.(next.profile, next.voice), 0);
       }
     },
-    [currentLanguage, handleSelectVoice, onSaveVoiceStackSelection, setFormData, isSavingStackSelection, stackSelectionConflict, confirmStackSave]
+    [handleSelectVoice, onSaveVoiceStackSelection, stackSelectionConflict, confirmStackSave]
   );
+  selectTierVoiceRef.current = handleSelectTierVoice;
 
   const handleStackTierChange = useCallback(
     (tier) => {
@@ -827,6 +847,9 @@ export function AgentVoicePanel({
   // Language selection
   const handleSelectLanguage = useCallback(
     (langCode) => {
+      // Re-clicking the current language changes nothing (it used to reset the
+      // composed voice to the tier's first voice).
+      if (langCode === currentLanguage) return;
       setStackSelectionError(null);
       setStackSelectionNotice(null);
 
@@ -869,35 +892,28 @@ export function AgentVoicePanel({
         },
       }));
 
-      // In composed tier, update draftSelection to a valid voice for the new language
+      // Composed tier: a language switch keeps the chosen voice when the tier
+      // offers it in the new language. Only a voice the new language cannot use
+      // is replaced, and that replacement is a draft the tenant still saves. It
+      // is never written into the script form, so the main Save cannot publish
+      // a voice the tenant did not pick.
       if (draftSelection?.tier && draftSelection.tier !== 'premium') {
         const prof = selectableStackProfiles.find((p) => p.tier === draftSelection.tier);
         const engines = publicEngines(prof, langCode);
+        const keepsVoice = engines.some((engine) => engine.id === draftSelection.engineId &&
+          engine.models.some((model) => model.id === draftSelection.modelId &&
+            model.voices.some((voice) => voice.id === draftSelection.voiceId)));
         const firstVoice = engines[0]?.models?.[0]?.voices?.[0];
-        if (firstVoice) {
+        if (!keepsVoice && firstVoice) {
           setDraftSelection((curr) => ({
             ...curr,
             engineId: engines[0].id,
             modelId: engines[0].models[0].id,
             voiceId: firstVoice.id,
           }));
-          setFormData((prev) => ({
-            ...prev,
-            voice: {
-              ...prev.voice,
-              voiceId: firstVoice.id,
-              label: firstVoice.label || firstVoice.id,
-              language: langCode,
-            },
-            voiceSettings: {
-              stackSelectionVersion: 1,
-              profileRevision: prof?.profileRevision || 1,
-              engineId: engines[0].id,
-              modelId: engines[0].models[0].id,
-              voiceId: firstVoice.id,
-            },
-          }));
-        } else {
+          setStackSelectionNotice(null);
+          setStackSelectionError('Your saved voice does not speak this language. Choose a voice below to save it.');
+        } else if (!keepsVoice) {
           setDraftSelection((curr) => ({ ...curr, engineId: '', modelId: '', voiceId: '' }));
         }
       }
@@ -905,7 +921,7 @@ export function AgentVoicePanel({
       const lMeta = EXTENDED_LANGUAGES.find((l) => l.code === langCode);
       showToast(`Language updated to ${lMeta?.name || langCode}`, 'info');
     },
-    [phoneVoices, currentVoiceId, activeVoiceProvider, draftSelection?.tier, selectableStackProfiles, setFormData]
+    [phoneVoices, currentVoiceId, currentLanguage, activeVoiceProvider, draftSelection, selectableStackProfiles, setFormData]
   );
 
 
@@ -1511,7 +1527,7 @@ export function AgentVoicePanel({
               <div
                 key={voice.id}
                 data-testid={`voice-card-${voice.id}`}
-                onClick={() => handleSelectVoice(voice)}
+                onClick={() => handleSelectTierVoice({ tier: 'premium' }, voice)}
                 className={`group flex items-center justify-between gap-3 px-3 py-2.5 transition-colors cursor-pointer select-none ${
                   isSelected
                     ? 'bg-accent-soft border-l-4 border-l-accent'

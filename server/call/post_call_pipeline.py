@@ -355,8 +355,11 @@ async def _generate_outcome(
                 "You analyze completed voice calls. Output structured JSON only. "
                 "Write the entire call summary in English only. Put it in summary_en. "
                 "Leave summary_te as an empty string. "
-                "Summaries must cover the entire call chronologically: caller intent, facts shared, "
-                "agent response, objections, agreed next step, and how the call ended. "
+                "summary_en is 3-6 complete sentences (roughly 60-150 words) covering the whole call "
+                "in order: caller intent, facts shared, agent response, objections, agreed next step, "
+                "and how the call ended. Keep it concise by choosing what matters, never by stopping "
+                "mid-sentence; the last sentence must be complete. Put names, numbers, dates and other "
+                "details in extracted_fields rather than lengthening the summary. "
                 "Never claim an action was completed unless the transcript confirms it. "
                 "A caller requesting an order or discussing buying details is interested, not merely new_lead. "
                 "A callback is the business calling the caller; I will call you is not callback_required. "
@@ -418,16 +421,14 @@ async def _generate_outcome(
             registry = get_provider_registry()
             adapter = registry.get_llm(provider_id)
             extra = {"api_mode": api_mode} if api_mode else {}
-            payload = await adapter.structured_completion(
-                messages,
-                OUTCOME_JSON_SCHEMA,
-                LLMConfig(provider=provider_id, model=candidate_model),
-                schema_name="call_outcome",
-                max_output_tokens=1200,
-                **extra,
+            payload = await _complete_with_budget(
+                adapter, messages, LLMConfig(provider=provider_id, model=candidate_model), extra
             )
             if not isinstance(payload, dict):
                 raise ValueError("outcome payload is not an object")
+            if not str(payload.get("summary_en") or payload.get("summary_te") or "").strip():
+                raise ValueError("outcome payload has no summary")
+            payload["summary_en"] = finish_summary(payload.get("summary_en"))
             payload["extracted_fields"] = normalize_extracted_fields(payload.get("extracted_fields"))
             payload["tags"] = normalize_model_tags(payload.get("tags"))
             payload["custom_tags"] = normalize_custom_tags(payload.get("custom_tags"))
@@ -448,12 +449,68 @@ async def _generate_outcome(
         for row in transcript
         if str(row.get("text") or "").strip()
     ]
-    failed["summary_en"] = (
-        "Automatic summary generation failed. Transcript review: " + " ".join(turns)
-    )[:2000]
+    failed["summary_en"] = _transcript_review(turns)
     failed["next_action"] = "Review the transcript and captured facts."
     failed["extracted_fields"] = normalize_extracted_fields(snapshot.get("facts"))
     return failed, last_error
+
+
+#: Output-token budgets for the outcome call. Reasoning models spend part of the budget
+#: thinking before the JSON starts, so a fixed small cap cut summaries off mid-sentence.
+#: A truncated answer is retried once per step with the next, larger budget.
+OUTCOME_TOKEN_BUDGETS: tuple[int, ...] = (2048, 4096, 8192)
+
+_SENTENCE_END = re.compile(r"[.!?।॥)\]\"'”’]\s*$")
+
+
+async def _complete_with_budget(adapter: Any, messages: list[dict], config: Any, extra: dict) -> Any:
+    """Run the outcome completion, growing the token budget whenever the provider reports
+    it stopped at the limit (finish_reason "length" / status "incomplete")."""
+    from server.providers.base import StructuredOutputTruncated
+
+    last: StructuredOutputTruncated | None = None
+    for budget in OUTCOME_TOKEN_BUDGETS:
+        try:
+            return await adapter.structured_completion(
+                messages,
+                OUTCOME_JSON_SCHEMA,
+                config,
+                schema_name="call_outcome",
+                max_output_tokens=budget,
+                **extra,
+            )
+        except StructuredOutputTruncated as exc:
+            last = exc
+            logger.warning(f"[CALL] outcome truncated at {budget} tokens; retrying with a larger budget")
+    assert last is not None
+    raise last
+
+
+def finish_summary(text: Any) -> str:
+    """Normalise a model summary so it always ends as a complete sentence.
+
+    Nothing is cut: the summary is kept whole and only given closing punctuation if the
+    model left it off.
+    """
+    clean = re.sub(r"[ \t]+", " ", str(text or "")).strip()
+    if clean and not _SENTENCE_END.search(clean):
+        clean = clean.rstrip(",;:- ") + "."
+    return clean
+
+
+def _transcript_review(turns: list[str], limit: int = 2000) -> str:
+    """Fallback summary when the model failed: whole transcript turns, never a cut-off turn."""
+    head = "Automatic summary generation failed. Transcript review:"
+    kept: list[str] = []
+    size = len(head)
+    for turn in turns:
+        if kept and size + 1 + len(turn) > limit:
+            remaining = len(turns) - len(kept)
+            kept.append(f"({remaining} more turn{'s' if remaining != 1 else ''} in the full transcript.)")
+            break
+        kept.append(turn)
+        size += 1 + len(turn)
+    return " ".join([head, *kept])
 
 
 #: Recording disclosures are paraphrased, but every phrasing names "record" —

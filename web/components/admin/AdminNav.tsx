@@ -66,6 +66,12 @@ const ADMIN_GROUPS: Array<{
         match: ["/dev/admin/tenants", "/dev/admin/users", "/dev/admin/numbers"],
       },
       {
+        // Every number purchase, why it failed, and platform blockers (Vobiz balance, rent).
+        href: "/dev/admin/purchases",
+        label: "Number purchases",
+        icon: <IconPhone className="h-4 w-4" />,
+      },
+      {
         href: "/dev/admin/verification",
         label: "Verification",
         icon: <IconActivity className="h-4 w-4" />,
@@ -100,6 +106,12 @@ const ADMIN_GROUPS: Array<{
   {
     label: "Platform",
     items: [
+      {
+        // Credits, quota, rejected keys and outages for every stack vendor.
+        href: "/dev/admin/provider-health",
+        label: "Provider health",
+        icon: <IconActivity className="h-4 w-4" />,
+      },
       {
         href: "/dev/speech-outage",
         label: "Speech outage",

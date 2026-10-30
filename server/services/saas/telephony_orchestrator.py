@@ -355,11 +355,13 @@ async def subscriber_outbound(
                 result["error"] = _sanitize_tenant_dial_error(str(result.get("error") or ""))
             return result
 
-        return await execute(
+        result = await execute(
             tenant_id=principal.tenant_id, request_id=dial_request_id, provider=provider,
             payload={"agent": agent_id, "from": resolved_from, "to": to_number, "stack": stack, "contact": contact},
             operation=dial,
         )
+        await _record_dial_attempt(provider, workspace_tid, agent_id, resolved_from, to_number, result, dial_request_id, contact)
+        return result
 
     if not await acquire_outbound_slot(provider, to_number):
         return {
@@ -383,9 +385,21 @@ async def subscriber_outbound(
         if res and isinstance(res, dict) and not res.get("ok"):
             err = str(res.get("error") or "")
             res["error"] = _sanitize_tenant_dial_error(err)
+        await _record_dial_attempt(provider, workspace_tid, agent_id, resolved_from, to_number, res, dial_request_id, contact)
         return res
     finally:
         release_outbound_slot(provider, to_number)
+
+
+async def _record_dial_attempt(provider, tenant_id, agent_id, from_e164, to_e164, result, dial_request_id, contact=None) -> None:
+    """Every placed (or carrier-refused) dial becomes a call-history row, so an
+    unanswered, busy, declined or failed outbound call is never invisible."""
+    from server.call.carrier_attempts import record_outbound_dial
+
+    await record_outbound_dial(
+        provider=provider, tenant_id=str(tenant_id), agent_id=str(agent_id), from_e164=from_e164,
+        to_e164=to_e164, result=result, dial_request_id=dial_request_id, contact=contact,
+    )
 
 
 def _sanitize_tenant_dial_error(raw_err: str) -> str:

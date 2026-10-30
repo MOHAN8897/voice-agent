@@ -74,6 +74,8 @@ class GnaniTTSAdapter:
             )
             if not r.is_success:
                 err_text = r.text
+                from server.services.provider_health import record_http_failure
+                record_http_failure("gnani", "tts", r.status_code, err_text)
                 if r.status_code in (401, 402, 429) or "credit" in err_text.lower():
                     raise RuntimeError(f"HTTP {r.status_code} Gnani credits exhausted or unauthorized: {err_text}")
                 r.raise_for_status()

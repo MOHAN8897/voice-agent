@@ -38,6 +38,8 @@ type Verification = {
   verifiedAt?: string | null;
   decidedAt?: string | null;
   sessionId?: string | null;
+  /** Voice KYC only: why sub-account or hosted-link setup failed. */
+  setupIssue?: string | null;
   updatedAt?: string | null;
   decision?: {
     source?: string;
@@ -305,6 +307,11 @@ export function AdminVerificationPage() {
                           <span className="ml-1 text-[10px] uppercase tracking-wide text-status-danger font-medium">
                             calls blocked
                           </span>
+                        )}
+                        {v.setupIssue && (
+                          <p className="mt-1 max-w-[260px] text-xs text-status-warning" data-testid="kyc-setup-issue">
+                            {v.setupIssue}
+                          </p>
                         )}
                       </SkeuoTd>
                       <SkeuoTd>

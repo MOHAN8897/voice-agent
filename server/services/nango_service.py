@@ -209,6 +209,14 @@ def _safe_urlopen(req_or_url: Any, timeout: float = 5.0) -> _SafeHttpResponse:
     with httpx.Client(timeout=timeout) as client:
         resp = client.request(method=method, url=url, headers=headers, content=content)
         if resp.status_code >= 400:
+            # Our Nango secret rejected, or Nango itself down: a platform incident.
+            # (Per-connection OAuth expiry travels through /proxy and is not this.)
+            if "nango" in (parsed.hostname or "") and "/proxy" not in parsed.path and (
+                resp.status_code in (401, 403) or resp.status_code >= 500
+            ):
+                from server.services.provider_health import record_vendor_answer
+
+                record_vendor_answer("nango", "integrations", resp.status_code, resp.content[:800])
             raise urllib.error.HTTPError(
                 url=url,
                 code=resp.status_code,

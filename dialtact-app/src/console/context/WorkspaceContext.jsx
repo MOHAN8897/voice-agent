@@ -13,6 +13,27 @@ function authed() {
 
 const WorkspaceContext = createContext(null);
 
+/**
+ * Merge a fresh agent list over the current one without letting a response that
+ * left the server before a voice save roll that save back. Voice fields are
+ * revisioned (voiceRevision), so the higher revision wins per agent.
+ */
+export function mergeAgentsKeepingNewerVoice(prev, fresh) {
+  if (!Array.isArray(prev) || !prev.length) return fresh;
+  const byId = new Map(prev.map((agent) => [agent.id, agent]));
+  return fresh.map((agent) => {
+    const known = byId.get(agent.id);
+    if (!known || (known.voiceRevision ?? 0) <= (agent.voiceRevision ?? 0)) return agent;
+    return {
+      ...agent,
+      defaultTier: known.defaultTier,
+      voiceSettings: known.voiceSettings,
+      voiceRevision: known.voiceRevision,
+      voice: known.voice ?? agent.voice,
+    };
+  });
+}
+
 export function WorkspaceProvider({ children }) {
   const auth = useAuth();
   const tenantStatus = auth?.user?.tenantStatus;
@@ -225,7 +246,7 @@ export function WorkspaceProvider({ children }) {
           capture('Wallet', () => api.billing.getWallet(), null),
         ]);
 
-      setAgents(normAgents);
+      setAgents((prev) => mergeAgentsKeepingNewerVoice(prev, normAgents));
       if (normAgents.length > 0) {
         setSelectedAgentId((prev) =>
           prev && normAgents.some((a) => a.id === prev) ? prev : normAgents[0].id
@@ -282,7 +303,7 @@ export function WorkspaceProvider({ children }) {
       const num = normNumbers.find((n) => n.assignedAgentId === a.id);
       return num ? { ...a, assignedNumber: num.number, numberId: num.id } : a;
     });
-    setAgents(joined);
+    setAgents((prev) => mergeAgentsKeepingNewerVoice(prev, joined));
     setSelectedAgentId((prev) =>
       prev && joined.some((a) => a.id === prev) ? prev : joined[0]?.id ?? null
     );
@@ -680,7 +701,12 @@ export function WorkspaceProvider({ children }) {
         };
       }
       if (status === 'needs_attention') {
-        return { ...purchase, ok: false, failureReason: 'Phone service confirmation needs support. Your purchase is reserved; please do not buy it again.' };
+        // The server's message says the payment is safe and support is on it.
+        return { ...purchase, ok: false, failureReason: 'needs_attention' };
+      }
+      if (status === 'refunded') {
+        await onFailed?.();
+        return { ...purchase, ok: false, failureReason: 'refunded', refunded: true };
       }
       await new Promise((r) => setTimeout(r, intervalMs));
     }
@@ -834,7 +860,7 @@ export function WorkspaceProvider({ children }) {
     return created;
   };
 
-  const placeOutboundCall = async ({ agentId, toE164, fromE164, integrations = null } = {}) => {
+  const placeOutboundCall = async ({ agentId, toE164, fromE164, integrations = null, dialRequestId = null } = {}) => {
     if (!agentId) throw new Error('Create a voice agent before placing outbound calls.');
     if (!toE164) throw new Error('Destination number is required.');
     const fromLine =
@@ -848,6 +874,7 @@ export function WorkspaceProvider({ children }) {
       toE164,
       fromE164: fromLine,
       integrations,
+      dialRequestId,
     });
     await Promise.all([refreshCalls(), refreshWallet()]);
     const callId = result.call_id || result.callId || result.id;

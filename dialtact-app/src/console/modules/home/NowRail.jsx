@@ -73,7 +73,7 @@ export function NowRail({
             {live.calls.map((call) => {
               const elapsed = call.startedAt ? (now - new Date(call.startedAt).getTime()) / 1000 : 0;
               const name = call.agentName || agents.find((a) => a.id === call.agentId)?.name || 'Agent';
-              const who = call.contact?.name || call.contact?.phoneMasked || 'a caller';
+              const who = call.contact?.name || call.contact?.phone || 'a caller';
               return (
                 <li key={call.callId}>
                   <button

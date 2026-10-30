@@ -464,6 +464,10 @@ class PstnTurnTtsSession:
                     pass
                 self._tts_cm = None
                 self._mark_failure(classify_tts_exception(exc, provider=provider))
+                if provider not in ("sarvam", "cartesia"):  # those record at their connectors
+                    from server.services.provider_health import record_exception
+
+                    record_exception(exc, provider=provider, component="tts", call_id=getattr(voice, "call_id", None))
                 if "credit" in str(exc).lower() or "quota" in str(exc).lower() or "402" in str(exc) or "429" in str(exc):
                     log_pstn("tts.credits_exhausted", call_id=voice.call_id, provider=provider, detail=str(exc)[:200])
                     setattr(voice, "_tts_credits_exhausted", True)

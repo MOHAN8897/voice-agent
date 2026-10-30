@@ -12,6 +12,7 @@ import { Modal } from '../ui/Modal';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
+import { outboundCallErrorMessage } from '../lib/outboundCall';
 import { leadStageToApi } from '../../services/apiNormalize';
 import { CallbackRequests } from './CallbackRequests';
 import { LanguageCallbacks } from './LanguageCallbacks';
@@ -19,6 +20,7 @@ import { CampaignSetup } from './CampaignSetup';
 import { FollowUpQueue } from './FollowUpQueue';
 import { DncRegistryPanel } from './DncRegistryPanel';
 import { LeadPriority } from './LeadPriority';
+import { formatPhone } from '../../lib/phoneMask';
 
 const STAGES = ['New', 'Contacted', 'Qualified', 'Meeting Booked', 'Converted', 'Unqualified'];
 const PAGE_SIZE = 25;
@@ -29,9 +31,23 @@ const formatDate = (value) => {
   return value && Number.isFinite(date.getTime()) ? date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not recorded';
 };
 
+// Whole-row open: a click anywhere on a lead row/card opens it, except on the
+// controls inside it (they keep their own behaviour) and except when the click
+// ends a text selection (copying a phone number must not open the lead).
+const ROW_OWNED = 'a,button,input,select,textarea,label,summary,[role="button"],[role="checkbox"],[data-row-ignore]';
+function rowClickOpens(event) {
+  const owned = event.target instanceof Element ? event.target.closest(ROW_OWNED) : null;
+  if (owned && owned !== event.currentTarget && event.currentTarget.contains(owned)) return false;
+  const selection = typeof window !== 'undefined' ? window.getSelection?.() : null;
+  if (selection && !selection.isCollapsed && selection.toString().trim()) return false;
+  return true;
+}
+const ROW_FOCUS = 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent';
+
 export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
   const { user } = useAuth();
   const readOnly = user?.role === 'customer_viewer' || user?.role === 'viewer';
+  const rowPressRef = useRef(null);
   const { agents, createLead, triggerCallToLead, phoneNumbers, outboundFromE164, setPreferredOutboundFrom, setSelectedCallId } = useWorkspace();
   // One-shot deep links from the home feed ("Open follow-ups", "Open lead").
   const [area, setArea] = useState(() => {
@@ -129,7 +145,7 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
     if (operationLock.current) return;
     operationLock.current = true; setBusy(lead.id); setDetailError(''); setError(''); setNotice('');
     try { await triggerCallToLead(lead, agentId); setNotice(`Call requested for ${lead.name}. Follow its progress in call history.`); }
-    catch (err) { const message = err.message || 'Could not start the call.'; setError(message); if (detail) setDetailError(message); }
+    catch (err) { const message = outboundCallErrorMessage(err); setError(message); if (detail) setDetailError(message); }
     finally { operationLock.current = false; setBusy(''); }
   }
   function openHistory(lead) {
@@ -184,6 +200,23 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
   const selectBox = (lead, extra = '') => (
     <input type="checkbox" aria-label={`Select ${lead.name}`} disabled={readOnly || lead.doNotCall || !lead.phone?.trim()} checked={selected.includes(lead.id)} onChange={() => toggle(lead)} className={`h-4 w-4 shrink-0 accent-accent ${extra}`} />
   );
+  const openRowProps = (lead) => ({
+    tabIndex: 0,
+    'data-lead-open': 'row',
+    // A press that moved is a drag (selecting text), not a click on the row.
+    onMouseDown: (event) => { rowPressRef.current = { x: event.clientX, y: event.clientY }; },
+    onClick: (event) => {
+      const press = rowPressRef.current;
+      rowPressRef.current = null;
+      if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 4) return;
+      if (rowClickOpens(event)) openDetail(lead);
+    },
+    onKeyDown: (event) => {
+      if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return;
+      event.preventDefault();
+      openDetail(lead);
+    },
+  });
   const updated = (lead) => (
     <time dateTime={lead.updatedAt || undefined} title={lead.updatedAt ? formatDate(lead.updatedAt) : undefined}>{lead.updatedAt ? relativeTime(lead.updatedAt) : 'Not recorded'}</time>
   );
@@ -233,16 +266,16 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
         ) : view === 'table' ? <>
           <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-ui"><caption className="sr-only">Lead contacts, pipeline stage, owner and last update</caption>
             <thead><tr className="border-b border-line text-meta text-fg-muted"><th className="w-10 py-2.5 pl-5 pr-2"><input type="checkbox" aria-label="Select all callable leads on this page" disabled={readOnly || !callableRows.length} checked={Boolean(callableRows.length) && callableRows.every((lead) => selected.includes(lead.id))} onChange={(event) => setSelected(event.target.checked ? callableRows.map((lead) => lead.id) : [])} className="h-4 w-4 accent-accent" /></th>{['Contact', 'Stage', 'Agent owner', 'Updated', ''].map((label, index) => <th key={label || index} scope="col" className="px-3 py-2.5 font-medium">{label ? label : <span className="sr-only">Actions</span>}</th>)}</tr></thead>
-            <tbody className="divide-y divide-line">{rows.map((lead) => <tr key={lead.id} className="align-top transition-colors hover:bg-canvas" data-testid={`lead-row-${lead.id}`}>
-              <td className="py-4 pl-5 pr-2">{selectBox(lead)}</td>
-              <td className="max-w-sm px-3 py-4"><div className="flex min-w-0 items-start gap-3"><Avatar name={lead.name} size="sm" /><div className="min-w-0"><button type="button" onClick={() => openDetail(lead)} title={lead.name} className="max-w-full truncate text-left font-semibold text-ink hover:text-accent-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-control">{lead.name}</button><p className={`mt-0.5 text-meta text-fg-body ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone || 'Phone missing'}</p>{lead.email && <p className="mt-0.5 truncate text-meta text-fg-muted" title={lead.email}>{lead.email}</p>}<p className="mt-1 line-clamp-1 max-w-xs text-meta text-fg-muted" title={lead.notes || undefined}>{lead.notes || 'Add notes and a next step'}</p></div></div></td>
+            <tbody className="divide-y divide-line">{rows.map((lead) => <tr key={lead.id} {...openRowProps(lead)} className={`align-top transition-colors hover:bg-canvas ${ROW_FOCUS}`} data-testid={`lead-row-${lead.id}`}>
+              <td className="py-4 pl-5 pr-2 cursor-default" data-row-ignore>{selectBox(lead)}</td>
+              <td className="max-w-sm px-3 py-4"><div className="flex min-w-0 items-start gap-3"><Avatar name={lead.name} size="sm" /><div className="min-w-0"><button type="button" onClick={() => openDetail(lead)} title={lead.name} className="max-w-full truncate text-left font-semibold text-ink hover:text-accent-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-control">{lead.name}</button><p className={`mt-0.5 text-meta text-fg-body ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone ? formatPhone(lead.phone) : 'Phone missing'}</p>{lead.email && <p className="mt-0.5 truncate text-meta text-fg-muted" title={lead.email}>{lead.email}</p>}<p className="mt-1 line-clamp-1 max-w-xs text-meta text-fg-muted" title={lead.notes || undefined}>{lead.notes || 'Add notes and a next step'}</p></div></div></td>
               <td className="px-3 py-4"><StatusBadge status={lead.stage} size="xs" /><LeadPriority lead={lead} /></td>
               <td className="px-3 py-4 text-ui text-fg-body"><span className="inline-flex min-w-0 items-center gap-2">{lead.agentId && <Avatar name={ownerName(lead)} size="xs" />}{ownerName(lead)}</span></td>
               <td className="whitespace-nowrap px-3 py-4 text-meta text-fg-muted">{updated(lead)}</td>
               <td className="py-4 pl-3 pr-5 text-right"><TactileButton size="sm" variant="secondary" icon={ArrowUpRight} onClick={() => openDetail(lead)} aria-label={`Open ${lead.name}`}>Details</TactileButton></td>
             </tr>)}</tbody></table></div>
-          <ul className="divide-y divide-line md:hidden">{rows.map((lead) => <li key={lead.id} className="space-y-2 p-4">
-            <div className="flex items-start gap-3">{selectBox(lead, 'mt-2.5')}<Avatar name={lead.name} size="sm" /><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><button type="button" onClick={() => openDetail(lead)} title={lead.name} className="min-w-0 truncate text-left text-copy font-semibold text-ink">{lead.name}</button><StatusBadge status={lead.stage} size="xs" /></div><p className={`text-meta text-fg-body ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone || 'Phone missing'}</p></div></div>
+          <ul className="divide-y divide-line md:hidden">{rows.map((lead) => <li key={lead.id} {...openRowProps(lead)} data-testid={`lead-item-${lead.id}`} className={`space-y-2 p-4 transition-colors hover:bg-canvas ${ROW_FOCUS}`}>
+            <div className="flex items-start gap-3">{selectBox(lead, 'mt-2.5')}<Avatar name={lead.name} size="sm" /><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><button type="button" onClick={() => openDetail(lead)} title={lead.name} className="min-w-0 truncate text-left text-copy font-semibold text-ink">{lead.name}</button><StatusBadge status={lead.stage} size="xs" /></div><p className={`text-meta text-fg-body ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone ? formatPhone(lead.phone) : 'Phone missing'}</p></div></div>
             <LeadPriority lead={lead} />
             <p className="line-clamp-2 text-meta text-fg-muted">{lead.notes || 'No notes yet'}</p>
             <div className="flex items-center justify-between gap-2 text-meta text-fg-muted"><span className="min-w-0 truncate">{ownerName(lead)}</span>{updated(lead)}</div>
@@ -250,10 +283,10 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
           </li>)}</ul>
         </> : <div className="flex gap-4 overflow-x-auto p-4" aria-label="Lead stages on this page">{STAGES.map((stage) => <section key={stage} className="w-64 shrink-0 space-y-3">
           <h4 className="flex items-center justify-between gap-2 text-ui font-semibold text-ink">{statusWord(stage).label}<span className="text-meta font-normal text-fg-muted"><span className="font-mono tabular-nums">{counts[leadStageToApi(stage)] || 0}</span> total</span></h4>
-          {rows.filter((lead) => lead.stage === stage).map((lead) => <div key={lead.id} className="space-y-2 rounded-control border border-line bg-surface p-3">
+          {rows.filter((lead) => lead.stage === stage).map((lead) => <div key={lead.id} {...openRowProps(lead)} data-testid={`lead-card-${lead.id}`} className={`space-y-2 rounded-control border border-line bg-surface p-3 transition-colors hover:border-line-strong ${ROW_FOCUS}`}>
             <div className="flex items-start gap-2">{selectBox(lead, 'mt-1')}<button type="button" onClick={() => openDetail(lead)} title={lead.name} className="min-w-0 break-words text-left text-ui font-semibold text-ink hover:text-accent-fg">{lead.name}</button></div>
             <LeadPriority lead={lead} />
-            <p className={`text-meta text-fg-body ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone || 'Phone missing'}</p>
+            <p className={`text-meta text-fg-body ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone ? formatPhone(lead.phone) : 'Phone missing'}</p>
             <p className="line-clamp-3 text-meta text-fg-muted">{lead.notes || 'No notes yet'}</p>
             <p className="text-meta text-fg-muted">{ownerName(lead)} · {updated(lead)}</p>
           </div>)}

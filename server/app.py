@@ -47,6 +47,9 @@ from server.routes.stripe_webhook import router as stripe_webhook_router
 from server.routes.razorpay_webhook import router as razorpay_webhook_router
 from server.routes.dev_admin import router as dev_admin_router
 from server.routes.dev_admin_accounts import router as dev_admin_accounts_router
+from server.routes.dev_admin_number_purchases import router as dev_admin_number_purchases_router
+from server.routes.dev_admin_provider_health import router as dev_admin_provider_health_router
+from server.routes.dev_admin_team import router as dev_admin_team_router
 from server.routes.app_billing import router as app_billing_router
 from server.routes.app_channels import router as app_channels_router
 from server.routes.admin_channels import router as admin_channels_router
@@ -213,6 +216,14 @@ async def lifespan(app: FastAPI):
                 )
         except Exception as e:
             logger.warning(f"[VOICE] Demo admin provisioning skipped: {e}")
+        try:
+            # Load stored admin-portal accounts so revoked sessions are refused from
+            # the first request, including on paths that parse cookies synchronously.
+            from server.auth.admin_sessions import refresh as refresh_admin_sessions
+
+            await refresh_admin_sessions(force=True)
+        except Exception as e:
+            logger.warning(f"[VOICE] Admin session snapshot skipped: {e}")
         try:
             from server.utils.http_clients import warm_openai_client
             warm_result = await warm_openai_client()
@@ -628,6 +639,9 @@ app.include_router(stripe_webhook_router)
 app.include_router(razorpay_webhook_router)
 app.include_router(dev_admin_router)
 app.include_router(dev_admin_accounts_router)
+app.include_router(dev_admin_number_purchases_router)
+app.include_router(dev_admin_provider_health_router)
+app.include_router(dev_admin_team_router)
 app.include_router(app_billing_router)
 app.include_router(app_channels_router)
 app.include_router(admin_channels_router)

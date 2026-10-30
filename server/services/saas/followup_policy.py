@@ -1,11 +1,13 @@
 """Validated permissions and timezone-aware scheduling. No carrier or LLM calls."""
 from __future__ import annotations
 
-from datetime import datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Any, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from server.call.callback_day_parts import DEFAULT_DAY_PARTS, legal_hours
 
 
 class FollowUpConfig(BaseModel):
@@ -32,6 +34,30 @@ class FollowUpConfig(BaseModel):
     })
     hotThreshold: int = Field(70, ge=1, le=100)
     warmThreshold: int = Field(40, ge=1, le=99)
+    # --- Auto-recall for calls that didn't connect -------------------------------------
+    # Inbound missed calls use ``missedMode`` (above); outbound calls the other person
+    # didn't answer, was busy for, declined or that failed use ``recallOutboundMode``.
+    recallOutboundMode: Literal["off", "review", "automatic"] = "off"
+    recallOutcomes: list[Literal["no_answer", "busy", "declined", "failed"]] = Field(
+        default_factory=lambda: ["no_answer", "busy", "declined"])
+    #: Recall attempts per missed/unanswered call (both directions).
+    recallMaxAttempts: int = Field(3, ge=1, le=5)
+    #: Gap between recall attempts; 1440 = next day.
+    recallSpacingMinutes: int = Field(120, ge=30, le=10080)
+    #: Double the gap after each further no-answer (2 h, 4 h, 8 h…).
+    recallBackoff: bool = True
+    #: Never ring someone straight back after they rejected the call.
+    recallMinGapAfterRejectMinutes: int = Field(60, ge=15, le=1440)
+    #: Calls to the same number per day across all automatic follow-ups.
+    recallMaxPerNumberPerDay: int = Field(2, ge=1, le=5)
+    quietHoursEnabled: bool = False
+    quietStart: str = "13:00"
+    quietEnd: str = "14:00"
+    skipHolidays: bool = True
+    #: Extra no-call dates (YYYY-MM-DD) on top of the employee's closed days.
+    holidays: list[str] = Field(default_factory=list, max_length=60)
+    #: How vague callback times ("evening", "after lunch") map to clock windows.
+    dayParts: dict[str, dict[str, str]] = Field(default_factory=lambda: {k: dict(v) for k, v in DEFAULT_DAY_PARTS.items()})
 
     @model_validator(mode="after")
     def validate_schedule(self):
@@ -53,7 +79,43 @@ class FollowUpConfig(BaseModel):
             for keys in self.scoreFactKeys.values()
         ):
             raise ValueError("Choose 1–20 memory field keys for each score signal (up to 64 characters each)")
+        if self.recallOutboundMode != "off" and not self.recallOutcomes:
+            raise ValueError("Choose which unanswered calls to call back")
+        try:
+            quiet_start, quiet_end = time.fromisoformat(self.quietStart), time.fromisoformat(self.quietEnd)
+        except ValueError as exc:
+            raise ValueError("Quiet hours must be HH:MM times") from exc
+        if self.quietHoursEnabled and quiet_start >= quiet_end:
+            raise ValueError("Quiet hours must start before they end")
+        for value in self.holidays:
+            try:
+                date.fromisoformat(value)
+            except ValueError as exc:
+                raise ValueError("Holidays must be dates like 2026-11-14") from exc
+        if set(self.dayParts) - set(DEFAULT_DAY_PARTS):
+            raise ValueError("Unknown time-of-day name")
+        for key, window in self.dayParts.items():
+            try:
+                opens, closes = time.fromisoformat(window["start"]), time.fromisoformat(window["end"])
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(f"Set a start and end time for {key.replace('_', ' ')}") from exc
+            if opens >= closes:
+                raise ValueError(f"The {key.replace('_', ' ')} window must start before it ends")
+        self.dayParts = {**{k: dict(v) for k, v in DEFAULT_DAY_PARTS.items()}, **self.dayParts}
         return self
+
+    def recall_attempt_limit(self, kind: str) -> int:
+        """Attempts allowed for a job: callbacks keep ``maxAttempts``; recalls use the recall limit."""
+        return self.maxAttempts if kind == "callback" else self.recallMaxAttempts
+
+    def recall_gap_minutes(self, *, attempts_made: int, declined: bool) -> int:
+        """Gap before the next recall, with exponential back-off after repeated no-answers."""
+        gap = self.recallSpacingMinutes
+        if self.recallBackoff and attempts_made > 1:
+            gap = min(10080, gap * (2 ** (attempts_made - 1)))
+        if declined:
+            gap = max(gap, self.recallMinGapAfterRejectMinutes)
+        return gap
 
 
 def utc(value: datetime) -> datetime:
@@ -92,12 +154,21 @@ def next_allowed(now: datetime, config: FollowUpConfig, profile: dict | None = N
         origin += timedelta(minutes=1)
     profile = profile or {}
     start, end = time.fromisoformat(config.startTime), time.fromisoformat(config.endTime)
+    # Legal calling hours (TRAI 09:00-21:00 in India) always bound the tenant window.
+    legal_start, legal_end = legal_hours(config.timezone)
+    start, end = max(start, legal_start), min(end, legal_end)
+    quiet = (time.fromisoformat(config.quietStart), time.fromisoformat(config.quietEnd)) if config.quietHoursEnabled else None
+    holidays = set(config.holidays) if config.skipHolidays else set()
     # Bounded scan: at most 14 * 1440 local minutes; no network, typically first iteration.
     for minute in range(14 * 1440 + 1):
         # Check now exactly; otherwise use future minute boundaries, never a grace period before opening.
         candidate = utc(now) if minute == 0 else origin + timedelta(minutes=minute - 1)
         local = candidate.astimezone(zone)
         if local.weekday() not in config.weekdays or not start <= local.time() < end:
+            continue
+        if quiet and quiet[0] <= local.time() < quiet[1]:
+            continue
+        if local.date().isoformat() in holidays:
             continue
         hours = profile.get("business_hours") or {}
         if within_profile_hours(candidate, hours, profile.get("timezone") or config.timezone):

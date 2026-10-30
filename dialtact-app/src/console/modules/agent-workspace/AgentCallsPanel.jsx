@@ -5,6 +5,7 @@ import { LeadsModule } from '../LeadsModule';
 import { AgentInboundPanel } from './AgentInboundPanel';
 import { AgentDialBulkPanel } from './AgentDialBulkPanel';
 import { ErrorBoundary } from '../../ui/ErrorBoundary';
+import { useSessionDraft } from '../../lib/sessionDraft';
 
 const PANELS = [
   { id: 'inbound', label: 'Incoming', icon: PhoneIncoming },
@@ -22,21 +23,30 @@ const PANELS = [
 export function AgentCallsPanel({
   agentId,
   agentName,
-  initialPanel = 'inbound',
+  initialPanel = null,
+  onPanelChange,
   onNavigateToSettings,
 }) {
-  const [panel, setPanel] = useState(() => {
+  // The sub-tab the tenant was on comes back when they return to this agent's
+  // Calls tab (from another tab or another page). An explicit link wins.
+  const [remembered, rememberPanel] = useSessionDraft('agent-calls-panel', agentId, { panel: null });
+  const [panel, setPanelState] = useState(() => {
     // If an old link points to 'settings', gracefully land on 'inbound'
     if (initialPanel === 'settings') return 'inbound';
-    return initialPanel || 'inbound';
+    return initialPanel || remembered.panel || 'history';
   });
+  const setPanel = (next) => {
+    setPanelState(next);
+    rememberPanel({ panel: next });
+    onPanelChange?.(next);
+  };
   const [historyPhone, setHistoryPhone] = useState('');
 
   useEffect(() => {
     if (initialPanel === 'settings') {
-      setPanel('inbound');
+      setPanelState('inbound');
     } else if (initialPanel) {
-      setPanel(initialPanel);
+      setPanelState(initialPanel);
     }
   }, [initialPanel]);
 

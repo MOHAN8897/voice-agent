@@ -300,7 +300,8 @@ export function AgentStudioModule({
     'te-IN';
 
   const [activeTab, setActiveTab] = useState(() => resolveEmployeeStep(flowStep).step);
-  const [callPanel, setCallPanel] = useState(() => resolveEmployeeStep(flowStep).callPanel || 'history');
+  // null: no link asked for a sub-tab, so the Calls tab reopens where the tenant left it.
+  const [callPanel, setCallPanel] = useState(() => resolveEmployeeStep(flowStep).callPanel || null);
   const [testCallOpen, setTestCallOpen] = useState(() => Boolean(resolveEmployeeStep(flowStep).openTestCall));
   const [voiceStackReady, setVoiceStackReady] = useState(true);
   // Reset before the voice panel's passive validation effect. Resetting here
@@ -438,9 +439,21 @@ export function AgentStudioModule({
         defaultTier: savedVoiceStackAgent.defaultTier,
         voiceSettings: savedVoiceStackAgent.voiceSettings,
         voiceRevision: savedVoiceStackAgent.voiceRevision,
-        languages: savedVoiceStackAgent.languages || selectedAgent.languages,
+        // Languages are not voice-revisioned: the script Save can change them
+        // without bumping voiceRevision, so the workspace row is the truth.
+        languages: selectedAgent.languages || savedVoiceStackAgent.languages,
       }
     : selectedAgent;
+  // The newest saved agent, updated synchronously on every successful voice
+  // save. A queued pick reads its expectedVoiceRevision from here, not from a
+  // render that predates the previous save (that raced into a 409 conflict).
+  const voiceStackAgentRef = useRef(voiceStackAgent);
+  if (
+    voiceStackAgent?.id !== voiceStackAgentRef.current?.id ||
+    (voiceStackAgent?.voiceRevision ?? 0) >= (voiceStackAgentRef.current?.voiceRevision ?? 0)
+  ) {
+    voiceStackAgentRef.current = voiceStackAgent;
+  }
 
   const voiceStackLanguage =
     formData?.language ||
@@ -496,7 +509,26 @@ export function AgentStudioModule({
     };
   }, [refreshVoiceStackCatalog]);
 
+  // Fold a voice/language the server just saved into both the form and its
+  // saved baseline, so the save dock does not report it as unsaved and Discard
+  // cannot roll the screen back to the previous voice.
+  const savedSnapshotSetterRef = useRef(null);
+  const applySavedVoiceToForm = useCallback(({ voice = null, language = null } = {}) => {
+    const apply = (form) => ({
+      ...form,
+      ...(language ? { language } : {}),
+      voice: {
+        ...(form?.voice || {}),
+        ...(voice || {}),
+        ...(language ? { language } : {}),
+      },
+    });
+    setFormData((prev) => apply(prev));
+    savedSnapshotSetterRef.current?.((prev) => snapForm(apply(formFromSnapshot(prev))));
+  }, []);
+
   const saveVoiceStackSelection = useCallback(async (selection) => {
+    const voiceStackAgent = voiceStackAgentRef.current;
     if (!voiceStackAgent?.id) return { error: true };
 
     const persistedLanguage =
@@ -575,13 +607,17 @@ export function AgentStudioModule({
       ) {
         return { savedButUnconfirmed: true };
       }
+      voiceStackAgentRef.current = { ...voiceStackAgent, ...savedAgent };
       setVoiceStackSavedAgents((current) => ({ ...current, [voiceStackAgent.id]: savedAgent }));
       updateAgentInWorkspace?.(savedAgent);
+      // A language saved together with the voice is no longer an unsaved edit.
+      if (patchPayload.languages) applySavedVoiceToForm({ language: voiceStackLanguage });
       return { agent: savedAgent };
     } catch (error) {
       if (error?.code === 'voice_revision_conflict') {
         try {
           const latest = await api.agents.get(voiceStackAgent.id);
+          voiceStackAgentRef.current = { ...voiceStackAgent, ...latest };
           setVoiceStackSavedAgents((current) => ({ ...current, [voiceStackAgent.id]: latest }));
           updateAgentInWorkspace?.(latest);
 
@@ -609,6 +645,8 @@ export function AgentStudioModule({
               }
               const retryRes = await api.request('PATCH', `/api/agents/${voiceStackAgent.id}`, retryPayload);
               const retryAgent = normalizeAgent(retryRes?.agent || retryRes);
+              voiceStackAgentRef.current = { ...voiceStackAgent, ...retryAgent };
+              if (retryPayload.languages) applySavedVoiceToForm({ language: voiceStackLanguage });
               setVoiceStackSavedAgents((current) => ({ ...current, [voiceStackAgent.id]: retryAgent }));
               updateAgentInWorkspace?.(retryAgent);
               return { agent: retryAgent };
@@ -629,7 +667,7 @@ export function AgentStudioModule({
         code: error?.code,
       };
     }
-  }, [voiceStackAgent, voiceStackLanguage, refreshVoiceStackCatalog, updateAgentInWorkspace]);
+  }, [voiceStackLanguage, refreshVoiceStackCatalog, updateAgentInWorkspace, applySavedVoiceToForm]);
 
   const reloadVoiceStackSettings = useCallback(async () => {
     if (!selectedAgent?.id) return null;
@@ -767,6 +805,7 @@ export function AgentStudioModule({
 
   // The last-loaded (saved) state. Dirty = formData differs from this, or settings tab has unsaved changes.
   const [savedSnapshot, setSavedSnapshot] = useState(() => snapForm(formData));
+  savedSnapshotSetterRef.current = setSavedSnapshot;
   const [pendingLeave, setPendingLeave] = useState(null);
   const scriptDirty = snapForm(formData) !== savedSnapshot;
   const dirty = scriptDirty || settingsDirty;
@@ -1873,6 +1912,7 @@ export function AgentStudioModule({
               onSaveVoiceStackSelection={saveVoiceStackSelection}
               onReloadVoiceStackSettings={reloadVoiceStackSettings}
               onVoiceStackReadyChange={setVoiceStackReady}
+              onSavedVoiceApplied={applySavedVoiceToForm}
               onOpenTestCall={() => setTestCallOpen(true)}
             />
           </ErrorBoundary>
@@ -1896,6 +1936,7 @@ export function AgentStudioModule({
               agentId={selectedAgent.id}
               agentName={selectedAgent.name}
               initialPanel={callPanel}
+              onPanelChange={setCallPanel}
               onNavigateToSettings={() => selectTab('settings')}
             />
           </ErrorBoundary>

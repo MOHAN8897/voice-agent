@@ -145,6 +145,10 @@ class DeepSeekLLMAdapter:
                 "json_schema": {"name": schema_name, "schema": schema, "strict": True},
             },
         )
+        if str(getattr(response.choices[0], "finish_reason", "") or "") == "length":
+            from server.providers.base import StructuredOutputTruncated
+
+            raise StructuredOutputTruncated("deepseek", max_output_tokens or 800, "length")
         text = response.choices[0].message.content or ""
         try:
             return json.loads(text)

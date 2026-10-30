@@ -40,6 +40,21 @@ def extract_responses_text(response: Any) -> str:
     return "".join(parts)
 
 
+def responses_truncation_reason(response: Any) -> str | None:
+    """The reason a Responses API result stopped early at its token limit, else None."""
+    status = getattr(response, "status", None)
+    if status is None and isinstance(response, dict):
+        status = response.get("status")
+    if str(status or "") != "incomplete":
+        return None
+    details = getattr(response, "incomplete_details", None)
+    if details is None and isinstance(response, dict):
+        details = response.get("incomplete_details")
+    reason = getattr(details, "reason", None) or (details.get("reason") if isinstance(details, dict) else None)
+    # Content-filter stops are not fixed by a bigger budget; only token limits are.
+    return "max_output_tokens" if str(reason or "max_output_tokens") == "max_output_tokens" else None
+
+
 def _repair_truncated_json(text: str) -> dict | None:
     """Close truncated JSON objects/strings enough to json.loads. None if salvage fails."""
     s = (text or "").rstrip()
@@ -207,6 +222,13 @@ class OpenAILLMAdapter:
         response = await client.responses.create(**create_kwargs)
         from server.services.saas.post_call_costs import record_post_call_response
         await record_post_call_response(response, model)
+        truncated = responses_truncation_reason(response)
+        if truncated:
+            # Reasoning models can spend the whole budget before the JSON closes. Never
+            # "repair" a cut payload into a half summary; let the caller retry bigger.
+            from server.providers.base import StructuredOutputTruncated
+
+            raise StructuredOutputTruncated("openai", create_kwargs["max_output_tokens"], truncated)
         text = extract_responses_text(response).strip()
         if not text:
             return {}

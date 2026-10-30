@@ -16,9 +16,9 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/kyc/voice/status*', route => route.fulfill({ json: pending }));
   await page.route('**/api/telephony/numbers/search?*', route => route.fulfill({ json: { numbers: [{ e164: '+12025550101', country: 'US', monthlyUsd: 4 }] } }));
   await page.route('**/api/telephony/countries', route => route.fulfill({ json: { countries: [{ code: 'US', name: 'United States', dial: '+1' }], default: 'US' } }));
-  await page.route('**/api/billing/catalog', route => route.fulfill({ json: { rates: { numberMonthlyUsd: 4 } } }));
+  await page.route('**/api/billing/catalog', route => route.fulfill({ json: { rates: { numberMonthlyUsd: 4, numberMonthlyInr: 564 } } }));
   await page.route('**/api/kyc/status', route => route.fulfill({ json: { required: false, configured: false, approved: false } }));
-  await page.route('**/api/billing/wallet', route => route.fulfill({ json: { balanceUsd: 100, balanceInr: 0, didMonthlyUsd: 4 } }));
+  await page.route('**/api/billing/wallet', route => route.fulfill({ json: { balanceUsd: 100, balanceInr: 9000, didMonthlyUsd: 4, didMonthlyInr: 564 } }));
   const b64 = value => Buffer.from(JSON.stringify(value)).toString('base64url');
   const token = `${b64({ alg: 'none' })}.${b64({ sub: user.userId, exp: 4070908800 })}.test`;
   await page.addInitScript(({ token, user }) => {

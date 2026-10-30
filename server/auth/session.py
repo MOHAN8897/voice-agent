@@ -25,6 +25,9 @@ class SessionData:
     tenant_id: str | None
     role: str
     issued_at: int
+    #: Set for dev sessions held by a stored platform-admin account
+    #: (`a:<account_id>:<epoch>`); None for the env-configured built-in login.
+    account_ref: str | None = None
 
 
 def _sign(payload: str) -> str:
@@ -32,9 +35,17 @@ def _sign(payload: str) -> str:
     return hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
 
 
-def create_session_token(kind: SessionKind, subject: str, tenant_id: str | None, role: str) -> str:
+def create_session_token(
+    kind: SessionKind,
+    subject: str,
+    tenant_id: str | None,
+    role: str,
+    account_ref: str | None = None,
+) -> str:
     issued = int(time.time())
     body = f"{kind}|{subject}|{tenant_id or ''}|{role}|{issued}"
+    if account_ref:
+        body = f"{body}|{account_ref}"
     return f"{body}|{_sign(body)}"
 
 
@@ -56,7 +67,27 @@ def parse_session_token(token: str, expected_kind: SessionKind | None = None) ->
     if time.time() - issued > _TTL_SEC:
         return None
     tenant = tenant_id if tenant_id else None
-    return SessionData(kind=kind, subject=subject, tenant_id=tenant, role=role, issued_at=issued)
+    ref = parts[5] if len(parts) >= 7 and parts[5] else None
+    if kind == "dev":
+        if ref:
+            # A stored admin account: valid only while the account is active and the
+            # token's epoch is current, and it authorizes with the *current* role.
+            from server.auth.admin_sessions import resolve_account_ref
+
+            state = resolve_account_ref(ref)
+            if state is None:
+                return None
+            subject, role = state.username, state.role
+        elif _is_builtin_dev_subject(subject) and role == "developer":
+            # Sessions issued before admin roles existed: the env login is the
+            # built-in super admin.
+            role = "super_admin"
+    return SessionData(kind=kind, subject=subject, tenant_id=tenant, role=role, issued_at=issued, account_ref=ref)
+
+
+def _is_builtin_dev_subject(subject: str) -> bool:
+    expected = (get_settings().dev_portal_username or "").strip()
+    return bool(expected) and expected.casefold() == (subject or "").strip().casefold()
 
 
 def create_csrf_token() -> str:

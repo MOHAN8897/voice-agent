@@ -28,8 +28,17 @@ test('Flagship profile preserves the chosen model and voice aliases', async ({ p
   await expect(page.getByTestId('agent-test-call')).toBeEnabled();
 });
 
-test('stale saved choice blocks tests until a current voice is saved', async ({ page }) => {
+test('a saved voice stays valid after an admin bumps the profile revision', async ({ page }) => {
+  // The server keeps a saved choice while its aliases still resolve
+  // (resolve_agent_selection); the console must not call it lost.
   await setupVoiceWorkspace(page, { staleSelection: true });
+  await expect(page.getByTestId('voice-select-btn-voice-medium')).toContainText('Selected');
+  await expect(page.getByTestId('voice-setup-needs-selection')).toHaveCount(0);
+  await expect(page.getByTestId('agent-test-call')).toBeEnabled();
+});
+
+test('a saved voice removed from the catalog blocks tests until a current voice is saved', async ({ page }) => {
+  await setupVoiceWorkspace(page, { removedVoice: true });
   await expect(page.getByTestId('voice-setup-needs-selection')).toBeVisible();
   await expect(page.getByTestId('agent-test-call')).toBeDisabled();
   await page.getByTestId('voice-select-btn-voice-medium').click();

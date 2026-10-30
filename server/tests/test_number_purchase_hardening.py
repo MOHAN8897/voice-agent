@@ -192,8 +192,11 @@ async def test_premium_carrier_number_is_refused_before_debit(db, monkeypatch):
             return [{"e164": PHONE, "setup_fee": 5000, "monthly_fee": 1, "currency": "INR"}]
 
     monkeypatch.setattr("server.services.vobiz_client.VobizClient", _Client)
-    with pytest.raises(ValueError, match="number_unavailable"):
+    # A distinct code so the operator learns the rent is below the carrier price;
+    # the tenant copy is the same as "unavailable" (see number_purchase_errors).
+    with pytest.raises(ValueError, match="carrier_price_above_retail") as info:
         await nps._assert_vobiz_inventory_number_available(PHONE, "IN")
+    assert info.value.context == {"carrierPrice": 5001.0, "retailPrice": 380.0, "currency": "INR"}
 
 
 # --- Purchase status shown to the tenant ---------------------------------------
@@ -206,12 +209,17 @@ async def test_purchase_status_hides_internal_error_and_reports_refund(db):
                                  last_error={"code": "provider_provision_failed", "error_type": "VobizApiError"}))
         await session.commit()
     row = await nps.get_purchase(pid, TID)
-    assert row["lastError"] == {"code": "provider_provision_failed"} and row["refunded"] is False
+    assert row["lastError"]["code"] == "provider_provision_failed" and row["refunded"] is False
+    assert set(row["lastError"]) == {"code", "message"}
+    assert "refund is being processed" in row["message"]
+    assert "VobizApiError" not in str(row) and "vobiz" not in row["message"].lower()
     async with db() as session:
         session.add(BillingWalletTransaction(tenant_id=TID, amount_cents=400, kind="did_refund",
                                              reference_id=f"did_refund:{pid}"))
         await session.commit()
-    assert (await nps.get_purchase(pid, TID))["refunded"] is True
+    refunded_row = await nps.get_purchase(pid, TID)
+    assert refunded_row["refunded"] is True
+    assert "refunded the charge to your wallet" in refunded_row["message"]
     assert await nps.get_purchase(pid, OTHER) is None
 
 

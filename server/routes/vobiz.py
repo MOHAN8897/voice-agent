@@ -361,6 +361,7 @@ async def vobiz_answer(request: Request):
 
         if not number_line_accepts_inbound(profile):
             log_pstn("vobiz.inbound.declined", call_uuid=call_uuid, reason="number_disabled")
+            await _note_inbound_decline(call_uuid, "number_disabled")
             return Response(content='<Response><Hangup reason="busy" /></Response>', media_type="application/xml")
 
     # 4. Inbound policy check (business hours, voicemail, transfer, decline)
@@ -371,6 +372,7 @@ async def vobiz_answer(request: Request):
             decision = evaluate_inbound_policy(profile)
             if not decision.should_answer:
                 log_pstn("vobiz.inbound.declined", call_uuid=call_uuid, reason=decision.reason)
+                await _note_inbound_decline(call_uuid, str(decision.reason or "policy_declined"))
                 if decision.route == "transfer" and decision.transfer_number:
                     import html
                     xfer = html.escape(str(decision.transfer_number).strip(), quote=True)
@@ -647,7 +649,89 @@ async def vobiz_hangup(request: Request):
         from server.services.vobiz_recordings import schedule_recording_retrieval
         schedule_recording_retrieval(internal_id)
 
+    # Every call that rang must appear in the call history, including outbound
+    # calls nobody answered and inbound calls nobody picked up. Recorded as a
+    # background task: the carrier's webhook ACK never waits on history.
+    asyncio.create_task(
+        _record_vobiz_attempt_end(payload, local, call_uuid, request_uuid, outbound_id, hangup_cause, internal_id),
+        name=f"vobiz-attempt-end-{call_uuid[:24]}",
+    )
+
     return {"ok": True, "call_uuid": call_uuid}
+
+
+def _vobiz_answered(payload: dict[str, Any]) -> bool:
+    if str(payload.get("AnswerTime") or payload.get("answer_time") or "").strip():
+        return True
+    for key in ("billsec", "BillDuration", "bill_duration"):
+        try:
+            if float(payload.get(key) or 0) > 0:
+                return True
+        except (TypeError, ValueError):
+            continue
+    return False
+
+
+async def _record_vobiz_attempt_end(
+    payload: dict[str, Any],
+    local: dict[str, Any],
+    call_uuid: str,
+    request_uuid: str,
+    outbound_id: str,
+    hangup_cause: str,
+    internal_id: str | None,
+) -> None:
+    """Close (or create, then close) the attempt row for this Vobiz hangup. Never raises."""
+    try:
+        from server.call.carrier_attempts import finalize_carrier_attempt
+
+        direction = str(local.get("direction") or payload.get("Direction") or "inbound").lower()
+        direction = "outbound" if direction.startswith("out") else "inbound"
+        from_number = str(payload.get("From") or local.get("from") or "") or None
+        to_number = str(payload.get("To") or local.get("to") or "") or None
+        tenant_id = str(local.get("tenant_id") or "") or await _vobiz_callback_tenant_id(payload)
+        agent_id = str(local.get("agent_id") or "") or None
+        if direction == "inbound" and not agent_id and to_number:
+            try:
+                from server.services.saas.telephony_profile import profile_for_number
+
+                profile = await profile_for_number(to_number) or await profile_for_number(_normalize_num(to_number))
+                agent_id = str((profile or {}).get("agent_id") or "") or None
+            except Exception:
+                agent_id = None
+        create_with = None
+        if tenant_id:
+            create_with = dict(
+                tenant_id=tenant_id,
+                agent_id=agent_id,
+                direction=direction,
+                from_number=from_number,
+                to_number=to_number,
+                status="in_progress",
+                policy_reason=str(local.get("inbound_declined_reason") or "") or None,
+            )
+        await finalize_carrier_attempt(
+            provider="vobiz",
+            control_ids=(request_uuid, call_uuid, outbound_id),
+            cause=payload.get("HangupCauseName") or hangup_cause,
+            sip_code=payload.get("SipResponseCode") or payload.get("sip_response_code"),
+            answered=_vobiz_answered(payload),
+            linked_call_id=internal_id,
+            create_with=create_with,
+        )
+    except Exception as exc:  # noqa: BLE001 - observability only.
+        logger.warning("[VOBIZ] attempt record failed kind=%s", type(exc).__name__)
+
+
+async def _note_inbound_decline(call_uuid: str, reason: str) -> None:
+    """Remember why an inbound call was not answered, for its history row."""
+    if not call_uuid:
+        return
+    try:
+        await asyncio.to_thread(vobiz_call_registry.upsert, call_uuid,
+                                {"inbound_declined_reason": reason[:50], "direction": "inbound"})
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[VOBIZ] decline note failed kind=%s", type(exc).__name__)
 
 
 @router.post("/api/vobiz/recording")

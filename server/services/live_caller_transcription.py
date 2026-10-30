@@ -41,6 +41,13 @@ def live_api_key(model: str) -> str:
     provider = live_provider(model)
     if provider == "gemini":
         return ""
+    if provider == "sarvam":
+        from server.services.sarvam_keys import sarvam_key_pool
+
+        # Healthiest Sarvam key: the backup while the primary is out of credits.
+        planned = sarvam_key_pool.plan()
+        if planned:
+            return planned[0][1]
     name = f"{provider}_api_key"
     return (dev_secrets_store.effective_secret(name) or getattr(get_settings(), name, "") or "").strip()
 
@@ -297,4 +304,13 @@ class LiveCallerTranscriber:
     def _record_error(self, event: dict[str, Any]) -> None:
         error = event.get("error") if isinstance(event.get("error"), dict) else event
         code = str(error.get("code") or "provider_rejected")
+        try:
+            from server.services.provider_health import KEY_FAILOVER_CATEGORIES, classify, provider_health
+
+            category = classify(self.provider, body={"error": {"code": code}}, message=str(error.get("message") or ""))
+            if category in KEY_FAILOVER_CATEGORIES or category in {"unavailable", "rate_limited"}:
+                provider_health.record_failure(self.provider, "stt", category,
+                                               detail=f"Live transcription rejected: {code}")
+        except Exception:
+            pass
         self._failure = code if re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]{0,79}", code) else "provider_rejected"

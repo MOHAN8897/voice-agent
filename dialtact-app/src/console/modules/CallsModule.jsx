@@ -10,13 +10,13 @@ import {
   Play,
   Pause,
   Download,
-  CreditCard,
   X,
   AlertTriangle,
   ListChecks,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
-import { CallIntegrationPicker, IntegrationSelectionSummary, useCallIntegrationOptions } from '../ui/CallIntegrationPicker';
+import { IntegrationSelectionSummary, useCallIntegrationOptions } from '../ui/CallIntegrationPicker';
+import { OutboundCallForm, useOutboundCall } from './outbound/OutboundCallForm';
 import { Badge, StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { PageHeader } from '../ui/PageHeader';
@@ -71,14 +71,15 @@ const FIELD =
 const SELECT =
   'h-11 sm:h-9 min-w-0 max-w-full sm:max-w-[14rem] rounded-control border border-line bg-surface px-3 text-base sm:text-ui text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15 disabled:opacity-50';
 
-function CallStatusPill({ status, className = '' }) {
+function CallStatusPill({ status, label = null, title = null, className = '' }) {
   const meta = statusMeta(status);
   const Icon = STATUS_ICON[status] || PhoneIncoming;
   const tone = status === 'in_progress' ? 'live' : STATUS_TONE[meta.tone] || 'neutral';
+  // `label` is the server's plain outcome ("No answer", "Busy", "Missed call").
   return (
-    <Badge tone={tone} title={meta.hint} className={className}>
+    <Badge tone={tone} title={title || meta.hint} className={className} data-testid="call-outcome-pill">
       <Icon className="h-3 w-3" aria-hidden="true" />
-      {meta.short}
+      {label || meta.short}
     </Badge>
   );
 }
@@ -140,11 +141,16 @@ function callSentence(call) {
     case 'in_progress':
       return { actor: agent, text: `is on a call with ${who}` };
     case 'missed':
-      return { actor: null, text: `Missed call from ${who}` };
+      return outgoing
+        ? { actor: agent, text: `couldn't reach ${who}: no answer` }
+        : { actor: null, text: `Missed call from ${who}` };
     case 'voicemail':
       return outgoing ? { actor: agent, text: `reached ${who}'s voicemail` } : { actor: null, text: `${who} reached voicemail` };
     case 'declined':
-      return { actor: agent, text: `couldn't reach ${who}: busy or declined` };
+      return {
+        actor: agent,
+        text: `couldn't reach ${who}: ${call.outcomeLabel ? call.outcomeLabel.toLowerCase() : 'busy or declined'}`,
+      };
     case 'failed':
       return { actor: agent, text: `couldn't connect to ${who}` };
     default:
@@ -390,16 +396,28 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   const [availableTags, setAvailableTags] = useState([]);
   const [searchQuery, setSearchQuery] = useState(() => initialSearch || sessionStorage.getItem('dialtact_calls_search') || '');
   useEffect(() => { sessionStorage.removeItem('dialtact_calls_search'); }, []);
-  const [toNumber, setToNumber] = useState('');
-  const [fromNumber, setFromNumber] = useState('');
-  const [agentId, setAgentId] = useState('');
-  const [dialBusy, setDialBusy] = useState(false);
-  // Integrations attached to the next outgoing call; null keeps the agent's saved settings.
-  const [callIntegrations, setCallIntegrations] = useState(null);
+  // "Place a call" is a draft the tenant fills in and may leave mid-way: keep it for
+  // this browser tab across page switches, and clear the number after a call.
+  // Integrations belong to the agent they were picked for (null keeps the agent's
+  // saved settings). The embedded history view never dials, so it keeps no draft.
+  // The form itself is the shared outgoing-call form (OutboundCallForm), the same
+  // one the agent workspace's test call and Outgoing tab use.
+  const outboundCall = useOutboundCall({
+    draftName: embedded ? null : 'place-call',
+    draftSubject: 'all',
+    extraDraft: { mainTab: 'history' },
+    onRequireFunds: onRequireFunds ? () => onRequireFunds() : null,
+    enabled: !embedded,
+  });
+  const dialDraft = outboundCall.draft;
+  const patchDialDraft = outboundCall.patchDraft;
+  const { agentId } = dialDraft;
+  const setAgentId = useCallback((value) => patchDialDraft({ agentId: value }), [patchDialDraft]);
   const [refreshing, setRefreshing] = useState(false);
   const [transcriptLines, setTranscriptLines] = useState([]);
   const [liveTranscription, setLiveTranscription] = useState(null);
-  const [mainTab, setMainTab] = useState('history');
+  const mainTab = dialDraft.mainTab === 'outbound' ? 'outbound' : 'history';
+  const setMainTab = (value) => patchDialDraft({ mainTab: value });
   const [historyBucket, setHistoryBucket] = useState('all');
   const [outcome, setOutcome] = useState(null);
   const [outcomeLoading, setOutcomeLoading] = useState(false);
@@ -431,8 +449,9 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
 
   useEffect(() => {
     if (lockedAgentId) return;
-    if (agents[0]?.id && !agentId) setAgentId(agents[0].id);
-  }, [agents, agentId, lockedAgentId]);
+    // A remembered agent that no longer exists falls back to the first one.
+    if (agents[0]?.id && (!agentId || !agents.some((a) => a.id === agentId))) setAgentId(agents[0].id);
+  }, [agents, agentId, lockedAgentId, setAgentId]);
 
   // The status tab is a server-side filter, so refetch rather than filter locally.
   // Keeping the full list in context means the other tabs stay instant.
@@ -587,10 +606,6 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
       (filteredCalls.length > 0 ? filteredCalls[0] : null),
     [filteredCalls, selectedCallId]
   );
-  // The dialer's select shows the first agent before any change; dial with what is shown.
-  const outboundAgentId = agentId || agents[0]?.id || '';
-  const outboundIntegrationOptions = useCallIntegrationOptions(!embedded && mainTab === 'outbound' ? outboundAgentId : null);
-  useEffect(() => { setCallIntegrations(null); }, [outboundAgentId]);
   const activeCampaign = activeCall?.campaignId ? campaigns.find((c) => c.id === activeCall.campaignId) : null;
   const activeCallSelection = activeCall?.integrationSelection || activeCampaign?.integrations || null;
   const detailIntegrationOptions = useCallIntegrationOptions(activeCallSelection?.length ? activeCall?.agentId : null);
@@ -674,34 +689,6 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
     setCallbackTarget('');
   }, [activeCall?.id]);
 
-  const placeCall = async () => {
-    if (!outboundAgentId || !toNumber.trim()) return;
-    // Payment wall: an empty wallet cannot place a billable call.
-    if (balanceUsd <= 0 && balanceInr <= 0) {
-      onRequireFunds?.();
-      return;
-    }
-    setDialBusy(true);
-    try {
-      await api.calls.triggerOutbound({
-        agentId: outboundAgentId,
-        toE164: toNumber.trim(),
-        fromE164: fromNumber || null,
-        integrations: callIntegrations,
-      });
-      showToast('Outgoing call started', 'success');
-      await refreshCalls();
-    } catch (e) {
-      if (e.status === 402 || e.code === 'insufficient_balance') {
-        onRequireFunds?.();
-      } else {
-        showToast(e.message || 'Could not place call', 'error');
-      }
-    } finally {
-      setDialBusy(false);
-    }
-  };
-
   /**
    * Call a missed caller back. Uses the server's callback endpoint, which reuses
    * the normal outbound path — so wallet, agent and concurrency checks all apply.
@@ -735,9 +722,6 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   const canCallBack = Boolean(activeCall) && isCallbackCandidate(activeCall);
   const summaryText = activeCall?.summary || outcome?.summary_en || null;
   const extracted = outcome?.extracted_fields || outcome?.facts || null;
-  const balanceUsd = Number(wallet?.balanceUsd) || 0;
-  const balanceInr = Number(wallet?.balanceInr) || 0;
-  const walletEmpty = balanceUsd <= 0 && balanceInr <= 0;
 
   const detailCaller = activeCall ? contactName(activeCall.callerName, activeCall.callerPhone) : '';
   const detailSentence = activeCall ? callSentence(activeCall) : null;
@@ -783,82 +767,21 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
             </p>
           </div>
 
-          {/* Payment wall, shown before the user tries to dial. */}
-          {walletEmpty && (
-            <div
-              data-testid="calls-payment-wall"
-              className="flex flex-col gap-3 rounded-control border border-warning-line bg-warning-soft p-3 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <p className="text-ui text-warning-fg">
-                Your wallet is empty. Add funds to place calls and receive callbacks.
-              </p>
-              <TactileButton
-                variant="brand"
-                size="sm"
-                icon={CreditCard}
-                onClick={() => onRequireFunds?.()}
-                data-testid="calls-payment-wall-add"
-              >
-                Add funds
-              </TactileButton>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto] lg:items-end">
-            <label className="min-w-0 space-y-1">
-              <span className="block text-meta font-medium text-fg-body">Agent</span>
-              <select value={agentId} onChange={(e) => setAgentId(e.target.value)} className={FIELD}>
-                {agents.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="min-w-0 space-y-1">
-              <span className="block text-meta font-medium text-fg-body">Call from</span>
-              <select value={fromNumber} onChange={(e) => setFromNumber(e.target.value)} className={`${FIELD} font-mono tabular-nums`}>
-                <option value="">Agent's own line</option>
-                {phoneNumbers.map((n) => (
-                  <option key={n.id} value={n.number}>
-                    {n.label ? `${n.label} · ${n.number}` : n.number}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="min-w-0 space-y-1">
-              <span className="block text-meta font-medium text-fg-body">Number to call</span>
-              <input
-                value={toNumber}
-                onChange={(e) => setToNumber(e.target.value)}
-                placeholder="+91 98765 43210"
-                inputMode="tel"
-                className={`${FIELD} font-mono tabular-nums`}
-              />
-            </label>
-            <TactileButton variant="primary" size="md" icon={PhoneCall} loading={dialBusy} onClick={placeCall} className="sm:col-span-2 lg:col-span-1">
-              Call now
-            </TactileButton>
-          </div>
-
-          <div className="border-t border-line pt-4">
-            <CallIntegrationPicker
-              scope="call"
-              agentId={outboundAgentId}
-              value={callIntegrations}
-              onChange={setCallIntegrations}
-              disabled={dialBusy}
-              options={outboundIntegrationOptions}
-            />
-          </div>
-          <div className="rounded-control border border-line bg-canvas p-3" data-testid="outbound-integration-summary">
-            <div className="mb-1.5 text-meta font-medium text-fg-body">This call will use</div>
-            <IntegrationSelectionSummary
-              selection={callIntegrations}
-              options={outboundIntegrationOptions.items}
-              emptyText="No integrations chosen: the agent uses its saved integration settings."
-            />
-          </div>
+          <OutboundCallForm
+            call={outboundCall}
+            ids={{
+              root: 'calls-place-call-form',
+              paymentWall: 'calls-payment-wall',
+              paymentWallAdd: 'calls-payment-wall-add',
+              agent: 'calls-place-call-agent',
+              from: 'calls-place-call-from',
+              to: 'calls-place-call-to',
+              submit: 'calls-place-call-submit',
+              integrationSummary: 'outbound-integration-summary',
+              error: 'calls-place-call-error',
+            }}
+            onPlaced={() => refreshCalls()}
+          />
         </SolidCard>
       )}
 
@@ -941,7 +864,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                       const isSelected = activeCall && activeCall.id === call.id;
                       const status = callStatus(call);
                       const sentence = callSentence(call);
-                      const outcomeText = dispositionLabel(call.disposition) || call.summary || null;
+                      const outcomeText = dispositionLabel(call.disposition) || call.summary || call.outcomeReason || null;
                       const masked = maskPhone(call.callerPhone);
                       const named = contactName(call.callerName, null, '') !== '';
                       return (
@@ -982,7 +905,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                                   <span className="font-mono tabular-nums">· {call.duration}</span>
                                 )}
                                 {!sentence.actor && call.agentName && call.agentName !== 'Unassigned' && <span>· {call.agentName}</span>}
-                                <CallStatusPill status={call.status} />
+                                <CallStatusPill status={call.status} label={call.outcomeLabel} title={call.outcomeReason} />
                                 {isTechnicalFailure(call.endReason) && <TechnicalIssuePill />}
                                 <CallTags tags={call.statusTags} />
                               </div>
@@ -1005,7 +928,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                       <h3 className="text-title text-ink break-words">{detailCaller}</h3>
                       <p className="text-ui text-fg-muted">
                         {activeCall.callerPhone && (
-                          <span className="font-mono tabular-nums text-fg-body">{activeCall.callerPhone}</span>
+                          <span className="font-mono tabular-nums text-fg-body">{maskPhone(activeCall.callerPhone)}</span>
                         )}
                         {activeCall.callerPhone && callReference(activeCall.id) ? ' · ' : ''}
                         {/* A short reference for support, not the raw database id. */}
@@ -1034,7 +957,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                       {detailOutcome && <span className="text-fg-body"> · {detailOutcome}</span>}
                     </p>
                     <div className="flex flex-wrap items-center gap-2 text-meta text-fg-muted">
-                      <CallStatusPill status={activeCall.status} />
+                      <CallStatusPill status={activeCall.status} label={activeCall.outcomeLabel} title={activeCall.outcomeReason} />
                       {isTechnicalFailure(activeCall.endReason) && <TechnicalIssuePill />}
                       {activeCall.startedAt && (
                         <time dateTime={activeCall.startedAt} title={new Date(activeCall.startedAt).toLocaleString('en-IN')}>
@@ -1046,10 +969,12 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                       )}
                     </div>
                     {/* Why this call ended up with this status, in plain language. */}
-                    <p className="text-ui text-fg-muted">
-                      {statusMeta(activeCall.status).hint}
+                    <p className="text-ui text-fg-muted" data-testid="call-outcome-reason">
+                      {activeCall.outcomeReason || statusMeta(activeCall.status).hint}
                       {!activeCall.connected ? ' This call never connected.' : ''}
-                      {activeCall.policyReason ? ` (${policyReasonLabel(activeCall.policyReason)})` : ''}
+                      {activeCall.policyReason && !activeCall.outcomeReason && activeCall.direction !== 'outbound'
+                        ? ` (${policyReasonLabel(activeCall.policyReason)})`
+                        : ''}
                     </p>
                   </div>
 

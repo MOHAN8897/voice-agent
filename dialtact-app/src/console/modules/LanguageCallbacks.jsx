@@ -10,6 +10,7 @@ import { Badge } from '../ui/StatusBadge';
 import { EmptyState } from '../ui/EmptyState';
 import { NeedsYouItem } from './NeedsYouItem';
 import { humanizeToken } from '../../lib/internalLabels';
+import { contactName, formatPhone } from '../../lib/phoneMask';
 
 const field = 'mt-1 block min-h-11 min-w-0 max-w-full rounded-control border border-line bg-surface px-3 py-2 text-base sm:text-ui text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15';
 const STATUS_LABEL = { pending: 'Needs callback', calling: 'Callback placed', done: 'Done', dismissed: 'Removed' };
@@ -78,7 +79,7 @@ export function LanguageCallbacks({ agentId = null, readOnly = false }) {
       if (!ready.ready) throw new Error(ready.message || `This agent can't call in ${row.requestedLanguageLabel} yet.`);
       const result = await api.request('POST', `/api/language-switch-requests/${row.id}/call`, outboundFromE164 ? { fromE164: outboundFromE164 } : {});
       if (result.ok === false) throw new Error(result.error || 'The call could not be placed. The request is still in the list.');
-      setNotice(`Calling ${row.contactName || row.phone} in ${row.requestedLanguageLabel} with ${agentName(row.agentId)}. It is marked done after a connected call in ${row.requestedLanguageLabel}.`);
+      setNotice(`Calling ${contactName(row.contactName, row.phone, 'this caller')} in ${row.requestedLanguageLabel} with ${agentName(row.agentId)}. It is marked done after a connected call in ${row.requestedLanguageLabel}.`);
       setRows((current) => current.map((item) => item.id === row.id ? { ...item, status: 'calling' } : item));
     } catch (e) {
       setError(e.message || 'Could not start the call.');
@@ -186,7 +187,7 @@ export function LanguageCallbacks({ agentId = null, readOnly = false }) {
         <ul className="mt-3 divide-y divide-line border-t border-line" data-testid="language-callback-list">
           {visible.map((row) => {
             const open = row.status === 'pending' || row.status === 'calling';
-            const who = row.contactName || 'Caller';
+            const who = contactName(row.contactName, null, 'Caller');
             const agent = agentName(row.agentId);
             return (
               <NeedsYouItem
@@ -194,13 +195,13 @@ export function LanguageCallbacks({ agentId = null, readOnly = false }) {
                 tone={row.error ? 'danger' : 'warning'}
                 needsYou={row.status === 'pending'}
                 leading={
-                  <input type="checkbox" aria-label={`Select ${row.contactName || row.phone}`} className="mt-2 h-4 w-4 shrink-0 accent-accent"
+                  <input type="checkbox" aria-label={`Select ${contactName(row.contactName, row.phone, 'caller')}`} className="mt-2 h-4 w-4 shrink-0 accent-accent"
                     disabled={readOnly || !open} checked={selected.includes(row.id)} onChange={() => toggle(row)} />
                 }
                 agentName={agent}
                 actor={who}
                 text={`wants a call back in ${row.requestedLanguageLabel}`}
-                detail={<><span className="font-mono tabular-nums">{row.phone}</span> · spoke {row.originalLanguageLabel} with {agent}</>}
+                detail={<><span className="font-mono tabular-nums">{formatPhone(row.phone) || row.phone}</span> · spoke {row.originalLanguageLabel} with {agent}</>}
                 at={row.createdAt || null}
                 badges={<>
                   <LanguageChip label={`Wants ${row.requestedLanguageLabel}`} />

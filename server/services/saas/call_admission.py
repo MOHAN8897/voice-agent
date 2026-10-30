@@ -23,7 +23,10 @@ from server.services.saas.voice_setup_errors import VOICE_SETUP_MESSAGES
 
 ACTIVE = ("reserved", "accepted", "answered", "uncertain")
 logger = logging.getLogger(__name__)
-NO_DIAL_CODES = frozenset({"voice_preparation_failed", "live_transcription_unavailable", "predial_policy_changed", *VOICE_SETUP_MESSAGES})
+from server.services.call_setup_failures import VOICE_SERVICE_UNAVAILABLE, VOICE_SERVICE_UNAVAILABLE_MESSAGE
+
+NO_DIAL_CODES = frozenset({"voice_preparation_failed", "live_transcription_unavailable", "predial_policy_changed",
+                           VOICE_SERVICE_UNAVAILABLE, *VOICE_SETUP_MESSAGES})
 
 
 def _now():
@@ -173,9 +176,10 @@ async def reserve(tenant_id: uuid.UUID, request_id: str, *, provider: str, paylo
 
 def safe_response(result: dict) -> dict:
     # Carrier bridge responses contain internal stream URLs/tokens and history.
-    response = {key: result[key] for key in ("ok", "call_id", "callId", "call_control_id", "code", "error", "status") if key in result}
+    response = {key: result[key] for key in ("ok", "call_id", "callId", "call_control_id", "code", "error", "status", "retry_after") if key in result}
     if not response.get("ok"):
         response["error"] = (VOICE_SETUP_MESSAGES.get(response.get("code")) or
+                             (VOICE_SERVICE_UNAVAILABLE_MESSAGE if response.get("code") == VOICE_SERVICE_UNAVAILABLE else None) or
                              ("The agent could not get ready. No call was placed. Contact your administrator or try again."
                              if response.get("code") in NO_DIAL_CODES else
                              "The call could not be confirmed. Check the call status before retrying."))

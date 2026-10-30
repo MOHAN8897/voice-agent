@@ -455,6 +455,10 @@ async def refresh_inventory() -> dict[str, Any]:
                     continue
                 try:
                     if provider == "sarvam":
+                        from server.services.sarvam_keys import sarvam_key_pool
+
+                        # Use the key the pool currently trusts (backup while the primary is spent).
+                        key = next(iter(sarvam_key_pool.plan()), ("", key))[1] or key
                         models = updated.setdefault(provider, {}).setdefault("models", {})
                         rows = await _sarvam_api_voices(client, key, models.get("bulbul:v4-flash") or [])
                         models["bulbul:v4-flash"] = rows

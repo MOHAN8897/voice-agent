@@ -12,12 +12,25 @@ def _get_cookie(request: Request, name: str) -> str | None:
     return request.cookies.get(name)
 
 
+async def refresh_admin_sessions_if_needed(token: str | None) -> None:
+    """Keep the stored-admin revocation snapshot fresh for account-bound tokens.
+
+    Only tokens carrying an account reference (seven `|` fields) need it, so the
+    built-in login and test tokens never touch the database here.
+    """
+    if token and token.count("|") >= 6:
+        from server.auth.admin_sessions import refresh
+
+        await refresh()
+
+
 async def require_dev_session(
     request: Request,
     x_csrf_token: str | None = Header(None, alias="X-CSRF-Token"),
 ) -> SessionData:
     names = cookie_names()
     token = _get_cookie(request, names["dev"])
+    await refresh_admin_sessions_if_needed(token)
     session = parse_session_token(token or "", "dev")
     if session is None:
         settings = get_settings()

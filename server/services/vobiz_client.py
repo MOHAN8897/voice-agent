@@ -148,6 +148,9 @@ class VobizClient:
                 async with httpx.AsyncClient(timeout=timeout) as client:
                     r = await client.request(method, url, headers=self._headers(), **kwargs)
                 if r.status_code >= 400:
+                    from server.services.provider_health import record_vendor_answer
+
+                    record_vendor_answer("vobiz", "telephony", r.status_code, r.text[:800])
                     raise VobizApiError(
                         f"Vobiz API {r.status_code}: {r.text[:300]}",
                         status=r.status_code,
@@ -160,6 +163,9 @@ class VobizClient:
                 if attempt < max_attempts - 1:
                     await asyncio.sleep(0.3)
                     continue
+                from server.services.provider_health import record_vendor_answer
+
+                record_vendor_answer("vobiz", "telephony", None, message="Vobiz API timed out")
                 raise VobizApiError(
                     f"Vobiz API timeout ({exc.__class__.__name__})",
                     status=None,
@@ -169,6 +175,9 @@ class VobizClient:
                 if attempt < max_attempts - 1:
                     await asyncio.sleep(0.3)
                     continue
+                from server.services.provider_health import record_vendor_answer
+
+                record_vendor_answer("vobiz", "telephony", None, message="Vobiz API unreachable (service unavailable)")
                 raise VobizApiError(
                     f"Vobiz API transport error ({exc.__class__.__name__})",
                     status=None,

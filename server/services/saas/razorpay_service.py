@@ -363,6 +363,15 @@ async def create_wallet_order(
             else "razorpay_order_failed"
         )
         logger.warning("razorpay order create failed error_type=%s", type(exc).__name__)
+        from server.services import provider_health as _ph
+
+        if failure == "razorpay_auth_failed":
+            _ph.provider_health.record_failure("razorpay", "payments", _ph.AUTH, tenant_id=str(tenant_id),
+                                               detail="Razorpay rejected our API key while creating a top-up order")
+        elif not isinstance(exc, razorpay.errors.BadRequestError):
+            _ph.provider_health.record_failure(
+                "razorpay", "payments", _ph.TIMEOUT if isinstance(exc, (TimeoutError, requests.exceptions.Timeout)) else _ph.UNAVAILABLE,
+                tenant_id=str(tenant_id), detail=f"Razorpay order create failed ({type(exc).__name__})")
         from server.services.saas.activity_log import record_event
 
         await record_event(

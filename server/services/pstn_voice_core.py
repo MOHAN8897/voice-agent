@@ -2754,6 +2754,16 @@ class PstnVoiceLoop:
 
         ctx = get_ctx(self.call_id)
         try:
+            from server.services.provider_health import record_turn_exception
+
+            llm = getattr(getattr(ctx, "resolved_stack", None), "llm", None) if ctx else None
+            record_turn_exception(
+                exc, provider=str(getattr(llm, "provider", "") or ""), component="llm",
+                call_id=self.call_id, tenant_id=str(ctx.tenant_id) if ctx and ctx.tenant_id else None,
+            )
+        except Exception:
+            pass
+        try:
             await record_turn_failure(
                 call_id=self.call_id,
                 tenant_id=str(ctx.tenant_id) if ctx and ctx.tenant_id else None,

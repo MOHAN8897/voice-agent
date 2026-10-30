@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from server.auth.passwords import verify_portal_password
-from server.auth.rbac import ROLE_DEVELOPER
+from server.auth.rbac import ROLE_DEVELOPER, ROLE_SUPER_ADMIN
 from server.auth.session import cookie_names, create_csrf_token, create_session_token, parse_session_token
 from server.config.env import get_settings
 from server.utils.rate_limiter import RateLimiter
@@ -66,9 +66,14 @@ def _clear_session_cookies(response: Response, kind: str) -> None:
 
 @router.post("/api/dev/login")
 async def dev_login(body: LoginBody, request: Request, response: Response):
+    """Sign in to the admin portal.
+
+    Two kinds of admin can sign in here: the built-in break-glass login configured
+    by DEV_PORTAL_USERNAME / DEV_PORTAL_PASSWORD (a super admin, managed only by
+    configuration), and stored platform-admin accounts managed on Roles & access.
+    """
     settings = get_settings()
-    if not settings.dev_portal_username or not settings.dev_portal_password:
-        return {"ok": False, "error": {"code": "auth_error", "message": "Dev portal not configured"}}
+    builtin_configured = bool(settings.dev_portal_username and settings.dev_portal_password)
     ip = request.client.host if request.client else "unknown"
     allowed, retry = _login_limiter.allow(f"dev:{ip}:{body.username}")
     if not allowed:
@@ -76,14 +81,32 @@ async def dev_login(body: LoginBody, request: Request, response: Response):
             "ok": False,
             "error": {"code": "rate_limit", "message": "Too many login attempts", "retry_after": retry},
         }
-    if not _portal_username_matches(settings.dev_portal_username, body.username) or not await asyncio.to_thread(
-        verify_portal_password, settings.dev_portal_password, body.password
-    ):
+    if builtin_configured and _portal_username_matches(settings.dev_portal_username, body.username):
+        # The built-in username is reserved: never fall through to stored accounts.
+        if not await asyncio.to_thread(verify_portal_password, settings.dev_portal_password, body.password):
+            return {"ok": False, "error": {"code": "auth_error", "message": "Invalid credentials"}}
+        csrf = create_csrf_token()
+        token = create_session_token("dev", body.username, settings.default_tenant_id, ROLE_SUPER_ADMIN)
+        _set_session_cookies(response, "dev", token, csrf)
+        return {"ok": True, "role": ROLE_SUPER_ADMIN, "csrf_token": csrf}
+
+    from server.services.saas import admin_accounts
+
+    account = await admin_accounts.authenticate(body.username, body.password, ip=ip, request=request)
+    if account is None:
+        if not builtin_configured and not await admin_accounts.any_accounts():
+            return {"ok": False, "error": {"code": "auth_error", "message": "Dev portal not configured"}}
         return {"ok": False, "error": {"code": "auth_error", "message": "Invalid credentials"}}
     csrf = create_csrf_token()
-    token = create_session_token("dev", body.username, settings.default_tenant_id, ROLE_DEVELOPER)
+    token = create_session_token(
+        "dev",
+        account.username,
+        settings.default_tenant_id,
+        account.role,
+        account_ref=admin_accounts.session_ref(account),
+    )
     _set_session_cookies(response, "dev", token, csrf)
-    return {"ok": True, "role": ROLE_DEVELOPER, "csrf_token": csrf}
+    return {"ok": True, "role": account.role, "csrf_token": csrf}
 
 
 @router.post("/api/dev/logout")
@@ -203,6 +226,9 @@ async def auth_me(request: Request):
 async def auth_dev_me(request: Request):
     settings = get_settings()
     names = cookie_names()
+    from server.auth.dependencies import refresh_admin_sessions_if_needed
+
+    await refresh_admin_sessions_if_needed(request.cookies.get(names["dev"]))
     session = parse_session_token(request.cookies.get(names["dev"]) or "", "dev")
     if session:
         csrf = request.cookies.get(names["dev_csrf"])

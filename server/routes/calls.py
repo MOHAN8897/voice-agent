@@ -571,7 +571,8 @@ def _enrich_call_list_item(item: dict) -> dict:
         if outcome:
             summary = (outcome.get("summary_en") or "").strip()
             if summary:
-                out["summary"] = summary[:240]
+                # The whole summary: clipping at 240 chars produced half sentences in the console.
+                out["summary"] = summary
             from server.call.outcome_schema import normalize_extracted_fields
 
             fields = normalize_extracted_fields(outcome.get("extracted_fields"))

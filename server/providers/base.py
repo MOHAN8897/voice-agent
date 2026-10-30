@@ -12,6 +12,20 @@ ConfigMode = Literal["env", "frontend"]
 ProviderStage = Literal["stt", "llm", "tts"]
 
 
+class StructuredOutputTruncated(RuntimeError):
+    """A structured completion stopped at its output-token limit before the JSON closed.
+
+    Raised instead of "repairing" the cut JSON, which would silently save a half
+    summary. Callers retry with a larger ``max_output_tokens``.
+    """
+
+    def __init__(self, provider: str, max_output_tokens: int | None, reason: str = "length") -> None:
+        super().__init__(f"{provider} structured output truncated ({reason}) at max_output_tokens={max_output_tokens}")
+        self.provider = provider
+        self.max_output_tokens = max_output_tokens
+        self.reason = reason
+
+
 @dataclass(frozen=True)
 class StageSelection:
     provider: str

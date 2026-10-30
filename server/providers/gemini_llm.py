@@ -318,7 +318,9 @@ class GeminiLLMAdapter:
                     json=body,
                 ) as resp:
                     if resp.status_code >= 400:
-                        await resp.aread()
+                        _err_body = await resp.aread()
+                        from server.services.provider_health import record_http_failure
+                        record_http_failure("gemini", "llm", resp.status_code, _err_body)
                         raise RuntimeError(f"Gemini request failed (HTTP {resp.status_code})")
                     async for line in resp.aiter_lines():
                         if not line or not line.startswith("data:"):
@@ -545,8 +547,17 @@ class GeminiLLMAdapter:
                 json=body,
             )
             if resp.status_code >= 400:
+                from server.services.provider_health import record_http_failure
+                record_http_failure("gemini", "llm", resp.status_code, resp.content)
                 raise RuntimeError(f"Gemini request failed (HTTP {resp.status_code})")
             payload = resp.json()
+        candidates = (payload or {}).get("candidates") if isinstance(payload, dict) else None
+        finish = (candidates[0] or {}).get("finishReason") if isinstance(candidates, list) and candidates and isinstance(candidates[0], dict) else None
+        if str(finish or "") == "MAX_TOKENS":
+            # Thinking tokens count against maxOutputTokens; retry bigger, never save half.
+            from server.providers.base import StructuredOutputTruncated
+
+            raise StructuredOutputTruncated("gemini", body["generationConfig"]["maxOutputTokens"], "MAX_TOKENS")
         text = _chunk_text(payload if isinstance(payload, dict) else {})
         try:
             parsed = json.loads(text)

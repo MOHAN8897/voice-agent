@@ -163,18 +163,33 @@ async def create_voice_kyc_session(
             return_url=body.return_url,
         )
     except voice_kyc_service.VoiceKycError as exc:
+        # Operators need to see a failed KYC start (sub-account or hosted link)
+        # without the tenant having to report it.
+        from server.services.saas.activity_log import record_event
+
+        await record_event(
+            action="voice_kyc.start_failed",
+            resource_type="voice_kyc",
+            resource_id=str(principal.tenant_id),
+            actor=principal.email or str(principal.user_id),
+            tenant_id=principal.tenant_id,
+            payload={"code": exc.code, "httpStatus": exc.status_code},
+            source="subscriber",
+            outcome="error" if exc.status_code >= 500 else "ok",
+            severity="error" if exc.status_code >= 500 else "warning",
+        )
         messages = {
             "voice_service_not_configured": "Phone service onboarding is not configured yet. Contact support.",
             "voice_kyc_encryption_not_configured": "Phone service onboarding is not configured yet. Contact support.",
             "voice_kyc_encryption_invalid": "Phone service onboarding is not configured yet. Contact support.",
-            "voice_account_needs_review": "Phone service setup needs support. Contact support before retrying.",
-            "voice_account_create_failed": "Could not create phone service verification. Check your details and try again.",
+            "voice_account_needs_review": "Your phone service setup needs a quick check from our team. Please contact support; there is no need to start again.",
+            "voice_account_create_failed": "We couldn't set up verification with these details. Please check your legal name and entity type, then try again.",
             "voice_identity_locked": "These business details are already registered. Contact support to change them.",
             "business_type_invalid": "Select a valid legal entity type.",
             "legal_name_required": "Enter the legal name for this account.",
             "account_email_required": "A verified account email is required.",
             "invalid_voice_kyc_return_url": "Could not return to the console after verification. Refresh and try again.",
-            "voice_kyc_session_failed": "Could not start verification. Please try again.",
+            "voice_kyc_session_failed": "We couldn't open the verification page just now. Please try again in a few minutes.",
         }
         raise HTTPException(
             status_code=exc.status_code,

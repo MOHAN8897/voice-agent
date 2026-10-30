@@ -18,6 +18,7 @@ import {
   useAdminResource,
 } from "@/lib/useAdminResource";
 import { useEffect, useState } from "react";
+import { ProviderHealthBanner } from "@/components/admin/health/ProviderHealthBanner";
 
 type Analytics = {
   windowDays: number;
@@ -143,6 +144,7 @@ export function AdminOverviewPage() {
         }
       />
 
+      <ProviderHealthBanner />
       <AdminError error={error} />
       <AdminError error={actionError} />
       <AdminLoading loading={loading} />

@@ -37,6 +37,17 @@ def factory_required():
     return factory
 
 
+def resolve_vague_time(cfg: FollowUpConfig, at: datetime, *texts: str, spread_key: str = "") -> dict | None:
+    """Resolve "evening" / "రేపు ఈవెనింగ్" / "शाम को" to the tenant's window. Never raises."""
+    from server.call.callback_day_parts import resolve_from_texts
+    try:
+        return resolve_from_texts([t for t in texts if t], now=at, timezone_name=cfg.timezone,
+                                  day_parts=cfg.dayParts, weekdays=cfg.weekdays, spread_key=spread_key)
+    except Exception as exc:  # noqa: BLE001 - a parsing problem must not block saving the request.
+        logger.warning("followup.day_part_resolution_failed kind=%s", type(exc).__name__)
+        return None
+
+
 def policy_public(row: AgentFollowUpPolicy | None) -> dict:
     return {"config": FollowUpConfig.model_validate(row.config if row else {}).model_dump(),
             "revision": row.revision if row else 0,
@@ -52,6 +63,8 @@ def job_public(row: FollowUpJob) -> dict:
             "timezone": (row.payload or {}).get("timezone"),
             "campaignId": (row.payload or {}).get("campaignId"),
             "campaignName": (row.payload or {}).get("campaignName"),
+            "resolvedWindow": (row.payload or {}).get("resolvedWindow"),
+            "outcome": (row.payload or {}).get("outcome"),
             "createdAt": row.created_at.isoformat(), "updatedAt": row.updated_at.isoformat()}
 
 
@@ -76,7 +89,8 @@ async def save_policy(principal: SubscriberPrincipal, agent_id: uuid.UUID, confi
         previous = FollowUpConfig.model_validate(row.config if row else {})
         escalation = config.enabled and (not previous.enabled or
             (config.callbackMode == "automatic" and previous.callbackMode != "automatic") or
-            (config.missedMode == "automatic" and previous.missedMode != "automatic"))
+            (config.missedMode == "automatic" and previous.missedMode != "automatic") or
+            (config.recallOutboundMode == "automatic" and previous.recallOutboundMode != "automatic"))
         if escalation and not acknowledge:
             raise HTTPException(422, "Confirm permission for follow-up calls and the associated call charges")
         if row is None:
@@ -90,11 +104,13 @@ async def save_policy(principal: SubscriberPrincipal, agent_id: uuid.UUID, confi
             row.authorized_by, row.billing_tenant_id = principal.user_id, principal.tenant_id
             if escalation or row.authorized_at is None:
                 row.authorized_at = now_utc()
-        if not config.enabled or (previous.missedMode != "off" and config.missedMode == "off"):
+        turned_off = [kind for kind, before, after in (("missed", previous.missedMode, config.missedMode),
+                      ("recall", previous.recallOutboundMode, config.recallOutboundMode)) if before != "off" and after == "off"]
+        if not config.enabled or turned_off:
             stmt = update(FollowUpJob).where(FollowUpJob.tenant_id == tid, FollowUpJob.agent_id == agent_id,
                 FollowUpJob.status.in_((*EDITABLE, "resolving")))
             if config.enabled:
-                stmt = stmt.where(FollowUpJob.kind == "missed")
+                stmt = stmt.where(FollowUpJob.kind.in_(turned_off))
             await session.execute(stmt.values(status="cancelled", reason="automation_disabled", lease_token=None, lease_until=None, updated_at=now_utc()))
         await session.commit()
         return policy_public(row)
@@ -157,17 +173,31 @@ async def capture_request(session, callback: CallCallback, *, request_text: str,
     cfg = FollowUpConfig.model_validate(policy.config)
     automatic = cfg.enabled and cfg.callbackMode == "automatic" and not review_only
     moment = now_utc()
+    resolved = resolve_vague_time(cfg, moment, requested_when, request_text,
+                                  *[t.get("text", "") for t in reversed(recent_turns or []) if t.get("role") == "user"],
+                                  spread_key=str(callback.callback_id))
     await session.execute(update(FollowUpJob).where(FollowUpJob.tenant_id == callback.tenant_id,
         FollowUpJob.agent_id == uuid.UUID(callback.agent_id), FollowUpJob.phone == callback.to_e164,
         FollowUpJob.status.in_((*EDITABLE, "resolving"))).values(status="cancelled", reason="newer_callback_request",
             lease_token=None, lease_until=None, updated_at=moment))
+    # A vague time ("tomorrow evening") resolves to a window here, deterministically;
+    # only explicit clock times still go to the time extractor.
+    window_due = datetime.fromisoformat(resolved["scheduledAt"]) if resolved else None
+    if automatic and window_due is not None:
+        status, reason, due = "scheduled", "requested_window_resolved", window_due
+    elif automatic:
+        status, reason, due = "planning", "resolve_requested_time", moment
+    else:
+        status = "needs_review"
+        reason = "interrupted_request_review" if review_only else "approval_required"
+        due = None
     session.add(FollowUpJob(tenant_id=callback.tenant_id, agent_id=uuid.UUID(callback.agent_id),
         origin_key=f"callback:{callback.callback_id}", source_id=str(callback.original_call_id),
-        kind="callback", phone=callback.to_e164, status="planning" if automatic else "needs_review",
-        reason="resolve_requested_time" if automatic else "interrupted_request_review" if review_only else "approval_required",
+        kind="callback", phone=callback.to_e164, status=status, reason=reason,
         payload={"requestText": request_text[:1200], "requestedWhen": requested_when[:400], "recentTurns": recent_turns or [], "callbackId": str(callback.callback_id),
-                 "timezone": cfg.timezone, "llm": llm or {}, "requestedAt": moment.isoformat()},
-        due_at=moment if automatic else None, expires_at=moment + timedelta(days=cfg.expiryDays),
+                 "timezone": cfg.timezone, "llm": llm or {}, "requestedAt": moment.isoformat(),
+                 **({"resolvedWindow": resolved} if resolved else {})},
+        due_at=due, expires_at=moment + timedelta(days=cfg.expiryDays),
         authorized_by=policy.authorized_by, billing_tenant_id=policy.billing_tenant_id))
 
 
@@ -246,7 +276,7 @@ async def _capture_missed(session, policy: AgentFollowUpPolicy, cfg: FollowUpCon
         CallAttempt.ended_at.is_not(None), CallAttempt.answered_at.is_(None), CallAttempt.linked_call_id.is_(None),
         CallAttempt.created_at >= policy.authorized_at,
         CallAttempt.created_at >= moment - timedelta(days=cfg.expiryDays),
-        CallAttempt.policy_reason.not_in(("inbound_disabled", "after_hours_hangup", "after_hours_voicemail")) | CallAttempt.policy_reason.is_(None),
+        CallAttempt.policy_reason.not_in(("inbound_disabled", "number_disabled", "after_hours_hangup", "after_hours_voicemail")) | CallAttempt.policy_reason.is_(None),
         CallAttempt.status.in_(("missed", "no_answer", "no-answer", "unanswered")), ~seen)
     from server.services.saas.call_callback_service import normalize_e164
     for attempt in (await session.scalars(stmt.order_by(CallAttempt.created_at).limit(50))).all():
@@ -262,7 +292,78 @@ async def _capture_missed(session, policy: AgentFollowUpPolicy, cfg: FollowUpCon
         session.add(FollowUpJob(tenant_id=policy.tenant_id, agent_id=policy.agent_id,
             origin_key=f"missed:{attempt.attempt_id}", source_id=str(attempt.attempt_id), kind="missed", phone=phone or "",
             status=status, reason=reason,
-            payload={"timezone": cfg.timezone}, due_at=delay, expires_at=utc(attempt.ended_at) + timedelta(days=cfg.expiryDays),
+            payload={"timezone": cfg.timezone, "outcome": "missed", "direction": "inbound"}, due_at=delay,
+            expires_at=utc(attempt.ended_at) + timedelta(days=cfg.expiryDays),
+            authorized_by=policy.authorized_by, billing_tenant_id=policy.billing_tenant_id))
+
+
+#: Recall outcome setting -> the attempt status it covers.
+_RECALL_OUTCOME_STATUS = {"no_answer": "missed", "busy": "declined", "declined": "declined", "failed": "failed"}
+
+
+def _recall_outcome(attempt) -> str | None:
+    """Which recall setting an unanswered outbound attempt falls under (None: never recall)."""
+    from server.call.hangup_causes import NON_RETRYABLE_REASONS
+    reason = str(attempt.end_reason or "").lower()
+    if reason in NON_RETRYABLE_REASONS:
+        return None  # Invalid / unallocated number.
+    if attempt.status == "missed":
+        return "no_answer"
+    if attempt.status == "declined":
+        return "busy" if "busy" in reason else "declined"
+    if attempt.status == "failed":
+        return "failed"
+    return None
+
+
+async def _capture_unanswered_outbound(session, policy: AgentFollowUpPolicy, cfg: FollowUpConfig, moment: datetime) -> None:
+    """Outbound calls nobody answered (no answer, busy, declined, failed) -> recall jobs.
+
+    Only one-off dials are recalled here. Campaign dials follow the campaign's own
+    retry rules and follow-up dials are retried by ``_reconcile_dials``.
+    """
+    if not cfg.enabled or cfg.recallOutboundMode == "off" or not policy.authorized_at:
+        return
+    statuses = sorted({_RECALL_OUTCOME_STATUS[o] for o in cfg.recallOutcomes})
+    seen = exists(select(FollowUpJob.id).where(FollowUpJob.tenant_id == policy.tenant_id,
+        func.replace(FollowUpJob.origin_key, "-", "") == "recall:" + func.replace(CallAttempt.attempt_id.cast(String), "-", "")))
+    followup_dial = exists(select(FollowUpJob.id).where(FollowUpJob.tenant_id == policy.tenant_id,
+        FollowUpJob.control_id == CallAttempt.provider_call_control_id))
+    stmt = select(CallAttempt).where(CallAttempt.tenant_id == policy.tenant_id,
+        CallAttempt.agent_id == policy.agent_id, CallAttempt.direction == "outbound",
+        CallAttempt.ended_at.is_not(None), CallAttempt.answered_at.is_(None), CallAttempt.linked_call_id.is_(None),
+        CallAttempt.created_at >= policy.authorized_at,
+        CallAttempt.created_at >= moment - timedelta(days=cfg.expiryDays),
+        or_(CallAttempt.policy_reason.is_(None), CallAttempt.policy_reason == "outbound_dial"),
+        CallAttempt.status.in_(statuses), ~seen, ~followup_dial)
+    from server.services.saas.call_callback_service import normalize_e164
+    automatic = cfg.recallOutboundMode == "automatic"
+    for attempt in (await session.scalars(stmt.order_by(CallAttempt.created_at).limit(50))).all():
+        outcome = _recall_outcome(attempt)
+        if outcome is not None and outcome not in cfg.recallOutcomes:
+            continue  # Not a setting the tenant turned on; leave it as history only.
+        phone = normalize_e164(attempt.to_number)
+        if outcome is None:
+            status, reason = "suppressed", "number_invalid"
+        elif not phone:
+            status, reason = "suppressed", "number_unavailable"
+        elif await session.scalar(select(DncEntry.id).where(
+                DncEntry.tenant_id == policy.tenant_id, DncEntry.phone_e164 == phone, DncEntry.active.is_(True))):
+            status, reason = "suppressed", "do_not_call"
+        elif await session.scalar(select(FollowUpJob.id).where(
+                FollowUpJob.tenant_id == policy.tenant_id, FollowUpJob.phone == phone,
+                FollowUpJob.status.in_(ACTIVE)).limit(1)):
+            status, reason = "suppressed", "already_queued_for_number"
+        else:
+            status, reason = ("scheduled", "unanswered_outbound") if automatic else ("needs_review", "approval_required")
+        gap = cfg.recall_gap_minutes(attempts_made=1, declined=outcome in ("busy", "declined"))
+        session.add(FollowUpJob(tenant_id=policy.tenant_id, agent_id=policy.agent_id,
+            origin_key=f"recall:{attempt.attempt_id}", source_id=str(attempt.attempt_id), kind="recall", phone=phone or "",
+            status=status, reason=reason,
+            payload={"timezone": cfg.timezone, "outcome": outcome or "invalid_number", "direction": "outbound",
+                     "endReason": attempt.end_reason},
+            due_at=utc(attempt.ended_at) + timedelta(minutes=gap),
+            expires_at=utc(attempt.ended_at) + timedelta(days=cfg.expiryDays),
             authorized_by=policy.authorized_by, billing_tenant_id=policy.billing_tenant_id))
 
 
@@ -299,7 +400,15 @@ async def _extract_time(job: FollowUpJob, cfg: FollowUpConfig) -> datetime | Non
                 pass
             break
     caller_text = "\n".join([payload.get("requestText", ""), *(r.get("text", "") for r in caller_turns)])
-    return extracted_due(result, caller_text, anchor, cfg)
+    due = extracted_due(result, caller_text, anchor, cfg)
+    if due is None:
+        # "Unclear" from the extractor is usually a day part without an hour.
+        resolved = resolve_vague_time(cfg, anchor, payload.get("requestedWhen", ""), payload.get("requestText", ""),
+                                      *(r.get("text", "") for r in reversed(caller_turns)), spread_key=str(job.id))
+        if resolved:
+            job.payload = {**payload, "resolvedWindow": resolved}
+            due = datetime.fromisoformat(resolved["scheduledAt"])
+    return due
 
 
 async def _principal(session, row: FollowUpJob) -> SubscriberPrincipal | None:
@@ -325,11 +434,13 @@ async def _principal(session, row: FollowUpJob) -> SubscriberPrincipal | None:
 
 
 async def _block_reason(session, row: FollowUpJob, policy, cfg: FollowUpConfig) -> str | None:
-    if not cfg.enabled or (row.kind == "missed" and cfg.missedMode == "off"):
+    if not cfg.enabled or (row.kind == "missed" and cfg.missedMode == "off") or (
+            row.kind == "recall" and cfg.recallOutboundMode == "off"):
         return "automation_disabled"
     approved = ((row.payload or {}).get("approval") or {}).get("kind") == "tenant" or row.reason == "tenant_approved"
     if not approved and ((row.kind == "callback" and cfg.callbackMode != "automatic") or
-            (row.kind == "missed" and cfg.missedMode != "automatic")):
+            (row.kind == "missed" and cfg.missedMode != "automatic") or
+            (row.kind == "recall" and cfg.recallOutboundMode != "automatic")):
         return "approval_required"
     if await session.scalar(select(DncEntry.id).where(DncEntry.tenant_id == row.tenant_id,
             DncEntry.phone_e164 == row.phone, DncEntry.active.is_(True))):
@@ -350,11 +461,11 @@ async def _block_reason(session, row: FollowUpJob, policy, cfg: FollowUpConfig) 
             CallCallback.callback_id == uuid.UUID(callback_id)))
         if request is None or request.status != "requested":
             return "request_closed"
-    if row.kind == "missed" and await session.scalar(select(FollowUpJob.id).where(
+    if row.kind in ("missed", "recall") and await session.scalar(select(FollowUpJob.id).where(
             FollowUpJob.tenant_id == row.tenant_id, FollowUpJob.phone == row.phone,
             FollowUpJob.kind == "callback", FollowUpJob.status.in_(ACTIVE)).limit(1)):
         return "explicit_callback_takes_priority"
-    if row.kind == "missed":
+    if row.kind in ("missed", "recall"):
         reached = (await session.scalars(select(CallAttempt).where(CallAttempt.tenant_id == row.tenant_id,
             CallAttempt.answered_at >= row.created_at))).all()
         if any(normalize_e164(a.to_number if a.direction == "outbound" else a.from_number) == row.phone for a in reached):
@@ -400,7 +511,7 @@ async def _process(job_id: uuid.UUID) -> None:
                 return
         if utc(row.expires_at) <= moment:
             row.status, row.reason = "expired", "request_expired"
-        elif row.attempts >= cfg.maxAttempts:
+        elif row.attempts >= cfg.recall_attempt_limit(row.kind):
             row.status, row.reason = "completed", "attempt_limit"
         elif reason:
             row.status, row.reason = ("needs_review" if reason == "approval_required" else "suppressed"), reason
@@ -422,10 +533,18 @@ async def _process(job_id: uuid.UUID) -> None:
                 reservations = (await session.scalars(other.where(FollowUpJob.updated_at >= min(utc(today), moment - timedelta(minutes=cfg.cooldownMinutes))))).all()
                 count = sum(1 for item in [*reservations, row] if item.agent_id == row.agent_id for event in (item.payload or {}).get("dispatches", [])
                             if utc(datetime.fromisoformat(event)) >= utc(today))
-                recent = any(item.phone == row.phone and any(utc(datetime.fromisoformat(event)) > moment - timedelta(minutes=cfg.cooldownMinutes)
+                # Recalls are spaced by their own setting; caller-requested callbacks keep the cooldown.
+                cooldown = cfg.cooldownMinutes if row.kind == "callback" else min(cfg.cooldownMinutes, cfg.recallSpacingMinutes)
+                recent = any(item.phone == row.phone and any(utc(datetime.fromisoformat(event)) > moment - timedelta(minutes=cooldown)
                              for event in (item.payload or {}).get("dispatches", [])) for item in [*reservations, row])
-                if count >= cfg.dailyLimit or recent:
-                    row.due_at, row.reason = moment + timedelta(minutes=cfg.cooldownMinutes if recent else 60), "contact_cooldown" if recent else "daily_limit"
+                per_number_today = sum(1 for item in [*reservations, row] if item.phone == row.phone
+                                       for event in (item.payload or {}).get("dispatches", [])
+                                       if utc(datetime.fromisoformat(event)) >= utc(today))
+                if row.kind != "callback" and per_number_today >= cfg.recallMaxPerNumberPerDay:
+                    tomorrow = next_allowed(utc(today) + timedelta(days=1), cfg, profile)
+                    row.due_at, row.reason = (tomorrow or moment + timedelta(days=1)), "number_daily_cap"
+                elif count >= cfg.dailyLimit or recent:
+                    row.due_at, row.reason = moment + timedelta(minutes=cooldown if recent else 60), "contact_cooldown" if recent else "daily_limit"
                 else:
                     row.status, row.reason, row.lease_token = "dispatching", "dispatch_reserved", token
                     row.lease_until = moment + timedelta(minutes=3)
@@ -442,8 +561,9 @@ async def _process(job_id: uuid.UUID) -> None:
         except Exception as exc:
             logger.warning("followup.time_resolution_failed kind=%s", type(exc).__name__)
             due = None
+        extra = {"payload": row.payload} if (row.payload or {}).get("resolvedWindow") else {}
         await _finish_lease(row.tenant_id, row.id, token, "scheduled" if due and due > moment else "needs_review",
-                            "requested_time_resolved" if due and due > moment else "time_requires_review", due_at=due)
+                            "requested_time_resolved" if due and due > moment else "time_requires_review", due_at=due, **extra)
     elif state == "dispatching":
         try:
             result = await asyncio.wait_for(request_callback(principal, call_id=row.source_id,
@@ -478,7 +598,9 @@ async def run_once() -> int:
     async with factory_required()() as session:
         policies = (await session.scalars(select(AgentFollowUpPolicy))).all()  # Internal cross-tenant worker only.
         for policy in policies:
-            await _capture_missed(session, policy, FollowUpConfig.model_validate(policy.config), moment)
+            cfg = FollowUpConfig.model_validate(policy.config)
+            await _capture_missed(session, policy, cfg, moment)
+            await _capture_unanswered_outbound(session, policy, cfg, moment)
         blocked = exists(select(DncEntry.id).where(DncEntry.tenant_id == FollowUpJob.tenant_id,
             DncEntry.phone_e164 == FollowUpJob.phone, DncEntry.active.is_(True)))
         await session.execute(update(FollowUpJob).where(FollowUpJob.status.in_((*EDITABLE, "resolving")), blocked)
@@ -526,9 +648,16 @@ async def _reconcile_dials(session, policies, moment):
                 await session.execute(update(CallCallback).where(CallCallback.tenant_id == row.tenant_id,
                     CallCallback.callback_id == uuid.UUID(callback_id), CallCallback.status == "requested")
                     .values(status="completed"))
-        elif attempt.status in ("missed", "no_answer", "no-answer", "busy") and row.attempts < cfg.maxAttempts and cfg.enabled:
+        elif attempt.status == "failed" and _recall_outcome(attempt) is None:
+            row.status, row.reason = "completed", "number_invalid"
+        elif (attempt.status in ("missed", "no_answer", "no-answer", "busy", "declined")
+              and row.attempts < cfg.recall_attempt_limit(row.kind) and cfg.enabled):
             row.status, row.reason = "scheduled", "retry_unanswered"
-            row.due_at = moment + timedelta(minutes=cfg.retryDelayMinutes)
+            if row.kind == "callback":
+                gap = cfg.retryDelayMinutes
+            else:
+                gap = cfg.recall_gap_minutes(attempts_made=row.attempts + 1, declined=attempt.status == "declined")
+            row.due_at = moment + timedelta(minutes=gap)
         else:
             row.status, row.reason = "completed", "attempt_limit_or_terminal_result"
         row.updated_at = moment

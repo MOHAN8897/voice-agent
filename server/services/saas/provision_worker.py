@@ -78,6 +78,105 @@ async def run_number_maintenance_if_due() -> bool:
     return True
 
 
+#: Vobiz's documented body for a purchase whose balance debit failed (HTTP 500).
+#: The number stays in inventory, so once ``place_number_order`` has reconciled
+#: and found it not owned, the order definitely did not happen.
+_VOBIZ_PURCHASE_FAILED_MARKER = "failed to purchase number"
+#: Attempts before a documented purchase refusal is treated as final and refunded.
+_PURCHASE_REFUSED_MAX_ATTEMPTS = 3
+
+
+async def _diagnose_vobiz_purchase_refusal(purchase) -> tuple[str, dict]:
+    """Read-only: is the parent balance below this number's carrier price?"""
+    from server.services.saas.number_purchase_service import (
+        CARRIER_MIN_BALANCE_USD,
+        _carrier_remaining,
+        carrier_charge_minor,
+    )
+    from server.services.vobiz_client import VobizClient
+
+    context: dict = {}
+    try:
+        client = VobizClient()
+        balance = await client.get_balance()
+        if not isinstance(balance, dict) or balance.get("ok") is False or balance.get("fallback"):
+            return "carrier_purchase_refused", context
+        remaining = _carrier_remaining(balance)
+        currency = str(balance.get("currency") or "INR").upper()
+        if remaining is None:
+            return "carrier_purchase_refused", context
+        context = {"carrierBalance": round(remaining, 2), "currency": currency}
+        required = None
+        try:
+            rows = await client.search_available_numbers(
+                country=str(purchase.country_code or "IN"), limit=25, search=purchase.e164
+            )
+            row = next((r for r in rows if str(r.get("e164") or "") == purchase.e164), None)
+            charge = carrier_charge_minor(row) if row else None
+            if charge is not None and charge[1] == currency:
+                required = charge[0] / 100.0
+        except Exception:
+            required = None
+        if required is None:
+            required = CARRIER_MIN_BALANCE_USD * (96.78 if currency == "INR" else 1.0)
+        context["carrierRequired"] = round(required, 2)
+        if remaining < required:
+            return "carrier_balance_exhausted", context
+    except Exception as exc:
+        logger.warning("vobiz refusal diagnosis failed error_type=%s", type(exc).__name__)
+    return "carrier_purchase_refused", context
+
+
+async def _classify_provision_failure(
+    provider: str,
+    exc: Exception,
+    provider_status: int | None,
+    provider_number_id: str | None,
+    purchase,
+) -> tuple[str | None, dict, bool]:
+    """(code, operator context, definitive) for a provisioning exception.
+
+    ``definitive`` means the carrier certainly did not sell us the number, so the
+    purchase can fail and refund now. Anything that might have created the number
+    is left to the reconcile-and-retry path.
+    """
+    if provider != "vobiz" or provider_number_id is not None or purchase is None:
+        return None, {}, False
+    detail = getattr(exc, "detail", None)
+    detail_code = None
+    if isinstance(detail, dict):
+        detail_code = str((detail.get("error") or {}).get("code") or "") or None
+    elif isinstance(detail, str):
+        detail_code = detail
+    if detail_code == "voice_kyc_required" or getattr(exc, "code", None) == "voice_kyc_required":
+        return "voice_kyc_not_approved", {}, True
+    if type(exc).__name__ != "VobizApiError":
+        return None, {}, False
+    if provider_status == 404:
+        # Documented: "number not found in inventory" — someone else bought it.
+        return "number_taken", {}, True
+    if provider_status in (401, 403):
+        return "carrier_auth_failed", {"providerStatus": provider_status}, True
+    body = str(getattr(exc, "body", "") or "").lower()
+    if provider_status == 500 and _VOBIZ_PURCHASE_FAILED_MARKER in body:
+        code, context = await _diagnose_vobiz_purchase_refusal(purchase)
+        if code == "carrier_balance_exhausted":
+            # Retrying cannot succeed until someone tops up the parent account.
+            return code, context, True
+        attempts = 0
+        factory = get_session_factory()
+        if factory is not None:
+            async with factory() as session:
+                job = (
+                    await session.execute(
+                        select(ProvisionJob).where(ProvisionJob.purchase_id == purchase.id)
+                    )
+                ).scalar_one_or_none()
+                attempts = int(job.attempts or 0) if job is not None else 0
+        return code, context, attempts >= _PURCHASE_REFUSED_MAX_ATTEMPTS
+    return None, {}, False
+
+
 async def enqueue_provision(purchase_id: uuid.UUID) -> None:
     factory = get_session_factory()
     if factory is None:
@@ -199,11 +298,18 @@ async def process_one_job() -> bool:
             # definitive 4xx refusal before any carrier call must refund, not
             # park the paid purchase in "needs_attention" forever.
             provider_status = getattr(e, "status_code", None)
-        vobiz_result_may_exist = provider == "vobiz" and (
-            provider_number_id is not None
-            or provider_status is None
-            or provider_status >= 500
-            or provider_status in {408, 409, 429}
+        failure_code, failure_context, definitive = await _classify_provision_failure(
+            provider, e, provider_status, provider_number_id, purchase
+        )
+        vobiz_result_may_exist = (
+            not definitive
+            and provider == "vobiz"
+            and (
+                provider_number_id is not None
+                or provider_status is None
+                or provider_status >= 500
+                or provider_status in {408, 409, 429}
+            )
         )
         if vobiz_result_may_exist:
             async with factory() as session:
@@ -216,10 +322,15 @@ async def process_one_job() -> bool:
                 retry = job.attempts < 5
                 job.status = "queued" if retry else "needs_attention"
                 job.last_error = {
-                    "code": "provider_confirmation_pending"
-                    if provider_number_id is None
-                    else "provider_activation_pending",
+                    "code": failure_code
+                    or (
+                        "provider_confirmation_pending"
+                        if provider_number_id is None
+                        else "provider_activation_pending"
+                    ),
                     "error_type": type(e).__name__,
+                    **({"providerStatus": provider_status} if provider_status is not None else {}),
+                    **({"context": failure_context} if failure_context else {}),
                 }
                 job.updated_at = (
                     _utcnow() + timedelta(seconds=min(300, 10 * (2 ** max(0, job.attempts - 1))))
@@ -241,7 +352,12 @@ async def process_one_job() -> bool:
                     resource_id=str(purchase_id),
                     actor="system",
                     tenant_id=purchase.tenant_id,
-                    payload={"errorType": type(e).__name__, "provider": "vobiz"},
+                    payload={
+                        "errorType": type(e).__name__,
+                        "provider": "vobiz",
+                        "code": job.last_error.get("code") if isinstance(job.last_error, dict) else None,
+                        "e164": purchase.e164,
+                    },
                     source="system",
                     outcome="warning",
                     severity="warning",
@@ -257,7 +373,12 @@ async def process_one_job() -> bool:
                 await session.execute(select(ProvisionJob).where(ProvisionJob.purchase_id == purchase_id))
             ).scalar_one()
             job.status = "failed"
-            job.last_error = {"code": "provider_provision_failed", "error_type": type(e).__name__}
+            job.last_error = {
+                "code": failure_code or "provider_provision_failed",
+                "error_type": type(e).__name__,
+                **({"providerStatus": provider_status} if provider_status is not None else {}),
+                **({"context": failure_context} if failure_context else {}),
+            }
             if purchase:
                 purchase.status = "failed"
                 refund_tenant = purchase.tenant_id
@@ -286,6 +407,23 @@ async def process_one_job() -> bool:
                 refunded = True
             except Exception:
                 logger.warning("did refund failed purchase=%s", purchase_id)
+            # The admin panel reads the refund outcome off the job, so a failed
+            # refund is visible next to the failure that caused it.
+            try:
+                async with factory() as session:
+                    job = (
+                        await session.execute(
+                            select(ProvisionJob).where(ProvisionJob.purchase_id == purchase_id)
+                        )
+                    ).scalar_one_or_none()
+                    if job is not None:
+                        job.last_error = {
+                            **(job.last_error if isinstance(job.last_error, dict) else {}),
+                            "refund": "done" if refunded else "failed",
+                        }
+                        await session.commit()
+            except Exception:
+                logger.warning("could not record refund outcome purchase=%s", purchase_id)
         # The single most important row in the log: money was taken and then
         # returned, or was taken and could not be returned. Either way the
         # operator has to be able to find it without reconstructing the job.
@@ -299,6 +437,10 @@ async def process_one_job() -> bool:
             tenant_id=refund_tenant,
             payload={
                 "errorType": type(e).__name__,
+                "code": failure_code or "provider_provision_failed",
+                "providerStatus": provider_status,
+                "context": failure_context or None,
+                "e164": purchase.e164 if purchase is not None else None,
                 "refunded": refunded if refund_wallet else False,
                 "refundAttempted": refund_wallet,
             },

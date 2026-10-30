@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { api } from '../../services/api';
+import { outboundCallErrorMessage } from '../lib/outboundCall';
 import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
 import { EmptyState } from '../ui/EmptyState';
 import { PhoneCall, RefreshCw } from 'lucide-react';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { NeedsYouItem } from './NeedsYouItem';
+import { formatPhone } from '../../lib/phoneMask';
 
 export function CallbackRequests({ agentId = null, readOnly = false }) {
   const [rows, setRows] = useState([]);
@@ -53,10 +55,10 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
       const result = await api.request('POST', `/api/calls/${row.callId}/callback`, {
         agentId: row.agentId, toE164: row.phone, mode: 'manual', dialRequestId: crypto.randomUUID(),
       });
-      if (result.ok === false) throw new Error('Could not start the callback. The request is still in the list.');
+      if (result.ok === false) throw Object.assign(new Error('Could not start the callback. The request is still in the list.'), { code: result.code });
       setNotice('Callback requested. Keep this request until the follow-up is complete.');
     } catch (e) {
-      setError(e.message || 'Could not start the callback. The request is still in the list.');
+      setError(e?.code === 'voice_service_unavailable' ? outboundCallErrorMessage(e) : (e.message || 'Could not start the callback. The request is still in the list.'));
     } finally {
       setBusy(null);
     }
@@ -88,9 +90,9 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
                 icon={PhoneCall}
                 tone="warning"
                 needsYou
-                actor={<span className="font-mono tabular-nums">{row.phone}</span>}
+                actor={<span className="font-mono tabular-nums">{formatPhone(row.phone) || row.phone}</span>}
                 text="asked for a call back"
-                detail={row.requestedWhen ? `Asked for: ${row.requestedWhen}` : null}
+                detail={row.requestedWhen ? `Asked for: ${row.requestedWhen}${row.resolvedWindow?.display ? ` → ${row.resolvedWindow.display}` : ''}` : null}
                 at={row.createdAt || null}
                 meta={agent ? <span>· {agent}</span> : null}
                 actions={<>
