@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ముందు వచ్చే cricket match ఎవరు గెలుస్తారు? అలాగే మీ business అసలు ఏం అందిస్తోంది?", "ts": "2026-10-25T15:23:14.547479Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Cricket match గురించి నాకు తెలియదు అండి, sorry. మేము visiting cards మరియు wedding invitations print చేస్తాము. విజిటింగ్ కార్డ్స్ ఒక్కోటి twenty five rupees పడతాయి, minimum one hundred కార్డ్స్ తీసుకోవాలి. మీకు ఏ రకమైన కార్డ్ కావాలి అండి?", "ts": "2026-10-25T15:23:15.597489Z", "brain_latency_ms": 1045}
+{"seq": 3, "role": "user", "text": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: మీరు wedding invitations కూడా print చేస్తారా? ధర, delivery time ఎంత?", "ts": "2026-10-25T15:23:15.608652Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "క్షమించండి, మాకు ఒక సాంకేతిక సమస్య ఎదురైంది. దయచేసి మాకు తిరిగి కాల్ చేయండి. ధన్యవాదాలు.", "ts": "2026-10-25T15:23:20.097879Z"}

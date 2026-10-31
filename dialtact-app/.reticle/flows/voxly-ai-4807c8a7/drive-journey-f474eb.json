@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "name": "drive-journey-f474eb",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790874252703,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Buy number"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "buy-number-submit"
+        }
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

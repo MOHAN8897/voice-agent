@@ -1,0 +1,3 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:26:01.833111Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T15:26:02.805660Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nuser_interested: true | user_asked_price_terms: true"}
+{"turn_seq": 5, "ts": "2026-10-25T15:26:03.707744Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nuser_interested: true | user_asked_price_terms: true"}

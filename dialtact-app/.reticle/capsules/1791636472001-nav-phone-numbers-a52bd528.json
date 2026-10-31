@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "settled",
+  "observed": "not settled: 2 request(s) still in flight",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-phone-numbers",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 301,
+          "column": 19
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1791636472001-nav-phone-numbers-a52bd528",
+  "createdAt": 1791636472016,
+  "seen": 1,
+  "lastSeenAt": 1791636472016
+}

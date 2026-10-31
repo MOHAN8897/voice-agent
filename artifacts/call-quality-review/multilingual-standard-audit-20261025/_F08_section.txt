@@ -1,0 +1,12 @@
+### F08 — P1: website-enabled British English cannot run on the current Standard tier
+
+**Confidence:** Confirmed creation succeeds and actual tier resolution rejects the locale.
+
+All three `en-GB` brains published successfully. Current Standard revision 91 supports `en-IN`, not `en-GB`; the resolver returned `unsupported_language: This profile does not support the agent language.` This prevented **54** requested session combinations from running. The resolver correctly fails closed. This is a product capability/coverage gap for the requested Standard-only multilingual audit; it does not prove that the frontend incorrectly enables its call button, or that another accent works.
+
+Evidence: [Captured enabled locales, Standard profile and resolver errors](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/baseline.json>), [Published British English build](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/agents/print-en-GB/build.json>). Creation checks only platform-enabled language at [server/routes/app_agents.py:128](<D:/voice agent/server/routes/app_agents.py:128>), lines 128–142, rather than proving the chosen calling profile can serve it.
+
+**Required change:** derive available locale/tier combinations from one capability contract and validate them before a ready-to-call state. If the product intends British English on this model, explicitly approve/test a provider locale mapping while preserving the selected conversational style; otherwise show the supported tier choice. Do not silently replace British English with Indian English in tests or production.
+
+**Acceptance:** every offered ready-to-call locale resolves on its selected tier and passes conversation/media checks, or creation/settings display a specific supported choice before calling. All 54 blocked combinations need to run once this is resolved.
+

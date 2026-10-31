@@ -1,7 +1,9 @@
 import { StreamingTextChunker } from "@/lib/voice/text-chunker";
-import { StreamingTtsClient } from "@/lib/voice/streaming-tts-client";
+import { billingCharCount } from "@/lib/billing-chars";
+import { StreamingTtsClient, TtsPipelineError } from "@/lib/voice/streaming-tts-client";
 import { StreamingAudioPlayback } from "@/lib/voice/streaming-audio-playback";
 import { fetchTtsConfig } from "@/lib/voice/tts-config";
+import { prepareSpokenReply } from "@/lib/voice/spoken-numbers";
 import { VOICE_PIPELINE_LIMITS, type VoiceTraceFn } from "@/lib/voice/types";
 
 export type TurnTtsPipelineOptions = {
@@ -31,6 +33,8 @@ export class TurnTtsPipeline {
   private audioSeq = 0;
   private textQueue: Promise<void> = Promise.resolve();
   private ttsAudioBytes = 0;
+  private ttsError: Error | null = null;
+  private textChunksSent = 0;
 
   constructor(opts: TurnTtsPipelineOptions) {
     this.opts = opts;
@@ -42,7 +46,7 @@ export class TurnTtsPipeline {
   }
 
   isActive(): boolean {
-    return !this.cancelled && this.opts.isTurnActive();
+    return !this.cancelled && !this.ttsError && this.opts.isTurnActive();
   }
 
   async start(): Promise<void> {
@@ -53,7 +57,7 @@ export class TurnTtsPipeline {
 
     this.opts.playback.attachTurn(this.opts.turnId, () => this.isActive(), () => this.cancel());
 
-    await this.opts.ttsClient.ensureConnected();
+    await this.opts.ttsClient.refreshConfigForTurn();
 
     this.opts.ttsClient.beginTurn({
       turnId: this.opts.turnId,
@@ -74,6 +78,7 @@ export class TurnTtsPipeline {
       },
       onError: (err) => {
         if (this.cancelled) return;
+        this.ttsError = err;
         this.trace("tts:error", `${err.message}`);
       },
     });
@@ -86,36 +91,58 @@ export class TurnTtsPipeline {
       this.trace("llm:first_token", "");
     }
 
+    // Keep raw deltas so sentence "." reaches the chunker. Sanitize only when sending.
     const chunks = this.chunker.append(delta);
     for (const chunk of chunks) {
-      this.enqueueTextChunk(chunk.text, chunk.sequenceNumber);
+      this.enqueueTextChunk(chunk.text, chunk.sequenceNumber, false);
     }
   }
 
-  private enqueueTextChunk(text: string, sequenceNumber: number) {
+  private enqueueTextChunk(text: string, sequenceNumber: number, ensureTerminal = false) {
     if (!this.isActive()) return;
-    this.trace("text:chunk_ready", `seq=${sequenceNumber} chars=${text.length}`);
-    this.textQueue = this.textQueue.then(() => {
-      if (!this.isActive()) return;
-      this.opts.ttsClient.sendText(text, sequenceNumber);
-    });
+    const spoken = prepareSpokenReply(text, { ensureTerminal });
+    if (!spoken.trim()) return;
+    this.trace("text:chunk_ready", `seq=${sequenceNumber} chars=${spoken.length}`);
+    this.textQueue = this.textQueue
+      .then(async () => {
+        if (!this.isActive()) return;
+        await this.opts.ttsClient.sendText(spoken, sequenceNumber);
+        this.textChunksSent += 1;
+      })
+      .catch((e) => {
+        if (!this.cancelled) {
+          this.ttsError = e instanceof Error ? e : new Error(String(e));
+          this.trace("tts:error", this.ttsError.message);
+        }
+      });
   }
 
   async finishLlm(): Promise<void> {
-    if (!this.isActive()) return;
+    if (this.cancelled) return;
 
     const finalChunks = this.chunker.flush();
     for (const chunk of finalChunks) {
-      this.enqueueTextChunk(chunk.text, chunk.sequenceNumber);
+      this.enqueueTextChunk(chunk.text, chunk.sequenceNumber, true);
     }
 
     await this.textQueue;
 
-    if (!this.isActive()) return;
+    if (this.cancelled) return;
+    if (this.ttsError) {
+      throw this.ttsError;
+    }
+
+    const spoken = this.chunker.getFullText().trim();
+    if (spoken && this.textChunksSent === 0) {
+      throw new TtsPipelineError("TTS produced no audio chunks for non-empty reply");
+    }
 
     await this.opts.ttsClient.flushTurn();
 
-    if (!this.isActive()) return;
+    if (this.cancelled || this.ttsError) {
+      if (this.ttsError) throw this.ttsError;
+      return;
+    }
 
     this.playbackDone = this.opts.playback.waitUntilIdle();
     await this.playbackDone;
@@ -145,7 +172,7 @@ export class TurnTtsPipeline {
   }
 
   getMetrics(): { ttsChars: number; ttsAudioBytes: number } {
-    return { ttsChars: this.chunker.getFullText().length, ttsAudioBytes: this.ttsAudioBytes };
+    return { ttsChars: billingCharCount(this.chunker.getFullText()), ttsAudioBytes: this.ttsAudioBytes };
   }
 }
 

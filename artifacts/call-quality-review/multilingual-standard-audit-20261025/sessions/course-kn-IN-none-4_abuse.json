@@ -1,0 +1,179 @@
+{
+  "key": "course-kn-IN-none-4_abuse",
+  "business": "course",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "9e6f9a82-523d-55f8-9044-940b6dfddc86",
+  "call_id": "28806607-266c-4415-a80a-c9e8b1389d28",
+  "session_id": "audit-course-kn-IN-none-4_abuse-c788336b",
+  "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 691,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"caller used abusive language ('ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ') and demanded price answer\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price answer\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. Course fee 4999 rupees total ಇರುತ್ತೆ. ನಾನು ಇವಾಗ call ಮುಗಿಸ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n,\n\"memory_update\": {\n\"operations\": [\n{\n\"op\": \"update_summary\",\n\"key\": \"call_summary\",\n\"value\": \"Caller responded with abuse ('ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ'), demanded price. Agent stated fee is 4999 rupees total and closed call due to abuse.\"\n}\n]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"caller used abusive language ('ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ') and demanded price answer\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price answer\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. Course fee 4999 rupees total ಇರುತ್ತೆ. ನಾನು ಇವಾಗ call ಮುಗಿಸ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n,\n\"memory_update\": {\n\"operations\": [\n{\n\"op\": \"update_summary\",\n\"key\": \"call_summary\",\n\"value\": \"Caller responded with abuse ('ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ'), demanded price. Agent stated fee is 4999 rupees total and closed call due to abuse.\"\n}\n]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 237,
+        "prompt_tokens": 4016,
+        "total_tokens": 4253,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. Course fee 4999 rupees total ಇರುತ್ತೆ. ನಾನು ಇವಾಗ call ಮುಗಿಸ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4016,
+          "output_tokens": 237,
+          "total_tokens": 4253
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller responded with abuse ('ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ'), demanded price. Agent stated fee is 4999 rupees total and closed call due to abuse."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "caller used abusive language ('ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ') and demanded price answer",
+          "remaining_request": "price answer",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.89
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1360,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"Caller threatened to kill me and demanded to end the call immediately.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"none\", \"contact_preference\": \"do_not_call\" }\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r",
+      "sse_content_tail": "\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r",
+      "error_type": "CancelledError",
+      "finish_reason": null,
+      "elapsed_s": 4.485
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 1,
+      "at": 0.906
+    },
+    {
+      "text": "ಕ್ಷಮಿಸಿ, ನಮಗೆ ಒಂದು ತಾಂತ್ರಿಕ ಸಮಸ್ಯೆ ಎದುರಾಗಿದೆ. ದಯವಿಟ್ಟು ನಮಗೆ ಮತ್ತೆ ಕರೆ ಮಾಡಿ. ಧನ್ಯವಾದಗಳು.",
+      "turn": 2,
+      "at": 5.437
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ. ಅದೇ ಮಾತನ್ನು ಹೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ ಬೆಲೆಯ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡು.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.906,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.",
+      "spoken": "ಕ್ಷಮಿಸಿ, ನಮಗೆ ಒಂದು ತಾಂತ್ರಿಕ ಸಮಸ್ಯೆ ಎದುರಾಗಿದೆ. ದಯವಿಟ್ಟು ನಮಗೆ ಮತ್ತೆ ಕರೆ ಮಾಡಿ. ಧನ್ಯವಾದಗಳು.",
+      "elapsed_s": 4.562,
+      "requests": 1,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 5.484,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "28806607-266c-4415-a80a-c9e8b1389d28",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "86dca6dad538703c16cfeab0af4289fdc43f18aa4b8d66c296256454f6350d3e",
+  "prompt_chars": 17552,
+  "opening_seeded": "Namaskara, I am Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our adult beginner Python course?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "caller used abusive language ('ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ') and demanded price answer",
+        "remaining_request": "price answer",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. Course fee four thousand nine hundred ninety nine rupees total ಇರುತ್ತೆ. ನಾನು ಇವಾಗ call ಮುಗಿಸ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 5.484,
+  "hangup_count": 1
+}

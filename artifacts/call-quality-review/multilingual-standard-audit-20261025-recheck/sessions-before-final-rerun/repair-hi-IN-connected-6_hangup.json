@@ -1,0 +1,450 @@
+{
+  "key": "repair-hi-IN-connected-6_hangup",
+  "business": "repair",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "25beedf0-4160-5e75-9a13-0bb19345ff11",
+  "call_id": "ba052ae0-44e0-440c-aa6e-aa2d3a1f6ec4",
+  "session_id": "audit-repair-hi-IN-connected-6_hangup-d4c327f3",
+  "compiled_checksum": "30004813b705763fee84f783301f109432b20e0f237e3a08bc5b74b2194fb737",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 339,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller asked for service, price and terms — goal is informational, not a confirmed visit yet.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"}\n\n,\n\n\"action_claimed\": \"order_confirmed\", \"spoken_response\": \"\", \"memory_update\": {\"operations\": []}\n\n}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller asked for service, price and terms — goal is informational, not a confirmed visit yet.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"}\n\n,\n\n\"action_claimed\": \"order_confirmed\", \"spoken_response\": \"\", \"memory_update\": {\"operations\": []}\n\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 104,
+        "prompt_tokens": 4066,
+        "total_tokens": 4170,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.297
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 530,
+      "sse_content_preview": "{\"spoken_response\": \"देखिए, AC basic servicing 699 rupees ki hai aur fridge inspection 399 rupees ki hai. Parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina fixed repair quote nahi milta. Hum Monday se Saturday subah 9 baje se shaam 6 baje tak available hain. Kya aapko kisi specific appliance ke liye visit book karni hai?\"}Parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed repair quote nahi milta. Kya aapko visit book karni hai?",
+      "sse_content_tail": "{\"spoken_response\": \"देखिए, AC basic servicing 699 rupees ki hai aur fridge inspection 399 rupees ki hai. Parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina fixed repair quote nahi milta. Hum Monday se Saturday subah 9 baje se shaam 6 baje tak available hain. Kya aapko kisi specific appliance ke liye visit book karni hai?\"}Parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed repair quote nahi milta. Kya aapko visit book karni hai?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 4262,
+        "total_tokens": 4301,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "देखिए, AC basic servicing 699 rupees ki hai aur fridge inspection 399 rupees ki hai. Parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina fixed repair quote nahi milta. Hum Monday se Saturday subah 9 baje se shaam 6 baje tak available hain. Kya aapko kisi specific appliance ke liye visit book karni hai?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8132,
+          "output_tokens": 198,
+          "total_tokens": 8330
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.828
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 627,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"order_confirmed\",\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n\"operations\": [\n{\n\"op\": \"update_summary\",\n\"key\": \"summary\",\n\"value\": \"Customer asked for AC servicing and fridge inspection pricing. Parts are extra only after approval. No booking requested. Customer explicitly said not\"\n}\n]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"order_confirmed\",\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n\"operations\": [\n{\n\"op\": \"update_summary\",\n\"key\": \"summary\",\n\"value\": \"Customer asked for AC servicing and fridge inspection pricing. Parts are extra only after approval. No booking requested. Customer explicitly said not\"\n}\n]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 194,
+        "prompt_tokens": 4125,
+        "total_tokens": 4319,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.078
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 436,
+      "sse_content_preview": "{\n  \"spoken_response\": \"AC servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Replacement parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed quote nahi milta hai. Kya aap visit book karna chahenge, ya koi aur jankari chahiye?\"\n}ठीक है, details note कर ली हैं. क्या aapko visit book karni hai ya baad mein callback chahiye?",
+      "sse_content_tail": "{\n  \"spoken_response\": \"AC servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Replacement parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed quote nahi milta hai. Kya aap visit book karna chahenge, ya koi aur jankari chahiye?\"\n}ठीक है, details note कर ली हैं. क्या aapko visit book karni hai ya baad mein callback chahiye?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 24,
+        "prompt_tokens": 4305,
+        "total_tokens": 4329,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "AC servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Replacement parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed quote nahi milta hai. Kya aap visit book karna chahenge, ya koi aur jankari chahiye?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8250,
+          "output_tokens": 272,
+          "total_tokens": 8522
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.812
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 552,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"ठीक है, धन्यवाद।\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"call_summary\",\n            \"value\": \"Caller inquired about AC servicing (699 rupees) and fridge inspection (399 rupees) pricing and parts policy. Clarified that parts are extra and only-a\"\n        }\n    ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"ठीक है, धन्यवाद।\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"call_summary\",\n            \"value\": \"Caller inquired about AC servicing (699 rupees) and fridge inspection (399 rupees) pricing and parts policy. Clarified that parts are extra and only-a\"\n        }\n    ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 180,
+        "prompt_tokens": 4168,
+        "total_tokens": 4348,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.407
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 158,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ठीक है। अगर आपको visit schedule karni ho toh bataiye, warna main baad mein callback arrange kar sakta hoon. Aap kya prefer karenge?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ठीक है। अगर आपको visit schedule karni ho toh bataiye, warna main baad mein callback arrange kar sakta hoon. Aap kya prefer karenge?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 41,
+        "prompt_tokens": 4168,
+        "total_tokens": 4209,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है। अगर आपको visit schedule karni ho toh bataiye, warna main baad mein callback arrange kar sakta hoon. Aap kya prefer karenge?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8336,
+          "output_tokens": 221,
+          "total_tokens": 8557
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.609
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "देखिए, AC basic servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina fixed repair quote nahi milta.",
+      "turn": 1,
+      "at": 2.891
+    },
+    {
+      "text": "AC servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Replacement parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed quote nahi milta hai.",
+      "turn": 2,
+      "at": 5.641
+    },
+    {
+      "text": "ठीक है। अगर आपको visit schedule karni ho toh bataiye, warna main baad mein callback arrange kar sakta hoon. Aap kya prefer karenge?",
+      "turn": 3,
+      "at": 8.219
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 4,
+      "at": 8.235
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।",
+      "spoken": "देखिए, AC basic servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina fixed repair quote nahi milta.",
+      "elapsed_s": 2.891,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?",
+      "spoken": "AC servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Replacement parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed quote nahi milta hai.",
+      "elapsed_s": 2.735,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ठीक है, धन्यवाद।",
+      "spoken": "ठीक है। अगर आपको visit schedule karni ho toh bataiye, warna main baad mein callback arrange kar sakta hoon. Aap kya prefer karenge?",
+      "elapsed_s": 2.563,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.046,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 8.281,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "ba052ae0-44e0-440c-aa6e-aa2d3a1f6ec4",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "90bd6a4f8ae0798b76272bede0e44a788bc94a372888bf0fee764a8aeed2a4c9",
+  "prompt_chars": 17918,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, main Ravi hoon SafeFix Home Service se. Kya aapko Pune mein kisi home appliance service ke baare mein jankari chahiye?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "देखिए, AC basic servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina fixed repair quote nahi milta.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "AC servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Replacement parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed quote nahi milta hai.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है। अगर आपको visit schedule karni ho toh bataiye, warna main baad mein callback arrange kar sakta hoon. Aap kya prefer karenge?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 8.281,
+  "hangup_count": 1
+}

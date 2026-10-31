@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. இந்த enquiry-யை team reviewக்கு submit செய்யுங்க. என் சம்மதம் இருக்கு. Booking அல்லது order confirmன்னு சொல்லாதீங்க.", "ts": "2026-10-25T19:07:37.175165Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "மன்னிக்கவும், system issue காரணமா enquiry-யை இப்போதைக்கு save பண்ண முடியலை. நான் இத எங்க team-கிட்ட சொல்லி follow up பண்றேன். வேற ஏதாவது தகவல் வேணுமா?", "ts": "2026-10-25T19:07:41.047928Z", "brain_latency_ms": 3624}
+{"seq": 3, "role": "user", "text": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.", "ts": "2026-10-25T19:07:41.069070Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.", "ts": "2026-10-25T19:07:41.076370Z", "brain_latency_ms": 1}

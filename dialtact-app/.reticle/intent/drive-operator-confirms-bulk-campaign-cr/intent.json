@@ -1,0 +1,22 @@
+{
+  "intents": {
+    "flow:drive-operator-confirms-bulk-campaign-create-returned": {
+      "binding": {
+        "flow": "drive-operator-confirms-bulk-campaign-create-returned"
+      },
+      "declaredAt": 1790847829939,
+      "id": "flow:drive-operator-confirms-bulk-campaign-create-returned",
+      "source": "decided on the dashboard",
+      "state": "bound",
+      "statement": "Operator confirms bulk campaign create returned success and dialer started concurrent calls",
+      "status": "proved",
+      "subject": "drive-operator-confirms-bulk-campaign-cr",
+      "surface": {
+        "flow": "drive-operator-confirms-bulk-campaign-create-returned"
+      },
+      "updatedAt": 1791972280885
+    }
+  },
+  "subject": "drive-operator-confirms-bulk-campaign-cr",
+  "version": 1
+}

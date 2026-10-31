@@ -1,0 +1,110 @@
+{
+  "key": "print-ta-IN-connected-1b_direct_tool_request",
+  "business": "print",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "bdce67d6-051d-5df0-b945-525173a1f672",
+  "call_id": "9ee62826-bcae-43d3-be64-f3f79bfc6dda",
+  "session_id": "audit-print-ta-IN-connected-1b_direct_tool_request-1ac69017",
+  "compiled_checksum": "76b288f72889bc9041f0c28adf9f13370a846e99cba4f1b6a4bb91f33ad390dc",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 982,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested to save the enquiry and provided all details; goal_complete — enquiry saved with reference AUDIT-ENQUIRY-1, no order or booking confirmed.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": " and provided all details; goal_complete — enquiry saved with reference AUDIT-ENQUIRY-1, no order or booking confirmed.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.657
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "error_type": "RuntimeError",
+      "finish_reason": null,
+      "elapsed_s": 0.343
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Save enquiry for team review",
+        "preferred_time": "Tomorrow 3 PM"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "மன்னிக்கவும், எங்களுக்கு ஒரு தொழில்நுட்பச் சிக்கல் உள்ளது. தயவுசெய்து எங்களை மீண்டும் அழைக்கவும். நன்றி.",
+      "turn": 1,
+      "at": 2.594
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "என் பெயர் Audit Customer, email audit.customer@example.invalid. என் enquiryயை team reviewக்காக save செய்யுங்க. நாளை பிற்பகல் மூன்று மணி எனக்கு வசதி. Request submit செய்ய சம்மதிக்கிறேன்; order அல்லது booking confirm ஆனதாகச் சொல்லாதீங்க.",
+      "spoken": "மன்னிக்கவும், எங்களுக்கு ஒரு தொழில்நுட்பச் சிக்கல் உள்ளது. தயவுசெய்து எங்களை மீண்டும் அழைக்கவும். நன்றி.",
+      "elapsed_s": 2.641,
+      "requests": 2,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 2.641,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "9ee62826-bcae-43d3-be64-f3f79bfc6dda",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "94dea0198bbca67e7df4548ae910d6d0dc08cefbb5ee961965f358043fdd266a",
+  "prompt_chars": 18310,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Vanakkam, I am Meera calling from ClearPrint Studio. Am I speaking with the right person to discuss your card printing needs today?",
+  "status": "completed",
+  "elapsed_s": 2.641,
+  "hangup_count": 1
+}

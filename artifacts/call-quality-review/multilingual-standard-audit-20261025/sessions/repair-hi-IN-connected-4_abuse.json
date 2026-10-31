@@ -1,0 +1,253 @@
+{
+  "key": "repair-hi-IN-connected-4_abuse",
+  "business": "repair",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "4_abuse",
+  "agent_id": "ee74c1a4-b235-5a77-99ad-00da15da64d8",
+  "call_id": "5f646631-c74a-4fb6-a5a7-714c712c219b",
+  "session_id": "audit-repair-hi-IN-connected-4_abuse-31ff2e30",
+  "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 353,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller used abusive language ('निकम्मे बेवकूफ').\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"},\n\n\"order_claimed\": false, \"spoken_response\": \"माफ़ कीजिए, मैं abusive बातचीत continue नहीं कर सकता। समय देने के लिए धन्यवाद। नमस्कार।\", \"memory_update\": {\"operations\": []} }",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller used abusive language ('निकम्मे बेवकूफ').\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"},\n\n\"order_claimed\": false, \"spoken_response\": \"माफ़ कीजिए, मैं abusive बातचीत continue नहीं कर सकता। समय देने के लिए धन्यवाद। नमस्कार।\", \"memory_update\": {\"operations\": []} }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 113,
+        "prompt_tokens": 4097,
+        "total_tokens": 4210,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "माफ़ कीजिए, मैं abusive बातचीत continue नहीं कर सकता। समय देने के लिए धन्यवाद। नमस्कार।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4097,
+          "output_tokens": 113,
+          "total_tokens": 4210
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "Caller used abusive language ('निकम्मे बेवकूफ').",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.671
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 334,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller threatened: 'मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।'\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller threatened: 'मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।'\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 124,
+        "prompt_tokens": 4064,
+        "total_tokens": 4188,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 0.516
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 359,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"माफ़ कीजिए, मैं यह call यहीं समाप्त कर रहा हूँ।\",\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"माफ़ कीजिए, मैं यह call यहीं समाप्त कर रहा हूँ।\",\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 131,
+        "prompt_tokens": 4064,
+        "total_tokens": 4195,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "माफ़ कीजिए, मैं यह call यहीं समाप्त कर रहा हूँ।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8128,
+          "output_tokens": 255,
+          "total_tokens": 8383
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.562
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 1,
+      "at": 0.672
+    },
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 2,
+      "at": 1.766
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 0.656,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 1.063,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "232255b2e4830950f7aad61ed56f3d4215047029b54815303b5f8c369cd9e2ae",
+  "prompt_chars": 17354,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, mera naam Ravi hai SafeFix Home Service se. Kya hum home appliance service ya pricing ke baare mein baat kar sakte hain?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "Caller used abusive language ('निकम्मे बेवकूफ').",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "माफ़ कीजिए, मैं abusive बातचीत continue नहीं कर सकता। समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "माफ़ कीजिए, मैं यह call यहीं समाप्त कर रहा हूँ।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 1.781,
+  "hangup_count": 0
+}

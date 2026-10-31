@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "route ?",
+  "observed": "route changed to '/login', expected '/login#dashboard/billing'",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-billing",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 301,
+          "column": 19
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1791894378104-nav-billing-24821ef0",
+  "createdAt": 1791894378105,
+  "seen": 1,
+  "lastSeenAt": 1791894378105
+}

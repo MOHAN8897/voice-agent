@@ -1,0 +1,533 @@
+[
+  {
+    "language": "en-IN",
+    "variant": "full_schema",
+    "sse_finish": "stop",
+    "usage": {
+      "completion_tokens": 224,
+      "prompt_tokens": 4037,
+      "total_tokens": 4261,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    },
+    "result": {
+      "done": true,
+      "text": "Sure. Printed visiting cards are twenty-five rupees per card, minimum one hundred cards. Wedding invitations are available, but the quote depends on design and quantity, so there is no fixed price. We deliver to Pune by post in five working days after artwork approval, and we do,",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4037,
+        "output_tokens": 224,
+        "total_tokens": 4261,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "update_summary",
+            "key": "interested",
+            "value": "true"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said 'Yes, I am interested' and asked for service, price and conditions.",
+        "remaining_request": "None stated beyond information already provided.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 1.063,
+    "content_chars": 789,
+    "whitespace_ratio": 0.217,
+    "content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'Yes, I am interested' and asked for service, price and conditions.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None stated beyond information already provided.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n  \"order_claimed\": false,\n  \"spoken_response\": \"Sure. Printed visiting cards are twenty-five rupees per card, minimum one hundred cards. Wedding invitations are available, but the quote depends on design and quantity, so there is no fixed price. We deliver to Pune by post in five working days after artwork approval, and we do,\",\"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+    "content_tail": "o_not_call\"\n  }\n,\n\n  \"order_claimed\": false,\n  \"spoken_response\": \"Sure. Printed visiting cards are twenty-five rupees per card, minimum one hundred cards. Wedding invitations are available, but the quote depends on design and quantity, so there is no fixed price. We deliver to Pune by post in five working days after artwork approval, and we do,\",\"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}"
+  },
+  {
+    "language": "en-IN",
+    "variant": "speech_only_schema",
+    "sse_finish": "stop",
+    "usage": {
+      "completion_tokens": 63,
+      "prompt_tokens": 4037,
+      "total_tokens": 4100,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    },
+    "result": {
+      "done": true,
+      "text": "Sure. Our printed visiting cards are twenty-five rupees per card, with a minimum order of one hundred cards. For wedding invitations, the design and quantity decide the quote, so there is no fixed price available. Which card and quantity do you need?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4037,
+        "output_tokens": 63,
+        "total_tokens": 4100,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": []
+      },
+      "end_call": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.469,
+    "content_chars": 277,
+    "whitespace_ratio": 0.166,
+    "content_preview": "{\n  \"spoken_response\": \"Sure. Our printed visiting cards are twenty-five rupees per card, with a minimum order of one hundred cards. For wedding invitations, the design and quantity decide the quote, so there is no fixed price available. Which card and quantity do you need?\"\n}",
+    "content_tail": "{\n  \"spoken_response\": \"Sure. Our printed visiting cards are twenty-five rupees per card, with a minimum order of one hundred cards. For wedding invitations, the design and quantity decide the quote, so there is no fixed price available. Which card and quantity do you need?\"\n}"
+  },
+  {
+    "language": "en-IN",
+    "variant": "plain_text",
+    "sse_finish": "stop",
+    "usage": {
+      "completion_tokens": 56,
+      "prompt_tokens": 4058,
+      "total_tokens": 4114,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    },
+    "result": {
+      "done": true,
+      "text": "Our printed visiting cards cost twenty-five rupees per card, with a minimum order of one hundred cards. Wedding invitations are available too, but the price depends on the design and quantity, so there is no fixed rate for those. Which card and quantity were you looking at?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4058,
+        "output_tokens": 56,
+        "total_tokens": 4114,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop"
+    },
+    "status": "completed",
+    "elapsed_s": 0.375,
+    "content_chars": 274,
+    "whitespace_ratio": 0.168,
+    "content_preview": "Our printed visiting cards cost twenty-five rupees per card, with a minimum order of one hundred cards. Wedding invitations are available too, but the price depends on the design and quantity, so there is no fixed rate for those. Which card and quantity were you looking at?",
+    "content_tail": "Our printed visiting cards cost twenty-five rupees per card, with a minimum order of one hundred cards. Wedding invitations are available too, but the price depends on the design and quantity, so there is no fixed rate for those. Which card and quantity were you looking at?"
+  },
+  {
+    "language": "en-IN",
+    "variant": "minimal_prompt_full_schema",
+    "sse_finish": "stop",
+    "usage": {
+      "completion_tokens": 276,
+      "prompt_tokens": 123,
+      "total_tokens": 399,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    },
+    "result": {
+      "done": true,
+      "text": "Visiting cards cost 25 rupees each, minimum 100. Wedding invitations use a design-based quote. Delivery five working days after approval.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 123,
+        "output_tokens": 276,
+        "total_tokens": 399,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "set_preference",
+            "key": "interest",
+            "value": "continue"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "Visiting cards cost 25 rupees each, minimum 100. Wedding invitations use a design-based quote. Delivery five working days after approval.",
+        "remaining_request": "Service: Visiting cards are 25 rupees each with a minimum order of 100. Wedding invitations are quoted based on design. Delivery takes five working days after approval. Conditions: minimum order applies to visiting cards.",
+        "contact_preference": "none",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 1.078,
+    "content_chars": 858,
+    "whitespace_ratio": 0.211,
+    "content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Visiting cards cost 25 rupees each, minimum 100. Wedding invitations use a design-based quote. Delivery five working days after approval.\",\n    \"reason\": \"none\",\n    \"decision\": \"continue\",\n    \"remaining_request\": \"Service: Visiting cards are 25 rupees each with a minimum order of 100. Wedding invitations are quoted based on design. Delivery takes five working days after approval. Conditions: minimum order applies to visiting cards.\",\n    \"contact_preference\": \"none\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"Visiting cards cost 25 rupees each, minimum 100. Wedding invitations use a design-based quote. Delivery five working days after approval.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_preference\",\n        \"key\": \"interest\",\n        \"value\": \"continue\"\n      }\n    ]\n  }\n}",
+    "content_tail": "d on design. Delivery takes five working days after approval. Conditions: minimum order applies to visiting cards.\",\n    \"contact_preference\": \"none\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"Visiting cards cost 25 rupees each, minimum 100. Wedding invitations use a design-based quote. Delivery five working days after approval.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_preference\",\n        \"key\": \"interest\",\n        \"value\": \"continue\"\n      }\n    ]\n  }\n}"
+  },
+  {
+    "language": "te-IN",
+    "variant": "full_schema",
+    "sse_finish": "stop",
+    "usage": {
+      "completion_tokens": 244,
+      "prompt_tokens": 4224,
+      "total_tokens": 4468,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    },
+    "result": {
+      "done": true,
+      "text": "తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 rupees పడుతుంది, కనీసం 100 కార్డ్స్ ఆర్డర్ చేయాలి. పెళ్లి పత్రికలకు design బట్టి price ఉంటుంది. artwork approval అయ్యాక ఐదు working days లో Pune కి delivery అవుతుంది. Cash on delivery కూడా తీసుకుంటాం. quote request కోసం మీ పేరు, డెలివ",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4224,
+        "output_tokens": 244,
+        "total_tokens": 4468,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "update_summary",
+            "key": "interested",
+            "value": "yes"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Customer explicitly said 'అవునండి, నాకు ఆసక్తి ఉంది' (interested), and asked for service, price, and conditions details.",
+        "remaining_request": "None",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.938,
+    "content_chars": 776,
+    "whitespace_ratio": 0.211,
+    "content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Customer explicitly said 'అవునండి, నాకు ఆసక్తి ఉంది' (interested), and asked for service, price, and conditions details.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 rupees పడుతుంది, కనీసం 100 కార్డ్స్ ఆర్డర్ చేయాలి. పెళ్లి పత్రికలకు design బట్టి price ఉంటుంది. artwork approval అయ్యాక ఐదు working days లో Pune కి delivery అవుతుంది. Cash on delivery కూడా తీసుకుంటాం. quote request కోసం మీ పేరు, డెలివ\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested\",\n        \"value\": \"yes\"\n      }\n    ]\n  }\n}",
+    "content_tail": "_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 rupees పడుతుంది, కనీసం 100 కార్డ్స్ ఆర్డర్ చేయాలి. పెళ్లి పత్రికలకు design బట్టి price ఉంటుంది. artwork approval అయ్యాక ఐదు working days లో Pune కి delivery అవుతుంది. Cash on delivery కూడా తీసుకుంటాం. quote request కోసం మీ పేరు, డెలివ\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested\",\n        \"value\": \"yes\"\n      }\n    ]\n  }\n}"
+  },
+  {
+    "language": "te-IN",
+    "variant": "speech_only_schema",
+    "sse_finish": "stop",
+    "usage": {
+      "completion_tokens": 117,
+      "prompt_tokens": 4224,
+      "total_tokens": 4341,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    },
+    "result": {
+      "done": true,
+      "text": "తప్పకుండా అండి. Printed visiting cards ఒక్కో కార్డ్ 25 రూపాయలు పడతాయి, కానీ minimum 100 కార్డ్స్ ఆర్డర్ చేయాలి. పెళ్లి పత్రికలు కూడా ఉన్నాయి, కానీ వాటికి డిజైన్ మరియు quantity బట్టి price మారుతుంది. Delivery గురించి చెప్పాలంటే, artwork approval అయ్యాక ఐదు working days లో Pune కి post ద్వారా పంపిస్తాము. Cash on delivery కూడా accept చేస్తాము. Refund policy మాత్రం ప్రస్తుతం అందుబాటులో లేదు అండి. మీకు ఏ కార్డ్ కావాలి, ఎన్ని quantity కావాలో చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4224,
+        "output_tokens": 117,
+        "total_tokens": 4341,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": []
+      },
+      "end_call": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.734,
+    "content_chars": 476,
+    "whitespace_ratio": 0.143,
+    "content_preview": "{\n  \"spoken_response\": \"తప్పకుండా అండి. Printed visiting cards ఒక్కో కార్డ్ 25 రూపాయలు పడతాయి, కానీ minimum 100 కార్డ్స్ ఆర్డర్ చేయాలి. పెళ్లి పత్రికలు కూడా ఉన్నాయి, కానీ వాటికి డిజైన్ మరియు quantity బట్టి price మారుతుంది. Delivery గురించి చెప్పాలంటే, artwork approval అయ్యాక ఐదు working days లో Pune కి post ద్వారా పంపిస్తాము. Cash on delivery కూడా accept చేస్తాము. Refund policy మాత్రం ప్రస్తుతం అందుబాటులో లేదు అండి. మీకు ఏ కార్డ్ కావాలి, ఎన్ని quantity కావాలో చెప్తారా?\"\n}",
+    "content_tail": "{\n  \"spoken_response\": \"తప్పకుండా అండి. Printed visiting cards ఒక్కో కార్డ్ 25 రూపాయలు పడతాయి, కానీ minimum 100 కార్డ్స్ ఆర్డర్ చేయాలి. పెళ్లి పత్రికలు కూడా ఉన్నాయి, కానీ వాటికి డిజైన్ మరియు quantity బట్టి price మారుతుంది. Delivery గురించి చెప్పాలంటే, artwork approval అయ్యాక ఐదు working days లో Pune కి post ద్వారా పంపిస్తాము. Cash on delivery కూడా accept చేస్తాము. Refund policy మాత్రం ప్రస్తుతం అందుబాటులో లేదు అండి. మీకు ఏ కార్డ్ కావాలి, ఎన్ని quantity కావాలో చెప్తారా?\"\n}"
+  },
+  {
+    "language": "te-IN",
+    "variant": "plain_text",
+    "sse_finish": "stop",
+    "usage": {
+      "completion_tokens": 98,
+      "prompt_tokens": 4245,
+      "total_tokens": 4343,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    },
+    "result": {
+      "done": true,
+      "text": "తప్పకుండా అండి. మా printed visiting cards ఒక్కో దానికి 25 rupees పడతాయి, కానీ minimum 100 cards ఆర్డర్ చేయాలి. పెళ్లి పత్రికలు కూడా ఉన్నాయి, కానీ వాటికి design మరియు quantity బట్టి price మారుతుంది. Delivery విషయానికి వస్తే, artwork approval అయ్యాక ఐదు working days లో Pune కి post ద్వారా పంపిస్తాము. Cash on delivery కూడా accept చేస్తాము. మీకు ఏ cards కావాలి అండి, ఎన్ని quantity లో కావాలో చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4245,
+        "output_tokens": 98,
+        "total_tokens": 4343,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop"
+    },
+    "status": "completed",
+    "elapsed_s": 0.594,
+    "content_chars": 399,
+    "whitespace_ratio": 0.148,
+    "content_preview": "తప్పకుండా అండి. మా printed visiting cards ఒక్కో దానికి 25 rupees పడతాయి, కానీ minimum 100 cards ఆర్డర్ చేయాలి. పెళ్లి పత్రికలు కూడా ఉన్నాయి, కానీ వాటికి design మరియు quantity బట్టి price మారుతుంది. Delivery విషయానికి వస్తే, artwork approval అయ్యాక ఐదు working days లో Pune కి post ద్వారా పంపిస్తాము. Cash on delivery కూడా accept చేస్తాము. మీకు ఏ cards కావాలి అండి, ఎన్ని quantity లో కావాలో చెప్తారా?",
+    "content_tail": "తప్పకుండా అండి. మా printed visiting cards ఒక్కో దానికి 25 rupees పడతాయి, కానీ minimum 100 cards ఆర్డర్ చేయాలి. పెళ్లి పత్రికలు కూడా ఉన్నాయి, కానీ వాటికి design మరియు quantity బట్టి price మారుతుంది. Delivery విషయానికి వస్తే, artwork approval అయ్యాక ఐదు working days లో Pune కి post ద్వారా పంపిస్తాము. Cash on delivery కూడా accept చేస్తాము. మీకు ఏ cards కావాలి అండి, ఎన్ని quantity లో కావాలో చెప్తారా?"
+  },
+  {
+    "language": "te-IN",
+    "variant": "minimal_prompt_full_schema",
+    "sse_finish": "length",
+    "status": "IncompleteTurnError",
+    "error": "sarvam did not complete the turn (length)",
+    "elapsed_s": 2.125,
+    "content_chars": 2050,
+    "whitespace_ratio": 0.898,
+    "content_preview": "{\n  \"end_call\": \n  {\n    \"evidence\": \"Visiting cards cost 25 rupees each, minimum 100. Wedding invitations use a design-based quote. Delivery five working days after approval.\",\n    \"reason\": \"none\",\n    \"decision\": \"continue\",\n    \"remaining_request\": \"none\"\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+    "content_tail": "  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  "
+  },
+  {
+    "language": "hi-IN",
+    "variant": "full_schema",
+    "sse_finish": "length",
+    "status": "IncompleteTurnError",
+    "error": "sarvam did not complete the turn (length)",
+    "elapsed_s": 2.437,
+    "content_chars": 2134,
+    "whitespace_ratio": 0.864,
+    "content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'हाँ, मुझे दिलचस्पी है' and asked for service, price and terms, indicating goal_complete readiness after quote request details.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"quote request with name and locality\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n\n\n\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+    "content_tail": "  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  "
+  },
+  {
+    "language": "hi-IN",
+    "variant": "speech_only_schema",
+    "sse_finish": "stop",
+    "usage": {
+      "completion_tokens": 82,
+      "prompt_tokens": 3961,
+      "total_tokens": 4043,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    },
+    "result": {
+      "done": true,
+      "text": "देखिए, visiting cards की कीमत 25 rupees per card है, minimum order 100 cards का रहेगा। Wedding invitations का कोई fixed price नहीं है, वो design और quantity par depend karta hai। Delivery Pune mein post se hoti hai, artwork approval ke baad paanch working days lagenge। Kya aapko inmein se kya chahiye?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 3961,
+        "output_tokens": 82,
+        "total_tokens": 4043,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": []
+      },
+      "end_call": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.469,
+    "content_chars": 329,
+    "whitespace_ratio": 0.173,
+    "content_preview": "{\n  \"spoken_response\": \"देखिए, visiting cards की कीमत 25 rupees per card है, minimum order 100 cards का रहेगा। Wedding invitations का कोई fixed price नहीं है, वो design और quantity par depend karta hai। Delivery Pune mein post se hoti hai, artwork approval ke baad paanch working days lagenge। Kya aapko inmein se kya chahiye?\"\n}",
+    "content_tail": "{\n  \"spoken_response\": \"देखिए, visiting cards की कीमत 25 rupees per card है, minimum order 100 cards का रहेगा। Wedding invitations का कोई fixed price नहीं है, वो design और quantity par depend karta hai। Delivery Pune mein post se hoti hai, artwork approval ke baad paanch working days lagenge। Kya aapko inmein se kya chahiye?\"\n}"
+  },
+  {
+    "language": "hi-IN",
+    "variant": "plain_text",
+    "sse_finish": "stop",
+    "usage": {
+      "completion_tokens": 70,
+      "prompt_tokens": 3982,
+      "total_tokens": 4052,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    },
+    "result": {
+      "done": true,
+      "text": "देखिए, visiting cards की price 25 rupees per card है, minimum 100 cards के साथ। Wedding invitations का कोई fix price नहीं है, वो design और quantity पर depend करता है। Delivery Pune में post से होती है, artwork approval के बाद पाँच working days लगते हैं। तो आपको कौन सा card और कितनी quantity चाहिए?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 3982,
+        "output_tokens": 70,
+        "total_tokens": 4052,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop"
+    },
+    "status": "completed",
+    "elapsed_s": 0.5,
+    "content_chars": 298,
+    "whitespace_ratio": 0.185,
+    "content_preview": "देखिए, visiting cards की price 25 rupees per card है, minimum 100 cards के साथ। Wedding invitations का कोई fix price नहीं है, वो design और quantity पर depend करता है। Delivery Pune में post से होती है, artwork approval के बाद पाँच working days लगते हैं। तो आपको कौन सा card और कितनी quantity चाहिए?",
+    "content_tail": "देखिए, visiting cards की price 25 rupees per card है, minimum 100 cards के साथ। Wedding invitations का कोई fix price नहीं है, वो design और quantity पर depend करता है। Delivery Pune में post से होती है, artwork approval के बाद पाँच working days लगते हैं। तो आपको कौन सा card और कितनी quantity चाहिए?"
+  },
+  {
+    "language": "hi-IN",
+    "variant": "minimal_prompt_full_schema",
+    "sse_finish": "length",
+    "status": "IncompleteTurnError",
+    "error": "sarvam did not complete the turn (length)",
+    "elapsed_s": 2.453,
+    "content_chars": 2042,
+    "whitespace_ratio": 0.911,
+    "content_preview": "{\n  \"end_call\": \n  {\n    \"evidence\": \"Visiting cards cost 25 rupees each, minimum 100. Wedding invitations use a design-based quote. Delivery five working days after approval.\",\n    \"reason\": \"none\",\n    \"decision\": \"continue\"\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+    "content_tail": " \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n"
+  },
+  {
+    "language": "en-IN",
+    "variant": "full_schema_no_length",
+    "sse_finish": "stop",
+    "usage": {
+      "completion_tokens": 232,
+      "prompt_tokens": 4037,
+      "total_tokens": 4269,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    },
+    "result": {
+      "done": true,
+      "text": "Sure. Printed visiting cards are twenty-five rupees per card with a minimum order of one hundred cards. Wedding invitations are available, but the design and quantity decide the quote, so there is no fixed price. If you would like a quote, could you share your preferred name and delivery locality?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4037,
+        "output_tokens": 232,
+        "total_tokens": 4269,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "update_summary",
+            "key": "interested",
+            "value": "yes"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller said 'Yes, I am interested. Please explain the service, price and any conditions.' which is goal_complete for providing information and agreeing to next step.",
+        "remaining_request": "None",
+        "contact_preference": "end_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.906,
+    "content_chars": 837,
+    "whitespace_ratio": 0.219,
+    "content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'Yes, I am interested. Please explain the service, price and any conditions.' which is goal_complete for providing information and agreeing to next step.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"end_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"Sure. Printed visiting cards are twenty-five rupees per card with a minimum order of one hundred cards. Wedding invitations are available, but the design and quantity decide the quote, so there is no fixed price. If you would like a quote, could you share your preferred name and delivery locality?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested\",\n        \"value\": \"yes\"\n      }\n    ]\n  }\n}",
+    "content_tail": "\"order_claimed\": false,\n  \"spoken_response\": \"Sure. Printed visiting cards are twenty-five rupees per card with a minimum order of one hundred cards. Wedding invitations are available, but the design and quantity decide the quote, so there is no fixed price. If you would like a quote, could you share your preferred name and delivery locality?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested\",\n        \"value\": \"yes\"\n      }\n    ]\n  }\n}"
+  },
+  {
+    "language": "te-IN",
+    "variant": "full_schema_no_length",
+    "sse_finish": "stop",
+    "usage": {
+      "completion_tokens": 244,
+      "prompt_tokens": 4224,
+      "total_tokens": 4468,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": null
+    },
+    "result": {
+      "done": true,
+      "text": "Sure అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 rupees పడతాయి, కనీసం 100 కార్డ్స్ ఆర్డర్ చేయాలి. పెళ్లి పత్రికలకు డిజైన్ బట్టి ధర మారుతుంది. ఆర్ట్‌వర్క్ అప్రూవల్ అయ్యాక ఐదు working days లో పూణెకు delivery అవుతుంది. Cash on delivery కూడా accept చేస్తాం. Refund policy మాత్రం ప్రస్తుతం అందుబాటులో లేదు. మీకు ఏ కార్డ్ కావాలి, ఎన్ని quantity కావాలో చెప్తారా?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4224,
+        "output_tokens": 244,
+        "total_tokens": 4468,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "update_summary",
+            "key": "interested",
+            "value": "yes"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Customer expressed interest and asked for service, price, and conditions.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 1.031,
+    "content_chars": 754,
+    "whitespace_ratio": 0.17,
+    "content_preview": "{   \"end_call\":   {  \"evidence\":  \"Customer expressed interest and asked for service, price, and conditions.\",  \"reason\":  \"goal_complete\",  \"decision\":  \"close\",  \"remaining_request\":  \"\",  \"contact_preference\":  \"do_not_call\"  }  ,  \"order_claimed\":  false  ,  \"spoken_response\": \"Sure అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 rupees పడతాయి, కనీసం 100 కార్డ్స్ ఆర్డర్ చేయాలి. పెళ్లి పత్రికలకు డిజైన్ బట్టి ధర మారుతుంది. ఆర్ట్‌వర్క్ అప్రూవల్ అయ్యాక ఐదు working days లో పూణెకు delivery అవుతుంది. Cash on delivery కూడా accept చేస్తాం. Refund policy మాత్రం ప్రస్తుతం అందుబాటులో లేదు. మీకు ఏ కార్డ్ కావాలి, ఎన్ని quantity కావాలో చెప్తారా?\"  ,  \"memory_update\":  {  \"operations\":  [  {  \"op\":  \"update_summary\",  \"key\":  \"interested\",  \"value\":  \"yes\"  }  ]  }  }",
+    "content_tail": "alse  ,  \"spoken_response\": \"Sure అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 rupees పడతాయి, కనీసం 100 కార్డ్స్ ఆర్డర్ చేయాలి. పెళ్లి పత్రికలకు డిజైన్ బట్టి ధర మారుతుంది. ఆర్ట్‌వర్క్ అప్రూవల్ అయ్యాక ఐదు working days లో పూణెకు delivery అవుతుంది. Cash on delivery కూడా accept చేస్తాం. Refund policy మాత్రం ప్రస్తుతం అందుబాటులో లేదు. మీకు ఏ కార్డ్ కావాలి, ఎన్ని quantity కావాలో చెప్తారా?\"  ,  \"memory_update\":  {  \"operations\":  [  {  \"op\":  \"update_summary\",  \"key\":  \"interested\",  \"value\":  \"yes\"  }  ]  }  }"
+  },
+  {
+    "language": "hi-IN",
+    "variant": "full_schema_no_length",
+    "sse_finish": "length",
+    "status": "IncompleteTurnError",
+    "error": "sarvam did not complete the turn (length)",
+    "elapsed_s": 2.391,
+    "content_chars": 2157,
+    "whitespace_ratio": 0.852,
+    "content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"User explicitly said 'हाँ, मुझे दिलचस्पी है' and asked for service, price and terms, indicating goal_complete is possible after providing quote request details.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"quote request details (preferred name and delivery locality)\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  ",
+    "content_tail": " \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n"
+  }
+]

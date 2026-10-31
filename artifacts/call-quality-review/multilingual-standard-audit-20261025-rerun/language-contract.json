@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "body": {
+    "languages": [
+      {
+        "code": "en-IN",
+        "label": "English (India)"
+      },
+      {
+        "code": "te-IN",
+        "label": "Telugu"
+      },
+      {
+        "code": "hi-IN",
+        "label": "Hindi"
+      },
+      {
+        "code": "ta-IN",
+        "label": "Tamil"
+      },
+      {
+        "code": "kn-IN",
+        "label": "Kannada"
+      }
+    ],
+    "default": "en-IN",
+    "tier": "medium",
+    "unavailableOnTier": [
+      {
+        "code": "en-GB",
+        "label": "English (UK)"
+      }
+    ]
+  }
+}

@@ -1,0 +1,533 @@
+{
+  "entries": [
+    {
+      "id": "inline:empty-voice-filter-combinations-display-zero-ava-a9cbb92f",
+      "statement": "Empty voice filter combinations display zero availability without chang…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:tenants-explicitly-approve-callback-automation-a-527478e7",
+      "statement": "Tenants explicitly approve callback automation and charges, review uncl…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:the-farewell-category-exposes-its-editor-directl-7eee2c31",
+      "statement": "The Farewell category exposes its editor directly while retaining other…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:the-recording-compliance-category-exposes-its-ed-24538ee1",
+      "statement": "The Recording & compliance category exposes its editor directly while r…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:voice-gender-counts-reflect-the-selected-voice-s-aa052cdb",
+      "statement": "Voice gender counts reflect the selected voice style, including zero av…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:overview-window-selection-reloads-real-server-an-21d1cf4d",
+      "statement": "Overview window selection reloads real server analytics for the chosen…",
+      "status": "proved",
+      "subject": "analytics"
+    },
+    {
+      "id": "inline:converted-callback-requests-leave-the-pending-qu-854ff231",
+      "statement": "Converted callback requests leave the pending queue only after a succes…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
+      "id": "inline:tenant-farewell-edits-are-persisted-and-publishe-956db398",
+      "statement": "Tenant farewell edits are persisted and published for subsequent calls.",
+      "status": "proved",
+      "subject": "business-brain"
+    },
+    {
+      "id": "india-tenant-compliance",
+      "statement": "Indian tenants see Indian calling consent and privacy obligations with…",
+      "status": "proposed",
+      "subject": "console"
+    },
+    {
+      "id": "inline:a-single-floating-save-action-appears-only-for-u-17fb888a",
+      "statement": "A single floating save action appears only for unsaved agent edits, and…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:agent-workspace-navigation-exposes-expansion-and-8bd1fe5a",
+      "statement": "Agent workspace navigation exposes expansion and the settings save acti…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:clearing-lead-filters-restores-contacts-without-9467ccf0",
+      "statement": "Clearing lead filters restores contacts without changing their pipeline…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:closing-campaign-setup-returns-to-the-lead-pipel-9f4a587e",
+      "statement": "Closing campaign setup returns to the lead pipeline.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:closing-details-returns-to-the-pipeline-2b396ca9",
+      "statement": "Closing details returns to the pipeline.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:collapsing-navigation-frees-workspace-width-whil-7cfac69e",
+      "statement": "Collapsing navigation frees workspace width while preserving accessible…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:confirmed-conversions-can-be-saved-60656ddf",
+      "statement": "Confirmed conversions can be saved.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:conversion-requires-tenant-confirmation-before-s-02f8b2a3",
+      "statement": "Conversion requires tenant confirmation before saving.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:handling-rules-publish-through-the-real-editor-r-b60839f7",
+      "statement": "Handling rules publish through the real editor; read-only tenants can i…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:indian-tenants-see-indian-consent-and-privacy-gu-6d37e14a",
+      "statement": "Indian tenants see Indian consent and privacy guidance and do not see i…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:lead-details-expose-the-current-pipeline-stage-99e69a06",
+      "statement": "Lead details expose the current pipeline stage.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:lead-search-filters-the-server-backed-pipeline-a-ded48eec",
+      "statement": "Lead search filters the server-backed pipeline and exposes a clear empt…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:saved-conversion-becomes-the-lead-s-persisted-pi-9fc69722",
+      "statement": "Saved conversion becomes the lead’s persisted pipeline stage.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:selected-leads-open-the-existing-campaign-review-c35caae9",
+      "statement": "Selected leads open the existing campaign review with their contact met…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:selecting-callable-leads-makes-them-available-fo-27fb3d5f",
+      "statement": "Selecting callable leads makes them available for campaign setup.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:the-voice-catalog-remains-available-after-lead-w-92e948fa",
+      "statement": "The voice catalog remains available after lead work.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:wallet-checkout-displays-the-configured-tax-term-6807c222",
+      "statement": "Wallet checkout displays the configured tax terms and credits only the…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:admin-previews-edited-gst-rules-without-saving-t-f4e359ad",
+      "statement": "Admin previews edited GST rules without saving them or creating a payme…",
+      "status": "proved",
+      "subject": "dev"
+    },
+    {
+      "id": "inline:platform-admins-can-inspect-each-pstn-tier-s-sav-26368601",
+      "statement": "Platform admins can inspect each PSTN tier’s saved profile and readines…",
+      "status": "proved",
+      "subject": "dev"
+    },
+    {
+      "id": "flow:drive-a-single-floating-save-action-appears-only-for-u",
+      "statement": "A single floating save action appears only for unsaved agent edits, and…",
+      "status": "proposed",
+      "subject": "drive-a-single-floating-save-action-appe"
+    },
+    {
+      "id": "flow:drive-agent-workspace-navigation-exposes-expansion-and",
+      "statement": "Agent workspace navigation exposes expansion and the settings save acti…",
+      "status": "proposed",
+      "subject": "drive-agent-workspace-navigation-exposes"
+    },
+    {
+      "id": "flow:drive-buy-modal-quotes-the-same-4-00-month-platform-di",
+      "statement": "Buy modal quotes the same $4.00/month platform DID rate as list rows an…",
+      "status": "proposed",
+      "subject": "drive-buy-modal-quotes-the-same-4-00-mon"
+    },
+    {
+      "id": "flow:drive-buy-number-modal-skips-kyc-card-when-user-is-alr",
+      "statement": "Buy-number modal skips KYC card when user is already Approved",
+      "status": "proposed",
+      "subject": "drive-buy-number-modal-skips-kyc-card-wh"
+    },
+    {
+      "id": "flow:drive-changing-a-stack-s-browser-rate-saves-its-exact",
+      "statement": "Changing a stack’s browser rate saves its exact profile override indepe…",
+      "status": "proposed",
+      "subject": "drive-changing-a-stack-s-browser-rate-sa"
+    },
+    {
+      "id": "flow:drive-changing-a-stack-s-browser-rate-saves-its-exact-987ba7",
+      "statement": "Changing a stack’s browser rate saves its exact profile override indepe…",
+      "status": "proposed",
+      "subject": "drive-changing-a-stack-s-browser-rate-sa"
+    },
+    {
+      "id": "flow:drive-console-entry-is-reachable-from-landing-so-kyc-s",
+      "statement": "Console entry is reachable from landing so KYC settings can be opened a…",
+      "status": "proposed",
+      "subject": "drive-console-entry-is-reachable-from-la"
+    },
+    {
+      "id": "flow:drive-console-entry-is-reachable-so-billing-and-wallet",
+      "statement": "Console entry is reachable so billing and wallet UI can be verified wit…",
+      "status": "proposed",
+      "subject": "drive-console-entry-is-reachable-so-bill"
+    },
+    {
+      "id": "flow:drive-handling-rules-publish-through-the-real-editor-r",
+      "statement": "Handling rules publish through the real editor; read-only tenants can i…",
+      "status": "proposed",
+      "subject": "drive-handling-rules-publish-through-the"
+    },
+    {
+      "id": "flow:drive-handling-rules-publish-through-the-real-editor-r-e8e16e",
+      "statement": "Handling rules publish through the real editor; read-only tenants can i…",
+      "status": "proposed",
+      "subject": "drive-handling-rules-publish-through-the"
+    },
+    {
+      "id": "flow:drive-marketing-visitors-can-inspect-relevant-calling",
+      "statement": "Marketing visitors can inspect relevant calling workflows, understand f…",
+      "status": "proposed",
+      "subject": "drive-marketing-visitors-can-inspect-rel"
+    },
+    {
+      "id": "flow:drive-opening-talk-to-ai-shows-live-mic-modal-without",
+      "statement": "Opening Talk to AI shows Live Mic modal without requesting microphone u…",
+      "status": "proposed",
+      "subject": "drive-opening-talk-to-ai-shows-live-mic"
+    },
+    {
+      "id": "flow:drive-overview-window-selection-reloads-real-server-an",
+      "statement": "Overview window selection reloads real server analytics for the chosen…",
+      "status": "proposed",
+      "subject": "drive-overview-window-selection-reloads"
+    },
+    {
+      "id": "flow:drive-platform-admins-can-inspect-each-pstn-tier-s-sav",
+      "statement": "Platform admins can inspect each PSTN tier’s saved profile and readines…",
+      "status": "proposed",
+      "subject": "drive-platform-admins-can-inspect-each-p"
+    },
+    {
+      "id": "flow:drive-settings-page-shows-identity-verification-card-f",
+      "statement": "Settings page shows identity verification card for Didit KYC",
+      "status": "proposed",
+      "subject": "drive-settings-page-shows-identity-verif"
+    },
+    {
+      "id": "flow:drive-talk-to-ai-opens-live-mic-without-requesting-mic",
+      "statement": "Talk to AI opens Live Mic without requesting microphone on open.",
+      "status": "proposed",
+      "subject": "drive-talk-to-ai-opens-live-mic-without"
+    },
+    {
+      "id": "flow:drive-tenants-explicitly-approve-callback-automation-a",
+      "statement": "Tenants explicitly approve callback automation and charges, review uncl…",
+      "status": "proposed",
+      "subject": "drive-tenants-explicitly-approve-callbac"
+    },
+    {
+      "id": "flow:drive-tenants-explicitly-approve-callback-automation-a-f0a778",
+      "statement": "Tenants explicitly approve callback automation and charges, review uncl…",
+      "status": "proposed",
+      "subject": "drive-tenants-explicitly-approve-callbac"
+    },
+    {
+      "id": "flow:drive-when-identity-is-not-approved-buy-number-shows-o",
+      "statement": "When identity is not approved, Buy Number shows only the modern verific…",
+      "status": "proposed",
+      "subject": "drive-when-identity-is-not-approved-buy"
+    },
+    {
+      "id": "complete-language-voices",
+      "statement": "Tenants see every supported voice for their selected model and language…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:admin-approved-kyc-shows-identity-verified-in-th-b62fafbc",
+      "statement": "Admin-approved KYC shows Identity verified in the console Settings card",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:approved-kyc-status-appears-in-settings-after-ad-d8b2105d",
+      "statement": "Approved KYC status appears in Settings after admin override",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:approved-users-see-buy-catalog-without-start-ver-60e2dbbc",
+      "statement": "Approved users see buy catalog without Start verification KYC card",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:before-any-browser-mic-prompt-live-mic-shows-an-9b005f71",
+      "statement": "Before any browser mic prompt, Live Mic shows an explicit microphone-on…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:billing-page-shows-card-payment-methods-without-c795753c",
+      "statement": "Billing page shows card payment methods without Razorpay env or admin s…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:buy-modal-does-not-show-kyc-start-card-after-ide-08e299d4",
+      "statement": "Buy modal does not show KYC start card after identity already Approved",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:buy-modal-quotes-the-same-4-00-month-platform-di-d302ef42",
+      "statement": "Buy modal quotes the same $4.00/month platform DID rate as list rows an…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:buy-modal-shows-aligned-4-monthly-did-rate-and-b-f4df3c25",
+      "statement": "Buy modal shows aligned $4 monthly DID rate and blocks purchase when wa…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:buy-number-modal-shows-a-verification-first-gate-43fe78a3",
+      "statement": "Buy number modal shows a verification-first gate before the number cata…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:buy-number-modal-skips-kyc-card-when-user-is-alr-26960625",
+      "statement": "Buy-number modal skips KYC card when user is already Approved",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:console-entry-is-reachable-from-landing-so-kyc-s-6897be55",
+      "statement": "Console entry is reachable from landing so KYC settings can be opened a…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:console-entry-is-reachable-so-billing-and-wallet-744fbfec",
+      "statement": "Console entry is reachable so billing and wallet UI can be verified wit…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:customer-add-funds-ui-never-shows-razorpay-env-v-7266a9bf",
+      "statement": "Customer Add Funds UI never shows Razorpay env var or secret names.",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:customer-can-open-console-auth-to-reach-phone-nu-cfff6ec5",
+      "statement": "Customer can open console auth to reach phone-numbers KYC gate",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:customer-can-start-didit-hosted-kyc-session-from-938be527",
+      "statement": "Customer can start Didit hosted KYC session from Settings",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:declining-mic-consent-returns-to-idle-without-re-34da05a9",
+      "statement": "Declining mic consent returns to idle without requesting microphone.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:didit-session-create-returns-success-so-verifica-993134a6",
+      "statement": "Didit session create returns success so verification can proceed",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:inventory-did-13526146416-is-owned-by-the-buyer-8b9ede61",
+      "statement": "Inventory DID +13526146416 is owned by the buyer tenant after wallet pu…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:landing-hero-invites-interaction-with-the-3d-cha-1a9e9216",
+      "statement": "Landing hero invites interaction with the 3D character.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:live-mic-consent-explains-microphone-only-access-bef9f894",
+      "statement": "Live Mic consent explains microphone-only access before the browser per…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:live-mic-shows-an-in-app-microphone-consent-expl-eabe4d66",
+      "statement": "Live Mic shows an in-app microphone consent explanation before any brow…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:marketing-visitors-can-inspect-relevant-calling-11d7a177",
+      "statement": "Marketing visitors can inspect relevant calling workflows, understand f…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:no-react-hooks-crash-on-employees-after-the-earl-373a2153",
+      "statement": "No React hooks crash on Employees after the early-return fix",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:opening-add-funds-from-the-wallet-chip-does-not-f31e8d74",
+      "statement": "Opening Add Funds from the wallet chip does not show an internal topbar…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:opening-talk-to-ai-shows-live-mic-modal-without-65ccea73",
+      "statement": "Opening Talk to AI shows Live Mic modal without requesting microphone u…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:pay-from-add-funds-creates-a-razorpay-order-with-10498fee",
+      "statement": "Pay from Add Funds creates a Razorpay order without exposing API secret…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:phone-numbers-buy-flow-surfaces-kyc-verify-card-db4437cf",
+      "statement": "Phone numbers buy flow surfaces KYC verify card when identity gate appl…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:settings-identity-card-never-mentions-didit-keys-3c93496c",
+      "statement": "Settings identity card never mentions Didit keys to customers.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:settings-page-shows-identity-verification-card-f-3a36ca43",
+      "statement": "Settings page shows identity verification card for Didit KYC",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:signed-in-user-reaches-the-agent-console-after-e-af7224a9",
+      "statement": "Signed-in user reaches the agent console after email login.",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:talk-to-ai-opens-live-mic-without-requesting-mic-6c1e73ef",
+      "statement": "Talk to AI opens Live Mic without requesting microphone on open.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:unauthenticated-users-see-a-clear-sign-in-gate-b-0c99c860",
+      "statement": "Unauthenticated users see a clear sign-in gate before console KYC and n…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:user-can-open-the-sign-in-form-from-the-console-1e2b2152",
+      "statement": "User can open the sign-in form from the console gate.",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:when-identity-is-not-approved-buy-number-shows-o-b014b8a3",
+      "statement": "When identity is not approved, Buy Number shows only the modern verific…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "provider-delivery-controls",
+      "statement": "Admins see all documented delivery controls and each call uses its immu…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "tenant-login-console",
+      "statement": "A successful tenant sign-in opens the requested console and retains com…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "tenant-outage-private",
+      "statement": "Only platform admins can view and change speech outage announcements; t…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "voice-single-test-save",
+      "statement": "The voice workspace has one test action and one primary save action.",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "voice-tier-atomic-save",
+      "statement": "Choosing a voice tier saves its exact model and voice selection before…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:changing-a-stack-s-browser-rate-saves-its-exact-33a80725",
+      "statement": "Changing a stack’s browser rate saves its exact profile override indepe…",
+      "status": "proved",
+      "subject": "voice-profiles"
+    }
+  ],
+  "version": 1
+}

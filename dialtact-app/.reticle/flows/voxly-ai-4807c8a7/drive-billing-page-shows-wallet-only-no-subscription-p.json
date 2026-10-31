@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "name": "drive-billing-page-shows-wallet-only-no-subscription-p",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790853458689,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "component",
+        "component": "Sidebar",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 304,
+          "column": 23
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Wallet & per-second billing"
+      },
+      "page": "/console"
+    }
+  ],
+  "startPath": "/console",
+  "intent": "Billing page shows wallet only, no subscription plans",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/console"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/console"
+    }
+  ],
+  "author": {
+    "agent": "cursor-vscode"
+  },
+  "intentId": "flow:drive-billing-page-shows-wallet-only-no-subscription-p"
+}

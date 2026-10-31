@@ -1,0 +1,427 @@
+{
+  "key": "print-ta-IN-connected-6_hangup",
+  "business": "print",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "41fc8f2a-2149-5df8-9318-c72ad4477003",
+  "call_id": "3ad3b7a9-85fc-4ee6-b222-6026ea37ff4f",
+  "session_id": "audit-print-ta-IN-connected-6_hangup-9384cb7d",
+  "compiled_checksum": "5e99ea2197e38380c84c69291fedd1fcccba74c7c0cb4be009ee6c835676179f",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 601,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"goal_complete\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"none\", \"contact_preference\": \"do_not_call\"},\n\"order_claimed\": false,\n\"spoken_response\": \"சரிங்க. விசிட்டிங் கார்டுகள் ஒரு கார்டுக்கு 25 ரூபாய், minimum 100 கார்டுகள் வேணும். டெலிவரி புனே-க்கு அஞ்சல் மூலமா artwork approve ஆன அப்புறம் ஐந்து வேலை நாட்கள்ல நடந்துடும். பணத்தைத் திரும்பத் தர்ற policy எங்ககிட்ட இல்லை. உங்களுக்கு இதுல விருப்பம் இருந்தா, கோட் கோரிக்கைக்காக உங\",\"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"interested_in_visiting_cards\", \"value\": \"yes\"} ]} }",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"goal_complete\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"none\", \"contact_preference\": \"do_not_call\"},\n\"order_claimed\": false,\n\"spoken_response\": \"சரிங்க. விசிட்டிங் கார்டுகள் ஒரு கார்டுக்கு 25 ரூபாய், minimum 100 கார்டுகள் வேணும். டெலிவரி புனே-க்கு அஞ்சல் மூலமா artwork approve ஆன அப்புறம் ஐந்து வேலை நாட்கள்ல நடந்துடும். பணத்தைத் திரும்பத் தர்ற policy எங்ககிட்ட இல்லை. உங்களுக்கு இதுல விருப்பம் இருந்தா, கோட் கோரிக்கைக்காக உங\",\"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"interested_in_visiting_cards\", \"value\": \"yes\"} ]} }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 192,
+        "prompt_tokens": 4298,
+        "total_tokens": 4490,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. விசிட்டிங் கார்டுகள் ஒரு கார்டுக்கு 25 ரூபாய், minimum 100 கார்டுகள் வேணும். டெலிவரி புனே-க்கு அஞ்சல் மூலமா artwork approve ஆன அப்புறம் ஐந்து வேலை நாட்கள்ல நடந்துடும். பணத்தைத் திரும்பத் தர்ற policy எங்ககிட்ட இல்லை. உங்களுக்கு இதுல விருப்பம் இருந்தா, கோட் கோரிக்கைக்காக உங",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4298,
+          "output_tokens": 192,
+          "total_tokens": 4490
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested_in_visiting_cards",
+              "value": "yes"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "goal_complete",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.907
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 635,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller explicitly said 'இப்போ எதையும் book அல்லது save செய்யாதீங்க' and asked only for information; no consent to save enquiry.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"திருமண அழைப்பிதழ்களுக்கு நிலையான விலை இல்லைங்க, design மற்றும் quantity பொறுத்து தான் quote வரும். கலைப்பொருள் ஒப்புதலுக்குப் பிறகு புனே நகருக்கு அஞ்சல் மூலம் ஐந்து வேலை நாட்களில் delivery ஆகிடும். உங்களுக்கு எந்த வகையான கார்டு மற்றும் எத்தனை எண்ணிக்கையில் வேணும்னு சொல்ல முடியுமா\", \"memory_update\": {\"operations\": []}}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller explicitly said 'இப்போ எதையும் book அல்லது save செய்யாதீங்க' and asked only for information; no consent to save enquiry.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"திருமண அழைப்பிதழ்களுக்கு நிலையான விலை இல்லைங்க, design மற்றும் quantity பொறுத்து தான் quote வரும். கலைப்பொருள் ஒப்புதலுக்குப் பிறகு புனே நகருக்கு அஞ்சல் மூலம் ஐந்து வேலை நாட்களில் delivery ஆகிடும். உங்களுக்கு எந்த வகையான கார்டு மற்றும் எத்தனை எண்ணிக்கையில் வேணும்னு சொல்ல முடியுமா\", \"memory_update\": {\"operations\": []}}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 167,
+        "prompt_tokens": 4333,
+        "total_tokens": 4500,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "திருமண அழைப்பிதழ்களுக்கு நிலையான விலை இல்லைங்க, design மற்றும் quantity பொறுத்து தான் quote வரும். கலைப்பொருள் ஒப்புதலுக்குப் பிறகு புனே நகருக்கு அஞ்சல் மூலம் ஐந்து வேலை நாட்களில் delivery ஆகிடும். உங்களுக்கு எந்த வகையான கார்டு மற்றும் எத்தனை எண்ணிக்கையில் வேணும்னு சொல்ல முடியுமா",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4333,
+          "output_tokens": 167,
+          "total_tokens": 4500
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said 'இப்போ எதையும் book அல்லது save செய்யாதீங்க' and asked only for information; no consent to save enquiry.",
+          "remaining_request": "None",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.766
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 566,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'சரி, நன்றி' which signals goal completion / not interested in continuing.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"order_claimed\": false,\n\"spoken_response\": \"சரிங்க, ClearPrint Studio-வைத் தொடர்பு கொண்டமைக்கு நன்றி. உங்களுக்கு நல்ல நாள் அமையட்டும்.\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_status\",\n      \"value\": \"caller acknowledged info and closed call\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'சரி, நன்றி' which signals goal completion / not interested in continuing.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"order_claimed\": false,\n\"spoken_response\": \"சரிங்க, ClearPrint Studio-வைத் தொடர்பு கொண்டமைக்கு நன்றி. உங்களுக்கு நல்ல நாள் அமையட்டும்.\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_status\",\n      \"value\": \"caller acknowledged info and closed call\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 182,
+        "prompt_tokens": 4358,
+        "total_tokens": 4540,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, ClearPrint Studio-வைத் தொடர்பு கொண்டமைக்கு நன்றி. உங்களுக்கு நல்ல நாள் அமையட்டும்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4358,
+          "output_tokens": 182,
+          "total_tokens": 4540
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_status",
+              "value": "caller acknowledged info and closed call"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller said 'சரி, நன்றி' which signals goal completion / not interested in continuing.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.734
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 11,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 357,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"Caller explicitly said 'வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.'\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n    , \"order_claimed\": false, \"spoken_response\": \"சரிங்க, உங்க நேரத்திற்கு நன்றி. வணக்கம்.\"\n    , \"memory_update\": { \"operations\": [] } }",
+      "sse_content_tail": "{ \"end_call\": { \"evidence\": \"Caller explicitly said 'வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.'\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n    , \"order_claimed\": false, \"spoken_response\": \"சரிங்க, உங்க நேரத்திற்கு நன்றி. வணக்கம்.\"\n    , \"memory_update\": { \"operations\": [] } }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 116,
+        "prompt_tokens": 4513,
+        "total_tokens": 4629,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, உங்க நேரத்திற்கு நன்றி. வணக்கம்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4513,
+          "output_tokens": 116,
+          "total_tokens": 4629
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said 'வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.'",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.609
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 1,
+      "at": 0.891
+    },
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 2,
+      "at": 1.672
+    },
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 3,
+      "at": 2.407
+    },
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 4,
+      "at": 3.032
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 0.891,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: நீங்க திருமண அழைப்பிதழ்களும் print செய்வீங்களா? விலை, delivery time என்ன?",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 0.765,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "சரி, நன்றி.",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 0.719,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 0.61,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "c2e45cbef961076ecdd15c4c8fce2190a7dc344171ea5abe24a207b999318204",
+  "prompt_chars": 18067,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "வணக்கம், நான் ClearPrint Studio-வில் இருந்து மீரா பேசுகிறேன். நாங்கள் அச்சிடும் சேவைகளை வழங்குகிறோம். உங்களுடைய கார்டு தேவைகள் குறித்து விவாதிக்கலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "goal_complete",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க. விசிட்டிங் கார்டுகள் ஒரு கார்டுக்கு 25 ரூபாய், minimum one hundred கார்டுகள் வேணும். டெலிவரி புனே-க்கு அஞ்சல் மூலமா artwork approve ஆன அப்புறம் ஐந்து வேலை நாட்கள்ல நடந்துடும். பணத்தைத் திரும்பத் தர்ற policy எங்ககிட்ட இல்லை. உங்களுக்கு இதுல விருப்பம் இருந்தா, கோட் கோரிக்கைக்காக உங.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said 'இப்போ எதையும் book அல்லது save செய்யாதீங்க' and asked only for information; no consent to save enquiry.",
+        "remaining_request": "None",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "திருமண அழைப்பிதழ்களுக்கு நிலையான விலை இல்லைங்க, design மற்றும் quantity பொறுத்து தான் quote வரும். கலைப்பொருள் ஒப்புதலுக்குப் பிறகு புனே நகருக்கு அஞ்சல் மூலம் ஐந்து வேலை நாட்களில் delivery ஆகிடும். உங்களுக்கு எந்த வகையான கார்டு மற்றும் எத்தனை எண்ணிக்கையில் வேணும்னு சொல்ல முடியுமா.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller said 'சரி, நன்றி' which signals goal completion / not interested in continuing.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, ClearPrint Studio-வைத் தொடர்பு கொண்டமைக்கு நன்றி. உங்களுக்கு நல்ல நாள் அமையட்டும்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said 'வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.'",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, உங்க நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.047,
+  "hangup_count": 0
+}

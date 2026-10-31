@@ -1,0 +1,55 @@
+{
+  "key": "course-en-IN-none-3_complete_rejection",
+  "business": "course",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "584c85f1-487c-5a21-8f37-bdbc77eb869f",
+  "call_id": "56848673-157a-4815-b512-9e0befe964bd",
+  "session_id": "audit-course-en-IN-none-3_complete_rejection-353df995",
+  "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 1,
+      "at": 0.0
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "No thank you. I do not want your service or product. Please end this call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.047,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "56848673-157a-4815-b512-9e0befe964bd",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 1,
+  "render_checksum": "af44a97c503afe1c9e3b6b1c9edfc54e481227732ece0d92f0e4d78a30880eee",
+  "prompt_chars": 18618,
+  "opening_seeded": "Hello, my name is Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our adult beginner Python course today?",
+  "status": "completed",
+  "elapsed_s": 0.047,
+  "hangup_count": 1
+}

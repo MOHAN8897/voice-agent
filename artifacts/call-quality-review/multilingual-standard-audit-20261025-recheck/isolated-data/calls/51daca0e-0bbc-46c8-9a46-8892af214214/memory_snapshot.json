@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "user_interested": "true",
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ए। पहले मेरे सवाल का जवाब दीजिए: Course की final fee, अवधि और class timings क्या हैं? क्या job guarantee है?\nassistant: Total fee four thousand nine hundred ninet… is course की final fee है, 6 weeks weekdays शाम 7 से 8 baje तक chalega, aur isme koi job guarantee ya placement nahi hai. Kya aapko pehle se coding ka koi anubhav hai?\nuser: मुझे job guarantee नहीं चाहिए, लेकिन Python सीखने में दिलचस्पी है। Course समझाइए।\nassistant: ठीक है, इसमें कोई placement या job guarantee नहीं है। यह course beginners के लिए है, जहाँ आप basics से Python सीखेंगे. क्या आपके पास पहले से coding का कोई experience है?"
+}

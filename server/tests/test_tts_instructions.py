@@ -2,17 +2,16 @@
 import base64
 from unittest.mock import AsyncMock, patch
 
-from fastapi.testclient import TestClient
-
 import server.app as app_mod
 from server.config.env import get_settings
+from server.tests.auth_helpers import authenticated_dev_client
 
 
 def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test-dummy")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    return authenticated_dev_client(app_mod.app)
 
 # -- TTS --
 def test_tts_rest_mocked(monkeypatch):
@@ -22,7 +21,7 @@ def test_tts_rest_mocked(monkeypatch):
     mock_res = {"audio_bytes": fake_wav, "content_type": "audio/wav", "request_id": "tts-123", "speaker": "shubh", "language_code": "te-IN"}
     # Patch synthesize to avoid real Sarvam call; it returns decoded bytes already, route wraps it
     # But our route calls synthesize() which does base64 decode internally — we mock synthesize to return fake_wav directly
-    with patch("server.routes.tts.synthesize", new=AsyncMock(return_value=mock_res)):
+    with patch("server.routes.tts.synthesize_via_registry", new=AsyncMock(return_value=mock_res)):
         r = client.post("/api/tts", json={"text": "హాయ్ సాయి", "language_code": "te-IN"})
         assert r.status_code == 200, r.text
         assert r.headers["content-type"] == "audio/wav"

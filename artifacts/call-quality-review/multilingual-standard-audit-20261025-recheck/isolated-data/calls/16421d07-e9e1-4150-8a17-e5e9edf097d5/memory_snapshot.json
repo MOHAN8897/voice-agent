@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "वाल का जवाब दीजिए: क्या आप शादी के निमंत्रण भी print करते हैं? कीमत और delivery time क्या है?\nassistant: जी हाँ, हम wedding invitations भी print करते हैं, लेकिन उसकी कीमत design और quantity पर depend करती है, fixed price available नहीं है। Delivery Pune में by post होती है, artwork approval के बाद five working days लगते हैं।\nuser: मुझे visiting cards नहीं चाहिए, लेकिन शादी के निमंत्रण चाहिए। क्या आप बनाते हैं?\nassistant: जी बिल्कुल, हम शादी के निमंत्रण भी बनाते हैं। इसकी कीमत design और quantity के हिसाब से तय होती है। अगर आपको quote चाहिए, तो क्या आप अपना नाम और delivery locality बता सकते हैं?"
+}

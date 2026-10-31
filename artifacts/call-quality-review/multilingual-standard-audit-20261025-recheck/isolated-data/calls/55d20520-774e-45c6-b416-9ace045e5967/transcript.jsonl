@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.", "ts": "2026-10-25T17:18:17.295530Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்குன்னு புரியுது. இந்த ஆறு வார online பைத்தான் training-க்கு மொத்த கட்டணம் four thousand nine hundred ninety nine rupees தான். இதுல job guarantee-யோ income promise-யோ கிடையாது, discount-உம் கிடையாது. உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா?", "ts": "2026-10-25T17:18:20.281348Z", "brain_latency_ms": 2722}
+{"seq": 3, "role": "user", "text": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.", "ts": "2026-10-25T17:18:20.292991Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.", "ts": "2026-10-25T17:18:20.299905Z", "brain_latency_ms": 1}

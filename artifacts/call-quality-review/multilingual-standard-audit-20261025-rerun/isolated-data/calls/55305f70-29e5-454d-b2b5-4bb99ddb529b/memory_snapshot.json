@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?\nuser: ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರಿಸಿ: ಸೈಕಲ್ basic service ಮತ್ತು puncture repair ಬೆಲೆ ಎಷ್ಟು? Parts ಕೂಡ ಇದರಲ್ಲಿ ಸೇರಿವೆಯಾ?\nassistant: Basic service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ one hundred twenty ರೂಪಾಯಿ. … ಪಾರ್ಟ್ಸ್ extra ಬಂದ್ರೆ, ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕಲಾಗುತ್ತದೆ. … ನಿಮಗೆ ಯಾವ service ಬೇಕು?\nuser: Basic service ಬೇಡ, ಆದರೆ puncture repair ಬೇಕು. ಸಹಾಯ ಮಾಡುತ್ತೀರಾ?\nassistant: ಸರಿ, puncture repair ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. … ಇದು ನಿಮಗೆ ಎಲ್ಲಿ ಮಾಡಿಸಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ? ನಿಮ್ಮ locality ಯಾವುದು?"
+}

@@ -1,0 +1,73 @@
+{
+  "key": "repair-en-IN-none-3_complete_rejection",
+  "business": "repair",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "29da9080-8d3b-5cb7-aa33-3bd976e59d15",
+  "call_id": "23cc39a6-f584-4e4e-9e6b-3d284825bd49",
+  "session_id": "audit-repair-en-IN-none-3_complete_rejection-e82b2a68",
+  "compiled_checksum": "6e65c45212f74d9666e1cc414ab9396a081ec81ae0dcc66bd945cea3863abfdf",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "No thank you. I do not want your service or product. Please end this call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.063,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "23cc39a6-f584-4e4e-9e6b-3d284825bd49",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "2e4a2a4bf102f7c2db5addc687d94dccaa0c41cfdaeeb87305ef96509eee8fe4",
+  "prompt_chars": 17711,
+  "opening_seeded": "Hello, this is Ravi calling from SafeFix Home Service. I am reaching out to answer any home appliance service or pricing questions you might have. Do you have a moment to talk?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.063,
+  "hangup_count": 1
+}

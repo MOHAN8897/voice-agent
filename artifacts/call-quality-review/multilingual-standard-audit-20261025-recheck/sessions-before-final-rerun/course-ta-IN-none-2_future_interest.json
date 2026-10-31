@@ -1,0 +1,312 @@
+{
+  "key": "course-ta-IN-none-2_future_interest",
+  "business": "course",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "13132fd6-d72a-5ef9-81a9-47b201ed6188",
+  "call_id": "943e6e23-a25e-4fbd-9f4e-3a597b79866a",
+  "session_id": "audit-course-ta-IN-none-2_future_interest-11174c18",
+  "compiled_checksum": "6de945f219536e3f862422a7bf903732ed8c2be0a2a89e7a29eaaacb4b90f85f",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 422,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller said 'இப்போ தேவையில்லை' and 'நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க' indicating a clear not_interested with a future interest qualifier.\", \"reason\": \"not_interested\", \"decision\": \"close\", \"remaining_request\": \"Interested next month, wants current fee\", \"contact_preference\": \"do_not_call\"},\n\n\"action_claimed\": \"order_confirmed\",\n\"spoken_response\": \"\",\n\"memory_update\": {\"operations\": []}\n}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller said 'இப்போ தேவையில்லை' and 'நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க' indicating a clear not_interested with a future interest qualifier.\", \"reason\": \"not_interested\", \"decision\": \"close\", \"remaining_request\": \"Interested next month, wants current fee\", \"contact_preference\": \"do_not_call\"},\n\n\"action_claimed\": \"order_confirmed\",\n\"spoken_response\": \"\",\n\"memory_update\": {\"operations\": []}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 126,
+        "prompt_tokens": 4225,
+        "total_tokens": 4351,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.032
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 416,
+      "sse_content_preview": "{\n  \"spoken_response\": \"சரிங்க, புரியுது. இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். உங்களுக்கு டெமோ அல்லது counseling தேவைப்பட்டா, உங்க பெயர், email address மற்றும் விருப்பமான நேரத்தை மட்டும் சொல்ல முடியுமா? இத submit பண்றதுனால seat confirm ஆயிடும்னு அர்த்தம் இல்ல, just ஒரு note-ஆ மட்டும் எடுத்துப்போம். உங்களுக்கு இது ஓகே தான?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"சரிங்க, புரியுது. இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். உங்களுக்கு டெமோ அல்லது counseling தேவைப்பட்டா, உங்க பெயர், email address மற்றும் விருப்பமான நேரத்தை மட்டும் சொல்ல முடியுமா? இத submit பண்றதுனால seat confirm ஆயிடும்னு அர்த்தம் இல்ல, just ஒரு note-ஆ மட்டும் எடுத்துப்போம். உங்களுக்கு இது ஓகே தான?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 112,
+        "prompt_tokens": 4225,
+        "total_tokens": 4337,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, புரியுது. இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். உங்களுக்கு டெமோ அல்லது counseling தேவைப்பட்டா, உங்க பெயர், email address மற்றும் விருப்பமான நேரத்தை மட்டும் சொல்ல முடியுமா? இத submit பண்றதுனால seat confirm ஆயிடும்னு அர்த்தம் இல்ல, just ஒரு note-ஆ மட்டும் எடுத்துப்போம். உங்களுக்கு இது ஓகே தான?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8450,
+          "output_tokens": 238,
+          "total_tokens": 8688
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.343
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 907,
+      "sse_content_preview": "{ \"end_call\":       {\"evidence\": \"I am not interested right now, but I have interest for next month.\", \"reason\": \"not_interested\", \"decision\": \"close\", \"remaining_request\": \"Wants to know more about the service before deciding\", \"contact_preference\": \"do_not_call\" }\n\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r",
+      "sse_content_tail": "call\":       {\"evidence\": \"I am not interested right now, but I have interest for next month.\", \"reason\": \"not_interested\", \"decision\": \"close\", \"remaining_request\": \"Wants to know more about the service before deciding\", \"contact_preference\": \"do_not_call\" }\n\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 3.829
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 238,
+      "sse_content_preview": "{ \"spoken_response\": \"சரிங்க. இந்த ஆறு வார வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை ஆன்லைனில் நடக்கும். உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா? அப்போதான் இது உங்களுக்கு சரியா பொருந்துமான்னு பாக்க முடியும்.\" }",
+      "sse_content_tail": "{ \"spoken_response\": \"சரிங்க. இந்த ஆறு வார வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை ஆன்லைனில் நடக்கும். உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா? அப்போதான் இது உங்களுக்கு சரியா பொருந்துமான்னு பாக்க முடியும்.\" }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 57,
+        "prompt_tokens": 4312,
+        "total_tokens": 4369,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. இந்த ஆறு வார வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை ஆன்லைனில் நடக்கும். உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா? அப்போதான் இது உங்களுக்கு சரியா பொருந்துமான்னு பாக்க முடியும்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4312,
+          "output_tokens": 57,
+          "total_tokens": 4369
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.671
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "சரிங்க, புரியுது. இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். உங்களுக்கு டெமோ அல்லது counseling தேவைப்பட்டா, உங்க பெயர், email address மற்றும் விருப்பமான நேரத்தை மட்டும் சொல்ல முடியுமா?",
+      "turn": 1,
+      "at": 2.375
+    },
+    {
+      "text": "சரிங்க. இந்த ஆறு வார வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை ஆன்லைனில் நடக்கும். உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா? அப்போதான் இது உங்களுக்கு சரியா பொருந்துமான்னு பாக்க முடியும்.",
+      "turn": 2,
+      "at": 6.89
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 3,
+      "at": 6.937
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "இப்போ தேவையில்லை, ஆனால் அடுத்த மாதம் எனக்கு ஆர்வம் இருக்கு. தற்போதைய விலையைச் சொல்லுங்க. எதையும் book செய்யாதீங்க; நான் நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க.",
+      "spoken": "சரிங்க, புரியுது. இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். உங்களுக்கு டெமோ அல்லது counseling தேவைப்பட்டா, உங்க பெயர், email address மற்றும் விருப்பமான நேரத்தை மட்டும் சொல்ல முடியுமா?",
+      "elapsed_s": 2.375,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "ஆமாம், எதிர்காலத்தில் எனக்கு ஆர்வம் இருக்கு. இப்போ நான் பிறகு call செய்யச் சொல்லவில்லை. இந்த service பற்றி இன்னும் என்ன தெரிஞ்சுக்கணும்?",
+      "spoken": "சரிங்க. இந்த ஆறு வார வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை ஆன்லைனில் நடக்கும். உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா? அப்போதான் இது உங்களுக்கு சரியா பொருந்துமான்னு பாக்க முடியும்.",
+      "elapsed_s": 4.5,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 6.984,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "943e6e23-a25e-4fbd-9f4e-3a597b79866a",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "ae8cf353089439c27e45453a9af5e7a4a7a728b4fb7af87c9e96059ba95608c8",
+  "prompt_chars": 18299,
+  "opening_seeded": "வணக்கம், நான் பிரைட் பாத் ஸ்கில்ஸ் நிறுவனத்திலிருந்து அனன்யா பேசுகிறேன். வயது பதினெட்டு மற்றும் அதற்கு மேற்பட்டவர்களுக்கான எங்கள் ஆறு வார ஆன்லைன் பைத்தான் பயிற்சி வகுப்பைப் பற்றி சொல்ல அழைக்கிறேன். இது பற்றி பேச இது சரியான நேரமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, புரியுது. இதோட மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். உங்களுக்கு டெமோ அல்லது counseling தேவைப்பட்டா, உங்க பெயர், email address மற்றும் விருப்பமான நேரத்தை மட்டும் சொல்ல முடியுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க. இந்த ஆறு வார வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை ஆன்லைனில் நடக்கும். உங்களுக்கு ஏற்கனவே coding experience ஏதாச்சும் இருக்கா? அப்போதான் இது உங்களுக்கு சரியா பொருந்துமான்னு பாக்க முடியும்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 7.0,
+  "hangup_count": 1
+}

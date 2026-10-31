@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "text \"?\" AND text \"?\"",
+  "observed": "no element matched {\"text\":\"$4.00\"}",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "",
+        "source": {
+          "file": "src/console/Topbar.jsx",
+          "line": 155,
+          "column": 9
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790935964609-click-134cb6af",
+  "createdAt": 1790935964613,
+  "seen": 1,
+  "lastSeenAt": 1790935964613
+}

@@ -1,15 +1,17 @@
 """Phase 5 hardening + dynamic prompting tests."""
-from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
-from server.config.env import get_settings
+
 import server.app as app_mod
 from server.agent.instruction_builder import build_agent_instructions
+from server.config.env import get_settings
+from server.tests.auth_helpers import authenticated_dev_client
+
 
 def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-phase5")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test-phase5")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    return authenticated_dev_client(app_mod.app)
 
 # -- Dynamic prompting hierarchy --
 

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "element ?",
+  "observed": "no element matched {\"testid\":\"agent-test-call\"} — testids present here: sidebar-wallet-pill, create-employee-modal, employee-brief-input, employee-industry-real_estate, employee-industry-clinic, employee-industry-dealership, employee-industry-coaching, employee-industry-real_estate_support, employee-industry-restaurant, employee-language-select, employee-role-select, employee-mode-instant_lead (the present-testid list shows the first 12 of 14 in document order — absence from it proves nothing)",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "create-next",
+        "source": {
+          "file": "src/console/modules/CreateAgentWizard.jsx",
+          "line": 315,
+          "column": 7
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790836427307-create-next-a45e4e0a",
+  "createdAt": 1790836427308,
+  "seen": 1,
+  "lastSeenAt": 1790836427308
+}

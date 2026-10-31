@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:29:47.598924Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:29:48.637722Z", "source": "model", "operations": [{"op": "set_preference", "key": "oMsgCallBack", "value": "oMsgCallBack"}], "applied": true, "validation_errors": []}

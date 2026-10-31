@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "user: Yes, I am interested. Please explain the service, price and any conditions.\nassistant: Of course — please go ahead.\nuser: Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?\nassistant: Of course — please go ahead.\nuser: Okay, thanks.\nassistant: Of course — please go ahead."
+}

@@ -1,0 +1,150 @@
+{
+  "key": "cycle-ta-IN-none-1b_direct_tool_request",
+  "business": "cycle",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "a8a625e5-7e5f-5320-8624-1a990a8d6419",
+  "call_id": "babc5e76-1909-431a-93ce-153ec5df6c22",
+  "session_id": "audit-cycle-ta-IN-none-1b_direct_tool_request-400c386d",
+  "compiled_checksum": "386ce2e8b1908900b6637a9f204489aefc5ecb99083f14f116174db28e20e614",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 224,
+      "sse_content_preview": "உங்க details-அ note பண்ணிக்கிட்டேன். ஆனா, எங்களால enquiry-யை directly team-க்கு அனுப்பவோ, email அனுப்பவோ முடியாது. அந்தத் தகவல் இப்போதைக்கு என்னிடம் இல்லை. உங்களுக்கு basic service வேணுமா இல்ல puncture repair மட்டும் போதுமா?",
+      "sse_content_tail": "உங்க details-அ note பண்ணிக்கிட்டேன். ஆனா, எங்களால enquiry-யை directly team-க்கு அனுப்பவோ, email அனுப்பவோ முடியாது. அந்தத் தகவல் இப்போதைக்கு என்னிடம் இல்லை. உங்களுக்கு basic service வேணுமா இல்ல puncture repair மட்டும் போதுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 58,
+        "prompt_tokens": 4048,
+        "total_tokens": 4106,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "உங்க details-அ note பண்ணிக்கிட்டேன். ஆனா, எங்களால enquiry-யை directly team-க்கு அனுப்பவோ, email அனுப்பவோ முடியாது. அந்தத் தகவல் இப்போதைக்கு என்னிடம் இல்லை. உங்களுக்கு basic service வேணுமா இல்ல puncture repair மட்டும் போதுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4048,
+          "output_tokens": 58,
+          "total_tokens": 4106
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.672
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது.",
+      "turn": 1,
+      "at": 2.157
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 2,
+      "at": 2.188
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want puncture repair in Adyar, Chennai; preferred review time tomorrow at 3pm. இந்த enquiry-யை team reviewக்கு submit செய்யுங்க. என் சம்மதம் இருக்கு. Booking அல்லது order confirmன்னு சொல்லாதீங்க.",
+      "spoken": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது.",
+      "elapsed_s": 2.157,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.235,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "babc5e76-1909-431a-93ce-153ec5df6c22",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "45f4750d5bdc872d08ff26870e3bbcd367e77fd20ed325e5433dc1d87338cf81",
+  "prompt_chars": 16716,
+  "opening_seeded": "வணக்கம், நான் CityCycle Repairs-இல் இருந்து அர்ஜுன் பேசுகிறேன். நான் ஒரு AI உதவியாளர். உங்களுக்கு பேச இப்போது நேரம் இருக்கிறதா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "உங்க details-அ note பண்ணிக்கிட்டேன். ஆனா, எங்களால enquiry-யை directly team-க்கு அனுப்பவோ, email அனுப்பவோ முடியாது. அந்தத் தகவல் இப்போதைக்கு என்னிடம் இல்லை. உங்களுக்கு basic service வேணுமா இல்ல puncture repair மட்டும் போதுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.235,
+  "hangup_count": 1,
+  "source_signature": "f95691c1be0b78b8daf4f3542b355e04f5d7c43f2dd1b6eefab36c2f223f4cfe"
+}

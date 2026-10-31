@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:28:09.625051Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T15:28:10.462912Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_asked_cricket: yes"}
+{"turn_seq": 5, "ts": "2026-10-25T15:28:11.264358Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_asked_cricket: yes"}
+{"turn_seq": 7, "ts": "2026-10-25T15:28:12.329157Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_asked_cricket: yes"}
+{"turn_seq": 9, "ts": "2026-10-25T15:28:13.090159Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_asked_cricket: yes"}

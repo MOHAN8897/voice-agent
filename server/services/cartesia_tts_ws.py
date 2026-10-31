@@ -15,15 +15,20 @@ from server.services.dev_secrets_store import dev_secrets_store
 
 def _cartesia_language(language_code: str) -> str:
     code = (language_code or "te-IN").split("-")[0].lower()
-    return code if code in {"en", "te", "hi", "es", "fr", "de", "ja", "ko", "pt", "zh"} else "en"
+    from server.providers.voice_inventory import inventory
+
+    supported = {locale.split("-")[0] for languages in inventory().get("cartesia", {}).get("modelLanguages", {}).values() for locale in languages}
+    if code not in supported:
+        raise ValueError("The selected speech model does not support this language")
+    return code
 
 
 def _resolve_tts_model(model: str | None) -> str:
     settings = get_settings()
     raw = (model or settings.cartesia_tts_model or "sonic-3.5").strip()
-    if raw in constants.CARTESIA_TTS_MODELS or raw.startswith("sonic"):
+    if raw in constants.CARTESIA_TTS_MODELS:
         return raw
-    return "sonic-3.5"
+    raise ValueError("The selected speech model is unavailable")
 
 
 def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
@@ -46,6 +51,7 @@ def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
             self._context_id: str | None = None
             self._model = resolved_model
             self._pending_done = False
+            self._sample_rate = 16000
 
         async def send(self, payload: str) -> None:
             try:
@@ -57,6 +63,15 @@ def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
                 self._cfg = dict(obj.get("data") or {})
                 if self._cfg.get("model"):
                     self._model = str(self._cfg["model"])
+                try:
+                    self._sample_rate = int(
+                        self._cfg.get("speech_sample_rate")
+                        or self._cfg.get("sample_rate")
+                        or self._sample_rate
+                        or 16000
+                    )
+                except (TypeError, ValueError):
+                    self._sample_rate = 16000
                 return
             if mtype == "ping":
                 return
@@ -76,10 +91,24 @@ def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
                     self._pending_done = True
 
         async def _send_generation(self, transcript: str, *, continue_: bool) -> None:
+            from server.services.tts_voice_direction import cartesia_generation_config
+
             cfg = self._cfg or {}
-            voice_id = cfg.get("speaker") or settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
-            sample_rate = int(cfg.get("sample_rate") or 24000)
+            from server.providers.cartesia_tts import resolve_cartesia_voice_id
+            voice_id = resolve_cartesia_voice_id(cfg.get("speaker"))
+            from server.providers.voice_inventory import validate_voice
+
+            validate_voice("cartesia", self._model, voice_id, str(cfg.get("language_code") or "te-IN"))
+            sample_rate = int(cfg.get("speech_sample_rate") or cfg.get("sample_rate") or 16000)
+            self._sample_rate = sample_rate
             lang = _cartesia_language(str(cfg.get("language_code") or "te-IN"))
+            gen = cfg.get("generation_config")
+            if not isinstance(gen, dict):
+                gen = cartesia_generation_config(
+                    emotion=cfg.get("emotion"),
+                    speed=cfg.get("speed"),
+                    volume=cfg.get("volume"),
+                )
             req = {
                 "model_id": self._model,
                 "transcript": transcript,
@@ -92,6 +121,8 @@ def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
                 "language": lang,
                 "context_id": self._context_id,
                 "continue": continue_,
+                "max_buffer_delay_ms": 0,
+                "generation_config": gen,
             }
             await self._ws.send(json.dumps(req))
 
@@ -119,7 +150,12 @@ def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
                         return json.dumps(
                             {
                                 "type": "audio",
-                                "data": {"audio": audio_b64, "event_type": "audio"},
+                                "data": {
+                                    "audio": audio_b64,
+                                    "event_type": "audio",
+                                    "sample_rate": self._sample_rate,
+                                    "speech_sample_rate": self._sample_rate,
+                                },
                             }
                         )
                     if data.get("done"):
@@ -149,9 +185,15 @@ def connect_cartesia_tts_ws(model: str | None = None, **_: Any):
     class _Connector:
         async def __aenter__(self):
             try:
-                ws = await websockets.connect(url, additional_headers=headers, max_size=None)
-            except TypeError:
-                ws = await websockets.connect(url, extra_headers=headers, max_size=None)
+                try:
+                    ws = await websockets.connect(url, additional_headers=headers, max_size=None)
+                except TypeError:
+                    ws = await websockets.connect(url, extra_headers=headers, max_size=None)
+            except Exception as exc:
+                from server.services.provider_health import record_exception
+
+                record_exception(exc, provider="cartesia", component="tts")
+                raise
             self._ws = ws
             return _CartesiaTtsProxy(self, ws)
 

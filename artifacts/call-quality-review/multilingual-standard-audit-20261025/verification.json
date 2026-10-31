@@ -1,0 +1,19 @@
+{
+  "unit_test_command": "python -m pytest server/tests/test_call_reliability_plan.py server/tests/test_revocable_hangup.py server/tests/test_sarvam_composed_transport.py server/tests/test_llm_finish_reason_recovery.py -q",
+  "unit_tests_passed": 58,
+  "unit_tests_failed": 0,
+  "warnings": [
+    "Existing audioop deprecation"
+  ],
+  "unit_test_elapsed_s": 5.73,
+  "matrix_sessions": 270,
+  "matrix_quality_verdict": "FAIL",
+  "close_checks": 20,
+  "close_checks_passed": 16,
+  "gateway_protocol_checks": 6,
+  "gateway_protocol_checks_passed": 6,
+  "real_carrier_tested": false,
+  "real_audio_tested": false,
+  "ui_verification": "Skipped: no UI changes; backend/model audit",
+  "server_source_drift": {}
+}

@@ -26,15 +26,31 @@ Calm, precise, operational, Telugu-first, and developer-capable. The product sho
 5. Always expose state, version, validation, and deployment impact.
 6. Keep per-call debugging separate from aggregate analytics.
 7. Preserve the current dark-console visual language while improving density, navigation, accessibility, and responsive behavior.
+8. Follow the **normative visual system** in [20-visual-design-and-ui-style.md](./20-visual-design-and-ui-style.md): marketing teal (Layer A) vs skeuo console/Dev Portal (Layer B). Color palette, page look, and elements are defined there — not ad hoc per screen.
 
 ## 2. Current UI evidence
 
-The current client is a single-page vanilla application:
+**Target product UI is Next.js in `web/`.** The vanilla SPA is historical only.
+
+### 2.1 Shipped Next.js (normative current product)
+
+| Surface | Prefix | Status |
+|---------|--------|--------|
+| Marketing | `/`, `/pricing`, `/docs` | Shipped — `web/app/(marketing)` |
+| **Dev Portal** | **`/dev/*`** | **Shipped** — `web/app/dev/(portal)`, `DevShell`, `DevNav`. Matches `17` §9 (P0). Do not redesign as a new app. |
+| Business Console | `/app/*` | Shipped — `web/app/app/(console)`, `ConsoleShell` |
+| Auth | `/dev/login`, `/app/login` | Shipped — `AuthShell` + `LoginForm` |
+
+Dev Portal pages already present: Overview, Environment, Stack & tiers, Runtime, Platform Brain, Compiled preview, Providers, Agents, Test Studio, Benchmarks, Promotion. Full map: [`frontend-spec/09-dev-portal.md`](../frontend-spec/09-dev-portal.md) and [`frontend-spec/12-codebase-route-map.md`](../frontend-spec/12-codebase-route-map.md).
+
+Look and palette for `/dev` and `/app`: skeuomorphic chassis in `web/app/globals.css` ([20](./20-visual-design-and-ui-style.md) §2.2).
+
+### 2.2 Historical vanilla SPA (port live-voice only)
 
 - `client/index.html`: sidebar tabs for Voice Agent, Voice Pipeline, AI Brain, Prompting, CRM & Tools, and Advanced.
 - `client/settings.js`: loads a safe server catalog, edits runtime settings, edits one free-form brain prompt, tests TTS/brain, and saves per-session settings.
 - `client/console_tabs.js`: query-string tab navigation.
-- `client/styles.css`: current dark console, cards, sidebar, pills, fields, and responsive styling.
+- `client/styles.css`: earlier dark console (superseded by `web/app/globals.css` for product UI).
 - `client/app.js`: live microphone, STT WebSocket, brain SSE, TTS WebSocket, transcript, interruption, and client export.
 
 The supplied UI reference shows eight collapsible instruction groups:
@@ -68,12 +84,13 @@ This pattern is adopted for customer business logic, with explicit versioning an
 
 1. Summary
 2. Business Brain
-3. Platform Brain — only platform administrator/developer
-4. Voice & Models
-5. Memory Schema
-6. Tools & Actions
-7. Channels
-8. Versions & Deployment
+3. Voice & Models
+4. Memory Schema
+5. Tools & Actions
+6. Channels
+7. Versions & Deployment
+
+Platform Brain is **not** a Business Console tab. It is edited only on **Dev Portal** `/dev/platform-brain` (`17` §9, shipped).
 
 ### Environment separation
 
@@ -82,6 +99,26 @@ This pattern is adopted for customer business logic, with explicit versioning an
 - Production: immutable active version; changes require promotion.
 
 Environment promotion is **in MVP scope** per [`17-product-decisions.md`](./17-product-decisions.md) §2 and §9–10 (dev → staging → production via Dev Portal). Implementation: [../implementation/phase-05-production-ui-telephony-and-launch.md](../implementation/phase-05-production-ui-telephony-and-launch.md) §6.3.1.
+
+## 3.1 Developer Portal sitemap (implemented)
+
+Platform staff only. **Not** in marketing nav. Auth: `/dev/login`.
+
+1. Overview — `/dev`
+2. Environment — `/dev/environment`
+3. Stack & tiers — `/dev/stack`
+4. Runtime tuning — `/dev/runtime`
+5. Platform Brain — `/dev/platform-brain`
+6. Compiled preview — `/dev/compiled`
+7. Providers — `/dev/providers`
+8. Agents — `/dev/agents`
+9. Test Studio — `/dev/test-studio`
+10. Benchmarks — `/dev/benchmarks`
+11. Promotion — `/dev/promotion`
+
+Agent-scoped copies exist under `/dev/agents/[id]/*` (summary, brain, voice, memory-schema, channels, tools, versions, test).
+
+Business Console primary nav (also implemented) is §3 “Primary navigation” at `/app`. Platform Brain is **not** a customer tab; it lives only on Dev Portal.
 
 ## 4. Full sitemap
 
@@ -585,4 +622,12 @@ These are not source requirements and must remain labeled until product approval
 5. **RECOMMENDED ENHANCEMENT — Quality review queue:** automatic sampling, reviewer scorecards, annotations, and regression dataset promotion.
 6. **RECOMMENDED ENHANCEMENT — Configuration diff/rollback:** required for safe environment promotion.
 
-None of these may be represented as implemented in the current repository.
+None of these may be represented as implemented in the current repository unless listed in §2.1.
+
+## 20. Visual design (normative pointer)
+
+Color palettes, how pages should look, and which UI elements to use: [20-visual-design-and-ui-style.md](./20-visual-design-and-ui-style.md).
+
+- Marketing: teal `#3dd6c6` on canvas `#06090d` (`DESIGN.md`).
+- Business Console and **already-built Dev Portal**: skeuo chassis `#08090c`, steel `#8fa6c4`, live rose `#e11d48` (`web/app/globals.css`).
+

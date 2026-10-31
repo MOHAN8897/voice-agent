@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ளா?\nassistant: சரிங்க, நான் விவரங்களை மட்டும் சொல்றேன். மொத்த கட்டணம் four thousand nine hundred ninety nine rupees. ஆறு வாரங்கள் வார நாட்கள்ல சாயங்காலம் ஏழுல இருந்து எட்டு மணி வரைக்கும் வகுப்பு இருக்கும். இதில் job guarantee எதுவும் கிடையாதுங்க. வேற ஏதாச்சும் தகவல் வேணுமா?\nuser: எனக்கு job guarantee தேவையில்லை, ஆனால் Python கற்றுக்கொள்ள ஆர்வம் இருக்கு. Course விளக்க முடியுமா?\nassistant: இந்த வகுப்பு ஆரம்பநிலையாளர்களுக்கானது. வார நாட்களில் சாயங்காலம் ஏழுல இருந்து எட்டு மணி வரைக்கும் ஆறு வாரங்கள் ஆன்லைனில் நடக்கும். உங்களுக்கு இதுல சேர ஆர்வம் இருந்தா சொல்லுங்க, அடுத்த கட்ட விவரங்களைச் சொல்றேன்."
+}

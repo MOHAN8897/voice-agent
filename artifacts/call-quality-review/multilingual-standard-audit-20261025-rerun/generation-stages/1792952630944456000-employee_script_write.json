@@ -1,0 +1,12 @@
+{
+  "stage": "employee_script_write",
+  "language": "ta-IN",
+  "output": {
+    "opening": "வணக்கம், நான் CityCycle Repairs-ில் இருந்து Arjun மேபுழுயுண்்றேண். நிம்மிதியாக பேச நேரம் இருக்கிறதா?",
+    "call_flow": "நம்மயிது கண்டுன் தகவல்கள் இருப்பது சிரமம் இல்லை. அடையாளம் செய்யுங்கள். உங்கள் மெகினிகள் அல்லது செயல்மயையைத் தெரியப்புங்கள். Basic bicycle service 499 rupees ஆகும். Puncture repair 120 rupees ஆகும். Parts extra only after approval. Open Tue-Sun 9am-6pm.",
+    "call_to_action": "ஒரு enquiry யை நம்முடைய CRM-ில் save செய்யலாமா?",
+    "objection_handling": "வலியுறுத்தல் இல்லாமல் சம்மா தெரிய்ப்புங்கள். Future need next month is welcome.",
+    "unknown_information": "அந்த தகவல் தற்போது அணுக்கம் இல்லை. நான் தவறணாக எதுவும் செல்லுபடி செய்யலும் நடுவிதம் எடுக்க முடியாது.",
+    "closing": "முக்கிய தகவல்களுடன் நண்ணில் தமிழ் நிரல் முடிவுக்கு வந்துள்ளது. நண்ட்றை, CityCycle Repairs தண்முடைய நல்ல நாள்."
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "version": 2,
+  "name": "drive-tenants-can-filter-the-complete-model-voice-list",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1792821707828,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "combobox",
+        "name": "Voice style for low"
+      },
+      "args": {
+        "value": "Conversational"
+      },
+      "action": "select",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-select-btn-voice-low-1"
+            },
+            "absent": true
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-select-btn-voice-low-60"
+            },
+            "state": "visible"
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "voice-select-btn-voice-low-60",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentVoicePanel.jsx",
+          "line": 1241,
+          "column": 33
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Voice setup saved"
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Tenants can filter the complete model voice list by supplier style without changing voice numbers or IDs.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-tenants-can-filter-the-complete-model-voice-list"
+}

@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "wedding_invitation_interest": "yes",
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: ನೀವು ಮದುವೆಯ ಆಮಂತ್ರಣಗಳನ್ನೂ print ಮಾಡುತ್ತೀರಾ? ಬೆಲೆ ಮತ್ತು delivery time ಎಷ್ಟು?\nassistant: ಹೌದು, ನಾವು wedding invitations ಕೂಡ ಮಾಡ್ತೀವಿ. ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಇಲ್ಲ. Artwork approve ಆದ್ಮೇಲೆ Pune-ಗೆ post ಮೂಲಕ ಐದು working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ ತರಹದ card ಬೇಕು, ಎಷ್ಟು quantity ಬೇಕಾಗಬಹುದು ಅಂತ ಹೇಳ್ತೀರಾ?\nuser: ನನಗೆ visiting cards ಬೇಡ, ಆದರೆ ಮದುವೆಯ ಆಮಂತ್ರಣಗಳು ಬೇಕು. ನೀವು ಮಾಡುತ್ತೀರಾ?\nassistant: ಹೌದು, ನಾವು ಖಂಡಿತ ಮದುವೆಯ ಆಮಂತ್ರಣಗಳನ್ನ ಮಾಡಿಕೊಡ್ತೀವಿ. ನಿಮ್ಮ quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ delivery locality ಹೇಳ್ತೀರಾ? Pune-ಗೆ ಕಳಿಸಬೇಕಾ?"
+}

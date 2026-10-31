@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "uration and class timing, and do you guarantee a job?\nassistant: The total fee is four thousand nine hundred ninety nine rupees for the 6 week course, classes are on weekdays from 7 PM to 8 PM, and there is no job guarantee or income promise. Since you asked not to book anything yet, I will not save any details.\nuser: I don't need a job guarantee, but I am interested in learning Python. Can you explain the course?\nassistant: Since you are already interested in learning Python, the course covers fundamentals over those 6 weekday evening sessions. Would you like to request a demo or counselling?"
+}

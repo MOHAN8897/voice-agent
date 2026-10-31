@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.", "ts": "2026-10-25T17:12:04.780585Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಸರಿ, ನಮ್ಮ visiting cards ಒಂದು card-ಗೆ twenty five rupees ಆಗುತ್ತೆ, minimum one hundred cards ತಗೋಬೇಕಾಗುತ್ತೆ. Wedding invitations ಕೂಡ ಇದೆ, ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, fixed price ಇಲ್ಲ. Delivery Pune-ಗೆ post ಮೂಲಕ artwork approval ಆದ್ಮೇಲೆ ಐದು working days-ಅಲ್ಲಿ ಆಗುತ್ತೆ.", "ts": "2026-10-25T17:12:06.204447Z", "brain_latency_ms": 1247}
+{"seq": 3, "role": "user", "text": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: ನೀವು ಮದುವೆಯ ಆಮಂತ್ರಣಗಳನ್ನೂ print ಮಾಡುತ್ತೀರಾ? ಬೆಲೆ ಮತ್ತು delivery time ಎಷ್ಟು?", "ts": "2026-10-25T17:12:06.217888Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಹೌದು, ನಾವು wedding invitations ಕೂಡ print ಮಾಡ್ತೀವಿ. ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಅಂತೇನಿಲ್ಲ. Delivery Pune-ಗೆ artwork approval ಆದ್ಮೇಲೆ ಐದು working days-ಅಲ್ಲಿ ಆಗುತ್ತೆ. ನಿಮಗೆ ಎಷ್ಟು quantity ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?", "ts": "2026-10-25T17:12:08.156927Z", "brain_latency_ms": 1726}
+{"seq": 5, "role": "user", "text": "ಸರಿ, ಧನ್ಯವಾದಗಳು.", "ts": "2026-10-25T17:12:08.168413Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ಸರಿ. ನಿಮಗೆ quote request ಕಳಿಸೋಕೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ delivery area ಹೇಳ್ತೀರಾ?", "ts": "2026-10-25T17:12:09.770442Z", "brain_latency_ms": 1507}
+{"seq": 7, "role": "user", "text": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.", "ts": "2026-10-25T17:12:09.799420Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.", "ts": "2026-10-25T17:12:09.807837Z", "brain_latency_ms": 1}

@@ -1,0 +1,81 @@
+{
+  "key": "course-en-IN-none-1_interested",
+  "business": "course",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "1_interested",
+  "agent_id": "584c85f1-487c-5a21-8f37-bdbc77eb869f",
+  "call_id": "f0f532f5-40e0-481f-8936-15f7800b111c",
+  "session_id": "audit-course-en-IN-none-1_interested-0fcb81b7",
+  "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 2.031
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "elapsed_s": 2.469
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 1.766
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "turn": 1,
+      "at": 6.281
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "elapsed_s": 6.328,
+      "requests": 3,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 6.328,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "f0f532f5-40e0-481f-8936-15f7800b111c",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 1,
+  "render_checksum": "af44a97c503afe1c9e3b6b1c9edfc54e481227732ece0d92f0e4d78a30880eee",
+  "prompt_chars": 18618,
+  "opening_seeded": "Hello, my name is Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our adult beginner Python course today?",
+  "status": "completed",
+  "elapsed_s": 6.328,
+  "hangup_count": 1
+}

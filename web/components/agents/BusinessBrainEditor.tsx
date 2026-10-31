@@ -23,6 +23,8 @@ export function BusinessBrainEditor({
   published,
   versionsCount = 0,
   initialChecksum,
+  initialRevision,
+  portal = "app",
   showCompiledPreview = false,
 }: {
   agentId: string;
@@ -30,6 +32,8 @@ export function BusinessBrainEditor({
   published?: PublishedRecord | null;
   versionsCount?: number;
   initialChecksum?: string;
+  initialRevision?: string;
+  portal?: "app" | "dev";
   showCompiledPreview?: boolean;
 }) {
   const [sections, setSections] = useState<BrainSection[]>(initialSections);
@@ -40,6 +44,7 @@ export function BusinessBrainEditor({
   );
   const [publishedVersion, setPublishedVersion] = useState<string | null>(published?.version_id ?? null);
   const [rawChecksum, setRawChecksum] = useState(initialChecksum || "");
+  const [revision, setRevision] = useState(initialRevision || "");
   const [optimizerModel, setOptimizerModel] = useState(published?.optimizer_report?.optimizer_model || "");
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -47,8 +52,13 @@ export function BusinessBrainEditor({
   const validationOk = issues.length === 0;
 
   useEffect(() => {
-    refreshPortalSession("app");
-  }, []);
+    refreshPortalSession(portal);
+  }, [portal]);
+
+  useEffect(() => {
+    setSections(initialSections);
+    setRevision(initialRevision || "");
+  }, [agentId, initialRevision, initialSections]);
 
   function updateText(sectionId: string, raw_text: string) {
     setSections((prev) => prev.map((s) => (s.section_id === sectionId ? { ...s, raw_text } : s)));
@@ -57,24 +67,30 @@ export function BusinessBrainEditor({
   const save = useCallback(async () => {
     setBusy("save");
     setStatus("Saving draft…");
-    const r = await portalFetch("app", `/api/agents/${agentId}/business-brain/draft`, {
-      method: "PUT",
-      body: JSON.stringify({ sections }),
-    });
-    if (r.ok) {
-      const j = await r.json();
-      setRawChecksum(j.raw_checksum || "");
-      setStatus("Draft saved");
-    } else {
-      setStatus("Save failed");
+    try {
+      const r = await portalFetch(portal, `/api/agents/${agentId}/business-brain/draft`, {
+        method: "PUT",
+        body: JSON.stringify({ sections, expected_revision: revision }),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        setRawChecksum(j.raw_checksum || "");
+        setRevision(j.revision);
+        setStatus("Draft saved");
+      } else {
+        setStatus(r.status === 409 ? "This draft changed in another editor. Reload before saving; your edits are still here." : "Save failed");
+      }
+    } catch {
+      setStatus("Could not save this draft. Your edits are still here; try again.");
+    } finally {
+      setBusy(null);
     }
-    setBusy(null);
-  }, [agentId, sections]);
+  }, [agentId, sections, revision, portal]);
 
   const validate = useCallback(async () => {
     setBusy("validate");
     setStatus("Validating…");
-    const r = await portalFetch("app", `/api/agents/${agentId}/business-brain/validate`, { method: "POST" });
+    const r = await portalFetch(portal, `/api/agents/${agentId}/business-brain/validate`, { method: "POST" });
     if (r.ok) {
       const j = await r.json();
       setIssues(j.issues || []);
@@ -83,12 +99,12 @@ export function BusinessBrainEditor({
       setStatus("Validation request failed");
     }
     setBusy(null);
-  }, [agentId]);
+  }, [agentId, portal]);
 
   const optimize = useCallback(async () => {
     setBusy("optimize");
     setStatus("Optimizing…");
-    const r = await portalFetch("app", `/api/agents/${agentId}/business-brain/optimize`, { method: "POST" });
+    const r = await portalFetch(portal, `/api/agents/${agentId}/business-brain/optimize`, { method: "POST" });
     if (r.ok) {
       const j = await r.json();
       const opt = j.optimizer || {};
@@ -100,21 +116,37 @@ export function BusinessBrainEditor({
       setStatus("Optimize failed");
     }
     setBusy(null);
-  }, [agentId, rawChecksum]);
+  }, [agentId, rawChecksum, portal]);
 
   const publish = useCallback(async () => {
     setBusy("publish");
     setStatus("Publishing…");
-    const r = await portalFetch("app", `/api/agents/${agentId}/business-brain/publish`, { method: "POST" });
-    if (r.ok) {
-      const j = await r.json();
-      setPublishedVersion(j.compiled_version || publishedVersion);
-      setStatus(`Published · compiled ${j.compiled_version || "—"}`);
-    } else {
-      setStatus("Publish failed — check validation and stack");
+    try {
+      const saved = await portalFetch(portal, `/api/agents/${agentId}/business-brain/draft`, {
+        method: "PUT", body: JSON.stringify({ sections, expected_revision: revision }),
+      });
+      if (!saved.ok) {
+        setStatus(saved.status === 409 ? "This draft changed in another editor. Reload before publishing; your edits are still here." : "Draft save failed; nothing was published.");
+        return;
+      }
+      const draft = await saved.json();
+      setRevision(draft.revision);
+      const r = await portalFetch(portal, `/api/agents/${agentId}/business-brain/publish`, {
+        method: "POST", body: JSON.stringify({ expected_revision: draft.revision }),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        setPublishedVersion(j.compiled_version || publishedVersion);
+        setStatus(`Published · compiled ${j.compiled_version || "—"}`);
+      } else {
+        setStatus("Publish failed — check validation and stack");
+      }
+    } catch {
+      setStatus("Publication could not be confirmed. Your edits are still here; reload the saved revision before retrying.");
+    } finally {
+      setBusy(null);
     }
-    setBusy(null);
-  }, [agentId, publishedVersion]);
+  }, [agentId, publishedVersion, sections, revision, portal]);
 
   return (
     <div className="space-y-6">

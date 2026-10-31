@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.", "ts": "2026-10-25T16:52:52.131973Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:52:54.166616Z", "brain_latency_ms": 1315}
+{"seq": 3, "role": "user", "text": "Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?", "ts": "2026-10-25T16:52:54.178817Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "AC basic servicing is six hundred ninety nine rupees and fridge inspection is three hundred ninety nine rupees. For repairs, parts are extra only after your approval and we don't give a fixed quote before inspection. We are open Monday to Saturday from 9am to 6pm. Which appliance do you need help with?", "ts": "2026-10-25T16:52:56.174886Z", "brain_latency_ms": 1775}
+{"seq": 5, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T16:52:56.187460Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T16:52:56.191873Z", "brain_latency_ms": 2}

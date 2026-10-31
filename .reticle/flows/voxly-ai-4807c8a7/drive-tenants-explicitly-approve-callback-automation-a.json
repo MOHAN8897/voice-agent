@@ -1,0 +1,460 @@
+{
+  "version": 2,
+  "name": "drive-tenants-explicitly-approve-callback-automation-a",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1793198616025,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Follow-ups & scoring"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/modules/agent-workspace/SectionNav.jsx",
+        "line": 27
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Follow-ups & scoring"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/modules/agent-workspace/SectionNav.jsx",
+        "line": 27
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "scope": "button[aria-label='Follow-ups & scoring'][aria-pressed='true']",
+          "self": true
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "Allow scheduled follow-up calls"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/modules/agent-workspace/FollowUpSettingsCard.jsx",
+        "line": 33
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "Allow scheduled follow-up calls"
+      },
+      "args": {
+        "text": "Space"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/modules/agent-workspace/FollowUpSettingsCard.jsx",
+        "line": 33
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "label": "Authorize follow-up calls and charges"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "Authorize follow-up calls and charges"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/modules/agent-workspace/FollowUpSettingsCard.jsx",
+        "line": 43
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "Authorize follow-up calls and charges"
+      },
+      "args": {
+        "text": "Space"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/modules/agent-workspace/FollowUpSettingsCard.jsx",
+        "line": 43
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "label": "Authorize follow-up calls and charges"
+        },
+        "state": "checked"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-save",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "focus",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-save",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "PUT",
+            "urlContains": "/follow-up-policy",
+            "status": 200
+          },
+          {
+            "kind": "text",
+            "contains": "All agent configurations saved successfully"
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/",
+      "writes": true
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-calls",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1308,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "focus",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-calls",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1308,
+          "column": 13
+        }
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-calls-panel-tab-leads"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-calls-panel-tab-leads",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentCallsPanel.jsx",
+          "line": 74,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "focus",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-calls-panel-tab-leads",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentCallsPanel.jsx",
+          "line": 74,
+          "column": 13
+        }
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "navigation",
+          "name": "Lead management"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Callbacks & missed calls"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 134
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Callbacks & missed calls"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 134
+      },
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "followup-queue"
+            },
+            "state": "visible"
+          },
+          {
+            "kind": "net",
+            "method": "GET",
+            "urlContains": "/api/follow-ups",
+            "status": 200
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Review time"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Review time"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/ui/TactileButton.jsx",
+        "line": 69
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "label": "Follow-up date and time"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/ui/Modal.jsx",
+        "line": 98
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/ui/Modal.jsx",
+        "line": 98
+      },
+      "expect": {
+        "kind": "element",
+        "query": {
+          "label": "Follow-up date and time"
+        },
+        "absent": true
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Do not call"
+      },
+      "args": {},
+      "action": "focus",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 134
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Do not call"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "source": {
+        "file": "src/console/modules/LeadsModule.jsx",
+        "line": 134
+      },
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "add-dnc-button"
+            },
+            "state": "visible"
+          },
+          {
+            "kind": "net",
+            "method": "GET",
+            "urlContains": "/api/dnc",
+            "status": 200
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Tenants explicitly approve callback automation and charges, review unclear callback times, and manage caller opt-outs before follow-up calls can run.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "mcp",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-tenants-explicitly-approve-callback-automation-a"
+}

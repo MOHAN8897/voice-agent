@@ -1,0 +1,94 @@
+{
+  "version": 2,
+  "name": "drive-journey-c8525a",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790872689162,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "component",
+        "component": "SolidCard",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 648,
+          "column": 13
+        }
+      },
+      "args": {
+        "value": "DIRTY-XYZ-789"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-back",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 492,
+          "column": 11
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-studio-leave-dialog"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-switcher",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 509,
+          "column": 15
+        }
+      },
+      "args": {
+        "value": "832dd86c-bbd5-4bcc-8466-469b3411c99f"
+      },
+      "action": "select",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "leave-save",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 472,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

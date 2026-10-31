@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ATELIER MARNE — A Gallery You Walk By Scrolling</title>
+<meta name="description" content="A real-time 3D architectural gallery you move through by scrolling — image-based lighting, real hung artwork, drifting dust, a clickable chapter index. Built with the cinematic-scroll skill (procedural Three.js + fal.ai environment, no video, no baked frames)." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+<script type="importmap">
+{"imports": {"three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js"}}
+</script>
+
+<style>
+  :root {
+    --bg:        #0c0a08;
+    --fg:        #f6efe4;
+    --fg-soft:   rgba(246,239,228,0.70);
+    --fg-faint:  rgba(246,239,228,0.40);
+    --accent:    #e6b765;   /* warm brass, brightened */
+    --accent-2:  #9fb6c9;   /* cool slate accent */
+    --line:      rgba(246,239,228,0.16);
+    --glass:     rgba(28,22,14,0.40);
+    --glass-bd:  rgba(246,239,228,0.18);
+    --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-cue:    cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: auto; }
+  body { background: var(--bg); color: var(--fg); font-family: 'Inter', system-ui, sans-serif; line-height: 1.55; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent); color: var(--bg); }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+  /* fixed 3D stage — the whole journey renders here */
+  #stage { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; display: block; }
+  .stage-fallback {
+    position: fixed; inset: 0; z-index: 0; display: none;
+    background:
+      radial-gradient(70% 55% at 50% 34%, rgba(230,183,101,0.40) 0%, rgba(230,183,101,0) 60%),
+      radial-gradient(120% 90% at 50% 120%, rgba(20,15,10,0) 30%, rgba(8,6,4,0.9) 100%),
+      linear-gradient(180deg, #221a0f, #0c0a08);
+  }
+  .no-webgl #stage { display: none; }
+  .no-webgl .stage-fallback { display: block; }
+  .vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(125% 105% at 50% 42%, transparent 56%, rgba(8,6,4,0.46) 100%); }
+
+  .progress { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 60; }
+  .progress span { display: block; height: 100%; transform: scaleX(0); transform-origin: 0 50%; background: linear-gradient(90deg, var(--accent), #f6efe4); will-change: transform; }
+
+  /* ── nav with a clickable chapter index ── */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 40; display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: clamp(14px,2.2vh,24px) clamp(18px,4vw,56px); }
+  .brand { font-family: 'Space Mono', monospace; font-weight: 700; letter-spacing: 0.22em; font-size: clamp(12px,1.05vw,15px); pointer-events: auto; }
+  .brand b { color: var(--accent); font-weight: 700; }
+  .chapters { display: flex; gap: clamp(8px,1vw,18px); align-items: center; pointer-events: auto;
+    background: var(--glass); border: 1px solid var(--glass-bd); border-radius: 999px;
+    padding: 8px clamp(10px,1.2vw,16px); backdrop-filter: blur(14px) saturate(1.1); -webkit-backdrop-filter: blur(14px) saturate(1.1); }
+  .chapters button { font-family: 'Space Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-faint); padding: 4px 8px; border-radius: 999px; transition: color .3s, background .3s; white-space: nowrap; }
+  .chapters button:hover { color: var(--fg); }
+  .chapters button.active { color: var(--bg); background: var(--accent); }
+  @media (max-width: 760px) { .chapters { display: none; } }
+
+  main { position: relative; z-index: 2; }
+  .beat { position: relative; height: 100vh; display: flex; align-items: center; padding: 0 clamp(20px,7vw,120px); pointer-events: none; }
+  .beat.center { justify-content: center; text-align: center; }
+  .beat.right { justify-content: flex-end; }
+
+  /* ── glassmorphic info card ── */
+  .glass {
+    pointer-events: auto; max-width: 44ch; padding: clamp(22px,2.6vw,38px) clamp(24px,2.8vw,42px);
+    border-radius: 22px; background: var(--glass); border: 1px solid var(--glass-bd);
+    backdrop-filter: blur(18px) saturate(1.15); -webkit-backdrop-filter: blur(18px) saturate(1.15);
+    box-shadow: 0 30px 90px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+    transition: transform .5s var(--ease-reveal), box-shadow .5s var(--ease-reveal), border-color .5s;
+  }
+  .beat.center .glass { max-width: 30ch; text-align: center; }
+  .glass.clickable:hover { transform: translateY(-4px); border-color: rgba(230,183,101,0.5); box-shadow: 0 40px 110px rgba(0,0,0,0.6), 0 0 0 1px rgba(230,183,101,0.25); }
+
+  .eyebrow { font-family: 'Space Mono', monospace; font-size: clamp(10px,0.9vw,12px); letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); display: inline-flex; align-items: center; gap: 12px; }
+  .eyebrow::before { content: ""; width: clamp(16px,2.4vw,34px); height: 1px; background: currentColor; }
+  .beat.center .eyebrow { justify-content: center; }
+
+  h1, h2 { font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; line-height: 1.0; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(2.5rem,6vw,5.4rem); margin-top: 0.9rem; }
+  h2 { font-size: clamp(1.9rem,4.2vw,3.4rem); margin-top: 0.7rem; }
+  h1 em, h2 em { font-style: italic; color: var(--accent); }
+  .lede { margin-top: 1.1rem; font-size: clamp(0.98rem,1.25vw,1.16rem); color: var(--fg-soft); }
+
+  /* stat row + feature chips inside cards */
+  .stats { margin-top: 1.4rem; display: flex; gap: clamp(16px,2.4vw,30px); flex-wrap: wrap; }
+  .stat .n { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: clamp(1.5rem,2.6vw,2.1rem); line-height: 1; color: var(--fg); }
+  .stat .l { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-faint); margin-top: 5px; }
+  .chips { margin-top: 1.2rem; display: flex; flex-wrap: wrap; gap: 8px; }
+  .chips span { font-family: 'Space Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-soft); padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px; }
+  .go { margin-top: 1.5rem; display: inline-flex; align-items: center; gap: 10px; font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); padding: 11px 18px; border: 1px solid rgba(230,183,101,0.45); border-radius: 999px; transition: background .3s, color .3s, gap .3s; }
+  .go:hover { background: var(--accent); color: var(--bg); gap: 16px; }
+  .go svg { width: 14px; height: 14px; }
+
+  .wd { display: inline-block; overflow: hidden; vertical-align: top; }
+  .wd > span { display: inline-block; will-change: transform; }
+
+  .scroll-cue { position: fixed; left: 50%; transform: translateX(-50%); bottom: clamp(18px,3vh,36px); z-index: 30; font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--fg-faint); display: flex; flex-direction: column; align-items: center; gap: 10px; will-change: opacity; pointer-events: none; }
+  .scroll-cue i { width: 1px; height: 32px; background: linear-gradient(var(--accent), transparent); animation: cue 2.2s var(--ease-cue) infinite; transform-origin: top; }
+  @keyframes cue { 0%,100% { transform: scaleY(0.3); opacity: 0.4; } 50% { transform: scaleY(1); opacity: 1; } }
+
+  footer { position: relative; z-index: 2; background: var(--bg); border-top: 1px solid var(--line); padding: clamp(40px,7vh,90px) clamp(24px,6vw,80px); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 18px; font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-faint); }
+  footer a { color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wd > span { transform: none !important; }
+    .scroll-cue i { animation: none; }
+    .progress span { transform: scaleX(1) !important; }
+    .glass { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stage" aria-hidden="true"></canvas>
+<div class="stage-fallback" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="progress" aria-hidden="true"><span></span></div>
+
+<nav>
+  <button class="brand" data-goto="0" aria-label="Atelier Marne — back to start">ATELIER<b>·</b>MARNE</button>
+  <div class="chapters" role="navigation" aria-label="Gallery halls">
+    <button data-goto="1">I · Light</button>
+    <button data-goto="2">II · Form</button>
+    <button data-goto="3">Arch</button>
+    <button data-goto="4">III · Scale</button>
+    <button data-goto="5">Visit</button>
+  </div>
+</nav>
+
+<main>
+  <!-- BEAT 0 — Atrium / title -->
+  <section class="beat" data-beat="0">
+    <div class="glass clickable" data-goto="1">
+      <span class="eyebrow">Permanent collection</span>
+      <h1 class="kinetic">A gallery you walk <em>by scrolling.</em></h1>
+      <p class="lede">No video. No baked frames. The room is rendered live, lit by a real environment — and the camera's pace is exactly your scroll's pace.</p>
+      <div class="stats">
+        <div class="stat"><div class="n">5</div><div class="l">halls</div></div>
+        <div class="stat"><div class="n">6</div><div class="l">works hung</div></div>
+        <div class="stat"><div class="n">60<span style="font-size:.5em">fps</span></div><div class="l">real-time</div></div>
+      </div>
+      <span class="go">Begin the walk <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </div>
+  </section>
+
+  <!-- BEAT 1 — Hall of light -->
+  <section class="beat right" data-beat="1">
+    <div class="glass clickable" data-goto="2">
+      <span class="eyebrow">Hall I — Light</span>
+      <h2 class="kinetic">Walls that <em>hold the warm.</em></h2>
+      <p class="lede">Brass strips wash the plaster; image-based lighting from a real atrium pours over every surface as the camera dollies the length of the hall.</p>
+      <div class="chips"><span>image-based light</span><span>brass wash</span><span>live dolly</span></div>
+      <span class="go">Enter Hall II <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </div>
+  </section>
+
+  <!-- BEAT 2 — The pedestals -->
+  <section class="beat" data-beat="2">
+    <div class="glass clickable" data-goto="3">
+      <span class="eyebrow">Hall II — Form</span>
+      <h2 class="kinetic">Objects on <em>plinths of shadow.</em></h2>
+      <p class="lede">Each piece turns under its own spotlight as you pass — real depth and parallax, every facet catching the reflected room. Not layered images.</p>
+      <div class="chips"><span>spotlit plinths</span><span>real reflections</span><span>true parallax</span></div>
+      <span class="go">Continue <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </div>
+  </section>
+
+  <!-- BEAT 3 — Threshold / archway -->
+  <section class="beat center" data-beat="3">
+    <div class="glass clickable" data-goto="4">
+      <span class="eyebrow">Threshold</span>
+      <h2 class="kinetic">Through the <em>arch.</em></h2>
+      <p class="lede">A darker frame swallows the camera, then opens. Slow down here — let the dust drift.</p>
+      <span class="go">Step through <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </div>
+  </section>
+
+  <!-- BEAT 4 — The atrium reveal -->
+  <section class="beat right" data-beat="4">
+    <div class="glass clickable" data-goto="5">
+      <span class="eyebrow">Hall III — Scale</span>
+      <h2 class="kinetic">The room <em>opens wide.</em></h2>
+      <p class="lede">The ceiling lifts and light pools on the floor — the same engine, a far bigger volume, lit by the same sky.</p>
+      <div class="stats">
+        <div class="stat"><div class="n">+50%</div><div class="l">volume</div></div>
+        <div class="stat"><div class="n">1</div><div class="l">renderer</div></div>
+      </div>
+      <span class="go">To the exit <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </div>
+  </section>
+
+  <!-- BEAT 5 — End / CTA -->
+  <section class="beat center" data-beat="5">
+    <div class="glass">
+      <span class="eyebrow">End of the walk</span>
+      <h2 class="kinetic">Every brief, <em>its own gallery.</em></h2>
+      <p class="lede">One scroll contract, infinite worlds. Build yours from a single command.</p>
+      <a class="go" href="https://github.com/MustBeSimo/cinematic-scroll-skill" target="_blank" rel="noopener">npx cinematic-scroll-skill <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>ATELIER·MARNE — procedural Three.js gallery · fal.ai environment</span>
+  <span>By Simone Leonelli · built with <a href="https://github.com/MustBeSimo/cinematic-scroll-skill">cinematic-scroll</a></span>
+</footer>
+
+<script type="module">
+  import * as THREE from 'three';
+
+  const reduce  = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile = matchMedia('(max-width: 768px)').matches;
+  const canvas  = document.getElementById('stage');
+  const BEATS = 6;
+
+  function webglOK(){ try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); } catch(e){ return false; } }
+
+  /* ── word split for masked reveals ── */
+  document.querySelectorAll('.kinetic').forEach(function(el){
+    const html = el.innerHTML.replace(/(<em>|<\/em>)/g, ' $1 ').trim();
+    el.innerHTML = html.split(' ').filter(Boolean).map(function(w){
+      if (w === '<em>' || w === '</em>') return w;
+      return '<span class="wd"><span>' + w + '</span></span>';
+    }).join(' ');
+  });
+
+  /* ── clickable chapter index + cards → smooth-scroll the camera there ── */
+  function gotoBeat(i){
+    const sec = document.querySelector('.beat[data-beat="'+i+'"]');
+    if (sec) sec.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  }
+  document.querySelectorAll('[data-goto]').forEach(function(el){
+    el.addEventListener('click', function(e){
+      // let real links (the CTA <a>) behave normally
+      if (el.tagName === 'A') return;
+      e.preventDefault();
+      gotoBeat(parseInt(el.dataset.goto, 10));
+    });
+  });
+
+  let renderer, scene, camera, raf = 0, running = false, onScreen = true;
+  let progress = 0, target = 0, mx = 0, my = 0, tmx = 0, tmy = 0;
+  let keyLightA, keyLightB, curve, dust;
+  const spinners = [], pictureLights = [];
+  const tmpV = new THREE.Vector3(), lookV = new THREE.Vector3();
+
+  function init(){
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile, alpha: false, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1.0 : 1.5));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.18;
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color('#0c0a08');
+    scene.fog = new THREE.FogExp2('#120d08', 0.0135);
+
+    camera = new THREE.PerspectiveCamera(58, innerWidth/innerHeight, 0.1, 400);
+
+    buildGallery();
+    buildPath();
+    buildDust();
+    loadEnvironment();
+
+    /* lighting — IBL does most of the fill; these warm lights ride with the camera */
+    scene.add(new THREE.AmbientLight('#4a3722', 0.55));
+    const hemi = new THREE.HemisphereLight('#e2c089', '#161009', 0.7); scene.add(hemi);
+    keyLightA = new THREE.PointLight('#ffd79a', 30, 38, 2.0); scene.add(keyLightA);
+    keyLightB = new THREE.PointLight('#ffe9c8', 16, 28, 2.0); scene.add(keyLightB);
+
+    addEventListener('resize', onResize, { passive: true });
+    if (!isMobile && !reduce) addEventListener('pointermove', onPointer, { passive: true });
+    canvas.addEventListener('webglcontextlost', onLost, false);
+    canvas.addEventListener('webglcontextrestored', onRestored, false);
+    document.addEventListener('visibilitychange', updateRun);
+    new IntersectionObserver((e)=>{ onScreen = e[0].isIntersecting; updateRun(); }, { threshold: 0 }).observe(canvas);
+
+    placeCamera(0);
+    if (reduce) renderer.render(scene, camera); else { running = true; loop(); }
+  }
+
+  /* image-based lighting + real reflections from the fal.ai atrium panorama */
+  function loadEnvironment(){
+    new THREE.TextureLoader().load('assets/env.jpg', function(tex){
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      try {
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        const rt = pmrem.fromEquirectangular(tex);
+        scene.environment = rt.texture;
+        pmrem.dispose(); tex.dispose();
+        if (reduce && renderer) renderer.render(scene, camera);
+      } catch(e){ /* IBL optional — scene still lit by the warm lights */ }
+    }, undefined, function(){ /* missing texture is non-fatal */ });
+  }
+
+  /* materials — envMapIntensity lets the IBL show in the metal/plaster */
+  const plaster = (c)=> new THREE.MeshStandardMaterial({ color: c, roughness: 0.9, metalness: 0.04, envMapIntensity: 0.7 });
+  const woodMat = new THREE.MeshStandardMaterial({ color: '#4a3020', roughness: 0.72, metalness: 0.06, envMapIntensity: 0.6 });
+  const brass   = new THREE.MeshStandardMaterial({ color: '#e6b765', roughness: 0.26, metalness: 0.95, emissive: '#5a3d12', emissiveIntensity: 0.25, envMapIntensity: 1.4 });
+  const glowMat = (c, i)=> new THREE.MeshStandardMaterial({ color: '#000', emissive: c, emissiveIntensity: i, roughness: 1, metalness: 0 });
+  const artTex = new THREE.TextureLoader();
+
+  function buildGallery(){
+    const HALL_W = 9, HALL_H = 6, SEG = 14, SEGS = 7; // 7 zones × 14 deep ≈ 98u
+    const wallL = plaster('#d8cbb2'), wallR = plaster('#d2c1a6'), floorMat = woodMat, ceilMat = plaster('#241a10');
+    const group = new THREE.Group(); scene.add(group);
+    let artIdx = 0;
+
+    for (let s = 0; s < SEGS; s++){
+      const z = -s * SEG;
+      const wide = (s >= 4);
+      const w = wide ? HALL_W + 6 : HALL_W;
+      const h = wide ? HALL_H + 3 : HALL_H;
+
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, SEG), floorMat);
+      floor.rotation.x = -Math.PI/2; floor.position.set(0, 0, z - SEG/2); group.add(floor);
+      const ceil = new THREE.Mesh(new THREE.PlaneGeometry(w, SEG), ceilMat);
+      ceil.rotation.x = Math.PI/2; ceil.position.set(0, h, z - SEG/2); group.add(ceil);
+
+      const left = new THREE.Mesh(new THREE.PlaneGeometry(SEG, h), wallL);
+      left.rotation.y = Math.PI/2; left.position.set(-w/2, h/2, z - SEG/2); group.add(left);
+      const right = new THREE.Mesh(new THREE.PlaneGeometry(SEG, h), wallR);
+      right.rotation.y = -Math.PI/2; right.position.set(w/2, h/2, z - SEG/2); group.add(right);
+
+      // ceiling light strip (emissive)
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, SEG - 2), glowMat('#ffe2ad', 2.4));
+      strip.position.set(0, h - 0.2, z - SEG/2); group.add(strip);
+
+      // framed REAL artwork on alternating walls, each with its own picture light
+      if (!wide){
+        for (let k = 0; k < 2; k++){
+          const fz = z - 4 - k*6;
+          const side = ((s + k) % 2 === 0) ? -1 : 1;
+          const frame = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.7, 2.0), brass);
+          frame.position.set(side*(w/2 - 0.10), h/2, fz); group.add(frame);
+          // the canvas — a lit material that receives the painting texture when it loads
+          const canvasMat = new THREE.MeshStandardMaterial({ color: '#1a140d', roughness: 0.62, metalness: 0.0, envMapIntensity: 0.3 });
+          const idx = (artIdx % 6) + 1; artIdx++;
+          // the painting is self-lit via its emissiveMap (no per-frame spotlight needed — keeps the light count low)
+          artTex.load('assets/art-' + idx + '.jpg', function(t){ t.colorSpace = THREE.SRGBColorSpace; canvasMat.map = t; canvasMat.emissive = new THREE.Color('#4a3720'); canvasMat.emissiveMap = t; canvasMat.emissiveIntensity = 0.8; canvasMat.color = new THREE.Color('#ffffff'); canvasMat.needsUpdate = true; if (reduce && renderer) renderer.render(scene, camera); }, undefined, function(){});
+          const art = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 2.25), canvasMat);
+          art.rotation.y = side*Math.PI/2; art.position.set(side*(w/2 - 0.22), h/2, fz); group.add(art);
+          // a cheap emissive "picture light" bar above the frame (reads as a wash, costs nothing)
+          const pin = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 1.6), glowMat('#ffe2ad', 1.8));
+          pin.position.set(side*(w/2 - 0.4), h/2 + 1.35, fz); group.add(pin);
+        }
+      }
+
+      // central pedestal + rotating object in "form" zones
+      if (s === 2 || s === 3 || (wide && s === 5)){
+        const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 1.1, 28), plaster('#241c14'));
+        ped.position.set(0, 0.55, z - SEG/2); group.add(ped);
+        let obj;
+        if (s === 2) obj = new THREE.Mesh(new THREE.TorusKnotGeometry(0.42, 0.13, 160, 20), brass);
+        else if (s === 3) obj = new THREE.Mesh(new THREE.IcosahedronGeometry(0.5, 0), new THREE.MeshStandardMaterial({ color:'#efe3cc', roughness:0.32, metalness:0.3, envMapIntensity:1.1 }));
+        else obj = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6, 0), brass);
+        obj.position.set(0, 1.5, z - SEG/2);
+        obj.userData.spin = true; group.add(obj); spinners.push(obj);
+        const halo = new THREE.Mesh(new THREE.CircleGeometry(1.5, 40), glowMat('#ffcf94', 0.5));
+        halo.rotation.x = -Math.PI/2; halo.position.set(0, 0.02, z - SEG/2); group.add(halo);
+      }
+
+      // archway threshold between halls
+      if (s === 4){
+        const archMat = plaster('#140d07');
+        const top = new THREE.Mesh(new THREE.BoxGeometry(w, 1.4, 0.6), archMat);
+        top.position.set(0, h - 0.7, z + 0.5); group.add(top);
+        for (const sx of [-1, 1]){
+          const col = new THREE.Mesh(new THREE.BoxGeometry(1.2, h, 0.6), archMat);
+          col.position.set(sx*(w/2 - 0.6), h/2, z + 0.5); group.add(col);
+        }
+      }
+    }
+    // back wall to close the vista
+    const endZ = -SEGS * SEG;
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(22, 12), glowMat('#e2c089', 0.4));
+    back.position.set(0, 6, endZ + 1); scene.add(back);
+  }
+
+  /* drifting dust motes that catch the light — a single Points cloud */
+  function buildDust(){
+    const N = isMobile ? 130 : 330;
+    const pos = new Float32Array(N * 3);
+    const seedArr = new Float32Array(N);
+    for (let i = 0; i < N; i++){
+      pos[i*3]   = (Math.random() - 0.5) * 14;
+      pos[i*3+1] = Math.random() * 7.5;
+      pos[i*3+2] = -Math.random() * 100 + 6;
+      seedArr[i] = Math.random() * 6.28;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.userData.seed = seedArr; g.userData.base = pos.slice();
+    // soft round sprite
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+    const cx = cv.getContext('2d');
+    const grd = cx.createRadialGradient(32,32,0,32,32,32);
+    grd.addColorStop(0,'rgba(255,236,200,1)'); grd.addColorStop(0.4,'rgba(255,224,170,0.5)'); grd.addColorStop(1,'rgba(255,224,170,0)');
+    cx.fillStyle = grd; cx.fillRect(0,0,64,64);
+    const sprite = new THREE.CanvasTexture(cv);
+    const m = new THREE.PointsMaterial({ size: 0.07, map: sprite, transparent: true, opacity: 0.75, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true });
+    dust = new THREE.Points(g, m); scene.add(dust);
+  }
+
+  function buildPath(){
+    const pts = [
+      new THREE.Vector3( 0.0, 1.7,   6),
+      new THREE.Vector3( 0.8, 1.7,  -8),
+      new THREE.Vector3(-0.9, 1.7, -22),
+      new THREE.Vector3( 0.6, 1.7, -36),
+      new THREE.Vector3( 0.0, 1.8, -52),
+      new THREE.Vector3(-1.2, 2.4, -68),
+      new THREE.Vector3( 0.4, 2.7, -82),
+    ];
+    curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.5);
+  }
+
+  function placeCamera(p){
+    if (!curve) return;
+    const t = Math.min(0.999, Math.max(0, p));
+    curve.getPointAt(t, tmpV);
+    curve.getPointAt(Math.min(0.999, t + 0.04), lookV);
+    camera.position.set(tmpV.x + tmx*0.9, tmpV.y + tmy*0.45, tmpV.z);
+    camera.lookAt(lookV.x + tmx*1.2, lookV.y + tmy*0.6, lookV.z);
+    camera.rotation.z += tmx * 0.035;   // a touch of mouse-led roll
+    if (keyLightA) keyLightA.position.set(tmpV.x, 4.7, tmpV.z - 3);
+    if (keyLightB) keyLightB.position.set(tmpV.x, 2.0, tmpV.z - 9);
+  }
+
+  let spinT = 0;
+  function loop(){
+    raf = requestAnimationFrame(loop);
+    if (!running) return;
+    progress += (target - progress) * 0.07;
+    tmx += (mx - tmx) * 0.05; tmy += (my - tmy) * 0.05;
+    spinT += 0.01;
+    for (const o of spinners) o.rotation.y = spinT + o.position.z;
+    if (dust){ // slow vertical/lateral drift
+      const arr = dust.geometry.attributes.position.array, base = dust.geometry.userData.base, sd = dust.geometry.userData.seed;
+      for (let i = 0; i < sd.length; i++){
+        arr[i*3]   = base[i*3]   + Math.sin(spinT*0.6 + sd[i]) * 0.5;
+        arr[i*3+1] = base[i*3+1] + Math.sin(spinT*0.4 + sd[i]*1.7) * 0.35;
+      }
+      dust.geometry.attributes.position.needsUpdate = true;
+    }
+    placeCamera(progress);
+    renderer.render(scene, camera);
+  }
+  function updateRun(){ const vis = document.visibilityState === 'visible' && onScreen; if (reduce){ running = false; return; } if (vis && !running){ running = true; if (!raf) loop(); } else if (!vis) running = false; }
+  function onResize(){ if (!renderer) return; camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); if (reduce){ placeCamera(progress); renderer.render(scene, camera); } }
+  function onPointer(e){ mx = (e.clientX/innerWidth)*2 - 1; my = -((e.clientY/innerHeight)*2 - 1); }
+  function onLost(e){ e.preventDefault(); running = false; cancelAnimationFrame(raf); raf = 0; }
+  function onRestored(){ try { init(); } catch(err){ document.body.classList.add('no-webgl'); } }
+
+  /* ── scroll → camera progress + active chapter ── */
+  function docProgress(){ const max = document.body.scrollHeight - innerHeight; return max <= 0 ? 0 : Math.min(1, Math.max(0, scrollY / max)); }
+  const chapBtns = Array.from(document.querySelectorAll('.chapters button'));
+  let ticking = false;
+  addEventListener('scroll', ()=>{
+    if (ticking) return; ticking = true;
+    requestAnimationFrame(()=>{
+      target = docProgress();
+      document.querySelector('.progress span').style.transform = 'scaleX(' + target + ')';
+      const cue = document.querySelector('.scroll-cue'); if (cue) cue.style.opacity = target > 0.04 ? '0' : '1';
+      // active chapter = nearest beat
+      const cur = Math.round(target * (BEATS - 1));
+      chapBtns.forEach(function(b){ b.classList.toggle('active', parseInt(b.dataset.goto,10) === cur); });
+      ticking = false;
+      if (reduce){ progress = target; placeCamera(progress); if (renderer) renderer.render(scene, camera); }
+    });
+  }, { passive: true });
+
+  /* ── floating kinetic text — each beat reveals when it enters ── */
+  const beats = document.querySelectorAll('.beat');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(function(en){
+      const words = en.target.querySelectorAll('.wd > span');
+      const others = en.target.querySelectorAll('.lede, .eyebrow, .stats, .chips, .go');
+      if (en.isIntersecting && en.intersectionRatio > 0.55){
+        words.forEach(function(w,i){ w.style.transition = 'transform 0.9s ' + (i*0.05) + 's var(--ease-reveal)'; w.style.transform = 'translateY(0)'; });
+        others.forEach(function(o,i){ o.style.transition = 'opacity 0.8s ' + (0.1 + i*0.07) + 's var(--ease-reveal), transform 0.8s ' + (0.1 + i*0.07) + 's var(--ease-reveal)'; o.style.opacity = '1'; o.style.transform = 'none'; });
+      } else {
+        words.forEach(function(w){ w.style.transition = 'transform 0.5s var(--ease-reveal)'; w.style.transform = 'translateY(110%)'; });
+        others.forEach(function(o){ o.style.transition = 'opacity 0.4s, transform 0.4s'; o.style.opacity = '0'; o.style.transform = 'translateY(24px)'; });
+      }
+    });
+  }, { threshold: [0, 0.55, 0.9] });
+
+  if (!reduce){
+    beats.forEach(function(b){
+      b.querySelectorAll('.wd > span').forEach(function(w){ w.style.transform = 'translateY(110%)'; });
+      b.querySelectorAll('.lede, .eyebrow, .stats, .chips, .go').forEach(function(o){ o.style.opacity = '0'; o.style.transform = 'translateY(24px)'; });
+      io.observe(b);
+    });
+  }
+
+  /* ── bootstrap ── */
+  if (!webglOK()) document.body.classList.add('no-webgl');
+  else { try { init(); } catch(e){ console.warn('gallery: init failed', e); document.body.classList.add('no-webgl'); } }
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+{
+  "key": "cycle-kn-IN-none-3b_stop_contact",
+  "business": "cycle",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "f5a79515-a0d2-5b65-906d-0dad26c62217",
+  "call_id": "e2945be2-f856-4e8b-ab23-b16f674fd6fc",
+  "session_id": "audit-cycle-kn-IN-none-3b_stop_contact-71cd998a",
+  "compiled_checksum": "d93974aaef8f4b67e05c7d2e8cfc340be9288980a7ef5aabd76478bb6dc212d8",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.063,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "e2945be2-f856-4e8b-ab23-b16f674fd6fc",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "e790ebeb19697467032eeb0092349c7a61e88a40ed26e7d52c70d9da8469ef9b",
+  "prompt_chars": 16746,
+  "opening_seeded": "ನಮಸ್ಕಾರ, ನಾನು ಸಿಟಿ ಸೈಕಲ್ ರಿಪೇರ್ಸ್ ನಿಂದ ಅರ್ಜುನ್ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ನಾವು ಸೈಕಲ್ ರಿಪೇರ್ ಮತ್ತು ಸೇವೆಗಳ ಬಗ್ಗೆ ಮಾಹಿತಿ ನೀಡುತ್ತಿದ್ದೇವೆ. ಈಗ ಮಾತನಾಡಲು ನಿಮಗೆ ಸಮಯವಿದೆಯೇ?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.063,
+  "hangup_count": 1,
+  "source_signature": "f22325fa3f608c0524c8afc9a14908696812152c9af5311fda442ff7a042a834"
+}

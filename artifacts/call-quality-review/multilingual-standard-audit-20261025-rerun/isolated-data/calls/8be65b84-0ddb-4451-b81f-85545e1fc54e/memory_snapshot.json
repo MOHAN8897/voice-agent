@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "I cannot help with that. If you need support, I can assist with bicycle repairs instead.\nuser: Fine, leave that topic. Please answer the original business question about price and conditions.\nassistant: A basic bicycle service costs four hundred ninety nine rupees, and a puncture repair costs one hundred twenty rupees. Parts are extra only after approval, and we are open Tuesday to Sunday from 9 am to 6 pm. Would you like to know more about any specific repair?\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

@@ -1,0 +1,12 @@
+{
+  "stage": "employee_script_write",
+  "language": "te-IN",
+  "output": {
+    "opening": "Hello, my name is Nila from FreshNest Cleaning. We provide cleaning services in Pune. Is this a good time to speak?",
+    "call_flow": "I can help explain our cleaning services and prices. Sofa cleaning is 349 rupees per seat with a minimum of 3 seats. Kitchen cleaning is 1599 rupees total. We operate Monday to Saturday from 9am to 6pm. Would you like to hear more about sofa cleaning or kitchen cleaning?",
+    "call_to_action": "If you would like to proceed, I can submit an enquiry for team review. May I have your preferred name, service type, and locality? Do I have your consent to submit this enquiry?",
+    "objection_handling": "If you are not interested right now, that is completely fine. If you prefer to wait, future interest is always welcome. If you ask about price, sofa cleaning is 349 rupees per seat for a minimum of 3 seats, and kitchen cleaning is 1599 rupees total. If you ask if I am an AI, I am an AI assistant helping FreshNest Cleaning.",
+    "unknown_information": "That detail is currently unavailable. I cannot invent a callback, payment, booking, or message.",
+    "closing": "Thank you for speaking with FreshNest Cleaning. Have a wonderful day."
+  }
+}

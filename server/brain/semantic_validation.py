@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from server.agent.brain_prompt_composer import MAX_AGENT_SCRIPT_CHARS
 from server.brain.sections import SECTION_MAX_CHARS, SECTION_REQUIRED_TYPES, SECTION_TYPES
 
 
@@ -38,10 +39,10 @@ class ValidationResult:
         }
 
 
-def _has_script_mix(text: str) -> bool:
-    has_telugu = bool(re.search(r"[\u0C00-\u0C7F]", text))
-    has_latin = bool(re.search(r"[A-Za-z]", text))
-    return has_telugu and has_latin
+def _malformed_variables(text: str) -> bool:
+    # Fallback values may contain normal punctuation, but never nested braces.
+    without_tags = re.sub(r"\{\{\s*[A-Za-z_][\w.]*\s*(?:\|[^{}]*)?\}\}", "", text)
+    return "{{" in without_tags or "}}" in without_tags
 
 
 def validate_sections(sections: list[dict[str, Any]]) -> ValidationResult:
@@ -56,12 +57,13 @@ def validate_sections(sections: list[dict[str, Any]]) -> ValidationResult:
             continue
         by_type.setdefault(stype, []).append(s)
         raw = str(s.get("raw_text") or "")
-        if len(raw) > SECTION_MAX_CHARS:
+        char_limit = MAX_AGENT_SCRIPT_CHARS if s.get("title") == "Calling script" else SECTION_MAX_CHARS
+        if len(raw) > char_limit:
             issues.append(
                 ValidationIssue(
                     "blocking",
                     "section_too_long",
-                    f"Section '{s.get('title')}' exceeds {SECTION_MAX_CHARS} characters",
+                    f"Section '{s.get('title')}' exceeds {char_limit} characters",
                     [str(s.get("section_id", ""))],
                 )
             )
@@ -74,12 +76,12 @@ def validate_sections(sections: list[dict[str, Any]]) -> ValidationResult:
                     [str(s.get("section_id", ""))],
                 )
             )
-        if raw.strip() and _has_script_mix(raw) and stype == "faq":
+        if s.get("enabled", True) and _malformed_variables(raw):
             issues.append(
                 ValidationIssue(
-                    "warning",
-                    "script_mix",
-                    "FAQ mixes Telugu and Latin heavily — verify spoken output",
+                    "blocking",
+                    "malformed_variable",
+                    "A variable tag is malformed. Use {{variable}} or {{variable | fallback}}.",
                     [str(s.get("section_id", ""))],
                 )
             )
@@ -92,6 +94,8 @@ def validate_sections(sections: list[dict[str, Any]]) -> ValidationResult:
     # Cross-section conflict heuristic: contradictory refund windows
     refund_mentions: list[tuple[str, str]] = []
     for s in sections:
+        if not s.get("enabled", True):
+            continue
         raw = str(s.get("raw_text") or "").lower()
         if "refund" in raw or "return" in raw:
             refund_mentions.append((str(s.get("section_id")), raw))
@@ -104,9 +108,9 @@ def validate_sections(sections: list[dict[str, Any]]) -> ValidationResult:
         if len(windows) > 1:
             issues.append(
                 ValidationIssue(
-                    "blocking",
+                    "warning",
                     "conflicting_refund_policy",
-                    f"Conflicting refund windows: {sorted(windows)}",
+                    f"Possible conflicting refund windows: {sorted(windows)}. Check whether they describe different products or policies.",
                     [sid for sid, _ in refund_mentions],
                 )
             )

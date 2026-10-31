@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "enquiry_reference": "AUDIT-ENQUIRY-1",
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": ""
+}

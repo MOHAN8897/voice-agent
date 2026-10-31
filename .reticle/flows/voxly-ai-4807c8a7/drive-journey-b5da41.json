@@ -1,0 +1,71 @@
+{
+  "version": 2,
+  "name": "drive-journey-b5da41",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790972221085,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Open builder"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-settings",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 638,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-compliance-regulation"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-compliance-do_not_call_registry",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentSettingsPanel.jsx",
+          "line": 359,
+          "column": 23
+        }
+      },
+      "args": {},
+      "action": "uncheck",
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

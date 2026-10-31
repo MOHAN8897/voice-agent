@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T18:50:32.344740Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T18:50:34.551040Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-25T18:50:36.425867Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-25T18:50:38.722034Z", "include_summary": false, "projection": ""}
+{"turn_seq": 9, "ts": "2026-10-25T18:50:38.738311Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ncaller_email: audit.customer@example.invalid | caller_name: Audit\n[Context]\nCaller shared contact details for the team to follow up."}

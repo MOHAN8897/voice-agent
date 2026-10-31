@@ -1,0 +1,123 @@
+{
+  "key": "course-en-IN-none-4_abuse",
+  "business": "course",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "584c85f1-487c-5a21-8f37-bdbc77eb869f",
+  "call_id": "8b40f636-58b5-4d0f-9003-695daad8e0a5",
+  "session_id": "audit-course-en-IN-none-4_abuse-0cdbd33f",
+  "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 2.188
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "result": {
+        "done": true,
+        "text": "I understand you are frustrated. The total fee for the course is 4999 rupees. Since this call is ending now, I will not continue. Thank you for your time.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4245,
+          "output_tokens": 189,
+          "total_tokens": 4434
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_result",
+              "value": "Abuse detected. Caller used hostile language and demanded price. Agent disclosed fee of 4999 rupees and initiated close per abuse policy."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "Abuse: hostile or threatening",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "elapsed_s": 0.812
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Of course — please go ahead.",
+      "turn": 1,
+      "at": 2.985
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 2,
+      "at": 3.0
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "You are a useless idiot. Stop repeating yourself and answer the price question.",
+      "spoken": "Of course — please go ahead.",
+      "elapsed_s": 2.985,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "I will kill you. End this call now.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 3.047,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "8b40f636-58b5-4d0f-9003-695daad8e0a5",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "render_checksum": "af44a97c503afe1c9e3b6b1c9edfc54e481227732ece0d92f0e4d78a30880eee",
+  "prompt_chars": 18618,
+  "opening_seeded": "Hello, my name is Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our adult beginner Python course today?",
+  "status": "completed",
+  "elapsed_s": 3.047,
+  "hangup_count": 1
+}

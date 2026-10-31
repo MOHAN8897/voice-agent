@@ -1,0 +1,1665 @@
+{
+  "intents": {
+    "inline:a-deployment-whose-mail-provider-cannot-deliver-4c2a706c": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "auth-debug-reset-link"
+        }
+      },
+      "declaredAt": 1791021008108,
+      "id": "inline:a-deployment-whose-mail-provider-cannot-deliver-4c2a706c",
+      "provenBy": {
+        "at": 1791021010849,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1791021010849"
+      },
+      "state": "proved",
+      "statement": "a deployment whose mail provider cannot deliver says so, and hands back the reset link, instead of showing a silent 'check your inbox'",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/AuthModal.jsx"
+        ]
+      },
+      "updatedAt": 1791021010910
+    },
+    "inline:a-new-signup-can-complete-email-verification-and-9f4d8f65": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 200,
+            "urlContains": "/api/auth/verify-email-otp"
+          },
+          {
+            "kind": "settled",
+            "quietMs": 400
+          }
+        ]
+      },
+      "declaredAt": 1791031700347,
+      "id": "inline:a-new-signup-can-complete-email-verification-and-9f4d8f65",
+      "state": "bound",
+      "statement": "A new signup can complete email verification and land signed in on the console",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791031700371
+    },
+    "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b36101c2": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "count": 1,
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/agents"
+          },
+          {
+            "count": 1,
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/telephony/numbers"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded from the API",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790855932128,
+      "id": "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b36101c2",
+      "state": "bound",
+      "statement": "A signed-in subscriber's workspace loads from the API: /api/agents answers 200 with their employees, and the console never shows the 'Some console data could not be loaded from the API' warning.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790855932173
+    },
+    "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b5fd5c7b": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/agents"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/telephony/numbers"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/billing/wallet"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/leads"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded from the API",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790855942522,
+      "id": "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b5fd5c7b",
+      "provenBy": {
+        "at": 1790855942598,
+        "grade": "net",
+        "verdictId": "reticle_assert:1790855942598"
+      },
+      "state": "proved",
+      "statement": "A signed-in subscriber's workspace loads from the API: the agent and phone-number requests answer 200 and the console never shows the 'Some console data could not be loaded from the API' warning.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790855942626
+    },
+    "inline:a-subscriber-holding-a-session-token-for-a-since-8411239e": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/auth/refresh"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/agents"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/telephony/numbers"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded from the API",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790856329800,
+      "id": "inline:a-subscriber-holding-a-session-token-for-a-since-8411239e",
+      "state": "bound",
+      "statement": "A subscriber holding a session token for a since-deleted workspace recovers silently onto their surviving workspace: the console reloads the agent list after a successful token refresh and never shows the 'Some console data could not be loaded from the API' warning.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790856329839
+    },
+    "inline:a-subscriber-s-console-workspace-sync-completes-d4c45a80": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/agents"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/telephony/numbers"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/campaigns"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/leads"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/billing/wallet"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded from the API",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790857960613,
+      "id": "inline:a-subscriber-s-console-workspace-sync-completes-d4c45a80",
+      "provenBy": {
+        "at": 1790857961066,
+        "grade": "net",
+        "verdictId": "reticle_assert:1790857961066"
+      },
+      "state": "proved",
+      "statement": "A subscriber's console workspace sync completes with every resource loaded: agents, phone numbers, campaigns, leads and wallet all answer 200, and no sync warning is shown.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790857961136
+    },
+    "inline:a-subscriber-whose-session-token-pointed-at-a-de-26a03115": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/agents"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/telephony/numbers"
+          },
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/billing/wallet"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded from the API",
+              "kind": "text"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "role",
+              "name": "mohan",
+              "value": "heading"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790856351177,
+      "id": "inline:a-subscriber-whose-session-token-pointed-at-a-de-26a03115",
+      "provenBy": {
+        "at": 1790856351295,
+        "grade": "net",
+        "verdictId": "reticle_assert:1790856351295"
+      },
+      "state": "proved",
+      "statement": "A subscriber whose session token pointed at a deleted workspace ends up signed in to their surviving workspace with their employees listed, and the console never shows the 'Some console data could not be loaded from the API' warning.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790856351338
+    },
+    "inline:a-tenant-can-launch-a-validated-campaign-once-an-cfab10fc": {
+      "binding": {
+        "absent": true,
+        "kind": "element",
+        "query": {
+          "testid": "campaign-setup"
+        }
+      },
+      "declaredAt": 1792502329341,
+      "id": "inline:a-tenant-can-launch-a-validated-campaign-once-an-cfab10fc",
+      "state": "bound",
+      "statement": "A tenant can launch a validated campaign once and return to the campaign list. Synthetic API fixtures prevent real calls.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792502329383
+    },
+    "inline:a-tenant-can-open-the-sign-in-form-before-select-23141429": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "by": "role",
+          "value": "textbox"
+        }
+      },
+      "declaredAt": 1792612358035,
+      "id": "inline:a-tenant-can-open-the-sign-in-form-before-select-23141429",
+      "provenBy": {
+        "at": 1792612358259,
+        "grade": "presence",
+        "runId": "drive-lease-c0bae5a4-d605-4714-a1d4-fcef0e297694",
+        "verdictId": "reticle_act_and_wait:1792612358259"
+      },
+      "state": "proved",
+      "statement": "A tenant can open the sign-in form before selecting an approved voice profile.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792612358280
+    },
+    "inline:a-tenant-can-sign-in-before-opening-the-voice-ed-cd853617": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "by": "role",
+          "value": "textbox"
+        }
+      },
+      "declaredAt": 1792612575099,
+      "id": "inline:a-tenant-can-sign-in-before-opening-the-voice-ed-cd853617",
+      "state": "bound",
+      "statement": "A tenant can sign in before opening the voice editor.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792612575162
+    },
+    "inline:after-de-duplicating-the-landing-copy-the-voice-ebe61ed7": {
+      "binding": {
+        "kind": "signal",
+        "name": "voxly:voice-sample-audible"
+      },
+      "declaredAt": 1791033249809,
+      "id": "inline:after-de-duplicating-the-landing-copy-the-voice-ebe61ed7",
+      "provenBy": {
+        "at": 1791033251376,
+        "grade": "signal",
+        "verdictId": "reticle_act_and_wait:1791033251376"
+      },
+      "state": "proved",
+      "statement": "after de-duplicating the landing copy, the voice showcase still plays real rendered audio for the visitor to judge",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/TalkToAiSection.jsx"
+        ]
+      },
+      "updatedAt": 1791033251401
+    },
+    "inline:after-login-console-sync-completes-without-sessi-2b4953d2": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "mohan saiteja's Workspace",
+            "kind": "text"
+          },
+          {
+            "contains": "All calls",
+            "kind": "text"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "session expired",
+              "kind": "text"
+            }
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790859525267,
+      "id": "inline:after-login-console-sync-completes-without-sessi-2b4953d2",
+      "provenBy": {
+        "at": 1790859525631,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790859525631"
+      },
+      "state": "proved",
+      "statement": "After login, console sync completes without session-expired banner; Calls history loads for the tenant.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1790859525673
+    },
+    "inline:an-authenticated-tenant-can-open-the-agent-works-d0f0b8ab": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Voice Test Agent",
+            "kind": "text"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "kind": "element",
+              "query": {
+                "by": "role",
+                "name": "Sign in to your console",
+                "value": "dialog"
+              }
+            }
+          }
+        ]
+      },
+      "declaredAt": 1792612384325,
+      "id": "inline:an-authenticated-tenant-can-open-the-agent-works-d0f0b8ab",
+      "state": "bound",
+      "statement": "An authenticated tenant can open the agent workspace and view only voice profiles that passed the approval gates.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792612384378
+    },
+    "inline:billing-has-no-fleet-subscription-plan-section-7e3ebf3f": {
+      "binding": {
+        "absent": true,
+        "contains": "Fleet Subscription Plan",
+        "kind": "text"
+      },
+      "declaredAt": 1790853482821,
+      "id": "inline:billing-has-no-fleet-subscription-plan-section-7e3ebf3f",
+      "state": "bound",
+      "statement": "Billing has no Fleet Subscription Plan section",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790853482864
+    },
+    "inline:billing-is-wallet-only-with-no-fleet-subscriptio-cd10753a": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Wallet & per-second billing",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "Fleet Subscription Plan",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790853779927,
+      "id": "inline:billing-is-wallet-only-with-no-fleet-subscriptio-cd10753a",
+      "provenBy": {
+        "at": 1790853780318,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790853780318"
+      },
+      "state": "proved",
+      "statement": "Billing is wallet-only with no fleet subscription plans",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790853780421
+    },
+    "inline:billing-page-shows-wallet-only-no-subscription-p-0085ec59": {
+      "binding": {
+        "contains": "Wallet & per-second billing",
+        "kind": "text"
+      },
+      "declaredAt": 1790853446510,
+      "id": "inline:billing-page-shows-wallet-only-no-subscription-p-0085ec59",
+      "provenBy": {
+        "at": 1790853447820,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790853447819"
+      },
+      "state": "proved",
+      "statement": "Billing page shows wallet only, no subscription plans",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790853447847
+    },
+    "inline:business-hours-and-timezone-saved-from-the-agent-53028e3d": {
+      "binding": {
+        "kind": "net",
+        "method": "PUT",
+        "status": 200,
+        "urlContains": "telephony-profile"
+      },
+      "declaredAt": 1790835441325,
+      "id": "inline:business-hours-and-timezone-saved-from-the-agent-53028e3d",
+      "state": "bound",
+      "statement": "Business hours and timezone saved from the agent workspace reach the same telephony profile endpoint with the same field names.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790835441404
+    },
+    "inline:call-history-uses-one-status-dropdown-and-reques-09b1a6be": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "GET",
+            "status": 200,
+            "urlContains": "status=missed"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "calls-status-filter"
+            }
+          },
+          {
+            "absent": true,
+            "kind": "console",
+            "level": "error"
+          }
+        ]
+      },
+      "declaredAt": 1792578032638,
+      "id": "inline:call-history-uses-one-status-dropdown-and-reques-09b1a6be",
+      "state": "bound",
+      "statement": "Call history uses one status dropdown and requests the selected status from the server without local call-count badges.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792578032696
+    },
+    "inline:changing-a-lead-s-pipeline-stage-from-the-agent-8213a879": {
+      "binding": {
+        "kind": "net",
+        "method": "PATCH",
+        "status": 200,
+        "urlContains": "/api/leads/"
+      },
+      "declaredAt": 1790835284414,
+      "id": "inline:changing-a-lead-s-pipeline-stage-from-the-agent-8213a879",
+      "state": "bound",
+      "statement": "Changing a lead's pipeline stage from the agent workspace writes through the existing lead stage endpoint.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790835284474
+    },
+    "inline:click-connect-account-for-google-calendar-to-tes-62ceae5e": {
+      "binding": {
+        "kind": "net",
+        "urlContains": "/api/integrations/composio/connect"
+      },
+      "declaredAt": 1791135130667,
+      "id": "inline:click-connect-account-for-google-calendar-to-tes-62ceae5e",
+      "state": "bound",
+      "statement": "Click Connect Account for Google Calendar to test OAuth connect flow initiation",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135130710
+    },
+    "inline:click-continue-sign-in-to-open-sign-in-modal-3180a56d": {
+      "binding": {
+        "contains": "Sign in to your console",
+        "kind": "text"
+      },
+      "declaredAt": 1791948192541,
+      "id": "inline:click-continue-sign-in-to-open-sign-in-modal-3180a56d",
+      "provenBy": {
+        "at": 1791948193028,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1791948193028"
+      },
+      "state": "proved",
+      "statement": "Click Continue - sign in to open sign-in modal",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/ConsoleSignInRequired.jsx"
+        ]
+      },
+      "updatedAt": 1791948193255
+    },
+    "inline:connect-google-calendar-integration-in-console-bb4d0c1f": {
+      "binding": {
+        "kind": "net",
+        "urlContains": "/api/integrations/GOOGLECALENDAR/connect"
+      },
+      "declaredAt": 1791135346325,
+      "id": "inline:connect-google-calendar-integration-in-console-bb4d0c1f",
+      "state": "bound",
+      "statement": "Connect Google Calendar integration in console",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135346463
+    },
+    "inline:console-sync-banner-is-gone-agents-load-from-api-9dc641e8": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "absent": true,
+            "contains": "Some console data could not be loaded",
+            "kind": "text"
+          },
+          {
+            "contains": "AI Employees",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790854447066,
+      "id": "inline:console-sync-banner-is-gone-agents-load-from-api-9dc641e8",
+      "provenBy": {
+        "at": 1790854447604,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790854447604"
+      },
+      "state": "proved",
+      "statement": "Console sync banner is gone; agents load from API without Not found",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790854447678
+    },
+    "inline:console-sync-banner-is-gone-and-phone-line-count-c7d1974d": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "absent": true,
+            "contains": "Some console data could not be loaded",
+            "kind": "text"
+          },
+          {
+            "contains": "Phone lines",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790853779922,
+      "id": "inline:console-sync-banner-is-gone-and-phone-line-count-c7d1974d",
+      "provenBy": {
+        "at": 1790853780242,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790853780242"
+      },
+      "state": "proved",
+      "statement": "Console sync banner is gone and phone line count shows assigned number",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "route": "/console"
+      },
+      "updatedAt": 1790853780296
+    },
+    "inline:creating-an-agent-lands-the-operator-on-the-agen-5e758005": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-tab-overview"
+        }
+      },
+      "declaredAt": 1790834420237,
+      "id": "inline:creating-an-agent-lands-the-operator-on-the-agen-5e758005",
+      "provenBy": {
+        "at": 1790834431159,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790834431156"
+      },
+      "state": "proved",
+      "statement": "Creating an agent lands the operator on the agent workspace Overview tab, where per-agent call activity and pipeline are visible.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/CreateAgentWizard.jsx"
+        ]
+      },
+      "updatedAt": 1790834431217
+    },
+    "inline:creating-an-ai-employee-lands-the-operator-in-th-254f8110": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call"
+        }
+      },
+      "declaredAt": 1790836372202,
+      "id": "inline:creating-an-ai-employee-lands-the-operator-in-th-254f8110",
+      "provenBy": {
+        "at": 1790836454457,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790836454457"
+      },
+      "state": "proved",
+      "statement": "Creating an AI employee lands the operator in the agent workspace with the five-tab shell and a Test call header action available.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/CreateAgentWizard.jsx"
+        ]
+      },
+      "updatedAt": 1790836454478
+    },
+    "inline:customer-initiates-razorpay-wallet-top-up-for-in-6e0faf57": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 200,
+            "urlContains": "/api/billing/razorpay/create-order"
+          },
+          {
+            "contains": "Opening",
+            "kind": "text"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "add-funds-modal"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790848927121,
+      "id": "inline:customer-initiates-razorpay-wallet-top-up-for-in-6e0faf57",
+      "state": "bound",
+      "statement": "Customer initiates Razorpay wallet top-up for INR 415",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790848927629
+    },
+    "inline:customer-tops-up-wallet-with-razorpay-inr-no-str-91055f6a": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Razorpay",
+            "kind": "text"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "Stripe",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790848892801,
+      "id": "inline:customer-tops-up-wallet-with-razorpay-inr-no-str-91055f6a",
+      "state": "bound",
+      "statement": "Customer tops up wallet with Razorpay INR — no Stripe path",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790848892875
+    },
+    "inline:disconnect-google-calendar-integration-from-work-a22621de": {
+      "binding": {
+        "kind": "net",
+        "urlContains": "/api/integrations/GOOGLECALENDAR"
+      },
+      "declaredAt": 1791135465158,
+      "id": "inline:disconnect-google-calendar-integration-from-work-a22621de",
+      "state": "bound",
+      "statement": "Disconnect Google Calendar integration from workspace",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135465238
+    },
+    "inline:enter-password-into-signin-form-7516e62a": {
+      "declaredAt": 1791135105719,
+      "id": "inline:enter-password-into-signin-form-7516e62a",
+      "state": "declared",
+      "statement": "Enter password into signin form",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135105734
+    },
+    "inline:enter-test-email-mohansaiteja-99-gmail-com-into-8e72a9b1": {
+      "declaredAt": 1791135100988,
+      "id": "inline:enter-test-email-mohansaiteja-99-gmail-com-into-8e72a9b1",
+      "state": "declared",
+      "statement": "Enter test email mohansaiteja.99@gmail.com into signin form",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135101080
+    },
+    "inline:every-industry-on-the-landing-page-plays-a-real-982871e2": {
+      "binding": {
+        "kind": "signal",
+        "name": "voxly:voice-sample-audible"
+      },
+      "declaredAt": 1791023741690,
+      "id": "inline:every-industry-on-the-landing-page-plays-a-real-982871e2",
+      "provenBy": {
+        "at": 1791023743734,
+        "grade": "signal",
+        "verdictId": "reticle_act_and_wait:1791023743734"
+      },
+      "state": "proved",
+      "statement": "every industry on the landing page plays a real clip rendered by the live speech model, not the browser's built-in voice",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/TalkToAiSection.jsx"
+        ]
+      },
+      "updatedAt": 1791023743803
+    },
+    "inline:google-calendar-card-shows-connect-button-after-8d769aac": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "connect-btn-googlecalendar"
+        }
+      },
+      "declaredAt": 1791135470958,
+      "id": "inline:google-calendar-card-shows-connect-button-after-8d769aac",
+      "provenBy": {
+        "at": 1791135471061,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1791135471061"
+      },
+      "state": "proved",
+      "statement": "Google Calendar card shows Connect button after disconnection",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/IntegrationsModule.jsx"
+        ]
+      },
+      "updatedAt": 1791135471106
+    },
+    "inline:google-calendar-shows-active-status-and-disconne-9ac7af4a": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "disconnect-btn-googlecalendar"
+        }
+      },
+      "declaredAt": 1791135440689,
+      "id": "inline:google-calendar-shows-active-status-and-disconne-9ac7af4a",
+      "provenBy": {
+        "at": 1791135440953,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1791135440952"
+      },
+      "state": "proved",
+      "statement": "Google Calendar shows Active status and Disconnect button after OAuth activation",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/IntegrationsModule.jsx"
+        ]
+      },
+      "updatedAt": 1791135441002
+    },
+    "inline:google-sign-in-returns-the-user-to-the-dialtact-c73bf1fb": {
+      "binding": {
+        "contains": "#dashboard/employees",
+        "kind": "route"
+      },
+      "declaredAt": 1791984701026,
+      "id": "inline:google-sign-in-returns-the-user-to-the-dialtact-c73bf1fb",
+      "provenBy": {
+        "at": 1791984715626,
+        "grade": "presence",
+        "runId": "drive-s411bee4b-e536-4dc1-b595-73cfebd7ab5f",
+        "verdictId": "reticle_assert:1791984715626"
+      },
+      "state": "proved",
+      "statement": "Google sign-in returns the user to the Dialtact console with an authenticated workspace.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1791984715641
+    },
+    "inline:open-sign-in-dialog-b1476163": {
+      "declaredAt": 1791970894252,
+      "id": "inline:open-sign-in-dialog-b1476163",
+      "state": "declared",
+      "statement": "Open sign-in dialog",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791970894280
+    },
+    "inline:open-sign-in-dialog-by-clicking-continue-sign-in-f80d4c52": {
+      "binding": {
+        "contains": "Sign in to your console",
+        "kind": "text"
+      },
+      "declaredAt": 1791947494601,
+      "id": "inline:open-sign-in-dialog-by-clicking-continue-sign-in-f80d4c52",
+      "provenBy": {
+        "at": 1791947494808,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1791947494808"
+      },
+      "state": "proved",
+      "statement": "Open sign-in dialog by clicking Continue - sign in",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/ConsoleSignInRequired.jsx"
+        ]
+      },
+      "updatedAt": 1791947494848
+    },
+    "inline:open-test-call-modal-from-agent-workspace-header-2ee9f12c": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call-panel-inner"
+        }
+      },
+      "declaredAt": 1790850892072,
+      "id": "inline:open-test-call-modal-from-agent-workspace-header-2ee9f12c",
+      "state": "bound",
+      "statement": "Open test call modal from agent workspace header so the call chrome with timer and 3D avatar is visible.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790850892997
+    },
+    "inline:open-the-test-call-modal-so-operators-get-call-c-08cc1200": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call-panel-inner"
+        }
+      },
+      "declaredAt": 1790851206989,
+      "id": "inline:open-the-test-call-modal-so-operators-get-call-c-08cc1200",
+      "provenBy": {
+        "at": 1790851208009,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790851208006"
+      },
+      "state": "proved",
+      "statement": "Open the test call modal so operators get call chrome with timer and 3D avatar.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790851208115
+    },
+    "inline:operator-confirms-bulk-campaign-create-returned-1729483f": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "GET",
+            "status": 200,
+            "urlContains": "/api/billing/wallet"
+          },
+          {
+            "contains": "₹",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790846713705,
+      "id": "inline:operator-confirms-bulk-campaign-create-returned-1729483f",
+      "provenBy": {
+        "at": 1790846717932,
+        "grade": "net",
+        "verdictId": "reticle_act_and_wait:1790846717931"
+      },
+      "state": "proved",
+      "statement": "Operator confirms bulk campaign create returned success and dialer started concurrent calls",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790846717981
+    },
+    "inline:operator-opens-calls-tab-to-dial-outbound-and-ru-0a5d5787": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "contains": "Place call",
+            "kind": "text"
+          },
+          {
+            "contains": "Bulk",
+            "kind": "text"
+          },
+          {
+            "contains": "Destination",
+            "kind": "text"
+          },
+          {
+            "contains": "concurrency",
+            "kind": "text"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "agent-dial-bulk"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790846437374,
+      "id": "inline:operator-opens-calls-tab-to-dial-outbound-and-ru-0a5d5787",
+      "state": "bound",
+      "statement": "Operator opens Calls tab to dial outbound and run bulk concurrent campaigns",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790846437444
+    },
+    "inline:operator-opens-mohan-agent-builder-to-place-outb-cd07e743": {
+      "binding": {
+        "contains": "Calls",
+        "kind": "text"
+      },
+      "declaredAt": 1790846420080,
+      "id": "inline:operator-opens-mohan-agent-builder-to-place-outb-cd07e743",
+      "state": "bound",
+      "statement": "Operator opens Mohan agent builder to place outbound and bulk campaign calls",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790846420222
+    },
+    "inline:operator-opens-outbound-dial-panel-to-place-a-li-41c58251": {
+      "binding": {
+        "kind": "anyOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "agent-dial-bulk"
+            }
+          },
+          {
+            "contains": "Place call",
+            "kind": "text"
+          },
+          {
+            "contains": "E.164",
+            "kind": "text"
+          },
+          {
+            "contains": "campaign",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790846458456,
+      "id": "inline:operator-opens-outbound-dial-panel-to-place-a-li-41c58251",
+      "state": "bound",
+      "statement": "Operator opens Outbound dial panel to place a live PSTN call and start a concurrent bulk campaign",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790846458524
+    },
+    "inline:operator-places-a-live-outbound-pstn-call-to-918-50cb110a": {
+      "binding": {
+        "kind": "net",
+        "method": "POST",
+        "urlContains": "/api/calls/outbound"
+      },
+      "declaredAt": 1790846473131,
+      "id": "inline:operator-places-a-live-outbound-pstn-call-to-918-50cb110a",
+      "state": "bound",
+      "statement": "Operator places a live outbound PSTN call to +918897908470 from the agent workspace",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790846473186
+    },
+    "inline:operator-places-a-live-outbound-pstn-call-to-918-9342a5d5": {
+      "binding": {
+        "kind": "net",
+        "method": "POST",
+        "status": 200,
+        "urlContains": "/api/calls/outbound"
+      },
+      "declaredAt": 1790846511887,
+      "id": "inline:operator-places-a-live-outbound-pstn-call-to-918-9342a5d5",
+      "state": "bound",
+      "statement": "Operator places a live outbound PSTN call to +918897908470 from Mohan agent workspace",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790846511945
+    },
+    "inline:platform-admin-views-tenant-wallet-balances-in-i-9888e2f0": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "admin-wallet-panel"
+            }
+          },
+          {
+            "contains": "INR",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1790846731283,
+      "id": "inline:platform-admin-views-tenant-wallet-balances-in-i-9888e2f0",
+      "provenBy": {
+        "at": 1790846732353,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790846732352"
+      },
+      "state": "proved",
+      "statement": "Platform admin views tenant wallet balances in INR and can adjust them",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/Sidebar.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790846732391
+    },
+    "inline:re-connect-google-calendar-to-leave-it-active-fo-f38b107b": {
+      "binding": {
+        "kind": "net",
+        "urlContains": "/api/integrations/GOOGLECALENDAR/connect"
+      },
+      "declaredAt": 1791135475231,
+      "id": "inline:re-connect-google-calendar-to-leave-it-active-fo-f38b107b",
+      "state": "bound",
+      "statement": "Re-connect Google Calendar to leave it active for workspace",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135475277
+    },
+    "inline:redeeming-a-password-reset-link-leaves-the-perso-c75c8cb8": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "sidebar-wallet-pill"
+        }
+      },
+      "declaredAt": 1791021387890,
+      "id": "inline:redeeming-a-password-reset-link-leaves-the-perso-c75c8cb8",
+      "provenBy": {
+        "at": 1791021395903,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1791021395903"
+      },
+      "state": "proved",
+      "statement": "redeeming a password reset link leaves the person signed in on their console, without asking them to retype the password",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/AuthModal.jsx"
+        ]
+      },
+      "updatedAt": 1791021395924
+    },
+    "inline:redeeming-a-password-reset-link-signs-the-person-6bf8ef40": {
+      "binding": {
+        "contains": "Welcome back",
+        "kind": "text"
+      },
+      "declaredAt": 1791021072445,
+      "id": "inline:redeeming-a-password-reset-link-signs-the-person-6bf8ef40",
+      "state": "bound",
+      "statement": "redeeming a password reset link signs the person straight into their console instead of asking them to retype the password they just set",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791021072480
+    },
+    "inline:refresh-reloads-call-stats-and-history-without-a-78af6dd9": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "status": 200,
+            "urlContains": "/api/calls/stats"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "session expired",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790859538722,
+      "id": "inline:refresh-reloads-call-stats-and-history-without-a-78af6dd9",
+      "provenBy": {
+        "at": 1790859542732,
+        "grade": "net",
+        "verdictId": "reticle_act_and_wait:1790859542731"
+      },
+      "state": "proved",
+      "statement": "Refresh reloads call stats and history without auth failure.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1790859542779
+    },
+    "inline:refreshing-call-history-keeps-tenant-data-loaded-8abd72d5": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "All calls",
+            "kind": "text"
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "session expired",
+              "kind": "text"
+            }
+          },
+          {
+            "kind": "not",
+            "predicate": {
+              "contains": "could not be loaded",
+              "kind": "text"
+            }
+          }
+        ]
+      },
+      "declaredAt": 1790859526665,
+      "id": "inline:refreshing-call-history-keeps-tenant-data-loaded-8abd72d5",
+      "state": "bound",
+      "statement": "Refreshing call history keeps tenant data loaded without session-expired sync errors.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790859526824
+    },
+    "inline:retry-sync-is-unnecessary-because-data-already-l-50c88dac": {
+      "binding": {
+        "contains": "AI Employees (2)",
+        "kind": "text"
+      },
+      "declaredAt": 1790854447169,
+      "id": "inline:retry-sync-is-unnecessary-because-data-already-l-50c88dac",
+      "state": "bound",
+      "statement": "Retry sync is unnecessary because data already loaded",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790854447424
+    },
+    "inline:saving-a-voice-setup-does-not-leave-an-unpublish-4d9c7736": {
+      "binding": {
+        "absent": true,
+        "kind": "element",
+        "query": {
+          "testid": "agent-studio-unsaved"
+        }
+      },
+      "declaredAt": 1792818819773,
+      "id": "inline:saving-a-voice-setup-does-not-leave-an-unpublish-4d9c7736",
+      "provenBy": {
+        "at": 1792818819895,
+        "grade": "presence",
+        "runId": "drive-lease-9efb05e1-b17d-446a-a6ee-d173067332c5",
+        "verdictId": "reticle_assert:1792818819894"
+      },
+      "state": "proved",
+      "statement": "Saving a voice setup does not leave an unpublished script change.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792818819919
+    },
+    "inline:saving-from-the-agent-workspace-script-tab-persi-554e2153": {
+      "binding": {
+        "kind": "net",
+        "method": "PUT",
+        "status": 200,
+        "urlContains": "/business-brain/"
+      },
+      "declaredAt": 1790834756138,
+      "id": "inline:saving-from-the-agent-workspace-script-tab-persi-554e2153",
+      "state": "bound",
+      "statement": "Saving from the agent workspace Script tab persists the calling script through the existing calling-script endpoint.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790834756191
+    },
+    "inline:submit-sign-in-form-ca9989d4": {
+      "declaredAt": 1791970928713,
+      "id": "inline:submit-sign-in-form-ca9989d4",
+      "state": "declared",
+      "statement": "Submit sign in form",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791970928723
+    },
+    "inline:submit-signin-form-and-authenticate-as-mohansait-32cb9afe": {
+      "binding": {
+        "kind": "net",
+        "urlContains": "/auth/login"
+      },
+      "declaredAt": 1791135114080,
+      "id": "inline:submit-signin-form-and-authenticate-as-mohansait-32cb9afe",
+      "state": "bound",
+      "statement": "Submit signin form and authenticate as mohansaiteja.99@gmail.com",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791135114139
+    },
+    "inline:switch-test-call-to-live-number-mode-without-pst-8756a1fb": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "test-call-live-number"
+        }
+      },
+      "declaredAt": 1790851215086,
+      "id": "inline:switch-test-call-to-live-number-mode-without-pst-8756a1fb",
+      "provenBy": {
+        "at": 1790851216100,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1790851216099"
+      },
+      "state": "proved",
+      "statement": "Switch test call to live-number mode without PSTN wording.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentTestCallPanel.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790851216301
+    },
+    "inline:tenants-can-choose-a-ready-tier-and-then-select-efb3a926": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "role",
+              "scope": "[data-testid='voice-stack-selector']",
+              "value": "combobox"
+            }
+          },
+          {
+            "kind": "settled",
+            "quietMs": 500
+          }
+        ]
+      },
+      "declaredAt": 1792609525162,
+      "id": "inline:tenants-can-choose-a-ready-tier-and-then-select-efb3a926",
+      "provenBy": {
+        "at": 1792609525883,
+        "grade": "presence",
+        "runId": "drive-lease-9605dc8b-861d-4b5a-b378-d8914e39b0f3",
+        "verdictId": "reticle_act_and_wait:1792609525883"
+      },
+      "state": "proved",
+      "statement": "Tenants can choose a ready tier and then select its supported engine, model, and voice before saving.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792609525907
+    },
+    "inline:tenants-should-see-only-approved-voice-stack-cho-6967d6aa": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Active: Telugu (te-IN)",
+            "kind": "text"
+          },
+          {
+            "contains": "No approved voice setup is available for this language yet.",
+            "kind": "text"
+          },
+          {
+            "kind": "settled",
+            "quietMs": 500
+          }
+        ]
+      },
+      "declaredAt": 1792609479275,
+      "id": "inline:tenants-should-see-only-approved-voice-stack-cho-6967d6aa",
+      "state": "bound",
+      "statement": "Tenants should see only approved voice stack choices for the language they select, and keep their existing voice active when no stack is ready.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792609479345
+    },
+    "inline:the-loaded-mascot-remains-interactive-after-init-9a01a3b6": {
+      "binding": {
+        "contains": "Hello! Hiii! 👋 I'm Dialtact! Nice to meet you!",
+        "kind": "text"
+      },
+      "declaredAt": 1791875404743,
+      "id": "inline:the-loaded-mascot-remains-interactive-after-init-9a01a3b6",
+      "provenBy": {
+        "at": 1791875552502,
+        "grade": "presence",
+        "verdictId": "reticle_act_and_wait:1791875552502"
+      },
+      "state": "proved",
+      "statement": "The loaded mascot remains interactive after initial loading and opens its greeting when tapped.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/three/VoxlyScene.jsx"
+        ]
+      },
+      "updatedAt": 1791875552532
+    },
+    "inline:the-marketing-page-plays-the-product-s-own-neura-275c6600": {
+      "binding": {
+        "kind": "signal",
+        "name": "voxly:voice-sample-audible"
+      },
+      "declaredAt": 1791015730967,
+      "id": "inline:the-marketing-page-plays-the-product-s-own-neura-275c6600",
+      "provenBy": {
+        "at": 1791015891637,
+        "grade": "signal",
+        "verdictId": "reticle_act_and_wait:1791015891637"
+      },
+      "state": "proved",
+      "statement": "the marketing page plays the product's own neural voice per industry, driven by real audio rather than a browser speech voice",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/TalkToAiSection.jsx"
+        ]
+      },
+      "updatedAt": 1791015891665
+    },
+    "inline:the-open-builder-action-on-an-agent-card-enters-dab944d9": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-panel-overview"
+        }
+      },
+      "declaredAt": 1790836534798,
+      "id": "inline:the-open-builder-action-on-an-agent-card-enters-dab944d9",
+      "state": "bound",
+      "statement": "The Open builder action on an agent card enters the workspace with Overview selected, not Script.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790836534820
+    },
+    "inline:the-phone-number-buying-experience-never-present-c934920e": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Sign in to build your agent",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "+14155550233",
+            "kind": "text"
+          },
+          {
+            "absent": true,
+            "contains": "+12125550399",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1792426665153,
+      "id": "inline:the-phone-number-buying-experience-never-present-c934920e",
+      "provenBy": {
+        "at": 1792426665402,
+        "grade": "presence",
+        "runId": "drive-s3eb9256b-35d5-49d6-8ff3-1ba6c8effc81",
+        "verdictId": "reticle_assert:1792426665402"
+      },
+      "state": "proved",
+      "statement": "The phone number buying experience never presents seeded demo numbers as provider inventory.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792426665426
+    },
+    "inline:the-tenant-can-open-an-agent-voice-editor-and-se-3aefa5f9": {
+      "binding": {
+        "contains": "agent=voice-reticle-agent",
+        "kind": "route"
+      },
+      "declaredAt": 1792610933482,
+      "id": "inline:the-tenant-can-open-an-agent-voice-editor-and-se-3aefa5f9",
+      "provenBy": {
+        "at": 1792610933609,
+        "grade": "presence",
+        "runId": "drive-lease-b2a54494-dcf6-4871-b05f-919f97991ca4",
+        "verdictId": "reticle_act_and_wait:1792610933609"
+      },
+      "state": "proved",
+      "statement": "The tenant can open an agent voice editor and sees only administrator-approved, ready low or standard voice profiles.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792610933630
+    },
+    "inline:the-tenant-voice-editor-only-offers-administrato-299bbc15": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "step=voice",
+            "kind": "route"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-stack-empty"
+            }
+          },
+          {
+            "kind": "settled"
+          }
+        ]
+      },
+      "declaredAt": 1792610901174,
+      "id": "inline:the-tenant-voice-editor-only-offers-administrato-299bbc15",
+      "provenBy": {
+        "at": 1792610939369,
+        "grade": "presence",
+        "runId": "drive-lease-b2a54494-dcf6-4871-b05f-919f97991ca4",
+        "verdictId": "reticle_act_and_wait:1792610939369"
+      },
+      "state": "proved",
+      "statement": "The tenant voice editor only offers administrator-approved, ready low or standard profiles, and keeps the existing voice setup unchanged when none are ready.",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1792610939392
+    },
+    "inline:verify-login-error-is-displayed-7fdafc32": {
+      "binding": {
+        "contains": "Invalid email or password",
+        "kind": "text"
+      },
+      "declaredAt": 1791970961018,
+      "id": "inline:verify-login-error-is-displayed-7fdafc32",
+      "state": "bound",
+      "statement": "Verify login error is displayed",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1791970961054
+    },
+    "inline:verify-reticle-connects-to-the-running-voxly-con-2de77407": {
+      "binding": {
+        "contains": "Sign in to build your agent",
+        "kind": "text"
+      },
+      "declaredAt": 1791947475272,
+      "id": "inline:verify-reticle-connects-to-the-running-voxly-con-2de77407",
+      "provenBy": {
+        "at": 1791947475342,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1791947475342"
+      },
+      "state": "proved",
+      "statement": "Verify Reticle connects to the running Voxly console and reads live DOM predicates",
+      "status": "proved",
+      "subject": "unsorted",
+      "updatedAt": 1791947475357
+    },
+    "inline:voxly-ai-landing-instrumented-after-reticle-init-7b0c610e": {
+      "binding": {
+        "contains": "Voxly",
+        "kind": "text"
+      },
+      "declaredAt": 1790832722375,
+      "id": "inline:voxly-ai-landing-instrumented-after-reticle-init-7b0c610e",
+      "state": "bound",
+      "statement": "voxly-ai landing instrumented after Reticle init",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1790832722607
+    },
+    "inline:wallet-balance-shown-in-dollars-on-the-test-call-5d90d096": {
+      "binding": {
+        "contains": "Wallet $",
+        "kind": "text"
+      },
+      "declaredAt": 1790851233300,
+      "id": "inline:wallet-balance-shown-in-dollars-on-the-test-call-5d90d096",
+      "provenBy": {
+        "at": 1790851233521,
+        "grade": "presence",
+        "verdictId": "reticle_assert:1790851233520"
+      },
+      "state": "proved",
+      "statement": "Wallet balance shown in dollars on the test call chrome.",
+      "status": "proved",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentTestCallPanel.jsx"
+        ],
+        "route": "/console"
+      },
+      "updatedAt": 1790851233621
+    },
+    "primary-call-status-filter": {
+      "declaredAt": 1792578005996,
+      "id": "primary-call-status-filter",
+      "state": "declared",
+      "statement": "Call history uses a compact status dropdown without misleading call counts and requests the selected status from the server.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "updatedAt": 1792578006021
+    },
+    "signup-completes": {
+      "declaredAt": 1791031620509,
+      "id": "signup-completes",
+      "state": "declared",
+      "statement": "A person who creates an account with an email and a password can finish email verification and reach the console — signup never dead-ends on a generic 'Unable to create an account with these details', and an email that is already registered is told what actually happened along with a way to proceed.",
+      "status": "proposed",
+      "subject": "unsorted",
+      "surface": {
+        "files": [
+          "src/components/AuthModal.jsx"
+        ]
+      },
+      "updatedAt": 1791031677735
+    }
+  },
+  "subject": "unsorted",
+  "version": 1
+}

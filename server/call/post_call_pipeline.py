@@ -1,10 +1,12 @@
-"""Post-call pipeline — outcome LLM after hang-up. Never blocks call/end."""
+"""Post-call pipeline â€” outcome LLM after hang-up. Never blocks call/end."""
 from __future__ import annotations
 
 import asyncio
 import json
+import re
 from datetime import datetime, timezone
 from typing import Any
+from weakref import WeakValueDictionary
 
 from server.call.call_context import get as get_ctx
 from server.call.call_ledger import call_ledger
@@ -12,16 +14,27 @@ from server.call.call_store import call_store
 from server.call.memory_manager import memory_manager
 from server.call.outcome_schema import (
     DISPOSITIONS,
+    MODEL_STATUS_TAGS,
     OUTCOME_JSON_SCHEMA,
+    derive_status_tags,
     empty_outcome,
+    merge_outcome_facts,
+    normalize_custom_tags,
+    normalize_extracted_fields,
+    normalize_model_tags,
+    normalize_unanswered_questions,
     validate_disposition,
 )
 from server.call.paths import call_dir
 from server.config.env import get_settings
+from server.realtime.language_guard import filter_unrelated_scripts
+from server.realtime.models import http_openai_model, is_realtime_llm_model
 from server.utils.logger import logger
 
-_QUEUE: asyncio.Queue[str] = asyncio.Queue()
+_QUEUE: asyncio.Queue[tuple[str, bool]] = asyncio.Queue(maxsize=1024)
 _WORKER: asyncio.Task | None = None
+_CALL_LOCKS: WeakValueDictionary[str, asyncio.Lock] = WeakValueDictionary()
+_PENDING: dict[str, bool] = {}
 
 
 def _utcnow() -> str:
@@ -30,6 +43,10 @@ def _utcnow() -> str:
 
 def outcome_path(call_id: str):
     return call_dir(call_id) / "outcome.json"
+
+
+def call_summary_path(call_id: str):
+    return call_dir(call_id) / "call_summary.json"
 
 
 def attempts_path(call_id: str):
@@ -47,9 +64,40 @@ def read_outcome(call_id: str) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
-async def enqueue(call_id: str) -> None:
-    await _QUEUE.put(call_id)
+async def enqueue(call_id: str, *, force: bool = False) -> None:
+    try:
+        await call_store.update(call_id, {"finalization_status": "pending"})
+    except Exception as exc:
+        logger.warning(f"[CALL] failed to set pending finalization_status for {call_id}: {exc}")
     _ensure_worker()
+    if call_id in _PENDING:
+        _PENDING[call_id] = _PENDING[call_id] or force
+        return
+    _PENDING[call_id] = force
+    try:
+        await _QUEUE.put((call_id, force))
+    except BaseException:
+        _PENDING.pop(call_id, None)
+        raise
+
+
+async def recover_pending_post_calls() -> int:
+    """Find any calls whose post-call processing was interrupted by restart and re-queue."""
+    try:
+        pending = await call_store.list_pending_finalization()
+        count = 0
+        for rec in pending:
+            cid = rec.get("call_id")
+            if cid:
+                logger.info(f"[RECOVERY] Re-enqueuing interrupted post-call analysis for {cid}")
+                await enqueue(str(cid), force=True)
+                count += 1
+        if count:
+            logger.info(f"[RECOVERY] Re-enqueued {count} pending post-call jobs")
+        return count
+    except Exception as exc:
+        logger.warning(f"[RECOVERY] post-call recovery failed: {exc}")
+        return 0
 
 
 def _ensure_worker() -> None:
@@ -64,9 +112,10 @@ def _ensure_worker() -> None:
 
 async def _drain() -> None:
     while True:
-        call_id = await _QUEUE.get()
+        call_id, force = await _QUEUE.get()
+        force = _PENDING.pop(call_id, force) or force
         try:
-            await run_outcome(call_id)
+            await run_outcome(call_id, force=force)
         except Exception as e:
             logger.warning(f"[CALL] post-call failed call={call_id} err={str(e)[:200]}")
             await _mark_outcome(call_id, "failed")
@@ -80,13 +129,33 @@ async def process_now(call_id: str) -> dict[str, Any]:
 
 
 async def run_outcome(call_id: str, *, force: bool = False) -> dict[str, Any]:
+    lock = _CALL_LOCKS.setdefault(call_id, asyncio.Lock())
+    async with lock:
+        existing = read_outcome(call_id)
+        if (
+            existing
+            and existing.get("generation_ok")
+            and existing.get("prompt_version") == "outcome_v4"
+            and not force
+        ):
+            if not existing.get("integration_dispatch_complete"):
+                await reconcile_and_dispatch_post_call(call_id, existing)
+                outcome_path(call_id).write_text(json.dumps(existing, ensure_ascii=False, indent=2), encoding="utf-8")
+                await _mark_outcome(call_id, "complete")
+            return existing
+        return await _run_outcome_locked(call_id)
+
+
+async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     settings = get_settings()
-    model = settings.post_call_llm_model
+    model = http_openai_model(settings)
     await _mark_outcome(call_id, "processing")
     transcript = call_ledger.read_lines(call_id)
     snapshot = memory_manager.get_snapshot(call_id)
     meta = call_ledger.read_meta(call_id)
-    payload, error = await _generate_outcome(transcript, snapshot, meta, model=model)
+    from server.services.saas.post_call_costs import capture_post_call_cost
+    with capture_post_call_cost(call_id):
+        payload, error = await _generate_outcome(transcript, snapshot, meta, model=model)
     attempt = {
         "ts": _utcnow(),
         "model": model,
@@ -96,18 +165,186 @@ async def run_outcome(call_id: str, *, force: bool = False) -> dict[str, Any]:
     }
     _append_attempt(call_id, attempt)
     payload["model"] = model
-    payload["prompt_version"] = "outcome_v1"
+    payload["prompt_version"] = "outcome_v4"
     payload["generated_at"] = _utcnow()
     payload["generation_ok"] = error is None
     disposition = validate_disposition(payload.get("disposition"))
     if payload.get("disposition") not in DISPOSITIONS:
         payload["disposition"] = disposition
         payload["notes"] = (payload.get("notes") or "") + " (disposition coerced to no_outcome)"
+    _finalize_summaries(payload, _call_language(meta))
+    facts = merge_outcome_facts(
+        payload.get("extracted_fields"),
+        snapshot,
+        caller_id=str(meta.get("caller_id") or "") or None,
+        callee_e164=str(meta.get("callee_e164") or "") or None,
+        direction=str(meta.get("direction") or "") or None,
+    )
+    handoff = meta.get("language_callback")
+    if isinstance(handoff, dict):
+        payload["language_callback"] = handoff
+        if handoff.get("status") == "requested":
+            payload["disposition"] = "callback_required"
+            facts["preferred_language"] = handoff["caller_language"]
+            facts["callback_requested"] = "true"
+            payload["summary_en"] = (payload.get("summary_en") or "") + " Language handoff: " + handoff["summary"]
+            payload["next_action"] = f"Arrange a callback in {handoff['caller_language']}. No callback time has been booked."
+            from server.call.language_switch import code_for_language_name, language_name
+            requested_code = code_for_language_name(str(handoff.get("caller_language") or ""))
+            if requested_code:
+                # Tagged as a language switch call: the console lists it under
+                # "Callback needed in another language" for the same agent.
+                facts["requested_language"] = facts["preferred_language"] = requested_code
+                facts["language_switch"] = "true"
+                payload["language_switch"] = {"requested_language": requested_code,
+                                              "original_language": handoff.get("configured_language") or meta.get("language")}
+                payload["next_action"] = (f"Call back in {language_name(requested_code)} with the same agent "
+                                          "(Callback needed in another language). No callback time has been booked.")
+    payload["extracted_fields"] = facts
+    payload["facts"] = facts
+    from server.call.order_confirmation import enforce_order_proof, read_order_proof
+
+    order_proof = read_order_proof(
+        call_id, tenant_id=str(meta.get("tenant_id") or "") or None
+    )
+    downgraded = enforce_order_proof(payload, order_proof)
+    # The proof check rebuilds the facts dict; later server facts must land in the saved one.
+    facts = payload["facts"] if isinstance(payload.get("facts"), dict) else facts
+    payload["facts"] = payload["extracted_fields"] = facts
+    if downgraded:
+        # Codes only: the proof holds customer details, the transcript holds words.
+        logger.info("[ORDER] outcome downgraded call=%s reason=%s", call_id, downgraded)
+        payload["summary_en"] = (
+            (payload.get("summary_en") or "").rstrip()
+            + "\n\nServer check: no confirmed order was recorded for this call, "
+            "so it was not marked as converted."
+        ).strip()
+    # Server records outrank a model reading of the transcript, in both directions.
+    if order_proof and str(order_proof.get("status") or "") == "confirmed" and payload.get("disposition") != "converted":
+        payload["disposition"] = "converted"
+        payload["next_action"] = payload.get("next_action") or "Fulfil the confirmed order recorded on this call."
+    if isinstance(meta.get("human_handoff"), dict) and meta["human_handoff"]:
+        # A saved request for a manager/owner is server truth, not a model reading,
+        # and it is a task for the business, never an objection.
+        facts["handoff_requested"] = "true"
+        payload["human_handoff"] = meta["human_handoff"]
+        payload["objections"] = [o for o in payload.get("objections") or [] if not _HANDOFF_OBJECTION.search(str(o))]
+        if payload.get("disposition") in {None, "no_outcome", "new_lead", "interested"}:
+            payload["disposition"] = "callback_required"
+    saved_callback = meta.get("callback_request") if isinstance(meta.get("callback_request"), dict) else None
+    if saved_callback and not meta.get("callback_cancelled") \
+            and str(saved_callback.get("status") or "requested") in {"requested", "saved", "scheduled"} \
+            and payload.get("disposition") in {None, "no_outcome", "new_lead", "interested"}:
+        payload["disposition"] = "callback_required"
+        facts["callback_requested"] = "true"
+    elif str(meta.get("end_reason") or "") == "not_interested" \
+            and payload.get("disposition") in {None, "no_outcome", "new_lead", "interested"}:
+        # The call closed on a verified whole-offer refusal ("we already have solar");
+        # a summary model calling that a new lead contradicts the server's own close.
+        payload["disposition"] = "not_interested"
+    payload["disclosure_status"] = _detect_disclosure_delivery(transcript, meta)
+    stored_pref = str((call_ledger.read_meta(call_id) or {}).get("contact_preference") or meta.get("contact_preference") or "none").strip().lower()
+    payload["contact_preference"] = stored_pref
+    if stored_pref == "do_not_call":
+        # Consent is authoritative server state, not a sales-model judgement.
+        # Do not surface an actionable callback alongside a permanent opt-out.
+        payload["disposition"] = "not_interested"
+        payload["next_action"] = "Do not contact this number. The caller opted out."
+        for key in ("callback_requested", "callback_time", "requested_time", "callback_phone", "language_switch",
+                    "handoff_requested"):
+            facts.pop(key, None)
+    payload["status_tags"] = derive_status_tags(
+        payload.get("disposition"),
+        facts,
+        next_action=payload.get("next_action"),
+        objections=payload.get("objections"),
+        model_tags=payload.get("tags"),
+        custom_tags=payload.get("custom_tags"),
+        disclosure_status=payload.get("disclosure_status"),
+        agent_failure=bool(call_ledger.read_failed_turns(call_id)),
+        contact_preference=payload["contact_preference"],
+    )
     outcome_path(call_id).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    _write_call_summary(call_id, payload)
     status = "complete" if error is None else "failed"
-    await call_store.update(call_id, {"disposition": payload["disposition"]})
+    await call_store.update(
+        call_id,
+        {"disposition": payload["disposition"], "status_tags": payload["status_tags"]},
+    )
+    try:
+        from server.services.saas.language_switch_service import (
+            complete_language_switch_after_call, ensure_language_switch_from_meta,
+        )
+        if stored_pref != "do_not_call":
+            await ensure_language_switch_from_meta(call_id, meta)
+        await complete_language_switch_after_call(call_id, meta)
+    except Exception as exc:  # noqa: BLE001 -- the outcome above is already durable.
+        logger.warning("[LANGUAGE_SWITCH] post-call sync failed call=%s kind=%s", call_id, type(exc).__name__)
+    # The judgement above is only useful if it lands in the CRM, attributed to the
+    # agent that took the call. Runs last so a lead write can never invalidate the
+    # outcome the console reads, and swallows its own errors for the same reason.
+    payload["lead"] = await _sync_lead(call_id, payload, meta)
+    if payload.get("lead"):
+        from server.services.saas.lead_scoring import assessment_time, persist_assessment
+        payload["lead_assessment"] = await persist_assessment(
+            str(meta.get("tenant_id") or ""), str(meta.get("agent_id") or ""),
+            payload["lead"]["leadId"], call_id, payload, at=assessment_time(meta),
+        )
+    else:
+        from server.services.saas.lead_scoring import assess_existing_contact
+        payload["lead_assessment"] = await assess_existing_contact(meta, call_id, payload)
+    try:
+        await reconcile_and_dispatch_post_call(call_id, payload)
+    except Exception as exc:
+        logger.warning("[POST_CALL] Integration dispatch interrupted: %s", type(exc).__name__)
+        raise
+    outcome_path(call_id).write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     await _mark_outcome(call_id, status)
     return payload
+
+
+async def _sync_lead(
+    call_id: str, outcome: dict[str, Any], meta: dict[str, Any]
+) -> dict[str, Any] | None:
+    """Attribute this call's outcome to a lead owned by the calling agent."""
+    try:
+        record = await call_store.get(call_id)
+    except Exception:
+        logger.warning("lead_sync: could not load call %s", call_id, exc_info=True)
+        return None
+    if not record:
+        return None
+    from server.services.saas.lead_sync import sync_outcome_to_lead
+
+    return await sync_outcome_to_lead(
+        outcome=outcome,
+        tenant_id=record.get("tenant_id"),
+        agent_id=record.get("agent_id"),
+        meta=meta,
+        call_id=call_id,
+    )
+
+
+def _outcome_models(meta: dict[str, Any], *, openai_model: str) -> list[tuple[str, str, str | None]]:
+    """The call's own text LLM first, then OpenAI; one provider outage must not blank every outcome.
+
+    Calls on a Sarvam stack were marked no_outcome whenever the separate OpenAI account
+    was exhausted, although the model that ran the conversation was available.
+    """
+    from server.providers import get_provider_registry
+
+    registry = get_provider_registry()
+    llm = ((meta.get("resolved_stack") or {}).get("llm") or {}) if isinstance(meta.get("resolved_stack"), dict) else {}
+    candidates: list[tuple[str, str, str | None]] = []
+    provider, call_model = str(llm.get("provider") or ""), str(llm.get("model") or "")
+    if provider and provider != "openai" and call_model and not is_realtime_llm_model(call_model):
+        try:
+            if registry.is_provider_enabled(provider, "llm") and registry.is_model_allowed(provider, "llm", call_model):
+                candidates.append((provider, call_model, (llm.get("config") or {}).get("api_mode")))
+        except Exception:
+            pass
+    candidates.append(("openai", openai_model, None))
+    return candidates
 
 
 async def _generate_outcome(
@@ -119,24 +356,61 @@ async def _generate_outcome(
 ) -> tuple[dict[str, Any], str | None]:
     settings = get_settings()
     if not transcript:
-        return empty_outcome(model=model, reason="empty transcript"), None
+        empty = empty_outcome(model=model, reason="empty transcript")
+        empty["summary_en"] = "No transcript was captured for this call."
+        empty["next_action"] = "Review the call recording and telephony logs."
+        return empty, "empty transcript"
 
     messages = [
         {
             "role": "developer",
             "content": (
                 "You analyze completed voice calls. Output structured JSON only. "
+                "summary_en is always English. summary_te holds the same summary written in the "
+                "call language named under [Call], in that language's own script; leave summary_te "
+                "empty only when the call language is English. Describe who called whom exactly as "
+                "[Call] states the direction. "
+                "summary_en is 3-6 complete sentences (roughly 60-150 words) covering the whole call "
+                "in order: caller intent, facts shared, agent response, objections, agreed next step, "
+                "and how the call ended. Keep it concise by choosing what matters, never by stopping "
+                "mid-sentence; the last sentence must be complete. Put names, numbers, dates and other "
+                "details in extracted_fields rather than lengthening the summary. "
+                "Never claim an action was completed unless the transcript confirms it. "
+                "A caller requesting an order or discussing buying details is interested, not merely new_lead. "
+                "A callback is the business calling the caller; I will call you is not callback_required. "
+                "When the caller asks for a manager, owner or another person to call them, add the "
+                "extracted field handoff_requested=true and tag followup:handoff; it is not an objection. "
+                "unanswered_questions: each caller question (in English, at most 5) that the agent "
+                "answered by saying it had no such information; [] when there were none. "
+                "Refusing a callback or one product is not refusing all contact. "
+                "Do not treat an agent's unsupported promise as proof of success. "
+                "extracted_fields must be an array of {key, value} strings "
+                "(name, budget, slot, etc). Use [] if nothing was captured. "
                 "Disposition rubric: new_lead (first contact/info captured), interested "
                 "(positive, not yet qualified), qualified (meets criteria), site_visit_planned "
                 "(concrete appointment), callback_required (explicit follow-up), not_interested "
                 "(clear rejection), wrong_number, converted (goal achieved), no_outcome "
-                "(<3 turns or inconclusive)."
+                "(<3 turns or inconclusive). "
+                "not_interested needs the caller to reject the offer or further contact: an answered "
+                "support or information question, unclear audio or a caller who simply said thanks is "
+                "new_lead (details captured) or no_outcome, never not_interested. site_visit_planned "
+                "needs an agreed visit or appointment day/time, not just an offer of one. "
+                "tags: choose 2-6 tags that best describe what the caller wanted and how the "
+                "call went. Use only this allow-list: "
+                + ", ".join(sorted(MODEL_STATUS_TAGS))
+                + ". "
+                "custom_tags: up to 3 short lowercase hyphenated topical tags specific to this "
+                "business or conversation (for example solar-rooftop, two-bedroom, delivery-date). "
+                "Never include company, carrier or vendor names. "
+                "Do not emit outcome:, contact:, compliance: or quality: tags — the server "
+                "derives those from the transcript."
             ),
         },
         {
             "role": "user",
             "content": (
-                "[Full transcript]\n"
+                _call_header(meta)
+                + "[Full transcript]\n"
                 + "\n".join(f"{row.get('role')}: {row.get('text')}" for row in transcript)
                 + "\n\n[Final working memory]\n"
                 + json.dumps(snapshot, ensure_ascii=False)
@@ -154,39 +428,312 @@ async def _generate_outcome(
 
     last_error: str | None = None
     retries = max(1, settings.post_call_max_retries)
-    resolved = meta.get("resolved_stack") or {}
-    llm_block = resolved.get("llm") or {}
-    provider_id = llm_block.get("provider") or "openai"
-    locked_model = llm_block.get("model") or model
-    for attempt in range(retries):
+    locked_model = http_openai_model(settings)
+    if model and not is_realtime_llm_model(model):
+        locked_model = model
+    candidates = _outcome_models(meta, openai_model=locked_model)
+    for attempt in range(retries * len(candidates)):
+        provider_id, candidate_model, api_mode = candidates[attempt % len(candidates)]
         try:
             from server.providers import get_provider_registry
             from server.providers.base import LLMConfig
 
             registry = get_provider_registry()
             adapter = registry.get_llm(provider_id)
-            payload = await adapter.structured_completion(
-                messages,
-                OUTCOME_JSON_SCHEMA,
-                LLMConfig(provider=provider_id, model=locked_model),
-                schema_name="call_outcome",
-                max_output_tokens=800,
+            extra = {"api_mode": api_mode} if api_mode else {}
+            payload = await _complete_with_budget(
+                adapter, messages, LLMConfig(provider=provider_id, model=candidate_model), extra
             )
             if not isinstance(payload, dict):
                 raise ValueError("outcome payload is not an object")
-            payload.setdefault("extracted_fields", {})
+            if not str(payload.get("summary_en") or payload.get("summary_te") or "").strip():
+                raise ValueError("outcome payload has no summary")
+            payload["summary_en"] = finish_summary(payload.get("summary_en"))
+            payload["extracted_fields"] = normalize_extracted_fields(payload.get("extracted_fields"))
+            payload["tags"] = normalize_model_tags(payload.get("tags"))
+            payload["custom_tags"] = normalize_custom_tags(payload.get("custom_tags"))
+            payload["unanswered_questions"] = normalize_unanswered_questions(payload.get("unanswered_questions"))
             payload.setdefault("objections", [])
             payload.setdefault("next_action", None)
             payload.setdefault("summary_te", "")
             payload.setdefault("summary_en", "")
             payload.setdefault("disposition_confidence", 0.0)
+            payload["outcome_provider"] = provider_id
+            config = LLMConfig(provider=provider_id, model=candidate_model)
+            await _repair_summaries(
+                payload, meta, lambda retry: _complete_with_budget(adapter, retry, config, extra), messages,
+            )
             return payload, None
         except Exception as e:
             last_error = str(e)[:240]
             logger.warning(f"[CALL] outcome attempt {attempt + 1} failed: {last_error}")
             await asyncio.sleep(0.2 * (2**attempt))
     failed = empty_outcome(model=model, reason=last_error or "outcome generation failed")
+    turns = [
+        f"{str(row.get('role') or 'unknown').title()}: {str(row.get('text') or '').strip()}"
+        for row in transcript
+        if str(row.get("text") or "").strip()
+    ]
+    failed["summary_en"] = _transcript_review(turns)
+    failed["next_action"] = "Review the transcript and captured facts."
+    failed["extracted_fields"] = normalize_extracted_fields(snapshot.get("facts"))
     return failed, last_error
+
+
+#: Output-token budgets for the outcome call. Reasoning models spend part of the budget
+#: thinking before the JSON starts, so a fixed small cap cut summaries off mid-sentence.
+#: A truncated answer is retried once per step with the next, larger budget.
+OUTCOME_TOKEN_BUDGETS: tuple[int, ...] = (2048, 4096, 8192)
+
+_SENTENCE_END = re.compile(r"[.!?।॥)\]\"'”’]\s*$")
+
+
+async def _complete_with_budget(adapter: Any, messages: list[dict], config: Any, extra: dict) -> Any:
+    """Run the outcome completion, growing the token budget whenever the provider reports
+    it stopped at the limit (finish_reason "length" / status "incomplete")."""
+    from server.providers.base import StructuredOutputTruncated
+
+    last: StructuredOutputTruncated | None = None
+    for budget in OUTCOME_TOKEN_BUDGETS:
+        try:
+            return await adapter.structured_completion(
+                messages,
+                OUTCOME_JSON_SCHEMA,
+                config,
+                schema_name="call_outcome",
+                max_output_tokens=budget,
+                **extra,
+            )
+        except StructuredOutputTruncated as exc:
+            last = exc
+            logger.warning(f"[CALL] outcome truncated at {budget} tokens; retrying with a larger budget")
+    assert last is not None
+    raise last
+
+
+def finish_summary(text: Any) -> str:
+    """Normalise a model summary so it always ends as a complete sentence.
+
+    Nothing is cut: the summary is kept whole and only given closing punctuation if the
+    model left it off.
+    """
+    clean = re.sub(r"[ \t]+", " ", str(text or "")).strip()
+    if clean and not _SENTENCE_END.search(clean):
+        clean = clean.rstrip(",;:- ") + "."
+    return clean
+
+
+def _transcript_review(turns: list[str], limit: int = 2000) -> str:
+    """Fallback summary when the model failed: whole transcript turns, never a cut-off turn."""
+    head = "Automatic summary generation failed. Transcript review:"
+    kept: list[str] = []
+    size = len(head)
+    for turn in turns:
+        if kept and size + 1 + len(turn) > limit:
+            remaining = len(turns) - len(kept)
+            kept.append(f"({remaining} more turn{'s' if remaining != 1 else ''} in the full transcript.)")
+            break
+        kept.append(turn)
+        size += 1 + len(turn)
+    return " ".join([head, *kept])
+
+
+#: Recording disclosures are paraphrased, but every phrasing names "record" —
+#: including the loanword used across Indian languages. Used only to audit that
+#: the disclosure was delivered, never to generate it.
+_DISCLOSURE_RE = re.compile(
+    r"record|recording|recorded|రికార్డ|रिकॉर्ड|रेकॉर्ड|பதிவ|ರೆಕಾರ್ಡ|റെക്കോർഡ|রেকর্ড",
+    re.IGNORECASE,
+)
+
+
+def _detect_disclosure_delivery(
+    transcript: list[dict[str, Any]], meta: dict[str, Any]
+) -> str | None:
+    """Whether an enabled disclosure was actually spoken in the conversation."""
+    info = (meta or {}).get("recording_disclosure")
+    if not isinstance(info, dict) or not info.get("enabled") or not info.get("injected"):
+        return None
+    for row in transcript or []:
+        if str(row.get("role") or "").lower() not in ("assistant", "agent"):
+            continue
+        if _DISCLOSURE_RE.search(str(row.get("text") or "")):
+            return "delivered"
+    return "missing"
+
+
+#: Languages written in a non-Latin script: a summary in one of them with no
+#: non-ASCII letter is English (or empty) wearing the wrong label.
+_NATIVE_SCRIPT_LANGUAGES = frozenset({"hi", "te", "ta", "kn", "ml", "bn", "mr", "gu", "pa", "or", "as", "ur"})
+
+#: A summary that says the wrong party placed the call. Checked on summary_en only.
+_WRONG_DIRECTION: dict[str, re.Pattern[str]] = {
+    "outbound": re.compile(
+        r"\b(?:the\s+)?(?:caller|customer|client|user|lead)\s+(?:initiated|placed|made|started)\s+(?:the|this)\s+call\b"
+        r"|\b(?:the\s+)?(?:caller|customer|client|user|lead)\s+called\s+(?:in\b|us\b|the\s+(?:business|company|agent)\b)"
+        r"|\bcalled\s+in\s+to\b|\binbound\s+call\b",
+        re.IGNORECASE,
+    ),
+    "inbound": re.compile(
+        r"\b(?:the\s+)?(?:agent|business|company)\s+(?:initiated|placed|made|started)\s+(?:the|this)\s+call\b"
+        r"|\b(?:the\s+)?(?:agent|business|company)\s+called\s+(?:the\s+)?(?:caller|customer|client|lead)\b"
+        r"|\boutbound\s+call\b",
+        re.IGNORECASE,
+    ),
+}
+#: An objection that only restates a saved handoff request ("asked to speak to the manager").
+#: Objections are written in English by the summary step, so English terms suffice.
+_HANDOFF_OBJECTION = re.compile(
+    r"\b(?:manager|owner|supervisor|boss|senior|proprietor|someone else|another person|a person|human|team lead)\b",
+    re.IGNORECASE,
+)
+_DIRECTION_FIX = {"outbound": "the agent called the customer", "inbound": "the customer called the business"}
+
+
+def _call_language(meta: dict[str, Any]) -> str:
+    stack = meta.get("resolved_stack") if isinstance(meta.get("resolved_stack"), dict) else {}
+    return str(meta.get("language") or stack.get("language") or "en-IN")
+
+
+def _call_direction(meta: dict[str, Any]) -> str | None:
+    value = str(meta.get("direction") or "").strip().lower()
+    if value in ("outbound", "outgoing", "outbound-api"):
+        return "outbound"
+    if value in ("inbound", "incoming"):
+        return "inbound"
+    return None
+
+
+def _is_english(language: str) -> bool:
+    return language.split("-")[0].lower() == "en"
+
+
+def _call_header(meta: dict[str, Any]) -> str:
+    """Direction and language facts the summary must not get wrong."""
+    from server.call.language_switch import language_name
+
+    language = _call_language(meta)
+    lines = [f"Language: {language_name(language)} ({language})"]
+    direction = _call_direction(meta)
+    if direction == "outbound":
+        lines.append("Direction: outbound. The business's agent called the customer (you called them); "
+                     "the customer did not initiate this call.")
+    elif direction == "inbound":
+        lines.append("Direction: inbound. The customer called the business (they called you).")
+    return "[Call]\n" + "\n".join(lines) + "\n\n"
+
+
+def _local_summary(text: Any, language: str) -> str:
+    """The call-language summary, or "" when it is missing or not in that language's script."""
+    # Not filter_unrelated_scripts: it treats Marathi's Devanagari as foreign on a Hindi call.
+    from server.realtime.language_guard import _SCRIPT_RANGES
+
+    clean = re.sub(r"\s+", " ", str(text or "")).strip()
+    base = language.split("-")[0].lower()
+    if base not in _NATIVE_SCRIPT_LANGUAGES:
+        return clean
+    ranges = _SCRIPT_RANGES.get(base)
+    native = any(lo <= ord(ch) <= hi for ch in clean for lo, hi in ranges) if ranges else not clean.isascii()
+    return clean if native else ""
+
+
+def summary_problems(payload: dict[str, Any], meta: dict[str, Any]) -> list[str]:
+    """Checks the code can enforce on a generated summary, in a stable order."""
+    problems: list[str] = []
+    direction = _call_direction(meta)
+    if direction and _WRONG_DIRECTION[direction].search(str(payload.get("summary_en") or "")):
+        problems.append("wrong_direction")
+    language = _call_language(meta)
+    if not _is_english(language) and not _local_summary(payload.get("summary_te"), language):
+        problems.append("missing_local_summary")
+    return problems
+
+
+def fix_summary_direction(text: str, direction: str | None) -> str:
+    """Last resort after the retry: replace a wrong-direction clause with the true one."""
+    if not direction:
+        return text
+
+    def swap(match: re.Match[str]) -> str:
+        fixed = _DIRECTION_FIX[direction]
+        return fixed[0].upper() + fixed[1:] if match.group(0)[:1].isupper() else fixed
+
+    return _WRONG_DIRECTION[direction].sub(swap, text)
+
+
+async def _repair_summaries(payload: dict[str, Any], meta: dict[str, Any], complete, messages: list[dict]) -> None:
+    """Retry once when the summary names the wrong caller or lacks the call-language text.
+
+    The retry only fills what was wrong: a good English summary is never replaced,
+    and an empty retry keeps the first answer.
+    """
+    problems = summary_problems(payload, meta)
+    if not problems:
+        return
+    from server.call.language_switch import language_name
+
+    asks = {
+        "wrong_direction": "summary_en says the wrong party started the call; follow the Direction under [Call].",
+        "missing_local_summary": f"summary_te is empty; write the summary in {language_name(_call_language(meta))}.",
+    }
+    retry = [
+        *messages,
+        {"role": "assistant", "content": json.dumps({k: payload.get(k) for k in ("summary_en", "summary_te")}, ensure_ascii=False)},
+        {"role": "user", "content": "Return the full JSON again. Fix: " + " ".join(asks[p] for p in problems)},
+    ]
+    try:
+        again = await complete(retry)
+    except Exception as exc:  # noqa: BLE001 -- the first answer stands.
+        logger.warning(f"[CALL] summary retry failed: {str(exc)[:160]}")
+        again = None
+    direction = _call_direction(meta)
+    if isinstance(again, dict):
+        if "missing_local_summary" in problems and _local_summary(again.get("summary_te"), _call_language(meta)):
+            payload["summary_te"] = str(again.get("summary_te") or "").strip()
+        retried_en = finish_summary(again.get("summary_en"))
+        if "wrong_direction" in problems and retried_en and not _WRONG_DIRECTION[direction].search(retried_en):
+            payload["summary_en"] = retried_en
+    remaining = summary_problems(payload, meta)
+    if "wrong_direction" in remaining:
+        payload["summary_en"] = fix_summary_direction(str(payload.get("summary_en") or ""), direction)
+    # An empty call-language summary after the retry is recorded, never invented.
+    payload["summary_checks"] = [p for p in remaining if p != "wrong_direction"]
+
+
+def _finalize_summaries(payload: dict[str, Any], language: str) -> None:
+    """English summary always; the call-language summary only for non-English calls."""
+    en = str(payload.get("summary_en") or "").strip()
+    local = "" if _is_english(language) else _local_summary(payload.get("summary_te"), language)
+    if not en and local:
+        en = local
+    payload["summary_en"] = filter_unrelated_scripts(en, "en-IN")
+    payload["summary_te"] = local
+    payload["summary_language"] = language
+
+
+def _write_call_summary(call_id: str, outcome: dict[str, Any]) -> None:
+    summary = {
+        "call_id": call_id,
+        "language_callback": outcome.get("language_callback"),
+        "disposition": validate_disposition(outcome.get("disposition")),
+        "disposition_confidence": outcome.get("disposition_confidence"),
+        "summary_te": outcome.get("summary_te") or "",
+        "summary_language": outcome.get("summary_language"),
+        "summary_en": outcome.get("summary_en") or "",
+        "next_action": outcome.get("next_action"),
+        "extracted_fields": outcome.get("extracted_fields") or {},
+        "facts": outcome.get("facts") or {},
+        "status_tags": outcome.get("status_tags") or [],
+        "tags": outcome.get("tags") or [],
+        "custom_tags": outcome.get("custom_tags") or [],
+        "disclosure_status": outcome.get("disclosure_status"),
+        "objections": outcome.get("objections") or [],
+        "unanswered_questions": outcome.get("unanswered_questions") or [],
+        "model": outcome.get("model"),
+        "generated_at": outcome.get("generated_at"),
+        "generation_ok": outcome.get("generation_ok"),
+    }
+    call_summary_path(call_id).write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _append_attempt(call_id: str, attempt: dict[str, Any]) -> None:
@@ -214,3 +761,137 @@ async def _mark_outcome(call_id: str, outcome_status: str) -> None:
         else:
             overall = rec.get("finalization_status") or "processing"
         await call_store.update(call_id, {"finalization_status": overall})
+
+
+async def get_agent_post_call_actions(tenant_id: str, agent_id: str) -> list[str]:
+    """Retrieve whitelisted post_call actions for this agent."""
+    import uuid
+    from sqlalchemy import select
+    from server.db.connection import get_session_factory
+    from server.db.models.integration_models import AgentIntegration
+
+    session_factory = get_session_factory()
+    if not session_factory:
+        return []
+    try:
+        async with session_factory() as session:
+            stmt = select(AgentIntegration).where(
+                AgentIntegration.tenant_id == uuid.UUID(str(tenant_id)),
+                AgentIntegration.agent_id == uuid.UUID(str(agent_id)),
+                AgentIntegration.timing_mode == "post_call",
+                AgentIntegration.enabled.is_(True),
+            )
+            res = await session.execute(stmt)
+            integrations = res.scalars().all()
+            from server.services.tool_schema_registry import _normalize, tool_definition
+            actions = set()
+            for integration in integrations:
+                # Connecting an app is not consent to automatic outbound messages.
+                for action in integration.action_whitelist or []:
+                    definition = tool_definition(action)
+                    if definition and definition[0] == _normalize(integration.app_name):
+                        actions.add(action.upper())
+            return sorted(actions)
+    except Exception as exc:
+        logger.warning("[POST_CALL] Failed to fetch agent post call actions: %s", exc)
+        return []
+
+
+async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]) -> None:
+    """Execute explicitly configured actions using the durable write claim.
+
+    Unknown in-call results stay unknown. They require provider verification,
+    never a local status change or an automatic repeat of the external write.
+    """
+    import uuid
+    from sqlalchemy import select
+    from server.db.connection import get_session_factory
+    from server.db.models.integration_models import ToolExecution
+    from server.services.tool_router import tool_router
+    from server.services.tool_schema_registry import tool_definition
+
+    record = await call_store.get(call_id)
+    if not record or not record.get("tenant_id") or not record.get("agent_id"):
+        return
+    tenant_id, agent_id = str(record["tenant_id"]), str(record["agent_id"])
+    factory = get_session_factory()
+    if factory is None:
+        raise RuntimeError("Integration tracking unavailable")
+    async with factory() as session:
+        pending = (await session.execute(select(ToolExecution).where(
+            ToolExecution.tenant_id == uuid.UUID(tenant_id), ToolExecution.call_id == str(call_id),
+            ToolExecution.status.in_(["initiated", "timed_out_pending"]),
+        ))).scalars().all()
+        outcome["integration_review_required"] = len(pending)
+    from server.services import call_integrations
+
+    selection = await call_integrations.selection_for_call(str(call_id), tenant_id=tenant_id)
+    meta: dict[str, Any] = {}
+    if selection is None:
+        actions = await get_agent_post_call_actions(tenant_id, agent_id)
+    else:
+        # Integrations were chosen at launch: only the selected after-call apps run.
+        from server.db.models.integration_models import AgentIntegration
+
+        async with factory() as session:
+            rules = (await session.execute(select(AgentIntegration).where(
+                AgentIntegration.tenant_id == uuid.UUID(tenant_id), AgentIntegration.agent_id == uuid.UUID(agent_id),
+            ))).scalars().all()
+        actions = await call_integrations.post_call_plan(selection, list(rules))
+        try:
+            meta = call_ledger.read_meta(str(call_id)) or {}
+        except Exception:  # noqa: BLE001 - arguments then come from the outcome only.
+            meta = {}
+    facts = outcome.get("extracted_fields") or {}
+    if not isinstance(facts, dict):
+        facts = {}
+    results = []
+    for action in actions:
+        definition = tool_definition(action)
+        properties = definition[1]["parameters"].get("properties", {})
+        # Only actual extracted values are used. Missing resource IDs, recipients
+        # or other required setup are rejected by the action schema.
+        arguments = {key: facts[key] for key in properties if key in facts}
+        if selection is not None and action in call_integrations.POST_CALL_DEFAULT_ACTION.values():
+            built = call_integrations.post_call_arguments(action, outcome, meta)
+            if built is None:
+                results.append({"action": action, "result": {
+                    "status": "skipped", "message": "The call did not capture the details this action needs.",
+                    "missing": missing_post_call_details(action, outcome, meta)}})
+                continue
+            arguments = built
+        result = await tool_router.route_and_execute(
+            tenant_id, agent_id, str(call_id), action, arguments, timing="post_call",
+        )
+        results.append({"action": action, "result": result})
+    outcome["integration_results"] = results
+    outcome["integration_dispatch_complete"] = True
+
+
+#: What each built-in post-call action needs from a call, in the tenant's words.
+#: Mirrors call_integrations.post_call_arguments; shown when an action is skipped.
+POST_CALL_REQUIRED_DETAILS: dict[str, tuple[str, ...]] = {
+    "GMAIL_CREATE_DRAFT": ("caller email", "call summary"),
+    "HUBSPOT_CREATE_CONTACT": ("caller name", "caller email or phone"),
+    "TODOIST_CREATE_TASK": ("next step or call summary",),
+}
+
+
+def missing_post_call_details(action: str, outcome: dict[str, Any], meta: dict[str, Any] | None) -> list[str]:
+    """Which of an action's required details this call did not capture."""
+    facts = outcome.get("extracted_fields") if isinstance(outcome.get("extracted_fields"), dict) else {}
+    contact = (meta or {}).get("contact") if isinstance((meta or {}).get("contact"), dict) else {}
+
+    def first(*keys: str) -> str:
+        return next((str(src.get(k)).strip() for src in (facts, contact) for k in keys if str(src.get(k) or "").strip()), "")
+
+    email = "@" in first("email", "caller_email")
+    present = {
+        "caller email": email,
+        "call summary": bool(str(outcome.get("summary_en") or "").strip()),
+        "caller name": bool(first("name", "caller_name", "full_name", "customer_name", "first_name")),
+        "caller email or phone": email or bool(first("phone", "callback_phone", "phone_number", "mobile", "phone_e164")),
+        "next step or call summary": bool(str(outcome.get("next_action") or outcome.get("summary_en") or "").strip()),
+    }
+    needed = POST_CALL_REQUIRED_DETAILS.get(str(action).upper(), ())
+    return [detail for detail in needed if not present.get(detail, False)] or list(needed)

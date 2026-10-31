@@ -24,14 +24,22 @@ export type TtsConfig = {
   output_audio_codec?: string;
   output_audio_bitrate?: string;
   temperature?: number;
+  pitch?: number;
+  loudness?: number;
+  volume?: number;
+  speed?: number;
+  emotion?: string;
   sample_rate?: number;
 };
 
 export const VOICE_PIPELINE_LIMITS = {
-  maxTextChunksQueued: 24,
-  maxAudioChunksBuffered: 256,
-  smallResponseMaxChars: 140,
+  maxTextChunksQueued: 48,
+  maxAudioChunksBuffered: 384,
+  smallResponseMaxChars: 200,
   minChunkChars: 14,
-  maxChunkChars: 220,
+  firstChunkMinChars: 18,
+  clauseFlushAt: 10_000,
+  forceFlushAt: 280,
+  maxChunkChars: 280,
   flushTimeoutMs: 45_000,
 } as const;

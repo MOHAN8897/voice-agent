@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "timings என்ன? Job guarantee கொடுப்பீங்களா?\nassistant: கண்டிப்பா, நான் எதுவும் save பண்ணல. மொத்த கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய். ஆறு வாரங்கள், வார நாட்கள்ல மாலை ஏழு முதல் எட்டு மணி வரை class இருக்கும். Job guarantee எதுவும் கிடையாது. வேற ஏதாச்சும் தகவல் வேணுமா?\nuser: எனக்கு job guarantee தேவையில்லை, ஆனால் Python கற்றுக்கொள்ள ஆர்வம் இருக்கு. Course விளக்க முடியுமா?\nassistant: சரிங்க. இது beginner level வகுப்பு, அதனால coding experience எதுவும் தேவையில்லை. உங்களுக்கு டெமோ அல்லது counseling தேவைப்பட்டா, உங்க பெயர், email address மற்றும் விருப்பமான நேரத்தை மட்டும் சொல்ல முடியுமா?"
+}

@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "Please answer my question first: What do AC servicing and fridge inspection cost, and are replacement parts included?\nassistant: Parts are extra, and only after your approval. There is no fixed repair quote before inspection. We are open Monday to Saturday, 9am to 6pm. Would you like to request a service visit?\nuser: I don't need AC servicing, but my fridge needs inspection. Can you help?\nassistant: Yes, we can definitely help with the fridge inspection at three hundred ninety nine rupees. Would you like to request a visit for that? If so, I will need your name, locality, and a preferred date."
+}

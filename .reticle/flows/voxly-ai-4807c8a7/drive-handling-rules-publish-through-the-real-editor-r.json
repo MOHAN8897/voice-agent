@@ -1,0 +1,183 @@
+{
+  "version": 2,
+  "name": "drive-handling-rules-publish-through-the-real-editor-r",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1793127178439,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "add-objective-btn",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1697,
+          "column": 53
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "label": "Rule 1 type"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "objection-trigger-0",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1778,
+          "column": 25
+        }
+      },
+      "args": {
+        "value": "When the caller asks for a demo"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "objection-response-0",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1798,
+          "column": 25
+        }
+      },
+      "args": {
+        "value": "Answer the question first.\nCollect a preferred time without promising a booking."
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-save",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "PUT",
+            "urlContains": "/business-brain/draft",
+            "status": 200
+          },
+          {
+            "kind": "net",
+            "method": "POST",
+            "urlContains": "/business-brain/publish",
+            "status": 200
+          },
+          {
+            "kind": "text",
+            "contains": "Saved for calls"
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/",
+      "writes": true
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "remove-objection-0",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1761,
+          "column": 23
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "objection-rule-0"
+        },
+        "absent": true
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-save",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "PUT",
+            "urlContains": "/business-brain/draft",
+            "status": 200
+          },
+          {
+            "kind": "net",
+            "method": "POST",
+            "urlContains": "/business-brain/publish",
+            "status": 200
+          },
+          {
+            "kind": "text",
+            "contains": "Saved for calls"
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/",
+      "writes": true
+    }
+  ],
+  "startPath": "/",
+  "intent": "Handling rules publish through the real editor; read-only tenants can inspect CRM contacts without mutation controls.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "mcp",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-handling-rules-publish-through-the-real-editor-r"
+}

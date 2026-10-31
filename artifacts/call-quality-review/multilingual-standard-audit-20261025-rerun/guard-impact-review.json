@@ -1,0 +1,452 @@
+[
+  {
+    "case": "cleaning-en-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "cleaning-en-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "cleaning-en-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "Got it, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total. I can note this request within the call, but I cannot save it externally or confirm a visit. Would you like me to submit this enquiry for team review now?",
+        "before": "Got it, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up.",
+        "after": "Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up."
+      }
+    ]
+  },
+  {
+    "case": "cleaning-en-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "Thank you for sharing those details, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total, and working hours are Monday to Saturday, 9 am to 6 pm.",
+        "before": "Thank you for sharing those details, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total, and working hours are Monday to Saturday, 9 am to 6 pm.",
+        "after": "Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total, and working hours are Monday to Saturday, 9 am to 6 pm. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up."
+      }
+    ]
+  },
+  {
+    "case": "cleaning-hi-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "cleaning-hi-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "cleaning-hi-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "ठीक है, Audit Customer. Kitchen cleaning one thousa… nine r… total है, Pune mein Monday se Saturday subah 9 baje se shaam 6 baje tak. Enquiry team review ke liye note kar li gayi hai, lekin yeh koi confirmed slot ya paid order nahi hai. Kya main kuch aur details note karूँ?",
+        "before": "ठीक है, Audit Customer. Kitchen cleaning one thousa… nine r… total है, Pune mein Monday se Saturday subah 9 baje se shaam 6 baje tak. मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता।",
+        "after": "मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता।"
+      }
+    ]
+  },
+  {
+    "case": "cleaning-hi-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "ठीक है, मैंने note कर लिया है कि आपको kitchen cleaning Baner, Pune mein chahiye aur consent bhi दे दिया है। दुर्भाग्य से, मैं externally कोई enquiry save या confirm नहीं कर सकती, पर team review के लिए यह details मैंने यहीं note कर ली हैं।",
+        "before": "ठीक है, मैंने note कर लिया है कि आपको kitchen cleaning Baner, Pune mein chahiye aur consent bhi दे दिया है। मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता।",
+        "after": "मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता।"
+      }
+    ]
+  },
+  {
+    "case": "cleaning-kn-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "cleaning-kn-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "cleaning-kn-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "ಸರಿ, Audit Customer ಅವರೇ, ನಿಮ್ಮ kitchen cleaning enquiry-ನ Baner, Pune details ಜೊತೆ ನಮ್ಮ ತಂಡಕ್ಕೆ submit ಮಾಡ್ತೀನಿ. ಇದು confirmed booking ಅಲ್ಲ, team review-ಗೆ ಮಾತ್ರ ಹೋಗುತ್ತೆ. ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಾ?",
+        "before": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಾ?",
+        "after": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ."
+      }
+    ]
+  },
+  {
+    "case": "cleaning-kn-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "ಸರಿ, kitchen cleaning ಗೆ ಒಟ್ಟು one thousand five hundred ninety nine ರೂಪಾಯಿ ಆಗುತ್ತೆ. Baner ನಲ್ಲಿ team review ಗೆ ಈ enquiry submit ಮಾಡ್ತೀನಿ, ಆದ್ರೆ ಇದು confirmed slot ಅಥವಾ paid order ಅಲ್ಲ. ಒಪ್ಪಿಗೆ ಇದೆ ಅಲ್ವಾ?",
+        "before": "ಸರಿ, kitchen cleaning ಗೆ ಒಟ್ಟು one thousand five hundred ninety nine ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಒಪ್ಪಿಗೆ ಇದೆ ಅಲ್ವಾ?",
+        "after": "ಸರಿ, kitchen cleaning ಗೆ ಒಟ್ಟು one thousand five hundred ninety nine ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ."
+      }
+    ]
+  },
+  {
+    "case": "cleaning-ta-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "cleaning-ta-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "cleaning-ta-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "சரிங்க, Audit Customer. உங்க kitchen cleaning enquiry-யை Baner, Pune-க்கு team review-க்காக submit பண்றேன். இது confirmed slot இல்ல, வெறும் enquiry மட்டுமே. ஒரு நிமிஷம், process பண்றேன்.",
+        "before": "சரிங்க, Audit Customer. இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது. இது confirmed slot இல்ல, வெறும் enquiry மட்டுமே. ஒரு நிமிஷம், process பண்றேன்.",
+        "after": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது."
+      }
+    ]
+  },
+  {
+    "case": "cleaning-ta-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "சரிங்க Audit Customer. Kitchen cleaning-க்கு மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். இது ஒரு confirmed booking கிடையாது, எங்க குழு review பண்றதுக்கு மட்டும் தான். உங்க details-அ submit பண்றதுக்கு முன்னாடி, வேற ஏதாச்சும் தகவல் வேணுமா?",
+        "before": "சரிங்க Audit Customer. Kitchen cleaning-க்கு மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது.",
+        "after": "Kitchen cleaning-க்கு மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது."
+      }
+    ]
+  },
+  {
+    "case": "cleaning-te-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "cleaning-te-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "cleaning-te-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "సరేనండి, Audit Customer గారు, మీరు Baner లో కిచెన్ క్లీనింగ్ కావాలని చెప్పారు కదా. మా team review కోసం ఈ details note చేసుకుంటున్నాను, కానీ ఇది కేవలం enquiry మాత్రమే, confirm అయిన visit కాదు. మీరు సమ్మతి తెలిపినందుకు ధన్యవాదాలు.",
+        "before": "సరేనండి, Audit Customer గారు, మీరు Baner లో కిచెన్ క్లీనింగ్ కావాలని చెప్పారు కదా. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీరు సమ్మతి తెలిపినందుకు ధన్యవాదాలు.",
+        "after": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు."
+      }
+    ]
+  },
+  {
+    "case": "cleaning-te-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "సరేనండి, కిచెన్ క్లీనింగ్ one thousand five hundred ninety nine రూపాయలు అవుతుంది. మీరు ఇచ్చిన details తో enquiry submit చేస్తున్నాను, కానీ ఇది confirmed booking కాదు అండి. ఒక్క నిమిషం, process చేస్తాను.",
+        "before": "సరేనండి, కిచెన్ క్లీనింగ్ one thousand five hundred ninety nine రూపాయలు అవుతుంది. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఒక్క నిమిషం, process చేస్తాను.",
+        "after": "సరేనండి, కిచెన్ క్లీనింగ్ one thousand five hundred ninety nine రూపాయలు అవుతుంది. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు."
+      }
+    ]
+  },
+  {
+    "case": "cycle-en-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "cycle-en-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "cycle-en-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "Thank you, Audit Customer. I have noted Adyar, Chennai for the puncture repair. With your consent, an authorised CRM can save this enquiry for team review. Would you like to proceed with sharing your details?",
+        "before": "Thank you, Audit Customer. I have noted Adyar, Chennai for the puncture repair. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up. Would you like to proceed with sharing your details?",
+        "after": "I can keep a note during this call, but I cannot send this request to the team or promise a follow-up."
+      }
+    ]
+  },
+  {
+    "case": "cycle-en-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "Thank you for sharing that, Audit Customer. A puncture repair in Adyar costs one hundred twenty rupees, and parts are extra only after approval. I don't have the ability to submit enquiries or confirm a time slot, so I can't save this for team review right now.",
+        "before": "Thank you for sharing that, Audit Customer. A puncture repair in Adyar costs one hundred twenty rupees, and parts are extra only after approval. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up.",
+        "after": "A puncture repair in Adyar costs one hundred twenty rupees, and parts are extra only after approval. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up."
+      }
+    ]
+  },
+  {
+    "case": "cycle-hi-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "cycle-hi-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "cycle-hi-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "समझ गया, Audit Customer. Puncture repair Adyar में one hundred twenty rupees में हो जाएगी। मैं enquiry team review के लिए save कर सकता हूँ, लेकिन booking या order confirm नहीं कर सकता। क्या मैं इसे save कर दूँ?",
+        "before": "समझ गया, Audit Customer. Puncture repair Adyar में one hundred twenty rupees में हो जाएगी। मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता। क्या मैं इसे save कर दूँ?",
+        "after": "Puncture repair Adyar में one hundred twenty rupees में हो जाएगी। मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता।"
+      }
+    ]
+  },
+  {
+    "case": "cycle-hi-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "ठीक है, puncture repair का charge one hundred twenty rupees है। मैं आपकी enquiry team review के लिए save कर देता हूँ। क्या मैं इसे आगे बढ़ा दूँ?",
+        "before": "ठीक है, puncture repair का charge one hundred twenty rupees है। मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता। क्या मैं इसे आगे बढ़ा दूँ?",
+        "after": "ठीक है, puncture repair का charge one hundred twenty rupees है। मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता।"
+      }
+    ]
+  },
+  {
+    "case": "cycle-kn-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "cycle-kn-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "cycle-kn-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "ಸರಿ, Audit Customer ಅವರೇ, Adyar ನಲ್ಲಿ puncture repair ಗೆ ನಿಮ್ಮ ಒಪ್ಪಿಗೆ ದಾಖಲು ಮಾಡ್ತೀನಿ. … ನಮಗೆ ಯಾವುದೇ external submission ಅಥವಾ booking confirm ಮಾಡುವ ಸೌಲಭ್ಯ ಇಲ್ಲ, ಹಾಗಾಗಿ team review ಗೆ direct ಆಗಿ ಕಳಿಸಲು ಆಗಲ್ಲ. … ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿತ್ತಾ?",
+        "before": "ಸರಿ, Audit Customer ಅವರೇ, Adyar ನಲ್ಲಿ puncture repair ಗೆ ನಿಮ್ಮ ಒಪ್ಪಿಗೆ ದಾಖಲು ಮಾಡ್ತೀನಿ. … ನಮಗೆ ಯಾವುದೇ external submission ಅಥವಾ booking confirm ಮಾಡುವ ಸೌಲಭ್ಯ ಇಲ್ಲ, ಹಾಗಾಗಿ team review ಗೆ direct ಆಗಿ ಕಳಿಸಲು ಆಗಲ್ಲ. … ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿತ್ತಾ?",
+        "after": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ."
+      }
+    ]
+  },
+  {
+    "case": "cycle-kn-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "ಸರಿ, ನಿಮ್ಮ puncture repair enquiry ಬಗ್ಗೆ note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. ಆದ್ರೆ ನಾವು team reviewಗೆ ಮಾತ್ರ details ತಗೊಳ್ಳೋಕೆ ಸಾಧ್ಯ, ಯಾವುದೇ booking ಅಥವಾ order confirm ಮಾಡೋಕೆ ಆಗಲ್ಲ. ನಿಮ್ಮ ಹೆಸರು Audit Customer ಅಂತ, locality Adyar, Chennai ಅಂತ ದಾಖಲಿಸಿದ್ದೀನಿ, ಸರಿನಾ?",
+        "before": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ನಿಮ್ಮ ಹೆಸರು Audit Customer ಅಂತ, locality Adyar, Chennai ಅಂತ ದಾಖಲಿಸಿದ್ದೀನಿ, ಸರಿನಾ?",
+        "after": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ."
+      }
+    ]
+  },
+  {
+    "case": "cycle-ta-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "cycle-ta-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "cycle-ta-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "Audit Customer, Adyar-ல puncture repair வேணும்னு சொன்னீங்க. ஆனா என்னால இங்க இருந்து enquiry-யோ, booking-ஓ submit பண்ண முடியாது. நீங்க direct-ஆ எங்க office-அ contact பண்ணி confirm பண்ணிக்கலாம். வேற ஏதாவது details வேணுமா?",
+        "before": "Audit Customer, Adyar-ல puncture repair வேணும்னு சொன்னீங்க. ஆனா என்னால இங்க இருந்து enquiry-யோ, booking-ஓ submit பண்ண முடியாது. நீங்க direct-ஆ எங்க office-அ contact பண்ணி confirm பண்ணிக்கலாம். வேற ஏதாவது details வேணுமா?",
+        "after": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது."
+      }
+    ]
+  },
+  {
+    "case": "cycle-ta-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "சரிங்க, puncture repair-க்கு Adyar area-ல details note பண்ணிக்கிட்டேன். ஆனா என்னால enquiry-யை team-க்கு submit பண்ணவோ, email அனுப்பவோ முடியாது. உங்களுக்கு basic service பத்தி வேற ஏதாச்சும் details வேணுமா?",
+        "before": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது. உங்களுக்கு basic service பத்தி வேற ஏதாச்சும் details வேணுமா?",
+        "after": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது."
+      }
+    ]
+  },
+  {
+    "case": "cycle-te-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "cycle-te-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "cycle-te-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "సరేనండి, Audit Customer గారు, Adyar లో పంక్చర్ రిపేర్ కోసం మీ details తీసుకున్నాను. నేను దీన్ని enquiry కింద సేవ్ చేయగలను, కానీ team review లేదా booking confirm అయ్యే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా అండి?",
+        "before": "సరేనండి, Audit Customer గారు, Adyar లో పంక్చర్ రిపేర్ కోసం మీ details తీసుకున్నాను. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. ఇంకేమైనా వివరాలు కావాలా అండి?",
+        "after": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు."
+      }
+    ]
+  },
+  {
+    "case": "cycle-te-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "సరేనండి, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అవుతుంది. Adyar లో ఈ service కోసం మీ సమ్మతి తీసుకున్నాను, కానీ మా system integration లేకుండా నేరుగా enquiry submit చేసే సదుపాయం లేదు అండి. మీకు వేరే విధంగా ఏమైనా help కావాలా?",
+        "before": "సరేనండి, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అవుతుంది. Adyar లో ఈ service కోసం మీ సమ్మతి తీసుకున్నాను, కానీ మా system integration లేకుండా నేరుగా enquiry submit చేసే సదుపాయం లేదు అండి. మీకు వేరే విధంగా ఏమైనా help కావాలా?",
+        "after": "సరేనండి, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అవుతుంది. ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు."
+      }
+    ]
+  },
+  {
+    "case": "language-en-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "language-en-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "language-en-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "Thank you for sharing that, Audit Customer. I don't have a way to submit enquiries or send details to the team right now. Would you like to share your main learning goal so I can help you better?",
+        "before": "Thank you for sharing that, Audit Customer. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up. Would you like to share your main learning goal so I can help you better?",
+        "after": "I can keep a note during this call, but I cannot send this request to the team or promise a follow-up."
+      }
+    ]
+  },
+  {
+    "case": "language-en-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "Thank you for sharing those details, Audit Customer. I don't have a way to send enquiries or save them externally right now, so I cannot submit this for team review. Which details would you like to know about the course?",
+        "before": "Thank you for sharing those details, Audit Customer. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up. Which details would you like to know about the course?",
+        "after": "I can keep a note during this call, but I cannot send this request to the team or promise a follow-up."
+      }
+    ]
+  },
+  {
+    "case": "language-hi-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "language-hi-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "language-hi-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "समझ गई, Audit Customer. आपकी enquiry save करने के लिए धन्यवाद। दुर्भाग्य से, अभी मैं email भेज नहीं सकती या externally save नहीं कर सकती, इसलिए team review के लिए यह details submit नहीं हो पाएंगी। क्या मैं आपकी किसी और तरह से मदद कर सकती हूँ?",
+        "before": "समझ गई, Audit Customer. मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता। दुर्भाग्य से, अभी मैं email भेज नहीं सकती या externally save नहीं कर सकती, इसलिए team review के लिए यह details submit नहीं हो पाएंगी। क्या मैं आपकी किसी और तरह से मदद कर सकती हूँ?",
+        "after": "मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता।"
+      }
+    ]
+  },
+  {
+    "case": "language-hi-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "ठीक है, आपकी details note कर ली हैं। दुर्भाग्य से, अभी मैं externally enquiry save या demo time confirm नहीं कर सकती। क्या आप अपनी learning goal के बारे में बताना चाहेंगे?",
+        "before": "मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता। दुर्भाग्य से, अभी मैं externally enquiry save या demo time confirm नहीं कर सकती। क्या आप अपनी learning goal के बारे में बताना चाहेंगे?",
+        "after": "मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता।"
+      }
+    ]
+  },
+  {
+    "case": "language-kn-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "language-kn-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "language-kn-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "ಧನ್ಯವಾದಗಳು Audit Customer. ನಾನು ಈ enquiry ಬಗ್ಗೆ ನಮ್ಮ team ಗೆ ತಿಳಿಸ್ತೀನಿ, ಆದ್ರೆ ನಮ್ಮ system ಇಂದ direct ಆಗಿ book ಅಥವಾ confirm ಮಾಡೋಕೆ ಆಗಲ್ಲ. ನಿಮಗೆ demo ಅಥವಾ counselling ಬಗ್ಗೆ ಇನ್ನು ಏನಾದ್ರೂ details ಬೇಕಾ?",
+        "before": "ಧನ್ಯವಾದಗಳು Audit Customer. ನಾನು ಈ enquiry ಬಗ್ಗೆ ನಮ್ಮ team ಗೆ ತಿಳಿಸ್ತೀನಿ, ಆದ್ರೆ ನಮ್ಮ system ಇಂದ direct ಆಗಿ book ಅಥವಾ confirm ಮಾಡೋಕೆ ಆಗಲ್ಲ. ನಿಮಗೆ demo ಅಥವಾ counselling ಬಗ್ಗೆ ಇನ್ನು ಏನಾದ್ರೂ details ಬೇಕಾ?",
+        "after": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ."
+      }
+    ]
+  },
+  {
+    "case": "language-kn-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು email note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. Demo enquiry submit ಮಾಡೋಕೆ ನಿಮ್ಮ consent ಸಿಕ್ಕಿದೆ. Team review-ಗೆ ಕಳಿಸೋಕೆ integration connect ಆಗ್ಬೇಕು, ಆದ್ರೆ ಸದ್ಯಕ್ಕೆ ಆ option available ಇಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+        "before": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+        "after": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ."
+      }
+    ]
+  },
+  {
+    "case": "language-ta-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "language-ta-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "language-ta-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "சரிங்க, உங்க பெயர் Audit Customer, email audit. customer@example. invalid, நாளைக்கு மதியம் மூணு மணிக்கு demo review வேணும்னு சொல்லிருக்கீங்க. ஆனா என்னால இங்க இருந்து direct-ஆ team-க்கு submit பண்ணவோ, save பண்ணவோ முடியாதுங்க.",
+        "before": "சரிங்க, உங்க பெயர் Audit Customer, email audit. customer@example. invalid, நாளைக்கு மதியம் மூணு மணிக்கு demo review வேணும்னு சொல்லிருக்கீங்க. இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது.",
+        "after": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது."
+      }
+    ]
+  },
+  {
+    "case": "language-ta-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "சரிங்க, உங்க details-அ நான் note பண்ணிக்கிட்டேன். ஆனா எங்களால direct-ஆ team-க்கு submit பண்ணவோ இல்ல email அனுப்பவோ முடியாதுங்க. நீங்க சம்மதம் கொடுத்ததால, எங்க குழு இத review பண்ணுவாங்க. உங்களுக்கு demo அல்லது counseling வேணுமா?",
+        "before": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது. ஆனா எங்களால direct-ஆ team-க்கு submit பண்ணவோ இல்ல email அனுப்பவோ முடியாதுங்க. உங்களுக்கு demo அல்லது counseling வேணுமா?",
+        "after": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது."
+      }
+    ]
+  },
+  {
+    "case": "language-te-IN-connected-7_integration_timeout",
+    "changes": []
+  },
+  {
+    "case": "language-te-IN-connected-8_integration_denied",
+    "changes": []
+  },
+  {
+    "case": "language-te-IN-none-1_interested",
+    "changes": [
+      {
+        "turn": 4,
+        "raw": "సరేనండి, మీ పేరు, email వివరాలు నోట్ చేసుకున్నాను. కానీ మా దగ్గర enquiry submit చేయడానికి tool లేదు అండి, సో నేను దీన్ని నేరుగా team కి పంపలేను. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+        "before": "సరేనండి, మీ పేరు, email వివరాలు నోట్ చేసుకున్నాను. కానీ మా దగ్గర enquiry submit చేయడానికి tool లేదు అండి, సో నేను దీన్ని నేరుగా team కి పంపలేను. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+        "after": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు."
+      }
+    ]
+  },
+  {
+    "case": "language-te-IN-none-1b_direct_tool_request",
+    "changes": [
+      {
+        "turn": 1,
+        "raw": "సరే అండి, మీ details note చేసుకున్నాను. నాకు ఇక్కడ నుంచి direct గా enquiry submit చేసే option లేదు అండి, కానీ మా team review కోసం దీన్ని note చేస్తున్నాను. మీకు వేరే ఏమైనా వివరాలు కావాలా?",
+        "before": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు. మీకు వేరే ఏమైనా వివరాలు కావాలా?",
+        "after": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు."
+      }
+    ]
+  }
+]

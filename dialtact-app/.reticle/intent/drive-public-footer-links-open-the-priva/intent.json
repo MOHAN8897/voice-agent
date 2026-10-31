@@ -1,0 +1,19 @@
+{
+  "intents": {
+    "flow:drive-public-footer-links-open-the-privacy-page-at-a-c": {
+      "declaredAt": 1792519050183,
+      "id": "flow:drive-public-footer-links-open-the-privacy-page-at-a-c",
+      "source": "decided on the dashboard",
+      "state": "declared",
+      "statement": "Public footer links open the privacy page at a crawlable URL.",
+      "status": "proved",
+      "subject": "drive-public-footer-links-open-the-priva",
+      "surface": {
+        "flow": "drive-public-footer-links-open-the-privacy-page-at-a-c"
+      },
+      "updatedAt": 1792519053273
+    }
+  },
+  "subject": "drive-public-footer-links-open-the-priva",
+  "version": 1
+}

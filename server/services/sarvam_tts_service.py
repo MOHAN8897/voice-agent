@@ -13,6 +13,8 @@ import httpx
 
 from server.config.constants import constants
 from server.config.env import get_settings
+from server.services.provider_health import provider_health
+from server.services.sarvam_keys import request_with_failover, stream_with_failover
 from server.services.tts_config import TtsConfigError, resolve_tts_config
 from server.utils.errors import AppError, ErrorCode, classify_http_status
 from server.utils.http_clients import get_sarvam_client
@@ -29,15 +31,24 @@ async def synthesize(
     pace: Optional[float] = None,
     model: Optional[str] = None,
     temperature: Optional[float] = None,
-    session_id: str = "default",
+    pitch: Optional[float] = None,
+    volume: Optional[float] = None,
+    session_id: Optional[str] = "default",
     timeout_ms: Optional[int] = None,
 ) -> dict:
     """
     REST synthesis — returns {audio_bytes, content_type, request_id, speaker, language_code}
-    temperature: bulbul:v3 only (0.01-1.0). Raises AppError on failure.
+    temperature: bulbul:v3 / bulbul:v4-flash (0.01-1.0).
+    pitch / volume (loudness): model-dependent — see constants.TTS_MODELS.
+    Raises AppError on failure.
     """
     settings = get_settings()
-    text = text.strip()
+    text = (text or "").strip()
+    if not text:
+        raise AppError(ErrorCode.VALIDATION_ERROR, "Text is required for TTS", status_code=400)
+    from server.services.spoken_numbers import prepare_spoken_reply
+
+    text = prepare_spoken_reply(text, provider="sarvam")
     if not text:
         raise AppError(ErrorCode.VALIDATION_ERROR, "Text is required for TTS", status_code=400)
     if len(text) > constants.TTS_MAX_CHARS_REST:
@@ -55,6 +66,8 @@ async def synthesize(
             model=model,
             pace=pace,
             temperature=temperature,
+            pitch=pitch,
+            volume=volume,
         )
     except TtsConfigError as e:
         raise AppError(ErrorCode.VALIDATION_ERROR, str(e), status_code=400) from e
@@ -74,36 +87,43 @@ async def synthesize(
     }
     if "temperature" in cfg:
         payload["temperature"] = cfg["temperature"]
+    if "pitch" in cfg:
+        payload["pitch"] = cfg["pitch"]
+    if "loudness" in cfg:
+        payload["loudness"] = cfg["loudness"]
 
-    log_tts("Synthesis started", chars=len(text), speaker=speaker, language_code=language_code, model=model, pace=pace, session=session_id)
+    log_tts("Synthesis started", chars=len(text), speaker=speaker, language_code=language_code, model=model, pace=pace, temperature=cfg.get("temperature"), pitch=cfg.get("pitch"), loudness=cfg.get("loudness"), session=session_id or "preview")
 
-    headers = {
-        "api-subscription-key": settings.sarvam_api_key,
-        "Content-Type": "application/json",
-    }
-
-    # Retry for 429/5xx with backoff (industry standard)
+    # Retry for timeouts / network errors with backoff; key failover for
+    # credits / quota / auth rejections happens around it.
     import asyncio as _asyncio
 
-    retries = 0
     max_retries = settings.max_retries
-    while True:
-        try:
-            client = get_sarvam_client()
-            resp = await client.post(SARVAM_TTS_URL, headers=headers, json=payload, timeout=timeout_s)
-            break
-        except httpx.TimeoutException as e:
-            if retries < max_retries:
-                retries += 1
-                await _asyncio.sleep(0.2 * (2**retries))
-                continue
-            raise AppError(ErrorCode.TIMEOUT, provider="sarvam_tts", retryable=True, cause=e) from e
-        except httpx.NetworkError as e:
-            if retries < max_retries:
-                retries += 1
-                await _asyncio.sleep(0.3 * (2**retries))
-                continue
-            raise AppError(ErrorCode.NETWORK_ERROR, provider="sarvam_tts", retryable=True, cause=e) from e
+
+    async def _send(key: str):
+        headers = {"api-subscription-key": key, "Content-Type": "application/json"}
+        retries = 0
+        while True:
+            try:
+                client = get_sarvam_client()
+                return await client.post(SARVAM_TTS_URL, headers=headers, json=payload, timeout=timeout_s)
+            except httpx.TimeoutException as e:
+                if retries < max_retries:
+                    retries += 1
+                    await _asyncio.sleep(0.2 * (2**retries))
+                    continue
+                provider_health.record_failure("sarvam", "tts", "timeout", detail="Sarvam TTS request timed out")
+                raise AppError(ErrorCode.TIMEOUT, provider="sarvam_tts", retryable=True, cause=e) from e
+            except httpx.NetworkError as e:
+                if retries < max_retries:
+                    retries += 1
+                    await _asyncio.sleep(0.3 * (2**retries))
+                    continue
+                provider_health.record_failure("sarvam", "tts", "unavailable", detail="Sarvam TTS network error")
+                raise AppError(ErrorCode.NETWORK_ERROR, provider="sarvam_tts", retryable=True, cause=e) from e
+
+    resp, _slot = await request_with_failover("tts", "Sarvam text-to-speech", _send)
+    retries = 0
 
     if resp.status_code != 200:
         # Retry 429/5xx
@@ -130,7 +150,7 @@ async def synthesize(
     except Exception as e:
         raise AppError(ErrorCode.PROVIDER_ERROR, provider="sarvam_tts", cause=e) from e
 
-    log_tts("Audio received", bytes=len(audio_bytes), request_id=body.get("request_id"), speaker=speaker, session=session_id)
+    log_tts("Audio received", bytes=len(audio_bytes), request_id=body.get("request_id"), speaker=speaker, session=session_id or "preview")
     return {
         "audio_bytes": audio_bytes,
         "content_type": "audio/wav",
@@ -149,6 +169,8 @@ async def synthesize_stream(
     output_audio_codec: str = "mp3",
     session_id: str = "default",
     temperature: float | None = None,
+    pitch: float | None = None,
+    volume: float | None = None,
     timeout_ms: int | None = None,
 ) -> AsyncIterator[bytes]:
     """
@@ -174,6 +196,8 @@ async def synthesize_stream(
             model=model,
             pace=pace,
             temperature=temperature,
+            pitch=pitch,
+            volume=volume,
             codec=output_audio_codec,
         )
     except TtsConfigError as e:
@@ -196,17 +220,27 @@ async def synthesize_stream(
     }
     if "temperature" in cfg:
         payload["temperature"] = cfg["temperature"]
-    headers = {"api-subscription-key": settings.sarvam_api_key, "Content-Type": "application/json"}
-
+    if "pitch" in cfg:
+        payload["pitch"] = cfg["pitch"]
+    if "loudness" in cfg:
+        payload["loudness"] = cfg["loudness"]
     log_tts("Stream synthesis started", chars=len(text), speaker=speaker, codec=output_audio_codec)
 
     # Use httpx streaming response
     client = get_sarvam_client()
     try:
-        async with client.stream("POST", SARVAM_TTS_STREAM_URL, headers=headers, json=payload, timeout=timeout_s) as resp:
+        async with stream_with_failover(
+            "tts",
+            "Sarvam text-to-speech stream",
+            lambda key: client.stream(
+                "POST", SARVAM_TTS_STREAM_URL,
+                headers={"api-subscription-key": key, "Content-Type": "application/json"},
+                json=payload, timeout=timeout_s,
+            ),
+        ) as resp:
             if resp.status_code != 200:
-                body = await resp.aread()
-                log_error("TTS stream failed", status=resp.status_code, body=body[:600].decode(errors="ignore"))
+                await resp.aread()
+                log_error("TTS stream failed", status=resp.status_code)
                 raise classify_http_status(resp.status_code, "sarvam_tts")
             async for chunk in resp.aiter_bytes(chunk_size=8192):
                 if chunk:

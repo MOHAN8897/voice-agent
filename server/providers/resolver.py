@@ -8,9 +8,15 @@ import hashlib
 import json
 from typing import Any
 
-from server.config.constants import constants
+from server.config.constants import constants, normalize_supported_language
 from server.config.env import Settings, get_settings
-from server.providers.base import ConfigMode, ResolvedStack, StackSelection, StageSelection, TierName
+from server.providers.base import (
+    ConfigMode,
+    ResolvedStack,
+    StackSelection,
+    StageSelection,
+    TierName,
+)
 from server.providers.registry import ProviderRegistry, get_provider_registry
 from server.services.dev_secrets_store import dev_secrets_store
 from server.utils.errors import AppError, ErrorCode
@@ -30,6 +36,7 @@ class StackResolver:
         language: str = "te-IN",
         stack_override: dict[str, Any] | None = None,
         environment: str = "development",
+        allow_composed_override: bool = False,
     ) -> ResolvedStack:
         effective_mode: ConfigMode = mode or dev_secrets_store.effective(
             "voice_agent_config_mode", self._settings.voice_agent_config_mode
@@ -38,14 +45,49 @@ class StackResolver:
             "voice_agent_tier", self._settings.voice_agent_tier
         )  # type: ignore[assignment]
 
-        if stack_override and environment == "production":
+        language = normalize_supported_language(language)
+
+        native_override = bool(isinstance(stack_override, dict) and stack_override.get("pipeline") == "realtime_voice")
+        is_profile_override = bool(
+            allow_composed_override
+            and isinstance(stack_override, dict)
+            and stack_override.get("pipeline") in {"composed_voice", "realtime_voice"}
+            and isinstance(stack_override.get("_voice_stack_snapshot"), dict)
+            and stack_override["_voice_stack_snapshot"].get("tier") == effective_tier
+        )
+        is_composed_override = bool(is_profile_override and stack_override.get("pipeline") == "composed_voice")
+        if stack_override and environment == "production" and not is_profile_override:
             raise AppError(
                 ErrorCode.VALIDATION_ERROR,
                 message="stack_override is not allowed in production",
                 status_code=400,
             )
 
-        if effective_mode == "env":
+        if native_override:
+            from server.providers.llm_protocol import native_audio_provider
+
+            llm = stack_override.get("llm") or {}
+            try:
+                if not isinstance(llm, dict) or not native_audio_provider(llm.get("provider"), llm.get("model"), "websocket"):
+                    raise ValueError("A native audio model must be explicit")
+                stack = StackSelection(llm=StageSelection(llm["provider"], llm["model"], {"api_mode": "websocket"}),
+                    stt=StageSelection(llm["provider"], "native_audio", {"inactive": True}),
+                    tts=StageSelection(llm["provider"], "native_audio", {"inactive": True}), language=language)
+            except (ValueError, KeyError, TypeError) as exc:
+                raise AppError(ErrorCode.VALIDATION_ERROR,
+                    message="The selected native audio model and provider do not match", status_code=409) from exc
+        elif is_composed_override:
+            # A fully resolved, server-owned profile must not depend on an
+            # unrelated global tier or browser session to supply base stages.
+            try:
+                stack = StackSelection(**{
+                    stage: StageSelection(**stack_override[stage])
+                    for stage in ("stt", "llm", "tts")
+                }, language=language)
+            except (KeyError, TypeError) as exc:
+                raise AppError(ErrorCode.VALIDATION_ERROR,
+                    message="The selected voice profile is incomplete", status_code=409) from exc
+        elif effective_mode == "env":
             stack = self._from_tier_config(effective_tier, language, environment)
         else:
             if user_selection is None:
@@ -53,11 +95,20 @@ class StackResolver:
             else:
                 stack = user_selection
 
-        if stack_override:
+        if stack_override and not is_composed_override and not native_override:
             stack = self._apply_override(stack, stack_override)
 
-        stack = self._apply_stage_fallbacks(stack)
-        self._validate_stack(stack, language)
+        # A disabled or invalid selected stage is an admission error. Replacing
+        # it changes the customer's tier, voice, protocol and cost assumptions.
+        if is_composed_override:
+            from server.providers.llm_protocol import text_llm_api_mode
+
+            try:
+                text_llm_api_mode(stack.llm.provider, stack.llm.model, stack.llm.config.get("api_mode"))
+            except (ValueError, AttributeError) as exc:
+                raise AppError(ErrorCode.VALIDATION_ERROR,
+                    message="The selected text model and transport do not match", status_code=409) from exc
+        self._validate_stack(stack, language, native_audio=native_override)
         combination_id = self._combination_id(stack)
         return ResolvedStack(
             combination_id=combination_id,
@@ -79,25 +130,36 @@ class StackResolver:
                 stt=cached.stt,
                 llm=cached.llm,
                 tts=cached.tts,
-                language=cached.language or language,
+                language=normalize_supported_language(cached.language) if cached.language else language,
                 voice_preset=cached.voice_preset,
             )
         return self._from_tier_env(tier, language)
 
     def _from_tier_env(self, tier: TierName, language: str) -> StackSelection:
         s = self._settings
-        prefix = tier.upper()
-        stt_provider = getattr(s, f"voice_{tier}_stt_provider")
-        stt_model = getattr(s, f"voice_{tier}_stt_model")
-        llm_provider = getattr(s, f"voice_{tier}_llm_provider")
-        llm_model = getattr(s, f"voice_{tier}_llm_model")
-        tts_provider = getattr(s, f"voice_{tier}_tts_provider")
-        tts_model = getattr(s, f"voice_{tier}_tts_model")
+        if tier not in ("low", "medium", "premium"):
+            raise AppError(ErrorCode.VALIDATION_ERROR,
+                message="The selected tier has no approved stack configuration", status_code=409)
+        values = {f"{stage}_{field}": getattr(s, f"voice_{tier}_{stage}_{field}", None)
+                  for stage in ("stt", "llm", "tts") for field in ("provider", "model")}
+        if any(not isinstance(value, str) or not value.strip() for value in values.values()):
+            raise AppError(ErrorCode.VALIDATION_ERROR,
+                message="The selected tier has an incomplete stack configuration", status_code=409)
+        if language not in constants.SUPPORTED_LANGUAGES and language != "unknown":
+            raise AppError(ErrorCode.VALIDATION_ERROR,
+                message=f"Language '{language}' is not supported", status_code=400)
+        stt_provider, stt_model = values["stt_provider"], values["stt_model"]
+        llm_provider, llm_model = values["llm_provider"], values["llm_model"]
+        tts_provider, tts_model = values["tts_provider"], values["tts_model"]
 
         tts_config: dict[str, Any] = {}
         if tts_provider == "sarvam":
-            lang = constants.SUPPORTED_LANGUAGES.get(language, constants.SUPPORTED_LANGUAGES["te-IN"])
-            tts_config["speaker"] = lang.get("speaker", s.sarvam_tts_speaker_te)
+            from server.providers.voice_inventory import default_voice
+
+            tts_config["speaker"] = default_voice(
+                "sarvam", tts_model, None if language == "unknown" else language,
+                preferred=getattr(s, "sarvam_tts_speaker_te", None),
+            )
 
         return StackSelection(
             stt=StageSelection(stt_provider, stt_model, {"mode": "realtime" if "realtime" in stt_model else "rest"}),
@@ -111,12 +173,13 @@ class StackResolver:
         stt = dict(stack.stt.__dict__)
         llm = dict(stack.llm.__dict__)
         tts = dict(stack.tts.__dict__)
-        if "stt" in override:
-            stt.update(override["stt"])
-        if "llm" in override:
-            llm.update(override["llm"])
-        if "tts" in override:
-            tts.update(override["tts"])
+        for stage, value in (("stt", stt), ("llm", llm), ("tts", tts)):
+            if stage in override:
+                incoming = override[stage]
+                if not isinstance(incoming, dict) or set(incoming) - {"provider", "model", "config"}:
+                    raise AppError(ErrorCode.VALIDATION_ERROR,
+                        message="The selected stage configuration is invalid", status_code=400)
+                value.update(incoming)
         return StackSelection(
             stt=StageSelection(**stt),
             llm=StageSelection(**llm),
@@ -125,44 +188,22 @@ class StackResolver:
             voice_preset=stack.voice_preset,
         )
 
-    def _apply_stage_fallbacks(self, stack: StackSelection) -> StackSelection:
-        from server.services.dev_fallback_store import dev_fallback_store
+    def _validate_stack(self, stack: StackSelection, language: str, *, native_audio: bool = False) -> None:
+        stages = (("llm", stack.llm),) if native_audio else (("stt", stack.stt), ("llm", stack.llm), ("tts", stack.tts))
+        for stage, sel in stages:
+            if (not isinstance(sel.provider, str) or not sel.provider.strip()
+                or not isinstance(sel.model, str) or not sel.model.strip() or not isinstance(sel.config, dict)):
+                raise AppError(ErrorCode.VALIDATION_ERROR,
+                    message="The selected stage configuration is incomplete", status_code=409)
+            speaker = str(sel.config.get("speaker") or "").strip()
+            if stage == "tts" and speaker and sel.provider in {"sarvam", "gnani", "cartesia", "gemini"}:
+                from server.providers.voice_inventory import validate_voice
 
-        chains = dev_fallback_store.get_chains()
-        return StackSelection(
-            stt=self._fallback_stage("stt", stack.stt, chains.get("stt") or []),
-            llm=self._fallback_stage("llm", stack.llm, chains.get("llm") or []),
-            tts=self._fallback_stage("tts", stack.tts, chains.get("tts") or []),
-            language=stack.language,
-            voice_preset=stack.voice_preset,
-        )
-
-    def _fallback_stage(self, stage: str, sel: StageSelection, chain: list[str]) -> StageSelection:
-        order = [sel.provider] + [p for p in chain if p != sel.provider]
-        for pid in order:
-            if not self._registry.is_provider_enabled(pid, stage):
-                continue
-            model = sel.model
-            if pid != sel.provider:
-                model = self._default_model(pid, stage) or model
-            if self._registry.is_model_allowed(pid, stage, model):
-                config = sel.config if pid == sel.provider else {}
-                return StageSelection(pid, model, config)
-            if stage == "stt" and model == "saaras:v3" and self._registry.is_model_allowed(pid, stage, "saaras:v3-realtime"):
-                return StageSelection(pid, "saaras:v3-realtime", sel.config if pid == sel.provider else {})
-        return sel
-
-    def _default_model(self, provider_id: str, stage: str) -> str | None:
-        for p in self._registry.get_catalog().get("providers") or []:
-            if p.get("id") != provider_id:
-                continue
-            models = (p.get("models") or {}).get(stage) or []
-            if models:
-                return str(models[0].get("id") or "")
-        return None
-
-    def _validate_stack(self, stack: StackSelection, language: str) -> None:
-        for stage, sel in (("stt", stack.stt), ("llm", stack.llm), ("tts", stack.tts)):
+                try:
+                    validate_voice(sel.provider, sel.model, speaker, language)
+                except ValueError as exc:
+                    raise AppError(ErrorCode.VALIDATION_ERROR,
+                        message="The selected speech model, voice and language do not match", status_code=409) from exc
             if not self._registry.is_provider_enabled(sel.provider, stage):
                 raise AppError(
                     ErrorCode.PROVIDER_DISABLED,

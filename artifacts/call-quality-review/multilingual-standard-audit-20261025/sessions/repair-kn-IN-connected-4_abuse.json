@@ -1,0 +1,235 @@
+{
+  "key": "repair-kn-IN-connected-4_abuse",
+  "business": "repair",
+  "language": "kn-IN",
+  "integration": true,
+  "scenario": "4_abuse",
+  "agent_id": "5f4913c1-ae60-5ad4-bfd0-7ebb2d1346b5",
+  "call_id": "8e3bca60-833e-4f5d-a1fb-2b976ebf8e78",
+  "session_id": "audit-repair-kn-IN-connected-4_abuse-533c423a",
+  "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 462,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller said: ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ. ಅದೇ ಮಾತನ್ನು ಹೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ ಬೆಲೆಯ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡು.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ಅರ್ಥ ಆಗುತ್ತೆ. ನಾನು ಇನ್ನು ಮುಂದೆ call ಮಾಡಲ್ಲ. ಧನ್ಯವಾದಗಳು.\", \"memory_update\": {\"operations\": [{\"op\": \"set_preference\", \"key\": \"do_not_call\"\n, \"value\": \"true\"}]}}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller said: ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ. ಅದೇ ಮಾತನ್ನು ಹೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ ಬೆಲೆಯ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡು.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ಅರ್ಥ ಆಗುತ್ತೆ. ನಾನು ಇನ್ನು ಮುಂದೆ call ಮಾಡಲ್ಲ. ಧನ್ಯವಾದಗಳು.\", \"memory_update\": {\"operations\": [{\"op\": \"set_preference\", \"key\": \"do_not_call\"\n, \"value\": \"true\"}]}}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 160,
+        "prompt_tokens": 4218,
+        "total_tokens": 4378,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ಅರ್ಥ ಆಗುತ್ತೆ. ನಾನು ಇನ್ನು ಮುಂದೆ call ಮಾಡಲ್ಲ. ಧನ್ಯವಾದಗಳು.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4218,
+          "output_tokens": 160,
+          "total_tokens": 4378
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "set_preference",
+              "key": "do_not_call",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "Caller said: ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ. ಅದೇ ಮಾತನ್ನು ಹೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ ಬೆಲೆಯ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡು.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.781
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 648,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ಈ ತರಹದ ಮಾತುಗಳಿಗೆ ನಾನು ಪ್ರತಿಕ್ರಿಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ನಿಮ್ಮ call ಈಗ ಮುಗಿಯುತ್ತಿದೆ.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller issued violent threat ('I will kill you. End this call now.') and demanded immediate disconnection. Agent terminated call under abuse policy.\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ಈ ತರಹದ ಮಾತುಗಳಿಗೆ ನಾನು ಪ್ರತಿಕ್ರಿಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ನಿಮ್ಮ call ಈಗ ಮುಗಿಯುತ್ತಿದೆ.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller issued violent threat ('I will kill you. End this call now.') and demanded immediate disconnection. Agent terminated call under abuse policy.\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 203,
+        "prompt_tokens": 4178,
+        "total_tokens": 4381,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ಈ ತರಹದ ಮಾತುಗಳಿಗೆ ನಾನು ಪ್ರತಿಕ್ರಿಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ನಿಮ್ಮ call ಈಗ ಮುಗಿಯುತ್ತಿದೆ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4178,
+          "output_tokens": 203,
+          "total_tokens": 4381
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller issued violent threat ('I will kill you. End this call now.') and demanded immediate disconnection. Agent terminated call under abuse policy."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.781
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 1,
+      "at": 0.782
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 2,
+      "at": 1.578
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ. ಅದೇ ಮಾತನ್ನು ಹೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ ಬೆಲೆಯ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡು.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.782,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.781,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "a4405d787fd7a9f6c3d89b05b176ee25a3365b9e77b516224e273236d26e008a",
+  "prompt_chars": 17494,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "ನಮಸ್ಕಾರ, ನಾನು ರವಿ, ಸೇಫ್‌ಫಿಕ್ಸ್ ಹೋಮ್ ಸರ್ವಿಸ್‌ನಿಂದ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ಇದು ನಮ್ಮ ಸೇವೆಗಳು ಮತ್ತು ಬೆಲೆಗಳ ಬಗ್ಗೆ ತಿಳಿಸಲು ಮಾಡಿದ ಕರೆ. ಈಗ ಮಾತನಾಡಲು ಇದು ಸರಿಯಾದ ಸಮಯವೇ?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "Caller said: ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ. ಅದೇ ಮಾತನ್ನು ಹೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ ಬೆಲೆಯ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡು.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ಅರ್ಥ ಆಗುತ್ತೆ. ನಾನು ಇನ್ನು ಮುಂದೆ call ಮಾಡಲ್ಲ. ಧನ್ಯವಾದಗಳು.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಕ್ಷಮಿಸಿ, ಈ ತರಹದ ಮಾತುಗಳಿಗೆ ನಾನು ಪ್ರತಿಕ್ರಿಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ. ನಿಮ್ಮ call ಈಗ ಮುಗಿಯುತ್ತಿದೆ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 1.594,
+  "hangup_count": 0
+}

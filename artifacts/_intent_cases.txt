@@ -1,0 +1,35 @@
+0|None|None|Wait, one more question: what is the price? Do not disconnect.
+1|None|None|I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.
+2|None|None|Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?
+3|None|None|No thank you. I do not want your service or product. Please end this call.
+4|None|None|Do not contact me again. Remove me from future calls and end the call.
+5|None|None|You have answered my questions. I do not need anything else. Goodbye, end the call.
+6|None|None|I don't want visiting cards, but I do want wedding invitations. Do you make them?
+7|None|None|ఆగండి, ఇంకో ప్రశ్న ఉంది: ధర ఎంత? Call cut చేయకండి.
+8|None|None|ఇప్పుడైతే అవసరం లేదు, కానీ వచ్చే నెల నాకు ఆసక్తి ఉంది. ప్రస్తుత ధర చెప్పండి. ఏదీ book చేయకండి, దీన్ని శాశ్వతంగా వద్దన్నట్టు అనుకోకండి.
+9|None|None|అవును, భవిష్యత్తులో నాకు ఆసక్తి ఉంది. ఇప్పుడే తర్వాత call చేయమని నేను అడగడం లేదు. ఈ service గురించి ఇంకా ఏం తెలుసుకోవాలి?
+10|None|None|వద్దండి, ధన్యవాదాలు. మీ service లేదా product నాకు అవసరం లేదు. దయచేసి call ముగించండి.
+11|None|None|నాకు మళ్లీ call చేయకండి. భవిష్యత్తు calls నుంచి నా పేరు తీసేసి ఈ call ముగించండి.
+12|None|None|నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.
+13|None|None|నాకు visiting cards వద్దు, కానీ wedding invitations కావాలి. మీరు చేస్తారా?
+14|None|None|रुकिए, एक और सवाल है: कीमत क्या है? Call मत काटिए।
+15|None|None|अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।
+16|None|None|हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?
+17|None|None|नहीं, धन्यवाद। मुझे आपकी service या product नहीं चाहिए। कृपया call समाप्त कीजिए।
+18|None|None|मुझे दोबारा call मत कीजिए। आगे की calls से मेरा नाम हटाइए और यह call खत्म कीजिए।
+19|None|None|मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।
+20|None|None|मुझे visiting cards नहीं चाहिए, लेकिन शादी के निमंत्रण चाहिए। क्या आप बनाते हैं?
+21|None|None|காத்திருங்க, இன்னொரு கேள்வி இருக்கு: விலை என்ன? Call cut செய்யாதீங்க.
+22|None|None|இப்போ தேவையில்லை, ஆனால் அடுத்த மாதம் எனக்கு ஆர்வம் இருக்கு. தற்போதைய விலையைச் சொல்லுங்க. எதையும் book செய்யாதீங்க; நான் நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க.
+23|None|None|ஆமாம், எதிர்காலத்தில் எனக்கு ஆர்வம் இருக்கு. இப்போ நான் பிறகு call செய்யச் சொல்லவில்லை. இந்த service பற்றி இன்னும் என்ன தெரிஞ்சுக்கணும்?
+24|None|None|வேண்டாம், நன்றி. உங்கள் service அல்லது product எனக்கு தேவையில்லை. தயவுசெய்து call முடிச்சிடுங்க.
+25|None|None|எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.
+26|None|None|என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.
+27|None|None|எனக்கு visiting cards வேண்டாம், ஆனால் திருமண அழைப்பிதழ்கள் வேண்டும். நீங்க செய்வீங்களா?
+28|None|None|ನಿಲ್ಲಿ, ಇನ್ನೊಂದು ಪ್ರಶ್ನೆ ಇದೆ: ಬೆಲೆ ಎಷ್ಟು? Call cut ಮಾಡಬೇಡಿ.
+29|None|None|ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ಈಗಿನ ಬೆಲೆ ಹೇಳಿ. ಏನನ್ನೂ book ಮಾಡಬೇಡಿ; ಇದನ್ನು ಶಾಶ್ವತ ನಿರಾಕರಣೆ ಎಂದು ಭಾವಿಸಬೇಡಿ.
+30|None|None|ಹೌದು, ಭವಿಷ್ಯದಲ್ಲಿ ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಾನು ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ. ಈ service ಬಗ್ಗೆ ಇನ್ನೇನು ತಿಳಿಯಬೇಕು?
+31|None|None|ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.
+32|None|None|ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.
+33|None|None|ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.
+34|None|None|ನನಗೆ visiting cards ಬೇಡ, ಆದರೆ ಮದುವೆಯ ಆಮಂತ್ರಣಗಳು ಬೇಕು. ನೀವು ಮಾಡುತ್ತೀರಾ?

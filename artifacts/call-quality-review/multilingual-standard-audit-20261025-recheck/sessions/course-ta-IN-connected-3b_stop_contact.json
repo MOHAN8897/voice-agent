@@ -1,0 +1,74 @@
+{
+  "key": "course-ta-IN-connected-3b_stop_contact",
+  "business": "course",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "3b_stop_contact",
+  "agent_id": "13132fd6-d72a-5ef9-81a9-47b201ed6188",
+  "call_id": "09c5222c-c319-490a-b1b3-da178a00e38e",
+  "session_id": "audit-course-ta-IN-connected-3b_stop_contact-e7269685",
+  "compiled_checksum": "6de945f219536e3f862422a7bf903732ed8c2be0a2a89e7a29eaaacb4b90f85f",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 1,
+      "at": 0.047
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.093,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "09c5222c-c319-490a-b1b3-da178a00e38e",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "9c507a47457da560070f48934087e1d6242a614453d74d03fdeb73c197cf054e",
+  "prompt_chars": 19307,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "வணக்கம், நான் பிரைட் பாத் ஸ்கில்ஸ் நிறுவனத்திலிருந்து அனன்யா பேசுகிறேன். வயது பதினெட்டு மற்றும் அதற்கு மேற்பட்டவர்களுக்கான எங்கள் ஆறு வார ஆன்லைன் பைத்தான் பயிற்சி வகுப்பைப் பற்றி சொல்ல அழைக்கிறேன். இது பற்றி பேச இது சரியான நேரமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.093,
+  "hangup_count": 1
+}

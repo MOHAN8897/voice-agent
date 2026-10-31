@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "Do not book or save anything yet. Please answer my question first: What is the final course fee, duration and class timing, and do you guarantee a job?"
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "al course fee, duration and class timing, and do you guarantee a job?\nassistant: The total fee is four thousand nine hundred ninety nine rupees for the 6 week course, classes are on weekdays from 7 PM to 8 PM, and there is no job guarantee or income promise. Which details would you like to know next?\nuser: I don't need a job guarantee, but I am interested in learning Python. Can you explain the course?\nassistant: Since you are already interested in learning Python, this course covers the basics from scratch over those 6 weekday sessions. Would you like to request a demo or counselling session?"
+}

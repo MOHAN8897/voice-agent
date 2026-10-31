@@ -1,0 +1,180 @@
+{
+  "key": "print-ta-IN-none-1b_direct_tool_request",
+  "business": "print",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "bdce67d6-051d-5df0-b945-525173a1f672",
+  "call_id": "98d1a9b3-660d-49d5-9a25-fd14cecb82a0",
+  "session_id": "audit-print-ta-IN-none-1b_direct_tool_request-3aafcf5e",
+  "compiled_checksum": "76b288f72889bc9041f0c28adf9f13370a846e99cba4f1b6a4bb91f33ad390dc",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1174,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly consented to submit a request on this call, provided their name Audit Customer, email audit.customer@example.invalid, requested a team review, and gave a callback preference of 'நாளை\"\n  ,\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"team review of enquiry and callback tomorrow afternoon at 3 PM\",\n    \"contact_preference\": \"callback\"\n  }\n  ,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"சரிங்க, உங்க பெயர் Audit Customer அப்புறம் email audit.customer@example.invalid-ன்னு note பண்ணிக்கிறேன். நாளை பிற்பகல் மூணு மணிக்கு callback வைக்கிறேன். ஆனா இது வெறும் request தான், confirmed order இல்ல. நம்ம team இத review பண்ணுவாங்க. உங்க நேரத்துக்கு நன்றி. வணக்கம்.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"quote_request\",\n        \"value\": \"Name: Audit Customer. Email: audit.customer@example.invalid. Callback: tomorrow afternoon 3 PM. Consent given to note request on call. Must not claim\"}\n      ,\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"delivery_locality\",\n        \"value\": \"Not provided\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "  \"decision\": \"close\",\n    \"remaining_request\": \"team review of enquiry and callback tomorrow afternoon at 3 PM\",\n    \"contact_preference\": \"callback\"\n  }\n  ,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"சரிங்க, உங்க பெயர் Audit Customer அப்புறம் email audit.customer@example.invalid-ன்னு note பண்ணிக்கிறேன். நாளை பிற்பகல் மூணு மணிக்கு callback வைக்கிறேன். ஆனா இது வெறும் request தான், confirmed order இல்ல. நம்ம team இத review பண்ணுவாங்க. உங்க நேரத்துக்கு நன்றி. வணக்கம்.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"quote_request\",\n        \"value\": \"Name: Audit Customer. Email: audit.customer@example.invalid. Callback: tomorrow afternoon 3 PM. Consent given to note request on call. Must not claim\"}\n      ,\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"delivery_locality\",\n        \"value\": \"Not provided\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 331,
+        "prompt_tokens": 4123,
+        "total_tokens": 4454,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, உங்க பெயர் Audit Customer அப்புறம் email audit.customer@example.invalid-ன்னு note பண்ணிக்கிறேன். நாளை பிற்பகல் மூணு மணிக்கு callback வைக்கிறேன். ஆனா இது வெறும் request தான், confirmed order இல்ல. நம்ம team இத review பண்ணுவாங்க. உங்க நேரத்துக்கு நன்றி. வணக்கம்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4123,
+          "output_tokens": 331,
+          "total_tokens": 4454
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "quote_request",
+              "value": "Name: Audit Customer. Email: audit.customer@example.invalid. Callback: tomorrow afternoon 3 PM. Consent given to note request on call. Must not claim"
+            },
+            {
+              "op": "update_summary",
+              "key": "delivery_locality",
+              "value": "Not provided"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly consented to submit a request on this call, provided their name Audit Customer, email audit.customer@example.invalid, requested a team review, and gave a callback preference of 'நாளை",
+          "remaining_request": "team review of enquiry and callback tomorrow afternoon at 3 PM",
+          "contact_preference": "callback",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.875
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "உங்கள் கோரிக்கை முடிந்ததா என்று என்னால் உறுதிப்படுத்த முடியவில்லை. தயவுசெய்து அதை முடிந்ததாகக் கருத வேண்டாம்.",
+      "turn": 1,
+      "at": 1.891
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 2,
+      "at": 1.907
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "என் பெயர் Audit Customer, email audit.customer@example.invalid. என் enquiryயை team reviewக்காக save செய்யுங்க. நாளை பிற்பகல் மூன்று மணி எனக்கு வசதி. Request submit செய்ய சம்மதிக்கிறேன்; order அல்லது booking confirm ஆனதாகச் சொல்லாதீங்க.",
+      "spoken": "உங்கள் கோரிக்கை முடிந்ததா என்று என்னால் உறுதிப்படுத்த முடியவில்லை. தயவுசெய்து அதை முடிந்ததாகக் கருத வேண்டாம்.",
+      "elapsed_s": 1.891,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 1.985,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "98d1a9b3-660d-49d5-9a25-fd14cecb82a0",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "94dea0198bbca67e7df4548ae910d6d0dc08cefbb5ee961965f358043fdd266a",
+  "prompt_chars": 18310,
+  "opening_seeded": "Vanakkam, I am Meera calling from ClearPrint Studio. Am I speaking with the right person to discuss your card printing needs today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly consented to submit a request on this call, provided their name Audit Customer, email audit.customer@example.invalid, requested a team review, and gave a callback preference of 'நாளை",
+        "remaining_request": "team review of enquiry and callback tomorrow afternoon at 3 PM",
+        "contact_preference": "callback",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, உங்க பெயர் Audit Customer அப்புறம் email audit. customer@example. invalid-ன்னு note பண்ணிக்கிறேன். நாளை பிற்பகல் மூணு மணிக்கு callback வைக்கிறேன். ஆனா இது வெறும் request தான், confirmed order இல்ல. நம்ம team இத review பண்ணுவாங்க. உங்க நேரத்துக்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 1.985,
+  "hangup_count": 1
+}

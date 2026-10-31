@@ -1,0 +1,295 @@
+{
+  "key": "course-hi-IN-none-2_future_interest",
+  "business": "course",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "7f650d01-7513-548e-bc19-54fdcfc5b5a2",
+  "call_id": "823138f2-79dc-4343-8c4d-6e430030ec07",
+  "session_id": "audit-course-hi-IN-none-2_future_interest-0af1176f",
+  "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 876,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'अभी जरूरत नहीं है' and 'कुछ book मत कीजिए', indicating a clear not_interested with no opt-out, while also expressing future interest.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Price information shared; future interest expressed for next month.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\":\n  \"समझ गई, कोई बात नहीं। Course की total fee 4,999 rupees है। जब भी आपको दिलचस्पी हो, आप callback के लिए कह सकते हैं। समय देने के लिए धन्यवाद। नमस्कार।\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller not interested now, wants price (4999 INR). Expressed interest for next month. Asked not to book. Requested do not call.\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'अभी जरूरत नहीं है' and 'कुछ book मत कीजिए', indicating a clear not_interested with no opt-out, while also expressing future interest.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Price information shared; future interest expressed for next month.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\":\n  \"समझ गई, कोई बात नहीं। Course की total fee 4,999 rupees है। जब भी आपको दिलचस्पी हो, आप callback के लिए कह सकते हैं। समय देने के लिए धन्यवाद। नमस्कार।\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller not interested now, wants price (4999 INR). Expressed interest for next month. Asked not to book. Requested do not call.\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 260,
+        "prompt_tokens": 3931,
+        "total_tokens": 4191,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "समझ गई, कोई बात नहीं। Course की total fee 4,999 rupees है। जब भी आपको दिलचस्पी हो, आप callback के लिए कह सकते हैं। समय देने के लिए धन्यवाद। नमस्कार।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3931,
+          "output_tokens": 260,
+          "total_tokens": 4191
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller not interested now, wants price (4999 INR). Expressed interest for next month. Asked not to book. Requested do not call."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "Caller explicitly said 'अभी जरूरत नहीं है' and 'कुछ book मत कीजिए', indicating a clear not_interested with no opt-out, while also expressing future interest.",
+          "remaining_request": "Price information shared; future interest expressed for next month.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.0
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 2123,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'अभी जरूरत नहीं है' and 'बाद में call करने के लिए नहीं कह रहा हूँ' while keeping future interest open.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Future interest in the course; did not request a callback.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  ",
+      "sse_finish": "length",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 2.922
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 724,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'अभी जरूरत नहीं है' and 'बाद में call करने के लिए नहीं कह रहा हूँ', which is a clear not_interested with no callback request.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n    \"order_claimed\": false,\n    \"spoken_response\": \"ठीक है, मैं समझ गई। जब भी आपको ज़रूरत हो आप हमसे संपर्क कर सकते हैं। BrightPath Skills se judne के लिए धन्यवाद. समय देने के लिए धन्यवाद। नमस्कार।\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest_status\",\n        \"value\": \"not_interested_for_now_interested_next_month\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'अभी जरूरत नहीं है' and 'बाद में call करने के लिए नहीं कह रहा हूँ', which is a clear not_interested with no callback request.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n    \"order_claimed\": false,\n    \"spoken_response\": \"ठीक है, मैं समझ गई। जब भी आपको ज़रूरत हो आप हमसे संपर्क कर सकते हैं। BrightPath Skills se judne के लिए धन्यवाद. समय देने के लिए धन्यवाद। नमस्कार।\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interest_status\",\n        \"value\": \"not_interested_for_now_interested_next_month\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 228,
+        "prompt_tokens": 3917,
+        "total_tokens": 4145,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, मैं समझ गई। जब भी आपको ज़रूरत हो आप हमसे संपर्क कर सकते हैं। BrightPath Skills se judne के लिए धन्यवाद. समय देने के लिए धन्यवाद। नमस्कार।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3917,
+          "output_tokens": 228,
+          "total_tokens": 4145
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interest_status",
+              "value": "not_interested_for_now_interested_next_month"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "Caller explicitly said 'अभी जरूरत नहीं है' and 'बाद में call करने के लिए नहीं कह रहा हूँ', which is a clear not_interested with no callback request.",
+          "remaining_request": "None",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.859
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 1,
+      "at": 1.016
+    },
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 2,
+      "at": 4.813
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 3,
+      "at": 4.829
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 1.016,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 3.781,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.046,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 4.875,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "823138f2-79dc-4343-8c4d-6e430030ec07",
+      "reason": "not_interested"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "875997769b501d7a3f1f36b3f6c6b01fe6d95ac74c81ac24e4a27767f719d2c9",
+  "prompt_chars": 16962,
+  "opening_seeded": "Namaste, mera naam Ananya hai BrightPath Skills se. Kya abhi baat karne ka thoda samay mil sakta hai?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Caller explicitly said 'अभी जरूरत नहीं है' and 'कुछ book मत कीजिए', indicating a clear not_interested with no opt-out, while also expressing future interest.",
+        "remaining_request": "Price information shared; future interest expressed for next month.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "समझ गई, कोई बात नहीं। Course की total fee four thousand nine hundred ninety nine rupees है। जब भी आपको दिलचस्पी हो, आप callback के लिए कह सकते हैं। समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Caller explicitly said 'अभी जरूरत नहीं है' and 'बाद में call करने के लिए नहीं कह रहा हूँ', which is a clear not_interested with no callback request.",
+        "remaining_request": "None",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, मैं समझ गई। जब भी आपको ज़रूरत हो आप हमसे संपर्क कर सकते हैं। BrightPath Skills se judne के लिए धन्यवाद. समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.875,
+  "hangup_count": 1
+}

@@ -10,18 +10,13 @@ from typing import Any
 from server.config.constants import constants
 from server.config.env import Settings, get_settings
 from server.providers.base import LLMAdapter, STTAdapter, TTSAdapter
+from server.providers.llm_catalog import llm_models_for_provider
 from server.providers.openai_llm import OpenAILLMAdapter
 from server.providers.sarvam_stt import SarvamSTTAdapter
 from server.providers.sarvam_tts import SarvamTTSAdapter
+from server.services.usage_pricing import build_pricing_metadata, resolve_fx_rate_inr
 
 _REGISTRY: "ProviderRegistry | None" = None
-
-_PRICING_METADATA: dict[str, dict[str, Any]] = {
-    "sarvam:saaras:v3": {"unit": "minute", "usd_per_unit": 0.006, "updated_at": "2026-08-01"},
-    "sarvam:saaras:v3-realtime": {"unit": "minute", "usd_per_unit": 0.008, "updated_at": "2026-08-01"},
-    "sarvam:bulbul:v3": {"unit": "1k_chars", "usd_per_unit": 0.015, "updated_at": "2026-08-01"},
-    "openai:gpt-5.6-luna": {"unit": "1k_tokens", "usd_per_unit": 0.002, "updated_at": "2026-08-01"},
-}
 
 
 class ProviderRegistry:
@@ -40,28 +35,50 @@ class ProviderRegistry:
         enable_sarvam = bool(dev_secrets_store.effective("enable_sarvam", s.enable_sarvam))
         enable_openai = bool(dev_secrets_store.effective("enable_openai", s.enable_openai))
         enable_deepseek = bool(dev_secrets_store.effective("enable_deepseek", s.enable_deepseek))
-        enable_gemini = bool(dev_secrets_store.effective("enable_gemini", s.enable_gemini))
         enable_cartesia = bool(dev_secrets_store.effective("enable_cartesia", s.enable_cartesia))
+        enable_gemini = bool(dev_secrets_store.effective("enable_gemini", s.enable_gemini))
 
         sarvam_key = dev_secrets_store.effective_secret("sarvam_api_key") or s.sarvam_api_key
         openai_key = dev_secrets_store.effective_secret("openai_api_key") or s.openai_api_key
         deepseek_key = dev_secrets_store.effective_secret("deepseek_api_key") or s.deepseek_api_key
         cartesia_key = dev_secrets_store.effective_secret("cartesia_api_key") or s.cartesia_api_key
-        gemini_key = dev_secrets_store.effective_secret("gemini_api_key") or s.gemini_api_key
 
         providers: list[dict[str, Any]] = []
 
         if enable_sarvam:
             self._stt["sarvam"] = SarvamSTTAdapter()
             self._tts["sarvam"] = SarvamTTSAdapter()
+            if sarvam_key and _allowed_models(s, "sarvam_llm_models_csv", "allowed_sarvam_llm_models"):
+                from server.providers.sarvam_llm import SarvamLLMAdapter
+
+                self._llm["sarvam"] = SarvamLLMAdapter()
             entry = self._sarvam_provider_entry(s)
+            entry["enabled"] = enable_sarvam
             entry["configured"] = bool(sarvam_key)
+            entry["adapter_available"] = bool(sarvam_key and _allowed_models(s, "sarvam_llm_models_csv", "allowed_sarvam_llm_models"))
             providers.append(entry)
 
         if enable_openai:
             self._llm["openai"] = OpenAILLMAdapter()
             entry = self._openai_provider_entry(s)
+            entry["enabled"] = enable_openai
             entry["configured"] = bool(openai_key)
+            providers.append(entry)
+
+        if enable_gemini:
+            gemini_key = dev_secrets_store.effective_secret("gemini_api_key") or s.gemini_api_key
+            if gemini_key:
+                from server.providers.gemini_llm import GeminiLLMAdapter
+
+                self._llm["gemini"] = GeminiLLMAdapter()
+                if _allowed_models(s, "gemini_tts_models_csv", "allowed_gemini_tts_models"):
+                    from server.providers.gemini_tts import GeminiTTSAdapter
+
+                    self._tts["gemini"] = GeminiTTSAdapter()
+            entry = self._gemini_provider_entry(s)
+            entry["enabled"] = enable_gemini
+            entry["configured"] = bool(gemini_key)
+            entry["adapter_available"] = bool(gemini_key and (self._llm.get("gemini") or self._tts.get("gemini")))
             providers.append(entry)
 
         if enable_deepseek:
@@ -70,44 +87,48 @@ class ProviderRegistry:
 
                 self._llm["deepseek"] = DeepSeekLLMAdapter()
             entry = self._deepseek_provider_entry(s)
+            entry["enabled"] = enable_deepseek
             entry["configured"] = bool(deepseek_key)
             entry["adapter_available"] = bool(deepseek_key)
             providers.append(entry)
 
-        if enable_gemini:
-            providers.append(
-                self._stub_provider_entry(
-                    "gemini",
-                    ["llm"],
-                    enabled=enable_gemini,
-                    configured=bool(gemini_key),
-                    adapter_available=False,
-                )
-            )
+        # Cartesia is a primary low-latency STT and TTS option
+        from server.providers.cartesia_stt import CartesiaSTTAdapter
+        from server.providers.cartesia_tts import CartesiaTTSAdapter
 
-        if enable_cartesia or cartesia_key:
-            if enable_cartesia and cartesia_key:
-                from server.providers.cartesia_stt import CartesiaSTTAdapter
-                from server.providers.cartesia_tts import CartesiaTTSAdapter
+        self._stt["cartesia"] = CartesiaSTTAdapter()
+        self._tts["cartesia"] = CartesiaTTSAdapter()
+        providers.append(self._cartesia_provider_entry(s, bool(cartesia_key), bool(enable_cartesia)))
 
-                self._stt["cartesia"] = CartesiaSTTAdapter()
-                self._tts["cartesia"] = CartesiaTTSAdapter()
-            providers.append(self._cartesia_provider_entry(s, bool(cartesia_key), enable_cartesia))
+        # Gnani AI (Vachana) TTS option
+        gnani_key = dev_secrets_store.effective_secret("gnani_api_key") or s.gnani_api_key
+        enable_gnani = dev_secrets_store.effective("enable_gnani", s.enable_gnani)
+        from server.providers.gnani_tts import GnaniTTSAdapter
+
+        self._tts["gnani"] = GnaniTTSAdapter()
+        providers.append(self._gnani_provider_entry(s, bool(gnani_key), bool(enable_gnani)))
+
 
         config_mode = dev_secrets_store.effective("voice_agent_config_mode", s.voice_agent_config_mode)
         active_tier = dev_secrets_store.effective("voice_agent_tier", s.voice_agent_tier)
 
+        fx_info = resolve_fx_rate_inr(preferred=s.fx_rate_inr)
+        fx_rate = float(fx_info["rate"])
         self._catalog = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "fx_rate_inr": s.fx_rate_inr,
+            "fx_rate_inr": fx_rate,
+            "fx_source": fx_info.get("source"),
+            "fx_as_of": fx_info.get("as_of"),
             "config_mode": config_mode,
             "active_tier": active_tier,
             "tiers": list(constants.TIER_NAMES),
             "providers": providers,
-            "pricing_metadata": _PRICING_METADATA,
+            "pricing_metadata": build_pricing_metadata(fx_rate),
         }
 
     def _sarvam_provider_entry(self, s: Settings) -> dict[str, Any]:
+        from server.providers.sarvam_llm import sarvam_chat_api_modes
+
         stt_models = [
             {
                 "id": m,
@@ -121,22 +142,79 @@ class ProviderRegistry:
         return {
             "id": "sarvam",
             "label": "Sarvam AI",
-            "stages": ["stt", "tts"],
+            "stages": ["stt", "tts", "llm"],
             "enabled": True,
             "configured": bool(s.sarvam_api_key),
             "healthy": True,
             "languages": list(constants.SUPPORTED_LANGUAGES.keys()),
             "models": {
                 "stt": stt_models,
+                "llm": [
+                    {
+                        "id": model,
+                        "label": model,
+                        "api_mode": sarvam_chat_api_modes(model)[0],
+                        "api_modes": sarvam_chat_api_modes(model),
+                        "streaming": True,
+                    }
+                    for model in _allowed_models(s, "sarvam_llm_models_csv", "allowed_sarvam_llm_models")
+                    if sarvam_chat_api_modes(model)
+                ],
                 "tts": [
-                    {"id": m, "label": meta["label"], "pricing_key": f"sarvam:{m}"}
+                    {
+                        "id": m,
+                        "label": meta["label"],
+                        "pricing_key": f"sarvam:{m}",
+                        "api_mode": "websocket",
+                        "api_modes": ["websocket"],
+                    }
                     for m, meta in constants.TTS_MODELS.items()
                 ],
             },
             "capabilities": {"streaming": True, "realtime_stt": True, "realtime_tts": True},
         }
 
+    def _gemini_provider_entry(self, s: Settings) -> dict[str, Any]:
+        from server.providers.gemini_tts import supports_gemini_tts_streaming
+
+        models = llm_models_for_provider("gemini", s)
+        return {
+            "id": "gemini",
+            "label": "Google Gemini",
+            "stages": ["llm", "tts"],
+            "enabled": s.enable_gemini,
+            "configured": bool(s.gemini_api_key),
+            "healthy": bool(s.gemini_api_key),
+            "adapter_available": bool(s.gemini_api_key),
+            "languages": ["multilingual"],
+            "models": {
+                "llm": models,
+                "tts": [
+                    {
+                        "id": model,
+                        "label": model,
+                        "api_mode": "websocket" if supports_gemini_tts_streaming(model) else "unary_rest",
+                        "api_modes": ["websocket", "streaming_rest", "unary_rest"]
+                        if supports_gemini_tts_streaming(model) else ["unary_rest"],
+                        "streaming": supports_gemini_tts_streaming(model),
+                    }
+                    for model in _allowed_models(s, "gemini_tts_models_csv", "allowed_gemini_tts_models")
+                ],
+            },
+            "capabilities": {
+                "streaming": True,
+                "structured_output": True,
+                "prompt_caching": True,
+                "realtime_voice": True,
+                "streaming_tts": any(
+                    supports_gemini_tts_streaming(model) for model in _allowed_models(s, "gemini_tts_models_csv", "allowed_gemini_tts_models")
+                ),
+            },
+            "notes": "HTTP Gemini for classic stacks; gemini-3.8-live for Test Studio speech-to-speech PSTN.",
+        }
+
     def _deepseek_provider_entry(self, s: Settings) -> dict[str, Any]:
+        models = llm_models_for_provider("deepseek", s)
         return {
             "id": "deepseek",
             "label": "DeepSeek",
@@ -146,21 +224,13 @@ class ProviderRegistry:
             "healthy": bool(s.deepseek_api_key),
             "adapter_available": bool(s.deepseek_api_key),
             "languages": ["multilingual"],
-            "models": {
-                "llm": [
-                    {
-                        "id": s.deepseek_model,
-                        "label": s.deepseek_model,
-                        "structured_output": True,
-                        "prompt_caching": False,
-                    }
-                ],
-            },
+            "models": {"llm": models},
             "capabilities": {"streaming": True, "structured_output": True},
+            "notes": "OpenAI-compatible API — https://api-docs.deepseek.com",
         }
 
     def _openai_provider_entry(self, s: Settings) -> dict[str, Any]:
-        allowed = list(s.allowed_openai_models)
+        models = llm_models_for_provider("openai", s)
         return {
             "id": "openai",
             "label": "OpenAI",
@@ -169,19 +239,14 @@ class ProviderRegistry:
             "configured": bool(s.openai_api_key),
             "healthy": True,
             "languages": ["multilingual"],
-            "models": {
-                "llm": [
-                    {
-                        "id": m,
-                        "label": m,
-                        "structured_output": True,
-                        "prompt_caching": m.startswith("gpt-5.6"),
-                        "pricing_key": f"openai:{m}",
-                    }
-                    for m in allowed
-                ],
+            "models": {"llm": models},
+            "capabilities": {
+                "streaming": True,
+                "structured_output": True,
+                "prompt_caching": True,
+                "realtime_text": True,
             },
-            "capabilities": {"streaming": True, "structured_output": True, "prompt_caching": True},
+            "notes": "Live calls use OpenAI Realtime text-only. Compile and post-call use HTTP models such as gpt-5.6-luna.",
         }
 
     def _cartesia_provider_entry(self, s: Settings, adapter_ok: bool, enabled: bool) -> dict[str, Any]:
@@ -207,12 +272,46 @@ class ProviderRegistry:
             "models": {
                 "stt": stt_models,
                 "tts": [
-                    {"id": m, "label": meta["label"], "pricing_key": f"cartesia:{m}"}
+                    {
+                        "id": m,
+                        "label": meta["label"],
+                        "pricing_key": f"cartesia:{m}",
+                        "api_mode": "websocket",
+                        "api_modes": ["websocket"],
+                    }
                     for m, meta in constants.CARTESIA_TTS_MODELS.items()
                 ],
             },
             "capabilities": {"streaming": True, "realtime_stt": True, "experimental": True},
             "notes": "Cartesia provides STT and TTS only — no LLM. Enable in Environment after saving API key.",
+        }
+
+    def _gnani_provider_entry(self, s: Settings, configured: bool, enabled: bool) -> dict[str, Any]:
+        return {
+            "id": "gnani",
+            "label": "Gnani.ai (Vachana)",
+            "stages": ["tts"],
+            "enabled": enabled,
+            "configured": configured,
+            "healthy": enabled and configured,
+            "adapter_available": enabled and configured,
+            "languages": list(constants.SUPPORTED_LANGUAGES.keys()),
+            "models": {
+                "stt": [],
+                "tts": [
+                    {
+                        "id": m,
+                        "label": meta["label"],
+                        "pricing_key": f"gnani:{m}",
+                        "api_mode": "websocket",
+                        "api_modes": ["websocket"],
+                    }
+                    for m, meta in constants.GNANI_TTS_MODELS.items()
+                ],
+                "llm": [],
+            },
+            "capabilities": {"streaming": True, "realtime_tts": True},
+            "notes": "Gnani.ai provides Vachana low-latency TTS supporting inline audio tags.",
         }
 
     @staticmethod
@@ -241,6 +340,9 @@ class ProviderRegistry:
         return self._catalog
 
     def is_provider_enabled(self, provider_id: str, stage: str) -> bool:
+        entry = next((row for row in self._catalog.get("providers", []) if row.get("id") == provider_id), None)
+        if not entry or entry.get("enabled") is not True or entry.get("configured") is not True:
+            return False
         if stage == "stt":
             return provider_id in self._stt
         if stage == "llm":
@@ -260,19 +362,28 @@ class ProviderRegistry:
         return False
 
     def get_stt(self, provider_id: str) -> STTAdapter:
-        if provider_id not in self._stt:
+        if not self.is_provider_enabled(provider_id, "stt"):
             raise KeyError(f"STT provider not available: {provider_id}")
         return self._stt[provider_id]
 
     def get_llm(self, provider_id: str) -> LLMAdapter:
-        if provider_id not in self._llm:
+        if not self.is_provider_enabled(provider_id, "llm"):
             raise KeyError(f"LLM provider not available: {provider_id}")
         return self._llm[provider_id]
 
     def get_tts(self, provider_id: str) -> TTSAdapter:
-        if provider_id not in self._tts:
+        if not self.is_provider_enabled(provider_id, "tts"):
             raise KeyError(f"TTS provider not available: {provider_id}")
         return self._tts[provider_id]
+
+
+def _allowed_models(settings: Settings, field: str, property_name: str) -> list[str]:
+    """Honor persisted admin model access without changing the universal Live stack."""
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    defaults = getattr(settings, property_name, [])
+    value = dev_secrets_store.effective(field, ",".join(defaults))
+    return list(dict.fromkeys(model.strip() for model in str(value or "").split(",") if model.strip()))
 
 
 def init_provider_registry(settings: Settings | None = None) -> ProviderRegistry:

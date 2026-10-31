@@ -9,8 +9,15 @@ import pytest
 
 from server.call.call_ledger import call_ledger
 from server.call.memory_manager import memory_manager
-from server.call.outcome_schema import DISPOSITIONS, validate_disposition
-from server.call.post_call_pipeline import process_now, read_outcome
+from server.call.outcome_schema import (
+    DISPOSITIONS,
+    derive_status_tags,
+    merge_outcome_facts,
+    normalize_custom_tags,
+    normalize_model_tags,
+    validate_disposition,
+)
+from server.call.post_call_pipeline import _detect_disclosure_delivery, process_now, read_outcome
 from server.config.env import get_settings
 
 FIXTURES = Path(__file__).parent / "fixtures" / "disposition_golden.json"
@@ -20,6 +27,57 @@ def test_unknown_disposition_coerced():
     assert validate_disposition("qualified") == "qualified"
     assert validate_disposition("not-a-real-status") == "no_outcome"
     assert "no_outcome" in DISPOSITIONS
+
+
+def test_owner_facts_and_status_tags_are_deterministic():
+    facts = merge_outcome_facts(
+        {"budget": "15 lakh"},
+        {"facts": {"name": "Subhash"}},
+        caller_id="+13526146416",
+    )
+    assert facts == {
+        "budget": "15 lakh",
+        "name": "Subhash",
+        "phone": "+13526146416",
+    }
+    tags = derive_status_tags(
+        "callback_required",
+        facts,
+        next_action="Call back tomorrow",
+        objections=[],
+    )
+    assert tags == [
+        "action:required",
+        "contact:name_known",
+        "contact:phone_known",
+        "followup:callback",
+        "outcome:callback_required",
+    ]
+
+
+def test_model_tags_cannot_override_deterministic_categories():
+    tags = normalize_model_tags([
+        "intent:pricing",
+        "outcome:qualified",
+        "compliance:disclosure_missing",
+        "made-up",
+    ])
+    assert tags == ["intent:pricing"]
+    custom = normalize_custom_tags(["Solar Rooftop", "vobiz", "nango", "warranty", "extra", "fourth"])
+    assert custom == ["custom:solar-rooftop", "custom:warranty", "custom:extra"]
+
+
+def test_disclosure_delivery_is_audited_from_the_assistant_transcript():
+    meta = {"recording_disclosure": {"enabled": True, "injected": True, "text": "This call is recorded."}}
+    assert _detect_disclosure_delivery([], meta) == "missing"
+    transcript = [
+        {"role": "user", "text": "Hello?"},
+        {"role": "assistant", "text": "This call is being recorded for quality."},
+    ]
+    assert _detect_disclosure_delivery(transcript, meta) == "delivered"
+    assert _detect_disclosure_delivery(transcript, {}) is None
+    disabled = {"recording_disclosure": {"enabled": False, "injected": False}}
+    assert _detect_disclosure_delivery(transcript, disabled) is None
 
 
 @pytest.mark.asyncio
@@ -47,7 +105,7 @@ async def test_golden_transcripts_to_disposition(monkeypatch, tmp_path):
         if case["memory"].get("summary"):
             ops.append({"op": "update_summary", "value": case["memory"]["summary"]})
         if ops:
-            memory_manager.apply_proposals(call_id, ops, turn_seq=1)
+            memory_manager.apply_proposals(call_id, ops, turn_seq=1, source="rolling_summary")
 
         async def fake_completion(*_a, **_k):
             return {
@@ -69,6 +127,9 @@ async def test_golden_transcripts_to_disposition(monkeypatch, tmp_path):
         assert disk is not None
         assert disk["disposition"] == case["expected_disposition"]
         assert disk.get("generation_ok") is True
+        assert f"outcome:{case['expected_disposition']}" in disk["status_tags"]
+        for key, value in (case["memory"].get("facts") or {}).items():
+            assert disk["facts"][key] == value
 
     call_ledger.reset_for_tests()
     memory_manager.reset_for_tests()
@@ -103,6 +164,46 @@ async def test_invalid_disposition_from_llm_rejected(monkeypatch, tmp_path):
         reg.return_value.get_llm.return_value = adapter
         outcome = await process_now("bad-disp")
     assert outcome["disposition"] == "no_outcome"
+    call_ledger.reset_for_tests()
+    memory_manager.reset_for_tests()
+    get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+async def test_outcome_summary_is_english_only(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
+    monkeypatch.setenv("DATA_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    call_ledger.reset_for_tests()
+    memory_manager.reset_for_tests()
+    await call_ledger.init("en-only", {"call_id": "en-only"})
+    await call_ledger.append_user_turn("en-only", "hello")
+    await call_ledger.append_assistant_turn("en-only", "Hi, this is Tis.")
+    memory_manager.init("en-only")
+
+    async def fake_completion(*_a, **_k):
+        return {
+            "disposition": "no_outcome",
+            "disposition_confidence": 0.5,
+            "summary_te": "సారాంశం",
+            "summary_en": "Caller greeted and the agent introduced Tis.",
+            "next_action": None,
+            "extracted_fields": {},
+            "objections": [],
+        }
+
+    with patch("server.providers.get_provider_registry") as reg:
+        adapter = type("A", (), {"structured_completion": AsyncMock(side_effect=fake_completion)})()
+        reg.return_value.get_llm.return_value = adapter
+        outcome = await process_now("en-only")
+    assert outcome["summary_te"] == ""
+    assert "Tis" in outcome["summary_en"]
+    assert outcome["prompt_version"] == "outcome_v4"
+    disk = read_outcome("en-only")
+    assert disk is not None
+    assert disk["summary_te"] == ""
+    assert "Tis" in disk["summary_en"]
     call_ledger.reset_for_tests()
     memory_manager.reset_for_tests()
     get_settings.cache_clear()
@@ -155,4 +256,18 @@ async def test_outcome_failure_does_not_fail_overall_call(monkeypatch, tmp_path)
     assert ctx.components["outcome"] == "failed"
     clear_all()
     get_settings.cache_clear()
+
+
+def test_outcome_schema_is_openai_strict_compatible():
+    from server.call.outcome_schema import OUTCOME_JSON_SCHEMA, normalize_extracted_fields
+
+    fields = OUTCOME_JSON_SCHEMA["properties"]["extracted_fields"]
+    assert fields["type"] == "array"
+    item = fields["items"]
+    assert item["additionalProperties"] is False
+    assert set(item["required"]) == {"key", "value"}
+    assert OUTCOME_JSON_SCHEMA["additionalProperties"] is False
+    assert normalize_extracted_fields([{"key": "name", "value": "Arun"}]) == {"name": "Arun"}
+    assert normalize_extracted_fields({"budget": "50L"}) == {"budget": "50L"}
+    assert normalize_extracted_fields(None) == {}
 

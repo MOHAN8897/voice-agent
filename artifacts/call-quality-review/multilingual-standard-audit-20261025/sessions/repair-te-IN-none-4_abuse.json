@@ -1,0 +1,251 @@
+{
+  "key": "repair-te-IN-none-4_abuse",
+  "business": "repair",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "8a13b76e-3b56-5229-9138-5d6ae489e1dd",
+  "call_id": "2309624d-ec5c-4058-a37f-36142f739f0f",
+  "session_id": "audit-repair-te-IN-none-4_abuse-c07954f2",
+  "compiled_checksum": "af87442c6d2ce882edae035185392cabc2004e146ddd899f472374156f3d3114",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 3240,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'నువ్వు పనికిమాలిన మూర్ఖుడివి' (you are a useless idiot), which is hostile and abusive.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_finish": "length",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 2.172
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 725,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price information\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"క్షమించండి అండి, అలా అనకూడదు. మా ఏసీ బేసిక్ సర్వీసింగ్ 699 rupees మరియు ఫ్రిడ్జ్ ఇన్స్పెక్షన్ 399 rupees అవుతుంది. ఇంకేమైనా వివరాలు కావాలా?\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller asked for pricing, then used abusive language ('నువ్వు పనికిమాలిన మూర్ఖుడివి'). Agent provided AC basic servicing at 699 rupees and fridge_ins.\"}\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price information\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"క్షమించండి అండి, అలా అనకూడదు. మా ఏసీ బేసిక్ సర్వీసింగ్ 699 rupees మరియు ఫ్రిడ్జ్ ఇన్స్పెక్షన్ 399 rupees అవుతుంది. ఇంకేమైనా వివరాలు కావాలా?\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller asked for pricing, then used abusive language ('నువ్వు పనికిమాలిన మూర్ఖుడివి'). Agent provided AC basic servicing at 699 rupees and fridge_ins.\"}\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 253,
+        "prompt_tokens": 4228,
+        "total_tokens": 4481,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "క్షమించండి అండి, అలా అనకూడదు. మా ఏసీ బేసిక్ సర్వీసింగ్ 699 rupees మరియు ఫ్రిడ్జ్ ఇన్స్పెక్షన్ 399 rupees అవుతుంది. ఇంకేమైనా వివరాలు కావాలా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4228,
+          "output_tokens": 253,
+          "total_tokens": 4481
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller asked for pricing, then used abusive language ('నువ్వు పనికిమాలిన మూర్ఖుడివి'). Agent provided AC basic servicing at 699 rupees and fridge_ins."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.",
+          "remaining_request": "price information",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.282
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 573,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'ఈ call ఇప్పుడే ముగించు' (end this call right now) and made a death threat.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n, \n    \"order_claimed\": false,\n    \"spoken_response\": \"క్షమించండి అండి, నేను ఇక కాల్ ముగిస్తున్నాను. నమస్కారం.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"Abuse and explicit call-end request. Closed immediately.\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'ఈ call ఇప్పుడే ముగించు' (end this call right now) and made a death threat.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n, \n    \"order_claimed\": false,\n    \"spoken_response\": \"క్షమించండి అండి, నేను ఇక కాల్ ముగిస్తున్నాను. నమస్కారం.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"Abuse and explicit call-end request. Closed immediately.\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 196,
+        "prompt_tokens": 4187,
+        "total_tokens": 4383,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "క్షమించండి అండి, నేను ఇక కాల్ ముగిస్తున్నాను. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4187,
+          "output_tokens": 196,
+          "total_tokens": 4383
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_outcome",
+              "value": "Abuse and explicit call-end request. Closed immediately."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "Caller said 'ఈ call ఇప్పుడే ముగించు' (end this call right now) and made a death threat.",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.907
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 1,
+      "at": 3.454
+    },
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 2,
+      "at": 4.407
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 3.454,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "నేను నిన్ను చంపేస్తాను. ఈ call ఇప్పుడే ముగించు.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 0.922,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "e243b1242b187bff41cde6be4096f79418a7d0db0799a29cde907723c54d0f76",
+  "prompt_chars": 17818,
+  "opening_seeded": "నమస్కారం, నేను సేఫ్ ఫిక్స్ హోమ్ సర్వీస్ నుండి రవిని మాట్లాడుతున్నాను. మేము పూణేలో హోమ్ అప్లయన్స్ సర్వీస్ అందిస్తాము. మీ గృహోపకరణాల గురించి మీకు ఏమైనా సమాచారం కావాలా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.",
+        "remaining_request": "price information",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "క్షమించండి అండి, అలా అనకూడదు. మా ఏసీ బేసిక్ సర్వీసింగ్ six hundred ninety nine rupees మరియు ఫ్రిడ్జ్ ఇన్స్పెక్షన్ three hundred ninety nine rupees అవుతుంది. ఇంకేమైనా వివరాలు కావాలా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "Caller said 'ఈ call ఇప్పుడే ముగించు' (end this call right now) and made a death threat.",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "క్షమించండి అండి, నేను ఇక కాల్ ముగిస్తున్నాను. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.438,
+  "hangup_count": 0
+}

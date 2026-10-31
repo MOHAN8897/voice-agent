@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_name": "still",
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "dred cards, and wedding invitations depend on the design and quantity. Which type are you looking at?\nuser: Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?\nassistant: For delivery to Pune, it takes five working days after artwork approval, and we accept cards or cash on delivery. Office hours are ten AM to six PM, Monday to Saturday. Feel free to reach out next month when you are ready.\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

@@ -1,0 +1,149 @@
+{
+  "key": "cycle-ta-IN-none-4_abuse",
+  "business": "cycle",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "a8a625e5-7e5f-5320-8624-1a990a8d6419",
+  "call_id": "bed5dd72-01be-4e4e-801f-b5f0977eda84",
+  "session_id": "audit-cycle-ta-IN-none-4_abuse-d3454814",
+  "compiled_checksum": "386ce2e8b1908900b6637a9f204489aefc5ecb99083f14f116174db28e20e614",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 168,
+      "sse_content_preview": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்கு. அடிப்படை சைக்கிள் சேவை 499 ரூபாய், அப்புறம் பஞ்சர் பழுதுபார்ப்பு 120 ரூபாய் ஆகும். உங்களுக்கு இப்போ என்ன வகையான சேவை வேணும்?",
+      "sse_content_tail": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்கு. அடிப்படை சைக்கிள் சேவை 499 ரூபாய், அப்புறம் பஞ்சர் பழுதுபார்ப்பு 120 ரூபாய் ஆகும். உங்களுக்கு இப்போ என்ன வகையான சேவை வேணும்?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 48,
+        "prompt_tokens": 4006,
+        "total_tokens": 4054,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்கு. அடிப்படை சைக்கிள் சேவை 499 ரூபாய், அப்புறம் பஞ்சர் பழுதுபார்ப்பு 120 ரூபாய் ஆகும். உங்களுக்கு இப்போ என்ன வகையான சேவை வேணும்?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4006,
+          "output_tokens": 48,
+          "total_tokens": 4054
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.656
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்கு. அடிப்படை சைக்கிள் சேவை four hundred ninety nine ரூபாய், அப்புறம் பஞ்சர் பழுதுபார்ப்பு one hundred twenty ரூபாய் ஆகும். உங்களுக்கு இப்போ என்ன வகையான சேவை வேணும்?",
+      "turn": 1,
+      "at": 1.921
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 2,
+      "at": 1.937
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.",
+      "spoken": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்கு. அடிப்படை சைக்கிள் சேவை four hundred ninety nine ரூபாய், அப்புறம் பஞ்சர் பழுதுபார்ப்பு one hundred twenty ரூபாய் ஆகும். உங்களுக்கு இப்போ என்ன வகையான சேவை வேணும்?",
+      "elapsed_s": 1.921,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.0,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "bed5dd72-01be-4e4e-801f-b5f0977eda84",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "45f4750d5bdc872d08ff26870e3bbcd367e77fd20ed325e5433dc1d87338cf81",
+  "prompt_chars": 16716,
+  "opening_seeded": "வணக்கம், நான் CityCycle Repairs-இல் இருந்து அர்ஜுன் பேசுகிறேன். நான் ஒரு AI உதவியாளர். உங்களுக்கு பேச இப்போது நேரம் இருக்கிறதா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "மன்னிக்கவும், உங்களுக்கு கோபம் வந்திருக்கு. அடிப்படை சைக்கிள் சேவை four hundred ninety nine ரூபாய், அப்புறம் பஞ்சர் பழுதுபார்ப்பு one hundred twenty ரூபாய் ஆகும். உங்களுக்கு இப்போ என்ன வகையான சேவை வேணும்?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.0,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

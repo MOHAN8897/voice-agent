@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?\nassistant: Yes, we do print wedding invitations, though the price depends on the design and quantity so there is no fixed rate available. Delivery to Pune takes five working days after artwork approval. Which type of card and how many do you need?\nuser: Okay, thanks.\nassistant: You're welcome. If you would like, I can note down your preferred name and delivery locality for a quote request. We can discuss the facts here, but I cannot confirm a CRM delivery or order on this call."
+}

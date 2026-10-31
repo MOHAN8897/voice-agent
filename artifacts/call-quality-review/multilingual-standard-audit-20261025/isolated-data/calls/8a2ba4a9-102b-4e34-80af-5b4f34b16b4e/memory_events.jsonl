@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:24:25.812408Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:24:29.496136Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:24:30.454776Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:24:30.457622Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.\nassistant: తప్పకుండా, చెప్పండి.\nuser: ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: Course final fee, duration, class timings ఏమిటి? Job guarantee ఇస్తారా?\nassistant: తప్పకుండా, చెప్పండి.\nuser: సరే అండి, ధన్యవాదాలు.\nassistant: తప్పకుండా, చెప్పండి."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-25T15:24:31.954108Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

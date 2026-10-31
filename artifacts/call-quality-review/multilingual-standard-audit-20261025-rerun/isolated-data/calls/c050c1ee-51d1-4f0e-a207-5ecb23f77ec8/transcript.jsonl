@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "ಕೋರ್ಸ್ ಒಟ್ಟು ಶುಲ್ಕ ಎಷ್ಟು? ಕ್ಲಾಸ್ ಸಮಯ ಏನು?", "ts": "2026-10-25T19:00:52.450932Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ನಮ್ಮ adult spoken-English classes online ಅಲ್ಲಿ ಇರುತ್ತೆ, weekends 10am ಇಂದ 11am ವರೆಗೆ ನಡೆಯುತ್ತೆ. ಒಟ್ಟು course fee six thousand four hundred ninety nine rupees ಇದೆ. ನೀವು ಯಾವ ತರಹದ learning goal ಇಟ್ಕೊಂಡಿದ್ದೀರಾ?", "ts": "2026-10-25T19:00:53.306904Z", "brain_latency_ms": 848}

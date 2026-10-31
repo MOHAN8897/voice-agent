@@ -1,0 +1,276 @@
+{
+  "key": "repair-hi-IN-none-4_abuse",
+  "business": "repair",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "25beedf0-4160-5e75-9a13-0bb19345ff11",
+  "call_id": "c0299f55-f49e-4327-a2c2-b074dc541b94",
+  "session_id": "audit-repair-hi-IN-none-4_abuse-89b50e31",
+  "compiled_checksum": "30004813b705763fee84f783301f109432b20e0f237e3a08bc5b74b2194fb737",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 296,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller used abuse ('निकम्मे बेवकूफ'), which triggers the abuse close reason.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"},\n\n\"action_claimed\": \"none\", \"spoken_response\": \"\", \"memory_update\": {\"operations\": []} }",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Caller used abuse ('निकम्मे बेवकूफ'), which triggers the abuse close reason.\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"},\n\n\"action_claimed\": \"none\", \"spoken_response\": \"\", \"memory_update\": {\"operations\": []} }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 92,
+        "prompt_tokens": 4074,
+        "total_tokens": 4166,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.016
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 252,
+      "sse_content_preview": "{\"spoken_response\": \"माफ़ कीजिए, अगर आपको बुरा लगा हो। AC basic servicing 699 rupees की है और fridge inspection 399 rupees की है। Parts extra lagenge, wo bhi sirf aapki approval ke baad. Kya aapko kisi specific appliance ke liye visit book karni hai?\"}",
+      "sse_content_tail": "{\"spoken_response\": \"माफ़ कीजिए, अगर आपको बुरा लगा हो। AC basic servicing 699 rupees की है और fridge inspection 399 rupees की है। Parts extra lagenge, wo bhi sirf aapki approval ke baad. Kya aapko kisi specific appliance ke liye visit book karni hai?\"}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 67,
+        "prompt_tokens": 4074,
+        "total_tokens": 4141,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "माफ़ कीजिए, अगर आपको बुरा लगा हो। AC basic servicing 699 rupees की है और fridge inspection 399 rupees की है। Parts extra lagenge, wo bhi sirf aapki approval ke baad. Kya aapko kisi specific appliance ke liye visit book karni hai?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8148,
+          "output_tokens": 159,
+          "total_tokens": 8307
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.906
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 475,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_outcome\",\n      \"value\": \"Abuse and explicit call termination requested by caller; ended per policy.\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_outcome\",\n      \"value\": \"Abuse and explicit call termination requested by caller; ended per policy.\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 166,
+        "prompt_tokens": 4124,
+        "total_tokens": 4290,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.0
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 71,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ठीक है, मैं call अभी बंद कर रहा हूँ। धन्यवाद।\"}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ठीक है, मैं call अभी बंद कर रहा हूँ। धन्यवाद।\"}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 24,
+        "prompt_tokens": 4124,
+        "total_tokens": 4148,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, मैं call अभी बंद कर रहा हूँ। धन्यवाद।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8248,
+          "output_tokens": 190,
+          "total_tokens": 8438
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.0
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "माफ़ कीजिए, अगर आपको बुरा लगा हो। AC basic servicing six hundred ninety nine rupees की है और fridge inspection three hundred ninety nine rupees की है। Parts extra lagenge, wo bhi sirf aapki approval ke baad. Kya aapko kisi specific appliance ke liye visit book karni hai?",
+      "turn": 1,
+      "at": 1.937
+    },
+    {
+      "text": "ठीक है, मैं call अभी बंद कर रहा हूँ। धन्यवाद।",
+      "turn": 2,
+      "at": 3.953
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।",
+      "spoken": "माफ़ कीजिए, अगर आपको बुरा लगा हो। AC basic servicing six hundred ninety nine rupees की है और fridge inspection three hundred ninety nine rupees की है। Parts extra lagenge, wo bhi sirf aapki approval ke baad. Kya aapko kisi specific appliance ke liye visit book karni hai?",
+      "elapsed_s": 1.937,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।",
+      "spoken": "ठीक है, मैं call अभी बंद कर रहा हूँ। धन्यवाद।",
+      "elapsed_s": 2.0,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "90bd6a4f8ae0798b76272bede0e44a788bc94a372888bf0fee764a8aeed2a4c9",
+  "prompt_chars": 17918,
+  "opening_seeded": "Namaste, main Ravi hoon SafeFix Home Service se. Kya aapko Pune mein kisi home appliance service ke baare mein jankari chahiye?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "माफ़ कीजिए, अगर आपको बुरा लगा हो। AC basic servicing six hundred ninety nine rupees की है और fridge inspection three hundred ninety nine rupees की है। Parts extra lagenge, wo bhi sirf aapki approval ke baad. Kya aapko kisi specific appliance ke liye visit book karni hai?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, मैं call अभी बंद कर रहा हूँ। धन्यवाद।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.968,
+  "hangup_count": 0
+}

@@ -1,0 +1,149 @@
+{
+  "key": "cleaning-en-IN-none-1b_direct_tool_request",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "4bf37ebd-fbc9-5c3f-9218-8020b68ebb68",
+  "call_id": "4132e43b-023e-4a8f-9ae6-37e4ebc08a83",
+  "session_id": "audit-cleaning-en-IN-none-1b_direct_tool_request-0add2e48",
+  "compiled_checksum": "2b7e6a316d693379d21e9c43e155493c13c45c6409a8f5aa911f12851d3f9e36",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 324,
+      "sse_content_preview": "Thank you, Audit Customer. Kitchen cleaning in Baner is 1599 rupees total, and working hours are Monday to Saturday, 9 AM to 6 PM. I can note your request within this call, but I cannot save it externally or confirm a visit since we do not have an integrated CRM. Would you like me to submit the enquiry for team review now?",
+      "sse_content_tail": "Thank you, Audit Customer. Kitchen cleaning in Baner is 1599 rupees total, and working hours are Monday to Saturday, 9 AM to 6 PM. I can note your request within this call, but I cannot save it externally or confirm a visit since we do not have an integrated CRM. Would you like me to submit the enquiry for team review now?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 78,
+        "prompt_tokens": 4329,
+        "total_tokens": 4407,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Thank you, Audit Customer. Kitchen cleaning in Baner is 1599 rupees total, and working hours are Monday to Saturday, 9 AM to 6 PM. I can note your request within this call, but I cannot save it externally or confirm a visit since we do not have an integrated CRM. Would you like me to submit the enquiry for team review now?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4329,
+          "output_tokens": 78,
+          "total_tokens": 4407
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.719
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Thank you, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total, and working hours are Monday to Saturday, 9 AM to 6 PM. I can note your request within this call, but I cannot save it externally or confirm a visit since we do not have an integrated CRM.",
+      "turn": 1,
+      "at": 2.297
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 2,
+      "at": 2.313
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.",
+      "spoken": "Thank you, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total, and working hours are Monday to Saturday, 9 AM to 6 PM. I can note your request within this call, but I cannot save it externally or confirm a visit since we do not have an integrated CRM.",
+      "elapsed_s": 2.297,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.36,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "4132e43b-023e-4a8f-9ae6-37e4ebc08a83",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "d149385fc706a512129f88d7877e49417b93dd56789f7d4d317178a9a381a1dc",
+  "prompt_chars": 18158,
+  "opening_seeded": "Hello, this is Nila calling on behalf of FreshNest Cleaning. We provide professional cleaning services in Pune only. Would you like to hear about our sofa or kitchen cleaning services?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Thank you, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total, and working hours are Monday to Saturday, 9 AM to 6 PM. I can note your request within this call, but I cannot save it externally or confirm a visit since we do not have an integrated CRM.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.36,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

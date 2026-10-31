@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.", "ts": "2026-10-25T17:18:35.264211Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "மன்னிக்கவும், ungalukku erpatta inconvenience-க்கு sorry. AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Parts extra aagum, customer approval-ku aprom dhan. Ungalukku visit venuma, illa vera ஏதாவது details வேணுமா?", "ts": "2026-10-25T17:18:39.926528Z", "brain_latency_ms": 4402}
+{"seq": 3, "role": "user", "text": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.", "ts": "2026-10-25T17:18:39.941536Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.", "ts": "2026-10-25T17:18:39.955279Z", "brain_latency_ms": 2}

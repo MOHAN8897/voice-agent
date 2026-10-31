@@ -1,0 +1,1058 @@
+{"at": "2026-10-25T18:19:32.586598+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:19:36.805519+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:19:41.369388+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:19:46.168776+00:00", "kind": "generation_stage", "language": "en-GB", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:19:51.744555+00:00", "kind": "generation_stage", "language": "en-GB", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:19:56.504077+00:00", "kind": "generation_stage", "language": "en-GB", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:02.014070+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:06.480750+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:11.698362+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:16.433855+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:21.850772+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:26.911625+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:30.689734+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:37.271553+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:41.587909+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:46.929061+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:51.831602+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:20:56.523890+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:21:01.623562+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:21:06.289610+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:21:09.969515+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:21:14.660537+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:21:20.257703+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:21:20.312985+00:00", "kind": "agent_build", "language": "en-IN", "business": "cleaning", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:21:25.311264+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:21:25.358149+00:00", "kind": "agent_build", "language": "en-IN", "business": "cycle", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:21:25.366712+00:00", "kind": "agent_build", "language": "en-GB", "business": "cleaning", "status": "creation_failed", "detail": 422}
+{"at": "2026-10-25T18:21:25.374146+00:00", "kind": "agent_build", "language": "en-GB", "business": "cycle", "status": "creation_failed", "detail": 422}
+{"at": "2026-10-25T18:21:25.383216+00:00", "kind": "agent_build", "language": "en-GB", "business": "language", "status": "creation_failed", "detail": 422}
+{"at": "2026-10-25T18:21:31.345555+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:21:36.950423+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:21:39.955799+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:21:44.733334+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:21:50.496719+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:21:50.546276+00:00", "kind": "agent_build", "language": "en-IN", "business": "language", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:21:55.561812+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:21:55.611469+00:00", "kind": "agent_build", "language": "te-IN", "business": "cleaning", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:22:01.359674+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:22:06.769742+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:22:10.960419+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:22:16.322812+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:22:20.811005+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:22:20.846605+00:00", "kind": "agent_build", "language": "te-IN", "business": "cycle", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:22:25.436477+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:22:25.476295+00:00", "kind": "agent_build", "language": "te-IN", "business": "language", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:22:31.621659+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:22:35.968531+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:22:41.060310+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:22:44.980724+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:22:50.532424+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:22:50.579967+00:00", "kind": "agent_build", "language": "hi-IN", "business": "cleaning", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:22:55.135052+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:22:55.180241+00:00", "kind": "agent_build", "language": "hi-IN", "business": "cycle", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:23:02.516323+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:23:08.521736+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:23:12.852591+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:23:15.764762+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:23:20.973481+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:23:25.726934+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:23:25.782624+00:00", "kind": "agent_build", "language": "ta-IN", "business": "cleaning", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:23:30.858498+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:23:30.912221+00:00", "kind": "agent_build", "language": "hi-IN", "business": "language", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:23:36.618738+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:23:43.593769+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:23:50.944456+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:23:54.042632+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:23:58.351792+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:23:58.388401+00:00", "kind": "agent_build", "language": "ta-IN", "business": "cycle", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:24:04.139353+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:24:10.407342+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:24:13.409721+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:24:13.462167+00:00", "kind": "agent_build", "language": "ta-IN", "business": "language", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:24:17.912453+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:24:23.206638+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:24:28.929638+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:24:28.932833+00:00", "kind": "agent_build", "language": "kn-IN", "business": "cleaning", "status": "creation_failed", "detail": 422}
+{"at": "2026-10-25T18:24:34.546669+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:24:39.440997+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:24:43.858248+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:24:43.907265+00:00", "kind": "agent_build", "language": "kn-IN", "business": "cycle", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:24:49.870281+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:24:53.196229+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:24:58.676531+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:24:58.731452+00:00", "kind": "agent_build", "language": "kn-IN", "business": "language", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:26:57.514090+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:00.095593+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:27:00.474807+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:27:01.360168+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:04.848352+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:07.366009+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:27:10.752120+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:11.149612+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:27:13.537996+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:14.316246+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:27:16.713771+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:17.140799+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:27:20.906760+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:24.097232+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:27:27.592393+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:27.963780+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:27:30.203700+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:30.626788+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:27:32.810318+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:33.309651+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:27:37.064881+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:38.757339+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:27:42.293035+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:27:42.427915+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:30:45.502934+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:30:49.745106+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:30:52.546380+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:30:59.174562+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:30:59.217420+00:00", "kind": "agent_build", "language": "kn-IN", "business": "cleaning", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:32:19.743010+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:32:19.840951+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:32:22.081076+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:32:23.177659+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:32:29.783731+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:32:30.858392+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:32:30.941329+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:32:32.044943+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:32:35.332294+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:32:44.124210+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:32:44.196203+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:32:48.624448+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:32:49.726928+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:33:02.951280+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:33:06.283379+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:33:06.365667+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:33:07.398713+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:33:15.182492+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:33:16.265285+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:33:16.347977+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:33:18.599038+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:33:19.583353+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:33:26.168001+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:33:27.325994+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:33:27.398903+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:33:28.460320+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:33:31.777115+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:33:40.715839+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:33:40.797551+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:33:45.029926+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:33:46.102027+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:33:59.362078+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:34:02.700660+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:34:02.792365+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:34:03.802112+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:34:34.334451+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:34:34.441023+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:34:36.601154+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:34:39.908220+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:34:45.436928+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:34:46.610492+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:34:46.698104+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:34:47.828230+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:34:50.964444+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:34:56.756296+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:34:56.842767+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:34:59.809325+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:35:01.032159+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:35:14.331604+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:35:18.800564+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:35:18.895048+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:35:22.101643+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:35:27.528869+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:35:30.884111+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:35:30.964797+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:35:32.037009+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:35:33.068556+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:35:39.697368+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:35:40.775637+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:35:40.858113+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:35:42.008120+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:35:45.335095+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:35:54.124856+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:35:54.207005+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:35:58.608574+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:36:04.187268+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:36:16.330080+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:36:17.435102+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:36:17.507311+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:36:20.750699+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:36:26.317588+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:36:29.645473+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:36:29.719112+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:36:30.668351+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:36:31.783993+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:36:38.434199+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:36:39.516082+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:36:39.612629+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:36:40.727712+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:36:43.968724+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:36:52.814671+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:36:52.896888+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:38:10.473474+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:38:10.554568+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:38:12.639457+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:38:13.864427+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:38:20.468329+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:38:22.301151+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:38:22.409742+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:38:22.768710+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:38:25.912408+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:38:34.766292+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:38:34.866788+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:38:39.189596+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:38:40.315516+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:38:53.687437+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:38:57.249178+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:38:57.577081+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:38:58.087930+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:39:05.751938+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:39:07.215282+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:39:07.294806+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:39:09.095476+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:39:10.285514+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:39:16.818416+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:39:17.812082+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:39:17.885894+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:39:18.993660+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:39:22.494519+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:39:31.232508+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:39:31.317963+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:39:35.536868+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:39:36.695073+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:39:49.904330+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:39:53.262128+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:39:53.351332+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:39:54.385569+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:40:02.214193+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:40:03.418254+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:40:03.518558+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:40:05.451022+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:40:06.561230+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:40:13.205563+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:40:14.320596+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:40:14.400311+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:40:15.447340+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:40:18.785049+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:40:27.620596+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:40:27.712994+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:40:32.015271+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:40:33.227909+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:40:46.428327+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:40:49.756175+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:40:49.850827+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:40:50.920844+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:40:58.618901+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:41:01.901511+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:41:01.995232+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:41:03.265517+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:41:04.203351+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:41:11.262405+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:41:11.920131+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:41:11.993254+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:41:15.462689+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:41:16.370336+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:41:25.187123+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:41:25.263021+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:41:29.829109+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:41:32.904366+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:41:45.248121+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:41:48.504838+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:41:48.591799+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:41:49.604052+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:41:57.522043+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:42:00.685023+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:42:00.762907+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:42:01.634534+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:42:02.772543+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:42:09.502549+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:42:10.580015+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:42:10.680390+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:42:11.766289+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:42:15.063426+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:42:23.862172+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:42:23.940103+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:42:28.731776+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:42:29.434865+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:42:42.754505+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:42:46.096343+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:42:46.197137+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:42:47.137792+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:42:54.919513+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:42:55.990276+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:42:56.079421+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:42:58.303989+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:42:59.330581+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:43:06.104294+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:43:07.096759+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:43:07.186096+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:43:10.421585+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:43:12.486250+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:43:21.466319+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:43:21.547071+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:43:25.815426+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:43:26.953969+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:43:40.130734+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:43:43.815670+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:43:43.929358+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:43:44.701947+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:43:53.024303+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:43:55.697455+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:43:55.783673+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:43:56.654713+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:43:57.988175+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:44:04.366988+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:44:05.520564+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:44:05.587514+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:44:06.667275+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:44:09.981782+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:44:18.812344+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:44:18.912825+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:44:24.012771+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:44:24.420910+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:44:37.663352+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:44:40.954415+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:44:41.029788+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:44:42.030533+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:44:49.820980+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:44:53.106325+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:44:53.198040+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:44:54.264664+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:44:55.289715+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:45:02.007025+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:45:03.075313+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:45:03.175699+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:45:04.237905+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:45:08.312769+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:45:16.287282+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:45:16.352985+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:45:20.731290+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:45:21.864917+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:45:36.105104+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:45:37.506478+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:45:37.598081+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:45:40.589627+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:46:46.844046+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:46:50.705493+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:46:54.634996+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:46:59.086060+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:46:59.129670+00:00", "kind": "agent_build", "language": "hi-IN", "business": "language", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:49:41.611258+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:49:42.240382+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:49:42.338284+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:49:44.546453+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:49:45.621843+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:49:45.952467+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:49:50.430361+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:49:52.299540+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:49:53.639687+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:49:54.016867+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:49:54.487911+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:49:55.996315+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:49:57.750066+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:50:01.355843+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:50:05.998352+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:50:06.631218+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:50:06.728101+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:50:10.725536+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:50:11.046594+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:50:12.194818+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:50:13.900167+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:50:19.419100+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:50:24.262907+00:00", "kind": "generation_stage", "language": "en-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:50:24.347852+00:00", "kind": "agent_build", "language": "en-IN", "business": "cleaning", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:50:25.509663+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:50:28.811513+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:50:28.916882+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:50:30.084892+00:00", "kind": "generation_stage", "language": "te-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:50:30.144175+00:00", "kind": "agent_build", "language": "te-IN", "business": "cleaning", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:50:30.238873+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:50:35.425772+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:50:37.665780+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:50:38.790900+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:50:38.885360+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:50:40.322102+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:50:40.987440+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:50:42.169415+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:50:45.157454+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:50:48.764534+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:50:49.719367+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:50:49.935196+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:50:50.043513+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:50:51.012118+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:50:54.338264+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:50:54.589423+00:00", "kind": "generation_stage", "language": "hi-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:50:54.626676+00:00", "kind": "agent_build", "language": "hi-IN", "business": "cleaning", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:50:58.756922+00:00", "kind": "generation_stage", "language": "ta-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:50:58.800175+00:00", "kind": "agent_build", "language": "ta-IN", "business": "cleaning", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:51:03.223974+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:51:03.309157+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:51:05.910709+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_brief_extract"}
+{"at": "2026-10-25T18:51:07.613884+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:51:08.822506+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:51:10.014989+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_script_write"}
+{"at": "2026-10-25T18:51:14.050807+00:00", "kind": "generation_stage", "language": "kn-IN", "status": "ok", "detail": "employee_script_review"}
+{"at": "2026-10-25T18:51:14.104333+00:00", "kind": "agent_build", "language": "kn-IN", "business": "cleaning", "status": "ready", "detail": 200}
+{"at": "2026-10-25T18:51:29.496643+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:51:29.584470+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:51:31.683623+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:51:32.813998+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:51:39.523577+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:51:40.574665+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:51:40.667712+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:51:41.763872+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:51:45.049372+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:51:54.178790+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:51:54.271263+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:51:58.585400+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:51:59.460150+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:52:12.727585+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:52:16.028742+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:52:16.121070+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:52:17.117624+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:52:24.918463+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:52:26.252877+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:52:26.344364+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:52:28.141124+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:52:29.407257+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:52:35.960075+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:52:37.402345+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:52:37.498388+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:52:38.259822+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:52:41.897030+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:52:49.202226+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:52:49.282439+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:52:53.659026+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:52:57.170369+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:53:10.294798+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:53:11.592502+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:53:11.686166+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:53:14.919948+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:53:20.318256+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:53:23.672101+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:53:23.765470+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:53:24.785119+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:53:25.862803+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:53:32.683699+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:53:33.575038+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:53:33.692269+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:53:34.830671+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:53:38.022757+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:53:46.993961+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:53:47.089784+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:53:51.320214+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:53:52.466224+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:54:05.844775+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:54:09.290978+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:54:09.373329+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:54:10.145447+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:54:17.974016+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:54:19.184561+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:54:19.280015+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:54:21.471490+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:54:22.719617+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:54:29.115570+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:54:30.227223+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:54:30.335268+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:54:31.272529+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:54:34.786343+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:54:43.585260+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:54:43.694633+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:54:47.872201+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:54:49.047325+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:55:02.324117+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:55:05.705110+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:55:05.801505+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:55:06.661792+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:55:14.503201+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:55:15.598468+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:55:15.690349+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:55:18.223146+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:55:19.035520+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:55:25.560551+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:55:26.644655+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:55:26.755273+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:55:28.027503+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:55:31.187252+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:55:40.676665+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:55:40.766317+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:55:44.509810+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:55:45.559894+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:55:58.039414+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:56:02.336261+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:56:02.434138+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:56:03.247920+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:56:11.120200+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:56:12.309993+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:56:12.386676+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:56:14.848369+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:56:15.551039+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:56:21.110217+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:56:23.606067+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:56:24.096623+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:56:24.790335+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:56:27.563728+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:56:36.531148+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:56:36.609115+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:56:40.970385+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:56:42.159924+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:56:55.497353+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:56:58.679196+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:56:58.775188+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:56:59.842751+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:57:07.543371+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:57:08.855356+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:57:08.932656+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:57:10.942893+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:57:12.226726+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:57:18.669068+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:57:19.602149+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:57:19.697251+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:57:20.916582+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:57:24.295043+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:57:33.216046+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:57:33.301300+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:57:37.607272+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:57:38.703596+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:57:52.098910+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:57:55.195128+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:57:55.277941+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:57:56.366095+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:58:04.355761+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:58:06.318478+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:58:06.421067+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:58:07.439443+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:58:08.687425+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:58:15.237835+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:58:16.230088+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:58:16.330598+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:58:17.595720+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:58:20.729549+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:58:29.558979+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:58:29.638404+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:58:33.996206+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:58:37.028322+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:58:49.613818+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:58:50.628666+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:58:50.746438+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:58:54.054288+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:58:59.602616+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:59:02.955252+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:59:03.045020+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:59:03.985807+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:59:05.146623+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:59:11.687027+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:59:13.001894+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:59:13.101531+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:59:14.262980+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:59:17.701385+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:59:26.940336+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:59:27.026750+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:59:30.626113+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:59:32.039415+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:59:45.056861+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T18:59:48.286672+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:59:48.402681+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T18:59:49.523620+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T18:59:56.100631+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T18:59:59.674546+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T18:59:59.770098+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:00:00.673759+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:00:01.644029+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:00:08.309500+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:00:09.419466+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:00:09.505533+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:00:10.723757+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:00:14.038649+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:00:22.710451+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:00:22.804009+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:00:27.352354+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:00:28.350048+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:00:41.582895+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:00:44.924528+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:00:45.016386+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:00:46.063890+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:00:50.543221+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:02:02.846566+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:02:02.952791+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:02:05.021185+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:02:06.192663+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:02:12.723696+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:02:13.847461+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:02:13.939620+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:02:15.108045+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:02:18.318713+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:02:27.158844+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:02:27.255344+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:02:31.629041+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:02:32.723723+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:02:46.051656+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:02:49.427228+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:02:49.521047+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:02:50.361494+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:02:58.187815+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:02:59.369566+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:02:59.446533+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:03:01.544155+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:03:02.951255+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:03:09.315935+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:03:10.542457+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:03:10.650659+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:03:11.510730+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:03:14.893799+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:03:23.784154+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:03:23.891804+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:03:28.161812+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:03:29.346007+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:03:42.519719+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:03:45.920224+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:03:46.030937+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:03:46.974899+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:03:54.903830+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:03:55.885104+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:03:55.960254+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:03:58.289405+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:03:59.514667+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:04:05.898482+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:04:07.081653+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:04:07.190457+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:04:08.173637+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:04:11.546511+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:04:20.650451+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:04:20.978570+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:04:24.812640+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:04:25.905531+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:04:39.034956+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:04:42.698389+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:04:42.791937+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:04:43.520006+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:04:51.484709+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:04:54.856379+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:04:54.930456+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:04:55.819003+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:04:57.067067+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:05:03.886900+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:05:04.987797+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:05:05.081929+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:05:06.534918+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:05:09.060673+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:05:17.938733+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:05:18.028550+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:05:22.406114+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:05:23.575667+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:05:36.930385+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:05:41.276771+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:05:41.301176+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:05:41.400025+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:05:49.843974+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:05:50.826563+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:05:50.909575+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:05:53.071625+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:05:53.527380+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:06:00.195840+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:06:01.221228+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:06:01.316694+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:06:02.458145+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:06:05.822782+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:06:14.567362+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:06:14.660706+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:06:19.790333+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:06:20.150788+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:06:33.411202+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:06:36.714480+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:06:36.800693+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:06:37.785999+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:06:42.407934+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:06:52.138525+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:06:52.699150+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:06:55.943703+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:06:56.860418+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:00.229290+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:01.491862+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:04.693642+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:06.051417+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:09.200039+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:10.151059+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:13.533323+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:14.557583+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:18.139935+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:19.063121+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:22.591644+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:23.467333+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:27.577307+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:27.890950+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:31.292015+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:32.328434+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:35.625510+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:37.159550+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:40.017052+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:41.150175+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:44.531331+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:45.750599+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:48.868793+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:49.982220+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:53.342399+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:07:54.524783+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:16:32.196076+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:16:32.279268+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:16:34.354171+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:16:35.430139+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:16:41.936161+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:16:43.241221+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:16:43.340076+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:16:44.287174+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:16:47.531910+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:16:51.963979+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:16:52.037977+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:16:53.089305+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:16:54.338919+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:17:00.817738+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:17:01.934509+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:17:02.024055+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:17:03.260548+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:17:06.661521+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:17:10.755393+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:17:10.858123+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:17:11.889684+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:17:13.173186+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:17:19.910550+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:17:20.771633+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:17:20.849956+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:17:21.931176+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:17:25.236623+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:17:29.653402+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:17:29.754225+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:17:30.863559+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:17:31.940413+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:17:36.484846+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:17:39.497377+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:17:39.566520+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:17:43.898190+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:17:44.255740+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:17:48.624197+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:17:48.698515+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:17:50.852134+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:17:52.112634+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:17:58.681963+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:17:59.995455+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:18:00.094932+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:18:01.039182+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:18:04.284945+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:18:09.981007+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:18:10.073905+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:18:10.122254+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:18:10.841955+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:18:17.510296+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:18:18.692929+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:18:18.787624+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:18:19.875843+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:18:23.102166+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:18:27.514845+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:18:27.591289+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:18:28.698538+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:18:29.801148+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:18:36.370102+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:18:37.579107+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:18:37.673146+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:18:38.683002+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:18:41.955009+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:18:46.395031+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:18:46.474111+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:18:47.555896+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:18:48.737365+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:18:56.056812+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:18:56.500006+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:18:56.593079+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:18:57.482589+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:19:01.096076+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:19:05.285337+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:19:05.378986+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:19:06.621677+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:19:07.466383+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:19:14.131536+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:19:15.481303+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:19:15.574804+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:19:16.541666+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:19:19.696155+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:19:24.105653+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:19:24.183049+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:19:25.245190+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:19:26.396397+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:19:32.952312+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:19:34.121965+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:19:34.228860+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:19:35.338919+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:19:38.618335+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:19:43.623399+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:19:43.727248+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:19:44.122181+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:19:45.101257+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:19:51.882411+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:19:52.988998+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:19:53.085976+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:19:54.142457+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:19:57.471165+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:20:02.581004+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:20:02.666835+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:20:03.049651+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:20:04.010146+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:20:10.609132+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:20:11.745663+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:20:11.842265+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:20:12.995531+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:20:16.292091+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:20:20.616285+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:20:20.696806+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:20:21.772559+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:20:22.913348+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:20:29.495320+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:20:30.504561+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:20:30.605480+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:20:31.707140+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:20:35.150365+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:20:39.519968+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:20:39.610786+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:20:40.660649+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:20:41.698305+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:20:48.264957+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:20:49.386751+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:20:49.481252+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:20:50.528427+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:20:54.635663+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:20:58.302621+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:20:58.381701+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "3_complete_rejection", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:20:59.429491+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:21:00.570944+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "4_abuse", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:21:07.053234+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:21:08.372403+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:21:08.483212+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "3b_stop_contact", "status": "completed", "count": 1}
+{"at": "2026-10-25T19:21:09.446116+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:21:11.608694+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "5b_direct_danger", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:30:20.827901+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:22.123298+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:25.528891+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:26.407219+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:29.728123+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:30.853276+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:34.191389+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:35.395751+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:38.730323+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:39.824670+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:43.176368+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:44.194809+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:48.697666+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:30:53.319952+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:31:00.763305+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:31:05.337019+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:31:09.558772+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:31:10.651521+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:31:14.101687+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:31:15.151115+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:31:21.855807+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:31:23.072867+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:31:39.422431+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:31:40.564293+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:31:44.996021+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:31:49.503857+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:31:52.864385+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:31:53.948157+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:31:57.172798+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:31:58.355200+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:32:01.634302+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:32:02.797027+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:32:12.777729+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:32:20.421155+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:32:24.876919+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:32:29.269021+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:32:30.426476+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:32:33.827468+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:32:34.955255+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:32:38.164729+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:32:39.306459+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:37:20.401718+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:37:23.620310+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:37:24.766037+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:37:28.059766+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:37:29.142142+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:37:32.392013+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:37:33.608740+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:37:36.980849+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:37:42.408641+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:37:43.502729+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:37:44.770223+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:37:47.999036+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:37:49.164983+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:37:55.645954+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:37:56.880239+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:37:59.978752+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:01.150877+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:03.444132+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:08.991000+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:38:09.304197+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:12.441921+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:16.932297+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:38:17.872599+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:38:24.547032+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:38:25.674706+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:38:26.759211+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:30.068646+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:31.154769+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:35.539833+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:38:37.762254+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:38.862287+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:38:42.228824+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:43.311691+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:47.743702+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:38:50.014184+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:51.084508+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:38:54.531824+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:38:55.554079+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:00.061505+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:39:03.255453+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:39:05.555567+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:08.739620+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:39:10.011010+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:12.177375+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:13.351343+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:16.601341+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:17.593041+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:19.959974+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:24.284997+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:25.527126+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:39:28.835816+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:33.101523+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:39:34.295708+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:39:36.541466+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:39.793004+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:39:40.924023+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:44.241694+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:46.560927+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:49.912905+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:39:50.867302+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:54.149344+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:56.374922+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:39:59.693557+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:40:00.818152+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:40:03.009603+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:44:33.862272+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:44:35.005181+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:44:38.354000+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:44:39.371626+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:44:42.755089+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:44:43.830016+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:44:50.413443+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:44:51.637771+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:44:52.720752+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:44:56.105920+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:44:57.231711+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:01.589473+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:05.701006+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:45:06.020933+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:07.238414+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:10.464746+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:11.505658+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:16.045985+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:45:19.408050+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:45:24.779387+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "5_diversion_danger", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:45:25.905934+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:45:27.030508+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:30.413857+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:31.465394+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:35.908154+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:45:38.148937+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:39.200931+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:45:42.529542+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:43.671229+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:48.095844+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:45:50.324364+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:51.470472+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:45:54.755203+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:45:55.764284+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:00.307618+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:46:02.521598+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:03.551825+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:46:06.980734+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:08.014256+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:09.151923+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:12.472413+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:13.513961+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:15.864256+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:20.174125+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:21.391294+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:46:24.676650+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:29.009032+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "2_future_interest", "status": "completed", "count": 3}
+{"at": "2026-10-25T19:46:32.405922+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:46:34.618095+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:35.646544+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "6_hangup", "status": "completed", "count": 4}
+{"at": "2026-10-25T19:46:39.067211+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:40.123485+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:41.326626+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:44.620326+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:45.678000+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:46.769577+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:50.097177+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:46:51.150563+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:48:28.696996+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:48:33.097549+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:48:34.103135+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:48:37.411676+00:00", "kind": "session", "language": "en-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:48:39.695906+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:48:42.837617+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:48:44.046113+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:48:47.396673+00:00", "kind": "session", "language": "en-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:48:49.537226+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:48:52.795381+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:48:53.914410+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:48:57.364918+00:00", "kind": "session", "language": "en-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:48:59.438398+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:02.831007+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:49:03.847819+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:07.130441+00:00", "kind": "session", "language": "te-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:09.386613+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:12.772967+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:49:13.847971+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:17.072915+00:00", "kind": "session", "language": "te-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:20.722929+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:21.479895+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:49:24.788657+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:25.973060+00:00", "kind": "session", "language": "te-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:28.254470+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:32.662992+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:33.754868+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:49:37.116079+00:00", "kind": "session", "language": "hi-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:39.229696+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:42.504420+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:49:43.654594+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:47.063689+00:00", "kind": "session", "language": "hi-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:49.204219+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:52.545775+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:49:54.447835+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:57.019493+00:00", "kind": "session", "language": "hi-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:49:59.182627+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:02.555363+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:50:03.583876+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:06.896122+00:00", "kind": "session", "language": "ta-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:09.147360+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:12.404407+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:50:13.437247+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:16.827771+00:00", "kind": "session", "language": "ta-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:19.115156+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:22.349236+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:50:23.503203+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:26.830599+00:00", "kind": "session", "language": "ta-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:29.022646+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:33.451374+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:34.604206+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:50:37.899744+00:00", "kind": "session", "language": "kn-IN", "business": "cleaning", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:40.094745+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:43.381586+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:50:44.397102+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:47.763509+00:00", "kind": "session", "language": "kn-IN", "business": "cycle", "scenario": "8_integration_denied", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:50.006228+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "1b_direct_tool_request", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:53.360454+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "1_interested", "status": "completed", "count": 5}
+{"at": "2026-10-25T19:50:54.396890+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "7_integration_timeout", "status": "completed", "count": 2}
+{"at": "2026-10-25T19:50:56.774777+00:00", "kind": "session", "language": "kn-IN", "business": "language", "scenario": "8_integration_denied", "status": "completed", "count": 2}

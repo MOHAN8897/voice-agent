@@ -1,0 +1,319 @@
+[
+  {
+    "call_id": "bdb7fe33-b962-4c79-aa98-0621875bca91",
+    "started_at": "2026-10-26T16:35:42.549974+00:00",
+    "ended_at": "2026-10-26T16:36:45+00:00",
+    "end_reason": "ws_disconnect",
+    "pipeline": "composed_voice",
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "transcript_role_counts": {
+      "user": 2,
+      "assistant": 2
+    },
+    "event_counts": {
+      "stt.transcript": 6,
+      "TURN_START": 2,
+      "BARGE_TRIGGER": 2,
+      "TURN_END": 2,
+      "PSTN_BARGE_FINAL": 2,
+      "stt.echo_drop": 1
+    },
+    "events": [
+      {
+        "time": "2026-10-26T22:05:55",
+        "event": "stt.transcript",
+        "source_log_line": 336
+      },
+      {
+        "time": "2026-10-26T22:05:55",
+        "event": "TURN_START",
+        "source_log_line": 340
+      },
+      {
+        "time": "2026-10-26T22:05:57",
+        "event": "BARGE_TRIGGER",
+        "source_log_line": 378
+      },
+      {
+        "time": "2026-10-26T22:05:57",
+        "event": "TURN_END",
+        "source_log_line": 388
+      },
+      {
+        "time": "2026-10-26T22:05:59",
+        "event": "stt.transcript",
+        "source_log_line": 425
+      },
+      {
+        "time": "2026-10-26T22:05:59",
+        "event": "PSTN_BARGE_FINAL",
+        "source_log_line": 428
+      },
+      {
+        "time": "2026-10-26T22:05:59",
+        "event": "TURN_START",
+        "source_log_line": 429
+      },
+      {
+        "time": "2026-10-26T22:06:02",
+        "event": "TURN_END",
+        "source_log_line": 449
+      },
+      {
+        "time": "2026-10-26T22:06:09",
+        "event": "BARGE_TRIGGER",
+        "source_log_line": 492
+      },
+      {
+        "time": "2026-10-26T22:06:12",
+        "event": "stt.transcript",
+        "source_log_line": 539
+      },
+      {
+        "time": "2026-10-26T22:06:12",
+        "event": "stt.echo_drop",
+        "source_log_line": 541
+      },
+      {
+        "time": "2026-10-26T22:06:12",
+        "event": "PSTN_BARGE_FINAL",
+        "source_log_line": 542
+      },
+      {
+        "time": "2026-10-26T22:06:14",
+        "event": "stt.transcript",
+        "source_log_line": 562
+      },
+      {
+        "time": "2026-10-26T22:06:25",
+        "event": "stt.transcript",
+        "source_log_line": 592
+      },
+      {
+        "time": "2026-10-26T22:06:43",
+        "event": "stt.transcript",
+        "source_log_line": 634
+      }
+    ]
+  },
+  {
+    "call_id": "92064910-e19a-46e5-ba19-420cd8041154",
+    "started_at": "2026-10-26T16:38:45.241389+00:00",
+    "ended_at": "2026-10-26T16:40:01+00:00",
+    "end_reason": "pstn_hangup",
+    "pipeline": "composed_voice",
+    "llm": {
+      "provider": "sarvam",
+      "model": "sarvam-105b-conversations",
+      "config": {
+        "api_mode": "chat_completions_v1"
+      }
+    },
+    "transcript_role_counts": {
+      "user": 7,
+      "assistant": 4
+    },
+    "event_counts": {
+      "stt.transcript": 12,
+      "TURN_START": 7,
+      "TURN_END": 7,
+      "BARGE_TRIGGER": 4,
+      "PSTN_BARGE_FINAL": 3,
+      "THINK_CANCEL": 2,
+      "turn.cancelled": 2
+    },
+    "events": [
+      {
+        "time": "2026-10-26T22:09:09",
+        "event": "stt.transcript",
+        "source_log_line": 830
+      },
+      {
+        "time": "2026-10-26T22:09:15",
+        "event": "stt.transcript",
+        "source_log_line": 911
+      },
+      {
+        "time": "2026-10-26T22:09:15",
+        "event": "TURN_START",
+        "source_log_line": 918
+      },
+      {
+        "time": "2026-10-26T22:09:19",
+        "event": "TURN_END",
+        "source_log_line": 946
+      },
+      {
+        "time": "2026-10-26T22:09:26",
+        "event": "stt.transcript",
+        "source_log_line": 988
+      },
+      {
+        "time": "2026-10-26T22:09:29",
+        "event": "stt.transcript",
+        "source_log_line": 1015
+      },
+      {
+        "time": "2026-10-26T22:09:32",
+        "event": "BARGE_TRIGGER",
+        "source_log_line": 1038
+      },
+      {
+        "time": "2026-10-26T22:09:33",
+        "event": "stt.transcript",
+        "source_log_line": 1047
+      },
+      {
+        "time": "2026-10-26T22:09:33",
+        "event": "PSTN_BARGE_FINAL",
+        "source_log_line": 1050
+      },
+      {
+        "time": "2026-10-26T22:09:33",
+        "event": "TURN_START",
+        "source_log_line": 1051
+      },
+      {
+        "time": "2026-10-26T22:09:38",
+        "event": "BARGE_TRIGGER",
+        "source_log_line": 1100
+      },
+      {
+        "time": "2026-10-26T22:09:38",
+        "event": "TURN_END",
+        "source_log_line": 1110
+      },
+      {
+        "time": "2026-10-26T22:09:40",
+        "event": "TURN_START",
+        "source_log_line": 1132
+      },
+      {
+        "time": "2026-10-26T22:09:41",
+        "event": "THINK_CANCEL",
+        "source_log_line": 1137
+      },
+      {
+        "time": "2026-10-26T22:09:41",
+        "event": "stt.transcript",
+        "source_log_line": 1152
+      },
+      {
+        "time": "2026-10-26T22:09:41",
+        "event": "turn.cancelled",
+        "source_log_line": 1160
+      },
+      {
+        "time": "2026-10-26T22:09:41",
+        "event": "TURN_END",
+        "source_log_line": 1161
+      },
+      {
+        "time": "2026-10-26T22:09:41",
+        "event": "TURN_START",
+        "source_log_line": 1164
+      },
+      {
+        "time": "2026-10-26T22:09:42",
+        "event": "THINK_CANCEL",
+        "source_log_line": 1180
+      },
+      {
+        "time": "2026-10-26T22:09:42",
+        "event": "turn.cancelled",
+        "source_log_line": 1182
+      },
+      {
+        "time": "2026-10-26T22:09:42",
+        "event": "TURN_END",
+        "source_log_line": 1183
+      },
+      {
+        "time": "2026-10-26T22:09:42",
+        "event": "TURN_START",
+        "source_log_line": 1186
+      },
+      {
+        "time": "2026-10-26T22:09:43",
+        "event": "stt.transcript",
+        "source_log_line": 1198
+      },
+      {
+        "time": "2026-10-26T22:09:47",
+        "event": "stt.transcript",
+        "source_log_line": 1222
+      },
+      {
+        "time": "2026-10-26T22:09:47",
+        "event": "TURN_END",
+        "source_log_line": 1231
+      },
+      {
+        "time": "2026-10-26T22:09:48",
+        "event": "BARGE_TRIGGER",
+        "source_log_line": 1246
+      },
+      {
+        "time": "2026-10-26T22:09:49",
+        "event": "stt.transcript",
+        "source_log_line": 1275
+      },
+      {
+        "time": "2026-10-26T22:09:49",
+        "event": "PSTN_BARGE_FINAL",
+        "source_log_line": 1278
+      },
+      {
+        "time": "2026-10-26T22:09:49",
+        "event": "TURN_START",
+        "source_log_line": 1279
+      },
+      {
+        "time": "2026-10-26T22:09:54",
+        "event": "TURN_END",
+        "source_log_line": 1300
+      },
+      {
+        "time": "2026-10-26T22:09:56",
+        "event": "stt.transcript",
+        "source_log_line": 1317
+      },
+      {
+        "time": "2026-10-26T22:09:58",
+        "event": "stt.transcript",
+        "source_log_line": 1329
+      },
+      {
+        "time": "2026-10-26T22:10:01",
+        "event": "BARGE_TRIGGER",
+        "source_log_line": 1362
+      },
+      {
+        "time": "2026-10-26T22:10:01",
+        "event": "stt.transcript",
+        "source_log_line": 1373
+      },
+      {
+        "time": "2026-10-26T22:10:01",
+        "event": "PSTN_BARGE_FINAL",
+        "source_log_line": 1376
+      },
+      {
+        "time": "2026-10-26T22:10:01",
+        "event": "TURN_START",
+        "source_log_line": 1377
+      },
+      {
+        "time": "2026-10-26T22:10:02",
+        "event": "TURN_END",
+        "source_log_line": 1390
+      }
+    ]
+  }
+]

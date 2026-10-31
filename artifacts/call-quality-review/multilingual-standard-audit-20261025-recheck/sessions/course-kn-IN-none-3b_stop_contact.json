@@ -1,0 +1,73 @@
+{
+  "key": "course-kn-IN-none-3b_stop_contact",
+  "business": "course",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "80e482df-388c-5272-ad7e-645030ca2af1",
+  "call_id": "1c010d0c-f0f8-4d6b-9e5c-63737ed525aa",
+  "session_id": "audit-course-kn-IN-none-3b_stop_contact-22306337",
+  "compiled_checksum": "ed09dfcb8ccd2fb90a508f3088ace1176edc25314edc630a784fb6774e9c36ad",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 1,
+      "at": 0.032
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.079,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "1c010d0c-f0f8-4d6b-9e5c-63737ed525aa",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "06260f7a52e8c560a3f327dca9312efe1a1176945a796658a0db12b4b3930cc5",
+  "prompt_chars": 19101,
+  "opening_seeded": "Namaskara, I am Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our beginner Python course? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.079,
+  "hangup_count": 1
+}

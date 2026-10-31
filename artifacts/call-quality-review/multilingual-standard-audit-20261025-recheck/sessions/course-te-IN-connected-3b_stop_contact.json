@@ -1,0 +1,74 @@
+{
+  "key": "course-te-IN-connected-3b_stop_contact",
+  "business": "course",
+  "language": "te-IN",
+  "integration": true,
+  "scenario": "3b_stop_contact",
+  "agent_id": "3fb67e11-427f-505d-9768-907a832cd354",
+  "call_id": "7b4960f1-e8ad-4335-8fbd-2d8bc07f486d",
+  "session_id": "audit-course-te-IN-connected-3b_stop_contact-36e7dd4e",
+  "compiled_checksum": "a3beaeea4d8bbdd077219e70ebac805f1983c237a7a542e9ee534f19d4614bfb",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 0.031
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "నాకు మళ్లీ call చేయకండి. భవిష్యత్తు calls నుంచి నా పేరు తీసేసి ఈ call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.078,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "7b4960f1-e8ad-4335-8fbd-2d8bc07f486d",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "b8c8673bfd3b51f4b9f3acd639afaf2498d6e0b345be9df2a69de51870f2f775",
+  "prompt_chars": 19516,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "నమస్కారం, నా పేరు అనన్య, బ్రైట్‌పాత్ స్కిల్స్ నుండి మాట్లాడుతున్నాను. వయోజనుల కోసం మా ఆన్‌లైన్ బిగినర్ పైథాన్ కోర్సు గురించి చెప్పడానికి కాల్ చేశాను. ఇప్పుడు మాట్లాడానికి మీకు సమయం ఉందా? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.094,
+  "hangup_count": 1
+}

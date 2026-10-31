@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   LiveVoiceSession,
   type Bubble,
   type LiveVoiceSessionHandle,
   type SessionTraceEvent,
   type TurnCompleteEvent,
+  type VoiceRuntimeConfig,
 } from "@/components/live/LiveVoiceSession";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
@@ -19,6 +20,7 @@ export function TestStudioLivePanel({
   languageCode,
   stackOverride,
   sessionId,
+  voiceConfig,
   onTrace,
   onCallStart,
   onCallEnd,
@@ -30,6 +32,7 @@ export function TestStudioLivePanel({
   languageCode: string;
   stackOverride?: Record<string, unknown>;
   sessionId?: string;
+  voiceConfig?: VoiceRuntimeConfig;
   onTrace: (e: SessionTraceEvent) => void;
   onCallStart: (callId: string) => void;
   onCallEnd: (callId: string) => void;
@@ -41,10 +44,23 @@ export function TestStudioLivePanel({
   const [micLevel, setMicLevel] = useState(0);
   const [lines, setLines] = useState<TranscriptLine[]>([]);
   const [partial, setPartial] = useState("");
+  const [insecureBlocked, setInsecureBlocked] = useState(false);
 
-  const listening = status === "listening" || status === "connecting";
-  const callActive = status !== "idle" && status !== "ended";
-  const orbActive = listening || status === "speaking" || status === "thinking";
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (!window.isSecureContext || !navigator?.mediaDevices?.getUserMedia) {
+        setInsecureBlocked(true);
+      }
+    }
+  }, []);
+
+  const listening =
+    status === "listening" ||
+    status === "connecting" ||
+    status === "thinking" ||
+    status === "speaking";
+  const callActive = status !== "idle" && status !== "ended" && status !== "paused";
+  const orbActive = listening;
 
   function handleStatus(next: string) {
     setStatus(next);
@@ -68,8 +84,18 @@ export function TestStudioLivePanel({
       title="Live conversation"
       description="Mic → STT → brain stream → TTS · chat transcript below"
       padding="md"
-      className="console-page-enter"
+      className="console-page-enter w-full min-w-0"
     >
+      {insecureBlocked && (
+        <div
+          role="alert"
+          className="mb-4 rounded-skeuo-sm border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200"
+        >
+          <strong>Microphone access blocked on HTTP:</strong> Modern browsers disable audio capture
+          on insecure contexts. Please access Test Studio via <code>https://</code> or <code>localhost</code> to
+          use the microphone.
+        </div>
+      )}
       <div className="mb-5 flex flex-col items-center gap-3 border-b border-surface-border-subtle pb-5 lg:flex-row lg:items-start lg:justify-between">
         <VoiceControlOrb
           status={status}
@@ -85,7 +111,9 @@ export function TestStudioLivePanel({
             End call
           </SkeuoButton>
           <p className="max-w-xs text-center text-[11px] text-text-muted lg:text-right">
-            {listening
+            {status.includes("Save agent brief")
+              ? "Create and save your agent script in Fine-tune → Prompts before starting the mic"
+              : listening
               ? "Listening — your words appear in the chat below"
               : callActive
                 ? "Mic off — flip the switch to speak again"
@@ -110,6 +138,7 @@ export function TestStudioLivePanel({
           languageCode={languageCode}
           stackOverride={stackOverride}
           sessionId={sessionId}
+          voiceConfig={voiceConfig}
           variant="lab"
           onTrace={onTrace}
           onCallStart={onCallStart}

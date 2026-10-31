@@ -1,0 +1,765 @@
+{
+  "model": "sarvam-105b-conversations",
+  "scope": "live pinned LLM control and grounded memory; no speech, telephony or external writes",
+  "results": [
+    {
+      "language": "te-IN",
+      "case": "name",
+      "passed": true,
+      "elapsed_s": 1.032,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Sai Kiran"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "te-IN",
+      "case": "quantity_correction",
+      "passed": true,
+      "elapsed_s": 0.984,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "te-IN",
+      "case": "ack_with_missing_address",
+      "passed": true,
+      "elapsed_s": 0.984,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "te-IN",
+      "case": "explicit_end_with_unfinished_work",
+      "passed": true,
+      "elapsed_s": 0.766,
+      "result": {
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "అంతే అంతే థ్యాంక్ యూ",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "te-IN",
+      "case": "unfinished_address",
+      "passed": true,
+      "elapsed_s": 0.953,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": true
+      }
+    },
+    {
+      "language": "hi-IN",
+      "case": "name",
+      "passed": true,
+      "elapsed_s": 0.922,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Sai Kiran"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "hi-IN",
+      "case": "quantity_correction",
+      "passed": true,
+      "elapsed_s": 0.891,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "hi-IN",
+      "case": "ack_with_missing_address",
+      "passed": true,
+      "elapsed_s": 0.906,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "hi-IN",
+      "case": "explicit_end_with_unfinished_work",
+      "passed": true,
+      "elapsed_s": 0.828,
+      "result": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "बस इतना ही, धन्यवाद",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "hi-IN",
+      "case": "unfinished_address",
+      "passed": true,
+      "elapsed_s": 0.766,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": true
+      }
+    },
+    {
+      "language": "ta-IN",
+      "case": "name",
+      "passed": true,
+      "elapsed_s": 0.906,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Sai Kiran"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "ta-IN",
+      "case": "quantity_correction",
+      "passed": true,
+      "elapsed_s": 1.031,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "ta-IN",
+      "case": "ack_with_missing_address",
+      "passed": true,
+      "elapsed_s": 0.828,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "ta-IN",
+      "case": "explicit_end_with_unfinished_work",
+      "passed": true,
+      "elapsed_s": 0.891,
+      "result": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "அவ்வளவுதான் நன்றி",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "ta-IN",
+      "case": "unfinished_address",
+      "passed": true,
+      "elapsed_s": 0.875,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": true
+      }
+    },
+    {
+      "language": "kn-IN",
+      "case": "name",
+      "passed": true,
+      "elapsed_s": 1.031,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Sai Kiran"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "kn-IN",
+      "case": "quantity_correction",
+      "passed": true,
+      "elapsed_s": 0.984,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "kn-IN",
+      "case": "ack_with_missing_address",
+      "passed": true,
+      "elapsed_s": 0.907,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "kn-IN",
+      "case": "explicit_end_with_unfinished_work",
+      "passed": true,
+      "elapsed_s": 0.89,
+      "result": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "ಇಷ್ಟೇ ಸಾಕು ಧನ್ಯವಾದಗಳು",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "kn-IN",
+      "case": "unfinished_address",
+      "passed": true,
+      "elapsed_s": 0.922,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": true
+      }
+    },
+    {
+      "language": "ml-IN",
+      "case": "name",
+      "passed": true,
+      "elapsed_s": 1.016,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Sai Kiran"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "ml-IN",
+      "case": "quantity_correction",
+      "passed": true,
+      "elapsed_s": 0.937,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "ml-IN",
+      "case": "ack_with_missing_address",
+      "passed": true,
+      "elapsed_s": 0.828,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "ml-IN",
+      "case": "explicit_end_with_unfinished_work",
+      "passed": true,
+      "elapsed_s": 0.813,
+      "result": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "ഇത്രയേ വേണ്ടൂ, നന്ദി",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "ml-IN",
+      "case": "unfinished_address",
+      "passed": true,
+      "elapsed_s": 0.719,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": true
+      }
+    },
+    {
+      "language": "mr-IN",
+      "case": "name",
+      "passed": true,
+      "elapsed_s": 0.734,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Sai Kiran"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "mr-IN",
+      "case": "quantity_correction",
+      "passed": true,
+      "elapsed_s": 0.688,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "mr-IN",
+      "case": "ack_with_missing_address",
+      "passed": true,
+      "elapsed_s": 0.562,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "mr-IN",
+      "case": "explicit_end_with_unfinished_work",
+      "passed": true,
+      "elapsed_s": 0.625,
+      "result": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "एवढेच हवे होते, धन्यवाद",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "mr-IN",
+      "case": "unfinished_address",
+      "passed": true,
+      "elapsed_s": 0.609,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": true
+      }
+    },
+    {
+      "language": "bn-IN",
+      "case": "name",
+      "passed": true,
+      "elapsed_s": 0.657,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Sai Kiran"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "bn-IN",
+      "case": "quantity_correction",
+      "passed": true,
+      "elapsed_s": 0.75,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "bn-IN",
+      "case": "ack_with_missing_address",
+      "passed": true,
+      "elapsed_s": 0.562,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "bn-IN",
+      "case": "explicit_end_with_unfinished_work",
+      "passed": true,
+      "elapsed_s": 0.625,
+      "result": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "এইটুকুই দরকার ছিল, ধন্যবাদ",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "bn-IN",
+      "case": "unfinished_address",
+      "passed": true,
+      "elapsed_s": 0.594,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": true
+      }
+    },
+    {
+      "language": "gu-IN",
+      "case": "name",
+      "passed": true,
+      "elapsed_s": 0.609,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Sai Kiran"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "gu-IN",
+      "case": "quantity_correction",
+      "passed": true,
+      "elapsed_s": 0.61,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "gu-IN",
+      "case": "ack_with_missing_address",
+      "passed": true,
+      "elapsed_s": 0.562,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "gu-IN",
+      "case": "explicit_end_with_unfinished_work",
+      "passed": true,
+      "elapsed_s": 0.563,
+      "result": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "બસ આટલું જ, આભાર",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "gu-IN",
+      "case": "unfinished_address",
+      "passed": true,
+      "elapsed_s": 0.64,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": true
+      }
+    },
+    {
+      "language": "pa-IN",
+      "case": "name",
+      "passed": true,
+      "elapsed_s": 0.719,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Sai Kiran"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "pa-IN",
+      "case": "quantity_correction",
+      "passed": true,
+      "elapsed_s": 0.797,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "pa-IN",
+      "case": "ack_with_missing_address",
+      "passed": true,
+      "elapsed_s": 0.5,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "pa-IN",
+      "case": "explicit_end_with_unfinished_work",
+      "passed": true,
+      "elapsed_s": 0.531,
+      "result": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "ਬਸ ਐਨਾ ਹੀ ਚਾਹੀਦਾ ਸੀ, ਧੰਨਵਾਦ",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "pa-IN",
+      "case": "unfinished_address",
+      "passed": true,
+      "elapsed_s": 0.485,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": true
+      }
+    },
+    {
+      "language": "en-IN",
+      "case": "name",
+      "passed": true,
+      "elapsed_s": 0.578,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Sai Kiran"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "en-IN",
+      "case": "quantity_correction",
+      "passed": true,
+      "elapsed_s": 0.609,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "en-IN",
+      "case": "ack_with_missing_address",
+      "passed": true,
+      "elapsed_s": 0.453,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "en-IN",
+      "case": "explicit_end_with_unfinished_work",
+      "passed": true,
+      "elapsed_s": 0.531,
+      "result": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "That's all I needed, thank you",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "en-IN",
+      "case": "unfinished_address",
+      "passed": true,
+      "elapsed_s": 0.485,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": true
+      }
+    },
+    {
+      "language": "en-US",
+      "case": "name",
+      "passed": true,
+      "elapsed_s": 0.562,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Sai Kiran"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "en-US",
+      "case": "quantity_correction",
+      "passed": true,
+      "elapsed_s": 0.594,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [
+          {
+            "op": "set_fact",
+            "key": "quantity",
+            "value": "100"
+          }
+        ],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "en-US",
+      "case": "ack_with_missing_address",
+      "passed": true,
+      "elapsed_s": 0.516,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "en-US",
+      "case": "explicit_end_with_unfinished_work",
+      "passed": true,
+      "elapsed_s": 0.484,
+      "result": {
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "That's all I needed, thank you",
+        "memory_operations": [],
+        "wait_for_caller": false
+      }
+    },
+    {
+      "language": "en-US",
+      "case": "unfinished_address",
+      "passed": true,
+      "elapsed_s": 0.516,
+      "result": {
+        "decision": "continue",
+        "memory_operations": [],
+        "wait_for_caller": true
+      }
+    }
+  ]
+}

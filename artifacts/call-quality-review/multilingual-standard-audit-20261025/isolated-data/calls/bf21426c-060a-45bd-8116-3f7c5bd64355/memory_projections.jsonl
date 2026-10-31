@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:30:11.455375Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T15:30:12.686560Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-25T15:30:13.686129Z", "include_summary": true, "projection": ""}
+{"turn_seq": 7, "ts": "2026-10-25T15:30:14.592833Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ninterested_product: wedding invitations | interested_visiting_cards: no"}
+{"turn_seq": 9, "ts": "2026-10-25T15:30:15.339490Z", "include_summary": false, "projection": "[Facts — do not re-ask]\ninterested_product: wedding invitations | interested_visiting_cards: no | caller_email: audit.customer@example.invalid\n[Context]\nCaller shared contact details for the team to follow up."}

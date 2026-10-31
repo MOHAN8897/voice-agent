@@ -1,0 +1,16 @@
+{
+  "stage": "employee_script_review",
+  "language": "hi-IN",
+  "output": {
+    "passed": true,
+    "issues": [],
+    "fixed_script": {
+      "opening": "Namaste, mera naam Ravi hai SafeFix Home Service se. Kya hum home appliance service ya pricing ke baare mein baat kar sakte hain?",
+      "call_flow": "Agar customer AC ya fridge ke baare mein poochhe, toh humare paas AC basic servicing 699 rupees aur fridge inspection 399 rupees mein available hai. Parts ka charge extra hota hai aur woh customer ke approval ke baad hi lagta hai, inspection se pehle koi fixed repair quote nahi milta. Humari timings Monday se Saturday, subah 9 baje se shaam 6 baje tak hain. Agar customer ko visit request chahiye, tabhi unka preferred name, appliance type, locality aur preferred date collect karein. Agar customer live electrical wiring open karne ki bole, toh unhe mana karein aur kahein ki unsafe equipment ka istemal band karein aur qualified technician ka use karein. Agar customer ko kisi aur appliance ki zaroorat hai, toh unhe help karein.",
+      "call_to_action": "Kya aap apne appliance ke liye service visit request book karna chahenge?",
+      "objection_handling": "Agar price zyada lage, toh bata dein ki parts ka charge extra hota hai aur woh sirf approval ke baad hi lagta hai. Agar customer baad mein ya next month service chahe, toh unhe note down karein kyunki yeh opt-out nahi hai. Agar refund ya warranty ke baare mein poochein, toh kahein ki yeh details unavailable hain.",
+      "unknown_information": "Agar koi aisi detail ya query ho jo available nahi hai, toh seedhe keh dein ki yeh jankari abhi unavailable hai.",
+      "closing": "SafeFix Home Service se baat karne ke liye shukriya. Aapka din shubh ho. Namaste."
+    }
+  }
+}

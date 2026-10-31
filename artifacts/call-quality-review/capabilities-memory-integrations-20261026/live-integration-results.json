@@ -1,0 +1,35 @@
+{
+  "accounts": {
+    "Calendar": {
+      "http_status": 200,
+      "requested_account_matches": true
+    },
+    "Gmail": {
+      "http_status": 200,
+      "requested_account_matches": true
+    }
+  },
+  "compiled_tool_names": [
+    "GOOGLECALENDAR_CREATE_EVENT",
+    "GOOGLECALENDAR_FIND_FREE_SLOTS",
+    "GOOGLECALENDAR_FIND_SLOTS",
+    "GOOGLECALENDAR_LIST_EVENTS",
+    "GOOGLECALENDAR_CANCEL_EVENT",
+    "GOOGLECALENDAR_RESCHEDULE_EVENT",
+    "SAVE_ENQUIRY",
+    "CONFIRM_ORDER"
+  ],
+  "calendar_router": {
+    "status": "available",
+    "slot_count": 8,
+    "time_zone": "Asia/Kolkata",
+    "message": "Calendar free-time samples between 09:00 and 17:00; confirm the business's appointment hours before booking."
+  },
+  "live_llm_calendar": {
+    "selected_action": true,
+    "response": "The first two available 30-minute slots on 28th October 2026 are 9:00 AM and 9:30 AM. Would you like me to check any other timings?",
+    "finish_reason": "stop",
+    "model": "sarvam-105b-conversations"
+  },
+  "no_external_writes": true
+}

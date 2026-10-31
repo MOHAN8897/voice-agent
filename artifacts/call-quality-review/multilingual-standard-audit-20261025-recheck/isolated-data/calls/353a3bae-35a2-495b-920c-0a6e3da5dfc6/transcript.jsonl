@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।", "ts": "2026-10-25T17:17:54.424644Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "माफ़ कीजिए, अगर आपको बुरा लगा हो। हमारी printed visiting cards twenty five rupees per card हैं, minimum one hundred cards का order होता है। क्या आपको visiting cards चाहिए, या wedding invitations के बारे में जानना है?", "ts": "2026-10-25T17:17:57.368556Z", "brain_latency_ms": 2126}
+{"seq": 3, "role": "user", "text": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।", "ts": "2026-10-25T17:17:57.395898Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-25T17:17:57.404134Z", "brain_latency_ms": 1}

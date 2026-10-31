@@ -1,0 +1,8 @@
+{
+  "planning": "compact",
+  "context_depth": "dependency",
+  "verification_depth": "impact",
+  "delegation": "none",
+  "reason_codes": ["multiple-files", "shared-call-and-billing-paths"],
+  "reason": "The configured live caller recognizer spans the admin stack, PSTN sidecar, and tenant transcript metadata. Tenant call totals now come from tenant-scoped wallet transactions; supplier costs stay out of tenant responses. A mixed-currency transaction can contain two debit legs, so the display totals both in the wallet's primary currency using the call FX snapshot. The retail per-minute rate formula is unchanged."
+}

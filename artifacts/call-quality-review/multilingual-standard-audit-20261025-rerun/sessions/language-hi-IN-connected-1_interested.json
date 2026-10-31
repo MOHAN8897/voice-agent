@@ -1,0 +1,590 @@
+{
+  "key": "language-hi-IN-connected-1_interested",
+  "business": "language",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "1_interested",
+  "agent_id": "f6d1446a-6cde-5293-bf8f-d4b1be794dd4",
+  "call_id": "87cb6759-2497-47cc-bb7d-1d3244a5cb7e",
+  "session_id": "audit-language-hi-IN-connected-1_interested-4dd808ca",
+  "compiled_checksum": "fbeff16896919a2d045a5300171ddac6ea8f0ee6f487112a29e7216f470e89b3",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 364,
+      "sse_content_preview": "हमारी classes online होती हैं, छह हफ्ते की, weekends पर सुबह दस से ग्यारह बजे तक. इसकी total fee 6499 rupees है. Exact next batch date, vacancies और refund rules की जानकारी मेरे पास अभी available नहीं है. क्या आपको demo या counselling के लिए अपनी preferred name और email share करना ठीक रहेगा? अगर आप consent दें, तो मैं team review के लिए enquiry save कर सकती हूँ.",
+      "sse_content_tail": "हमारी classes online होती हैं, छह हफ्ते की, weekends पर सुबह दस से ग्यारह बजे तक. इसकी total fee 6499 rupees है. Exact next batch date, vacancies और refund rules की जानकारी मेरे पास अभी available नहीं है. क्या आपको demo या counselling के लिए अपनी preferred name और email share करना ठीक रहेगा? अगर आप consent दें, तो मैं team review के लिए enquiry save कर सकती हूँ.",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 84,
+        "prompt_tokens": 4233,
+        "total_tokens": 4317,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "हमारी classes online होती हैं, छह हफ्ते की, weekends पर सुबह दस से ग्यारह बजे तक. इसकी total fee 6499 rupees है. Exact next batch date, vacancies और refund rules की जानकारी मेरे पास अभी available नहीं है. क्या आपको demo या counselling के लिए अपनी preferred name और email share करना ठीक रहेगा? अगर आप consent दें, तो मैं team review के लिए enquiry save कर सकती हूँ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4233,
+          "output_tokens": 84,
+          "total_tokens": 4317
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.828
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 187,
+      "sse_content_preview": "हमारी online classes छह हफ्ते की हैं, weekends पर सुबह दस से ग्यारह बजे तक चलती हैं, और इसकी total fee 6499 rupees है। इसके बारे में और कुछ जानना है, या क्या मैं आपकी enquiry save कर लूँ?",
+      "sse_content_tail": "हमारी online classes छह हफ्ते की हैं, weekends पर सुबह दस से ग्यारह बजे तक चलती हैं, और इसकी total fee 6499 rupees है। इसके बारे में और कुछ जानना है, या क्या मैं आपकी enquiry save कर लूँ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 51,
+        "prompt_tokens": 4193,
+        "total_tokens": 4244,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "हमारी online classes छह हफ्ते की हैं, weekends पर सुबह दस से ग्यारह बजे तक चलती हैं, और इसकी total fee 6499 rupees है। इसके बारे में और कुछ जानना है, या क्या मैं आपकी enquiry save कर लूँ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4193,
+          "output_tokens": 51,
+          "total_tokens": 4244
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.719
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 385,
+      "sse_content_preview": "Course की total fee six thousand four hundred ninety nine rupees है, duration छह हफ्ते का है, और classes weekends पर सुबह दस से ग्यारह बजे तक online रहेंगी। देखिए, fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन यह learning support के लिए काफी अच्छा है। क्या आप अपना preferred name और email share करना चाहेंगे, ताकि हम आपकी enquiry save कर सकें? बस पहले आपकी consent चाहिए होगी।",
+      "sse_content_tail": "Course की total fee six thousand four hundred ninety nine rupees है, duration छह हफ्ते का है, और classes weekends पर सुबह दस से ग्यारह बजे तक online रहेंगी। देखिए, fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन यह learning support के लिए काफी अच्छा है। क्या आप अपना preferred name और email share करना चाहेंगे, ताकि हम आपकी enquiry save कर सकें? बस पहले आपकी consent चाहिए होगी।",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 83,
+        "prompt_tokens": 4308,
+        "total_tokens": 4391,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Course की total fee six thousand four hundred ninety nine rupees है, duration छह हफ्ते का है, और classes weekends पर सुबह दस से ग्यारह बजे तक online रहेंगी। देखिए, fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन यह learning support के लिए काफी अच्छा है। क्या आप अपना preferred name और email share करना चाहेंगे, ताकि हम आपकी enquiry save कर सकें? बस पहले आपकी consent चाहिए होगी।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4308,
+          "output_tokens": 83,
+          "total_tokens": 4391
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.938
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 295,
+      "sse_content_preview": "Course की total fee six thousand four hundred ninety nine rupees है, duration छह हफ्ते का है और class timing weekends पर सुबह दस से ग्यारह बजे तक है। वैसे fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन यह learning support के लिए अच्छा रहेगा। क्या आप इसके बारे में और कुछ जानना चाहते हैं?",
+      "sse_content_tail": "Course की total fee six thousand four hundred ninety nine rupees है, duration छह हफ्ते का है और class timing weekends पर सुबह दस से ग्यारह बजे तक है। वैसे fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन यह learning support के लिए अच्छा रहेगा। क्या आप इसके बारे में और कुछ जानना चाहते हैं?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 65,
+        "prompt_tokens": 4268,
+        "total_tokens": 4333,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Course की total fee six thousand four hundred ninety nine rupees है, duration छह हफ्ते का है और class timing weekends पर सुबह दस से ग्यारह बजे तक है। वैसे fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन यह learning support के लिए अच्छा रहेगा। क्या आप इसके बारे में और कुछ जानना चाहते हैं?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4268,
+          "output_tokens": 65,
+          "total_tokens": 4333
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.735
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 129,
+      "sse_content_preview": "ठीक है, spoken English सीखना ही main focus है. बस ये बता दीजिए कि आपका main learning goal क्या है, ताकि मैं सही guidance दे सकूँ?",
+      "sse_content_tail": "ठीक है, spoken English सीखना ही main focus है. बस ये बता दीजिए कि आपका main learning goal क्या है, ताकि मैं सही guidance दे सकूँ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 32,
+        "prompt_tokens": 4358,
+        "total_tokens": 4390,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, spoken English सीखना ही main focus है. बस ये बता दीजिए कि आपका main learning goal क्या है, ताकि मैं सही guidance दे सकूँ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4358,
+          "output_tokens": 32,
+          "total_tokens": 4390
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.484
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 168,
+      "sse_content_preview": "समझ गई, spoken English सीखना ही हमारा focus है। क्या आप demo या counselling के लिए अपना preferred name और email share कर सकते हैं? और क्या मैं आपकी enquiry save कर लूँ?",
+      "sse_content_tail": "समझ गई, spoken English सीखना ही हमारा focus है। क्या आप demo या counselling के लिए अपना preferred name और email share कर सकते हैं? और क्या मैं आपकी enquiry save कर लूँ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 4318,
+        "total_tokens": 4357,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "समझ गई, spoken English सीखना ही हमारा focus है। क्या आप demo या counselling के लिए अपना preferred name और email share कर सकते हैं? और क्या मैं आपकी enquiry save कर लूँ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4318,
+          "output_tokens": 39,
+          "total_tokens": 4357
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.578
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 11,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 72,
+        "prompt_tokens": 4599,
+        "total_tokens": 4671,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4599,
+          "output_tokens": 72,
+          "total_tokens": 4671
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-90db2673b8029f81",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Adult spoken-English course demo enquiry. Preferred review time tomorrow at 3pm.\", \"preferred_time\": \"tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 15,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 170,
+      "sse_content_preview": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। यह सिर्फ team review के लिए है, कोई booking या confirmation नहीं हुआ है। क्या इसके अलावा और कुछ जानना है?",
+      "sse_content_tail": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। यह सिर्फ team review के लिए है, कोई booking या confirmation नहीं हुआ है। क्या इसके अलावा और कुछ जानना है?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 4902,
+        "total_tokens": 4947,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। यह सिर्फ team review के लिए है, कोई booking या confirmation नहीं हुआ है। क्या इसके अलावा और कुछ जानना है?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4902,
+          "output_tokens": 45,
+          "total_tokens": 4947
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.656
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Adult spoken-English course demo enquiry. Preferred review time tomorrow at 3pm.",
+        "preferred_time": "tomorrow at 3pm"
+      },
+      "turn": 4
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "हमारी online classes छह हफ्ते की हैं, weekends पर सुबह दस से ग्यारह बजे तक चलती हैं, और इसकी total fee six thousand four hundred ninety nine rupees है। इसके बारे में और कुछ जानना है, या क्या मैं आपकी enquiry save कर लूँ?",
+      "turn": 1,
+      "at": 4.0
+    },
+    {
+      "text": "Course की total fee six thousand four hundred ninety nine rupees है, duration छह हफ्ते का है और class timing weekends पर सुबह दस से ग्यारह बजे तक है। वैसे fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन यह learning support के लिए अच्छा रहेगा।",
+      "turn": 2,
+      "at": 8.453
+    },
+    {
+      "text": "समझ गई, spoken English सीखना ही हमारा focus है। क्या आप demo या counselling के लिए अपना preferred name और email share कर सकते हैं? और क्या मैं आपकी enquiry save कर लूँ?",
+      "turn": 3,
+      "at": 12.719
+    },
+    {
+      "text": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। यह सिर्फ team review के लिए है, कोई booking या confirmation नहीं हुआ है। क्या इसके अलावा और कुछ जानना है?",
+      "turn": 4,
+      "at": 17.25
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 5,
+      "at": 17.297
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।",
+      "spoken": "हमारी online classes छह हफ्ते की हैं, weekends पर सुबह दस से ग्यारह बजे तक चलती हैं, और इसकी total fee six thousand four hundred ninety nine rupees है। इसके बारे में और कुछ जानना है, या क्या मैं आपकी enquiry save कर लूँ?",
+      "elapsed_s": 4.0,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "अभी कुछ book या save मत कीजिए। पहले मेरा सवाल बताइए: Final course fee, duration और class timing क्या है? Fluency या job की guarantee है?",
+      "spoken": "Course की total fee six thousand four hundred ninety nine rupees है, duration छह हफ्ते का है और class timing weekends पर सुबह दस से ग्यारह बजे तक है। वैसे fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन यह learning support के लिए अच्छा रहेगा।",
+      "elapsed_s": 4.422,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "मुझे job guarantee नहीं चाहिए, लेकिन spoken English सीखनी है। Course बताइए।",
+      "spoken": "समझ गई, spoken English सीखना ही हमारा focus है। क्या आप demo या counselling के लिए अपना preferred name और email share कर सकते हैं? और क्या मैं आपकी enquiry save कर लूँ?",
+      "elapsed_s": 4.25,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. यह enquiry team review के लिए submit कीजिए। मेरी सहमति है। Booking या order confirm मत बताइए।",
+      "spoken": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। यह सिर्फ team review के लिए है, कोई booking या confirmation नहीं हुआ है। क्या इसके अलावा और कुछ जानना है?",
+      "elapsed_s": 4.5,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 17.344,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "87cb6759-2497-47cc-bb7d-1d3244a5cb7e",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "eeaaae96b876a7d69abbf56899190e39f1a0967fa26720c7ff5d3c4c7faa0dbf",
+  "prompt_chars": 17970,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste. Main Sana hoon SpeakEasy Language Studio se. Main ek AI assistant hoon. Kya aap adult spoken-English classes ke baare mein baat karne ke liye abhi thoda samay de sakte hain?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "हमारी online classes छह हफ्ते की हैं, weekends पर सुबह दस से ग्यारह बजे तक चलती हैं, और इसकी total fee six thousand four hundred ninety nine rupees है। इसके बारे में और कुछ जानना है, या क्या मैं आपकी enquiry save कर लूँ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "Course की total fee six thousand four hundred ninety nine rupees है, duration छह हफ्ते का है और class timing weekends पर सुबह दस से ग्यारह बजे तक है। वैसे fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन यह learning support के लिए अच्छा रहेगा।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "समझ गई, spoken English सीखना ही हमारा focus है। क्या आप demo या counselling के लिए अपना preferred name और email share कर सकते हैं? और क्या मैं आपकी enquiry save कर लूँ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। यह सिर्फ team review के लिए है, कोई booking या confirmation नहीं हुआ है। क्या इसके अलावा और कुछ जानना है?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 17.359,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

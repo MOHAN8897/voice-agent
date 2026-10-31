@@ -10,7 +10,7 @@ import threading
 import time
 from typing import Dict, Optional
 
-from server.config.constants import constants
+from server.config.constants import constants, language_in_supported, normalize_supported_language
 from server.prompts.voice_defaults import (
     DEFAULT_VOICE_PRESET_ID,
     VOICE_PIPELINE_PRESET_IDS,
@@ -87,13 +87,16 @@ class RuntimeSettingsStore:
             values: dict = entry["values"]
             snapshot = dict(values)
             loose = VOICE_PRESET_BUNDLED_KEYS & patch.keys()
-            if loose and "voicePresetId" not in patch:
+            studio = session_id.startswith("test-studio:")
+            if loose and "voicePresetId" not in patch and not studio:
                 raise SettingsValidationError(
                     f"Change voicePresetId instead of individual pipeline settings: {sorted(loose)}"
                 )
             if patch.get("voicePresetId") is not None:
                 pid = self._validate("voicePresetId", patch["voicePresetId"])
                 bundled = voice_preset_values(pid)
+                if studio:
+                    bundled.update({k: v for k, v in patch.items() if k in VOICE_PRESET_BUNDLED_KEYS})
                 patch = {k: v for k, v in patch.items() if k not in VOICE_PRESET_BUNDLED_KEYS}
                 patch = {**patch, "voicePresetId": pid, **bundled}
             try:
@@ -104,7 +107,7 @@ class RuntimeSettingsStore:
                         values.pop(key, None)
                         continue
                     values[key] = self._validate(key, val)
-                    self._cross_validate(values)
+                self._cross_validate(values)
             except Exception:
                 entry["values"] = snapshot
                 raise
@@ -118,8 +121,9 @@ class RuntimeSettingsStore:
                 raise SettingsValidationError(f"voicePresetId must be one of {VOICE_PIPELINE_PRESET_IDS}")
             return val
         if key == "sttModel":
-            if val not in constants.STT_MODELS:
-                raise SettingsValidationError(f"sttModel must be one of {list(constants.STT_MODELS)}")
+            allowed = list(constants.STT_MODELS) + list(constants.CARTESIA_STT_MODELS)
+            if val not in allowed:
+                raise SettingsValidationError(f"sttModel must be one of {allowed}")
             return val
         if key == "sttMode":
             model = None  # resolved at use-time; mode must be in global list
@@ -127,8 +131,10 @@ class RuntimeSettingsStore:
                 raise SettingsValidationError(f"sttMode must be one of {constants.STT_MODES}")
             return val
         if key == "sttLanguage":
-            if val not in list(constants.SUPPORTED_LANGUAGES) + ["unknown"]:
-                raise SettingsValidationError("sttLanguage must be te-IN/hi-IN/en-IN/unknown")
+            val = normalize_supported_language(val)
+            if not language_in_supported(val, allow_unknown=True):
+                allowed = ", ".join(list(constants.SUPPORTED_LANGUAGES) + ["unknown"])
+                raise SettingsValidationError(f"sttLanguage must be one of {allowed}")
             return val
         if key == "sttStreamType":
             if val not in constants.STT_STREAM_TYPES:
@@ -149,8 +155,8 @@ class RuntimeSettingsStore:
                 v = int(val)
             except Exception:
                 raise SettingsValidationError("bargeMinWords must be int")
-            if not 2 <= v <= 4:
-                raise SettingsValidationError("bargeMinWords range 2-4")
+            if not 1 <= v <= 10:
+                raise SettingsValidationError("bargeMinWords range 1-10")
             return v
         if key == "bargeRequireVad":
             if isinstance(val, bool):
@@ -163,14 +169,16 @@ class RuntimeSettingsStore:
             return val
         if key == "ttsSpeaker":
             v = str(val).strip()
+            from server.providers.voice_inventory import voices_for_model
             from server.services.cartesia_voices import is_cartesia_voice_id
 
             if is_cartesia_voice_id(v):
                 return v
-            v_lower = v.lower()
-            if v_lower in constants.TTS_SPEAKERS_V3 or v_lower in constants.TTS_SPEAKERS_V2:
-                return v_lower
-            raise SettingsValidationError("Unknown speaker — use Sarvam speaker id or Cartesia voice UUID")
+            for model in constants.TTS_MODELS:
+                for row in voices_for_model("sarvam", model):
+                    if row["providerVoiceId"].casefold() == v.casefold():
+                        return row["providerVoiceId"]
+            raise SettingsValidationError("Unknown speaker — use a published Sarvam voice or Cartesia voice UUID")
         if key == "ttsPace":
             return _clamp(float(val), 0.3, 3.0)  # per-model clamped at use
         if key == "ttsTemperature":
@@ -245,15 +253,20 @@ class RuntimeSettingsStore:
         model = values.get("ttsModel")
         spk = values.get("ttsSpeaker")
         if model and spk:
-            sarvam_ok = spk in constants.TTS_SPEAKERS_V3 if model == "bulbul:v3" else spk in constants.TTS_SPEAKERS_V2
-            cartesia_ok = model in constants.CARTESIA_TTS_MODELS
-            if model in constants.TTS_MODELS and not sarvam_ok:
-                raise SettingsValidationError(f"Speaker '{spk}' incompatible with {model}")
-            if cartesia_ok:
-                from server.services.cartesia_voices import is_cartesia_voice_id
+            from server.providers.voice_inventory import default_voice, validate_voice, voices_for_model
 
-                if not is_cartesia_voice_id(spk):
-                    raise SettingsValidationError(f"Cartesia voice id required for {model}")
+            language = values.get("sttLanguage")
+            language = None if language in (None, "unknown") else language
+            provider = "sarvam" if model in constants.TTS_MODELS else "cartesia" if model in constants.CARTESIA_TTS_MODELS else None
+            if provider:
+                published = {row["providerVoiceId"] for row in voices_for_model(provider, model)}
+                if spk not in published:
+                    values["ttsSpeaker"] = default_voice(provider, model, language, preferred=spk)
+                else:
+                    try:
+                        validate_voice(provider, model, spk, language)
+                    except ValueError as exc:
+                        raise SettingsValidationError(f"Speaker '{spk}' incompatible with {model}: {exc}") from exc
         pace = values.get("ttsPace")
         if model == "bulbul:v3" and pace is not None:
             values["ttsPace"] = _clamp(pace, 0.5, 2.0)
@@ -264,10 +277,70 @@ class RuntimeSettingsStore:
             entry = self._store.get(session_id)
             return dict(entry["values"]) if entry else {}
 
+    def raw_entry(self, session_id: str) -> Optional[dict]:
+        with self._lock:
+            entry = self._store.get(session_id)
+            if not entry:
+                return None
+            return {
+                "values": dict(entry.get("values") or {}),
+                "updatedAt": float(entry.get("updatedAt") or 0),
+            }
+
+    async def persist_to_db(self, session_id: str) -> bool:
+        entry = self.raw_entry(session_id)
+        if not entry:
+            return False
+        try:
+            from server.services.saved_runtime_store import upsert
+
+            return await upsert(session_id, entry)
+        except Exception as exc:
+            from server.utils.logger import logger
+
+            logger.warning("[RUNTIME] Postgres persist failed for %s: %s", session_id, exc)
+            return False
+
+    async def hydrate_from_db(self) -> int:
+        """Overlay Postgres-saved runtime after disk hydrate (DB wins)."""
+        try:
+            from server.services.saved_runtime_store import load_all, upsert
+
+            rows = await load_all()
+        except Exception:
+            return 0
+        with self._lock:
+            snapshot = {sid: dict(entry) for sid, entry in self._store.items()}
+            for sid, payload in rows.items():
+                if not isinstance(payload, dict):
+                    continue
+                values = payload.get("values")
+                if not isinstance(values, dict):
+                    continue
+                self._store[sid] = {
+                    "values": dict(values),
+                    "updatedAt": float(payload.get("updatedAt") or 0) or time.time(),
+                }
+                session_persist.set_runtime(sid, self._store[sid])
+        for sid, entry in snapshot.items():
+            if sid in rows or not (entry.get("values") or {}):
+                continue
+            try:
+                await upsert(sid, entry)
+            except Exception:
+                pass
+        return len(rows)
+
     def clear(self, session_id: str) -> None:
         with self._lock:
             self._store.pop(session_id, None)
         session_persist.delete_runtime(session_id)
+        try:
+            from server.services.saved_runtime_store import queue_delete
+
+            queue_delete(session_id)
+        except Exception:
+            pass
 
 
 runtime_settings = RuntimeSettingsStore()

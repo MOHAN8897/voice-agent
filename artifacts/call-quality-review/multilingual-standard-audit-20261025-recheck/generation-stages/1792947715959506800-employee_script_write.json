@@ -1,0 +1,12 @@
+{
+  "stage": "employee_script_write",
+  "language": "hi-IN",
+  "output": {
+    "opening": "Namaste, I am Meera from ClearPrint Studio. Am I speaking with the right person regarding card printing needs?",
+    "call_flow": "Answer caller questions first. Understand which card type they need. If visiting cards, note that we do printed visiting cards at 25 rupees per card with a minimum of 100 cards. If wedding invitations, explain that design and quantity decide the quote, as there is no fixed wedding price available. Mention that delivery is in Pune by post, taking five working days after artwork approval. State that cards and cash on delivery are accepted, and our office hours are 10am to 6pm Monday to Saturday. If the customer says no to visiting cards, ask if they might want wedding invitations. If they are interested in a quote, ask for their preferred name and delivery locality.",
+    "call_to_action": "May I take your preferred name and delivery locality for a quote request?",
+    "objection_handling": "If they ask about price, state the exact facts without inventing discounts. If they ask about refunds, state that refunds are unavailable. If they say not interested or no, respect the decline politely. If they say later, take a requested callback preference without booking or promising a date without confirmation.",
+    "unknown_information": "If asked about any unknown details, clearly state that the information is unavailable. Do not invent callbacks, payments, bookings, or messages.",
+    "closing": "Thank you for speaking with ClearPrint Studio. Have a wonderful day."
+  }
+}

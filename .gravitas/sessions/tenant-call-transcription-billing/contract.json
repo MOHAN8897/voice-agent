@@ -1,0 +1,50 @@
+{
+  "mode": "implement",
+  "objective": "Make the tenant live-call transcript status truthful, use the configured Gemini PSTN transcription model without provider fallback, show only the amount actually charged from the wallet ledger, remove the Ctrl+K hint, and keep internal supplier-cost breakdowns out of tenant surfaces.",
+  "acceptance_criteria": [
+    "Configured Gemini PSTN live transcription model remains the selected transcriber; graceful teardown does not turn an already captured transcript into a false failure.",
+    "Actual provider failures remain visible as failed or partial status without the generic contact-support message when a saved transcript exists.",
+    "Calls and Billing show the wallet transaction amount for the call, in the charged currency, without supplier/model cost components or per-session rates.",
+    "Tenant call-list and last-session responses do not expose supplier-cost breakdown fields; admin cost reporting remains unchanged.",
+    "Search remains usable and its Ctrl+K/⌘K visual hint is removed.",
+    "Focused regression tests and UI verification cover the changed behavior; no live call or billing rate is altered."
+  ],
+  "non_goals": [
+    "Do not change admin-configured prices or the per-minute charge formula; use the call's locked FX snapshot when a mixed-currency wallet needs its secondary balance leg.",
+    "Do not change the Gemini voice provider or make a paid production call.",
+    "Do not change secondary PSTN or OpenAI voice-stack behavior."
+  ],
+  "risk": "medium",
+  "budget": "balanced",
+  "allowed_write_scope": [
+    ".gravitas/sessions/tenant-call-transcription-billing/",
+    "server/services/live_caller_transcription.py",
+    "server/services/pstn_realtime_voice_core.py",
+    "server/services/saas/call_redaction.py",
+    "server/routes/calls.py",
+    "server/routes/app_billing.py",
+    "server/services/saas/billing_wallet_service.py",
+    "server/tests/test_live_caller_transcription.py",
+    "server/tests/test_payment_walls.py",
+    "server/tests/test_calls_security.py",
+    "server/tests/test_wallet_call_billing.py",
+    "server/tests/test_wallet_transaction_tenant_scope.py",
+    "voxly-ai/src/console/modules/CallsModule.jsx",
+    "voxly-ai/src/console/modules/BillingModule.jsx",
+    "voxly-ai/src/console/Topbar.jsx",
+    "voxly-ai/src/services/apiNormalize.js",
+    "voxly-ai/e2e/primary-call-lifecycle.spec.js",
+    "voxly-ai/e2e/fixtures/primary-call.js"
+  ],
+  "verification": "targeted",
+  "action_risk": "medium",
+  "reversibility": "reversible",
+  "uncertainty": "medium",
+  "blast_radius": "tenant call history, billing summary, and live transcript status",
+  "verification_depth": "impact",
+  "reason_codes": [
+    "multiple-files",
+    "billing-visibility",
+    "live-provider-lifecycle"
+  ]
+}

@@ -1,0 +1,86 @@
+name: Security Testing Pipeline (Semgrep, OWASP ZAP, Strix)
+
+on:
+  push:
+    branches: [main, master, "working_app-*"]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      staging_url:
+        description: "Target staging URL for active DAST and agentic pen-testing"
+        required: false
+        default: "https://staging.dialtact.com"
+      run_active_scans:
+        description: "Execute OWASP ZAP and Strix against target staging URL"
+        type: boolean
+        default: false
+
+jobs:
+  semgrep-sast:
+    name: Semgrep Code Security Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep SAST Audit
+        run: |
+          semgrep scan --error \
+            --config p/owasp-top-ten \
+            --config p/security-audit \
+            --config .semgrep.yml \
+            server/ dialtact-app/src/
+
+  owasp-zap-dast:
+    name: OWASP ZAP Dynamic Staging Scan
+    needs: [semgrep-sast]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_active_scans == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{ github.event.inputs.staging_url }}
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+          issue_title: 'OWASP ZAP Staging Security Vulnerability Findings'
+
+  strix-agentic-test:
+    name: Strix Autonomous Agentic Penetration Testing
+    needs: [semgrep-sast]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_active_scans == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Pull and Run Strix Security Agent
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          STRIX_TARGET: ${{ github.event.inputs.staging_url }}
+        run: |
+          docker run --rm \
+            -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+            -v ${{ github.workspace }}:/workspace \
+            ghcr.io/usestrix/strix:latest \
+            --target "${STRIX_TARGET}" \
+            --output /workspace/artifacts/strix-report.json || true
+
+      - name: Upload Strix Audit Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: strix-security-audit-report
+          path: artifacts/strix-report.json
+          if-no-files-found: ignore

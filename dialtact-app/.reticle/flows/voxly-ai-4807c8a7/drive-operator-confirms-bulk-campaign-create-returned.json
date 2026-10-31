@@ -1,0 +1,159 @@
+{
+  "version": 2,
+  "name": "drive-operator-confirms-bulk-campaign-create-returned",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790847829014,
+  "steps": [
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-calls-panel-tab-outbound",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentCallsPanel.jsx",
+          "line": 54,
+          "column": 9
+        }
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "agent-calls-panel-tab-outbound",
+            "source": {
+              "file": "src/console/modules/agent-workspace/AgentCallsPanel.jsx",
+              "line": 54,
+              "column": 9
+            }
+          },
+          "args": {},
+          "action": "click"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "agent-bulk-contacts",
+            "source": {
+              "file": "src/console/modules/agent-workspace/AgentDialBulkPanel.jsx",
+              "line": 221,
+              "column": 11
+            }
+          },
+          "args": {
+            "value": "+919398247132,A\n+918897908470,B"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "agent-bulk-concurrency",
+            "source": {
+              "file": "src/console/modules/agent-workspace/AgentDialBulkPanel.jsx",
+              "line": 232,
+              "column": 13
+            }
+          },
+          "args": {
+            "value": "2"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "agent-bulk-start",
+            "source": {
+              "file": "src/console/ui/TactileButton.jsx",
+              "line": 69,
+              "column": 5
+            }
+          },
+          "args": {},
+          "action": "click",
+          "expect": {
+            "kind": "net",
+            "method": "POST",
+            "urlContains": "/api/campaigns",
+            "status": 200
+          }
+        }
+      ],
+      "page": "/console"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Billing & Usage"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "GET",
+            "urlContains": "/api/billing/wallet",
+            "status": 200
+          },
+          {
+            "kind": "text",
+            "contains": "₹"
+          }
+        ]
+      },
+      "page": "/console"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Platform admin"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "by": "testid",
+              "value": "admin-wallet-panel"
+            }
+          },
+          {
+            "kind": "text",
+            "contains": "INR"
+          }
+        ]
+      },
+      "page": "/console"
+    }
+  ],
+  "intent": "Operator confirms bulk campaign create returned success and dialer started concurrent calls",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/console"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/console"
+    }
+  ],
+  "author": {
+    "agent": "cursor-vscode"
+  },
+  "intentId": "flow:drive-operator-confirms-bulk-campaign-create-returned"
+}

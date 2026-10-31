@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.", "ts": "2026-10-25T17:35:11.342380Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಖಂಡಿತ. ನಮ್ಮ beginner Python course ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ. Total fee four thousand nine hundred ninety nine rupees ಆಗುತ್ತೆ. ಇದರಲ್ಲಿ ಯಾವುದೇ placement guarantee ಅಥವಾ discount options ಇಲ್ಲ. ನಿಮಗೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?", "ts": "2026-10-25T17:35:14.176603Z", "brain_latency_ms": 2655}
+{"seq": 3, "role": "user", "text": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: Course final fee, ಅವಧಿ ಮತ್ತು class timings ಏನು? Job guarantee ಕೊಡುತ್ತೀರಾ?", "ts": "2026-10-25T17:35:14.204008Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Total fee four thousand nine hundred and ninety nine rupees. Course ಆರು ವಾರ ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ class ಇರುತ್ತೆ. ನಾವು ಯಾವುದೇ job guarantee ಅಥವಾ income promise ಕೊಡಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?", "ts": "2026-10-25T17:35:17.566631Z", "brain_latency_ms": 2935}
+{"seq": 5, "role": "user", "text": "ಸರಿ, ಧನ್ಯವಾದಗಳು.", "ts": "2026-10-25T17:35:17.574546Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ಸರಿ, ನಿಮಗೆ ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ ಅಥವಾ ಈ ಬಗ್ಗೆ demo preference ಏನಾದ್ರೂ note ಮಾಡ್ಲಾ?", "ts": "2026-10-25T17:35:20.215151Z", "brain_latency_ms": 2268}
+{"seq": 7, "role": "user", "text": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.", "ts": "2026-10-25T17:35:20.231496Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.", "ts": "2026-10-25T17:35:20.240205Z", "brain_latency_ms": 2}

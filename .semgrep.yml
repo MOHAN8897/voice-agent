@@ -1,0 +1,60 @@
+rules:
+  - id: cors-wildcard-credentials-risk
+    languages: [python]
+    severity: ERROR
+    message: "CORS Misconfiguration: Cannot allow all origins ('*') when allow_credentials is True. This exposes authenticated sessions to cross-origin credential theft."
+    metadata:
+      cwe: "CWE-942: Permissive Cross-Domain Policy with Untrusted Domains"
+      owasp: "A01:2021 - Broken Access Control"
+    patterns:
+      - pattern: |
+          $APP.add_middleware(
+              CORSMiddleware,
+              ...,
+              allow_origins=[..., "*", ...],
+              ...,
+              allow_credentials=True,
+              ...
+          )
+
+  - id: dynamic-sql-text-interpolation
+    languages: [python]
+    severity: ERROR
+    message: "SQL Injection Risk: Formatting or interpolating dynamic strings directly inside SQLAlchemy text() creates high SQL injection vulnerability. Use bound query parameters or ORM statements."
+    metadata:
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: text(f"...")
+          - pattern: text("..." % ...)
+          - pattern: text("...".format(...))
+
+  - id: prohibited-carrier-tenant-surface-leak
+    languages: [python]
+    severity: ERROR
+    message: "Strict Vendor & Secret Scrubbing Violation: Internal vendors and wholesale carriers (plivo, exotel, composio) must never be referenced or exposed on customer/tenant-facing surfaces."
+    metadata:
+      cwe: "CWE-200: Exposure of Sensitive Information to an Unauthorized Actor"
+      owasp: "A01:2021 - Broken Access Control"
+    paths:
+      include:
+        - "**/server/routes/app_*.py"
+        - "**/server/routes/campaigns.py"
+        - "**/server/routes/integrations.py"
+        - "**/dialtact-app/src/**"
+    patterns:
+      - pattern-regex: "(?i)\\b(plivo|exotel|composio)\\b"
+
+  - id: unsafe-urllib-file-ssrf
+    languages: [python]
+    severity: WARNING
+    message: "SSRF Risk: Native urllib.request.urlopen supports file:// and other protocol handlers. Use httpx or validate the scheme is strictly http/https."
+    metadata:
+      cwe: "CWE-918: Server-Side Request Forgery (SSRF)"
+      owasp: "A10:2021 - Server-Side Request Forgery"
+    patterns:
+      - pattern: urllib.request.urlopen(...)
+    paths:
+      exclude:
+        - "**/server/services/nango_service.py"

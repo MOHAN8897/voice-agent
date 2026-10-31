@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:25:57.166519Z", "source": "model", "operations": [{"op": "set_fact", "key": "user_interested", "value": "true"}, {"op": "set_fact", "key": "user_asked_pricing_terms", "value": "true"}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:25:58.060839Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:25:58.789727Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:25:58.793160Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।\nassistant: ज़रूर, बताइए।\nuser: अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?\nassistant: ज़रूर, बताइए।\nuser: ठीक है, धन्यवाद।\nassistant: ज़रूर, बताइए।"}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-25T15:25:58.810093Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

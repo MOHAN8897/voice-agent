@@ -1,0 +1,74 @@
+{
+  "key": "print-ta-IN-connected-3b_stop_contact",
+  "business": "print",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "3b_stop_contact",
+  "agent_id": "bdce67d6-051d-5df0-b945-525173a1f672",
+  "call_id": "7873f923-9b42-4880-88b7-cff29b732fcd",
+  "session_id": "audit-print-ta-IN-connected-3b_stop_contact-20e1911c",
+  "compiled_checksum": "76b288f72889bc9041f0c28adf9f13370a846e99cba4f1b6a4bb91f33ad390dc",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.062,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "7873f923-9b42-4880-88b7-cff29b732fcd",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "94dea0198bbca67e7df4548ae910d6d0dc08cefbb5ee961965f358043fdd266a",
+  "prompt_chars": 18310,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Vanakkam, I am Meera calling from ClearPrint Studio. Am I speaking with the right person to discuss your card printing needs today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.062,
+  "hangup_count": 1
+}

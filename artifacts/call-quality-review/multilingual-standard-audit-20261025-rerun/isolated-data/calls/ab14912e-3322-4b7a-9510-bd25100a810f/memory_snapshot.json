@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ice, puncture repair ధరలు ఎంత? Parts కూడా ఆ ధరలో ఉన్నాయా?\nassistant: అవును అండి, బేసిక్ సర్వీసు four hundred ninety nine రూపాయలు, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అవుతుంది. Parts ఖర్చులు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ service కావాలి అండి?\nuser: Basic service వద్దు, కానీ puncture repair కావాలి. చేయగలరా?\nassistant: తప్పకుండా అండి, పంక్చర్ రిపేర్ one hundred twenty రూపాయలకే చేస్తాము. మీకు ఆ repair కావాలంటే, మీ పేరు, locality వివరాలు చెప్తారా అండి? ఈ కాల్‌లో వివరాలు note చేసుకోగలను, కానీ టీమ్‌కు అభ్యర్థన పంపడం లేదా follow-up హామీ ఇవ్వడం చేయలేను. మీకు ఆసక్తి ఉందా?"
+}

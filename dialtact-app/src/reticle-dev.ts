@@ -1,0 +1,73 @@
+// Dev-only. Loaded for you after connect() — by @reticlehq/vite-plugin's injected connect, or by
+// the connect file init wrote for a framework that connects itself — so you do not import it.
+// Self-guards on import.meta.env.DEV, so it is a no-op in a production build.
+import { registerCapabilities } from '@reticlehq/react';
+
+if (import.meta.env.DEV) {
+  // ── Start with ONE flow. ─────────────────────────────────────────────────────────────────────
+  // You do not need to describe the whole app to get value, and trying to is the slow path. Register
+  // the store your most important flow reads, and list the testids that flow touches. Add more later,
+  // when a flow you actually replay needs them.
+  //
+  // Registering a store is the highest-value line in this file: it lets the agent check what the app
+  // BELIEVES, not just what it rendered — the class of bug a screenshot cannot see. Pass the STORE,
+  // not `() => store.getState()`: the store form wires `subscribe` too, so every mutation emits a
+  // state diff; the getter form is read-only and silently produces empty diffs.
+  // No state library detected. If you add one, register it here — see https://docs.reticle.sh/state-management
+
+  registerCapabilities({
+    testids: ['sidebar-wallet-pill', 'billing-export-csv', 'call-recording-toggle', 'calls-payment-wall', 'calls-payment-wall-add', 'call-callback-panel', 'call-callback-number', 'call-callback-submit', 'create-employee-modal', 'employee-brief-input', 'employee-language-select', 'employee-role-select', 'employee-natural-spoken-style', 'employee-create-error', 'create-next', 'buy-number-error', 'buy-number-submit', 'studio-inbound-enabled', 'studio-outbound-enabled', 'studio-hours-summary', 'studio-hours-toggle-all', 'studio-transfer-number', 'studio-greeting', 'studio-telephony-error', 'studio-telephony-save', 'add-funds-modal', 'add-funds-amount', 'add-funds-error', 'add-funds-submit',
+      // Agent card play/pause, and the unsaved-script guard on the studio.
+      'agent-studio-unsaved', 'agent-studio-discard', 'agent-studio-save-inline',
+      'agent-studio-back', 'agent-studio-switcher', 'agent-studio-leave-dialog',
+      // Tenant voice-stack selection, including the approval-gated empty state.
+      'nav-employees', 'agent-tab-voice', 'agent-open-builder', 'agent-voice-panel',
+      'voice-stack-selector', 'voice-stack-language', 'voice-stack-language-unsaved',
+      'voice-stack-loading', 'voice-stack-catalog-retry', 'voice-stack-empty',
+      'voice-stack-tier-low', 'voice-stack-tier-medium', 'voice-stack-options',
+      'voice-stack-engine', 'voice-stack-model', 'voice-stack-voice', 'voice-stack-preview',
+      'voice-stack-audio-preview', 'voice-stack-preview-retry', 'voice-stack-conflict-reload',
+      'voice-stack-save-status', 'voice-stack-reset', 'voice-stack-save',
+      'leave-save', 'leave-cancel', 'leave-discard',
+      'kyc-required-prompt', 'kyc-verify-now',
+      'test-call-timer', 'test-call-start-browser', 'test-call-end-browser',
+      // Marketing voice showcase: the real clips, the transcript, the waveform, and
+      // the A/B against the browser's own voice.
+      'voice-sample-play', 'voice-sample-status', 'voice-sample-waveform',
+      'voice-sample-transcript', 'voice-mode-product', 'voice-mode-browser',
+      'voice-sample-healthcare-clinic', 'voice-sample-logistics',
+      'voice-industry-healthcare-clinic', 'voice-industry-logistics',
+      'talk-to-ai-live', 'walkthrough-toggle',
+      // Auth: reset link (dev), the new confirm field, and the idle sign-out.
+      'auth-debug-reset-link', 'auth-reset-confirm', 'idle-warning-modal',
+      'idle-stay-signed-in', 'idle-sign-out',
+      // Settings: change password.
+      'change-password-form', 'change-password-current', 'change-password-new',
+      'change-password-confirm', 'change-password-submit', 'change-password-error',
+      'change-password-notice', 'session-idle-minutes',
+      // Phase 4: Compliance, DND, and Onboarding
+      'agent-recording-disclosure-toggle', 'agent-recording-disclosure-text', 'agent-recording-disclosure-save',
+      'compliance-attestation-checkbox', 'confirm-launch-campaign-btn', 'campaign-wizard-launch-btn',
+      'main-tab-campaigns', 'main-tab-dnd', 'campaigns-tab-button', 'dnd-registry-tab-button',
+      'dnc-registry-panel', 'dnc-tab-active', 'dnc-tab-deactivated', 'add-dnc-button',
+      'add-dnc-single-phone', 'add-dnc-bulk-phones', 'add-dnc-submit-btn',
+      'dnc-deactivate-reason-input', 'dnc-reconsent-checkbox', 'dnc-deactivate-confirm-btn',
+      'onboarding-survey-modal', 'onboarding-step-1', 'onboarding-step-2', 'onboarding-step-3',
+      'onboarding-fullname-input', 'onboarding-company-input', 'onboarding-role-select',
+      'onboarding-referral-select', 'onboarding-usecase-select', 'onboarding-volume-select',
+      'onboarding-terms-checkbox', 'onboarding-next-btn', 'onboarding-submit-btn'],
+    signals: ['dialtact:voice-sample-started', 'dialtact:voice-sample-audible', 'dialtact:voice-sample-ended'],
+    stores: [], // the keys you registered above
+  });
+}
+
+// Supply the dev flag type when the host does not include vite/client.
+// These interfaces merge with vite/client when it is already present.
+declare global {
+  interface ImportMetaEnv {
+    DEV: boolean;
+  }
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}

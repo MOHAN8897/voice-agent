@@ -1,0 +1,12 @@
+{
+  "callId": "b0ea94d9-409c-4989-a2d5-c43437cf9a41",
+  "carrier": {
+    "uuid": "d4d15191-a634-4423-ac60-386d6f1fbe4f",
+    "answer_time": "2026-10-26T05:49:37Z",
+    "end_time": "2026-10-26T05:50:40Z",
+    "hangup_source": "API Request",
+    "hangup_cause": "NORMAL_CLEARING"
+  },
+  "callbackRecovered": true,
+  "callbackStatus": "requested"
+}

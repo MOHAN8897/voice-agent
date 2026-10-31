@@ -1,0 +1,48 @@
+{
+  "intents": {
+    "inline:tenant-farewell-edits-are-persisted-and-publishe-956db398": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "PUT",
+            "requestBodyContains": "saas_call_end_policy",
+            "status": 200,
+            "urlContains": "/business-brain/draft"
+          },
+          {
+            "kind": "net",
+            "method": "POST",
+            "status": 200,
+            "urlContains": "/business-brain/publish"
+          },
+          {
+            "contains": "Saved for calls",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1792998021279,
+      "id": "inline:tenant-farewell-edits-are-persisted-and-publishe-956db398",
+      "provenBy": {
+        "at": 1792998236882,
+        "grade": "net",
+        "runId": "drive-sf783d628-df9f-4454-963a-f39d9d0a9827",
+        "verdictId": "reticle_act_and_wait:1792998236882"
+      },
+      "state": "proved",
+      "statement": "Tenant farewell edits are persisted and published for subsequent calls.",
+      "status": "proved",
+      "subject": "business-brain",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792998236958
+    }
+  },
+  "subject": "business-brain",
+  "version": 1
+}

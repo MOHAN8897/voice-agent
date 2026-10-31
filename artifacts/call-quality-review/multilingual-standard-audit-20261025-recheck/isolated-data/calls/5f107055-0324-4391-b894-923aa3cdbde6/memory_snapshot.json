@@ -1,0 +1,13 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {
+    "interested": "true",
+    "price_disclosed": "true",
+    "terms_disclosed": "true"
+  },
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "fee, duration, class timings ఏమిటి? Job guarantee ఇస్తారా?\nassistant: తప్పకుండా అండి. మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు. క్లాసులు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి ఏడు నుండి ఎనిమిది గంటల మధ్య ఉంటాయి. మరియు ఇందులో ఎలాంటి ప్లేస్‌మెంట్ లేదా ఉద్యోగ హామీ ఉండదు అండి.\nuser: నాకు job guarantee అవసరం లేదు, కానీ Python నేర్చుకోవాలని ఆసక్తి ఉంది. Course వివరించగలరా?\nassistant: సరేనండి, ప్లేస్‌మెంట్ హామీ ఏమీ ఉండదు. ఇది పూర్తిగా బిగినర్స్ కోసం, సోమవారం నుండి శుక్రవారం వరకు రాత్రి ఏడు నుండి ఎనిమిది గంటల మధ్య ఆన్‌లైన్‌లో ఉంటుంది. మీకు కోడింగ్ అనుభవం ఏమైనా ఉందా అండి?"
+}

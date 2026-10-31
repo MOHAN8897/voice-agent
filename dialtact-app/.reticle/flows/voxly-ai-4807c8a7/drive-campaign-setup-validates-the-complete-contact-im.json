@@ -1,0 +1,80 @@
+{
+  "version": 2,
+  "name": "drive-campaign-setup-validates-the-complete-contact-im",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1792503420377,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Validate contacts"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "1 ready · 0 invalid · 0 duplicates"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "checkbox",
+        "name": "I confirm I have authorization and required consent to call these contacts, and accept responsibility for the campaign’s purpose, content and legality."
+      },
+      "args": {},
+      "action": "check",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "campaign-launch"
+        },
+        "state": "enabled"
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "campaign-launch",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Isolated UI audit"
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Campaign setup validates the complete contact import before launch. This run uses isolated synthetic API responses.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-campaign-setup-validates-the-complete-contact-im"
+}

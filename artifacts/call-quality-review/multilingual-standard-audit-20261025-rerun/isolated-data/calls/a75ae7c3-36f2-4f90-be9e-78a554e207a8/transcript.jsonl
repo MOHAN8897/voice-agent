@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T19:16:54.352868Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "A basic bicycle service costs four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Which service do you need?", "ts": "2026-10-25T19:16:56.324305Z", "brain_latency_ms": 1959}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Answer this first: What do a basic bicycle service and puncture repair cost, and are parts included?", "ts": "2026-10-25T19:16:56.349823Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "A basic service costs four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. Would you like to know about anything else?", "ts": "2026-10-25T19:16:58.488164Z", "brain_latency_ms": 2130}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-25T19:16:58.496583Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "You are welcome. Would you like to share your name and locality if you need an enquiry later?", "ts": "2026-10-25T19:17:00.732340Z", "brain_latency_ms": 2229}
+{"seq": 7, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T19:17:00.747795Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T19:17:00.756190Z", "brain_latency_ms": 2}

@@ -55,6 +55,9 @@ class MemoryManager:
         self._lock = threading.RLock()
         self._state: dict[str, dict[str, Any]] = {}
         self._events: dict[str, list[dict[str, Any]]] = {}
+        self._write_seq: dict[str, int] = {}
+        self._latest_disk_seq: dict[str, int] = {}
+        self._persist_locks: dict[str, threading.Lock] = {}
 
     def events_path(self, call_id: str):
         return call_dir(call_id) / "memory_events.jsonl"
@@ -84,10 +87,17 @@ class MemoryManager:
             pass
         return _copy_snapshot(snap)
 
-    def get_snapshot(self, call_id: str) -> dict[str, Any]:
+    def peek_snapshot(self, call_id: str) -> dict[str, Any] | None:
+        """Already hydrated active-call state; never perform disk or Redis I/O."""
         with self._lock:
             if call_id in self._state:
                 return _copy_snapshot(self._state[call_id])
+        return None
+
+    def get_snapshot(self, call_id: str) -> dict[str, Any]:
+        local = self.peek_snapshot(call_id)
+        if local is not None:
+            return local
         try:
             from server.call.redis_memory_cache import get_snapshot as redis_get_snapshot
 
@@ -123,7 +133,7 @@ class MemoryManager:
 
     def snapshot_at_turn(self, call_id: str, turn_seq: int) -> dict[str, Any]:
         snap = empty_snapshot()
-        for event in self.list_events(call_id):
+        for event in sorted(self.list_events(call_id), key=lambda e: int(e.get("turn_seq") or 0)):
             if int(event.get("turn_seq") or 0) > turn_seq:
                 break
             if event.get("applied"):
@@ -170,10 +180,18 @@ class MemoryManager:
         reason: str | None = None,
     ) -> dict[str, Any]:
         ops = operations or []
+        if source == "model":
+            # The rolling summary is server-written; a model-written one is a
+            # conclusion channel, not a fact.
+            ops = [
+                op
+                for op in ops
+                if not (isinstance(op, dict) and str(op.get("op") or "") == "update_summary")
+            ]
         accepted: list[dict[str, Any]] = []
         errors: list[str] = []
         for raw in ops:
-            ok, normalized, err = self.validate_op(raw)
+            ok, normalized, err = self.validate_op(raw, source=source)
             if not ok:
                 errors.append(err or "invalid op")
                 continue
@@ -199,19 +217,44 @@ class MemoryManager:
                 loaded = self._read_snapshot_file(call_id)
                 if loaded:
                     snap = loaded
+            # Background merges can finish after a later caller correction.
+            # Replay persisted events too, so a process restart preserves ordering.
+            events = self._events.get(call_id)
+            if events is None:
+                events = self._read_events_file(call_id)
+                self._events[call_id] = events
+            latest: dict[tuple[str, str], int] = {}
+            for previous in events:
+                for operation in previous.get("operations") or []:
+                    field = (operation.get("op", ""), operation.get("key", ""))
+                    latest[field] = max(latest.get(field, 0), int(previous.get("turn_seq") or 0))
+            if turn_seq > 0:
+                accepted = [op for op in accepted
+                            if latest.get((op["op"], op.get("key", "")), 0) <= turn_seq]
+            event["operations"] = accepted
+            event["applied"] = bool(accepted)
             if accepted:
                 self._apply_ops_to(snap, accepted)
             self._state[call_id] = snap
             self._events.setdefault(call_id, []).append(event)
+            seq = self._write_seq.get(call_id, 0) + 1
+            self._write_seq[call_id] = seq
+            snap_to_write = _copy_snapshot(snap)
+            event_to_write = dict(event)
+            persist_lock = self._persist_locks.setdefault(call_id, threading.Lock())
+        # Disk and cache I/O happen outside self._lock so active-call peek_snapshot is never blocked.
+        # Monotonic sequence check guarantees out-of-order writes cannot overwrite newer state.
+        with persist_lock:
+            self._append_event(call_id, event_to_write)
+            if seq >= self._latest_disk_seq.get(call_id, 0):
+                self._write_snapshot(call_id, snap_to_write)
+                try:
+                    from server.call.redis_memory_cache import set_snapshot as redis_set_snapshot
 
-        self._append_event(call_id, event)
-        self._write_snapshot(call_id, snap)
-        try:
-            from server.call.redis_memory_cache import set_snapshot as redis_set_snapshot
-
-            redis_set_snapshot(call_id, snap)
-        except Exception:
-            pass
+                    redis_set_snapshot(call_id, snap_to_write)
+                except Exception:
+                    pass
+                self._latest_disk_seq[call_id] = seq
         if errors:
             logger.info(f"[MEMORY] rejected ops call={call_id} turn={turn_seq} errors={errors[:4]}")
         return {"snapshot": _copy_snapshot(snap), "event": event}
@@ -234,7 +277,7 @@ class MemoryManager:
             reason=reason,
         )
 
-    def validate_op(self, raw: Any) -> tuple[bool, dict[str, Any], str | None]:
+    def validate_op(self, raw: Any, *, source: str = "model") -> tuple[bool, dict[str, Any], str | None]:
         if not isinstance(raw, dict):
             return False, {}, "op must be an object"
         op = str(raw.get("op") or "").strip()
@@ -247,7 +290,15 @@ class MemoryManager:
                 return False, {}, f"invalid key: {key!r}"
             if not value:
                 return False, {}, f"{op} requires a non-empty value"
-            return True, {"op": op, "key": key, "value": value[:_VALUE_MAX]}, None
+            if source != "manual_correction":
+                # An operator correction is trusted; every other writer must fit the slot.
+                from server.call.memory_guard import slot_value_error
+
+                mismatch = slot_value_error(key, value)
+                if mismatch:
+                    return False, {}, f"{mismatch}: {key}"
+            cap = 400 if "address" in key.lower() else _VALUE_MAX
+            return True, {"op": op, "key": key, "value": value[:cap]}, None
         value = str(raw.get("value") if raw.get("value") is not None else "").strip()
         if not value:
             return False, {}, f"{op} requires a non-empty value"
@@ -294,10 +345,13 @@ class MemoryManager:
         return _copy_snapshot(data if isinstance(data, dict) else empty_snapshot())
 
     def _write_snapshot(self, call_id: str, snapshot: dict[str, Any]) -> None:
-        self.snapshot_path(call_id).write_text(
+        target = self.snapshot_path(call_id)
+        temporary = target.with_suffix(".json.tmp")
+        temporary.write_text(
             json.dumps(snapshot, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+        temporary.replace(target)
 
     def _append_event(self, call_id: str, event: dict[str, Any]) -> None:
         with self.events_path(call_id).open("a", encoding="utf-8") as fh:
@@ -322,6 +376,9 @@ class MemoryManager:
         with self._lock:
             self._state.clear()
             self._events.clear()
+            self._write_seq.clear()
+            self._latest_disk_seq.clear()
+            self._persist_locks.clear()
 
 
 memory_manager = MemoryManager()

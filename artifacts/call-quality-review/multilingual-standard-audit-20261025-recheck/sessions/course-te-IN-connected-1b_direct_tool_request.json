@@ -1,0 +1,193 @@
+{
+  "key": "course-te-IN-connected-1b_direct_tool_request",
+  "business": "course",
+  "language": "te-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "3fb67e11-427f-505d-9768-907a832cd354",
+  "call_id": "73b4beae-f8ed-4ea9-82d7-52b07787ee8b",
+  "session_id": "audit-course-te-IN-connected-1b_direct_tool_request-494fabe2",
+  "compiled_checksum": "a3beaeea4d8bbdd077219e70ebac805f1983c237a7a542e9ee534f19d4614bfb",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 695,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested to save enquiry and provided consent; task completed successfully.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"enquiry_saved\",\n  \"spoken_response\": \"సరేనండి, మీ enquiry save అయిపోయింది. మీ reference number AUDIT-ENQUIRY-1. ఇది కేవలం మా team review కోసం మాత్రమే, booking కానీ payment కానీ confirm అవ్వలేదు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"enquiry_status\",\n        \"value\": \"saved\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested to save enquiry and provided consent; task completed successfully.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"enquiry_saved\",\n  \"spoken_response\": \"సరేనండి, మీ enquiry save అయిపోయింది. మీ reference number AUDIT-ENQUIRY-1. ఇది కేవలం మా team review కోసం మాత్రమే, booking కానీ payment కానీ confirm అవ్వలేదు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"enquiry_status\",\n        \"value\": \"saved\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 219,
+        "prompt_tokens": 4848,
+        "total_tokens": 5067,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ enquiry save అయిపోయింది. మీ reference number AUDIT-ENQUIRY-1. ఇది కేవలం మా team review కోసం మాత్రమే, booking కానీ payment కానీ confirm అవ్వలేదు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4848,
+          "output_tokens": 219,
+          "total_tokens": 5067
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "enquiry_status",
+              "value": "saved"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly requested to save enquiry and provided consent; task completed successfully.",
+          "remaining_request": "None",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "enquiry_saved",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.046
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Enquiry for adult beginner Python course",
+        "preferred_time": "Tomorrow 3 PM"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, మీ enquiry save అయిపోయింది. మీ reference number AUDIT-ENQUIRY-1. ఇది కేవలం మా team review కోసం మాత్రమే, booking కానీ payment కానీ confirm అవ్వలేదు.",
+      "turn": 1,
+      "at": 1.625
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 2,
+      "at": 1.656
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "నా పేరు Audit Customer, email audit.customer@example.invalid. నా enquiryని team review కోసం save చేయండి. రేపు మధ్యాహ్నం మూడు గంటలు నాకు అనుకూలం. Request submit చేయడానికి నా సమ్మతి ఉంది, కానీ order లేదా booking confirm అయిందని చెప్పకండి.",
+      "spoken": "సరేనండి, మీ enquiry save అయిపోయింది. మీ reference number AUDIT-ENQUIRY-1. ఇది కేవలం మా team review కోసం మాత్రమే, booking కానీ payment కానీ confirm అవ్వలేదు.",
+      "elapsed_s": 1.61,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 1.703,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "73b4beae-f8ed-4ea9-82d7-52b07787ee8b",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "b8c8673bfd3b51f4b9f3acd639afaf2498d6e0b345be9df2a69de51870f2f775",
+  "prompt_chars": 19516,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "నమస్కారం, నా పేరు అనన్య, బ్రైట్‌పాత్ స్కిల్స్ నుండి మాట్లాడుతున్నాను. వయోజనుల కోసం మా ఆన్‌లైన్ బిగినర్ పైథాన్ కోర్సు గురించి చెప్పడానికి కాల్ చేశాను. ఇప్పుడు మాట్లాడానికి మీకు సమయం ఉందా? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly requested to save enquiry and provided consent; task completed successfully.",
+        "remaining_request": "None",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, మీ enquiry save అయిపోయింది. మీ reference number AUDIT-ENQUIRY-1. ఇది కేవలం మా team review కోసం మాత్రమే, booking కానీ payment కానీ confirm అవ్వలేదు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 1.703,
+  "hangup_count": 1
+}

@@ -1,0 +1,8 @@
+{
+  "facts": {},
+  "preferences": {
+    "no_booking_or_saving": "true"
+  },
+  "important_context": "புனேவில் எங்க SafeFix Home Service செயல்படுது. AC basic servicing 699 ரூபாய் மற்றும் fridge inspection 399 ரூபாய் ஆகும். உதிரிபாகங்கள் தேவைப்பட்டாங்கற",
+  "summary": "user: ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.\nassistant: கண்டிப்பாக, சொல்லுங்கள்.\nuser: இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: AC servicing, fridge inspection விலை என்ன? Replacement parts அதில் சேருமா?\nassistant: கண்டிப்பாக, சொல்லுங்கள்.\nuser: சரி, நன்றி.\nassistant: கண்டிப்பாக, சொல்லுங்கள்."
+}

@@ -1,6 +1,7 @@
 """Memory extraction fallback — used only when structured same-LLM parse fails SLO."""
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from server.call.memory_manager import memory_manager
@@ -24,8 +25,8 @@ async def extract_and_apply(
     if not settings.memory_extraction_fallback:
         return None
     try:
-        from server.providers import get_provider_registry
         from server.call.live_turn_schema import LIVE_TURN_JSON_SCHEMA
+        from server.providers import get_provider_registry
         from server.providers.base import LLMConfig
 
         adapter = get_provider_registry().get_llm("openai")
@@ -47,8 +48,14 @@ async def extract_and_apply(
             schema_name="memory_extraction",
             max_output_tokens=settings.memory_extraction_max_output_tokens,
         )
-        ops = (payload.get("memory_update") or {}).get("operations") or []
-        return memory_manager.apply_proposals(call_id, ops, turn_seq=turn_seq, source="extraction_fallback")
+        from server.call.memory_guard import grounded_turn_operations
+
+        raw_ops = (payload.get("memory_update") or {}).get("operations") or []
+        ops = grounded_turn_operations([
+            {**op, "evidence": op.get("evidence") or op.get("value", "")}
+            for op in raw_ops if isinstance(op, dict)
+        ], user_text)
+        return await asyncio.to_thread(memory_manager.apply_proposals, call_id, ops, turn_seq=turn_seq, source="extraction_fallback")
     except Exception as e:
         logger.warning(f"[MEMORY] extraction fallback failed call={call_id}: {str(e)[:200]}")
         return None

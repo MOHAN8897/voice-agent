@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ா?\nassistant: சோஃபா சுத்தம் ஒரு சீட்டுக்கு three hundred forty nine ரூபாய், minimum 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் one thousand five hundred ninety nine ரூபாய் மொத்தம். உங்கள் கோரிக்கை முடிந்ததா என்று என்னால் உறுதிப்படுத்த முடியவில்லை. தயவுசெய்து அதை முடிந்ததாகக் கருத வேண்டாம். உங்களுக்கு எந்த service வேணும்?\nuser: சோபா cleaning வேண்டாம், ஆனால் kitchen cleaning வேணும். விவரமா சொல்லுங்க.\nassistant: சரிங்க, kitchen cleaning மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். எங்க சேவைகள் புனே நகரில் மட்டுமே இருக்கு, திங்கள் முதல் சனி வரை காலை 9 மணி முதல் மாலை 6 மணி வரை செயல்படுறோம்."
+}

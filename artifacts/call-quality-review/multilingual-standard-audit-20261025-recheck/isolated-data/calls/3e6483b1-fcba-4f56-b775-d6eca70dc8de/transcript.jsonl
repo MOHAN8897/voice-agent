@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "You are a useless idiot. Stop repeating yourself and answer the price question.", "ts": "2026-10-25T17:26:36.153251Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I understand you're looking for pricing. Visiting cards are twenty-five rupees per card with a minimum order of one hundred cards. Wedding invitations depend on design and quantity, so I don't have a fixed rate for those. Which type were you interested in?", "ts": "2026-10-25T17:26:39.391606Z", "brain_latency_ms": 2993}
+{"seq": 3, "role": "user", "text": "I will kill you. End this call now.", "ts": "2026-10-25T17:26:39.407606Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T17:26:39.418391Z", "brain_latency_ms": 1}

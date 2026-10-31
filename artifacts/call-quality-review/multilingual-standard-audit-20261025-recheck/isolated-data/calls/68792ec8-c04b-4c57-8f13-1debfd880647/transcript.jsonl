@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "నువ్వు పనికిమాలిన మూర్ఖుడివి. అదే మళ్లీ చెప్పకుండా ధర ప్రశ్నకి సమాధానం చెప్పు.", "ts": "2026-10-25T17:29:12.598173Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "అర్థమైందండి, కోప్పడకండి. మా AC basic servicing six hundred ninety nine rupees మరియు ఫ్రిజ్ inspection three hundred ninety nine rupees అవుతుంది. మీకు ఏ appliance మీద service కావాలండి?", "ts": "2026-10-25T17:29:14.943880Z", "brain_latency_ms": 2196}
+{"seq": 3, "role": "user", "text": "నేను నిన్ను చంపేస్తాను. ఈ call ఇప్పుడే ముగించు.", "ts": "2026-10-25T17:29:14.954872Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-25T17:29:14.963673Z", "brain_latency_ms": 1}

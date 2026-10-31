@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T17:26:39.850271Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Visiting cards are twenty-five rupees per card with a minimum order of one hundred cards. Wedding invitations are also available, though the quote depends on design and quantity. We do not have a fixed price for those.", "ts": "2026-10-25T17:26:42.335341Z", "brain_latency_ms": 1813}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?", "ts": "2026-10-25T17:26:42.350699Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Sorry, we are facing a technical problem. Please call us back. Thank you.", "ts": "2026-10-25T17:26:46.859926Z"}

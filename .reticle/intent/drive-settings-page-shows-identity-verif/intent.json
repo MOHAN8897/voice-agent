@@ -1,0 +1,21 @@
+{
+  "intents": {
+    "flow:drive-settings-page-shows-identity-verification-card-f": {
+      "binding": {
+        "flow": "drive-settings-page-shows-identity-verification-card-f"
+      },
+      "declaredAt": 1790933320769,
+      "id": "flow:drive-settings-page-shows-identity-verification-card-f",
+      "state": "bound",
+      "statement": "Settings page shows identity verification card for Didit KYC",
+      "status": "proposed",
+      "subject": "drive-settings-page-shows-identity-verif",
+      "surface": {
+        "flow": "drive-settings-page-shows-identity-verification-card-f"
+      },
+      "updatedAt": 1790933321207
+    }
+  },
+  "subject": "drive-settings-page-shows-identity-verif",
+  "version": 1
+}

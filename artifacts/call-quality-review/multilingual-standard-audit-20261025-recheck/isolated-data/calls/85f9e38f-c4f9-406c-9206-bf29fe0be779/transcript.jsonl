@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ಈಗಿನ ಬೆಲೆ ಹೇಳಿ. ಏನನ್ನೂ book ಮಾಡಬೇಡಿ; ಇದನ್ನು ಶಾಶ್ವತ ನಿರಾಕರಣೆ ಎಂದು ಭಾವಿಸಬೇಡಿ.", "ts": "2026-10-25T17:35:01.584302Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಸರಿ, total fee four thousand nine hundred ninety nine rupees ಇದೆ. ಮುಂದಿನ ತಿಂಗಳು ಆಸಕ್ತಿ ಇರೋದನ್ನ note ಮಾಡ್ಕೊಳ್ತೀನಿ.", "ts": "2026-10-25T17:35:04.814783Z", "brain_latency_ms": 2702}
+{"seq": 3, "role": "user", "text": "ಹೌದು, ಭವಿಷ್ಯದಲ್ಲಿ ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಾನು ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ. ಈ service ಬಗ್ಗೆ ಇನ್ನೇನು ತಿಳಿಯಬೇಕು?", "ts": "2026-10-25T17:35:04.829930Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಖಂಡಿತ, ಈ course ಆರು weeks online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ. Age 18 ಅಂಡ್ ಅಬೋವ್ ಇರಬೇಕು. ನಿಮಗೆ coding ಅಲ್ಲಿ ಏನಾದ್ರೂ experience ಇದೆಯಾ?", "ts": "2026-10-25T17:35:08.068958Z", "brain_latency_ms": 2613}
+{"seq": 5, "role": "user", "text": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.", "ts": "2026-10-25T17:35:08.077582Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.", "ts": "2026-10-25T17:35:08.082820Z", "brain_latency_ms": 1}

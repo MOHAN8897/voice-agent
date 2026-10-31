@@ -1,0 +1,73 @@
+{
+  "key": "print-hi-IN-none-3b_stop_contact",
+  "business": "print",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "2fc12aaa-fef8-53c9-81db-07efa7f84427",
+  "call_id": "0f630808-b347-4268-a38c-7849fdd9c0e5",
+  "session_id": "audit-print-hi-IN-none-3b_stop_contact-6e9f3de6",
+  "compiled_checksum": "e91bf22969093f6a27742c03010544073c3466fd7eebb112e2acaf08eed62852",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 1,
+      "at": 0.015
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "मुझे दोबारा call मत कीजिए। आगे की calls से मेरा नाम हटाइए और यह call खत्म कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.078,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "0f630808-b347-4268-a38c-7849fdd9c0e5",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "c24b80c3ea5863d92e17dda61428d03d0f154610dc6b3c0599e4a2bfb2a90dd1",
+  "prompt_chars": 18000,
+  "opening_seeded": "Namaste, I am Meera, an AI assistant from ClearPrint Studio. Am I speaking with the right person regarding card printing needs?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.078,
+  "hangup_count": 1
+}

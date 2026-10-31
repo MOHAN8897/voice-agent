@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "true true true Caller shared contact details for the team to follow up.",
+  "summary": "ve செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: Course final fee, கால அளவு, class timings என்ன? Job guarantee கொடுப்பீங்களா?\nassistant: கண்டிப்பாக, சொல்லுங்கள்.\nuser: எனக்கு job guarantee தேவையில்லை, ஆனால் Python கற்றுக்கொள்ள ஆர்வம் இருக்கு. Course விளக்க முடியுமா?\nassistant: சரிங்க. இது 6 வார ஆன்லைன் class, திங்கள் முதல் வெள்ளி வரை மாலை 7 to 8 மணி வரை நடக்கும். மொத்த கட்டணம் four thousand nine hundred ninety nine ரூபாய் மட்டுமே. வேலைவாய்ப்பு உத்தரவோ, income promise-ஓ நாங்க தரமாட்டோம். உங்களுக்கு coding experience ஏற்கனவே ஏதாவது இருக்கா? அப்போ இது உங்களுக்கு சரியா இருக்குமான்னு முடிவு."
+}

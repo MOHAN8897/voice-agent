@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.", "ts": "2026-10-25T15:31:05.399634Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಸರಿ, AC basic servicing six hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು fridge inspection three hundred ninety nine ರೂಪಾಯಿ ಆಗುತ್ತೆ. Parts extra ಇರುತ್ತೆ, ಆದ್ರೆ inspection ಆದ್ಮೇಲೆ ನಿಮ್ಮ approval ತಗೊಂಡ್ಮೇಲೆ ಮಾತ್ರ. ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ open ಇರುತ್ತೆ. ನಿಮಗೆ visit request ಏನಾದ್ರೂ ಮಾಡ್ಬೇಕಾ?", "ts": "2026-10-25T15:31:08.011182Z"}
+{"seq": 3, "role": "user", "text": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: AC servicing ಮತ್ತು fridge inspection ಬೆಲೆ ಎಷ್ಟು? Replacement parts ಅದರಲ್ಲಿ ಸೇರಿವೆಯಾ?", "ts": "2026-10-25T15:31:08.036685Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಕ್ಷಮಿಸಿ, ನಮಗೆ ಒಂದು ತಾಂತ್ರಿಕ ಸಮಸ್ಯೆ ಎದುರಾಗಿದೆ. ದಯವಿಟ್ಟು ನಮಗೆ ಮತ್ತೆ ಕರೆ ಮಾಡಿ. ಧನ್ಯವಾದಗಳು.", "ts": "2026-10-25T15:31:12.522338Z"}

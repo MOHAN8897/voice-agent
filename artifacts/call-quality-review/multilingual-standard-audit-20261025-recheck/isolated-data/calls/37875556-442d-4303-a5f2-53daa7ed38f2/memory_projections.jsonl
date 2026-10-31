@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T17:06:14.763072Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T17:06:16.323341Z", "include_summary": true, "projection": "[Context]\nnot_interested_after_cricket_tangent"}
+{"turn_seq": 5, "ts": "2026-10-25T17:06:18.437670Z", "include_summary": true, "projection": "[Context]\nnot_interested_after_cricket_tangent"}
+{"turn_seq": 7, "ts": "2026-10-25T17:06:20.038187Z", "include_summary": false, "projection": "[Context]\nnot_interested_after_cricket_tangent"}
+{"turn_seq": 9, "ts": "2026-10-25T17:06:20.062493Z", "include_summary": false, "projection": "[Context]\nnot_interested_after_cricket_tangent"}

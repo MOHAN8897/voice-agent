@@ -1,0 +1,26 @@
+{
+  "mode": "implement",
+  "objective": "End primary Gemini PSTN calls after the agent completes an explicit closing farewell, even without caller confirmation or an end_call tool",
+  "acceptance_criteria": [
+    "A completed terminal agent farewell arms hangup without a separate caller goodbye",
+    "The carrier disconnect waits for farewell playback to drain",
+    "Caller barge-in and current speech prevent an unwanted disconnect",
+    "Questions, quoted examples, ordinary thanks, and interrupted responses do not trigger the new fallback",
+    "English, Telugu, Hindi, Tamil, and Kannada closing phrases are recognized",
+    "New trigger is limited to Gemini PSTN; default validator behavior and admin call-end policies remain unchanged"
+  ],
+  "non_goals": ["production configuration or deployment", "public API changes", "billing changes"],
+  "allowed_write_scope": [
+    "server/call/hangup_judge.py",
+    "server/call/end_call_validate.py",
+    "server/services/pstn_realtime_voice_core.py",
+    "server/tests/test_agent_farewell_hangup.py",
+    ".gravitas/sessions/agent-farewell-hangup/"
+  ],
+  "planning": "compact",
+  "context_depth": "dependency",
+  "verification_depth": "impact",
+  "delegation": "none",
+  "reason_codes": ["shared-module", "call-lifecycle"],
+  "risk": "medium"
+}

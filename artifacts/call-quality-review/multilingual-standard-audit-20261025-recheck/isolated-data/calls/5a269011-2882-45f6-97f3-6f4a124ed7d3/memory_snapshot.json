@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "For any repairs, parts are extra only after your approval and we cannot give a fixed quote before inspection. We are open Monday to Saturday, 9am to 6pm. Would you like to request a service visit?\nuser: Do not book or save anything yet. Please answer my question first: What do AC servicing and fridge inspection cost, and are replacement parts included?\nassistant: Parts are extra only after customer approval, and there is no fixed repair quote before inspection. Would you like to request a service visit?\nuser: Okay, thanks.\nassistant: You are welcome. Would you like to request a service visit?"
+}

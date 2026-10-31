@@ -34,7 +34,7 @@ Alignment audit: [../implementation/PRD-TRACEABILITY-AUDIT.md](../implementation
 
 Build a **small end-to-end MVP** first:
 
-1. Dev Portal (auth, stack UI, Platform Brain, tier assignment testing)
+1. Dev Portal (auth, stack UI, Platform Brain, tier assignment testing) — **UI shipped** at `web/app/dev` (`/dev/login`, `/dev`, `/dev/stack`, `/dev/platform-brain`, `/dev/promotion`, Test Studio). Remaining: token/visual alignment per [20](./20-visual-design-and-ui-style.md), not a new portal.
 2. Live browser voice test with same-LLM structured turns + compact memory
 3. Agent + compiled brain versioning
 4. Call ledger + post-call disposition

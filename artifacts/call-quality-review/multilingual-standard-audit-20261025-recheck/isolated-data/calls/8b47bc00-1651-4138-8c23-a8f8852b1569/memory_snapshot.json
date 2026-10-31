@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "నా ప్రశ్నకి సమాధానం చెప్పండి: Course final fee, duration, class timings ఏమిటి? Job guarantee ఇస్తారా?\nassistant: Course fee మొత్తం four thousand nine hundred ninety nine రూపాయలు అండి. క్లాసులు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో job guarantee లేదా placement వాగ్దానాలు ఏమీ లేవు. మీకు coding experience ఏమైనా ఉందా అండి?\nuser: నాకు job guarantee అవసరం లేదు, కానీ Python నేర్చుకోవాలని ఆసక్తి ఉంది. Course వివరించగలరా?\nassistant: సరేనండి, ఇందులో ఎలాంటి job guarantee ఉండదు. మీకు డెమో లేదా కౌన్సెలింగ్ కావాలా అండి? మీకు ఇష్టమైన time చెప్తే, మీ పేరు, ఈమెయిల్ తీసుకుంటాను."
+}

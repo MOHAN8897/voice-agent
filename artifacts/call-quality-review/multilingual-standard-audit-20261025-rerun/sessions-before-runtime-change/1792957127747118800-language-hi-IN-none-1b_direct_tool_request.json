@@ -1,0 +1,150 @@
+{
+  "key": "language-hi-IN-none-1b_direct_tool_request",
+  "business": "language",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "f6d1446a-6cde-5293-bf8f-d4b1be794dd4",
+  "call_id": "ef538882-bece-4951-bdc0-0c51a67a52bf",
+  "session_id": "audit-language-hi-IN-none-1b_direct_tool_request-15549f97",
+  "compiled_checksum": "fbeff16896919a2d045a5300171ddac6ea8f0ee6f487112a29e7216f470e89b3",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 167,
+      "sse_content_preview": "ठीक है, आपकी details note कर ली हैं। दुर्भाग्य से, अभी मैं externally enquiry submit या demo confirm नहीं कर सकती। क्या मैं आपकी interest किसी और तरीके से note कर लूँ?",
+      "sse_content_tail": "ठीक है, आपकी details note कर ली हैं। दुर्भाग्य से, अभी मैं externally enquiry submit या demo confirm नहीं कर सकती। क्या मैं आपकी interest किसी और तरीके से note कर लूँ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 39,
+        "prompt_tokens": 4286,
+        "total_tokens": 4325,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, आपकी details note कर ली हैं। दुर्भाग्य से, अभी मैं externally enquiry submit या demo confirm नहीं कर सकती। क्या मैं आपकी interest किसी और तरीके से note कर लूँ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4286,
+          "output_tokens": 39,
+          "total_tokens": 4325
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.781
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें। दुर्भाग्य से, अभी मैं externally enquiry submit या demo confirm नहीं कर सकती। क्या मैं आपकी interest किसी और तरीके से note कर लूँ?",
+      "turn": 1,
+      "at": 2.297
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 2,
+      "at": 2.328
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. यह enquiry team review के लिए submit कीजिए। मेरी सहमति है। Booking या order confirm मत बताइए।",
+      "spoken": "मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें। दुर्भाग्य से, अभी मैं externally enquiry submit या demo confirm नहीं कर सकती। क्या मैं आपकी interest किसी और तरीके से note कर लूँ?",
+      "elapsed_s": 2.297,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.39,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "ef538882-bece-4951-bdc0-0c51a67a52bf",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "eeaaae96b876a7d69abbf56899190e39f1a0967fa26720c7ff5d3c4c7faa0dbf",
+  "prompt_chars": 17970,
+  "opening_seeded": "Namaste. Main Sana hoon SpeakEasy Language Studio se. Main ek AI assistant hoon. Kya aap adult spoken-English classes ke baare mein baat karne ke liye abhi thoda samay de sakte hain?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ठीक है, आपकी details note कर ली हैं। दुर्भाग्य से, अभी मैं externally enquiry submit या demo confirm नहीं कर सकती। क्या मैं आपकी interest किसी और तरीके से note कर लूँ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.39,
+  "hangup_count": 1,
+  "source_signature": "f22325fa3f608c0524c8afc9a14908696812152c9af5311fda442ff7a042a834"
+}

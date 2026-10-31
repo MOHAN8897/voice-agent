@@ -1,0 +1,73 @@
+{
+  "key": "repair-te-IN-none-3_complete_rejection",
+  "business": "repair",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "06b278b0-2481-50b3-889f-512379078927",
+  "call_id": "8c04320f-65cb-438f-a0c1-f9f7228ce1a6",
+  "session_id": "audit-repair-te-IN-none-3_complete_rejection-d94b9edd",
+  "compiled_checksum": "58c08a08aeba6b222855eb1fced348835fcddf8ecb0c4c5133775f2f2ba137e1",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "వద్దండి, ధన్యవాదాలు. మీ service లేదా product నాకు అవసరం లేదు. దయచేసి call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.063,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "8c04320f-65cb-438f-a0c1-f9f7228ce1a6",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "0ee36aba113da814098ca0e49fd1f856aee991ee3817e8f845a16d538f14767b",
+  "prompt_chars": 18101,
+  "opening_seeded": "నమస్కారం, నేను సేఫ్ ఫిక్స్ హోమ్ సర్వీస్ నుండి రవిని మాట్లాడుతున్నాను. మీ హోమ్ అప్లయన్స్ సర్వీస్ అవసరాల గురించి మాట్లాడటానికి ఇది సరైన సమయమేనా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.063,
+  "hangup_count": 1
+}

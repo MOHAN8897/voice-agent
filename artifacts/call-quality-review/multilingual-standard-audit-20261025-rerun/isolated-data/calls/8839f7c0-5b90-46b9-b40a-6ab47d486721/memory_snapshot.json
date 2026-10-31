@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "ou need support, please reach out to local emergency services or a trusted professional.\nuser: Fine, leave that topic. Please answer the original business question about price and conditions.\nassistant: Sure. Sofa cleaning is three hundred forty nine rupees per seat with a minimum of 3 seats, and kitchen cleaning is one thousand five hundred ninety nine rupees total. We work Monday to Saturday from 9 AM to 6 PM. Would you like to hear more about either service?\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

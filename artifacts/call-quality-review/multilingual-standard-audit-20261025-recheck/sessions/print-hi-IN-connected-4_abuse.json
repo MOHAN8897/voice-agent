@@ -1,0 +1,200 @@
+{
+  "key": "print-hi-IN-connected-4_abuse",
+  "business": "print",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "4_abuse",
+  "agent_id": "2fc12aaa-fef8-53c9-81db-07efa7f84427",
+  "call_id": "15dfef72-0995-46af-ad29-edcb992b7c3c",
+  "session_id": "audit-print-hi-IN-connected-4_abuse-35dad0f7",
+  "compiled_checksum": "e91bf22969093f6a27742c03010544073c3466fd7eebb112e2acaf08eed62852",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 480,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Abuse: hostile or threatening\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"},\n\n\"action_claimed\": \"none\"\n\n,  \n\"spoken_response\": \"\"  \n,  \n\"memory_update\": {  \n  \"operations\": [  \n    {  \n      \"op\": \"update_summary\",  \n      \"key\": \"abuse_detected\",  \n      \"value\": \"Caller used abusive language ('nikamme bewakoof') and demanded price. Abusive, hostile. Close immediately.\"  \n    }  \n  ]  \n}  \n}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Abuse: hostile or threatening\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"},\n\n\"action_claimed\": \"none\"\n\n,  \n\"spoken_response\": \"\"  \n,  \n\"memory_update\": {  \n  \"operations\": [  \n    {  \n      \"op\": \"update_summary\",  \n      \"key\": \"abuse_detected\",  \n      \"value\": \"Caller used abusive language ('nikamme bewakoof') and demanded price. Abusive, hostile. Close immediately.\"  \n    }  \n  ]  \n}  \n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 166,
+        "prompt_tokens": 4023,
+        "total_tokens": 4189,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.281
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 209,
+      "sse_content_preview": "{\"spoken_response\": \"माफ़ कीजिए, अगर मेरी बात से आपको परेशानी हुई हो। हमारे printed visiting cards 25 rupees per card हैं, minimum 100 cards के साथ। क्या आप visiting cards देख रहे हैं या wedding invitations?\"}",
+      "sse_content_tail": "{\"spoken_response\": \"माफ़ कीजिए, अगर मेरी बात से आपको परेशानी हुई हो। हमारे printed visiting cards 25 rupees per card हैं, minimum 100 cards के साथ। क्या आप visiting cards देख रहे हैं या wedding invitations?\"}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 53,
+        "prompt_tokens": 4023,
+        "total_tokens": 4076,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "माफ़ कीजिए, अगर मेरी बात से आपको परेशानी हुई हो। हमारे printed visiting cards 25 rupees per card हैं, minimum 100 cards के साथ। क्या आप visiting cards देख रहे हैं या wedding invitations?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8046,
+          "output_tokens": 219,
+          "total_tokens": 8265
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.734
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "माफ़ कीजिए, अगर मेरी बात से आपको परेशानी हुई हो। हमारे printed visiting cards twenty five rupees per card हैं, minimum one hundred cards के साथ। क्या आप visiting cards देख रहे हैं या wedding invitations?",
+      "turn": 1,
+      "at": 2.875
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 2,
+      "at": 2.906
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।",
+      "spoken": "माफ़ कीजिए, अगर मेरी बात से आपको परेशानी हुई हो। हमारे printed visiting cards twenty five rupees per card हैं, minimum one hundred cards के साथ। क्या आप visiting cards देख रहे हैं या wedding invitations?",
+      "elapsed_s": 2.875,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.968,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "15dfef72-0995-46af-ad29-edcb992b7c3c",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "c24b80c3ea5863d92e17dda61428d03d0f154610dc6b3c0599e4a2bfb2a90dd1",
+  "prompt_chars": 18000,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, I am Meera, an AI assistant from ClearPrint Studio. Am I speaking with the right person regarding card printing needs?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "माफ़ कीजिए, अगर मेरी बात से आपको परेशानी हुई हो। हमारे printed visiting cards twenty five rupees per card हैं, minimum one hundred cards के साथ। क्या आप visiting cards देख रहे हैं या wedding invitations?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.968,
+  "hangup_count": 1
+}

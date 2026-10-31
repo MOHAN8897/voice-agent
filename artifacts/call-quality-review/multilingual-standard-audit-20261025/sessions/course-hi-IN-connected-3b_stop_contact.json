@@ -1,0 +1,74 @@
+{
+  "key": "course-hi-IN-connected-3b_stop_contact",
+  "business": "course",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "3b_stop_contact",
+  "agent_id": "7f650d01-7513-548e-bc19-54fdcfc5b5a2",
+  "call_id": "afad30ae-2127-42f8-a4ad-1f11ea98e289",
+  "session_id": "audit-course-hi-IN-connected-3b_stop_contact-acee57e6",
+  "compiled_checksum": "13267d96f6154d54870c6fa924498a5dd9f6cb0d8a71efd66b68b957e6ee9ef3",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "मुझे दोबारा call मत कीजिए। आगे की calls से मेरा नाम हटाइए और यह call खत्म कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.063,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "afad30ae-2127-42f8-a4ad-1f11ea98e289",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "875997769b501d7a3f1f36b3f6c6b01fe6d95ac74c81ac24e4a27767f719d2c9",
+  "prompt_chars": 16962,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, mera naam Ananya hai BrightPath Skills se. Kya abhi baat karne ka thoda samay mil sakta hai?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.063,
+  "hangup_count": 1
+}

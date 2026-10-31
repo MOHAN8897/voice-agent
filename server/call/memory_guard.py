@@ -1,0 +1,280 @@
+"""Facts only — a model may record what the caller said, never what it concluded.
+
+Call outcomes belong to the close gate, a successful order tool, and the
+post-call pipeline. A model-written "firm refusal" becomes a poisoned fact that
+every later turn treats as settled truth.
+"""
+from __future__ import annotations
+
+import re
+from typing import Any
+
+
+_QUESTION_INQUIRY = re.compile(
+    r"\?|"
+    r"\b(?:when|where|what|how\s+much|how\s+many|why|who|is\s+it|can\s+you|will\s+you|could\s+you|is\s+there|available\?)\b|"
+    r"(?:ఎప్పుడు|ఎప్పటికి|ఎంత|ఎక్కడ|ఏమిటి|ఏంటి|ఎందుకు|ఎవరు|ఉందా|ఉన్నాయా|అవుతుందా|చేస్తారా|చేస్తారా\?|తీసుకుంటారా|పంపుతారా|చెప్తారా)|"
+    r"\b(?:enta|entha|ekkada|emiti|enti|enduku|evaru|unda|unnaya|avutunda|chestaara|chestara|cheptara|tisukuntara)\b|"
+    r"(?:कब|कहाँ|कहा|कितना|कितने|क्यों|क्या|होगी|होगा|मिलेगा)|"
+    r"(?:எப்போது|எங்கு|எவ்வளவு|என்ன|ஏன்|இருக்கா)",
+    re.I,
+)
+
+
+_COMPARISON_WORDS = re.compile(
+    r"\b(?:better|vs|versus|difference|compared|which\s+is\s+better|or)\b|"
+    r"\b(?:kante|kanna|leda|leka|teda|edi\s+manchidi)\b|"
+    r"(?:కంటే|కన్నా|లేదా|లేక|తేడా|ఏది\s*మంచిది)|"
+    r"(?:से\s*बेहतर|या|अंतर)",
+    re.I,
+)
+_CORRECTION_WORDS = re.compile(
+    r"\b(?:not|instead\s+of|change\s+to|actually|i\s+mean|rather)\b|"
+    r"\b(?:kaadu|vaddu|badulu|maarustunna|asalu)\b|"
+    r"(?:కాదు|వద్దు|బదులు|మారుస్తున్నా|అసలు)|"
+    r"(?:नहीं|बदले|बदलना)",
+    re.I,
+)
+
+
+def _is_question_or_inquiry(value: str, quote: str) -> bool:
+    from server.call.end_call_validate import looks_like_question
+
+    if looks_like_question(quote) or looks_like_question(value):
+        return True
+    return bool(_QUESTION_INQUIRY.search(quote) or _QUESTION_INQUIRY.search(value))
+
+
+def classify_statement_modality(quote: str, value: str) -> str:
+    """Label statement as asserted, asked, compared, or corrected."""
+    if _CORRECTION_WORDS.search(quote) or _CORRECTION_WORDS.search(value):
+        # Legacy untyped proposals cannot establish which option was negated.
+        # Require a semantic assertion for corrections rather than guessing.
+        return "corrected"
+    if _COMPARISON_WORDS.search(quote) or _COMPARISON_WORDS.search(value):
+        return "compared"
+    if _is_question_or_inquiry(value, quote):
+        return "asked"
+    return "asserted"
+
+
+def grounded_turn_operations(raw: Any, caller_text: str) -> list[dict[str, str]]:
+    """Accept only bounded facts quoted from this caller turn, never instructions."""
+    from server.call.close_decision import evidence_matches
+
+    result = []
+    for item in raw[:8] if isinstance(raw, list) else []:
+        if not isinstance(item, dict) or item.get("op") not in {"set_fact", "set_preference"}:
+            continue
+        key = str(item.get("key") or "").strip()
+        value = str(item.get("value") or "").strip()
+        quote = str(item.get("evidence") or "").strip()
+        if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", key):
+            continue
+        if re.search(r"(?:^|_)(?:password|passcode|otp|pin|cvv|card_number|instruction|system_prompt)(?:_|$)", key):
+            continue
+        if not value or len(value) > 400 or not quote or not evidence_matches(quote, caller_text):
+            continue
+        if not evidence_matches(value, quote):
+            continue
+        semantic = item.get("assertion")
+        modality = classify_statement_modality(quote, value)
+        if semantic is not None:
+            if semantic != "caller_asserted" or item.get("polarity") != "positive":
+                continue
+        elif modality in {"asked", "compared", "corrected"}:
+            continue
+        operation = "set_fact" if key in {"caller_name", "product", "quantity", "email", "requested_time", "budget", "delivery_locality", "delivery_address"} else item["op"]
+        result.append({"op": operation, "key": key, "value": value})
+    return sanitize_model_operations(result)[0]
+
+# Judgment about this call's intent/outcome. Allowed only on a gate-approved
+# close turn, where the server itself established the conclusion.
+_CALL_CONCLUSION_KEY = re.compile(
+    r"(?:^|_)(?:outcome|disposition|status|close_reason|end_reason|decision|"
+    r"firm_refusal|not_interested|closed|dnc|do_not_call|opt_out)(?:$|_)",
+    re.I,
+)
+_CALL_CONCLUSION_VALUE = re.compile(
+    r"\b(?:firm refusal|refused|declined|not interested|no interest|opted out|"
+    r"do not call|dnc|completed_and_closed|completed and closed|"
+    r"conversation (?:is )?closed|call (?:is )?closed|call (?:has )?ended|"
+    r"no longer interested|will not buy|not a lead)\b|"
+    r"(?:ఆసక్తి\s*లేదు|ఇంట్రెస్ట్\s*లేదు|కాల్\s*అవసరం\s*లేదు|కాల్\s*ముగిసింది)|"
+    r"(?:दिलचस्पी\s*नहीं|रुचि\s*नहीं|कॉल\s*समाप्त)|"
+    r"(?:ஆர்வம்\s*இல்லை|அழைப்பு\s*முடிந்தது)|"
+    r"(?:ಆಸಕ್ತಿ\s*ಇಲ್ಲ|ಕರೆ\s*ಮುಗಿದಿದೆ)|"
+    r"(?:ആസക്തി\s*ഇല്ല|കോൾ\s*അവസാനിച്ചു)",
+    re.I,
+)
+# Commerce/lead conclusions. Allowed only when the matching server tool proved
+# the action; conversion itself is a post-call decision and never live memory.
+_COMMERCE_CONCLUSION_KEY = re.compile(
+    r"(?:^|_)(?:converted|qualified|order_confirmed|booking_confirmed|"
+    r"purchase|payment_confirmed)(?:$|_)",
+    re.I,
+)
+_COMMERCE_CONCLUSION_VALUE = re.compile(
+    r"\b(?:converted|qualified lead|lead (?:is )?(?:qualified|converted)|"
+    r"order (?:is )?confirmed|booking (?:is )?confirmed|"
+    r"callback (?:is )?(?:scheduled|booked|confirmed|completed)|"
+    r"purchased|sale (?:is )?closed)\b",
+    re.I,
+)
+_UPDATE_SUMMARY = "update_summary"
+
+# The caller's current turn is open/positive; a stored decline is stale.
+_CURRENT_INTEREST = re.compile(
+    r"\b(?:yes|yeah|interested|tell me more|more details|how much|price|cost|"
+    r"send (?:me )?(?:details|price|brochure)|whatsapp|visit|demo|book|order|"
+    r"available|go ahead)\b|"
+    r"(?:ఆసక్తి|ఇంట్రెస్ట్|చెప్పండి|ఎంత|వివరాలు|పంపండి|అవును|సరే)|"
+    r"(?:दिलचस्पी|बताइए|कीमत|कितना|विवरण|हाँ|ठीक)|"
+    r"(?:ஆர்வம்|சொல்லுங்க|விலை|விவரம்|ஆம்|சரி)",
+    re.I,
+)
+
+
+def _calls_conclusion(key: str, value: str) -> bool:
+    return bool(_CALL_CONCLUSION_KEY.search(key) or _CALL_CONCLUSION_VALUE.search(value))
+
+
+def commerce_conclusion(key: str, value: str) -> bool:
+    """A stored order/conversion judgement, not a fact the caller stated."""
+    return bool(
+        _COMMERCE_CONCLUSION_KEY.search(key) or _COMMERCE_CONCLUSION_VALUE.search(value)
+    )
+
+
+def sanitize_model_operations(
+    operations: Any,
+    *,
+    close_approved: bool = False,
+    order_proof: bool = False,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Keep facts; reject conclusions the gate/tool has not proven."""
+    ops = operations if isinstance(operations, list) else []
+    kept: list[dict[str, Any]] = []
+    rejected: list[str] = []
+    for raw in ops:
+        if not isinstance(raw, dict):
+            continue
+        op = str(raw.get("op") or "").strip()
+        if op == _UPDATE_SUMMARY:
+            rejected.append("model_update_summary")
+            continue
+        key = str(raw.get("key") or "")
+        value = str(raw.get("value") or "")
+        if commerce_conclusion(key, value):
+            if not order_proof:
+                rejected.append(f"commerce_conclusion:{key or op}")
+                continue
+        elif _calls_conclusion(key, value) and not close_approved:
+            rejected.append(f"call_conclusion:{key or op}")
+            continue
+        kept.append(raw)
+    return kept, rejected
+
+
+def suppress_stale_conclusions(
+    snapshot: dict[str, Any] | None,
+    caller_text: str,
+) -> dict[str, Any]:
+    """Drop stored decline/close notes when the caller's current words are open."""
+    snap = snapshot or {}
+    text = caller_text or ""
+    if not text.strip() or not _CURRENT_INTEREST.search(text):
+        return snap
+    # The caller is reaffirming the decline: the stored note is still current.
+    if _CALL_CONCLUSION_VALUE.search(text):
+        return snap
+    filtered = dict(snap)
+    for field_name in ("facts", "preferences"):
+        values = snap.get(field_name)
+        if not isinstance(values, dict):
+            continue
+        filtered[field_name] = {
+            key: value
+            for key, value in values.items()
+            if not _calls_conclusion(str(key), str(value))
+        }
+    return filtered
+
+
+# --- slot values ---------------------------------------------------------------------------
+# A slot holds the kind of value its name promises. "బల్క్" ("bulk") is an
+# answer to "how many?" but not a quantity; storing it made the agent believe
+# the quantity was known and the post-call lead carry a word instead of a count.
+
+NUMBER_WORDS: dict[str, list[str]] = {
+    "en": ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+           "fifteen", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred",
+           "hundreds", "thousand", "thousands", "lakh", "lakhs", "crore", "dozen", "dozens", "couple", "single"],
+    # Bare ఒక / ఒక్క is also the article "a"; ఒకటి / ఒక్కటి is the number.
+    "te": ["ఒకటి", "ఒక్కటి", "రెండు", "మూడు", "నాలుగు", "ఐదు", "అయిదు", "ఆరు", "ఏడు", "ఎనిమిది", "తొమ్మిది",
+           "పది", "ఇరవై", "ముప్పై", "నలభై", "యాభై", "అరవై", "డెబ్బై", "ఎనభై", "తొంభై", "వంద", "వందలు", "నూరు",
+           "వెయ్యి", "వేయి", "వేలు", "లక్ష", "లక్షలు", "డజను", "డజన్", "వన్", "టూ", "త్రీ", "ఫోర్", "ఫైవ్",
+           "సిక్స్", "సెవెన్", "ఎయిట్", "నైన్", "టెన్", "ట్వెంటీ", "ఫిఫ్టీ", "హండ్రెడ్", "థౌజండ్"],
+    "hi": ["एक", "दो", "तीन", "चार", "पांच", "पाँच", "छह", "छः", "सात", "आठ", "नौ", "दस", "बीस", "तीस",
+           "चालीस", "पचास", "साठ", "सत्तर", "अस्सी", "नब्बे", "सौ", "हज़ार", "हजार", "लाख", "करोड़", "दर्जन",
+           "हंड्रेड", "थाउजेंड", "फाइव", "टेन"],
+    "ta": ["ஒன்று", "ஒண்ணு", "இரண்டு", "ரெண்டு", "மூன்று", "மூணு", "நான்கு", "நாலு", "ஐந்து", "அஞ்சு",
+           "ஆறு", "ஏழு", "எட்டு", "ஒன்பது", "பத்து", "இருபது", "ஐம்பது", "நூறு", "ஆயிரம்", "லட்சம்", "டஜன்"],
+    "kn": ["ಒಂದು", "ಎರಡು", "ಮೂರು", "ನಾಲ್ಕು", "ಐದು", "ಆರು", "ಏಳು", "ಎಂಟು", "ಒಂಬತ್ತು", "ಹತ್ತು", "ಇಪ್ಪತ್ತು",
+           "ಐವತ್ತು", "ನೂರು", "ಸಾವಿರ", "ಲಕ್ಷ", "ಡಜನ್"],
+    "ml": ["ഒന്ന്", "രണ്ട്", "മൂന്ന്", "നാല്", "അഞ്ച്", "ആറ്", "ഏഴ്", "എട്ട്", "ഒമ്പത്", "പത്ത്", "ഇരുപത്",
+           "അമ്പത്", "നൂറ്", "ആയിരം", "ലക്ഷം", "ഡസൻ"],
+    "mr": ["एक", "दोन", "तीन", "चार", "पाच", "सहा", "सात", "आठ", "नऊ", "दहा", "वीस", "पन्नास", "शंभर",
+           "हजार", "लाख", "डझन"],
+    "bn": ["এক", "দুই", "তিন", "চার", "পাঁচ", "ছয়", "সাত", "আট", "দশ", "কুড়ি", "বিশ", "পঞ্চাশ", "একশ",
+           "একশো", "হাজার", "লাখ", "ডজন"],
+    "gu": ["એક", "બે", "ત્રણ", "ચાર", "પાંચ", "છ", "સાત", "આઠ", "નવ", "દસ", "વીસ", "પચાસ", "સો", "હજાર",
+           "લાખ", "ડઝન"],
+    "pa": ["ਇੱਕ", "ਇਕ", "ਦੋ", "ਤਿੰਨ", "ਚਾਰ", "ਪੰਜ", "ਛੇ", "ਸੱਤ", "ਅੱਠ", "ਨੌਂ", "ਦਸ", "ਵੀਹ", "ਪੰਜਾਹ", "ਸੌ",
+           "ਹਜ਼ਾਰ", "ਲੱਖ", "ਦਰਜਨ"],
+}
+_NUMBER_TOKENS = frozenset(w.casefold() for pool in NUMBER_WORDS.values() for w in pool)
+# Agglutinated forms ("ఐదువందలు", "వందల") start with a number word of three or more letters.
+_NUMBER_PREFIXES = tuple(sorted((w for w in _NUMBER_TOKENS if len(w) >= 3 and not w.isascii()), key=len, reverse=True))
+_DIGIT = re.compile(r"\d")
+
+_COUNT_KEY = re.compile(
+    r"(?:^|_)(?:quantity|qty|count|units|pieces|headcount|party_size|guests)(?:$|_)|^(?:number_of|num|no_of)_", re.I,
+)
+_NAME_KEY = re.compile(r"^(?:caller_|customer_|contact_|lead_|first_|last_|full_)?name$|^(?:first|last|full|sur)name$", re.I)
+_PHONE_KEY = re.compile(r"^(?:callback_|alternate_|alt_|contact_)?(?:phone|mobile)(?:_number)?$|^contact_number$", re.I)
+_EMAIL_KEY = re.compile(r"^(?:caller_|contact_)?email(?:_address)?$", re.I)
+
+
+def has_number(text: str | None) -> bool:
+    """Digits in any script, or a number word in a supported language."""
+    raw = text or ""
+    if _DIGIT.search(raw):
+        return True
+    from server.call.reply_guard import tokens
+
+    return any(t in _NUMBER_TOKENS or (not t.isascii() and t.startswith(_NUMBER_PREFIXES)) for t in tokens(raw))
+
+
+def slot_value_error(key: str, value: str) -> str | None:
+    """Why ``value`` does not fit slot ``key``, or None when it fits (or the slot is free-form)."""
+    text = (value or "").strip()
+    if _COUNT_KEY.search(key):
+        return None if has_number(text) else "not_a_number"
+    if _NAME_KEY.fullmatch(key):
+        from server.call.caller_detail_capture import is_usable_lead_name
+        from server.call.reply_guard import is_acknowledgement
+
+        if _DIGIT.search(text) or "?" in text or "@" in text:
+            return "not_a_name"
+        if len(text) > 60 or len(text.split()) > 4:
+            return "not_a_name"
+        if is_acknowledgement(text) or not is_usable_lead_name(text):
+            return "not_a_name"
+        return None
+    if _PHONE_KEY.fullmatch(key):
+        return None if len(_DIGIT.findall(text)) >= 6 else "not_a_phone"
+    if _EMAIL_KEY.fullmatch(key):
+        spoken = re.search(r"\bat\b.*\bdot\b", text, re.I)
+        return None if ("@" in text or spoken) else "not_an_email"
+    return None

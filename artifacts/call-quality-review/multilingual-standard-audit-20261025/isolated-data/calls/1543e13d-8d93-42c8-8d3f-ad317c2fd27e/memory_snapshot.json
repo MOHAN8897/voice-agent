@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "user: ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.\nassistant: கண்டிப்பாக, சொல்லுங்கள்.\nuser: இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: Course final fee, கால அளவு, class timings என்ன? Job guarantee கொடுப்பீங்களா?\nassistant: கண்டிப்பாக, சொல்லுங்கள்.\nuser: எனக்கு job guarantee தேவையில்லை, ஆனால் Python கற்றுக்கொள்ள ஆர்வம் இருக்கு. Course விளக்க முடியுமா?\nassistant: கண்டிப்பாக, சொல்லுங்கள்."
+}

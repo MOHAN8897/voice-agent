@@ -1,0 +1,193 @@
+{
+  "key": "print-hi-IN-connected-1b_direct_tool_request",
+  "business": "print",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "2fc12aaa-fef8-53c9-81db-07efa7f84427",
+  "call_id": "8877cb46-9abd-4dbc-8d2c-32de3cb8c677",
+  "session_id": "audit-print-hi-IN-connected-1b_direct_tool_request-efc11c0d",
+  "compiled_checksum": "e91bf22969093f6a27742c03010544073c3466fd7eebb112e2acaf08eed62852",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 682,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested to save enquiry and submit consent, and after successful CRM save there is no remaining business objective.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"enquiry_saved\",\n  \"spoken_response\": \"आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। Team इसे review करेगी, लेकिन ये कोई confirmed order नहीं है। समय देने के लिए धन्यवाद। नमस्कार।\"\n,\n\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"enquiry_saved\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested to save enquiry and submit consent, and after successful CRM save there is no remaining business objective.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"enquiry_saved\",\n  \"spoken_response\": \"आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। Team इसे review करेगी, लेकिन ये कोई confirmed order नहीं है। समय देने के लिए धन्यवाद। नमस्कार।\"\n,\n\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"enquiry_saved\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 208,
+        "prompt_tokens": 4447,
+        "total_tokens": 4655,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। Team इसे review करेगी, लेकिन ये कोई confirmed order नहीं है। समय देने के लिए धन्यवाद। नमस्कार।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4447,
+          "output_tokens": 208,
+          "total_tokens": 4655
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "enquiry_saved",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly requested to save enquiry and submit consent, and after successful CRM save there is no remaining business objective.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "enquiry_saved",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.109
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Card printing enquiry for team review",
+        "preferred_time": "Tomorrow 3 PM"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें।",
+      "turn": 1,
+      "at": 2.188
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 2,
+      "at": 2.219
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "मेरा नाम Audit Customer है, email audit.customer@example.invalid है। मेरी enquiry team के review के लिए save कीजिए। कल दोपहर तीन बजे मेरे लिए ठीक है। Request submit करने की मेरी सहमति है, लेकिन order या booking confirm होने का दावा मत कीजिए।",
+      "spoken": "मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें।",
+      "elapsed_s": 2.188,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.266,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "8877cb46-9abd-4dbc-8d2c-32de3cb8c677",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "c24b80c3ea5863d92e17dda61428d03d0f154610dc6b3c0599e4a2bfb2a90dd1",
+  "prompt_chars": 18000,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, I am Meera, an AI assistant from ClearPrint Studio. Am I speaking with the right person regarding card printing needs?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly requested to save enquiry and submit consent, and after successful CRM save there is no remaining business objective.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। Team इसे review करेगी, लेकिन ये कोई confirmed order नहीं है। समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.266,
+  "hangup_count": 1
+}

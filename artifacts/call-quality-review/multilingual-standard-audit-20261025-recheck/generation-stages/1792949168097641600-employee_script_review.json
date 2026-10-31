@@ -1,0 +1,16 @@
+{
+  "stage": "employee_script_review",
+  "language": "kn-IN",
+  "output": {
+    "passed": true,
+    "issues": [],
+    "fixed_script": {
+      "opening": "Namaskara, I am Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our beginner Python course?",
+      "call_flow": "Our adult beginner Python course runs for six weeks online on weekdays from 7pm to 8pm, for age 18 and above. The total fee is 4999 rupees. We do not provide any placement or job guarantees, income promises, discounts, or instalment plans. Would you like to share if you have any coding experience?",
+      "call_to_action": "With your permission, may I collect your preferred name, email, and preferred time to note your demo preference?",
+      "objection_handling": "If you mention an old fee of 3999 rupees, please note that the correct total fee is 4999 rupees. If you ask about placement or job guarantees, there is no placement or job guarantee and no income promise. If you ask for a discount or instalment plan, no discount or instalment plan is authorised. If you ask about refund rules, exact next batch dates, or vacancies, those details are unknown. If you ask if I am an AI, yes, I am an artificial intelligence assistant. If you want to wait until after exams, your future interest is welcome.",
+      "unknown_information": "Refund rules, exact next batch dates, and vacancies are unknown and not provided.",
+      "closing": "Thank you for your time with BrightPath Skills. Have a wonderful day. Goodbye."
+    }
+  }
+}

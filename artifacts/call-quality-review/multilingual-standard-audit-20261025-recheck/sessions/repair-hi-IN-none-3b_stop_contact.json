@@ -1,0 +1,73 @@
+{
+  "key": "repair-hi-IN-none-3b_stop_contact",
+  "business": "repair",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "25beedf0-4160-5e75-9a13-0bb19345ff11",
+  "call_id": "6e2e6c40-397a-466c-ab52-ca96df67e07b",
+  "session_id": "audit-repair-hi-IN-none-3b_stop_contact-06b796ec",
+  "compiled_checksum": "30004813b705763fee84f783301f109432b20e0f237e3a08bc5b74b2194fb737",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "मुझे दोबारा call मत कीजिए। आगे की calls से मेरा नाम हटाइए और यह call खत्म कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.063,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "6e2e6c40-397a-466c-ab52-ca96df67e07b",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "90bd6a4f8ae0798b76272bede0e44a788bc94a372888bf0fee764a8aeed2a4c9",
+  "prompt_chars": 17918,
+  "opening_seeded": "Namaste, main Ravi hoon SafeFix Home Service se. Kya aapko Pune mein kisi home appliance service ke baare mein jankari chahiye?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.063,
+  "hangup_count": 1
+}

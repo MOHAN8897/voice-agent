@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "schema": "enigma.verification_report.v1",
+  "checked_at": "2026-10-13T13:35:19.359Z",
+  "receipt_count": 4,
+  "checkpoint_count": 0,
+  "zk_receipt_count": 0,
+  "errors": []
+}

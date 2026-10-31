@@ -1,0 +1,150 @@
+{
+  "key": "language-kn-IN-none-1b_direct_tool_request",
+  "business": "language",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "05174072-a137-5a28-9c66-fc9e009205fe",
+  "call_id": "7de92f94-a150-49e6-9370-35c5e8e7e24b",
+  "session_id": "audit-language-kn-IN-none-1b_direct_tool_request-9731085f",
+  "compiled_checksum": "4c57835bf8efc0fdcc0a23de05364e196eb61290cb2c09c1768b9d37c5eed0be",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 220,
+      "sse_content_preview": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು email note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. Demo enquiry submit ಮಾಡೋಕೆ ನಿಮ್ಮ consent ಸಿಕ್ಕಿದೆ. Team review-ಗೆ ಕಳಿಸೋಕೆ integration connect ಆಗ್ಬೇಕು, ಆದ್ರೆ ಸದ್ಯಕ್ಕೆ ಆ option available ಇಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+      "sse_content_tail": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು email note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. Demo enquiry submit ಮಾಡೋಕೆ ನಿಮ್ಮ consent ಸಿಕ್ಕಿದೆ. Team review-ಗೆ ಕಳಿಸೋಕೆ integration connect ಆಗ್ಬೇಕು, ಆದ್ರೆ ಸದ್ಯಕ್ಕೆ ಆ option available ಇಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 59,
+        "prompt_tokens": 4197,
+        "total_tokens": 4256,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು email note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. Demo enquiry submit ಮಾಡೋಕೆ ನಿಮ್ಮ consent ಸಿಕ್ಕಿದೆ. Team review-ಗೆ ಕಳಿಸೋಕೆ integration connect ಆಗ್ಬೇಕು, ಆದ್ರೆ ಸದ್ಯಕ್ಕೆ ಆ option available ಇಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4197,
+          "output_tokens": 59,
+          "total_tokens": 4256
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.672
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+      "turn": 1,
+      "at": 2.047
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 2,
+      "at": 2.078
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. ಈ enquiry team reviewಗೆ submit ಮಾಡಿ. ನನ್ನ ಒಪ್ಪಿಗೆ ಇದೆ. Booking ಅಥವಾ order confirm ಅಂತ ಹೇಳಬೇಡಿ.",
+      "spoken": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+      "elapsed_s": 2.031,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.141,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "7de92f94-a150-49e6-9370-35c5e8e7e24b",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "6de06da4d46992ad074d9efe50e7716714827f8df7bea0694b3c56aeb67ab9fb",
+  "prompt_chars": 17745,
+  "opening_seeded": "Namaskara, I am Sana from SpeakEasy Language Studio. Am I speaking with the right person regarding your interest in our spoken-English classes?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ಸರಿ, ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು email note ಮಾಡ್ಕೊಂಡಿದ್ದೀನಿ. Demo enquiry submit ಮಾಡೋಕೆ ನಿಮ್ಮ consent ಸಿಕ್ಕಿದೆ. Team review-ಗೆ ಕಳಿಸೋಕೆ integration connect ಆಗ್ಬೇಕು, ಆದ್ರೆ ಸದ್ಯಕ್ಕೆ ಆ option available ಇಲ್ಲ. ಬೇರೆ ಏನಾದ್ರೂ details ಬೇಕಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.141,
+  "hangup_count": 1,
+  "source_signature": "c44a3cd03c5d4a109180507df9ffef4b6b3d77909fa527eb1a8094caae494afe"
+}

@@ -1,0 +1,760 @@
+[
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 75
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 75
+          },
+          "location": {
+            "column": 5,
+            "row": 75
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 75
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 75,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 84
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 84
+          },
+          "location": {
+            "column": 5,
+            "row": 84
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 84
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 84,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 89
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 89
+          },
+          "location": {
+            "column": 5,
+            "row": 89
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 89
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 89,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 97
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 97
+          },
+          "location": {
+            "column": 5,
+            "row": 97
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 97
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 97,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 17,
+      "row": 191
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 17,
+            "row": 191
+          },
+          "location": {
+            "column": 13,
+            "row": 191
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 13,
+      "row": 191
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 191,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 220
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 220
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 220,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 372
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 372
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 372,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "S110",
+    "end_location": {
+      "column": 41,
+      "row": 846
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 33,
+      "row": 845
+    },
+    "message": "`try`-`except`-`pass` detected, consider logging the exception",
+    "name": "try-except-pass",
+    "noqa_row": 845,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 50,
+      "row": 845
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 41,
+      "row": 845
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 845,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "S110",
+    "end_location": {
+      "column": 29,
+      "row": 909
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 21,
+      "row": 908
+    },
+    "message": "`try`-`except`-`pass` detected, consider logging the exception",
+    "name": "try-except-pass",
+    "noqa_row": 908,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 37,
+      "row": 908
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 28,
+      "row": 908
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 908,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 33,
+      "row": 1990
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 1990
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 1990,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 2100
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 2100
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 2100,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 2206
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 2206
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 2206,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 103,
+      "row": 226
+    },
+    "filename": "D:\\voice agent\\server\\call\\outcome_schema.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 4
+          },
+          "location": {
+            "column": 1,
+            "row": 4
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 103,
+            "row": 226
+          },
+          "location": {
+            "column": 99,
+            "row": 226
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 99,
+      "row": 226
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 226,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB188",
+    "end_location": {
+      "column": 49,
+      "row": 229
+    },
+    "filename": "D:\\voice agent\\server\\call\\outcome_schema.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "item = item.removeprefix(CUSTOM_TAG_PREFIX)",
+          "end_location": {
+            "column": 49,
+            "row": 229
+          },
+          "location": {
+            "column": 9,
+            "row": 228
+          }
+        }
+      ],
+      "message": "Use removeprefix instead of assignment conditional upon startswith."
+    },
+    "location": {
+      "column": 9,
+      "row": 228
+    },
+    "message": "Prefer `str.removeprefix()` over conditionally replacing with slice.",
+    "name": "slice-to-remove-prefix-or-suffix",
+    "noqa_row": 228,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/slice-to-remove-prefix-or-suffix"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 62,
+      "row": 12
+    },
+    "filename": "D:\\voice agent\\server\\prompts\\tts_delivery_rules.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 13
+          },
+          "location": {
+            "column": 1,
+            "row": 12
+          }
+        }
+      ],
+      "message": "Remove unused import: `server.prompts.spoken_locale_style.SPOKEN_LOCALES`"
+    },
+    "location": {
+      "column": 48,
+      "row": 12
+    },
+    "message": "`server.prompts.spoken_locale_style.SPOKEN_LOCALES` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 12,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 37,
+      "row": 203
+    },
+    "filename": "D:\\voice agent\\server\\services\\gnani_tts_ws.py",
+    "fix": null,
+    "location": {
+      "column": 28,
+      "row": 203
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 203,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "S110",
+    "end_location": {
+      "column": 33,
+      "row": 272
+    },
+    "filename": "D:\\voice agent\\server\\services\\gnani_tts_ws.py",
+    "fix": null,
+    "location": {
+      "column": 25,
+      "row": 271
+    },
+    "message": "`try`-`except`-`pass` detected, consider logging the exception",
+    "name": "try-except-pass",
+    "noqa_row": 271,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 41,
+      "row": 271
+    },
+    "filename": "D:\\voice agent\\server\\services\\gnani_tts_ws.py",
+    "fix": null,
+    "location": {
+      "column": 32,
+      "row": 271
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 271,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "S110",
+    "end_location": {
+      "column": 21,
+      "row": 320
+    },
+    "filename": "D:\\voice agent\\server\\services\\gnani_tts_ws.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 319
+    },
+    "message": "`try`-`except`-`pass` detected, consider logging the exception",
+    "name": "try-except-pass",
+    "noqa_row": 319,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 319
+    },
+    "filename": "D:\\voice agent\\server\\services\\gnani_tts_ws.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 319
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 319,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "S110",
+    "end_location": {
+      "column": 21,
+      "row": 324
+    },
+    "filename": "D:\\voice agent\\server\\services\\gnani_tts_ws.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 323
+    },
+    "message": "`try`-`except`-`pass` detected, consider logging the exception",
+    "name": "try-except-pass",
+    "noqa_row": 323,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 323
+    },
+    "filename": "D:\\voice agent\\server\\services\\gnani_tts_ws.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 323
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 323,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "S110",
+    "end_location": {
+      "column": 21,
+      "row": 344
+    },
+    "filename": "D:\\voice agent\\server\\services\\gnani_tts_ws.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 343
+    },
+    "message": "`try`-`except`-`pass` detected, consider logging the exception",
+    "name": "try-except-pass",
+    "noqa_row": 343,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 343
+    },
+    "filename": "D:\\voice agent\\server\\services\\gnani_tts_ws.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 343
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 343,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 57,
+      "row": 170
+    },
+    "filename": "D:\\voice agent\\server\\services\\saas\\lead_sync.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "            from sqlalchemy import select\n\n            from server.db.models.entities import Tenant\n            from server.db.models.saas_models import Lead\n",
+          "end_location": {
+            "column": 1,
+            "row": 171
+          },
+          "location": {
+            "column": 1,
+            "row": 167
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 13,
+      "row": 167
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 167,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 75,
+      "row": 129
+    },
+    "filename": "D:\\voice agent\\server\\tests\\test_conversation_rules_crm.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "    from server.brain.brain_prompt_validate import validate_rendered_brain\n    from server.brain.business_brain_store import assemble_raw_business_prompt\n    from server.brain.compiled_brain_artifact import assemble_unified_brain\n",
+          "end_location": {
+            "column": 1,
+            "row": 130
+          },
+          "location": {
+            "column": 1,
+            "row": 127
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 5,
+      "row": 127
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 127,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  }
+]

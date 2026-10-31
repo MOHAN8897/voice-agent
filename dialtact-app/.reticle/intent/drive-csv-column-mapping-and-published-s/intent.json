@@ -1,0 +1,22 @@
+{
+  "intents": {
+    "flow:drive-csv-column-mapping-and-published-script-placehol": {
+      "binding": {
+        "flow": "drive-csv-column-mapping-and-published-script-placehol"
+      },
+      "declaredAt": 1792524174064,
+      "id": "flow:drive-csv-column-mapping-and-published-script-placehol",
+      "source": "decided on the dashboard",
+      "state": "bound",
+      "statement": "CSV column mapping and published script placeholders resolve to the selected recipient before campaign launch.",
+      "status": "proved",
+      "subject": "drive-csv-column-mapping-and-published-s",
+      "surface": {
+        "flow": "drive-csv-column-mapping-and-published-script-placehol"
+      },
+      "updatedAt": 1792524176628
+    }
+  },
+  "subject": "drive-csv-column-mapping-and-published-s",
+  "version": 1
+}

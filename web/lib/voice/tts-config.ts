@@ -28,6 +28,31 @@ export function isCartesiaVoiceId(value: string): boolean {
   return UUID_RE.test(value.trim());
 }
 
+/** Cartesia "Skylar" — same as server constants.CARTESIA_DEFAULT_VOICE_ID */
+export const DEFAULT_CARTESIA_VOICE_ID = "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4";
+export const DEFAULT_SARVAM_SPEAKER = "shubh";
+
+export function defaultTtsVoice(provider: string): string {
+  return provider === "cartesia" ? DEFAULT_CARTESIA_VOICE_ID : DEFAULT_SARVAM_SPEAKER;
+}
+
+export function ttsProviderFromStack(provider: string, model = ""): "cartesia" | "sarvam" {
+  if (provider === "cartesia" || isCartesiaModel(model)) return "cartesia";
+  return "sarvam";
+}
+
+export function voiceMatchesTtsProvider(provider: string, voiceId: string): boolean {
+  const id = (voiceId || "").trim();
+  if (!id) return false;
+  if (provider === "cartesia") return isCartesiaVoiceId(id);
+  return !isCartesiaVoiceId(id);
+}
+
+/** Keep explicit supplier IDs unchanged; the model catalog validates compatibility. */
+export function ensureTtsVoice(_provider: string, voiceId: string, _model = ""): string {
+  return (voiceId || "").trim();
+}
+
 async function fetchStackTtsFallback(sessionId: string, languageCode: string): Promise<TtsConfig | null> {
   try {
     const [stackRes, runtimeRes] = await Promise.all([
@@ -150,8 +175,19 @@ export function buildWsTtsConfig(cfg: TtsConfig): Record<string, unknown> {
   if (cfg.speaker) {
     out.speaker = cfg.speaker;
   }
-  if (cfg.temperature != null && model === "bulbul:v3") {
+  if (cfg.temperature != null && (model === "bulbul:v3" || model === "bulbul:v4-flash")) {
     out.temperature = cfg.temperature;
+  }
+  if (model === "bulbul:v2") {
+    if (cfg.pitch != null) out.pitch = cfg.pitch;
+    // The server maps the universal volume field to native loudness.
+    const volume = cfg.volume ?? cfg.loudness;
+    if (volume != null) out.volume = volume;
+  }
+  if (cfg.provider === "cartesia" || isCartesiaModel(model)) {
+    out.pace = cfg.speed ?? cfg.pace ?? 1.0;
+    if (cfg.emotion != null) out.emotion = cfg.emotion;
+    if (cfg.volume != null) out.volume = cfg.volume;
   }
   return out;
 }

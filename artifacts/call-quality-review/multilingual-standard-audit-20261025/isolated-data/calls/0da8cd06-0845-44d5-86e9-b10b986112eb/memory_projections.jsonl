@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:30:38.116114Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T15:30:39.187222Z", "include_summary": true, "projection": "[Context]\nCaller diverted to cricket match prediction, then asked what the business provides. Reiterated AC servicing 699 rupees and fridge inspection 399 rupee"}
+{"turn_seq": 5, "ts": "2026-10-25T15:30:39.910665Z", "include_summary": true, "projection": "[Context]\nCaller diverted to cricket match prediction, then asked what the business provides. Reiterated AC servicing 699 rupees and fridge inspection 399 rupee"}
+{"turn_seq": 7, "ts": "2026-10-25T15:30:45.538871Z", "include_summary": false, "projection": "[Context]\nCaller diverted to cricket match prediction, then asked what the business provides. Reiterated AC servicing 699 rupees and fridge inspection 399 rupee"}
+{"turn_seq": 9, "ts": "2026-10-25T15:30:46.398793Z", "include_summary": false, "projection": "[Context]\nCaller diverted to cricket match prediction, then asked what the business provides. Reiterated AC servicing 699 rupees and fridge inspection 399 rupee"}

@@ -1,0 +1,113 @@
+{
+  "key": "course-en-IN-none-1b_direct_tool_request",
+  "business": "course",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "584c85f1-487c-5a21-8f37-bdbc77eb869f",
+  "call_id": "932f336a-190e-40db-9961-c04d7f6f7c15",
+  "session_id": "audit-course-en-IN-none-1b_direct_tool_request-59c417cb",
+  "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 3273,
+      "sse_finish": "length",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 2.109
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 2174,
+      "error_type": "CancelledError",
+      "finish_reason": null,
+      "elapsed_s": 2.36
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 2089,
+      "sse_finish": "length",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 2.25
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "turn": 1,
+      "at": 6.735
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My preferred name is Audit Customer and email audit.customer@example.invalid. Please save my enquiry and preferred time tomorrow at 3pm for the team to review. I consent to submitting the request; do not claim an order or booking is confirmed.",
+      "spoken": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "elapsed_s": 6.782,
+      "requests": 3,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 6.782,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "932f336a-190e-40db-9961-c04d7f6f7c15",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "af44a97c503afe1c9e3b6b1c9edfc54e481227732ece0d92f0e4d78a30880eee",
+  "prompt_chars": 18618,
+  "opening_seeded": "Hello, my name is Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our adult beginner Python course today?",
+  "status": "completed",
+  "elapsed_s": 6.782,
+  "hangup_count": 1
+}

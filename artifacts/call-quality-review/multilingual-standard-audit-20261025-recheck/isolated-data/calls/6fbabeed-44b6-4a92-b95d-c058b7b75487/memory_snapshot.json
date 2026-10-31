@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "nfirm that your request went through. Please don't treat it as done.\nuser: Do not book or save anything yet. Please answer my question first: What is the final course fee, duration and class timing, and do you guarantee a job?\nassistant: I couldn't confirm that your request went through. Please don't treat it as done.\nuser: Okay, thanks.\nassistant: The course is 6 weeks online, weekdays from 7 PM to 8 PM, for age 18 and above. The total fee is four thousand nine hundred ninety nine rupees. There is no placement or job guarantee, and no income promise. Which details would you like to know next?"
+}

@@ -15,6 +15,8 @@ type EnvRow = {
   masked?: string;
   source?: string;
   editable?: boolean;
+  cleared?: boolean;
+  hint?: string;
 };
 
 type EnvGroup = Record<string, EnvRow[]>;
@@ -64,13 +66,16 @@ function SecretRow({
   draft,
   onDraft,
   onRevert,
+  onClear,
 }: {
   row: EnvRow;
   draft: string;
   onDraft: (v: string) => void;
   onRevert: () => void;
+  onClear: () => void;
 }) {
   const configured = Boolean(row.configured);
+  const cleared = Boolean(row.cleared);
   return (
     <div
       className={`rounded-xl border p-4 transition-colors ${
@@ -94,7 +99,7 @@ function SecretRow({
           </div>
         ) : (
           <div className="rounded-lg border border-dashed border-surface-border px-3 py-2.5 text-sm text-text-subtle">
-            Empty — no value in .env or overlay
+            {cleared ? "Cleared in overlay — .env value hidden" : "Empty — no value in .env or overlay"}
           </div>
         )}
         <input
@@ -105,8 +110,20 @@ function SecretRow({
           onChange={(e) => onDraft(e.target.value)}
         />
         {row.source === "overlay" && (
-          <button type="button" onClick={onRevert} className="mt-2 text-xs text-text-muted hover:text-accent">
-            Revert to .env
+          <div className="mt-2 flex flex-wrap gap-3">
+            <button type="button" onClick={onRevert} className="text-xs text-text-muted hover:text-accent">
+              Revert to .env
+            </button>
+            {configured && (
+              <button type="button" onClick={onClear} className="text-xs text-text-muted hover:text-warning">
+                Clear key
+              </button>
+            )}
+          </div>
+        )}
+        {row.source === "env" && configured && (
+          <button type="button" onClick={onClear} className="mt-2 text-xs text-text-muted hover:text-warning">
+            Clear key (hide .env value)
           </button>
         )}
       </div>
@@ -247,6 +264,26 @@ export function EnvironmentPanel() {
     load();
   }, [load]);
 
+  async function clearSecret(field: string) {
+    setStatus(`Clearing ${field}…`);
+    const r = await portalFetch("dev", "/api/dev/environment", {
+      method: "PATCH",
+      body: JSON.stringify({ [field]: "" }),
+    });
+    if (r.ok) {
+      setStatus(`Cleared ${field} in overlay`);
+      setDraft((d) => {
+        const next = { ...d };
+        delete next[field];
+        return next;
+      });
+      await load();
+    } else {
+      const j = await r.json().catch(() => ({}));
+      setStatus(j.detail?.error?.message || `Could not clear ${field}`);
+    }
+  }
+
   async function revertField(field: string) {
     setStatus(`Reverting ${field}…`);
     const r = await portalFetch("dev", `/api/dev/environment/${encodeURIComponent(field)}`, {
@@ -304,7 +341,10 @@ export function EnvironmentPanel() {
     setSaving(true);
     setStatus("Saving to server overlay…");
     setSaveResult(null);
-    const patch: Record<string, unknown> = { ...toggles, ...strings };
+    const patch: Record<string, unknown> = { ...toggles };
+    Object.entries(strings).forEach(([k, v]) => {
+      if (typeof v === "string" && v.trim()) patch[k] = v.trim();
+    });
     Object.entries(draft).forEach(([k, v]) => {
       if (v.trim()) patch[k] = v.trim();
     });
@@ -430,6 +470,30 @@ export function EnvironmentPanel() {
         )}
       </DevCard>
 
+      {(groups.llm_defaults || []).length > 0 && (
+        <DevCard
+          title="LLM defaults (.env)"
+          description="Read-only — edit GEMINI_MODEL and VOICE_PIPELINE_MODE in .env; restart API after changes"
+          delayMs={60}
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(groups.llm_defaults || []).map((row) => (
+              <div
+                key={row.field}
+                className="rounded-xl border border-surface-border-subtle bg-surface-raised p-4"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-mono text-xs font-medium text-text">{row.env_name}</p>
+                  <SourceBadge source={row.source || "env"} />
+                </div>
+                <p className="mt-2 font-mono text-sm text-text">{String(row.value ?? "—")}</p>
+                {row.hint ? <p className="mt-2 text-[11px] text-text-subtle">{row.hint}</p> : null}
+              </div>
+            ))}
+          </div>
+        </DevCard>
+      )}
+
       <DevCard title="Provider toggles" description="Enable or disable provider adapters" delayMs={80}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {toggleRows.map((row) => (
@@ -457,12 +521,13 @@ export function EnvironmentPanel() {
               draft={draft[row.field] || ""}
               onDraft={(v) => setDraft((d) => ({ ...d, [row.field]: v }))}
               onRevert={() => revertField(row.field)}
+              onClear={() => clearSecret(row.field)}
             />
           ))}
         </div>
       </DevCard>
 
-      <DevCard title="Telephony URLs & numbers" description="Exotel webhook base and ExoPhone" delayMs={160}>
+      <DevCard title="Telephony URLs & numbers" description="Active PSTN provider, webhook base, caller IDs" delayMs={160}>
         <div className="grid gap-4 lg:grid-cols-3">
           {telephonyStrings.map((row) => (
             <StringConfigRow

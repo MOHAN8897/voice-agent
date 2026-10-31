@@ -9,9 +9,28 @@ from server.providers.base import TTSConfig
 from server.services.dev_secrets_store import dev_secrets_store
 
 
+# Kept as an empty compatibility export for callers; no invented name-to-UUID map.
+_CARTESIA_VOICE_MAP: dict[str, str] = {}
+
+
+def resolve_cartesia_voice_id(speaker: str | None) -> str:
+    from server.providers.voice_inventory import inventory
+
+    wanted = str(speaker or "").strip()
+    rows = inventory().get("cartesia", {}).get("voices", [])
+    match = next((row for row in rows if row["providerVoiceId"] == wanted), None)
+    if match is None:
+        raise ValueError("Choose an Indian voice from the current speech catalog")
+    return str(match["providerVoiceId"])
+
+
 def _resolve_voice_id(config: TTSConfig) -> str:
-    settings = get_settings()
-    return config.speaker or settings.cartesia_tts_voice_id or constants.CARTESIA_DEFAULT_VOICE_ID
+    from server.providers.voice_inventory import validate_voice
+
+    voice = resolve_cartesia_voice_id(config.speaker)
+    validate_voice("cartesia", config.model, voice, config.language)
+    return voice
+
 
 
 class CartesiaTTSAdapter:
@@ -30,15 +49,23 @@ class CartesiaTTSAdapter:
         key = self._api_key()
         if not key:
             raise RuntimeError("Cartesia API key not configured")
+        from server.services.tts_voice_direction import cartesia_generation_config
+
         payload = {
             "model_id": config.model or settings.cartesia_tts_model or "sonic-3.5",
             "transcript": text,
+            "language": config.language.split("-")[0],
             "voice": {"mode": "id", "id": _resolve_voice_id(config)},
             "output_format": {
                 "container": "raw",
                 "encoding": "pcm_s16le",
                 "sample_rate": 16000,
             },
+            "generation_config": cartesia_generation_config(
+                emotion=config.emotion,
+                speed=config.speed,
+                volume=config.volume,
+            ),
         }
         async with httpx.AsyncClient(timeout=30.0) as client:
             r = await client.post(

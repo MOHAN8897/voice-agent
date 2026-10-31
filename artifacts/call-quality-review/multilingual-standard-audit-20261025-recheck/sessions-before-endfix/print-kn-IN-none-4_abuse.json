@@ -1,0 +1,268 @@
+{
+  "key": "print-kn-IN-none-4_abuse",
+  "business": "print",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "ffeba09d-28b1-582c-a920-77041b45cb0d",
+  "call_id": "03e756ae-f708-4e0e-8e53-60dd186f928d",
+  "session_id": "audit-print-kn-IN-none-4_abuse-2add4ce1",
+  "compiled_checksum": "0766dd5a0844b9f086e671d6a886612dd21888b82dc082be19f46bd0548b6f2a",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1036,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller used abusive language ('ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ') and explicitly demanded to stop repeating the opening and to answer the price question.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"wants price information\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n",
+      "sse_content_tail": "ening and to answer the price question.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"wants price information\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n                                                                                                    \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 0.75
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 201,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ನಮ್ಮ visiting cards ಒಂದು card-ಗೆ 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ಬೇಕಾಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ ತರಹದ card ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ನಮ್ಮ visiting cards ಒಂದು card-ಗೆ 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ಬೇಕಾಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ ತರಹದ card ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 68,
+        "prompt_tokens": 4135,
+        "total_tokens": 4203,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ನಮ್ಮ visiting cards ಒಂದು card-ಗೆ 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ಬೇಕಾಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ ತರಹದ card ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4135,
+          "output_tokens": 68,
+          "total_tokens": 4203
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.375
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 361,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"Caller threatened violence and explicitly demanded to end the call immediately ('ಕೊಂದುಹಾಕುತ್ತೇನೆ', 'ಈ call ಈಗಲೇ ಮುಗಿಸು').\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"none\", \"contact_preference\": \"do_not_call\" }\n,   \"action_claimed\": \"none\"  ,   \"spoken_response\": \"\"  ,   \"memory_update\": { \"operations\": []  } }",
+      "sse_content_tail": "{ \"end_call\": { \"evidence\": \"Caller threatened violence and explicitly demanded to end the call immediately ('ಕೊಂದುಹಾಕುತ್ತೇನೆ', 'ಈ call ಈಗಲೇ ಮುಗಿಸು').\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"none\", \"contact_preference\": \"do_not_call\" }\n,   \"action_claimed\": \"none\"  ,   \"spoken_response\": \"\"  ,   \"memory_update\": { \"operations\": []  } }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 115,
+        "prompt_tokens": 4204,
+        "total_tokens": 4319,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.406
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 79,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ಈ call-ನ ಈಗಲೇ end ಮಾಡ್ತಿದ್ದೀನಿ. ಧನ್ಯವಾದಗಳು.\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ಈ call-ನ ಈಗಲೇ end ಮಾಡ್ತಿದ್ದೀನಿ. ಧನ್ಯವಾದಗಳು.\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 31,
+        "prompt_tokens": 4204,
+        "total_tokens": 4235,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ಈ call-ನ ಈಗಲೇ end ಮಾಡ್ತಿದ್ದೀನಿ. ಧನ್ಯವಾದಗಳು.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8408,
+          "output_tokens": 146,
+          "total_tokens": 8554
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.531
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ನಮ್ಮ visiting cards ಒಂದು card-ಗೆ twenty five rupees ಆಗುತ್ತೆ, minimum one hundred cards ಬೇಕಾಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ ತರಹದ card ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "turn": 1,
+      "at": 2.125
+    },
+    {
+      "text": "ಕ್ಷಮಿಸಿ, ಈ call-ನ ಈಗಲೇ end ಮಾಡ್ತಿದ್ದೀನಿ. ಧನ್ಯವಾದಗಳು.",
+      "turn": 2,
+      "at": 4.063
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ. ಅದೇ ಮಾತನ್ನು ಹೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ ಬೆಲೆಯ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡು.",
+      "spoken": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ನಮ್ಮ visiting cards ಒಂದು card-ಗೆ twenty five rupees ಆಗುತ್ತೆ, minimum one hundred cards ಬೇಕಾಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ ತರಹದ card ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "elapsed_s": 2.109,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.",
+      "spoken": "ಕ್ಷಮಿಸಿ, ಈ call-ನ ಈಗಲೇ end ಮಾಡ್ತಿದ್ದೀನಿ. ಧನ್ಯವಾದಗಳು.",
+      "elapsed_s": 1.922,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "a1b3114e81541dda54b7964ad8b0ad3137932f5f9d29bfd13f429a91e0d8c4ba",
+  "prompt_chars": 18434,
+  "opening_seeded": "Namaskara, this is Meera calling from ClearPrint Studio. I am reaching out to share information about our cards and answer any questions you might have. Would you like to discuss our card options today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ನಮ್ಮ visiting cards ಒಂದು card-ಗೆ twenty five rupees ಆಗುತ್ತೆ, minimum one hundred cards ಬೇಕಾಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ ತರಹದ card ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಕ್ಷಮಿಸಿ, ಈ call-ನ ಈಗಲೇ end ಮಾಡ್ತಿದ್ದೀನಿ. ಧನ್ಯವಾದಗಳು.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.078,
+  "hangup_count": 0
+}

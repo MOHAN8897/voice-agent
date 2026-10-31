@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "fee, duration, class timings ఏమిటి? Job guarantee ఇస్తారా?\nassistant: సరేనండి. మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు. క్లాసులు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి ఉద్యోగ హామీ లేదా placement వాగ్దానం లేదు అండి. మీకు ఇంకేమైనా వివరాలు కావాలా?\nuser: నాకు job guarantee అవసరం లేదు, కానీ Python నేర్చుకోవాలని ఆసక్తి ఉంది. Course వివరించగలరా?\nassistant: సరేనండి, job guarantee ఏమీ ఉండదు. ఇది పూర్తిగా beginners కోసం, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు ఉంటాయి. మీకు coding experience ఏమైనా ఉందా అండి?"
+}

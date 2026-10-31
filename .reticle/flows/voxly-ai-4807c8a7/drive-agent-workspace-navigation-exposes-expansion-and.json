@@ -1,0 +1,72 @@
+{
+  "version": 2,
+  "name": "drive-agent-workspace-navigation-exposes-expansion-and",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1793087435602,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "sidebar-collapse-toggle",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 307,
+          "column": 7
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "role": "button",
+          "name": "Collapse sidebar"
+        }
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-settings",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1287,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-settings-save-bar"
+        }
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Agent workspace navigation exposes expansion and the settings save action without losing the editor.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "mcp",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-agent-workspace-navigation-exposes-expansion-and"
+}

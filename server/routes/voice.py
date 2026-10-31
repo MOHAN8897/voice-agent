@@ -8,10 +8,14 @@ from __future__ import annotations
 
 import base64
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
-from server.config.constants import constants
+from server.auth.subscriber_dependencies import (
+    SubscriberPrincipal,
+    require_subscriber_jwt_if_enabled,
+)
+from server.config.constants import coerce_supported_language, constants
 from server.services.runtime_settings import runtime_settings
 from server.session.voice_session import VoiceSessionController
 from server.utils.audio import validate_audio_size
@@ -38,15 +42,14 @@ async def voice_turn(
     userInstructions: str = Form(""),
     businessInstructions: str = Form(""),
     ttsSpeaker: str = Form(""),
+    _auth: SubscriberPrincipal | None = Depends(require_subscriber_jwt_if_enabled),
 ):
     controller = VoiceSessionController()
     rt = _runtime(sessionId)
     try:
         data = await file.read()
         validate_audio_size(data, constants.MAX_AUDIO_BYTES)
-        # lang validation
-        if language_code not in constants.SUPPORTED_LANGUAGES:
-            language_code = "te-IN"
+        language_code = coerce_supported_language(language_code)
         if mode not in ("transcribe", "translate", "verbatim", "translit", "codemix"):
             mode = "transcribe"
 

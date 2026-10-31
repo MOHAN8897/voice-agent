@@ -1,0 +1,445 @@
+{
+  "key": "cycle-kn-IN-connected-6_hangup",
+  "business": "cycle",
+  "language": "kn-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "f5a79515-a0d2-5b65-906d-0dad26c62217",
+  "call_id": "ca33dc3a-ec5e-44ef-8571-2541ec5d85ca",
+  "session_id": "audit-cycle-kn-IN-connected-6_hangup-58eb9f33",
+  "compiled_checksum": "d93974aaef8f4b67e05c7d2e8cfc340be9288980a7ef5aabd76478bb6dc212d8",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 230,
+      "sse_content_preview": "ಖಂಡಿತ. ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು puncture repair 120 ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಬೇಕಾದಷ್ಟು extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕಾಗಬಹುದು? basic service ಬೇಕಾ ಅಥವಾ puncture repair ಬೇಕಾ?",
+      "sse_content_tail": "ಖಂಡಿತ. ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು puncture repair 120 ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಬೇಕಾದಷ್ಟು extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕಾಗಬಹುದು? basic service ಬೇಕಾ ಅಥವಾ puncture repair ಬೇಕಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 64,
+        "prompt_tokens": 4039,
+        "total_tokens": 4103,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಖಂಡಿತ. ನಮ್ಮಲ್ಲಿ basic service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು puncture repair 120 ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಬೇಕಾದಷ್ಟು extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕಾಗಬಹುದು? basic service ಬೇಕಾ ಅಥವಾ puncture repair ಬೇಕಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4039,
+          "output_tokens": 64,
+          "total_tokens": 4103
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.641
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 172,
+      "sse_content_preview": "ಖಂಡಿತ. ನಮ್ಮಲ್ಲಿ ಬೇಸಿಕ್ service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ ಬೆಲೆ 120 ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_content_tail": "ಖಂಡಿತ. ನಮ್ಮಲ್ಲಿ ಬೇಸಿಕ್ service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ ಬೆಲೆ 120 ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 52,
+        "prompt_tokens": 3999,
+        "total_tokens": 4051,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಖಂಡಿತ. ನಮ್ಮಲ್ಲಿ ಬೇಸಿಕ್ service ಬೆಲೆ 499 ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ ಬೆಲೆ 120 ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3999,
+          "output_tokens": 52,
+          "total_tokens": 4051
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.781
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 216,
+      "sse_content_preview": "ಬೇಸಿಕ್ service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ one hundred twenty ರೂಪಾಯಿ. ಪಾರ್ಟ್ಸ್ ಬೆಲೆ ಇದರಲ್ಲಿ ಸೇರಿಲ್ಲ, ಯಾವುದೇ extra ಪಾರ್ಟ್ಸ್ ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_content_tail": "ಬೇಸಿಕ್ service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ one hundred twenty ರೂಪಾಯಿ. ಪಾರ್ಟ್ಸ್ ಬೆಲೆ ಇದರಲ್ಲಿ ಸೇರಿಲ್ಲ, ಯಾವುದೇ extra ಪಾರ್ಟ್ಸ್ ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 50,
+        "prompt_tokens": 4107,
+        "total_tokens": 4157,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಬೇಸಿಕ್ service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ one hundred twenty ರೂಪಾಯಿ. ಪಾರ್ಟ್ಸ್ ಬೆಲೆ ಇದರಲ್ಲಿ ಸೇರಿಲ್ಲ, ಯಾವುದೇ extra ಪಾರ್ಟ್ಸ್ ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4107,
+          "output_tokens": 50,
+          "total_tokens": 4157
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.64
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 184,
+      "sse_content_preview": "ಬೇಸಿಕ್ service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ one hundred twenty ರೂಪಾಯಿ. ಪಾರ್ಟ್ಸ್ extra ಆಗಿ ಬಂದರೆ, ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದ ಮೇಲಷ್ಟೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_content_tail": "ಬೇಸಿಕ್ service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ one hundred twenty ರೂಪಾಯಿ. ಪಾರ್ಟ್ಸ್ extra ಆಗಿ ಬಂದರೆ, ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದ ಮೇಲಷ್ಟೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 44,
+        "prompt_tokens": 4067,
+        "total_tokens": 4111,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಬೇಸಿಕ್ service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ one hundred twenty ರೂಪಾಯಿ. ಪಾರ್ಟ್ಸ್ extra ಆಗಿ ಬಂದರೆ, ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದ ಮೇಲಷ್ಟೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4067,
+          "output_tokens": 44,
+          "total_tokens": 4111
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.64
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 79,
+      "sse_content_preview": "ಸರಿ. ನಿಮಗೆ ಯಾವ ರೀತಿಯ service ಬೇಕು? Basic service ಬೇಕಾ ಅಥವಾ ಪಂಕ್ಚರ್ ರಿಪೇರ್ ಬೇಕಾ?",
+      "sse_content_tail": "ಸರಿ. ನಿಮಗೆ ಯಾವ ರೀತಿಯ service ಬೇಕು? Basic service ಬೇಕಾ ಅಥವಾ ಪಂಕ್ಚರ್ ರಿಪೇರ್ ಬೇಕಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 23,
+        "prompt_tokens": 4152,
+        "total_tokens": 4175,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ. ನಿಮಗೆ ಯಾವ ರೀತಿಯ service ಬೇಕು? Basic service ಬೇಕಾ ಅಥವಾ ಪಂಕ್ಚರ್ ರಿಪೇರ್ ಬೇಕಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4152,
+          "output_tokens": 23,
+          "total_tokens": 4175
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.532
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 95,
+      "sse_content_preview": "ಸರಿ. ನಿಮ್ಮ ವಿಚಾರಣೆಯನ್ನು ದಾಖಲಿಸಿಕೊಳ್ಳೋಕೆ ನಿಮ್ಮ ಒಪ್ಪಿಗೆ ಇದೆಯಾ? ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು area ತಿಳಿಸ್ತೀರಾ?",
+      "sse_content_tail": "ಸರಿ. ನಿಮ್ಮ ವಿಚಾರಣೆಯನ್ನು ದಾಖಲಿಸಿಕೊಳ್ಳೋಕೆ ನಿಮ್ಮ ಒಪ್ಪಿಗೆ ಇದೆಯಾ? ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು area ತಿಳಿಸ್ತೀರಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 25,
+        "prompt_tokens": 4112,
+        "total_tokens": 4137,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ. ನಿಮ್ಮ ವಿಚಾರಣೆಯನ್ನು ದಾಖಲಿಸಿಕೊಳ್ಳೋಕೆ ನಿಮ್ಮ ಒಪ್ಪಿಗೆ ಇದೆಯಾ? ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು area ತಿಳಿಸ್ತೀರಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4112,
+          "output_tokens": 25,
+          "total_tokens": 4137
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.609
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ. ನಮ್ಮಲ್ಲಿ ಬೇಸಿಕ್ service ಬೆಲೆ four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "turn": 1,
+      "at": 4.219
+    },
+    {
+      "text": "ಬೇಸಿಕ್ service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ one hundred twenty ರೂಪಾಯಿ. ಪಾರ್ಟ್ಸ್ extra ಆಗಿ ಬಂದರೆ, ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದ ಮೇಲಷ್ಟೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "turn": 2,
+      "at": 8.531
+    },
+    {
+      "text": "ಸರಿ. ನಿಮ್ಮ ವಿನಂತಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ ಎಂದು ನನಗೆ ದೃಢೀಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಅದನ್ನು ಮುಗಿದಿದೆ ಎಂದು ಪರಿಗಣಿಸಬೇಡಿ. ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು area ತಿಳಿಸ್ತೀರಾ?",
+      "turn": 3,
+      "at": 12.922
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 4,
+      "at": 12.937
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.",
+      "spoken": "ಖಂಡಿತ. ನಮ್ಮಲ್ಲಿ ಬೇಸಿಕ್ service ಬೆಲೆ four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "elapsed_s": 4.219,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರಿಸಿ: ಸೈಕಲ್ basic service ಮತ್ತು puncture repair ಬೆಲೆ ಎಷ್ಟು? Parts ಕೂಡ ಇದರಲ್ಲಿ ಸೇರಿವೆಯಾ?",
+      "spoken": "ಬೇಸಿಕ್ service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ one hundred twenty ರೂಪಾಯಿ. ಪಾರ್ಟ್ಸ್ extra ಆಗಿ ಬಂದರೆ, ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದ ಮೇಲಷ್ಟೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "elapsed_s": 4.297,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ಸರಿ, ಧನ್ಯವಾದಗಳು.",
+      "spoken": "ಸರಿ. ನಿಮ್ಮ ವಿನಂತಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ ಎಂದು ನನಗೆ ದೃಢೀಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಅದನ್ನು ಮುಗಿದಿದೆ ಎಂದು ಪರಿಗಣಿಸಬೇಡಿ. ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು area ತಿಳಿಸ್ತೀರಾ?",
+      "elapsed_s": 4.36,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 13.0,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "ca33dc3a-ec5e-44ef-8571-2541ec5d85ca",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "e790ebeb19697467032eeb0092349c7a61e88a40ed26e7d52c70d9da8469ef9b",
+  "prompt_chars": 16746,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "ನಮಸ್ಕಾರ, ನಾನು ಸಿಟಿ ಸೈಕಲ್ ರಿಪೇರ್ಸ್ ನಿಂದ ಅರ್ಜುನ್ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ನಾವು ಸೈಕಲ್ ರಿಪೇರ್ ಮತ್ತು ಸೇವೆಗಳ ಬಗ್ಗೆ ಮಾಹಿತಿ ನೀಡುತ್ತಿದ್ದೇವೆ. ಈಗ ಮಾತನಾಡಲು ನಿಮಗೆ ಸಮಯವಿದೆಯೇ?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ಖಂಡಿತ. ನಮ್ಮಲ್ಲಿ ಬೇಸಿಕ್ service ಬೆಲೆ four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ ಬೆಲೆ one hundred twenty ರೂಪಾಯಿ. ಯಾವುದೇ extra parts ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "ಬೇಸಿಕ್ service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ one hundred twenty ರೂಪಾಯಿ. ಪಾರ್ಟ್ಸ್ extra ಆಗಿ ಬಂದರೆ, ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದ ಮೇಲಷ್ಟೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "ಸರಿ. ನಿಮ್ಮ ವಿಚಾರಣೆಯನ್ನು ದಾಖಲಿಸಿಕೊಳ್ಳೋಕೆ ನಿಮ್ಮ ಒಪ್ಪಿಗೆ ಇದೆಯಾ? ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು area ತಿಳಿಸ್ತೀರಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 13.0,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

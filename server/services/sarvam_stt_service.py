@@ -8,6 +8,9 @@ from __future__ import annotations
 import httpx
 
 from server.config.env import get_settings
+from server.config.constants import provider_language_code
+from server.services.provider_health import provider_health
+from server.services.sarvam_keys import request_with_failover
 from server.utils.errors import AppError, ErrorCode, classify_http_status
 from server.utils.http_clients import get_sarvam_client
 from server.utils.logger import log_error, log_stt
@@ -29,10 +32,10 @@ async def transcribe(
     Raises AppError on failure (classified).
     """
     settings = get_settings()
-    api_key = settings.sarvam_api_key
     model = model or settings.sarvam_stt_model
     timeout_s = (timeout_ms or settings.request_timeout_ms) / 1000
 
+    language_code = provider_language_code(language_code, provider="sarvam", stage="stt")
     log_stt("Audio submitted", bytes=len(audio_bytes), language_code=language_code, model=model, mode=mode)
 
     # httpx multipart
@@ -43,18 +46,23 @@ async def transcribe(
         "mode": mode,
     }
 
-    headers = {"api-subscription-key": api_key}
-
     try:
         client = get_sarvam_client()
-        resp = await client.post(SARVAM_STT_URL, headers=headers, files=files, data=data, timeout=timeout_s)
+        resp, _slot = await request_with_failover(
+            "stt",
+            "Sarvam speech-to-text",
+            lambda key: client.post(SARVAM_STT_URL, headers={"api-subscription-key": key},
+                                    files=files, data=data, timeout=timeout_s),
+        )
     except httpx.TimeoutException as e:
+        provider_health.record_failure("sarvam", "stt", "timeout", detail="Sarvam STT request timed out")
         raise AppError(ErrorCode.TIMEOUT, provider="sarvam_stt", retryable=True, cause=e) from e
     except httpx.NetworkError as e:
+        provider_health.record_failure("sarvam", "stt", "unavailable", detail="Sarvam STT network error")
         raise AppError(ErrorCode.NETWORK_ERROR, provider="sarvam_stt", retryable=True, cause=e) from e
 
     if resp.status_code != 200:
-        log_error("STT failed", status=resp.status_code, body=resp.text[:500])
+        log_error("STT failed", status=resp.status_code)
         raise classify_http_status(resp.status_code, "sarvam_stt")
 
     try:

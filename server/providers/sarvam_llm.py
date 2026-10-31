@@ -1,0 +1,664 @@
+"""Sarvam Chat Completions adapter for an explicitly selected model and API mode."""
+
+from __future__ import annotations
+
+import asyncio
+import json
+from collections.abc import AsyncIterator
+from typing import Any
+
+import httpx
+
+from server.call.live_turn_schema import SpokenResponseExtractor
+from server.config.env import get_settings
+from server.providers.base import LLMConfig
+from server.providers.llm_protocol import IncompleteTurnError
+from server.providers.openai_messages import message_text
+from server.services.dev_secrets_store import dev_secrets_store
+from server.services.sarvam_keys import rejection_error, request_with_failover, stream_with_failover
+
+SARVAM_CHAT_COMPLETIONS_V2_URL = "https://api.sarvam.ai/v2/chat/completions"
+SARVAM_CHAT_COMPLETIONS_V1_URL = "https://api.sarvam.ai/v1/chat/completions"
+SARVAM_V1_CHAT_MODELS = frozenset({"sarvam-105b", "sarvam-105b-conversations"})
+
+# The 2026-10-25 audit recorded 227 requests that emitted >1,000 content chars
+# then an all-whitespace tail for hundreds of characters until `length`. Once
+# the spoken string is closed nothing audible can follow, so a long whitespace
+# run is a completed reply with a broken envelope, not a reason to burn the
+# budget (or retry and risk a second answer).
+_WHITESPACE_TAIL_LIMIT = 240
+_WHITESPACE_STALL_LIMIT = 640
+_WHITESPACE_MIN_VISIBLE = 600
+
+
+def _record_transport_failure(category: str, detail: str) -> None:
+    from server.services.provider_health import provider_health
+
+    try:
+        provider_health.record_failure("sarvam", "llm", category, detail=detail)
+    except Exception:
+        pass
+
+
+def sarvam_chat_api_modes(model: str) -> list[str]:
+    from server.providers.llm_protocol import sarvam_chat_modes
+
+    return sarvam_chat_modes(model)
+
+
+def _safe_count(value: Any) -> int:
+    try:
+        return max(0, int(value or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _usage_from_payload(payload: dict[str, Any]) -> dict[str, int]:
+    usage = payload.get("usage")
+    if not isinstance(usage, dict):
+        return {}
+    prompt_tokens = _safe_count(usage.get("prompt_tokens"))
+    completion_tokens = _safe_count(usage.get("completion_tokens"))
+    prompt_details = usage.get("prompt_tokens_details")
+    completion_details = usage.get("completion_tokens_details")
+    cached_tokens = (
+        _safe_count(prompt_details.get("cached_tokens")) if isinstance(prompt_details, dict) else 0
+    )
+    reasoning_tokens = (
+        _safe_count(completion_details.get("reasoning_tokens"))
+        if isinstance(completion_details, dict)
+        else 0
+    )
+    normalized = {
+        "input_tokens": prompt_tokens,
+        "output_tokens": completion_tokens,
+        "total_tokens": _safe_count(usage.get("total_tokens")) or prompt_tokens + completion_tokens,
+        "cached_tokens": min(prompt_tokens, cached_tokens),
+        "cache_write_tokens": 0,
+    }
+    if reasoning_tokens:
+        normalized["reasoning_tokens"] = min(completion_tokens, reasoning_tokens)
+    return normalized
+
+
+def _chat_messages(
+    input_messages: list[dict[str, Any]] | None, transcript: str | None
+) -> list[dict[str, Any]]:
+    messages: list[dict[str, Any]] = []
+    for original in input_messages or []:
+        if not isinstance(original, dict):
+            continue
+        role = str(original.get("role") or "").strip().lower()
+        if role not in {"system", "developer", "user", "assistant", "tool"}:
+            continue
+        # V1 rejects OpenAI's developer role with HTTP 400. Keep the pinned
+        # instruction at system priority on both chat transports.
+        if role == "developer":
+            role = "system"
+        content = original.get("content")
+        if not isinstance(content, str):
+            content = message_text(original)
+        message: dict[str, Any] = {"role": role, "content": content}
+        if role == "tool":
+            call_id = original.get("tool_call_id")
+            if call_id:
+                message["tool_call_id"] = str(call_id)
+            if original.get("name"):
+                message["name"] = str(original["name"])
+        if role == "assistant" and isinstance(original.get("tool_calls"), list):
+            message["tool_calls"] = original["tool_calls"]
+        if content or message.get("tool_calls"):
+            messages.append(message)
+
+    if not messages and (transcript or "").strip():
+        messages.append({"role": "user", "content": (transcript or "").strip()})
+    if not messages:
+        raise ValueError("Sarvam LLM requires conversation messages from the resolved turn")
+    return messages
+
+
+def _chat_tools(tools: list[Any]) -> list[dict[str, Any]]:
+    """Translate internal Responses-style declarations to Chat Completions tools."""
+    declarations: list[dict[str, Any]] = []
+    for tool in tools:
+        if not isinstance(tool, dict) or tool.get("type", "function") != "function":
+            raise ValueError("Sarvam Chat Completions requires function tool declarations")
+        function = tool.get("function")
+        if not isinstance(function, dict):
+            function = {key: tool[key] for key in ("name", "description", "parameters", "strict") if key in tool}
+        if not isinstance(function.get("name"), str) or not function["name"].strip():
+            raise ValueError("Sarvam Chat Completions requires named function tools")
+        declarations.append({"type": "function", "function": function})
+    return declarations
+
+
+def _stream_tool_call_deltas(calls_by_index: dict[int, dict[str, Any]], raw_calls: Any) -> None:
+    if not isinstance(raw_calls, list):
+        return
+    for raw in raw_calls:
+        if not isinstance(raw, dict):
+            continue
+        try:
+            index = int(raw.get("index", 0))
+        except (TypeError, ValueError):
+            continue
+        call = calls_by_index.setdefault(
+            index,
+            {"type": "function", "id": "", "function": {"name": "", "arguments": ""}},
+        )
+        if raw.get("id"):
+            call["id"] = str(raw["id"])
+        if raw.get("type"):
+            call["type"] = str(raw["type"])
+        function = raw.get("function")
+        if not isinstance(function, dict):
+            continue
+        if function.get("name"):
+            call["function"]["name"] += str(function["name"])
+        if function.get("arguments"):
+            call["function"]["arguments"] += str(function["arguments"])
+
+
+class SarvamLLMAdapter:
+    """V1 serves Sarvam chat models; V2 beta access is separately granted per key."""
+
+    provider_id = "sarvam"
+    # V1 returns tool calls only when no response_format schema is present
+    # (2026-10-25 audit F06: full schema + tools yielded zero native calls).
+    # The orchestrator therefore runs native selection first, then a validated
+    # speech turn.
+    selects_tools_without_schema = True
+    # Live rerun: both full and reduced JSON stalled; native speech completed
+    # 20/20 probes. Keep structured_completion for offline generation intact.
+    uses_plain_live_speech = True
+
+    def __init__(self, *, api_key: str | None = None) -> None:
+        self._provided_api_key = api_key
+
+    def supports_structured_output(self) -> bool:
+        return True
+
+    def supports_prompt_caching(self) -> bool:
+        # Session-affinity caching routes multi-turn conversations together for prefix context reuse.
+        return True
+
+    def _has_any_key(self) -> bool:
+        from server.services.sarvam_keys import sarvam_key_pool
+
+        return bool(self._provided_api_key or sarvam_key_pool.keys())
+
+    def _api_key(self) -> str:
+        settings = get_settings()
+        return (
+            self._provided_api_key
+            or dev_secrets_store.effective_secret("sarvam_api_key")
+            or settings.sarvam_api_key
+            or ""
+        ).strip()
+
+    @staticmethod
+    def _model(kwargs: dict[str, Any]) -> str:
+        config = kwargs.get("config")
+        model = kwargs.get("model") or getattr(config, "model", None)
+        if not isinstance(model, str) or not model.strip():
+            raise ValueError("Sarvam LLM requires the model selected in the resolved stack")
+        return model.strip()
+
+    @classmethod
+    def _api_mode(cls, kwargs: dict[str, Any]) -> str:
+        mode = kwargs.get("api_mode")
+        if not mode:
+            config = kwargs.get("config")
+            if config:
+                mode = getattr(config, "api_mode", None) or (config.get("api_mode") if isinstance(config, dict) else None)
+        if not mode:
+            valid_modes = sarvam_chat_api_modes(cls._model(kwargs))
+            if not valid_modes:
+                raise ValueError("The selected Sarvam model has no supported chat transport")
+            mode = valid_modes[0]
+        mode_str = str(mode).strip().lower()
+        if mode_str not in {"chat_completions_v1", "chat_completions_v2"}:
+            raise ValueError("Sarvam LLM requires an approved chat completion API mode")
+        return mode_str
+
+    @classmethod
+    def _url(cls, model: str, kwargs: dict[str, Any]) -> str:
+        from server.providers.llm_protocol import text_llm_api_mode
+
+        mode = cls._api_mode(kwargs)
+        if mode == "chat_completions_v1":
+            if model not in SARVAM_V1_CHAT_MODELS:
+                raise ValueError("The selected Sarvam model is unavailable on Chat Completions V1")
+            text_llm_api_mode("sarvam", model, mode)
+            return SARVAM_CHAT_COMPLETIONS_V1_URL
+        text_llm_api_mode("sarvam", model, mode)
+        return SARVAM_CHAT_COMPLETIONS_V2_URL
+
+    @staticmethod
+    def _timeout() -> httpx.Timeout:
+        timeout_s = max(0.1, get_settings().request_timeout_ms / 1000)
+        return httpx.Timeout(
+            timeout=timeout_s,
+            connect=min(timeout_s, 10.0),
+            read=timeout_s,
+            write=timeout_s,
+            pool=timeout_s,
+        )
+
+    def _headers(self, kwargs: dict[str, Any] | None = None, *, key: str | None = None) -> dict[str, str]:
+        key = key or self._api_key()
+        if not key:
+            raise RuntimeError("SARVAM_API_KEY is not configured")
+        headers = {
+            "api-subscription-key": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+        }
+        if kwargs:
+            affinity = str(kwargs.get("session_id") or kwargs.get("call_id") or "").strip()
+            if affinity:
+                headers["x-session-affinity"] = affinity
+        return headers
+
+    @staticmethod
+    def _max_tokens(kwargs: dict[str, Any]) -> int:
+        config = kwargs.get("config")
+        raw = (
+            kwargs.get("max_output_tokens")
+            or getattr(config, "max_tokens", None)
+            or get_settings().max_response_length
+        )
+        try:
+            value = int(raw)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Sarvam LLM requires a positive output token limit") from exc
+        if value <= 0:
+            raise ValueError("Sarvam LLM requires a positive output token limit")
+        return value
+
+    @staticmethod
+    def _temperature(kwargs: dict[str, Any]) -> float | None:
+        config = kwargs.get("config")
+        raw = kwargs.get("temperature")
+        if raw is None:
+            raw = getattr(config, "temperature", None)
+        return float(raw) if raw is not None else None
+
+    @staticmethod
+    def _response_format(schema: dict[str, Any], schema_name: str) -> dict[str, Any]:
+        return {
+            "type": "json_schema",
+            "json_schema": {
+                "name": schema_name,
+                "schema": schema,
+                "strict": True,
+            },
+        }
+
+    def _request_body(
+        self,
+        *,
+        model: str,
+        messages: list[dict[str, Any]],
+        kwargs: dict[str, Any],
+        stream: bool,
+        schema: dict[str, Any] | None = None,
+        schema_name: str = "live_turn",
+    ) -> dict[str, Any]:
+        body: dict[str, Any] = {
+            "model": model,
+            "messages": messages,
+            "max_tokens": self._max_tokens(kwargs),
+            "stream": stream,
+        }
+        temperature = self._temperature(kwargs)
+        if temperature is not None:
+            body["temperature"] = temperature
+        if schema is not None:
+            body["response_format"] = self._response_format(schema, schema_name)
+        tools = kwargs.get("tools")
+        if isinstance(tools, list) and tools:
+            body["tools"] = _chat_tools(tools)
+        if kwargs.get("tool_choice") is not None:
+            body["tool_choice"] = kwargs["tool_choice"]
+        if kwargs.get("parallel_tool_calls") is not None:
+            body["parallel_tool_calls"] = bool(kwargs["parallel_tool_calls"])
+        reasoning_effort = kwargs.get("reasoning_effort")
+        if reasoning_effort is not None or self._api_mode(kwargs) == "chat_completions_v1":
+            # Omission enables provider-default thinking. Explicit null keeps
+            # conversational V1 calls from spending the speech budget on thought.
+            body["reasoning_effort"] = reasoning_effort
+        if stream:
+            body["stream_options"] = {"include_usage": True}
+        return body
+
+    def stream_live_turn(
+        self,
+        input_messages: list[dict] | None = None,
+        schema: dict | None = None,
+        **kwargs: Any,
+    ) -> AsyncIterator[dict]:
+        return self._stream(
+            input_messages=input_messages,
+            schema=schema,
+            **kwargs,
+        )
+
+    def stream_structured_turn(
+        self,
+        input_messages: list[dict] | None = None,
+        schema: dict | None = None,
+        **kwargs: Any,
+    ) -> AsyncIterator[dict]:
+        return self._stream(
+            input_messages=input_messages,
+            schema=schema,
+            **kwargs,
+        )
+
+    async def _stream(
+        self,
+        input_messages: list[dict] | None = None,
+        schema: dict | None = None,
+        **kwargs: Any,
+    ) -> AsyncIterator[dict]:
+        if not self._has_any_key():
+            raise RuntimeError("SARVAM_API_KEY is not configured")
+        model = self._model(kwargs)
+        url = self._url(model, kwargs)
+        messages = _chat_messages(input_messages, kwargs.get("transcript"))
+        body = self._request_body(
+            model=model,
+            messages=messages,
+            kwargs=kwargs,
+            stream=True,
+            schema=schema,
+            schema_name=str(kwargs.get("schema_name") or "live_turn"),
+        )
+        extractor = SpokenResponseExtractor() if schema is not None else None
+        plain_parts: list[str] = []
+        usage: dict[str, int] = {}
+        tool_calls: dict[int, dict[str, Any]] = {}
+        completed = False
+        finish_reason: str | None = None
+        visible_chars = 0
+        whitespace_run = 0
+        buffer_output = bool(kwargs.get("tools") or kwargs.get("buffer_response"))
+        async with httpx.AsyncClient(timeout=self._timeout()) as client:
+            try:
+                async with stream_with_failover(
+                    "llm",
+                    "Sarvam Chat Completions",
+                    lambda key: client.stream("POST", url, headers=self._headers(kwargs, key=key), json=body),
+                    provided_key=self._provided_api_key,
+                ) as response:
+                    if response.status_code >= 400:
+                        await response.aread()
+                        raise rejection_error(
+                            f"Sarvam Chat Completions HTTP {response.status_code}",
+                            component="llm", status=response.status_code, body=response.content,
+                        )
+                    async for line in response.aiter_lines():
+                        if not line or line.startswith(":"):
+                            continue
+                        if not line.startswith("data:"):
+                            continue
+                        data = line[5:].strip()
+                        if not data:
+                            continue
+                        if data == "[DONE]":
+                            completed = True
+                            break
+                        try:
+                            payload = json.loads(data)
+                        except json.JSONDecodeError as exc:
+                            raise RuntimeError(
+                                "Sarvam Chat Completions returned malformed SSE data"
+                            ) from exc
+                        if not isinstance(payload, dict):
+                            raise TypeError("Sarvam Chat Completions returned malformed SSE data")
+                        if payload.get("error"):
+                            raise RuntimeError("Sarvam Chat Completions stream failed")
+                        next_usage = _usage_from_payload(payload)
+                        if next_usage:
+                            usage = next_usage
+                        choices = payload.get("choices")
+                        if not isinstance(choices, list) or not choices:
+                            continue
+                        choice = choices[0]
+                        stop_reason = (
+                            str(choice.get("finish_reason") or "").strip()
+                            if isinstance(choice, dict)
+                            else ""
+                        )
+                        delta = choice.get("delta") if isinstance(choice, dict) else None
+                        if isinstance(delta, dict):
+                            _stream_tool_call_deltas(tool_calls, delta.get("tool_calls"))
+                            content = delta.get("content")
+                            if isinstance(content, list):
+                                content = "".join(
+                                    str(part.get("text") or "")
+                                    for part in content
+                                    if isinstance(part, dict)
+                                )
+                            if isinstance(content, str) and content:
+                                if content.strip():
+                                    visible_chars += len(content.strip())
+                                    whitespace_run = len(content) - len(content.rstrip())
+                                else:
+                                    whitespace_run += len(content)
+                                if extractor is not None:
+                                    spoken = extractor.feed(content)
+                                else:
+                                    plain_parts.append(content)
+                                    spoken = content
+                                if spoken and not buffer_output:
+                                    yield {
+                                        "delta": spoken,
+                                        "language_context": {},
+                                        "close_preview": (
+                                            extractor.preview_decision()
+                                            if extractor is not None
+                                            else None
+                                        ),
+                                        "action_preview": (
+                                            extractor.preview_action_claim()
+                                            if extractor is not None
+                                            else None
+                                        ),
+                                    }
+                                if (
+                                    extractor is not None
+                                    and extractor.spoken_complete
+                                    and whitespace_run >= _WHITESPACE_TAIL_LIMIT
+                                    and visible_chars >= _WHITESPACE_MIN_VISIBLE
+                                ):
+                                    completed = True
+                                    finish_reason = "whitespace_tail"
+                                    break
+                                if (
+                                    whitespace_run >= _WHITESPACE_STALL_LIMIT
+                                    and not (extractor and extractor.spoken_complete)
+                                ):
+                                    raise IncompleteTurnError(
+                                        provider=self.provider_id,
+                                        finish_reason="whitespace_stall",
+                                        partial_text=(
+                                            extractor.spoken_text
+                                            if extractor is not None
+                                            else "".join(plain_parts)
+                                        ),
+                                        usage=usage,
+                                    )
+                        if stop_reason:
+                            finish_reason = stop_reason
+                            if stop_reason in {"stop", "tool_calls"}:
+                                completed = True
+                            # Read through the terminal usage chunk even after
+                            # length/content-filter stops. Raising here loses
+                            # the provider's billed reasoning/completion tokens.
+            except asyncio.CancelledError:
+                raise
+            except httpx.TimeoutException as exc:
+                _record_transport_failure("timeout", "Sarvam Chat Completions request timed out")
+                raise TimeoutError("Sarvam Chat Completions request timed out") from exc
+            except httpx.HTTPError as exc:
+                _record_transport_failure("unavailable", "Sarvam Chat Completions transport failed")
+                raise RuntimeError("Sarvam Chat Completions transport failed") from exc
+
+        full_text = (
+            extractor.spoken_text.strip() if extractor is not None else "".join(plain_parts).strip()
+        )
+        completed_tool_calls = [tool_calls[index] for index in sorted(tool_calls)]
+        if finish_reason and finish_reason not in {"stop", "tool_calls", "whitespace_tail"}:
+            raise IncompleteTurnError(provider=self.provider_id, finish_reason=finish_reason,
+                raw_finish_reason=finish_reason, partial_text=full_text, usage=usage)
+        if kwargs.get("speech_only") and full_text.lstrip().startswith(("{", "[", "```")):
+            # The delivery contract forbids control data. It was buffered, so
+            # none reached TTS and the bounded reply recovery can restart clean.
+            raise IncompleteTurnError(
+                provider=self.provider_id,
+                finish_reason="unexpected_speech_format",
+                partial_text="",
+                usage=usage,
+            )
+        if completed_tool_calls and not completed:
+            raise IncompleteTurnError(
+                provider=self.provider_id,
+                finish_reason=finish_reason or "interrupted",
+                partial_text=full_text,
+                usage=usage,
+            )
+        if not full_text and not completed_tool_calls and not kwargs.get("allow_empty_response"):
+            raise IncompleteTurnError(
+                provider=self.provider_id,
+                finish_reason=finish_reason or "empty",
+                partial_text="",
+                usage=usage,
+            )
+        if not completed:
+            # HTTP 200 without either a terminal finish reason or [DONE].
+            raise IncompleteTurnError(
+                provider=self.provider_id,
+                finish_reason=finish_reason or "no_finish_reason",
+                partial_text=full_text,
+                usage=usage,
+            )
+
+        event: dict[str, Any] = {
+            "done": True,
+            "text": full_text,
+            "language_context": {},
+            "usage": usage,
+            "finish_reason": finish_reason or "stop",
+        }
+        if completed_tool_calls:
+            event["tool_calls"] = completed_tool_calls
+        if extractor is not None:
+            event.update(
+                {
+                    "memory_update": extractor.parse_memory_update(),
+                    "end_call": extractor.parse_end_call(),
+                    "action_claimed": extractor.parse_action_claim(),
+                    "memory_parse_failed": extractor.structured_parse_failed(),
+                }
+            )
+
+        # Do not speak a prospective tool response before the authorized tool
+        # result is known. The orchestrator either executes the tools and asks
+        # for a final structured answer, or releases this text if no tool call
+        # was requested.
+        if buffer_output and not completed_tool_calls and full_text:
+            yield {
+                "delta": full_text,
+                "language_context": {},
+                "close_preview": (
+                    extractor.preview_decision() if extractor is not None else None
+                ),
+                "action_preview": (
+                    extractor.preview_action_claim() if extractor is not None else None
+                ),
+            }
+
+        yield event
+
+    async def structured_completion(
+        self,
+        input_messages: list[dict],
+        schema: dict,
+        config: LLMConfig | None = None,
+        *,
+        schema_name: str = "structured",
+        max_output_tokens: int | None = None,
+        api_mode: str | None = None,
+    ) -> dict:
+        if not self._has_any_key():
+            raise RuntimeError("SARVAM_API_KEY is not configured")
+        model = (config.model if config else "").strip()
+        if not model:
+            raise ValueError("Sarvam LLM requires the model selected in the resolved stack")
+        messages = _chat_messages(input_messages, None)
+        kwargs: dict[str, Any] = {"max_output_tokens": max_output_tokens, "api_mode": api_mode}
+        if config is not None:
+            kwargs["config"] = config
+        url = self._url(model, kwargs)
+        body = self._request_body(
+            model=model,
+            messages=messages,
+            kwargs=kwargs,
+            stream=False,
+            schema=schema,
+            schema_name=schema_name,
+        )
+        if max_output_tokens is None and config is not None and config.max_tokens is not None:
+            body["max_tokens"] = config.max_tokens
+        async with httpx.AsyncClient(timeout=self._timeout()) as client:
+            try:
+                response, _slot = await request_with_failover(
+                    "llm",
+                    "Sarvam Chat Completions",
+                    lambda key: client.post(url, headers=self._headers(kwargs, key=key), json=body),
+                    provided_key=self._provided_api_key,
+                )
+            except asyncio.CancelledError:
+                raise
+            except httpx.TimeoutException as exc:
+                _record_transport_failure("timeout", "Sarvam Chat Completions request timed out")
+                raise TimeoutError("Sarvam Chat Completions request timed out") from exc
+            except httpx.HTTPError as exc:
+                _record_transport_failure("unavailable", "Sarvam Chat Completions transport failed")
+                raise RuntimeError("Sarvam Chat Completions transport failed") from exc
+        if response.status_code >= 400:
+            raise rejection_error(
+                f"Sarvam Chat Completions HTTP {response.status_code}",
+                component="llm", status=response.status_code, body=getattr(response, "content", None),
+            )
+        try:
+            payload = response.json()
+        except (ValueError, json.JSONDecodeError) as exc:
+            raise RuntimeError("Sarvam Chat Completions returned malformed JSON") from exc
+        if not isinstance(payload, dict):
+            raise TypeError("Sarvam Chat Completions returned malformed JSON")
+        choices = payload.get("choices")
+        if not isinstance(choices, list) or not choices:
+            raise RuntimeError("Sarvam Chat Completions returned an empty response")
+        message = choices[0].get("message") if isinstance(choices[0], dict) else None
+        if not isinstance(message, dict):
+            raise TypeError("Sarvam Chat Completions returned a malformed response")
+        if isinstance(choices[0], dict) and str(choices[0].get("finish_reason") or "") == "length":
+            # Reasoning can use up the budget before the JSON closes; retry bigger, never save half.
+            from server.providers.base import StructuredOutputTruncated
+
+            raise StructuredOutputTruncated("sarvam", body.get("max_tokens") or max_output_tokens, "length")
+        content = message.get("content")
+        if not isinstance(content, str) or not content.strip():
+            raise RuntimeError("Sarvam Chat Completions returned an empty structured response")
+        try:
+            result = json.loads(content)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(
+                "Sarvam Chat Completions returned malformed structured JSON"
+            ) from exc
+        if not isinstance(result, dict):
+            raise TypeError("Sarvam Chat Completions structured response must be an object")
+        return result

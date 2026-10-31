@@ -1,0 +1,185 @@
+{
+  "intents": {
+    "inline:choosing-a-tier-confirms-that-its-voice-setup-wa-a5d9e928": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "voice-stack-save-status"
+        }
+      },
+      "declaredAt": 1792818931564,
+      "id": "inline:choosing-a-tier-confirms-that-its-voice-setup-wa-a5d9e928",
+      "provenBy": {
+        "at": 1792818934395,
+        "grade": "presence",
+        "runId": "drive-lease-9efb05e1-b17d-446a-a6ee-d173067332c5",
+        "verdictId": "reticle_act_and_wait:1792818934395"
+      },
+      "state": "proved",
+      "statement": "Choosing a tier confirms that its voice setup was saved.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentVoicePanel.jsx"
+        ]
+      },
+      "updatedAt": 1792818934492
+    },
+    "inline:selecting-a-filtered-voice-saves-that-exact-voic-2856511b": {
+      "binding": {
+        "contains": "Voice setup saved",
+        "kind": "text"
+      },
+      "declaredAt": 1792821699672,
+      "id": "inline:selecting-a-filtered-voice-saves-that-exact-voic-2856511b",
+      "provenBy": {
+        "at": 1792821700284,
+        "grade": "presence",
+        "runId": "drive-lease-ff8fab95-10a1-4a09-84e0-e9d56ba41500",
+        "verdictId": "reticle_act_and_wait:1792821700284"
+      },
+      "state": "proved",
+      "statement": "Selecting a filtered voice saves that exact voice before the tenant can test the agent.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentVoicePanel.jsx"
+        ]
+      },
+      "updatedAt": 1792821700325
+    },
+    "inline:selecting-a-style-filtered-voice-saves-its-exact-7cc1ddd7": {
+      "binding": {
+        "contains": "Voice setup saved",
+        "kind": "text"
+      },
+      "declaredAt": 1792822827369,
+      "id": "inline:selecting-a-style-filtered-voice-saves-its-exact-7cc1ddd7",
+      "provenBy": {
+        "at": 1792822828061,
+        "grade": "presence",
+        "runId": "drive-lease-58cfdf9e-fddb-4917-950e-d6f68f8d2dd9",
+        "verdictId": "reticle_act_and_wait:1792822828061"
+      },
+      "state": "proved",
+      "statement": "Selecting a style-filtered voice saves its exact identity before the agent can be tested.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentVoicePanel.jsx"
+        ]
+      },
+      "updatedAt": 1792822828102
+    },
+    "inline:tenants-can-filter-complete-provider-voice-lists-d02617d7": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "absent": true,
+            "kind": "element",
+            "query": {
+              "testid": "voice-select-btn-voice-low-1"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-select-btn-voice-low-60"
+            },
+            "state": "visible"
+          }
+        ]
+      },
+      "declaredAt": 1792822769772,
+      "id": "inline:tenants-can-filter-complete-provider-voice-lists-d02617d7",
+      "provenBy": {
+        "at": 1792822771046,
+        "grade": "presence",
+        "runId": "drive-lease-58cfdf9e-fddb-4917-950e-d6f68f8d2dd9",
+        "verdictId": "reticle_act_and_wait:1792822771046"
+      },
+      "state": "proved",
+      "statement": "Tenants can filter complete provider voice lists by style without changing voice identity or numbers.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentVoicePanel.jsx"
+        ]
+      },
+      "updatedAt": 1792822771091
+    },
+    "inline:tenants-can-filter-the-complete-model-voice-list-df4456be": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "absent": true,
+            "kind": "element",
+            "query": {
+              "testid": "voice-select-btn-voice-low-1"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-select-btn-voice-low-60"
+            },
+            "state": "visible"
+          }
+        ]
+      },
+      "declaredAt": 1792821675367,
+      "id": "inline:tenants-can-filter-the-complete-model-voice-list-df4456be",
+      "provenBy": {
+        "at": 1792821676588,
+        "grade": "presence",
+        "runId": "drive-lease-ff8fab95-10a1-4a09-84e0-e9d56ba41500",
+        "verdictId": "reticle_act_and_wait:1792821676588"
+      },
+      "state": "proved",
+      "statement": "Tenants can filter the complete model voice list by supplier style without changing voice numbers or IDs.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentVoicePanel.jsx"
+        ]
+      },
+      "updatedAt": 1792821676632
+    },
+    "inline:the-saved-voice-tier-remains-selected-after-relo-d6966828": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "voice-stack-tier-low"
+        },
+        "state": "checked"
+      },
+      "declaredAt": 1792818934669,
+      "id": "inline:the-saved-voice-tier-remains-selected-after-relo-d6966828",
+      "provenBy": {
+        "at": 1792818934771,
+        "grade": "presence",
+        "runId": "drive-lease-9efb05e1-b17d-446a-a6ee-d173067332c5",
+        "verdictId": "reticle_assert:1792818934771"
+      },
+      "state": "proved",
+      "statement": "The saved voice tier remains selected after reloading the voice catalog.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentVoicePanel.jsx"
+        ]
+      },
+      "updatedAt": 1792818934838
+    }
+  },
+  "subject": "agent-workspace",
+  "version": 1
+}

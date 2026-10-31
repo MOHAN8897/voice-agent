@@ -1,0 +1,373 @@
+{
+  "key": "course-te-IN-none-6_hangup",
+  "business": "course",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "73629b35-ee60-5ee7-bb82-5151652a5a38",
+  "call_id": "10cfdb95-b0b6-4393-a992-ebb08ae0fb3c",
+  "session_id": "audit-course-te-IN-none-6_hangup-5a3b9584",
+  "compiled_checksum": "7dd3e2c93442bdc28ae9224278169d62d2f4c7f9a8c04318fd7be19e3174c3c6",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 894,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"User expressed interest and asked for details; no explicit close requested.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"end_call\"\n  }\n  \n  \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"User expressed interest and asked for details; no explicit close requested.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"end_call\"\n  }\n  \n  \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.484
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 371,
+      "sse_content_preview": "{\n  \"spoken_response\": \"తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ లో ఉంటుంది, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు జరుగుతాయి. దీనికి minimum age 18 ఉండాలి. మొత్తం ఫీజు 4999 రూపాయలు మాత్రమే. ఇందులో ఎలాంటి job guarantee లేదా placement వాగ్దానాలు ఉండవు, అలాగే డిస్కౌంట్లు లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు coding లో ఏమైనా అనుభవం ఉందా అండి?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ లో ఉంటుంది, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు జరుగుతాయి. దీనికి minimum age 18 ఉండాలి. మొత్తం ఫీజు 4999 రూపాయలు మాత్రమే. ఇందులో ఎలాంటి job guarantee లేదా placement వాగ్దానాలు ఉండవు, అలాగే డిస్కౌంట్లు లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు coding లో ఏమైనా అనుభవం ఉందా అండి?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 111,
+        "prompt_tokens": 4356,
+        "total_tokens": 4467,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ లో ఉంటుంది, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు జరుగుతాయి. దీనికి minimum age 18 ఉండాలి. మొత్తం ఫీజు 4999 రూపాయలు మాత్రమే. ఇందులో ఎలాంటి job guarantee లేదా placement వాగ్దానాలు ఉండవు, అలాగే డిస్కౌంట్లు లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు coding లో ఏమైనా అనుభవం ఉందా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4356,
+          "output_tokens": 111,
+          "total_tokens": 4467
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.985
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1177,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"No booking or saving now, just answer fee duration timings and job guarantee first\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"wants fee duration timings and job guarantee answered before any next step\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"సరేనండి. మొత్తం ఫీజు 4999 రూపాయలు అండి, ఆరు వారాల క్లాసులు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి job guarantee లేదా placement వాగ్దానం లేదు. మీరు ఇప్పుడు వెళ్లాలనుకుంటే నేను call close చేయగలను, లేదంటే ఇంకేమైనా వివరాలు కావాలా అండి?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller asked for fee, duration, timings, and job guarantee. Informed: total fee 4999 INR, 6 weeks Mon-Fri 7-8 PM, no job guarantee. Caller said do not\"},\n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n",
+      "sse_content_tail": ",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"సరేనండి. మొత్తం ఫీజు 4999 రూపాయలు అండి, ఆరు వారాల క్లాసులు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి job guarantee లేదా placement వాగ్దానం లేదు. మీరు ఇప్పుడు వెళ్లాలనుకుంటే నేను call close చేయగలను, లేదంటే ఇంకేమైనా వివరాలు కావాలా అండి?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller asked for fee, duration, timings, and job guarantee. Informed: total fee 4999 INR, 6 weeks Mon-Fri 7-8 PM, no job guarantee. Caller said do not\"},\n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n",
+      "result": {
+        "done": true,
+        "text": "సరేనండి. మొత్తం ఫీజు 4999 రూపాయలు అండి, ఆరు వారాల క్లాసులు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి job guarantee లేదా placement వాగ్దానం లేదు. మీరు ఇప్పుడు వెళ్లాలనుకుంటే నేను call close చేయగలను, లేదంటే ఇంకేమైనా వివరాలు కావాలా అండి?",
+        "language_context": {},
+        "usage": {},
+        "finish_reason": "whitespace_tail",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": true,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 2.265
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 598,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"సరే అండి, ధన్యవాదాలు.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"end_call\"\n  }\n,\n\n    \"action_claimed\": \"none\",\n    \"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller inquired about course fee (4999 rupees), duration (6 weeks), timings (Mon-Fri 7-8 PM), and job guarantee. Clarified no placement guarantee and \"}\n      ]\n    }\n  }",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"సరే అండి, ధన్యవాదాలు.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"end_call\"\n  }\n,\n\n    \"action_claimed\": \"none\",\n    \"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller inquired about course fee (4999 rupees), duration (6 weeks), timings (Mon-Fri 7-8 PM), and job guarantee. Clarified no placement guarantee and \"}\n      ]\n    }\n  }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 213,
+        "prompt_tokens": 4489,
+        "total_tokens": 4702,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4489,
+          "output_tokens": 213,
+          "total_tokens": 4702
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller inquired about course fee (4999 rupees), duration (6 weeks), timings (Mon-Fri 7-8 PM), and job guarantee. Clarified no placement guarantee and "
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "సరే అండి, ధన్యవాదాలు.",
+          "remaining_request": "",
+          "contact_preference": "end_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.703
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ లో ఉంటుంది, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు జరుగుతాయి. దీనికి minimum age 18 ఉండాలి. మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు మాత్రమే.",
+      "turn": 1,
+      "at": 2.484
+    },
+    {
+      "text": "సరేనండి. మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు అండి, ఆరు వారాల క్లాసులు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి job guarantee లేదా placement వాగ్దానం లేదు. మీరు ఇప్పుడు వెళ్లాలనుకుంటే నేను call close చేయగలను, లేదంటే ఇంకేమైనా వివరాలు కావాలా అండి?",
+      "turn": 2,
+      "at": 4.75
+    },
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 3,
+      "at": 6.5
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 4,
+      "at": 6.546
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.",
+      "spoken": "తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ లో ఉంటుంది, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు జరుగుతాయి. దీనికి minimum age 18 ఉండాలి. మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు మాత్రమే.",
+      "elapsed_s": 2.469,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: Course final fee, duration, class timings ఏమిటి? Job guarantee ఇస్తారా?",
+      "spoken": "సరేనండి. మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు అండి, ఆరు వారాల క్లాసులు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి job guarantee లేదా placement వాగ్దానం లేదు. మీరు ఇప్పుడు వెళ్లాలనుకుంటే నేను call close చేయగలను, లేదంటే ఇంకేమైనా వివరాలు కావాలా అండి?",
+      "elapsed_s": 2.265,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "సరే అండి, ధన్యవాదాలు.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 1.719,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 6.593,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "10cfdb95-b0b6-4393-a992-ebb08ae0fb3c",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "e7082482fcf2b4bc9469c68d3c3c1b2710173d0834f2f78ec07cbf4ceba6c74f",
+  "prompt_chars": 18476,
+  "opening_seeded": "నమస్కారం, నా పేరు అనన్య, నేను బ్రైట్ పాత్ స్కిల్స్ నుండి మాట్లాడుతున్నాను. వయోజనుల కోసం మన ఆరు వారాల ఆన్‌లైన్ పైథాన్ కోర్సు వివరాలు చెప్పడానికి నేను కాల్ చేశాను. ఇప్పుడు మాట్లాడటానికి మీకు కొంచెం సమయం ఉందా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ లో ఉంటుంది, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు జరుగుతాయి. దీనికి minimum age 18 ఉండాలి. మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు మాత్రమే.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి. మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు అండి, ఆరు వారాల క్లాసులు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి job guarantee లేదా placement వాగ్దానం లేదు. మీరు ఇప్పుడు వెళ్లాలనుకుంటే నేను call close చేయగలను, లేదంటే ఇంకేమైనా వివరాలు కావాలా అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "సరే అండి, ధన్యవాదాలు.",
+        "remaining_request": "",
+        "contact_preference": "end_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.593,
+  "hangup_count": 1
+}

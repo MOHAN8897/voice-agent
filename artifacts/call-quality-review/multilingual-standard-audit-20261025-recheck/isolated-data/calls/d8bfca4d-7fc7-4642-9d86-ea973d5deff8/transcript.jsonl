@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "నా పేరు Audit Customer, email audit.customer@example.invalid. నా enquiryని team review కోసం save చేయండి. రేపు మధ్యాహ్నం మూడు గంటలు నాకు అనుకూలం. Request submit చేయడానికి నా సమ్మతి ఉంది, కానీ order లేదా booking confirm అయిందని చెప్పకండి.", "ts": "2026-10-25T17:29:00.027948Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "సరేనండి, మీ details note చేసుకున్నాను. మా team review కోసం దీన్ని save చేస్తాను, కానీ visit ఇంకా confirm అవ్వలేదు అండి. మీకు రేపు మధ్యాహ్నం మూడు గంటల time okay కదా?", "ts": "2026-10-25T17:29:02.709906Z", "brain_latency_ms": 2526}
+{"seq": 3, "role": "user", "text": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.", "ts": "2026-10-25T17:29:02.723477Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-25T17:29:02.732037Z", "brain_latency_ms": 1}

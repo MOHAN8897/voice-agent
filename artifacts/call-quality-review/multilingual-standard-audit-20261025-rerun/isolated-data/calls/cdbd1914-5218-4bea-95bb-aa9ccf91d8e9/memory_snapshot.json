@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "stant: மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய், ஆறு வாரங்கள் வகுப்பு, வார இறுதி நாட்களில் காலை பத்து முதல் பதினொன்று மணி வரை இருக்கும். இதுல எந்த job guarantee-யும் கிடையாதுங்க. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா?\nuser: Job guarantee வேண்டாம், ஆனால் spoken English கத்துக்க ஆர்வம் இருக்கு. Course சொல்லுங்க.\nassistant: சரிங்க, job guarantee எதுவும் கிடையாது, ஆனா spoken English கத்துக்க இது நல்ல வகுப்பு. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா? இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது."
+}

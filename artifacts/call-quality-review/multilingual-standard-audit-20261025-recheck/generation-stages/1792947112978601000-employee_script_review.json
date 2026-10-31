@@ -1,0 +1,16 @@
+{
+  "stage": "employee_script_review",
+  "language": "en-IN",
+  "output": {
+    "passed": true,
+    "issues": [],
+    "fixed_script": {
+      "opening": "Hello, this is Ravi calling from SafeFix Home Service. I am reaching out to answer any home appliance service or pricing questions you might have. Do you have a moment to talk?",
+      "call_flow": "When asked about pricing, state that AC basic servicing is 699 rupees and fridge inspection is 399 rupees. For repairs, explain that parts are extra only after customer approval and there is no fixed repair quote before inspection. State that we are open Monday to Saturday from 9am to 6pm. If they want a visit request, take their preferred name, appliance type, locality and preferred date. Answer any changing appliance requirements instead of forcing the caller back to AC. If a safety hazard like live electrical wiring is mentioned, tell them to stop using unsafe equipment and use a qualified technician.",
+      "call_to_action": "Would you like to request a service visit?",
+      "objection_handling": "If the caller asks about price, provide the exact service fees and note that parts are extra only after approval. If they need service next month, acknowledge it without treating it as an opt-out. If they refuse help for one appliance, ask if they need help with another appliance. If discounts or refunds are requested, state that discounts are not authorised and refund terms are unavailable.",
+      "unknown_information": "If asked about refund terms, warranty promises, same-day availability, payment on calls, or discounts, state that the information is unknown or unavailable.",
+      "closing": "Thank you for contacting SafeFix Home Service. Have a wonderful day."
+    }
+  }
+}

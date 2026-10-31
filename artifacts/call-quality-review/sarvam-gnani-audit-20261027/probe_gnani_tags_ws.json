@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-10-27T17:45:18.651431+00:00",
+  "model": "timbre-v3.0",
+  "voice": "Shivani",
+  "language": "en-IN",
+  "rows": [
+    {
+      "case": "A_neutral",
+      "text": "Great news, your trial class is free.",
+      "bytes": 92160,
+      "duration_s": 2.88,
+      "rms": 2203.6,
+      "transcript": "Great news, your trial class is free.",
+      "stt_error": "",
+      "errors": []
+    },
+    {
+      "case": "B_excited",
+      "text": "<excited> Great news, your trial class is free.",
+      "bytes": 92160,
+      "duration_s": 2.88,
+      "rms": 1907.8,
+      "transcript": "Great news, your trial class is free.",
+      "stt_error": "",
+      "errors": []
+    },
+    {
+      "case": "C_control_spoken_tag",
+      "text": "excited Great news, your trial class is free.",
+      "bytes": 102400,
+      "duration_s": 3.2,
+      "rms": 2076.9,
+      "transcript": "Excited, Great News. Your Trial Class Is Free.",
+      "stt_error": "",
+      "errors": []
+    },
+    {
+      "case": "D_pauses",
+      "text": "<pauses> Let me check that for you.",
+      "bytes": 76800,
+      "duration_s": 2.4,
+      "rms": 1595.5,
+      "transcript": "Let me check that for you.",
+      "stt_error": "",
+      "errors": []
+    },
+    {
+      "case": "E_control_plain",
+      "text": "Let me check that for you.",
+      "bytes": 38400,
+      "duration_s": 1.2,
+      "rms": 1792.2,
+      "transcript": "Let me check that for you.",
+      "stt_error": "",
+      "errors": []
+    },
+    {
+      "case": "F_slow",
+      "text": "<slow> The intermediate course costs eight thousand rupees.",
+      "bytes": 112640,
+      "duration_s": 3.52,
+      "rms": 2211.8,
+      "transcript": "The intermediate course costs 8000 rupees.",
+      "stt_error": "",
+      "errors": []
+    },
+    {
+      "case": "G_control_fast",
+      "text": "The intermediate course costs eight thousand rupees.",
+      "bytes": 112640,
+      "duration_s": 3.52,
+      "rms": 2011.3,
+      "transcript": "The intermediate course costs ₹8000.",
+      "stt_error": "",
+      "errors": []
+    }
+  ],
+  "duration_ratios": {
+    "B_excited_vs_A_neutral": 1.0,
+    "D_pauses_vs_E_control_plain": 2.0,
+    "F_slow_vs_G_control_fast": 1.0,
+    "B_excited_vs_C_control_spoken_tag": 0.9
+  }
+}

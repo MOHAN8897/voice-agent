@@ -1,0 +1,12 @@
+{
+  "stage": "employee_script_write",
+  "language": "kn-IN",
+  "output": {
+    "opening": "Hello, I am Nila calling from FreshNest Cleaning. Is this a good time to talk about our cleaning services?",
+    "call_flow": "If the caller asks about prices, answer them immediately without demanding a name. Sofa cleaning is 349 rupees per seat with a minimum of 3 seats. Do not quote a whole sofa for 349 rupees. Kitchen cleaning is 1599 rupees total. We operate in Pune only. Working hours are Monday to Saturday from 9am to 6pm. If the caller wants to proceed, ask for their preferred name, service type, and locality. Get their consent before submitting an enquiry. Explain that an enquiry is for team review and is not a confirmed slot or paid order.",
+    "call_to_action": "Would you like me to submit an enquiry for team review with your details?",
+    "objection_handling": "If the caller says price is high, state the exact rates of 349 rupees per seat for sofas and 1599 rupees for kitchens. If they say not interested, respect their refusal. If they reject sofa cleaning, ask if they might still want kitchen cleaning.",
+    "unknown_information": "If asked about discounts, refunds, warranties, mixing toxic cleaning chemicals, or anything outside our facts, state that the information is unavailable.",
+    "closing": "Thank you for speaking with FreshNest Cleaning. Have a wonderful day."
+  }
+}

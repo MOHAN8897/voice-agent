@@ -1,0 +1,149 @@
+{
+  "key": "cleaning-ta-IN-none-4_abuse",
+  "business": "cleaning",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "28379062-167d-521b-acaa-f5f7b31aef23",
+  "call_id": "e58fc143-d644-4ffd-8423-d6d3310701bb",
+  "session_id": "audit-cleaning-ta-IN-none-4_abuse-c168cf25",
+  "compiled_checksum": "5e5238d3b8cf5d51b2a82b5c24606ff9a1fd78590a03d3d2536ebf28e2da3fd9",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 191,
+      "sse_content_preview": "மன்னிக்கவும், கோபப்படுறீங்கன்னு புரியுது. சோஃபா சுத்தம் ஒரு சீட்டுக்கு 349 ரூபாய், குறைந்தபட்சம் 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். உங்களுக்கு எந்த service வேணும்?",
+      "sse_content_tail": "மன்னிக்கவும், கோபப்படுறீங்கன்னு புரியுது. சோஃபா சுத்தம் ஒரு சீட்டுக்கு 349 ரூபாய், குறைந்தபட்சம் 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். உங்களுக்கு எந்த service வேணும்?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 61,
+        "prompt_tokens": 4210,
+        "total_tokens": 4271,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "மன்னிக்கவும், கோபப்படுறீங்கன்னு புரியுது. சோஃபா சுத்தம் ஒரு சீட்டுக்கு 349 ரூபாய், குறைந்தபட்சம் 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் 1599 ரூபாய் ஆகும். உங்களுக்கு எந்த service வேணும்?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4210,
+          "output_tokens": 61,
+          "total_tokens": 4271
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.75
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "மன்னிக்கவும், கோபப்படுறீங்கன்னு புரியுது. சோஃபா சுத்தம் ஒரு சீட்டுக்கு three hundred forty nine ரூபாய், குறைந்தபட்சம் 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். உங்களுக்கு எந்த service வேணும்?",
+      "turn": 1,
+      "at": 2.031
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 2,
+      "at": 2.062
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.",
+      "spoken": "மன்னிக்கவும், கோபப்படுறீங்கன்னு புரியுது. சோஃபா சுத்தம் ஒரு சீட்டுக்கு three hundred forty nine ரூபாய், குறைந்தபட்சம் 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். உங்களுக்கு எந்த service வேணும்?",
+      "elapsed_s": 2.016,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.079,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.125,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "e58fc143-d644-4ffd-8423-d6d3310701bb",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "403aa6d884b1097fbe94536f67617b50c1e441d919b1dbfdc8dc64ca23aa1786",
+  "prompt_chars": 17687,
+  "opening_seeded": "வணக்கம், நான் பிரெஷ்நெஸ்ட் கிளீனிங்கில் இருந்து நிலா பேசுகிறேன். எங்கள் துப்புரவு சேவைகளைப் பற்றி உங்களுக்குத் தகவல் தரலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "மன்னிக்கவும், கோபப்படுறீங்கன்னு புரியுது. சோஃபா சுத்தம் ஒரு சீட்டுக்கு three hundred forty nine ரூபாய், குறைந்தபட்சம் 3 சீட்டுகள் வேணும். சமையலறை சுத்தம் மொத்தம் one thousand five hundred ninety nine ரூபாய் ஆகும். உங்களுக்கு எந்த service வேணும்?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.125,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

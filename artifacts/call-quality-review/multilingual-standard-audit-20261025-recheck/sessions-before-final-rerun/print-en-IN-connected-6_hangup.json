@@ -1,0 +1,412 @@
+{
+  "key": "print-en-IN-connected-6_hangup",
+  "business": "print",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "462931fd-5723-5ca3-9185-4c211c89b3c2",
+  "call_id": "14ea6691-054e-49e6-a456-d5f31006e2a4",
+  "session_id": "audit-print-en-IN-connected-6_hangup-567de2cc",
+  "compiled_checksum": "469e25fa9016f54e25a6de5b1468eb7e210876abafd5df4545b0c0dcdd5ff9dc",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 1210,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested service, price and conditions and is interested; goal_complete not yet reached because quote request details are still needed.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"continue\",\n    \"remaining_request\": \"quote request with name and locality\",\n    \"contact_preference\": \"end_call\"\n  }\n,\n\n  \"action_claimed\": \"none\"\n,\n\n  \"spoken_response\": \"Visiting cards are twenty five rupees per card with a minimum order of one hundred cards. Wedding invitations are also available, but the quote depends on the design and quantity. We deliver to Pune by post in five working days after artwork approval. Would you like to share your preferred name and delivery locality so I can note down a quote request for you?\"\n,\n\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"caller_interest\",\n        \"value\": \"interested_in_quote\"\n      }\n    ]\n  }\n}Yes, we do print wedding invitations, but the price depends on the design and quantity since there is no fixed rate. Delivery to Pune takes five working days after artwork approval. Which type of card are you looking at, visiting cards or wedding invitations?",
+      "sse_content_tail": "ity\",\n    \"contact_preference\": \"end_call\"\n  }\n,\n\n  \"action_claimed\": \"none\"\n,\n\n  \"spoken_response\": \"Visiting cards are twenty five rupees per card with a minimum order of one hundred cards. Wedding invitations are also available, but the quote depends on the design and quantity. We deliver to Pune by post in five working days after artwork approval. Would you like to share your preferred name and delivery locality so I can note down a quote request for you?\"\n,\n\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"caller_interest\",\n        \"value\": \"interested_in_quote\"\n      }\n    ]\n  }\n}Yes, we do print wedding invitations, but the price depends on the design and quantity since there is no fixed rate. Delivery to Pune takes five working days after artwork approval. Which type of card are you looking at, visiting cards or wedding invitations?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 51,
+        "prompt_tokens": 4146,
+        "total_tokens": 4197,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Visiting cards are twenty five rupees per card with a minimum order of one hundred cards. Wedding invitations are also available, but the quote depends on the design and quantity. We deliver to Pune by post in five working days after artwork approval. Would you like to share your preferred name and delivery locality so I can note down a quote request for you?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3943,
+          "output_tokens": 246,
+          "total_tokens": 4189
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "caller_interest",
+              "value": "interested_in_quote"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly requested service, price and conditions and is interested; goal_complete not yet reached because quote request details are still needed.",
+          "remaining_request": "quote request with name and locality",
+          "contact_preference": "end_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.234
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 927,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"none\", \"contact_preference\": \"end_call\"}\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"none\", \"contact_preference\": \"end_call\"}\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.375
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 383,
+      "sse_content_preview": "{\"spoken_response\":\"Yes, we do print wedding invitations. The price depends on the design and quantity, as there is no fixed rate. Delivery to Pune takes five working days after artwork approval. Which type of card were you looking at, and how many do you need?\"}You are welcome. Which type of card are you looking at, visiting cards or wedding invitations, and how many do you need?",
+      "sse_content_tail": "{\"spoken_response\":\"Yes, we do print wedding invitations. The price depends on the design and quantity, as there is no fixed rate. Delivery to Pune takes five working days after artwork approval. Which type of card were you looking at, and how many do you need?\"}You are welcome. Which type of card are you looking at, visiting cards or wedding invitations, and how many do you need?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 27,
+        "prompt_tokens": 4250,
+        "total_tokens": 4277,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Yes, we do print wedding invitations. The price depends on the design and quantity, as there is no fixed rate. Delivery to Pune takes five working days after artwork approval. Which type of card were you looking at, and how many do you need?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4009,
+          "output_tokens": 58,
+          "total_tokens": 4067
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.735
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 569,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'Okay, thanks' which is a bare acknowledgement, not a confirmed next step or goal completion. Per policy, a bare okay or thanks is never permission to hang up.\",\n    \"reason\": \"none\",\n    \"decision\": \"continue\",\n    \"remaining_request\": \"none expressed\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"You're welcome. Which type of card are you looking at, visiting cards or wedding invitations, and how many do you need?\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'Okay, thanks' which is a bare acknowledgement, not a confirmed next step or goal completion. Per policy, a bare okay or thanks is never permission to hang up.\",\n    \"reason\": \"none\",\n    \"decision\": \"continue\",\n    \"remaining_request\": \"none expressed\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"You're welcome. Which type of card are you looking at, visiting cards or wedding invitations, and how many do you need?\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 173,
+        "prompt_tokens": 4113,
+        "total_tokens": 4286,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "You're welcome. Which type of card are you looking at, visiting cards or wedding invitations, and how many do you need?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4113,
+          "output_tokens": 173,
+          "total_tokens": 4286
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "Caller said 'Okay, thanks' which is a bare acknowledgement, not a confirmed next step or goal completion. Per policy, a bare okay or thanks is never permission to hang up.",
+          "remaining_request": "none expressed",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.047
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Visiting cards are twenty five rupees per card with a minimum order of one hundred cards.",
+      "turn": 1,
+      "at": 3.422
+    },
+    {
+      "text": "Wedding invitations are also available, but the quote depends on the design and quantity.",
+      "turn": 1,
+      "at": 3.422
+    },
+    {
+      "text": "We deliver to Pune by post in five working days after artwork approval.",
+      "turn": 1,
+      "at": 3.422
+    },
+    {
+      "text": "Would you like to",
+      "turn": 1,
+      "at": 3.625
+    },
+    {
+      "text": "Yes, we do print wedding invitations. The price depends on the design and quantity, as there is no fixed rate. Delivery to Pune takes five working days after artwork approval. Which type of card were you looking at, and how many do you need?",
+      "turn": 2,
+      "at": 6.969
+    },
+    {
+      "text": "You're welcome.",
+      "turn": 3,
+      "at": 8.813
+    },
+    {
+      "text": "Which type of card are you looking at, visiting cards or wedding invitations, and how many do you need?",
+      "turn": 3,
+      "at": 8.86
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 4,
+      "at": 8.969
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "Visiting cards are twenty five rupees per card with a minimum order of one hundred cards. Wedding invitations are also available, but the quote depends on the design and quantity. We deliver to Pune by post in five working days after artwork approval. Would you like to",
+      "elapsed_s": 3.609,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?",
+      "spoken": "Yes, we do print wedding invitations. The price depends on the design and quantity, as there is no fixed rate. Delivery to Pune takes five working days after artwork approval. Which type of card were you looking at, and how many do you need?",
+      "elapsed_s": 3.328,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "Okay, thanks.",
+      "spoken": "You're welcome. Which type of card are you looking at, visiting cards or wedding invitations, and how many do you need?",
+      "elapsed_s": 1.953,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 9.016,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "14ea6691-054e-49e6-a456-d5f31006e2a4",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "13d0600179a387a79fa6c49d136bf52b0b8ded6daf803cba45fccfc064a0254a",
+  "prompt_chars": 17610,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, this is Meera calling from ClearPrint Studio. Is it a good time to speak about your card printing needs?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly requested service, price and conditions and is interested; goal_complete not yet reached because quote request details are still needed.",
+        "remaining_request": "quote request with name and locality",
+        "contact_preference": "end_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "Visiting cards are twenty five rupees per card with a minimum order of one hundred cards. Wedding invitations are also available, but the quote depends on the design and quantity. We deliver to Pune by post in five working days after artwork approval.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "Yes, we do print wedding invitations. The price depends on the design and quantity, as there is no fixed rate. Delivery to Pune takes five working days after artwork approval. Which type of card were you looking at, and how many do you need?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "Caller said 'Okay, thanks' which is a bare acknowledgement, not a confirmed next step or goal completion. Per policy, a bare okay or thanks is never permission to hang up.",
+        "remaining_request": "none expressed",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "You're welcome. Which type of card are you looking at, visiting cards or wedding invitations, and how many do you need?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 9.016,
+  "hangup_count": 1
+}

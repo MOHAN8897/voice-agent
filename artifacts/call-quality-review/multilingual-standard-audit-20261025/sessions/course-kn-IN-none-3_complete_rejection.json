@@ -1,0 +1,130 @@
+{
+  "key": "course-kn-IN-none-3_complete_rejection",
+  "business": "course",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "9e6f9a82-523d-55f8-9044-940b6dfddc86",
+  "call_id": "435a81b8-0178-4076-b20d-bba1b7feda5a",
+  "session_id": "audit-course-kn-IN-none-3_complete_rejection-8cff5501",
+  "compiled_checksum": "c92b194c049ebc4683e421c2e38b0dc11b88712d47649139eab1fb685a623a20",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 529,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_preference\",\n        \"key\": \"contact_preference\",\n        \"value\": \"do_not_call\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_preference\",\n        \"key\": \"contact_preference\",\n        \"value\": \"do_not_call\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 191,
+        "prompt_tokens": 4009,
+        "total_tokens": 4200,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4009,
+          "output_tokens": 191,
+          "total_tokens": 4200
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "set_preference",
+              "key": "contact_preference",
+              "value": "do_not_call"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "firm_refusal",
+          "evidence": "Caller explicitly said 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.828
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 1,
+      "at": 0.844
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.844,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "86dca6dad538703c16cfeab0af4289fdc43f18aa4b8d66c296256454f6350d3e",
+  "prompt_chars": 17552,
+  "opening_seeded": "Namaskara, I am Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our adult beginner Python course?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "Caller explicitly said 'ಬೇಡ, ಧನ್ಯವಾದಗಳು. ನಿಮ್ಮ service ಅಥವಾ product ನನಗೆ ಬೇಡ. ದಯವಿಟ್ಟು call ಮುಗಿಸಿ.'",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.859,
+  "hangup_count": 0
+}

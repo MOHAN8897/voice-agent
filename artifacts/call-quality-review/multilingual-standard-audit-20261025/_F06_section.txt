@@ -1,0 +1,20 @@
+### F06 — P1: the connected integration is offered, but the current initial request never calls it
+
+**Confidence:** Confirmed failed integration triggering in this matrix and paired probes. The structured-output/tool-selection interaction is a likely cause, not a universal claim about every possible request to this provider.
+
+All **135 connected sessions** had the mock enquiry capability available; it was declared on model turns, while deterministic closes bypassed the model. **Zero CRM executions** occurred. First-turn direct submission variants prevent this from being explained solely by earlier hangup. Some ordinary requests can legitimately need more business details, so a separate fully specified ClearPrint request supplied name, synthetic email, 200 invitations, Baner/Pune, preferred review time and consent.
+
+With the same compiled brain and tool declarations in English and Telugu:
+
+- Current full live-turn schema plus `tool_choice=auto`: 0 native tool calls in 2 requests.
+- No response schema plus `tool_choice=auto`: 1 native CRM call in each of 2 requests.
+- No response schema plus `tool_choice=required`: 1 native CRM call in each of 2 requests. This last forcing variant is diagnostic only; it must not become the production default.
+
+Evidence: [Paired native-tool results](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/tool-probe-results.json>). Current combined tool-and-full-schema request: [server/call/live_turn_orchestrator.py:1052](<D:/voice agent/server/call/live_turn_orchestrator.py:1052>), lines 1052–1080. The post-tool final-response path is lines 1113–1145 of that file.
+
+To isolate downstream orchestration, genuine native tool calls from the no-schema diagnostic were replayed through the actual `_execute_composed_tools`, with success, timeout/unknown, and denied capability. **6/6 protocol checks passed**: tenant/agent scope asserted, matching `tool_call_id`, unknown outcome on timeout, no execution when unauthorized. However, only **3/6 post-tool structured model replies completed**; the other three were incomplete. Telugu success correctly distinguished a saved enquiry from an order/booking. Evidence: [Downstream gateway and real final-reply probes](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/gateway-probe-results.json>). These replays do not turn the normal matrix's zero executions into a success.
+
+**Required change:** a provider-supported native tool selection phase followed by the validated speech phase. Execute only offered/authorized actions, preserve tool IDs, expose unknown outcomes honestly, and never replay a write after uncertain completion. Use typed action proof (`enquiry_saved`, `appointment_confirmed`, `order_confirmed`) rather than a universal order flag. The generic post-tool developer instruction currently asks for missing quantity/name/delivery address whenever no `CONFIRM_ORDER` success exists, even for non-order workflows: [server/call/live_turn_orchestrator.py:1504](<D:/voice agent/server/call/live_turn_orchestrator.py:1504>), lines 1504–1514. Scope that instruction to order-taking agents.
+
+**Acceptance:** a consenting, fully specified enquiry executes exactly once and is acknowledged only after success; absent/denied integration cannot execute; timeout cannot produce a success claim or duplicate write; a course enquiry never demands a product delivery address. Re-run the real initial model-selection path, not only a direct gateway test.
+

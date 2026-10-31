@@ -1,0 +1,44 @@
+[
+  {
+    "mode": "off",
+    "dnd": false,
+    "jobs": [],
+    "passed": true
+  },
+  {
+    "mode": "review",
+    "dnd": false,
+    "jobs": [
+      [
+        "missed",
+        "needs_review",
+        "approval_required"
+      ]
+    ],
+    "passed": true
+  },
+  {
+    "mode": "automatic",
+    "dnd": false,
+    "jobs": [
+      [
+        "missed",
+        "scheduled",
+        "missed_call"
+      ]
+    ],
+    "passed": true
+  },
+  {
+    "mode": "automatic",
+    "dnd": true,
+    "jobs": [
+      [
+        "missed",
+        "suppressed",
+        "do_not_call"
+      ]
+    ],
+    "passed": true
+  }
+]

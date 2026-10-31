@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.", "ts": "2026-10-25T15:30:10.419246Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಖಂಡಿತ, ಹೇಳಿ.", "ts": "2026-10-25T15:30:11.455375Z", "brain_latency_ms": 1031}
+{"seq": 3, "role": "user", "text": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: ನೀವು ಮದುವೆಯ ಆಮಂತ್ರಣಗಳನ್ನೂ print ಮಾಡುತ್ತೀರಾ? ಬೆಲೆ ಮತ್ತು delivery time ಎಷ್ಟು?", "ts": "2026-10-25T15:30:11.470650Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಹೌದು, ನಾವು wedding invitations ಕೂಡ print ಮಾಡ್ತೀವಿ. ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ price depend ಆಗುತ್ತೆ, so fixed price ಇಲ್ಲ. Artwork approval ಆದ್ಮೇಲೆ Pune-ಗೆ post ಮೂಲಕ ಐದು working days-ನಲ್ಲಿ delivery ಆಗುತ್ತೆ. ನಿಮಗೆ visiting cards ಬಗ್ಗೆ ಏನಾದ್ರೂ details ಬೇಕಾ, ಅಥವಾ ಮದುವೆ ಆಮಂತ್ರಣಗಳ.", "ts": "2026-10-25T15:30:12.685456Z", "brain_latency_ms": 1196}
+{"seq": 5, "role": "user", "text": "ನನಗೆ visiting cards ಬೇಡ, ಆದರೆ ಮದುವೆಯ ಆಮಂತ್ರಣಗಳು ಬೇಕು. ನೀವು ಮಾಡುತ್ತೀರಾ?", "ts": "2026-10-25T15:30:12.704981Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ಖಂಡಿತ, ಹೇಳಿ.", "ts": "2026-10-25T15:30:13.684615Z", "brain_latency_ms": 977}
+{"seq": 7, "role": "user", "text": "ನನ್ನ ಹೆಸರು Audit Customer, email audit.customer@example.invalid. ನನ್ನ enquiryಯನ್ನು team reviewಗಾಗಿ save ಮಾಡಿ. ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆ ನನಗೆ ಅನುಕೂಲ. Request submit ಮಾಡಲು ನನ್ನ ಒಪ್ಪಿಗೆ ಇದೆ, ಆದರೆ order ಅಥವಾ booking confirm ಆಯಿತು ಎಂದು ಹೇಳಬೇಡಿ.", "ts": "2026-10-25T15:30:13.709856Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ಖಂಡಿತ, ಹೇಳಿ.", "ts": "2026-10-25T15:30:14.591330Z", "brain_latency_ms": 875}
+{"seq": 9, "role": "user", "text": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.", "ts": "2026-10-25T15:30:14.610017Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "ಖಂಡಿತ, ಹೇಳಿ.", "ts": "2026-10-25T15:30:15.337479Z", "brain_latency_ms": 724}

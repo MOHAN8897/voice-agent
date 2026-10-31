@@ -1,0 +1,434 @@
+"""Typed proofs for actions a turn may claim.
+
+A reply may say an enquiry was saved, an appointment was requested or
+confirmed, or an order was confirmed only when a tool result from this turn
+proved that exact action. The proof type is carried into the validated speech
+phase and checked again before any text is spoken (2026-10-25 audit F06).
+"""
+from __future__ import annotations
+
+import json
+import re
+from typing import Any, Iterable
+
+PROOF_ENQUIRY_SAVED = "enquiry_saved"
+PROOF_APPOINTMENT_REQUESTED = "appointment_requested"
+PROOF_APPOINTMENT_CONFIRMED = "appointment_confirmed"
+PROOF_ORDER_CONFIRMED = "order_confirmed"
+
+ACTION_CLAIMS: tuple[str, ...] = (
+    PROOF_ENQUIRY_SAVED,
+    PROOF_APPOINTMENT_REQUESTED,
+    PROOF_APPOINTMENT_CONFIRMED,
+    PROOF_ORDER_CONFIRMED,
+)
+_RECORDED_REQUEST = frozenset({PROOF_ENQUIRY_SAVED, PROOF_APPOINTMENT_REQUESTED})
+
+# Statuses that prove the external action happened. ``cancelled`` is
+# deliberately absent: a cancelled booking is not a confirmed one.
+_SUCCESS_STATUSES = frozenset(
+    {
+        "ok",
+        "success",
+        "succeeded",
+        "confirmed",
+        "created",
+        "booked",
+        "sent",
+        "draft_created",
+        "rescheduled",
+        "subscribed",
+        "accepted",
+    }
+)
+_PENDING_STATUSES = frozenset({"requested", "pending", "tentative", "queued"})
+
+_ENQUIRY_SUFFIXES = (
+    "_CREATE_ENQUIRY",
+    "_CREATE_LEAD",
+    "_CREATE_CONTACT",
+    "_CREATE_DEAL",
+    "_CREATE_PERSON",
+    "_CREATE_RECORD",
+    "_CREATE_CONVERSATION",
+    "_CREATE_NOTE",
+)
+_APPOINTMENT_SUFFIXES = (
+    "_CREATE_EVENT",
+    "_CREATE_BOOKING",
+    "_CREATE_INVITEE",
+    "_CREATE_MEETING",
+    "_CREATE_APPOINTMENT",
+    "_RESCHEDULE_EVENT",
+    "_RESCHEDULE_BOOKING",
+    "_RESCHEDULE_APPOINTMENT",
+)
+_REQUEST_SUFFIXES = (
+    "_CREATE_TASK",
+    "_CREATE_TICKET",
+    "_CREATE_ISSUE",
+    "_CREATE_CARD",
+    "_CREATE_ITEM",
+)
+
+# Spoken in everyday phone register: the caller hears this mid-call, so it reads
+# like a person talking, not a notice ("నిర్ధారణ", "अनुरोध" were bookish).
+_UNCONFIRMED_LINES: dict[str, str] = {
+    "en": "I couldn't confirm that your request went through. Please don't treat it as done.",
+    "te": "అది పూర్తయిందో లేదో నేను confirm చేయలేకపోయాను. ఇంకా అయిపోయిందని అనుకోకండి.",
+    "hi": "ये हो गया या नहीं, अभी confirm नहीं हो पाया। प्लीज़ इसे हुआ हुआ मत मानिए।",
+    "mr": "हे झालं की नाही, ते अजून confirm झालं नाही. प्लीज ते झालं असं समजू नका.",
+    "ta": "அது முடிஞ்சதான்னு என்னால confirm பண்ண முடியல. அது முடிஞ்சதா நினைக்காதீங்க.",
+    "kn": "ಅದು ಆಯ್ತಾ ಇಲ್ವಾ ಅಂತ ನನಗೆ confirm ಮಾಡೋಕೆ ಆಗ್ಲಿಲ್ಲ. ಅದು ಆಗಿದೆ ಅಂತ ಅಂದ್ಕೋಬೇಡಿ.",
+    "ml": "അത് നടന്നോ എന്ന് എനിക്ക് confirm ചെയ്യാൻ പറ്റിയില്ല. അത് കഴിഞ്ഞെന്ന് കരുതരുത്.",
+    "bn": "এটা হয়েছে কিনা আমি confirm করতে পারিনি। প্লিজ এটা হয়ে গেছে ধরে নেবেন না।",
+    "gu": "એ થયું કે નહીં, એ હજી confirm નથી થયું. પ્લીઝ એને થઈ ગયું ન માનતા.",
+    "pa": "ਇਹ ਹੋਇਆ ਕਿ ਨਹੀਂ, ਅਜੇ confirm ਨਹੀਂ ਹੋਇਆ। ਕਿਰਪਾ ਕਰਕੇ ਇਸਨੂੰ ਹੋਇਆ ਨਾ ਮੰਨੋ।",
+}
+
+
+def action_unconfirmed_line_for(language: str | None) -> str:
+    from server.prompts.agent_voice_rules import normalize_compile_language
+
+    lang = normalize_compile_language(language)
+    return _UNCONFIRMED_LINES.get(lang.split("-")[0], _UNCONFIRMED_LINES["en"])
+
+
+def _status(result: Any) -> str:
+    if not isinstance(result, dict):
+        return ""
+    return str(result.get("status") or "").strip().lower()
+
+
+def _result_text(result: Any) -> str:
+    try:
+        return json.dumps(result, ensure_ascii=False, default=str).lower()
+    except (TypeError, ValueError):
+        return ""
+
+
+def proof_for_tool_result(tool_name: str, result: Any) -> str | None:
+    """The typed action a successful tool result proves, or None.
+
+    Unknown, error and unclassified results prove nothing, so a reply that
+    claims one of these actions is replaced before it is spoken.
+    """
+    name = str(tool_name or "").upper()
+    status = _status(result)
+    if status not in _SUCCESS_STATUSES:
+        return None
+    if name == "CONFIRM_ORDER":
+        return PROOF_ORDER_CONFIRMED
+    if name in {"SAVE_ENQUIRY", "REQUEST_HUMAN_HANDOFF"}:
+        # A saved handoff is a recorded request for the business's team.
+        return PROOF_ENQUIRY_SAVED
+    if name.endswith(_ENQUIRY_SUFFIXES):
+        return PROOF_ENQUIRY_SAVED
+    if name.endswith(_APPOINTMENT_SUFFIXES):
+        details = _result_text(result)
+        if (
+            (isinstance(result, dict) and result.get("confirmed") is False)
+            or status in _PENDING_STATUSES
+            or any(word in details for word in ('"requested"', '"pending"', '"tentative"'))
+        ):
+            return PROOF_APPOINTMENT_REQUESTED
+        return PROOF_APPOINTMENT_CONFIRMED
+    if name.endswith(_REQUEST_SUFFIXES):
+        return PROOF_APPOINTMENT_REQUESTED
+    return None
+
+
+def proof_set(proofs: Iterable[str]) -> set[str]:
+    return {str(proof) for proof in proofs if str(proof) in ACTION_CLAIMS}
+
+
+def claim_has_proof(claim: str | None, proofs: Iterable[str]) -> bool:
+    if not claim or claim not in ACTION_CLAIMS:
+        return True
+    available = proof_set(proofs)
+    if claim in _RECORDED_REQUEST:
+        return bool(available & _RECORDED_REQUEST)
+    return claim in available
+
+
+_ORDER_CLAIM = re.compile(
+    r"\b(?:order|purchase)\b[^.!?]{0,60}\b(?:confirmed|placed|done|complete[d]?)\b|"
+    r"\b(?:confirmed|placed)\b[^.!?]{0,40}\b(?:order|purchase)\b|"
+    r"\b(?:order|purchase)\b[^.!?]{0,60}\bconfirm(?:ing)?\b[^.!?]{0,24}(?:చేస్తున్న|అయింది|చేశా)|"
+    r"(?:ఆర్డర్|ఆర్డరు)[^.!?]{0,40}(?:నిర్ధార|పూర్తి)|"
+    r"(?:ऑर्डर)[^.!?]{0,40}(?:पुष्टि|पूरा)|"
+    r"(?:ஆர்டர்)[^.!?]{0,40}(?:உறுதி|முடிந்த)|"
+    r"(?:ಆರ್ಡರ್)[^.!?]{0,40}(?:ದೃಢೀಕರಿಸ|ಪೂರ್ಣಗೊಂಡ)|"
+    r"(?:ഓർഡർ)[^.!?]{0,40}(?:സ്ഥിരീകരിച്ച|പൂർത്തിയായ)|"
+    r"(?:ઓર્ડર)[^.!?]{0,40}(?:પુષ્ટિ|કન્ફર્મ|પૂર્ણ|મૂકી)|"
+    # The English loanword "confirm" written in each script, followed by a done/doing verb.
+    r"(?:order|ఆర్డర్|ऑर्डर|ஆர்டர்|ಆರ್ಡರ್|ഓർഡർ|ઓર્ડર)[^.!?]{0,40}"
+    r"(?:confirm|కన్ఫర్మ్|कन्फर्म|கன்ஃபார்ம்|கன்பார்ம்|ಕನ್ಫರ್ಮ್|കൺഫേം|કન્ફર્મ)[^.!?]{0,20}"
+    r"(?:చేస్తున్న|చేశా|అయింది|అయ్యింది|कर\s*(?:दिया|रहा|रही|दी)|हो\s*गया|பண்ணிட்ட|பண்றேன்|ஆயிடுச்சு|"
+    r"ಮಾಡ್ತೀನಿ|ಮಾಡಿದ್ದೀನಿ|ಆಯ್ತು|ചെയ്തു|ചെയ്യുന്നു|આવી\s*ગયો|કરી\s*દીધો|કરું\s*છું|ing\b|ed\b)",
+    re.I,
+)
+_APPOINTMENT_CLAIM = re.compile(
+    # Site surveys and consultations are bookings too: "your free site survey
+    # is booked for Saturday" was spoken without any booking tool.
+    r"\b(?:appointment|booking|slot|visit|meeting|reservation|survey|consultation)\b[^.!?]{0,60}"
+    r"\b(?:confirmed|booked|placed|scheduled|reserved|fixed)\b|"
+    r"\b(?:confirmed|booked|placed|scheduled|reserved)\b[^.!?]{0,40}"
+    r"\b(?:appointment|booking|slot|visit|meeting|reservation|survey|consultation)\b|"
+    r"(?:అపాయింట్\u200cమెంట్|బుకింగ్|స్లాట్)[^.!?]{0,40}(?:నిర్ధార|బుక్|షెడ్యూల్)|"
+    r"(?<!ఛార్జ్\s)(?<!ఛార్జీ\s)(?<!ఫీజు\s)(?<!ఖర్చు\s)విజిట్[^.!?]{0,40}(?:నిర్ధార|షెడ్యూల్)|"
+    r"(?:अपॉइंटमेंट|बुकिंग|विज़िट|सर्वे)[^.!?]{0,40}(?:पुष्टि|बुक|निर्धारित)|"
+    r"(?:அப்பாயின்ட்மென்ட்|புக்கிங்|விஜிட்)[^.!?]{0,40}(?:உறுதி|புக்|திட்டமிட)|"
+    r"(?:ಅಪಾಯಿಂಟ್\u200cಮೆಂಟ್|ಬುಕಿಂಗ್|ವಿಜಿಟ್)[^.!?]{0,40}(?:ದೃಢೀಕರಿಸ|ಬುಕ್|ನಿಗದಿ)|"
+    r"(?:അപ്പോയിന്റ്മെന്റ്|ബുക്കിംഗ്)[^.!?]{0,40}(?:സ്ഥിരീകരിച്ച|ಬುക്ക്|ക്രമീകരിച്ച)|"
+    # Code-mixed speech: an English noun with a native booking verb
+    # ("survey बुक कर दिया", "సర్వే బుక్ చేశాను").
+    r"\b(?:appointment|booking|slot|visit|survey|consultation)\b[^.!?]{0,30}"
+    r"(?:बुक|निर्धारित|पुष्टि|బుక్|నిర్ధార|புக்|உறுதி|ಬುಕ್)|"
+    r"(?:సర్వే|सर्वे|சர்வே)[^.!?]{0,40}(?:బుక్|నిర్ధార|बुक|पुष्टि|புக்|உறுதி)",
+    re.I,
+)
+_RECORDED_CLAIM = re.compile(
+    r"\b(?:enquiry|inquiry|request|details)\b[^.!?]{0,60}"
+    r"\b(?:saved|recorded|submitted|noted|registered|sent|logged)\b|"
+    r"\b(?:saved|recorded|submitted|noted|registered|logged)\b[^.!?]{0,40}"
+    r"\b(?:enquiry|inquiry|request|details)\b|"
+    r"(?:అభ్యర్థన|వివరాలు|ఎంక్వైరీ)[^.!?]{0,40}(?:సేవ్|నమోదు|పంప|తెలియజేస)|"
+    r"(?:अनुरोध|विवरण|पूछताछ)[^.!?]{0,40}(?:सहेज|दर्ज|भेज|नोट)|"
+    r"(?:கோரிக்கை|விவரங்கள்|விசாரணை)[^.!?]{0,40}(?:சேமி|பதிவு|அனுப்ப)|"
+    r"(?:ವಿನಂತಿ|ವಿವರಗಳು|ವಿಚಾರಣೆ)[^.!?]{0,40}(?:ಉಳಿಸ|ದಾಖಲಿಸ|ಕಳುಹಿಸ)|"
+    r"(?:അഭ്യർത്ഥന|വിവരങ്ങൾ|അന്വേഷണം)[^.!?]{0,40}(?:സംരക്ഷിച്ച|രേഖപ്പെടുത്തി|അയച്ച)",
+    re.I,
+)
+
+
+# Negation must stay inside the clause that carries the claim: "no placement
+# guarantee. The order is confirmed" still asserts a confirmation.
+_NEGATORS = re.compile(
+    r"\b(?:not|never|no|without|cannot|nahi)\b|\b\w+n['’]t\b|"
+    r"(?:नहीं|नही|मत|లేదు|కాదు|இல்லை|இல்ல|கிடையா|ಅಲ್ಲ|ಇಲ್ಲ|ഇല്ല|না|નથી|ਨਹੀਂ)",
+    re.I,
+)
+_CLAUSE_BREAK = re.compile(r"[,.!?।;\n]|\b(?:but|however|and)\b|కానీ|लेकिन|ஆனா|ಆದರೆ", re.IGNORECASE)
+# Indic negation often follows the predicate. Only an adjacent negative tail
+# belongs to that predicate: "confirmed with no refund" is still a claim.
+_NEGATED_TAIL = re.compile(
+    r"^\s*(?:(?:or|ya|paid|order|booking|slot|visit)\b\s*|या\s*|அல்லது\s*|ಅಥವಾ\s*){0,6}"
+    r"(?:\b(?:not|never|no|cannot|nahi)\b|\b\w+n['’]t\b|"
+    r"नहीं|नही|లేదు|కాదు|இல்ல|கிடையா|ಅಲ್ಲ|ಇಲ್ಲ|ഇല്ല)",
+    re.IGNORECASE,
+)
+
+
+_PROPOSAL_QUESTION = re.compile(
+    r"\?|"
+    r"(?:చేయమంటారా|చేయాలా|చేద్దామా|బుక్\s*చేయనా|షెడ్యూల్\s*చేయనా|బుక్\s*చేస్తారా|"
+    r"\bshall\s+i\b|\bshould\s+i\b|\bwould\s+you\s+like\s+to\b|\bwant\s+me\s+to\b|"
+    r"\bdo\s+you\s+want\s+to\b|\bcan\s+we\s+book\b|"
+    # Conditional offers in code-mixed speech are proposals, not claims.
+    r"चाहें\s*तो|चाहेंगे|चाहते\s+हैं|कर\s+दूँ|करवा\s+दूँ|కావాలంటే|చేయనా)",
+    re.I,
+)
+_FEE_OR_CHARGE = re.compile(
+    r"(?:విజిట్\s*(?:ఛార్జ్|ఛార్జీ|ఫీజు|ఖర్చు)|visit\s*(?:fee|charge|cost)|inspection\s*(?:fee|charge))",
+    re.I,
+)
+
+
+def _claim_is_negated(text: str, match: re.Match[str]) -> bool:
+    clause = text[max(0, match.start() - 40) : min(len(text), match.end() + 40)]
+    if _FEE_OR_CHARGE.search(clause):
+        return True
+    if _PROPOSAL_QUESTION.search(clause) or _PROPOSAL_QUESTION.search(text[match.start() : min(len(text), match.end() + 30)]):
+        return True
+    if _NEGATORS.search(match.group(0)):
+        return True
+    prefix = text[max(0, match.start() - 40) : match.start()]
+    breaks = list(_CLAUSE_BREAK.finditer(prefix))
+    if breaks:
+        prefix = prefix[breaks[-1].end() :]
+    if _NEGATORS.search(prefix):
+        return True
+    return bool(_NEGATED_TAIL.search(text[match.end() : match.end() + 60]))
+
+
+def _asserted(rx: re.Pattern[str], text: str) -> bool:
+    return any(not _claim_is_negated(text, match) for match in rx.finditer(text))
+
+
+def claims_recorded_request(text: str) -> bool:
+    return _asserted(_RECORDED_CLAIM, text or "")
+
+
+def unproven_claim(text: str, proofs: Iterable[str]) -> str | None:
+    """The typed claim the text makes without a matching proof, if any."""
+    available = proof_set(proofs)
+    spoken = text or ""
+    if PROOF_ORDER_CONFIRMED not in available and _asserted(_ORDER_CLAIM, spoken):
+        return PROOF_ORDER_CONFIRMED
+    if PROOF_APPOINTMENT_CONFIRMED not in available and _asserted(
+        _APPOINTMENT_CLAIM, spoken
+    ):
+        return PROOF_APPOINTMENT_CONFIRMED
+    if not (available & _RECORDED_REQUEST) and _asserted(_RECORDED_CLAIM, spoken):
+        return PROOF_ENQUIRY_SAVED
+    return None
+
+
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?।])\s+")
+
+
+def replace_unproven_claims(
+    text: str, proofs: Iterable[str], language: str | None, *, warning_line: str | None = None,
+) -> str:
+    """Remove only the claim the server cannot prove, keeping usable answers.
+
+    An unsupported order or appointment also invalidates dependent delivery
+    promises, so replace that reply. Remove unsupported recorded-request
+    sentences individually, retaining separate factual answers.
+    """
+    spoken = (text or "").strip()
+    claim = unproven_claim(spoken, proofs)
+    if not claim:
+        return spoken
+    line = warning_line or action_unconfirmed_line_for(language)
+    if claim in {PROOF_ORDER_CONFIRMED, PROOF_APPOINTMENT_CONFIRMED}:
+        return line
+    kept: list[str] = []
+    replaced = False
+    for part in _SENTENCE_SPLIT.split(spoken):
+        if unproven_claim(part, proofs) == claim:
+            if not replaced:
+                kept.append(line)
+            replaced = True
+        else:
+            kept.append(part)
+    return " ".join(kept) if kept else line
+
+
+_UNAVAILABLE_LINES = {
+    "en": "I can keep a note during this call, but I cannot send this request to the team or promise a follow-up.",
+    "te": "ఈ కాల్‌లో విషయం గుర్తుంచుకోగలను. కానీ టీమ్‌కు ఇది పంపే సదుపాయం లేదా follow-up హామీ ఇచ్చే సదుపాయం నాకు లేదు.",
+    "hi": "मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता।",
+    "ta": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது.",
+    "kn": "ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+}
+_REQUEST_TARGET = re.compile(
+    r"enquir|inquir|request|details|team|system|crm|email|callback|follow.?up|"
+    r"అభ్యర్థ|వివర|టీమ్|जांच|अनुरोध|विवरण|टीम|क्वायरी|"
+    r"கோரிக்கை|விவரங்க|குழு|வಿನಂತಿ|ವಿವರ|ತಂಡ", re.IGNORECASE,
+)
+_REQUEST_ACTION = re.compile(
+    r"sav(?:e|ed|ing)|submit|send|sent|forward|pass|record|not(?:e|ed|ing)|review|"
+    r"contact|callback|follow.?up|\bcheck\b|\bupdate\b|ಸಂಪರ್ಕಿ|ಸಂಪ್ರದಿ|సంప్రదిం|संपर्क|தொடர்பு|"
+    r"సేవ్|నమోదు|పంప|సమర్పి|భద్రపర|भेज|दर्ज|सहेज|नोट|"
+    r"சேமி|பதிவு|அனுப்ப|ಉಳಿಸ|ದಾಖಲಿ|ಕಳುಹಿ|ಕಳಿಸ|ಪರಿಶೀಲಿಸ", re.IGNORECASE,
+)
+_UNAVAILABLE_NEGATION = re.compile(
+    r"\b(?:no|not|cannot|can't|couldn't|unable|won't|without)\b|"
+    r"చేయలే|లేను|లేము|లేదు|కాదు|नहीं|नही|मत|"
+    r"முடியாத|முடியாது|இல்லை|ಆಗಲ್ಲ|ಸಾಧ್ಯವಿಲ್ಲ|ಮಾಡಲಾಗದು|ಸೌಲಭ್ಯವಿಲ್ಲ", re.IGNORECASE,
+)
+_LOCAL_NOTE_SCOPE = re.compile(
+    r"(?:this|our)\s+(?:call|conversation)|ఈ\s*కాల్|इस\s*कॉल|இந்த\s*அழைப்|ಈ\s*(?:ಕರೆ|ಕರೆಯಲ್ಲಿ)",
+    re.IGNORECASE,
+)
+_EXTERNAL_TARGET = re.compile(r"team|system|crm|external|email|callback|follow.?up|టీమ్|टीम|குழு|ತಂಡ", re.IGNORECASE)
+_FACTUAL_PRICE = re.compile(
+    r"\b(?:fee|cost|price|charge|rupees|rs)\b|₹|రూపాయ|रुपय|ரூபாய்|ರೂಪಾಯಿ", re.IGNORECASE,
+)
+_NEXT_STEP = re.compile(r"\b(?:will|shall|can|could|would|try|later|again)\b", re.IGNORECASE)
+_SUBMISSION_TARGET = re.compile(
+    r"enquir|inquir|request|lead|ticket|అభ్యర్థ|ఎంక్వైరీ|अनुरोध|पूछताछ|கோரிக்கை|விசாரணை|ವಿನಂತಿ|ವಿಚಾರಣೆ",
+    re.IGNORECASE,
+)
+_SUBMISSION_VERB = re.compile(
+    r"\b(?:submit|save|send|forward|register)\b|సమర్పి|పంపండి|సేవ్|दर्ज|भेज|சமர்ப்பி|அனுப்பு|சேமி|ಸಲ್ಲಿಸಿ|ಕಳುಹಿಸಿ|ಸೇವ್",
+    re.IGNORECASE,
+)
+_SUBMISSION_NEGATION = re.compile(r"కండి|ಬೇಡಿ|செய்யாத|பண்ணாத", re.IGNORECASE)
+
+
+def caller_requests_external_submission(text: str) -> bool:
+    """High-confidence request only; it adds a limitation, never permission."""
+    return any(
+        _SUBMISSION_TARGET.search(clause) and _SUBMISSION_VERB.search(clause)
+        and not _NEGATORS.search(clause) and not _SUBMISSION_NEGATION.search(clause)
+        for clause in re.split(r"[.!?।;\n]", text or "")
+    )
+
+
+def _is_handoff_acknowledgement(sentence: str) -> bool:
+    from server.call.call_end_policy import handoff_acknowledgement_for
+    from server.prompts.agent_voice_rules import CALL_END_FAREWELLS
+
+    def norm(value: str) -> str:
+        return re.sub(r"[\s.!?।,]+", " ", value).strip().casefold()
+
+    spoken = norm(sentence)
+    if len(spoken) < 12:
+        return False
+    lines = {norm(handoff_acknowledgement_for(lang)) for lang in CALL_END_FAREWELLS}
+    return any(spoken in line or line in spoken for line in lines)
+
+
+def unavailable_action_line_for(language: str | None) -> str:
+    lang = str(language or "en-IN").split("-")[0]
+    return _UNAVAILABLE_LINES.get(lang, _UNAVAILABLE_LINES["en"])
+
+
+def replace_unavailable_action_promises(
+    text: str, language: str | None, *, unconfirmed: bool = False,
+    requested_unavailable: bool = False,
+    saved_request: bool = False,
+) -> str:
+    """No connected gateway means no submission promise, including future tense.
+
+    This runs only with explicit server evidence that external actions are
+    unavailable. Keep factual sentences and explicitly local conversation notes;
+    a booking disclaimer cannot justify an earlier promise to submit an enquiry.
+
+    After a failed/unknown tool result, the server owns the outcome wording.
+    Retain separate price facts, but never forward free-form model promises or
+    retry advice after an uncertain write.
+    """
+    if unconfirmed or (requested_unavailable and not saved_request):
+        facts = [
+            sentence for sentence in _SENTENCE_SPLIT.split((text or "").strip())
+            if _FACTUAL_PRICE.search(sentence)
+            and not _REQUEST_TARGET.search(sentence)
+            and not _REQUEST_ACTION.search(sentence)
+            and not _NEXT_STEP.search(sentence)
+        ]
+        boundary = action_unconfirmed_line_for(language) if unconfirmed else unavailable_action_line_for(language)
+        return " ".join([*facts, boundary])
+    boundary = unavailable_action_line_for(language)
+    output: list[str] = []
+    replaced = False
+    for sentence in _SENTENCE_SPLIT.split((text or "").strip()):
+        if saved_request and claims_recorded_request(sentence) and not _EXTERNAL_TARGET.search(sentence):
+            output.append(sentence)
+            continue
+        if saved_request and _is_handoff_acknowledgement(sentence):
+            # The platform's own "I'll pass this to my manager or team" after a
+            # saved request; replacing it brought back "I can't connect you".
+            output.append(sentence)
+            continue
+        unsupported = False
+        target_seen = False
+        for clause in re.split(r"[,;]|\b(?:but|however)\b|కానీ|लेकिन|ஆனா|ಆದರೆ", sentence):
+            target_seen = target_seen or bool(_REQUEST_TARGET.search(clause))
+            if not target_seen or not _REQUEST_ACTION.search(clause):
+                continue
+            if _UNAVAILABLE_NEGATION.search(clause):
+                continue
+            if _LOCAL_NOTE_SCOPE.search(clause) and not _EXTERNAL_TARGET.search(clause):
+                continue
+            unsupported = True
+        if unsupported:
+            if not replaced:
+                output.append(boundary)
+                replaced = True
+        else:
+            output.append(sentence)
+    return " ".join(output)

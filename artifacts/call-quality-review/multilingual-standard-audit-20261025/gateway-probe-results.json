@@ -1,0 +1,250 @@
+[
+  {
+    "language": "en-IN",
+    "mode": "success",
+    "executions": [
+      {
+        "tool_name": "CRM_CREATE_ENQUIRY",
+        "arguments": {
+          "name": "Audit Customer",
+          "email": "audit.customer@example.invalid",
+          "request": "Quote for 200 wedding invitations delivered to Baner, Pune",
+          "preferred_time": "tomorrow at 3pm"
+        }
+      }
+    ],
+    "tool_result_messages": [
+      {
+        "role": "tool",
+        "tool_call_id": "chatcmpl-tool-80bb940d303a39df",
+        "name": "CRM_CREATE_ENQUIRY",
+        "content": "{\"status\":\"ok\",\"saved\":true,\"reference\":\"AUDIT-ONLY\",\"appointment_confirmed\":false,\"order_confirmed\":false,\"message\":\"Enquiry saved for team review only. No email sent and no booking or order confirmed.\"}"
+      }
+    ],
+    "protocol_pass": true,
+    "status": "IncompleteTurnError",
+    "error": "sarvam did not complete the turn (length)",
+    "elapsed_s": 2.422
+  },
+  {
+    "language": "en-IN",
+    "mode": "timeout",
+    "executions": [
+      {
+        "tool_name": "CRM_CREATE_ENQUIRY",
+        "arguments": {
+          "name": "Audit Customer",
+          "email": "audit.customer@example.invalid",
+          "request": "Quote for 200 wedding invitations delivered to Baner, Pune",
+          "preferred_time": "tomorrow at 3pm"
+        }
+      }
+    ],
+    "tool_result_messages": [
+      {
+        "role": "tool",
+        "tool_call_id": "chatcmpl-tool-80bb940d303a39df",
+        "name": "CRM_CREATE_ENQUIRY",
+        "content": "{\"status\":\"unknown\",\"message\":\"The action result could not be confirmed.\"}"
+      }
+    ],
+    "protocol_pass": true,
+    "status": "IncompleteTurnError",
+    "error": "sarvam did not complete the turn (length)",
+    "elapsed_s": 2.265
+  },
+  {
+    "language": "en-IN",
+    "mode": "unauthorized",
+    "executions": [],
+    "tool_result_messages": [
+      {
+        "role": "tool",
+        "tool_call_id": "chatcmpl-tool-80bb940d303a39df",
+        "name": "CRM_CREATE_ENQUIRY",
+        "content": "{\"status\":\"error\",\"message\":\"This action is unavailable or its arguments were invalid.\"}"
+      }
+    ],
+    "protocol_pass": true,
+    "result": {
+      "done": true,
+      "text": "I am sorry, but I could not confirm saving the enquiry in our system right now. I have noted your request for two hundred wedding invitations in Baner, Pune for review at three PM tomorrow. You may reach out to ClearPrint Studio directly during our office hours to follow up. Have",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4384,
+        "output_tokens": 273,
+        "total_tokens": 4657,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_name",
+            "value": "Audit Customer"
+          },
+          {
+            "op": "set_fact",
+            "key": "caller_email",
+            "value": "audit.customer@example.invalid"
+          },
+          {
+            "op": "set_fact",
+            "key": "item",
+            "value": "wedding invitations, quantity 200, delivery locality Baner, Pune, preferred review time tomorrow 3pm"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly requested submission of a consented quote enquiry and provided all required details; tool returned error, so I must not claim success.",
+        "remaining_request": "Submit quote enquiry for 200 wedding invitations in Baner, Pune for review at 3pm tomorrow.",
+        "contact_preference": "end_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 1.328
+  },
+  {
+    "language": "te-IN",
+    "mode": "success",
+    "executions": [
+      {
+        "tool_name": "CRM_CREATE_ENQUIRY",
+        "arguments": {
+          "name": "Audit Customer",
+          "email": "audit.customer@example.invalid",
+          "request": "Quote for 200 wedding invitations delivered to Baner, Pune",
+          "preferred_time": "tomorrow at 3pm"
+        }
+      }
+    ],
+    "tool_result_messages": [
+      {
+        "role": "tool",
+        "tool_call_id": "chatcmpl-tool-a21f8a6f433f2893",
+        "name": "CRM_CREATE_ENQUIRY",
+        "content": "{\"status\":\"ok\",\"saved\":true,\"reference\":\"AUDIT-ONLY\",\"appointment_confirmed\":false,\"order_confirmed\":false,\"message\":\"Enquiry saved for team review only. No email sent and no booking or order confirmed.\"}"
+      }
+    ],
+    "protocol_pass": true,
+    "result": {
+      "done": true,
+      "text": "మీ enquiry save అయిపోయింది అండి, reference number AUDIT-ONLY. ఇది just team review కోసమే, ఎటువంటి order లేదా booking confirm అవ్వలేదు. ఈరోజు సమయం ఇచ్చినందుకు ధన్యవాదాలు. మీ రోజు బాగుండాలి.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4598,
+        "output_tokens": 238,
+        "total_tokens": 4836,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "update_summary",
+            "key": "wedding_invitations",
+            "value": "200 pieces, Baner Pune, enquiry saved ref AUDIT-ONLY, no order confirmed"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly requested submission of a consented quote enquiry and provided all details; CRM saved successfully with reference AUDIT-ONLY.",
+        "remaining_request": "None; enquiry saved for team review.",
+        "contact_preference": "end_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 1.094
+  },
+  {
+    "language": "te-IN",
+    "mode": "timeout",
+    "executions": [
+      {
+        "tool_name": "CRM_CREATE_ENQUIRY",
+        "arguments": {
+          "name": "Audit Customer",
+          "email": "audit.customer@example.invalid",
+          "request": "Quote for 200 wedding invitations delivered to Baner, Pune",
+          "preferred_time": "tomorrow at 3pm"
+        }
+      }
+    ],
+    "tool_result_messages": [
+      {
+        "role": "tool",
+        "tool_call_id": "chatcmpl-tool-a21f8a6f433f2893",
+        "name": "CRM_CREATE_ENQUIRY",
+        "content": "{\"status\":\"unknown\",\"message\":\"The action result could not be confirmed.\"}"
+      }
+    ],
+    "protocol_pass": true,
+    "status": "IncompleteTurnError",
+    "error": "sarvam did not complete the turn (length)",
+    "elapsed_s": 3.125
+  },
+  {
+    "language": "te-IN",
+    "mode": "unauthorized",
+    "executions": [],
+    "tool_result_messages": [
+      {
+        "role": "tool",
+        "tool_call_id": "chatcmpl-tool-a21f8a6f433f2893",
+        "name": "CRM_CREATE_ENQUIRY",
+        "content": "{\"status\":\"error\",\"message\":\"This action is unavailable or its arguments were invalid.\"}"
+      }
+    ],
+    "protocol_pass": true,
+    "result": {
+      "done": true,
+      "text": "క్షమించండి అండి, ఈ enquiry save అవ్వలేదు. నేను దీన్ని note చేసుకుంటాను, కానీ system లో confirm అవ్వలేదు. మీ time ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4567,
+        "output_tokens": 275,
+        "total_tokens": 4842,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "set_fact",
+            "key": "caller_requested_quote_200_wedding_invitations_b",
+            "value": "Audit Customer, Baner Pune, tomorrow 3pm review, email audit.customer@example.invalid"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly requested submission of a consented quote enquiry for 200 wedding invitations in Baner, Pune, for review tomorrow at 3pm, provided name Audit Customer and email audit.customer@result",
+        "remaining_request": "Quote enquiry submission for 200 wedding invitations in Baner, Pune, review tomorrow at 3pm",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 1.563
+  }
+]

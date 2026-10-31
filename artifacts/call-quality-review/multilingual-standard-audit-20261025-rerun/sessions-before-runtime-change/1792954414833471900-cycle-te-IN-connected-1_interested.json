@@ -1,0 +1,590 @@
+{
+  "key": "cycle-te-IN-connected-1_interested",
+  "business": "cycle",
+  "language": "te-IN",
+  "integration": true,
+  "scenario": "1_interested",
+  "agent_id": "7640831e-15d9-57fe-8f3c-9acd9c39e5c1",
+  "call_id": "7369708d-5428-4844-907e-9253128d64c3",
+  "session_id": "audit-cycle-te-IN-connected-1_interested-ae83ca6e",
+  "compiled_checksum": "cc2b7a6b60713e363adb9b53a3fc84f22aebcd1bcfcbf228494ee7499e95e4d0",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 270,
+      "sse_content_preview": "తప్పకుండా అండి. బేసిక్ సైకిల్ సర్వీసు 499 rupees అవుతుంది, పంక్చర్ రిపేర్ 120 rupees పడుతుంది. విడిభాగాల ఖర్చులు మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మా shop మంగళవారం నుండి ఆదివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు open లో ఉంటుంది. మీకు ఏ service కావాలి అండి?",
+      "sse_content_tail": "తప్పకుండా అండి. బేసిక్ సైకిల్ సర్వీసు 499 rupees అవుతుంది, పంక్చర్ రిపేర్ 120 rupees పడుతుంది. విడిభాగాల ఖర్చులు మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మా shop మంగళవారం నుండి ఆదివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు open లో ఉంటుంది. మీకు ఏ service కావాలి అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 82,
+        "prompt_tokens": 4263,
+        "total_tokens": 4345,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. బేసిక్ సైకిల్ సర్వీసు 499 rupees అవుతుంది, పంక్చర్ రిపేర్ 120 rupees పడుతుంది. విడిభాగాల ఖర్చులు మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మా shop మంగళవారం నుండి ఆదివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు open లో ఉంటుంది. మీకు ఏ service కావాలి అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4263,
+          "output_tokens": 82,
+          "total_tokens": 4345
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.687
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 176,
+      "sse_content_preview": "తప్పకుండా అండి. బేసిక్ సైకిల్ సర్వీసు 499 రూపాయలు, పంక్చర్ రిపేర్ 120 రూపాయలు అవుతుంది. విడిభాగాల ఖర్చులు మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ వివరాలు కావాలి అండి?",
+      "sse_content_tail": "తప్పకుండా అండి. బేసిక్ సైకిల్ సర్వీసు 499 రూపాయలు, పంక్చర్ రిపేర్ 120 రూపాయలు అవుతుంది. విడిభాగాల ఖర్చులు మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ వివరాలు కావాలి అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 60,
+        "prompt_tokens": 4223,
+        "total_tokens": 4283,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. బేసిక్ సైకిల్ సర్వీసు 499 రూపాయలు, పంక్చర్ రిపేర్ 120 రూపాయలు అవుతుంది. విడిభాగాల ఖర్చులు మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ వివరాలు కావాలి అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4223,
+          "output_tokens": 60,
+          "total_tokens": 4283
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.657
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 185,
+      "sse_content_preview": "Basic service four hundred ninety nine rupees, పంక్చర్ repair one hundred twenty rupees అండి. Parts ఖర్చులు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ service కావాలి అండి?",
+      "sse_content_tail": "Basic service four hundred ninety nine rupees, పంక్చర్ repair one hundred twenty rupees అండి. Parts ఖర్చులు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ service కావాలి అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 42,
+        "prompt_tokens": 4348,
+        "total_tokens": 4390,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Basic service four hundred ninety nine rupees, పంక్చర్ repair one hundred twenty rupees అండి. Parts ఖర్చులు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ service కావాలి అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4348,
+          "output_tokens": 42,
+          "total_tokens": 4390
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.547
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 196,
+      "sse_content_preview": "బేసిక్ సర్వీసు four hundred ninety nine రూపాయలు, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అండి. విడిభాగాల ఖర్చులు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ service కావాలో చెప్తారా?",
+      "sse_content_tail": "బేసిక్ సర్వీసు four hundred ninety nine రూపాయలు, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అండి. విడిభాగాల ఖర్చులు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ service కావాలో చెప్తారా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 53,
+        "prompt_tokens": 4308,
+        "total_tokens": 4361,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "బేసిక్ సర్వీసు four hundred ninety nine రూపాయలు, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అండి. విడిభాగాల ఖర్చులు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ service కావాలో చెప్తారా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4308,
+          "output_tokens": 53,
+          "total_tokens": 4361
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.531
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 219,
+      "sse_content_preview": "తప్పకుండా అండి, పంక్చర్ రిపేర్ మేము చేయగలం. దానికి one hundred twenty రూపాయలు అవుతుంది. మీకు ఈ service కావాలంటే, మీ పేరు, మరియు మీ area details చెప్తారా? మీ permission తో మా team కి ఒక enquiry లాగా save చేస్తాము. సరేనా?",
+      "sse_content_tail": "తప్పకుండా అండి, పంక్చర్ రిపేర్ మేము చేయగలం. దానికి one hundred twenty రూపాయలు అవుతుంది. మీకు ఈ service కావాలంటే, మీ పేరు, మరియు మీ area details చెప్తారా? మీ permission తో మా team కి ఒక enquiry లాగా save చేస్తాము. సరేనా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 61,
+        "prompt_tokens": 4412,
+        "total_tokens": 4473,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి, పంక్చర్ రిపేర్ మేము చేయగలం. దానికి one hundred twenty రూపాయలు అవుతుంది. మీకు ఈ service కావాలంటే, మీ పేరు, మరియు మీ area details చెప్తారా? మీ permission తో మా team కి ఒక enquiry లాగా save చేస్తాము. సరేనా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4412,
+          "output_tokens": 61,
+          "total_tokens": 4473
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.563
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 184,
+      "sse_content_preview": "తప్పకుండా అండి, పంక్చర్ రిపేర్ one hundred twenty రూపాయలకు చేస్తాము. మీకు ఆ repair కావాలంటే, మీ పేరు, locality వివరాలు చెప్తారా? మా team దీన్ని enquiry కింద save చేస్తుంది. మీకు ఓకేనా?",
+      "sse_content_tail": "తప్పకుండా అండి, పంక్చర్ రిపేర్ one hundred twenty రూపాయలకు చేస్తాము. మీకు ఆ repair కావాలంటే, మీ పేరు, locality వివరాలు చెప్తారా? మా team దీన్ని enquiry కింద save చేస్తుంది. మీకు ఓకేనా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 48,
+        "prompt_tokens": 4372,
+        "total_tokens": 4420,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి, పంక్చర్ రిపేర్ one hundred twenty రూపాయలకు చేస్తాము. మీకు ఆ repair కావాలంటే, మీ పేరు, locality వివరాలు చెప్తారా? మా team దీన్ని enquiry కింద save చేస్తుంది. మీకు ఓకేనా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4372,
+          "output_tokens": 48,
+          "total_tokens": 4420
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.609
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 11,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 4680,
+        "total_tokens": 4743,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4680,
+          "output_tokens": 63,
+          "total_tokens": 4743
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-88b7e09f5f9fa53f",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Puncture repair in Adyar, Chennai\", \"preferred_time\": \"Tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.515
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 15,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 166,
+      "sse_content_preview": "సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది కేవలం team review కోసం మాత్రమే, booking లేదా order confirm అవ్వలేదు. ఇంకేమైనా help కావాలా అండి?",
+      "sse_content_tail": "సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది కేవలం team review కోసం మాత్రమే, booking లేదా order confirm అవ్వలేదు. ఇంకేమైనా help కావాలా అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 49,
+        "prompt_tokens": 4974,
+        "total_tokens": 5023,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది కేవలం team review కోసం మాత్రమే, booking లేదా order confirm అవ్వలేదు. ఇంకేమైనా help కావాలా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4974,
+          "output_tokens": 49,
+          "total_tokens": 5023
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.578
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Puncture repair in Adyar, Chennai",
+        "preferred_time": "Tomorrow at 3pm"
+      },
+      "turn": 4
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా అండి. బేసిక్ సైకిల్ సర్వీసు four hundred ninety nine రూపాయలు, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అవుతుంది. విడిభాగాల ఖర్చులు మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ వివరాలు కావాలి అండి?",
+      "turn": 1,
+      "at": 4.359
+    },
+    {
+      "text": "బేసిక్ సర్వీసు four hundred ninety nine రూపాయలు, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అండి. విడిభాగాల ఖర్చులు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ service కావాలో చెప్తారా?",
+      "turn": 2,
+      "at": 8.672
+    },
+    {
+      "text": "తప్పకుండా అండి, పంక్చర్ రిపేర్ one hundred twenty రూపాయలకు చేస్తాము. మీకు ఆ repair కావాలంటే, మీ పేరు, locality వివరాలు చెప్తారా? మా team దీన్ని enquiry కింద save చేస్తుంది. మీకు ఓకేనా?",
+      "turn": 3,
+      "at": 13.203
+    },
+    {
+      "text": "సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది కేవలం team review కోసం మాత్రమే, booking లేదా order confirm అవ్వలేదు. ఇంకేమైనా help కావాలా అండి?",
+      "turn": 4,
+      "at": 17.593
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 5,
+      "at": 17.609
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.",
+      "spoken": "తప్పకుండా అండి. బేసిక్ సైకిల్ సర్వీసు four hundred ninety nine రూపాయలు, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అవుతుంది. విడిభాగాల ఖర్చులు మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ వివరాలు కావాలి అండి?",
+      "elapsed_s": 4.344,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ఇప్పుడే ఏదీ book లేదా save చేయకండి. ముందు నా ప్రశ్నకు సమాధానం చెప్పండి: సైకిల్ basic service, puncture repair ధరలు ఎంత? Parts కూడా ఆ ధరలో ఉన్నాయా?",
+      "spoken": "బేసిక్ సర్వీసు four hundred ninety nine రూపాయలు, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అండి. విడిభాగాల ఖర్చులు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ service కావాలో చెప్తారా?",
+      "elapsed_s": 4.297,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "Basic service వద్దు, కానీ puncture repair కావాలి. చేయగలరా?",
+      "spoken": "తప్పకుండా అండి, పంక్చర్ రిపేర్ one hundred twenty రూపాయలకు చేస్తాము. మీకు ఆ repair కావాలంటే, మీ పేరు, locality వివరాలు చెప్తారా? మా team దీన్ని enquiry కింద save చేస్తుంది. మీకు ఓకేనా?",
+      "elapsed_s": 4.516,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want puncture repair in Adyar, Chennai; preferred review time tomorrow at 3pm. ఈ enquiry ని team review కోసం submit చేయండి. నా సమ్మతి ఉంది. Booking లేదా order confirm అయిందని చెప్పకండి.",
+      "spoken": "సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది కేవలం team review కోసం మాత్రమే, booking లేదా order confirm అవ్వలేదు. ఇంకేమైనా help కావాలా అండి?",
+      "elapsed_s": 4.375,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 17.656,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "7369708d-5428-4844-907e-9253128d64c3",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "b1eb4409eb21fc6fe7f111ccdb25904624b9374aec5f51f11bb93fd07f97667f",
+  "prompt_chars": 17380,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "నమస్కారం, నేను సిటీసైకిల్ రిపేర్స్ నుండి అర్జున్‌ని. సైకిల్ మరమ్మతులు లేదా సేవలకు సంబంధించి మీ ప్రశ్నలకు సమాధానం ఇవ్వడానికి నేను కాల్ చేస్తున్నాను. ఈ సమయంలో మాట్లాడటానికి మీకు కొంచెం సమయం ఉందా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "తప్పకుండా అండి. బేసిక్ సైకిల్ సర్వీసు four hundred ninety nine రూపాయలు, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అవుతుంది. విడిభాగాల ఖర్చులు మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ వివరాలు కావాలి అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "బేసిక్ సర్వీసు four hundred ninety nine రూపాయలు, పంక్చర్ రిపేర్ one hundred twenty రూపాయలు అండి. విడిభాగాల ఖర్చులు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ service కావాలో చెప్తారా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "తప్పకుండా అండి, పంక్చర్ రిపేర్ one hundred twenty రూపాయలకు చేస్తాము. మీకు ఆ repair కావాలంటే, మీ పేరు, locality వివరాలు చెప్తారా? మా team దీన్ని enquiry కింద save చేస్తుంది. మీకు ఓకేనా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది కేవలం team review కోసం మాత్రమే, booking లేదా order confirm అవ్వలేదు. ఇంకేమైనా help కావాలా అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 17.656,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

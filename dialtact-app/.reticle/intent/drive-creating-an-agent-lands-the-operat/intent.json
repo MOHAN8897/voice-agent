@@ -1,0 +1,19 @@
+{
+  "intents": {
+    "flow:drive-creating-an-agent-lands-the-operator-on-the-agen": {
+      "declaredAt": 1790834468188,
+      "id": "flow:drive-creating-an-agent-lands-the-operator-on-the-agen",
+      "source": "decided on the dashboard",
+      "state": "declared",
+      "statement": "Creating an agent lands the operator on the agent workspace Overview tab, where per-agent call activity and pipeline are visible.",
+      "status": "proved",
+      "subject": "drive-creating-an-agent-lands-the-operat",
+      "surface": {
+        "flow": "drive-creating-an-agent-lands-the-operator-on-the-agen"
+      },
+      "updatedAt": 1791972280846
+    }
+  },
+  "subject": "drive-creating-an-agent-lands-the-operat",
+  "version": 1
+}

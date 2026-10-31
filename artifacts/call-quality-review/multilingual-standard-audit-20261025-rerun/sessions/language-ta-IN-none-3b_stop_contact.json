@@ -1,0 +1,74 @@
+{
+  "key": "language-ta-IN-none-3b_stop_contact",
+  "business": "language",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "1557575e-e441-56ca-ab6d-89d0b81299d9",
+  "call_id": "b03e93ea-686c-4cee-b1b8-529a3f5dbef0",
+  "session_id": "audit-language-ta-IN-none-3b_stop_contact-356de2be",
+  "compiled_checksum": "6f8104d7a8c5c3b787bc284a4e53444f57bdac783432ab7a136254cbcd2ebd24",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "எனக்கு மறுபடியும் call செய்யாதீங்க. இனி செய்யும் callsலிருந்து என் பெயரை நீக்கி இந்த call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.078,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "b03e93ea-686c-4cee-b1b8-529a3f5dbef0",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "fddbda827552053fc2f3507c5d09e7033a8dd638e98b01a40f11d7b39dab9e34",
+  "prompt_chars": 17234,
+  "opening_seeded": "வணக்கம், நான் SpeakEasy Language Studio நிறுவனத்திலிருந்து சானா பேசுகிறேன். ஆன்லைன் ஆங்கில வகுப்புகள் பற்றிய உங்கள் கேள்விகளுக்கு பதிலளிக்கலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.078,
+  "hangup_count": 1,
+  "source_signature": "f22325fa3f608c0524c8afc9a14908696812152c9af5311fda442ff7a042a834"
+}

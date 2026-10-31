@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_name": "still",
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "the design and quantity, so there is no fixed price.\nuser: Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?\nassistant: For delivery to Pune, it takes five working days after artwork approval. We accept cards and cash on delivery. Our office is open Monday to Saturday, ten AM to six PM. Which type of card are you looking at, visiting cards or wedding invitations, and how many do you need?\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

@@ -1,0 +1,322 @@
+{
+  "key": "cleaning-en-IN-connected-2_future_interest",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "2_future_interest",
+  "agent_id": "69c3a1f9-9bb0-5fc5-b8af-5cf5e13d0283",
+  "call_id": "526035b1-9134-4894-baa8-fd99f607ce59",
+  "session_id": "audit-cleaning-en-IN-connected-2_future_interest-effdfce3",
+  "compiled_checksum": "5a25d6a9a1e56b4248a00a7ed913ce26430c3226a93d4ae617e7e7e2d1c9293a",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 205,
+      "sse_content_preview": "Understood. Sofa cleaning is 349 rupees per seat with a minimum of three seats, and kitchen cleaning is 1599 rupees total. Would you like me to note this down for team review when you are ready next month?",
+      "sse_content_tail": "Understood. Sofa cleaning is 349 rupees per seat with a minimum of three seats, and kitchen cleaning is 1599 rupees total. Would you like me to note this down for team review when you are ready next month?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 51,
+        "prompt_tokens": 4149,
+        "total_tokens": 4200,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Understood. Sofa cleaning is 349 rupees per seat with a minimum of three seats, and kitchen cleaning is 1599 rupees total. Would you like me to note this down for team review when you are ready next month?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4149,
+          "output_tokens": 51,
+          "total_tokens": 4200
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.093
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 208,
+      "sse_content_preview": "Of course. Sofa cleaning is 349 rupees per seat, minimum three seats, and kitchen cleaning is 1599 rupees total. Since you are interested for next month, shall I note down your enquiry for our team to review?",
+      "sse_content_tail": "Of course. Sofa cleaning is 349 rupees per seat, minimum three seats, and kitchen cleaning is 1599 rupees total. Since you are interested for next month, shall I note down your enquiry for our team to review?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 51,
+        "prompt_tokens": 4082,
+        "total_tokens": 4133,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Of course. Sofa cleaning is 349 rupees per seat, minimum three seats, and kitchen cleaning is 1599 rupees total. Since you are interested for next month, shall I note down your enquiry for our team to review?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4082,
+          "output_tokens": 51,
+          "total_tokens": 4133
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.781
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 129,
+      "sse_content_preview": "Our working hours are Monday to Saturday, from 9 AM to 6 PM. Would you like to know more about sofa cleaning or kitchen cleaning?",
+      "sse_content_tail": "Our working hours are Monday to Saturday, from 9 AM to 6 PM. Would you like to know more about sofa cleaning or kitchen cleaning?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 31,
+        "prompt_tokens": 4220,
+        "total_tokens": 4251,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our working hours are Monday to Saturday, from 9 AM to 6 PM. Would you like to know more about sofa cleaning or kitchen cleaning?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4220,
+          "output_tokens": 31,
+          "total_tokens": 4251
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.969
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 142,
+      "sse_content_preview": "Our working hours are Monday to Saturday, from 9am to 6pm. Which service would you like to know more about, sofa cleaning or kitchen cleaning?",
+      "sse_content_tail": "Our working hours are Monday to Saturday, from 9am to 6pm. Which service would you like to know more about, sofa cleaning or kitchen cleaning?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 34,
+        "prompt_tokens": 4153,
+        "total_tokens": 4187,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our working hours are Monday to Saturday, from 9am to 6pm. Which service would you like to know more about, sofa cleaning or kitchen cleaning?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4153,
+          "output_tokens": 34,
+          "total_tokens": 4187
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.75
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Of course. Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats, and kitchen cleaning is one thousand five hundred ninety nine rupees total. Since you are interested for next month, shall I note down your enquiry for our team to review?",
+      "turn": 1,
+      "at": 1.656
+    },
+    {
+      "text": "Our working hours are Monday to Saturday, from 9am to 6pm. Which service would you like to know more about, sofa cleaning or kitchen cleaning?",
+      "turn": 2,
+      "at": 3.172
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 3,
+      "at": 3.188
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.",
+      "spoken": "Of course. Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats, and kitchen cleaning is one thousand five hundred ninety nine rupees total. Since you are interested for next month, shall I note down your enquiry for our team to review?",
+      "elapsed_s": 1.656,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?",
+      "spoken": "Our working hours are Monday to Saturday, from 9am to 6pm. Which service would you like to know more about, sofa cleaning or kitchen cleaning?",
+      "elapsed_s": 1.5,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.281,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 3.453,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "526035b1-9134-4894-baa8-fd99f607ce59",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "23682e89b99a0ffbe82046a24f58960907ce34dea61daea3adc20a16c6e3540c",
+  "prompt_chars": 17509,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, I am Nila, an AI assistant with FreshNest Cleaning. Am I speaking with the homeowner today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Of course. Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats, and kitchen cleaning is one thousand five hundred ninety nine rupees total. Since you are interested for next month, shall I note down your enquiry for our team to review?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "Our working hours are Monday to Saturday, from 9am to 6pm. Which service would you like to know more about, sofa cleaning or kitchen cleaning?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.469,
+  "hangup_count": 1,
+  "source_signature": "b5a97b0be556d652c5115f22700db9020bcfd81aee17c1b71898a26694c896ca"
+}

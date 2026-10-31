@@ -29,6 +29,42 @@ router = APIRouter()
 _UPSTREAM_STT_EVENTS = {"audio_input", "speech_start", "speech_end", "flush", "config.update", "end", "ping"}
 
 
+def _upstream_tts_config_payload(merged: dict) -> dict:
+    """Browser TTS upstream config — preserve sample rate so playback matches generation."""
+    out: dict = {
+        "speaker": merged["speaker"],
+        "language_code": merged["language_code"],
+        "pace": merged["pace"],
+        "min_buffer_size": merged["min_buffer_size"],
+        "max_chunk_length": merged["max_chunk_length"],
+        "output_audio_codec": merged["output_audio_codec"],
+        "output_audio_bitrate": merged["output_audio_bitrate"],
+        "model": merged["model"],
+    }
+    if "temperature" in merged:
+        out["temperature"] = merged["temperature"]
+    if "pitch" in merged:
+        out["pitch"] = merged["pitch"]
+    if "loudness" in merged:
+        out["loudness"] = merged["loudness"]
+    for key in ("emotion", "speed", "volume"):
+        if merged.get(key) is not None:
+            out[key] = merged[key]
+    if isinstance(merged.get("generation_config"), dict):
+        out["generation_config"] = merged["generation_config"]
+    rate = merged.get("sample_rate")
+    if rate is not None:
+        rate_str = str(int(rate))
+        provider = str(merged.get("provider") or "sarvam")
+        if provider == "cartesia":
+            out["sample_rate"] = int(rate)
+            out["speech_sample_rate"] = rate_str
+        elif provider == "sarvam":
+            # Sarvam WS expects speech_sample_rate (not sample_rate).
+            out["speech_sample_rate"] = rate_str
+    return out
+
+
 def _stack_for_ws(call_id: str | None, session_id: str, language: str = "te-IN"):
     if call_id:
         from server.call.call_context import get as get_call_ctx
@@ -41,7 +77,61 @@ def _stack_for_ws(call_id: str | None, session_id: str, language: str = "te-IN")
 
 def _connect_stt_upstream(session_id: str = "default", call_id: str | None = None, **kwargs):
     """Resolve STT upstream via locked call stack or provider registry."""
+    from server.services.voice_stt_runtime import sarvam_vad_config
+
     settings = get_settings()
+    expected_pipeline = str(kwargs.pop("expected_pipeline", "") or "").strip().lower()
+    pinned_stack = kwargs.pop("pinned_stack", None)
+    call_context = None
+    if call_id:
+        from server.call.call_context import get as get_call_ctx
+
+        call_context = get_call_ctx(call_id)
+    composed = expected_pipeline == "composed_voice" or bool(
+        call_context and getattr(call_context, "pipeline", None) == "composed_voice"
+    )
+    if composed:
+        if not settings.use_provider_registry:
+            raise RuntimeError("Composed PSTN speech recognition requires the provider registry")
+        if not call_context or getattr(call_context, "pipeline", None) != "composed_voice":
+            raise RuntimeError("Composed PSTN call has no matching pinned call context")
+        stack = getattr(call_context, "resolved_stack", None)
+        if stack is None:
+            raise RuntimeError("Composed PSTN call has no pinned speech-recognition selection")
+        selection = getattr(stack, "stt", None)
+        provider_id = str(getattr(selection, "provider", "") or "").strip().lower()
+        model_id = str(getattr(selection, "model", "") or "").strip()
+        if not provider_id or not model_id:
+            raise RuntimeError("Composed PSTN call has an incomplete speech-recognition selection")
+        if isinstance(pinned_stack, dict):
+            pinned_stt = pinned_stack.get("stt")
+            if isinstance(pinned_stt, dict) and (
+                str(pinned_stt.get("provider") or "").strip().lower() != provider_id
+                or str(pinned_stt.get("model") or "").strip() != model_id
+            ):
+                raise RuntimeError("Composed PSTN speech-recognition selection does not match admission")
+        registry = get_provider_registry()
+        if (
+            not registry.is_provider_enabled(provider_id, "stt")
+            or not registry.is_model_allowed(provider_id, "stt", model_id)
+        ):
+            raise RuntimeError("The pinned composed speech-recognition model is unavailable")
+        stage_config = getattr(selection, "config", {})
+        stage_config = stage_config if isinstance(stage_config, dict) else {}
+        mode = str(stage_config.get("mode") or "realtime").strip().lower()
+        if mode != "realtime":
+            raise RuntimeError("The pinned composed speech-recognition mode is unavailable")
+        stt = registry.get_stt(provider_id)
+        config = STTConfig(
+            provider=provider_id,
+            model=model_id,
+            language=kwargs.get("language_code", stack.language),
+            mode=mode,
+            stream_type=stage_config.get("stream_type", "fast"),
+            sample_rate=kwargs.get("sample_rate", 16000),
+            vad_config=sarvam_vad_config(kwargs),
+        )
+        return stt.connect_realtime(config)
     if settings.use_provider_registry:
         stack = _stack_for_ws(call_id, session_id, language=kwargs.get("language_code", "te-IN"))
         registry = get_provider_registry()
@@ -53,12 +143,11 @@ def _connect_stt_upstream(session_id: str = "default", call_id: str | None = Non
             mode="realtime",
             stream_type=kwargs.get("stream_type", stack.stt.config.get("stream_type", "fast")),
             sample_rate=kwargs.get("sample_rate", 16000),
-            vad_config={
-                "silence_duration_ms": kwargs.get("silence_duration_ms"),
-                "threshold": kwargs.get("threshold"),
-            },
+            vad_config=sarvam_vad_config(kwargs),
         )
         return stt.connect_realtime(config)
+    from server.services.sarvam_ws import connect_stt_realtime
+
     return connect_stt_realtime(**kwargs)
 
 
@@ -67,46 +156,80 @@ def _is_cartesia_model(model: str) -> bool:
 
 
 def _resolve_ws_tts_model(model: str, session_id: str, call_id: str | None) -> str:
-    stack = _stack_for_ws(call_id, session_id)
-    if stack:
-        if stack.tts.provider == "cartesia" or _is_cartesia_model(stack.tts.model):
+    try:
+        resolved = merge_ws_tts_config(session_id, {}, call_id=call_id, ws_model=model)
+        return str(resolved.get("model") or "bulbul:v3")
+    except Exception:
+        stack = _stack_for_ws(call_id, session_id)
+        if stack:
+            if stack.tts.provider == "cartesia" or _is_cartesia_model(stack.tts.model):
+                return stack.tts.model
+            if model in constants.TTS_MODELS:
+                return model
             return stack.tts.model
-        if model in constants.TTS_MODELS:
+        if model in constants.TTS_MODELS or _is_cartesia_model(model):
             return model
-        return stack.tts.model
-    if model in constants.TTS_MODELS or _is_cartesia_model(model):
-        return model
-    return "bulbul:v3"
+        return "bulbul:v3"
 
 
-def _connect_tts_upstream(model: str, session_id: str = "default", call_id: str | None = None):
+def _connect_tts_upstream(
+    model: str,
+    session_id: str = "default",
+    call_id: str | None = None,
+    *,
+    resolved: dict | None = None,
+):
+    """Open TTS from a frozen media profile when provided — never re-resolve a locked PSTN stack."""
+    from server.services.sarvam_ws import connect_tts_ws
+    from server.services.tts_config import resolve_tts_config
+
+    locked = resolved is not None
+    cfg = resolved if locked else resolve_tts_config(session_id, model=model, call_id=call_id)
+    provider = str(cfg.get("provider") or "sarvam")
+    effective_model = str(cfg.get("model") or model or "bulbul:v3")
+    speaker = str(cfg.get("speaker") or "shubh")
+    language = str(cfg.get("language_code") or "te-IN")
     settings = get_settings()
     if settings.use_provider_registry:
-        stack = _stack_for_ws(call_id, session_id)
         registry = get_provider_registry()
-        tts = registry.get_tts(stack.tts.provider)
-        if stack.tts.provider == "cartesia" or _is_cartesia_model(stack.tts.model):
-            effective_model = stack.tts.model if _is_cartesia_model(stack.tts.model) else (
-                model if _is_cartesia_model(model) else (settings.cartesia_tts_model or "sonic-3.5")
-            )
-        else:
-            effective_model = model if model in constants.TTS_MODELS else stack.tts.model
+        # Locked call profiles stay on the provider that merge_pstn_tts_config chose.
+        # Runtime/env fallbacks apply only when this helper is resolving from scratch.
+        if not locked and not registry.is_provider_enabled(provider, "tts"):
+            provider = "sarvam"
+            if effective_model not in constants.TTS_MODELS:
+                effective_model = "bulbul:v3"
+            from server.services.cartesia_voices import is_cartesia_voice_id
+
+            if is_cartesia_voice_id(speaker):
+                speaker = settings.sarvam_tts_speaker_te
+        tts = registry.get_tts(provider)
         config = TTSConfig(
-            provider=stack.tts.provider,
+            provider=provider,
             model=effective_model,
-            language=stack.language,
-            speaker=stack.tts.config.get("speaker", settings.sarvam_tts_speaker_te),
+            language=language,
+            speaker=speaker,
+            pace=cfg.get("pace"),
+            temperature=cfg.get("temperature"),
+            pitch=cfg.get("pitch"),
+            volume=(
+                cfg.get("loudness")
+                if cfg.get("loudness") is not None
+                else cfg.get("volume")
+            ),
+            emotion=cfg.get("emotion"),
+            speed=cfg.get("speed"),
         )
         log_ws(
             "TTS upstream opening",
-            provider=stack.tts.provider,
+            provider=provider,
             model=effective_model,
-            speaker=config.speaker,
+            speaker=speaker,
             session=session_id,
             call_id=call_id,
+            locked=locked,
         )
         return tts.connect_stream(config)
-    return connect_tts_ws(model=model)
+    return connect_tts_ws(model=effective_model if effective_model in constants.TTS_MODELS else "bulbul:v3")
 
 
 @router.websocket("/ws/stt-realtime")
@@ -126,21 +249,30 @@ async def ws_stt_realtime(ws: WebSocket):
 
             call_lifecycle_service.note_ws_open(call_id)
         rt = runtime_settings.get(session_id)
-        silence_ms = int(q["silence_duration_ms"]) if q.get("silence_duration_ms") else rt.get("sttSilenceMs")
+        from server.services.voice_stt_runtime import (
+            effective_stt_mode,
+            effective_stt_silence_ms,
+            effective_stt_stream_type,
+        )
+
+        explicit_silence = int(q["silence_duration_ms"]) if q.get("silence_duration_ms") else None
+        silence_ms = effective_stt_silence_ms(rt, explicit=explicit_silence)
         threshold_val = float(q["threshold"]) if q.get("threshold") else rt.get("sttThreshold")
         upstream_cm = _connect_stt_upstream(
             session_id=session_id,
             call_id=call_id,
             language_code=q.get("language_code", "te-IN"),
-            stream_type=q.get("stream_type", "fast"),
-            mode=q.get("mode", "transcribe"),
+            stream_type=effective_stt_stream_type(q.get("stream_type") or rt.get("sttStreamType")),
+            mode=effective_stt_mode(q.get("mode") or rt.get("sttMode")),
             endpointing=q.get("endpointing", "vad"),
             sample_rate=int(q.get("sample_rate", 16000)),
-            silence_duration_ms=int(silence_ms) if silence_ms is not None else None,
+            silence_duration_ms=silence_ms,
             threshold=float(threshold_val) if threshold_val is not None else None,
         )
         upstream = await upstream_cm.__aenter__()
         log_ws("STT upstream connected", session=session_id, language=q.get("language_code", "te-IN"))
+
+        audio_stats = {"frames": 0, "peak": 0}
 
         async def upstream_to_client():
             try:
@@ -150,14 +282,22 @@ async def ws_stt_realtime(ws: WebSocket):
                     try:
                         msg = json.loads(raw)
                         ev = msg.get("event") or msg.get("type") or ""
-                        if ev in ("transcript.partial", "transcript.final", "error"):
-                            txt = (msg.get("text") or (msg.get("data") or {}).get("text") or "")[:80]
+                        data_obj = msg.get("data") if isinstance(msg.get("data"), dict) else {}
+                        txt = (msg.get("text") or data_obj.get("text") or "")[:80]
+                        if ev in (
+                            "session.begin",
+                            "transcript.partial",
+                            "transcript.final",
+                            "error",
+                            "vad.speech_start",
+                            "vad.speech_end",
+                        ):
                             log_ws("STT relay", event=ev, text=txt, session=session_id, call_id=call_id)
                     except Exception:
                         pass
                     await ws.send_text(raw)
-            except Exception:
-                pass
+            except Exception as exc:
+                log_error("STT upstream read failed", err=str(exc)[:300], session=session_id)
             finally:
                 try:
                     await ws.close()
@@ -172,6 +312,22 @@ async def ws_stt_realtime(ws: WebSocket):
                 data = msg.get("bytes")
                 text = msg.get("text")
                 if data:
+                    audio_stats["frames"] += 1
+                    probe = data[: min(len(data), 4096)]
+                    for i in range(0, len(probe) - 1, 2):
+                        sample = int.from_bytes(probe[i : i + 2], "little", signed=True)
+                        amp = abs(sample)
+                        if amp > audio_stats["peak"]:
+                            audio_stats["peak"] = amp
+                    if audio_stats["frames"] == 1 or audio_stats["frames"] % 40 == 0:
+                        log_ws(
+                            "STT audio in",
+                            frames=audio_stats["frames"],
+                            bytes=len(data),
+                            peak=audio_stats["peak"],
+                            session=session_id,
+                            call_id=call_id,
+                        )
                     if call_id:
                         from server.call.audio_archive import audio_archive
 
@@ -370,18 +526,7 @@ async def ws_tts(ws: WebSocket):
                 d = dict(obj.get("data") or {})
                 try:
                     merged = merge_ws_tts_config(session_id, d, call_id=call_id, ws_model=model)
-                    out = {
-                        "speaker": merged["speaker"],
-                        "language_code": merged["language_code"],
-                        "pace": merged["pace"],
-                        "min_buffer_size": merged["min_buffer_size"],
-                        "max_chunk_length": merged["max_chunk_length"],
-                        "output_audio_codec": merged["output_audio_codec"],
-                        "output_audio_bitrate": merged["output_audio_bitrate"],
-                        "model": merged["model"],
-                    }
-                    if "temperature" in merged:
-                        out["temperature"] = merged["temperature"]
+                    out = _upstream_tts_config_payload(merged)
                     last_upstream_config = out
                     await connect_upstream()
                     assert upstream is not None
@@ -407,6 +552,11 @@ async def ws_tts(ws: WebSocket):
             elif mtype == "flush":
                 log_ws("TTS flush", session=session_id)
                 await forward_upstream(text)
+            elif mtype == "cancel":
+                log_ws("TTS cancel", session=session_id)
+                await close_upstream()
+                configured = False
+                await notify_upstream_reset("client_cancel")
             elif mtype == "ping":
                 if upstream is not None:
                     await forward_upstream(text)

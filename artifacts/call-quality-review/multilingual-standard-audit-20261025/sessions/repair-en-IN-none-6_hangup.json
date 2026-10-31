@@ -1,0 +1,218 @@
+{
+  "key": "repair-en-IN-none-6_hangup",
+  "business": "repair",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "fef33d3c-637a-5f4a-9e56-a8af72d9f342",
+  "call_id": "ba8fb52f-cb31-4541-8707-8ca9d45c1c37",
+  "session_id": "audit-repair-en-IN-none-6_hangup-c5a1d0f3",
+  "compiled_checksum": "9a35a9b727563ad7cae4145a69329d267250fe2335b6b64fc907cd4eee863c39",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "result": {
+        "done": true,
+        "text": "We offer appliance services in Pune, open Monday to Saturday from 9 AM to 6 PM. AC basic servicing is 699 rupees, and fridge inspection is 399 rupees. Parts are extra only after your approval, and there is no fixed repair quote before inspection. Would you like to request a visit",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3937,
+          "output_tokens": 223,
+          "total_tokens": 4160
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "caller_interest",
+              "value": "Interested in service and pricing details; no visit request yet."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly asked to explain service, price and conditions — goal_complete for information request; no visit details supplied and no appointment integration mentioned.",
+          "remaining_request": "None",
+          "contact_preference": "end_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "elapsed_s": 1.0
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "result": {
+        "done": true,
+        "text": "AC basic servicing is 699 rupees, and fridge inspection is 399 rupees. Parts are extra, but only after your approval. There is no fixed repair quote before inspection. Would you like to request a service visit?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3968,
+          "output_tokens": 178,
+          "total_tokens": 4146
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "The caller asked a pricing question and explicitly said 'Do not book or save anything yet. Please answer my question first', which signals goal_complete for information only and no further action.",
+          "remaining_request": "None — caller only wanted pricing and conditions answered.",
+          "contact_preference": "end_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "elapsed_s": 0.859
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "result": {
+        "done": true,
+        "text": "Thank you for contacting SafeFix Home Service. Have a wonderful day.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4049,
+          "output_tokens": 138,
+          "total_tokens": 4187
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller said 'Okay, thanks.' which is a bare acknowledgement with no remaining request or next step.",
+          "remaining_request": "none",
+          "contact_preference": "end_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "elapsed_s": 0.578
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Of course — please go ahead.",
+      "turn": 1,
+      "at": 0.985
+    },
+    {
+      "text": "Of course — please go ahead.",
+      "turn": 2,
+      "at": 1.875
+    },
+    {
+      "text": "Of course — please go ahead.",
+      "turn": 3,
+      "at": 2.5
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 4,
+      "at": 2.516
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "Of course — please go ahead.",
+      "elapsed_s": 0.985,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Please answer my question first: What do AC servicing and fridge inspection cost, and are replacement parts included?",
+      "spoken": "Of course — please go ahead.",
+      "elapsed_s": 0.875,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "Okay, thanks.",
+      "spoken": "Of course — please go ahead.",
+      "elapsed_s": 0.593,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 2.563,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "ba8fb52f-cb31-4541-8707-8ca9d45c1c37",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "render_checksum": "44f1771ea7b78229fe0b03a80d617bf6cb7773521f2f8157a4337dbf978b0520",
+  "prompt_chars": 17361,
+  "opening_seeded": "Hello, my name is Ravi calling from SafeFix Home Service. I am reaching out regarding our home appliance service in Pune. Do you have a moment to talk?",
+  "status": "completed",
+  "elapsed_s": 2.563,
+  "hangup_count": 1
+}

@@ -1,0 +1,15 @@
+{
+  "projectId": "voxly-ai-4807c8a7",
+  "projectName": "voxly-ai",
+  "orgId": "org_a91cf508defa420e8c310c473abcca4d",
+  "url": "https://app.reticle.sh",
+  "dashboardUrl": "https://app.reticle.sh/overview?project=voxly-ai-4807c8a7",
+  "repo": "8a4af8d24a1cba3a",
+  "workspace": "mohan saiteja's workspace",
+  "sync": {
+    "runs": true,
+    "memory": true,
+    "flows": true
+  },
+  "verify": "local"
+}

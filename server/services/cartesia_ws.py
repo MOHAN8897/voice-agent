@@ -133,9 +133,15 @@ def connect_cartesia_stt_realtime(
     class _Connector:
         async def __aenter__(self):
             try:
-                ws = await websockets.connect(url, additional_headers=headers, max_size=None)
-            except TypeError:
-                ws = await websockets.connect(url, extra_headers=headers, max_size=None)
+                try:
+                    ws = await websockets.connect(url, additional_headers=headers, max_size=None)
+                except TypeError:
+                    ws = await websockets.connect(url, extra_headers=headers, max_size=None)
+            except Exception as exc:
+                from server.services.provider_health import record_exception
+
+                record_exception(exc, provider="cartesia", component="stt")
+                raise
             self._ws = ws
             return _CartesiaSttProxy(self, ws)
 

@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ime என்ன?\nassistant: ஆமாம், நாங்க wedding invitations-உம் பண்றோம். ஆனா design அப்புறம் quantity-அ பொறுத்து தான் quote வரும், fixed price எதுவும் இல்ல. Delivery வந்து Pune-ல post மூலமா artwork approve ஆன அப்புறம் five working days எடுக்கும்.\nuser: எனக்கு visiting cards வேண்டாம், ஆனால் திருமண அழைப்பிதழ்கள் வேண்டும். நீங்க செய்வீங்களா?\nassistant: கண்டிப்பா, நாங்க wedding invitations பண்றோம். உங்க preferred name அப்புறம் delivery locality சொன்னீங்கன்னா, நான் ஒரு quote request note பண்ணிக்கிறேன். இத நாங்க discuss பண்ணி note பண்ணலாம், ஆனா இது CRM delivery இல்ல confirmed order-னு சொல்லிட முடியாதுங்க."
+}

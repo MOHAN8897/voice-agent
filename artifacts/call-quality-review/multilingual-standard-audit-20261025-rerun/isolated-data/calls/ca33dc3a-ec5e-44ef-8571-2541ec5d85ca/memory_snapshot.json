@@ -1,0 +1,6 @@
+{
+  "facts": {},
+  "preferences": {},
+  "important_context": "",
+  "summary": "s ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಮಾಡ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?\nuser: ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರಿಸಿ: ಸೈಕಲ್ basic service ಮತ್ತು puncture repair ಬೆಲೆ ಎಷ್ಟು? Parts ಕೂಡ ಇದರಲ್ಲಿ ಸೇರಿವೆಯಾ?\nassistant: ಬೇಸಿಕ್ service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ ರಿಪೇರ್ one hundred twenty ರೂಪಾಯಿ. ಪಾರ್ಟ್ಸ್ extra ಆಗಿ ಬಂದರೆ, ನಿಮ್ಮ ಅನುಮತಿ ಪಡೆದ ಮೇಲಷ್ಟೇ ಹಾಕಲಾಗುತ್ತದೆ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?\nuser: ಸರಿ, ಧನ್ಯವಾದಗಳು.\nassistant: ಸರಿ. ನಿಮ್ಮ ವಿನಂತಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ ಎಂದು ನನಗೆ ದೃಢೀಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಅದನ್ನು ಮುಗಿದಿದೆ ಎಂದು ಪರಿಗಣಿಸಬೇಡಿ. ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು area ತಿಳಿಸ್ತೀರಾ?"
+}

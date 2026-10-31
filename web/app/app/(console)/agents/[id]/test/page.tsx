@@ -1,5 +1,6 @@
-import { AgentTestStudio } from "@/components/test-studio/AgentTestStudio";
+import { redirect } from "next/navigation";
 
-export default function AgentTestPage({ params }: { params: { id: string } }) {
-  return <AgentTestStudio agentId={params.id} portal="app" />;
+export default async function AgentTestRedirectPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  redirect(`/app/test-studio/${id}`);
 }

@@ -1,0 +1,16 @@
+{
+  "call_id": "91be08f8-64e0-4f40-8589-9a393ceffe7e",
+  "tenant_id": "e0aac13f-22ee-5e8b-b7a7-c81e2869a53c",
+  "agent_id": "30e9f522-cc97-5431-81bc-71fd1d2fec3d",
+  "session_id": "audio-91be08f8-64e0-4f40-8589-9a393ceffe7e",
+  "language": "en-IN",
+  "audit": true,
+  "stage_usage": {
+    "tts": {
+      "input_characters": 216,
+      "output_audio_seconds": 9.421188,
+      "output_audio_samples": 150739,
+      "native_usage": {}
+    }
+  }
+}

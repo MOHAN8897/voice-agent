@@ -52,14 +52,27 @@ def test_alembic_revision_chain():
     from pathlib import Path
 
     versions = Path(__file__).resolve().parents[1] / "db" / "migrations" / "versions"
-    p1 = versions / "001_phase1_initial.py"
-    p2 = versions / "002_phase2_brains.py"
-    p3 = versions / "003_phase3_calls.py"
-    for path, rev, down in (
-        (p1, "001_phase1", None),
-        (p2, "002_phase2_brains", "001_phase1"),
-        (p3, "003_phase3_calls", "002_phase2_brains"),
-    ):
+    chain = (
+        ("001_phase1_initial.py", "001_phase1", None),
+        ("002_phase2_brains.py", "002_phase2_brains", "001_phase1"),
+        ("003_phase3_calls.py", "003_phase3_calls", "002_phase2_brains"),
+        ("004_phase5_platform.py", "004_phase5", "003_phase3_calls"),
+        ("005_tier_stack_payload.py", "005_tier_stack", "004_phase5"),
+        ("006_dev_telephony.py", "006_dev_telephony", "005_tier_stack"),
+        ("007_saved_instructions.py", "007_saved_instructions", "006_dev_telephony"),
+        ("008_saved_runtime.py", "008_saved_runtime", "007_saved_instructions"),
+        ("009_saas_identity.py", "009_saas_identity", "008_saved_runtime"),
+        ("010_saas_telephony_commerce.py", "010_saas_telephony", "009_saas_identity"),
+        ("011_saas_leads_billing.py", "011_saas_leads_billing", "010_saas_telephony"),
+        ("012_razorpay_invoices.py", "012_razorpay_invoices", "011_saas_leads_billing"),
+        ("013_email_verification_tokens.py", "013_email_verification", "012_razorpay_invoices"),
+        ("014_wallet_ledger_reference.py", "014_wallet_ledger_reference", "013_email_verification"),
+        ("015_email_verification_otp.py", "015_email_verification_otp", "014_wallet_ledger_reference"),
+        ("016_usage_credits_user.py", "016_usage_credits_user", "015_email_verification_otp"),
+        ("017_number_purchase_assign_agent.py", "017_number_purchase_assign_agent", "016_usage_credits_user"),
+    )
+    for filename, rev, down in chain:
+        path = versions / filename
         spec = importlib.util.spec_from_file_location(path.stem, path)
         assert spec and spec.loader
         mod = importlib.util.module_from_spec(spec)
@@ -69,7 +82,10 @@ def test_alembic_revision_chain():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(not os.getenv("DATABASE_URL"), reason="DATABASE_URL not set")
+@pytest.mark.skipif(
+    os.getenv("LIVE_DB", "").strip().lower() not in ("1", "true", "yes") or not os.getenv("DATABASE_URL"),
+    reason="Requires LIVE_DB=1 and DATABASE_URL",
+)
 async def test_db_health_when_configured():
     from server.config.env import get_settings
 

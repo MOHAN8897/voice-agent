@@ -53,7 +53,13 @@ export function CallsWorkspace() {
       }
       if (active.search.trim()) {
         const q = active.search.trim().toLowerCase();
-        list = list.filter((c) => c.call_id.toLowerCase().includes(q));
+        list = list.filter(
+          (c) =>
+            c.call_id.toLowerCase().includes(q) ||
+            (c.customer && c.customer.toLowerCase().includes(q)) ||
+            (c.summary && c.summary.toLowerCase().includes(q)) ||
+            (c.disposition && c.disposition.toLowerCase().includes(q))
+        );
       }
       setCalls(list);
       setTotal(typeof j.total === "number" ? j.total : list.length);

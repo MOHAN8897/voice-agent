@@ -1,0 +1,42 @@
+{
+  "intents": {
+    "inline:converted-callback-requests-leave-the-pending-qu-854ff231": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "PATCH",
+            "requestBodyContains": "converted",
+            "status": 200,
+            "urlContains": "/api/callback-requests/test-callback"
+          },
+          {
+            "contains": "No pending callback requests.",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1792998039028,
+      "id": "inline:converted-callback-requests-leave-the-pending-qu-854ff231",
+      "provenBy": {
+        "at": 1792998523267,
+        "grade": "net",
+        "runId": "drive-sc1ebbc53-7b14-4273-963f-fa6478fcd653",
+        "verdictId": "reticle_act_and_wait:1792998523267"
+      },
+      "state": "proved",
+      "statement": "Converted callback requests leave the pending queue only after a successful save.",
+      "status": "proved",
+      "subject": "api",
+      "surface": {
+        "files": [
+          "src/console/ui/TactileButton.jsx"
+        ]
+      },
+      "updatedAt": 1792998523289
+    }
+  },
+  "subject": "api",
+  "version": 1
+}

@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।", "ts": "2026-10-25T19:18:29.814709Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "देखिए, sofa cleaning three hundred forty nine rupees per seat है और minimum 3 seats चाहिए. Kitchen cleaning का total one thousand five hundred ninety nine rupees है. Aapko inme se kiski details chahiye?", "ts": "2026-10-25T19:18:32.115339Z", "brain_latency_ms": 2292}
+{"seq": 3, "role": "user", "text": "अभी कुछ book या save मत कीजिए। पहले मेरा सवाल बताइए: सोफा और kitchen cleaning की कीमत और minimum seats कितनी हैं? क्या visit अभी confirm है?", "ts": "2026-10-25T19:18:32.130423Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "सोफा cleaning three hundred forty nine rupees per seat है, minimum 3 seats चाहिए, और kitchen cleaning one thousand five hundred ninety nine rupees total है. मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें। क्या आपकी locality Pune में है?", "ts": "2026-10-25T19:18:34.373444Z", "brain_latency_ms": 2237}
+{"seq": 5, "role": "user", "text": "ठीक है, धन्यवाद।", "ts": "2026-10-25T19:18:34.422010Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ठीक है। मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें।", "ts": "2026-10-25T19:18:36.284905Z", "brain_latency_ms": 1858}
+{"seq": 7, "role": "user", "text": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।", "ts": "2026-10-25T19:18:36.302169Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-25T19:18:36.305727Z", "brain_latency_ms": 1}

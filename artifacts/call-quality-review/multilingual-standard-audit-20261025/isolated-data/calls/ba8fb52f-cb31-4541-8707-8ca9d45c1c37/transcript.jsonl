@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T15:15:44.534504Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Of course — please go ahead.", "ts": "2026-10-25T15:15:45.524032Z", "brain_latency_ms": 613}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Please answer my question first: What do AC servicing and fridge inspection cost, and are replacement parts included?", "ts": "2026-10-25T15:15:45.534220Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Of course — please go ahead.", "ts": "2026-10-25T15:15:46.408938Z", "brain_latency_ms": 647}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-25T15:15:46.447696Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Of course — please go ahead.", "ts": "2026-10-25T15:15:47.026452Z", "brain_latency_ms": 474}
+{"seq": 7, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T15:15:47.049196Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T15:15:47.054778Z", "brain_latency_ms": 1}

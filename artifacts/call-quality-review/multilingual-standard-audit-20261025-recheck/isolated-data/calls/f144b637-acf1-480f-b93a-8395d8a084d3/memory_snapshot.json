@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "onditions.\nassistant: I couldn't confirm that your request went through. Please don't treat it as done.\nuser: Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?\nassistant: Yes, we do print wedding invitations as well. For visiting cards, it is twenty-five rupees per card with a minimum order of one hundred cards. Wedding invitations depend on the design and quantity, so there is no fixed price.\nuser: Okay, thanks.\nassistant: You're welcome. Which type of card would you like, and how many do you need?"
+}

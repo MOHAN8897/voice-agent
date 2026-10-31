@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ot book or save anything yet. Please answer my question first: What do AC servicing and fridge inspection cost, and are replacement parts included?\nassistant: AC basic servicing is six hundred ninety nine rupees and fridge inspection is three hundred ninety nine rupees. Replacement parts are extra and only after your approval, so there is no fixed repair quote before inspection. Would you like to request a service visit?\nuser: I don't need AC servicing, but my fridge needs inspection. Can you help?\nassistant: Of course, we can help with the fridge inspection. Would you like to request a visit?"
+}

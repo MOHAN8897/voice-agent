@@ -1,0 +1,419 @@
+{
+  "key": "print-te-IN-none-6_hangup",
+  "business": "print",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "f3af70e9-b056-5d3b-8e97-da7174791478",
+  "call_id": "129df5fa-8b63-41b0-809a-c2fcd4164e40",
+  "session_id": "audit-print-te-IN-none-6_hangup-6874fa0b",
+  "compiled_checksum": "793858a9dada51bec19ca20371c431417f12615af0fb1f99849b6cde6ad39249",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1020,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Customer expressed interest and asked for service, price, and conditions — script objective to understand card type/quantity and take name/locality for quote is now active.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"quote request with name and delivery location\",\n    \"contact_preference\": \"end_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "ective to understand card type/quantity and take name/locality for quote is now active.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"quote request with name and delivery location\",\n    \"contact_preference\": \"end_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.532
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 334,
+      "sse_content_preview": "{\n  \"spoken_response\": \"తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు పడుతుంది, కనీసం 100 కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది. డెలివరీ పూణేలో ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము. మీకు ఏ రకమైన కార్డ్స్ కావాలి అండి, ఎన్ని కావాలి?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు పడుతుంది, కనీసం 100 కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది. డెలివరీ పూణేలో ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము. మీకు ఏ రకమైన కార్డ్స్ కావాలి అండి, ఎన్ని కావాలి?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 105,
+        "prompt_tokens": 4312,
+        "total_tokens": 4417,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు పడుతుంది, కనీసం 100 కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది. డెలివరీ పూణేలో ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము. మీకు ఏ రకమైన కార్డ్స్ కావాలి అండి, ఎన్ని కావాలి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4312,
+          "output_tokens": 105,
+          "total_tokens": 4417
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.734
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 643,
+      "sse_content_preview": "{\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t",
+      "sse_content_tail": "{\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\n\t\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t\n\t\t",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.047
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 271,
+      "sse_content_preview": "{\"spoken_response\": \"అవును అండి, వెడ్డింగ్ ఇన్విటేషన్లు కూడా చేస్తాము. కానీ డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది, fixed price ఏమీ లేదు. పూణేలో డెలివరీ ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము. మీకు ఏ రకమైన కార్డ్స్ కావాలి అండి?\"}",
+      "sse_content_tail": "{\"spoken_response\": \"అవును అండి, వెడ్డింగ్ ఇన్విటేషన్లు కూడా చేస్తాము. కానీ డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది, fixed price ఏమీ లేదు. పూణేలో డెలివరీ ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము. మీకు ఏ రకమైన కార్డ్స్ కావాలి అండి?\"}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 79,
+        "prompt_tokens": 4396,
+        "total_tokens": 4475,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "అవును అండి, వెడ్డింగ్ ఇన్విటేషన్లు కూడా చేస్తాము. కానీ డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది, fixed price ఏమీ లేదు. పూణేలో డెలివరీ ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము. మీకు ఏ రకమైన కార్డ్స్ కావాలి అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4396,
+          "output_tokens": 79,
+          "total_tokens": 4475
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.688
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 803,
+      "sse_content_preview": "{ \"end_call\": { \"evidence\": \"సరే అండి, ధన్యవాదాలు.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n\t\t\n\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t",
+      "sse_content_tail": "{ \"end_call\": { \"evidence\": \"సరే అండి, ధన్యవాదాలు.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\" }\n\t\t\n\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t\n\t\t\t",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.328
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 121,
+      "sse_content_preview": "{ \"spoken_response\": \"సరేనండి. మీకు ఆసక్తి ఉంటే, కోట్ రిక్వెస్ట్ కోసం మీ ఇష్టమైన పేరు మరియు డెలివరీ లొకేషన్ చెప్పగలరా?\" }",
+      "sse_content_tail": "{ \"spoken_response\": \"సరేనండి. మీకు ఆసక్తి ఉంటే, కోట్ రిక్వెస్ట్ కోసం మీ ఇష్టమైన పేరు మరియు డెలివరీ లొకేషన్ చెప్పగలరా?\" }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 42,
+        "prompt_tokens": 4451,
+        "total_tokens": 4493,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి. మీకు ఆసక్తి ఉంటే, కోట్ రిక్వెస్ట్ కోసం మీ ఇష్టమైన పేరు మరియు డెలివరీ లొకేషన్ చెప్పగలరా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4451,
+          "output_tokens": 42,
+          "total_tokens": 4493
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.969
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు పడుతుంది, కనీసం one hundred కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది. డెలివరీ పూణేలో ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము.",
+      "turn": 1,
+      "at": 2.281
+    },
+    {
+      "text": "అవును అండి, వెడ్డింగ్ ఇన్విటేషన్లు కూడా చేస్తాము. కానీ డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది, fixed price ఏమీ లేదు. పూణేలో డెలివరీ ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము. మీకు ఏ రకమైన కార్డ్స్ కావాలి అండి?",
+      "turn": 2,
+      "at": 4.047
+    },
+    {
+      "text": "సరేనండి. మీకు ఆసక్తి ఉంటే, కోట్ రిక్వెస్ట్ కోసం మీ ఇష్టమైన పేరు మరియు డెలివరీ లొకేషన్ చెప్పగలరా?",
+      "turn": 3,
+      "at": 6.344
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 4,
+      "at": 6.375
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.",
+      "spoken": "తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు పడుతుంది, కనీసం one hundred కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది. డెలివరీ పూణేలో ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము.",
+      "elapsed_s": 2.266,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: మీరు wedding invitations కూడా print చేస్తారా? ధర, delivery time ఎంత?",
+      "spoken": "అవును అండి, వెడ్డింగ్ ఇన్విటేషన్లు కూడా చేస్తాము. కానీ డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది, fixed price ఏమీ లేదు. పూణేలో డెలివరీ ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము. మీకు ఏ రకమైన కార్డ్స్ కావాలి అండి?",
+      "elapsed_s": 1.735,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "సరే అండి, ధన్యవాదాలు.",
+      "spoken": "సరేనండి. మీకు ఆసక్తి ఉంటే, కోట్ రిక్వెస్ట్ కోసం మీ ఇష్టమైన పేరు మరియు డెలివరీ లొకేషన్ చెప్పగలరా?",
+      "elapsed_s": 2.282,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 6.422,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "129df5fa-8b63-41b0-809a-c2fcd4164e40",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "43f890af79674ccea3f40754552912551aafbf813a2d8afaace49ff8171cacc5",
+  "prompt_chars": 18359,
+  "opening_seeded": "నమస్కారం, నా పేరు మీరా, క్లియర్ ప్రింట్ స్టూడియో నుండి మాట్లాడుతున్నాను. ఇది సేల్స్ కాల్ కాదండి, మా కార్డ్స్ గురించి మీ సందేహాలు తీర్చడానికి కాల్ చేస్తున్నాను. మీకు విజిటింగ్ కార్డ్స్ లేదా వెడ్డింగ్ ఇన్విటేషన్ల గురించి వివరాలు కావాలా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కోటి 25 రూపాయలు పడుతుంది, కనీసం one hundred కార్డ్స్ ఆర్డర్ చేయాలి. వెడ్డింగ్ ఇన్విటేషన్లకు డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది. డెలివరీ పూణేలో ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "అవును అండి, వెడ్డింగ్ ఇన్విటేషన్లు కూడా చేస్తాము. కానీ డిజైన్ మరియు క్వాంటిటీని బట్టి ధర మారుతుంది, fixed price ఏమీ లేదు. పూణేలో డెలివరీ ఉంటుంది, ఆర్ట్ వర్క్ అప్రూవ్ అయిన ఐదు రోజుల తర్వాత పోస్ట్ ద్వారా పంపిస్తాము. మీకు ఏ రకమైన కార్డ్స్ కావాలి అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి. మీకు ఆసక్తి ఉంటే, కోట్ రిక్వెస్ట్ కోసం మీ ఇష్టమైన పేరు మరియు డెలివరీ లొకేషన్ చెప్పగలరా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.422,
+  "hangup_count": 1
+}

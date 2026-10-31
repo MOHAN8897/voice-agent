@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "्या है? Fluency या job की guarantee है?\nassistant: Course की total fee six thousand four hundr… नौ रुपये है, छह हफ्ते की online classes हैं और timing weekends पर सुबह दस से ग्यारह बजे तक है. वैसे, fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन learning support के लिए यह अच्छा रहेगा.\nuser: मुझे job guarantee नहीं चाहिए, लेकिन spoken English सीखनी है। Course बताइए।\nassistant: ठीक है, spoken English सीखना ही काफी है. क्या आप demo या counselling के लिए अपना preferred name और email बता सकते हैं? मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन टीम को अनुरोध भेजने या follow-up का वादा नहीं कर सकता।"
+}

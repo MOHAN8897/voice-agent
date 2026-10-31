@@ -1,17 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ensureArray } from "@/lib/ensure-array";
 import { SkeuoPanel } from "@/components/ui/skeuo/SkeuoPanel";
 import { SkeuoButton } from "@/components/ui/skeuo/SkeuoButton";
 import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { cn } from "@/lib/cn";
-import { useTestStudioFineTune } from "@/components/test-studio/useTestStudioFineTune";
+import { StudioTabRail } from "@/components/test-studio/StudioTabRail";
+import {
+  useTestStudioFineTune,
+  CALL_END_REASONS,
+  DEFAULT_CALL_END_FAREWELL,
+  defaultCallEndPolicy,
+} from "@/components/test-studio/useTestStudioFineTune";
+import { compileLanguageLabel } from "@/components/test-studio/CompileLanguagePicker";
+import { CompilerSectionsPanel } from "@/components/test-studio/CompilerSectionsPanel";
+import { RealtimeVoiceSelect } from "@/components/test-studio/RealtimeVoiceSelect";
+import { ScriptEntityTagsPanel } from "@/components/test-studio/ScriptEntityTagsPanel";
+import { LivePromptPreviewPanel } from "@/components/test-studio/LivePromptPreviewPanel";
+import { hasScriptEntityValues } from "@/lib/script-entities";
 import { CartesiaVoiceSelect } from "@/components/test-studio/CartesiaVoiceSelect";
 import { SarvamVoiceSelect } from "@/components/test-studio/SarvamVoiceSelect";
+import {
+  DEFAULT_REALTIME_NOISE_REDUCTION,
+  DEFAULT_REALTIME_SPEED,
+  DEFAULT_REALTIME_TURN_DETECTION,
+  DEFAULT_REALTIME_VAD_EAGERNESS,
+  DEFAULT_REALTIME_VOICE,
+  REALTIME_MODEL_IDS,
+  REALTIME_NOISE_REDUCTION,
+  REALTIME_TURN_DETECTION,
+  REALTIME_VAD_EAGERNESS,
+  GEMINI_LIVE_MODEL_IDS,
+  isGeminiLiveVoiceModel,
+  isRealtimePstnMode,
+  normalizeRealtimeSilenceMs,
+  normalizeRealtimeSpeed,
+} from "@/lib/realtime-voice";
 
 type Tab = "prompts" | "llm" | "voice";
+
+export type FineTuneUnsavedGuard = {
+  isDirty: boolean;
+  confirmLeave: () => Promise<boolean>;
+};
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "prompts", label: "Prompts" },
@@ -37,8 +71,53 @@ function Field({
   );
 }
 
+const AGENT_BRIEF_PLACEHOLDER: Record<string, string> = {
+  "te-IN":
+    "Create a Telugu telecaller for Acme Realty.\nAgent name: Swetha.\nShe represents the business like a real teammate — listen, answer first, don't interrogate.\nKnown inventory: 1,000 sq ft from fifty lakhs. If they want a different size, follow them. Never invent prices.",
+  "en-IN":
+    "Create an English agent for Acme Support.\nAgent name: Priya.\nTalk like a person who works there — listen, answer first, don't interrogate.\nHandle billing tickets. Book callbacks. Never invent policies. Do not sell.",
+  "en-US":
+    "Create an English agent for Northwind Labs.\nAgent name: Sarah.\nTalk like a person who works there — listen, answer first, don't interrogate.\nSaaS is forty nine dollars a month. Book a demo. Never invent discounts. Do not assume WhatsApp.",
+  "hi-IN":
+    "Create a Hindi telecaller for Acme Realty.\nAgent name: Priya.\nHinglish, like a real teammate — listen, answer first, don't interrogate.\nKnown inventory: 1,000 sq ft from fifty lakhs. If they want a different size, follow them. Never invent prices.",
+};
+
 const inputCls =
   "w-full rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel-inset px-3 py-2 text-sm disabled:opacity-50";
+
+function countWords(text: string): number {
+  const t = text.trim();
+  if (!t) return 0;
+  return t.split(/\s+/).length;
+}
+
+function SectionMeter({
+  words,
+  maxWords,
+  recommended,
+  chars,
+  maxChars,
+}: {
+  words: number;
+  maxWords: number;
+  recommended: number;
+  chars: number;
+  maxChars: number;
+}) {
+  const over = words > maxWords || chars > maxChars;
+  const warn = !over && words > recommended;
+  return (
+    <p
+      className={cn(
+        "mt-1 font-mono text-[10px]",
+        over ? "text-status-error" : warn ? "text-status-warning" : "text-text-subtle"
+      )}
+    >
+      {words}/{maxWords} words · {chars}/{maxChars} chars
+      {over ? " — too long to save" : warn ? ` · keep under ~${recommended} words for cache + memory` : ""}
+    </p>
+  );
+}
 
 export function TestStudioFineTuneWorkbench({
   agentId,
@@ -48,10 +127,25 @@ export function TestStudioFineTuneWorkbench({
   activeTab,
   onTabChange,
   stackTtsProvider,
+  stackTtsModel,
   runtimeTtsSpeaker,
   onRuntimeSpeakerChange,
   sarvamSpeakersV3 = [],
   sarvamSpeakersV2 = [],
+  channel = "agent",
+  realtimeVoice,
+  realtimeTurnDetection,
+  realtimeVadEagerness,
+  realtimeNoiseReduction,
+  realtimeSpeed,
+  realtimeSilenceMs,
+  onRealtimeVoiceChange,
+  onRealtimeTurnDetectionChange,
+  onRealtimeSettingsChange,
+  liveLlmModel,
+  onLiveLlmChange,
+  onUnsavedGuardChange,
+  callId,
 }: {
   agentId: string;
   portal: "app" | "dev";
@@ -59,68 +153,174 @@ export function TestStudioFineTuneWorkbench({
   locked: boolean;
   activeTab?: Tab;
   onTabChange?: (tab: Tab) => void;
+  callId?: string | null;
   stackTtsProvider?: string;
+  stackTtsModel?: string;
   runtimeTtsSpeaker?: string;
   onRuntimeSpeakerChange?: (speaker: string) => void;
   sarvamSpeakersV3?: string[];
   sarvamSpeakersV2?: string[];
+  channel?: "agent" | "pstn" | "pstn_realtime";
+  realtimeVoice?: string;
+  realtimeTurnDetection?: string;
+  realtimeVadEagerness?: string;
+  realtimeNoiseReduction?: string;
+  realtimeSpeed?: number;
+  realtimeSilenceMs?: number;
+  onRealtimeVoiceChange?: (voice: string) => void;
+  onRealtimeTurnDetectionChange?: (kind: string) => void;
+  onRealtimeSettingsChange?: (patch: {
+    realtimeVoice?: string;
+    realtimeTurnDetection?: string;
+    realtimeVadEagerness?: string;
+    realtimeNoiseReduction?: string;
+    realtimeSpeed?: number;
+    realtimeSilenceMs?: number;
+  }) => void;
+  liveLlmModel?: string;
+  onLiveLlmChange?: (model: string) => void;
+  onUnsavedGuardChange?: (guard: FineTuneUnsavedGuard | null) => void;
 }) {
   const [internalTab, setInternalTab] = useState<Tab>("prompts");
   const tab = activeTab ?? internalTab;
   const setTab = onTabChange ?? setInternalTab;
-  const ft = useTestStudioFineTune(agentId, language);
+  const ft = useTestStudioFineTune(agentId, language, portal);
+  const [unsavedOpen, setUnsavedOpen] = useState(false);
+  const [createConfirmOpen, setCreateConfirmOpen] = useState(false);
+  const leaveResolverRef = useRef<((ok: boolean) => void) | null>(null);
+  const dirtyRef = useRef(ft.dirty);
+  dirtyRef.current = ft.dirty;
+  const saveRef = useRef(ft.saveFineTune);
+  saveRef.current = ft.saveFineTune;
+  const discardRef = useRef(ft.discardChanges);
+  discardRef.current = ft.discardChanges;
+
+  const confirmLeave = useCallback(() => {
+    if (!dirtyRef.current) return Promise.resolve(true);
+    return new Promise<boolean>((resolve) => {
+      leaveResolverRef.current = resolve;
+      setUnsavedOpen(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    onUnsavedGuardChange?.({ isDirty: ft.dirty, confirmLeave });
+    return () => onUnsavedGuardChange?.(null);
+  }, [ft.dirty, confirmLeave, onUnsavedGuardChange]);
+
+  useEffect(() => {
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!dirtyRef.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
+
+  const settleLeave = (ok: boolean) => {
+    leaveResolverRef.current?.(ok);
+    leaveResolverRef.current = null;
+    setUnsavedOpen(false);
+  };
+
+  const handleSaveFromDialog = async () => {
+    const ok = await saveRef.current();
+    if (ok) settleLeave(true);
+  };
+
+  const handleDiscardFromDialog = () => {
+    discardRef.current();
+    settleLeave(true);
+  };
+
+  const requestCreateScript = () => {
+    if (ft.instructions.agentScript.trim()) {
+      setCreateConfirmOpen(true);
+      return;
+    }
+    void ft.saveInstructions();
+  };
+
+  const langLabel = compileLanguageLabel(language);
+  const savedLang = ft.optimizerMeta.savedLanguage;
+  const scriptLangMismatch = Boolean(savedLang && savedLang !== language && ft.instructions.agentScript);
+  const callEnd = ft.instructions.callEndPolicy ?? defaultCallEndPolicy(language);
   const defaults = ft.catalog?.openai?.defaults || {};
   const modelLabels = ft.catalog?.openai?.modelLabels || {};
   const allowedModels = ensureArray<string>(ft.catalog?.openai?.allowedModels);
   const reasoningEfforts = ensureArray<string>(ft.catalog?.openai?.reasoningEfforts);
+  const ttsCatalog = ft.catalog?.tts as
+    | {
+        defaultCartesiaVoiceId?: string;
+        cartesiaModels?: { id: string; label: string }[];
+        voicePresets?: { id: string; label: string }[];
+        speakersV3?: string[];
+        speakersV2?: string[];
+      }
+    | undefined;
   const defaultCartesiaVoice =
-    String(ft.catalog?.tts?.defaultCartesiaVoiceId || "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4");
+    String(ttsCatalog?.defaultCartesiaVoiceId || "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4");
   const useCartesia = stackTtsProvider === "cartesia" || String(ft.runtime.ttsModel || "").startsWith("sonic");
+  const realtime = isRealtimePstnMode(channel);
+  const filteredRealtime = [
+    ...allowedModels.filter((m) => m.startsWith("gpt-realtime")),
+    ...GEMINI_LIVE_MODEL_IDS.filter((m) => !allowedModels.includes(m)),
+  ];
+  const llmModels = realtime
+    ? filteredRealtime.length
+      ? filteredRealtime
+      : [...REALTIME_MODEL_IDS, ...GEMINI_LIVE_MODEL_IDS]
+    : allowedModels;
 
   const brainHref =
     portal === "dev" ? `/dev/agents/${agentId}/brain` : `/app/agents/${agentId}/brain`;
+  const scriptOver =
+    countWords(ft.instructions.agentScript) > ft.limits.agentScriptMaxWords ||
+    ft.instructions.agentScript.length > ft.limits.agentScriptMax;
+  const briefOver =
+    countWords(ft.instructions.agentBrief) > ft.limits.agentBriefMaxWords ||
+    ft.instructions.agentBrief.length > ft.limits.agentBriefMax;
+  const saveBlocked = locked || ft.loading || ft.saving || scriptOver || briefOver;
 
   return (
+    <>
     <SkeuoPanel
       title="Fine-tune workbench"
-      description="Saved to disk — survives server restart (session: test-studio)"
+      description="Saved to disk and database per agent — survives server restart"
       padding="md"
       className="console-page-enter"
     >
-      <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-surface-border-subtle bg-surface/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-1 rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-1">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                disabled={locked}
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  "rounded-skeuo-sm px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50",
-                  tab === t.id
-                    ? "bg-accent text-accent-fg shadow-skeuo-sm"
-                    : "text-text-muted hover:bg-surface-raised"
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+      <div className="mb-4 space-y-3">
+        <StudioTabRail
+          tone="child"
+          ariaLabel="Fine-tune section"
+          items={TABS.map((t) => ({ id: t.id, label: t.label }))}
+          value={tab}
+          onChange={setTab}
+          locked={locked}
+        />
+        <div className="flex flex-wrap items-center gap-2">
             <SkeuoBadge tone="muted" className="font-mono text-[10px]">
               session: {ft.sessionId}
             </SkeuoBadge>
-            <SkeuoBadge tone="success" className="text-[10px]">
-              persisted
-            </SkeuoBadge>
+            <SkeuoButton type="button" variant="primary" size="sm"
+              disabled={saveBlocked}
+              onClick={() => void ft.saveFineTune()}>
+              {ft.saving ? "Saving…" : "Save"}
+            </SkeuoButton>
+            {ft.dirty && (
+              <SkeuoBadge tone="warning" className="text-[10px]">
+                Unsaved changes
+              </SkeuoBadge>
+            )}
             {locked && (
               <SkeuoBadge tone="warning" className="text-[10px]">
                 call in progress
               </SkeuoBadge>
             )}
-          </div>
         </div>
+        <p role="status" className="text-xs text-text-muted">{ft.status}</p>
       </div>
 
       {ft.loading ? (
@@ -137,7 +337,7 @@ export function TestStudioFineTuneWorkbench({
                   disabled={locked}
                   onClick={ft.importFromAgentDraft}
                 >
-                  Import agent draft → business
+                  Import agent draft → brief
                 </SkeuoButton>
                 <SkeuoButton
                   type="button"
@@ -148,41 +348,212 @@ export function TestStudioFineTuneWorkbench({
                 >
                   Load factory default
                 </SkeuoButton>
+                {portal === "dev" && (
                 <Link
                   href={brainHref}
                   className="inline-flex items-center rounded-skeuo-sm border border-surface-border-subtle px-3 py-1.5 text-xs text-text-muted hover:bg-surface-raised"
                 >
                   Open full brain editor →
                 </Link>
+                )}
               </div>
 
-              <div className="grid gap-5 lg:grid-cols-2">
+              <div className="rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-3 text-xs text-text-muted">
+                Describe your agent in plain language — company, agent name, role, and goals. GPT expands it into a
+                conversational policy (not a question tree) that answers first, follows the latest customer ask, and
+                matches the role (sales vs support vs recruitment). Live memory still attaches after the cache
+                breakpoint (~{ft.limits.memoryHeadroomTokens} tokens).
+              </div>
+
+              <p className="text-xs text-text-muted">
+                Script compiles in <span className="font-medium text-text">{langLabel}</span>
+                {scriptLangMismatch
+                  ? ` — saved script is still ${compileLanguageLabel(savedLang || "")}; create agent script again.`
+                  : "."}
+              </p>
+
+              <Field
+                label="Agent brief"
+                hint={`Business facts in any language — the live script will still be ${langLabel}.`}
+              >
+                <textarea
+                  disabled={locked || ft.saving}
+                  maxLength={ft.limits.agentBriefMax}
+                  placeholder={AGENT_BRIEF_PLACEHOLDER[language] || AGENT_BRIEF_PLACEHOLDER["te-IN"]}
+                  className={cn(inputCls, "min-h-[140px] resize-y text-sm")}
+                  value={ft.instructions.agentBrief}
+                  onChange={(e) =>
+                    ft.setInstructions((p) => ({ ...p, agentBrief: e.target.value }))
+                  }
+                />
+                <SectionMeter
+                  words={countWords(ft.instructions.agentBrief)}
+                  maxWords={ft.limits.agentBriefMaxWords}
+                  recommended={ft.limits.recommendedAgentBriefWords}
+                  chars={ft.instructions.agentBrief.length}
+                  maxChars={ft.limits.agentBriefMax}
+                />
+              </Field>
+
+              <ScriptEntityTagsPanel
+                entities={ft.scriptEntities}
+                scriptHasTags={hasScriptEntityValues(ft.scriptEntities)}
+                disabled={locked || ft.saving}
+                onChange={ft.setScriptEntities}
+                onApplyToScript={ft.mergeEntityTagsIntoScript}
+              />
+
+              <Field
+                label="Generated calling script"
+                hint={
+                  ft.instructions.agentScript || ft.optimizerMeta.compiledVersion
+                    ? `Business sections only (identity, offer, opening, role). Extracted fields are saved separately. Max ${ft.limits.agentScriptMaxWords} words.`
+                    : "Create agent script first, then you can edit this calling script."
+                }
+              >
+                <textarea
+                  readOnly={!(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion)}
+                  disabled={locked || ft.saving || !(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion)}
+                  maxLength={ft.limits.agentScriptMax}
+                  placeholder="Create agent script to generate the calling script from your brief…"
+                  className={cn(inputCls, "min-h-[200px] resize-y font-mono text-[11px]", !(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion) && "opacity-90")}
+                  value={ft.instructions.agentScript}
+                  onChange={(e) => {
+                    if (!(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion)) return;
+                    const next = e.target.value.slice(0, ft.limits.agentScriptMax);
+                    ft.setInstructions((p) => ({ ...p, agentScript: next }));
+                  }}
+                />
+                {(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion) ? (
+                  <SectionMeter
+                    words={countWords(ft.instructions.agentScript)}
+                    maxWords={ft.limits.agentScriptMaxWords}
+                    recommended={ft.limits.recommendedAgentScriptWords}
+                    chars={ft.instructions.agentScript.length}
+                    maxChars={ft.limits.agentScriptMax}
+                  />
+                ) : null}
+              </Field>
+
+              {ft.optimizerMeta.generationStatus ? (
+                <div className="rounded-skeuo-sm border border-surface-border-subtle p-3 text-xs" data-testid="script-generation-diagnostics" aria-live="polite">
+                  <p className="font-medium">
+                    {ft.optimizerMeta.generationStatus === "degraded" ? "Generated with fallback — review before using" : ft.optimizerMeta.generationStatus === "ready" ? "Generated and checked against the brief" : ft.optimizerMeta.generationStatus === "user_edited" ? "Edited script — review changes before using" : "Generation needs attention"}
+                  </p>
+                  <p className="mt-1 text-text-muted">
+                    {ft.optimizerMeta.provenance?.provider || "Deterministic compiler"}
+                    {ft.optimizerMeta.provenance?.model ? ` · ${ft.optimizerMeta.provenance.model}` : ""}
+                    {ft.optimizerMeta.provenance?.fallback ? " · fallback used" : ""}
+                    {" · Automated validation does not replace reviewing business facts and call behavior."}
+                  </p>
+                  {ft.optimizerMeta.issues?.length ? (
+                    <ul className="mt-2 list-disc pl-4">
+                      {ft.optimizerMeta.issues.map((issue, index) => <li key={`${issue.code || "issue"}-${index}`}>{issue.message}</li>)}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {(ft.instructions.agentScript || ft.optimizerMeta.compiledVersion) && hasScriptEntityValues(ft.scriptEntities) ? (
+                <details className="rounded-skeuo-sm border border-surface-border-subtle p-3">
+                  <summary className="cursor-pointer text-xs font-medium text-text-muted">
+                    Full script package (JSON preview)
+                  </summary>
+                  <pre className="mt-2 max-h-48 overflow-auto font-mono text-[10px] text-text-subtle whitespace-pre-wrap">
+                    {JSON.stringify(
+                      {
+                        script_entities: ft.scriptEntities,
+                        business_script: ft.instructions.agentScript,
+                      },
+                      null,
+                      2
+                    )}
+                  </pre>
+                </details>
+              ) : null}
+
+              <LivePromptPreviewPanel
+                sessionId={ft.sessionId}
+                callId={callId}
+                direction={channel === "pstn" || channel === "pstn_realtime" ? "outbound" : "outbound"}
+                llmModel={liveLlmModel}
+                pipeline={
+                  channel === "pstn" || channel === "pstn_realtime" ? "realtime_voice" : "realtime_text"
+                }
+              />
+
+              <CompilerSectionsPanel data={ft.compilerSections} className="mt-2" />
+
+              <div className="rounded-skeuo-sm border border-surface-border-subtle p-4">
+                <p className="text-sm text-text-muted">Call end</p>
+                <p className="mt-0.5 text-[11px] text-text-subtle">
+                  Optional. If you skip this, the default hangup line for {langLabel} is compiled into the brain
+                  and used on web and phone. The model may propose hanging up; the server still validates goodbye /
+                  refusal / goal / abuse. Farewell is spoken fully, then the call ends.
+                </p>
+                <p className="text-[11px] text-text-subtle">
+                  Farewell line uses {langLabel}.
+                </p>
+                <div className="mt-3 grid gap-2">
+                  {CALL_END_REASONS.map((reason) => {
+                    const on = callEnd.allowedReasons.includes(reason.id);
+                    return (
+                      <label key={reason.id} className="flex items-start gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          disabled={locked || ft.saving}
+                          className="mt-1"
+                          checked={on}
+                          onChange={() => {
+                            ft.setInstructions((p) => {
+                              const cur = (p.callEndPolicy ?? defaultCallEndPolicy(language)).allowedReasons;
+                              const next = on ? cur.filter((id) => id !== reason.id) : [...cur, reason.id];
+                              return {
+                                ...p,
+                                callEndPolicy: {
+                                  ...(p.callEndPolicy ?? defaultCallEndPolicy(language)),
+                                  allowedReasons: next.length ? next : cur,
+                                },
+                              };
+                            });
+                          }}
+                        />
+                        <span>{reason.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
                 <Field
-                  label="Behaviour instructions (dev / platform)"
-                  hint="Your platform rules — saved as entered. Merged into compiled cache prompt on Save."
+                  label="Farewell"
+                  hint={`One ${langLabel} sentence, spoken before hangup. Leave the default if you do not have a custom hangup script.`}
                 >
                   <textarea
-                    disabled={locked}
-                    className={cn(inputCls, "min-h-[140px] resize-y font-mono text-xs")}
-                    value={ft.instructions.behaviourInstructions}
+                    disabled={locked || ft.saving}
+                    maxLength={240}
+                    className={cn(inputCls, "min-h-[72px] resize-y text-sm")}
+                    value={callEnd.farewell}
                     onChange={(e) =>
-                      ft.setInstructions((p) => ({ ...p, behaviourInstructions: e.target.value }))
+                      ft.setInstructions((p) => ({
+                        ...p,
+                        callEndPolicy: {
+                          ...(p.callEndPolicy ?? defaultCallEndPolicy(language)),
+                          farewell: e.target.value,
+                        },
+                      }))
                     }
                   />
                 </Field>
-                <Field
-                  label="Business instructions (customer)"
-                  hint="What the business client provides — saved raw. Never replaced by the optimizer in the UI."
-                >
-                  <textarea
-                    disabled={locked}
-                    className={cn(inputCls, "min-h-[140px] resize-y font-mono text-xs")}
-                    value={ft.instructions.businessInstructions}
-                    onChange={(e) =>
-                      ft.setInstructions((p) => ({ ...p, businessInstructions: e.target.value }))
-                    }
-                  />
-                </Field>
+                <div className="mt-3">
+                  <SkeuoButton
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={locked || ft.saving}
+                    onClick={ft.saveCallEndPolicy}
+                  >
+                    Save call end
+                  </SkeuoButton>
+                </div>
               </div>
 
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -198,58 +569,75 @@ export function TestStudioFineTuneWorkbench({
                 </Field>
                 <div className="rounded-skeuo-sm border border-surface-border-subtle skeuo-inset p-3 text-xs text-text-muted">
                   <p>
-                    Compiled cache tokens:{" "}
+                    Brain cache tokens:{" "}
                     <span className="font-mono text-text">{ft.instructions.estimatedTokens}</span> /{" "}
                     {ft.instructions.budgetTokens}
+                    {ft.instructions.cacheEligible ? (
+                      <span className="ml-2 text-status-success">cache ON</span>
+                    ) : (
+                      <span className="ml-2 text-status-warning">cache OFF</span>
+                    )}
                   </p>
-                  {ft.optimizerMeta.rawTokenEstimate ? (
-                    <p className="mt-1">
-                      Raw ~{ft.optimizerMeta.rawTokenEstimate} → compiled {ft.instructions.estimatedTokens}
-                      {ft.optimizerMeta.tokensSaved ? ` (saved ~${ft.optimizerMeta.tokensSaved})` : ""}
-                    </p>
-                  ) : null}
+                  <p className="mt-1 text-[11px] text-text-subtle">
+                    Headroom {ft.instructions.headroom} tokens · live memory uses ~{ft.limits.memoryHeadroomTokens} tokens after the breakpoint
+                  </p>
                   {ft.optimizerMeta.compiledVersion ? (
                     <p className="mt-1 font-mono text-[10px]">
-                      v{ft.optimizerMeta.compiledVersion}
+                      Script v{ft.optimizerMeta.compiledVersion}
                       {ft.optimizerMeta.optimizerModel ? ` · ${ft.optimizerMeta.optimizerModel}` : ""}
+                      {ft.optimizerMeta.agentName ? ` · ${ft.optimizerMeta.agentName}` : ""}
+                      {ft.optimizerMeta.detectedRole ? ` · ${ft.optimizerMeta.detectedRole}` : ""}
                     </p>
                   ) : (
-                    <p className="mt-1">Save prompts to run one-time compiler</p>
+                    <p className="mt-1">Create agent script to activate the cached brain</p>
                   )}
                 </div>
               </div>
-
-              {portal === "dev" && (
-                <Field
-                  label="Compiled cache prompt (dev only)"
-                  hint="LLM-compressed merge sent to the API cache breakpoint — not shown to business clients"
-                >
-                  <textarea
-                    readOnly
-                    className={cn(inputCls, "min-h-[160px] resize-y font-mono text-[11px] opacity-90")}
-                    value={ft.effectivePreview || "Save prompts to generate compiled preview…"}
-                  />
-                </Field>
-              )}
             </div>
           )}
 
           {tab === "llm" && (
             <div className="grid gap-5 lg:grid-cols-2">
-              <Field label="OpenAI model">
+              <Field
+                label={realtime ? "Live speech model (OpenAI or Gemini)" : "OpenAI model"}
+                hint={
+                  realtime
+                    ? "Speech-to-speech only. Gemini uses Test Studio stack prefs — not saved as openaiModel in runtime."
+                    : undefined
+                }
+              >
                 <select
                   disabled={locked}
                   className={inputCls}
-                  value={String(ft.runtime.openaiModel ?? defaults.openaiModel ?? "")}
-                  onChange={(e) => ft.setRuntime((r) => ({ ...r, openaiModel: e.target.value }))}
+                  value={
+                    realtime
+                      ? liveLlmModel && llmModels.includes(liveLlmModel)
+                        ? liveLlmModel
+                        : llmModels.includes(String(ft.runtime.openaiModel ?? defaults.openaiModel ?? ""))
+                          ? String(ft.runtime.openaiModel ?? defaults.openaiModel ?? "")
+                          : "gpt-realtime-2.1-mini"
+                      : String(ft.runtime.openaiModel ?? defaults.openaiModel ?? "")
+                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (realtime) {
+                      onLiveLlmChange?.(value);
+                      if (!isGeminiLiveVoiceModel(value)) {
+                        ft.setRuntime((r) => ({ ...r, openaiModel: value }));
+                      }
+                    } else {
+                      ft.setRuntime((r) => ({ ...r, openaiModel: value }));
+                    }
+                  }}
                 >
-                  {allowedModels.map((m) => (
+                  {llmModels.map((m) => (
                     <option key={m} value={m}>
                       {modelLabels[m] || m}
                     </option>
                   ))}
                 </select>
               </Field>
+              {!realtime && (
               <Field label="Reasoning effort">
                 <select
                   disabled={locked}
@@ -268,6 +656,8 @@ export function TestStudioFineTuneWorkbench({
                   ))}
                 </select>
               </Field>
+              )}
+              {!realtime && (
               <Field label="Temperature">
                 <input
                   type="number"
@@ -282,6 +672,7 @@ export function TestStudioFineTuneWorkbench({
                   }
                 />
               </Field>
+              )}
               <Field label="Max output tokens">
                 <input
                   type="number"
@@ -299,7 +690,7 @@ export function TestStudioFineTuneWorkbench({
                 <input
                   type="number"
                   min={1500}
-                  max={2500}
+                  max={10000}
                   disabled={locked}
                   className={inputCls}
                   value={Number(
@@ -318,15 +709,113 @@ export function TestStudioFineTuneWorkbench({
 
           {tab === "voice" && (
             <div className="grid gap-5 lg:grid-cols-2">
+              {realtime ? (
+                <>
+                  <Field
+                    label="Realtime voice"
+                    hint="OpenAI slug; Gemini Live maps to a prebuilt voice on PSTN. Locked after the first audio reply."
+                  >
+                    <RealtimeVoiceSelect
+                      disabled={locked}
+                      value={realtimeVoice || DEFAULT_REALTIME_VOICE}
+                      llmModel={liveLlmModel}
+                      onChange={(voiceId) => {
+                        onRealtimeVoiceChange?.(voiceId);
+                        onRealtimeSettingsChange?.({ realtimeVoice: voiceId });
+                      }}
+                    />
+                  </Field>
+                  <Field
+                    label="Turn detection"
+                    hint="Semantic VAD waits for meaning; server VAD uses silence."
+                  >
+                    <select
+                      disabled={locked}
+                      className={inputCls}
+                      value={realtimeTurnDetection || DEFAULT_REALTIME_TURN_DETECTION}
+                      onChange={(e) => {
+                        onRealtimeTurnDetectionChange?.(e.target.value);
+                        onRealtimeSettingsChange?.({ realtimeTurnDetection: e.target.value });
+                      }}
+                    >
+                      {REALTIME_TURN_DETECTION.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  {(realtimeTurnDetection || DEFAULT_REALTIME_TURN_DETECTION) === "semantic_vad" ? (
+                    <Field label="Semantic VAD eagerness" hint="How quickly the model takes the turn.">
+                      <select
+                        disabled={locked}
+                        className={inputCls}
+                        value={realtimeVadEagerness || DEFAULT_REALTIME_VAD_EAGERNESS}
+                        onChange={(e) => onRealtimeSettingsChange?.({ realtimeVadEagerness: e.target.value })}
+                      >
+                        {REALTIME_VAD_EAGERNESS.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.label}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  ) : (
+                    <Field label="Silence duration (ms)" hint="Server VAD endpointing — same role as STT silence on Full PSTN.">
+                      <input
+                        type="number"
+                        min={200}
+                        max={2000}
+                        disabled={locked}
+                        className={inputCls}
+                        value={normalizeRealtimeSilenceMs(realtimeSilenceMs)}
+                        onChange={(e) =>
+                          onRealtimeSettingsChange?.({ realtimeSilenceMs: Number(e.target.value) })
+                        }
+                      />
+                    </Field>
+                  )}
+                  <Field label="Noise reduction" hint="Far field is the usual choice for Telnyx PSTN.">
+                    <select
+                      disabled={locked}
+                      className={inputCls}
+                      value={realtimeNoiseReduction || DEFAULT_REALTIME_NOISE_REDUCTION}
+                      onChange={(e) => onRealtimeSettingsChange?.({ realtimeNoiseReduction: e.target.value })}
+                    >
+                      {REALTIME_NOISE_REDUCTION.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Speech speed" hint="OpenAI audio output speed (0.25–1.5). Same idea as TTS pace.">
+                    <input
+                      type="number"
+                      step="0.05"
+                      min={0.25}
+                      max={1.5}
+                      disabled={locked}
+                      className={inputCls}
+                      value={normalizeRealtimeSpeed(realtimeSpeed ?? DEFAULT_REALTIME_SPEED)}
+                      onChange={(e) => onRealtimeSettingsChange?.({ realtimeSpeed: Number(e.target.value) })}
+                    />
+                  </Field>
+                </>
+              ) : (
+              <>
               {useCartesia ? (
                 <>
                   <Field
                     label="Cartesia voice"
-                    hint="Telugu, Hindi, Indian English & US/UK English — pulled live from Cartesia."
+                    hint="Indian voices matched to the selected language and model."
                   >
                     <CartesiaVoiceSelect
+                      language={language}
+                      ttsModel={String(ft.runtime.ttsModel || "sonic-3.5")}
                       disabled={false}
                       value={String(ft.runtime.ttsSpeaker || runtimeTtsSpeaker || defaultCartesiaVoice)}
+                      defaultVoiceId={defaultCartesiaVoice}
                       onChange={(ttsSpeaker) => {
                         ft.setRuntime((r) => ({
                           ...r,
@@ -344,7 +833,7 @@ export function TestStudioFineTuneWorkbench({
                       value={String(ft.runtime.ttsModel || "sonic-3.5")}
                       onChange={(e) => ft.setRuntime((r) => ({ ...r, ttsModel: e.target.value }))}
                     >
-                      {ensureArray<{ id: string; label: string }>(ft.catalog?.tts?.cartesiaModels).map(
+                      {ensureArray<{ id: string; label: string }>(ttsCatalog?.cartesiaModels).map(
                         (m) => (
                           <option key={m.id} value={m.id}>
                             {m.label || m.id}
@@ -363,7 +852,7 @@ export function TestStudioFineTuneWorkbench({
                       value={String(ft.runtime.voicePresetId ?? defaults.voicePresetId ?? "")}
                       onChange={(e) => ft.setRuntime((r) => ({ ...r, voicePresetId: e.target.value }))}
                     >
-                      {ensureArray<{ id: string; label: string }>(ft.catalog?.tts?.voicePresets).map(
+                      {ensureArray<{ id: string; label: string }>(ttsCatalog?.voicePresets).map(
                         (p) => (
                           <option key={p.id} value={p.id}>
                             {p.label}
@@ -372,13 +861,15 @@ export function TestStudioFineTuneWorkbench({
                       )}
                     </select>
                   </Field>
-                  <Field label="Sarvam TTS speaker" hint="Auto-saves to runtime when changed">
+                  <Field label="Speech voice" hint="Auto-saves to runtime when changed">
                     <SarvamVoiceSelect
+                      provider={stackTtsProvider}
+                      language={language}
                       disabled={false}
                       value={String(ft.runtime.ttsSpeaker || runtimeTtsSpeaker || defaults.ttsSpeaker || "shubh")}
-                      model={String(ft.runtime.ttsModel || "bulbul:v3")}
-                      speakersV3={sarvamSpeakersV3.length ? sarvamSpeakersV3 : ensureArray<string>(ft.catalog?.tts?.speakersV3)}
-                      speakersV2={sarvamSpeakersV2.length ? sarvamSpeakersV2 : ensureArray<string>(ft.catalog?.tts?.speakersV2)}
+                      model={String(ft.runtime.ttsModel || stackTtsModel || "")}
+                      speakersV3={sarvamSpeakersV3.length ? sarvamSpeakersV3 : ensureArray<string>(ttsCatalog?.speakersV3)}
+                      speakersV2={sarvamSpeakersV2.length ? sarvamSpeakersV2 : ensureArray<string>(ttsCatalog?.speakersV2)}
                       onChange={(ttsSpeaker) => {
                         ft.setRuntime((r) => ({ ...r, ttsSpeaker }));
                         onRuntimeSpeakerChange?.(ttsSpeaker);
@@ -472,44 +963,79 @@ export function TestStudioFineTuneWorkbench({
                   />
                 </div>
               </Field>
+              </>
+              )}
             </div>
           )}
         </>
       )}
 
       <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-surface-border-subtle pt-4">
-        <SkeuoButton type="button" variant="primary" disabled={locked || ft.loading} onClick={ft.saveAll}>
-          Save all for test session
+        <SkeuoButton type="button" variant="primary" disabled={saveBlocked} onClick={() => void ft.saveFineTune()}>
+          {ft.saving ? "Saving…" : "Save fine-tune"}
         </SkeuoButton>
         <SkeuoButton
           type="button"
           variant="secondary"
-          disabled={locked || ft.loading}
-          onClick={async () => {
-            await ft.saveInstructions();
-            await ft.refreshEffectivePreview();
-          }}
+          disabled={locked || ft.loading || ft.saving || briefOver}
+          onClick={requestCreateScript}
         >
-          Save prompts only
+          {ft.saving ? "Creating script…" : "Create agent script"}
         </SkeuoButton>
         <SkeuoButton
           type="button"
           variant="secondary"
-          disabled={locked || ft.loading}
-          onClick={ft.saveRuntime}
+          disabled={locked || ft.loading || ft.saving}
+          onClick={() => void ft.saveRuntime()}
         >
           Save runtime only
         </SkeuoButton>
         <SkeuoButton
           type="button"
           variant="ghost"
-          disabled={locked || ft.loading}
+          disabled={locked || ft.loading || ft.saving}
           onClick={ft.clearSession}
         >
           Clear session overrides
         </SkeuoButton>
-        {ft.status && <span className="text-xs text-text-muted">{ft.status}</span>}
+        {ft.status && (
+          <span
+            className={cn(
+              "text-xs",
+              /fail|too long|exceed/i.test(ft.status) ? "text-status-error" : "text-text-muted"
+            )}
+          >
+            {ft.status}
+          </span>
+        )}
       </div>
     </SkeuoPanel>
+      <ConfirmDialog
+        open={unsavedOpen}
+        title="Save Fine-tune changes?"
+        description="You have unsaved Fine-tune edits. Save them, discard them, or keep editing."
+        confirmLabel="Save"
+        cancelLabel="Keep editing"
+        discardLabel="Discard"
+        busy={ft.saving}
+        onConfirm={() => void handleSaveFromDialog()}
+        onCancel={() => settleLeave(false)}
+        onDiscard={handleDiscardFromDialog}
+      />
+      <ConfirmDialog
+        open={createConfirmOpen}
+        title="Replace calling script?"
+        description="Creating a new script from the brief replaces the current calling script, including any unsaved edits."
+        confirmLabel="Create new script"
+        cancelLabel="Cancel"
+        variant="secondary"
+        busy={ft.saving}
+        onConfirm={() => {
+          setCreateConfirmOpen(false);
+          void ft.saveInstructions();
+        }}
+        onCancel={() => setCreateConfirmOpen(false)}
+      />
+    </>
   );
 }

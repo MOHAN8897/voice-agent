@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ಏನಾದ್ರೂ ಇದೆಯಾ?\nuser: ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: Course final fee, ಅವಧಿ ಮತ್ತು class timings ಏನು? Job guarantee ಕೊಡುತ್ತೀರಾ?\nassistant: Total fee four thousand nine hundred and ninety nine rupees. Course ಆರು ವಾರ ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ. ಮತ್ತೆ ಯಾವುದೇ job guarantee ಇಲ್ಲ. ನಿಮಗೆ ಇನ್ನೇನಾದ್ರೂ details ಬೇಕಾ?\nuser: ನನಗೆ job guarantee ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ Python ಕಲಿಯಲು ಆಸಕ್ತಿ ಇದೆ. Course ವಿವರಿಸುತ್ತೀರಾ?\nassistant: ಸರಿ, ನಿಮಗೆ job guarantee ಬೇಡ ಅಂದ್ರೆ ತೊಂದ್ರೆ ಇಲ್ಲ. ಈ course ಸಂಪೂರ್ಣ beginners-ಗೆ ಅಂತಾನೇ design ಮಾಡಿರೋದು. ನಿಮಗೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?"
+}

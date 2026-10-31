@@ -1,0 +1,57 @@
+{
+  "key": "print-te-IN-connected-2_future_interest",
+  "business": "print",
+  "language": "te-IN",
+  "integration": true,
+  "scenario": "2_future_interest",
+  "agent_id": "f3af70e9-b056-5d3b-8e97-da7174791478",
+  "call_id": "1741aed8-8850-403e-a077-9dbc767feb86",
+  "session_id": "audit-print-te-IN-connected-2_future_interest-187aa09f",
+  "compiled_checksum": "793858a9dada51bec19ca20371c431417f12615af0fb1f99849b6cde6ad39249",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "క్షమించండి, మాకు ఒక సాంకేతిక సమస్య ఎదురైంది. దయచేసి మాకు తిరిగి కాల్ చేయండి. ధన్యవాదాలు.",
+      "turn": 1,
+      "at": 0.593
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "ఇప్పుడైతే అవసరం లేదు, కానీ వచ్చే నెల నాకు ఆసక్తి ఉంది. ప్రస్తుత ధర చెప్పండి. ఏదీ book చేయకండి, దీన్ని శాశ్వతంగా వద్దన్నట్టు అనుకోకండి.",
+      "spoken": "క్షమించండి, మాకు ఒక సాంకేతిక సమస్య ఎదురైంది. దయచేసి మాకు తిరిగి కాల్ చేయండి. ధన్యవాదాలు.",
+      "elapsed_s": 0.641,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.656,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "1741aed8-8850-403e-a077-9dbc767feb86",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "43f890af79674ccea3f40754552912551aafbf813a2d8afaace49ff8171cacc5",
+  "prompt_chars": 18359,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "నమస్కారం, నా పేరు మీరా, క్లియర్ ప్రింట్ స్టూడియో నుండి మాట్లాడుతున్నాను. ఇది సేల్స్ కాల్ కాదండి, మా కార్డ్స్ గురించి మీ సందేహాలు తీర్చడానికి కాల్ చేస్తున్నాను. మీకు విజిటింగ్ కార్డ్స్ లేదా వెడ్డింగ్ ఇన్విటేషన్ల గురించి వివరాలు కావాలా?",
+  "status": "completed",
+  "elapsed_s": 0.656,
+  "hangup_count": 1
+}

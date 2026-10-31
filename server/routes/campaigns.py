@@ -1,253 +1,1054 @@
-"""Campaign + DNC + phone number APIs — Phase 5."""
+"""Campaign + DNC + phone number APIs — Phase 5 (+ SaaS tenant context)."""
 from __future__ import annotations
 
 import uuid
+import hashlib
+import json
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
+import re
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel, Field, ConfigDict, AliasChoices, field_validator, model_validator
+from sqlalchemy import func, or_, select, update
 
-from server.auth.dependencies import require_app_session, require_permission
-from server.auth.session import SessionData
-from server.config.env import get_settings
+from server.auth.api_tenant import ApiTenantContext, require_api_tenant
+from server.auth.rbac import require_role_permission
 from server.db.connection import get_session_factory
+from server.db.models.entities import Agent
 from server.db.models.phase5_models import Campaign, CampaignContact, CampaignRun, DncEntry, PhoneNumber
 
 router = APIRouter()
 
 
-class CampaignCreate(BaseModel):
-    name: str
-    agent_id: str = Field(..., alias="agentId")
-    concurrency: int = 5
+def _client_ip(request: Request) -> str | None:
+    return request.client.host if request.client else None
 
-    model_config = {"populate_by_name": True}
+
+class CallingWindow(BaseModel):
+    start: str = Field(pattern=r"^([01][0-9]|2[0-3]):[0-5][0-9]$")
+    end: str = Field(pattern=r"^([01][0-9]|2[0-3]):[0-5][0-9]$")
+    timezone: str = Field(default="Asia/Kolkata", max_length=64)
+
+    @field_validator("timezone")
+    @classmethod
+    def valid_zone(cls, value):
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError):
+            raise ValueError("Choose a valid IANA timezone")
+        return value
+
+
+class CampaignCreate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    client_request_id: str | None = Field(None, max_length=64, min_length=16, validation_alias=AliasChoices("clientRequestId", "client_request_id"))
+    name: str = Field(min_length=1, max_length=255, pattern=r".*\S.*")
+    agent_id: str = Field(..., validation_alias=AliasChoices("agentId", "agent_id"))
+    description: str | None = Field(None, max_length=4000)
+    default_country: str = Field("US", validation_alias=AliasChoices("defaultCountry", "default_country"))
+    concurrency: int = 5
+    max_attempts: int | None = Field(
+        None, validation_alias=AliasChoices("maxAttempts", "max_attempts")
+    )
+    retry_delay_minutes: int | None = Field(
+        None, validation_alias=AliasChoices("retryDelayMinutes", "retry_delay_minutes")
+    )
+    from_e164: str | None = Field(None, validation_alias=AliasChoices("fromE164", "from_e164"))
+    contacts: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
+    contact_list_id: str | None = Field(None, validation_alias=AliasChoices("contactListId", "contact_list_id"))
+    auto_start: bool = Field(False, validation_alias=AliasChoices("autoStart", "auto_start"))
+    calling_window: CallingWindow | None = Field(None, validation_alias=AliasChoices("callingWindow", "calling_window"))
+    starts_at: datetime | None = Field(None, validation_alias=AliasChoices("startsAt", "starts_at"))
+    expires_at: datetime | None = Field(None, validation_alias=AliasChoices("expiresAt", "expires_at"))
+    followup_job_ids: list[uuid.UUID] = Field(default_factory=list, max_length=1000, validation_alias=AliasChoices("followupJobIds", "followup_job_ids"))
+    expected_script_version: str | None = Field(None, max_length=100, validation_alias=AliasChoices("expectedScriptVersion", "expected_script_version"))
+    # Compliance Attestation
+    consent_confirmed: bool = Field(..., validation_alias=AliasChoices("consentConfirmed", "consent_confirmed"))
+    consent_version: str = Field("2026-10-v1", validation_alias=AliasChoices("consentVersion", "consent_version"))
+    dnd_scrub_enabled: bool = Field(True, validation_alias=AliasChoices("dndScrubEnabled", "dnd_scrub_enabled"))
+    # Integrations every call in this campaign may use ([{app, mode}]); None keeps agent defaults.
+    integrations: list[dict[str, Any]] | None = Field(None, max_length=12, validation_alias=AliasChoices("integrations", "integrationSelection", "integration_selection"))
+
+    @field_validator("consent_confirmed")
+    @classmethod
+    def validate_consent(cls, v: bool) -> bool:
+        if not v:
+            raise ValueError("You must confirm consent to launch campaigns.")
+        return v
+
+    @model_validator(mode="after")
+    def validate_schedule(self):
+        for stamp in (self.starts_at, self.expires_at):
+            if stamp is not None and (stamp.tzinfo is None or stamp.utcoffset() is None):
+                raise ValueError("Campaign dates must include an explicit timezone offset")
+        if self.starts_at and self.expires_at and self.expires_at <= self.starts_at:
+            raise ValueError("Campaign expiry must be after its start")
+        if self.followup_job_ids and (self.contacts or self.contact_list_id):
+            raise ValueError("Follow-up jobs cannot be mixed with uploaded contacts")
+        return self
+
+
+class ValidateVariablesBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    agent_id: str = Field(..., validation_alias=AliasChoices("agentId", "agent_id"))
+    contacts: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
+    contact_list_id: str | None = Field(None, validation_alias=AliasChoices("contactListId", "contact_list_id"))
+
+
+class CampaignStatusPatch(BaseModel):
+    status: str = Field(..., pattern="^(running|paused|cancelled)$")
 
 
 class ContactImport(BaseModel):
-    contacts: list[dict[str, Any]] = Field(default_factory=list)
+    contacts: list[dict[str, Any]] = Field(default_factory=list, max_length=10000)
 
 
 class DncBody(BaseModel):
-    phone_e164: str = Field(..., alias="phoneE164")
-    reason: str | None = None
+    model_config = ConfigDict(populate_by_name=True)
 
-    model_config = {"populate_by_name": True}
+    phone_e164: str = Field(..., validation_alias=AliasChoices("phoneE164", "phone_e164"))
+    reason: str | None = "manual_operator"
+
+
+class DncBulkBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    phones: list[str] = Field(default_factory=list, max_length=5000)
+    reason: str | None = "bulk_upload"
+
+
+class DncDeactivateBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    expected_added_at: datetime | None = Field(None, validation_alias=AliasChoices("expectedAddedAt", "expected_added_at"))
+
+    removal_reason: str = Field(
+        ...,
+        min_length=5,
+        validation_alias=AliasChoices("removalReason", "removal_reason"),
+        description="Reason for removing contact from DND list",
+    )
+    reconsent_confirmed: bool = Field(
+        ...,
+        validation_alias=AliasChoices("reconsentConfirmed", "reconsent_confirmed"),
+        description="Must explicitly confirm new recipient authorization",
+    )
+
+    @field_validator("reconsent_confirmed")
+    @classmethod
+    def validate_reconsent(cls, v: bool) -> bool:
+        if not v:
+            raise ValueError("You must explicitly confirm new recipient authorization.")
+        return v
+
+    @field_validator("removal_reason", mode="before")
+    @classmethod
+    def trimmed_reason(cls, value):
+        value = str(value or "").strip()
+        if not 5 <= len(value) <= 1000:
+            raise ValueError("Explain renewed permission in 5–1,000 characters")
+        return value
 
 
 class PhoneNumberBody(BaseModel):
     e164: str
 
 
-def _tenant_id(session: SessionData) -> uuid.UUID:
-    settings = get_settings()
-    raw = session.tenant_id or settings.default_tenant_id
-    return uuid.UUID(raw)
+@router.get("/api/campaigns/audience/follow-ups")
+async def followup_audience(
+    agent_id: uuid.UUID = Query(alias="agentId"), kind: Literal["callback", "missed"] = "callback",
+    limit: int = Query(500, ge=1, le=500), offset: int = Query(0, ge=0),
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
+    require_role_permission(ctx.role, "app.calls.read")
+    factory = get_session_factory()
+    if factory is None:
+        raise HTTPException(503, "Follow-up storage is unavailable")
+    from server.services.saas.campaign_followups import audience
+    from server.routes.app_followups import storage
+    async with factory() as db:
+        return await storage(audience(db, ctx.workspace_tenant_id, agent_id, kind,
+                                      now=datetime.now(timezone.utc), limit=limit, offset=offset))
+
+
+async def _campaign_for_tenant(db, campaign_id: str, tenant_id: uuid.UUID) -> Campaign:
+    try:
+        cid = uuid.UUID(campaign_id)
+    except (ValueError, TypeError):
+        raise HTTPException(404, "Campaign not found") from None
+    result = await db.execute(select(Campaign).where(Campaign.campaign_id == cid, Campaign.tenant_id == tenant_id))
+    camp = result.scalar_one_or_none()
+    if camp is None or camp.tenant_id != tenant_id:
+        raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Campaign not found"}})
+    return camp
 
 
 @router.get("/api/campaigns")
-async def list_campaigns(session: SessionData = Depends(require_app_session)):
-    require_permission(session, "app.calls.read")
+async def list_campaigns(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
+    require_role_permission(ctx.role, "app.calls.read")
     factory = get_session_factory()
     if factory is None:
         return {"campaigns": []}
-    tenant = _tenant_id(session)
+    tenant_id = ctx.workspace_tenant_id
     async with factory() as db:
-        result = await db.execute(select(Campaign).where(Campaign.tenant_id == tenant))
-        rows = result.scalars().all()
-        return {
-            "campaigns": [
-                {
-                    "campaign_id": str(r.campaign_id),
-                    "name": r.name,
+        from sqlalchemy import func
+
+        # chisel: single SQL outerjoin and group_by eliminates N+1 query loop
+        stmt = (
+            select(Campaign, func.count(CampaignContact.id).label("total_contacts"))
+            .outerjoin(CampaignContact, CampaignContact.campaign_id == Campaign.campaign_id)
+            .where(Campaign.tenant_id == tenant_id)
+            .group_by(Campaign.campaign_id)
+            .order_by(Campaign.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        result = await db.execute(stmt)
+        rows = result.all()
+
+        # Per-campaign analytics for the whole page in one grouped query, so the
+        # console does not poll /analytics once per campaign.
+        page_ids = [r.campaign_id for r, _ in rows]
+        dispositions: dict[str, dict[str, int]] = {str(cid): {} for cid in page_ids}
+        dial_attempts: dict[str, int] = {str(cid): 0 for cid in page_ids}
+        if page_ids:
+            grouped = await db.execute(
+                select(
+                    CampaignContact.campaign_id,
+                    CampaignContact.status,
+                    func.count(),
+                    func.coalesce(func.sum(CampaignContact.attempts), 0),
+                )
+                .where(CampaignContact.campaign_id.in_(page_ids))
+                .group_by(CampaignContact.campaign_id, CampaignContact.status)
+            )
+            for cid, contact_status, n, tried in grouped.all():
+                dispositions[str(cid)][contact_status] = int(n)
+                dial_attempts[str(cid)] += int(tried or 0)
+
+        out = []
+        for r, cnt in rows:
+            groups = dispositions.get(str(r.campaign_id), {})
+            out.append({
+                "campaignId": str(r.campaign_id),
+                "campaign_id": str(r.campaign_id),
+                "id": str(r.campaign_id),
+                "name": r.name,
+                "description": r.description,
+                "defaultCountry": r.default_country,
+                "status": r.status,
+                "agentId": str(r.agent_id),
+                "agent_id": str(r.agent_id),
+                "concurrency": r.concurrency,
+                "concurrencyLimit": r.concurrency,
+                "retryRules": r.retry_rules or {},
+                "retry_rules": r.retry_rules or {},
+                "integrations": (r.schedule or {}).get("integration_selection"),
+                "totalContacts": int(cnt or 0),
+                "createdAt": r.created_at.isoformat() if r.created_at else None,
+                # Same shape as GET /api/campaigns/{id}/analytics.
+                "analytics": {
                     "status": r.status,
-                    "agent_id": str(r.agent_id),
-                    "concurrency": r.concurrency,
-                }
-                for r in rows
-            ]
-        }
+                    "attempts": dial_attempts.get(str(r.campaign_id), 0),
+                    "connects": groups.get("connected", 0) + groups.get("completed", 0),
+                    "dispositions": groups,
+                },
+            })
+        return {"campaigns": out}
+
+
+@router.post("/api/campaigns/validate-variables")
+async def validate_variables(
+    body: ValidateVariablesBody,
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
+    require_role_permission(ctx.role, "app.campaigns.write")
+    from server.services.saas.call_callback_service import resolve_workspace_agent
+    from server.services.saas.contact_import_service import validate_agent_variables_against_contacts
+    from server.db.models.phase5_models import Contact
+
+    agent = await resolve_workspace_agent(body.agent_id, str(ctx.workspace_tenant_id))
+    texts = [
+        str(agent.get("system_prompt") or ""),
+        str(agent.get("opening_greeting") or ""),
+        str(agent.get("brief") or ""),
+    ]
+
+    contacts_to_check = list(body.contacts or [])
+    if not contacts_to_check and body.contact_list_id:
+        factory = get_session_factory()
+        if factory:
+            async with factory() as session:
+                rows = await session.execute(
+                    select(Contact).where(
+                        Contact.contact_list_id == uuid.UUID(body.contact_list_id),
+                        Contact.tenant_id == ctx.workspace_tenant_id,
+                    ).limit(10001)
+                )
+                contacts_to_check = [
+                    {
+                        "phone": r.phone,
+                        "first_name": r.first_name,
+                        "last_name": r.last_name,
+                        "full_name": r.full_name,
+                        "email": r.email,
+                        "company": r.company,
+                        "custom_fields": r.custom_fields,
+                    }
+                    for r in rows.scalars().all()
+                ]
+
+    if len(contacts_to_check) > 10000:
+        raise HTTPException(422, "Split this campaign into batches of at most 10,000 contacts")
+
+    from server.services.saas.campaign_script import published_campaign_script
+    version, script = await published_campaign_script(agent.get("active_compiled_brain_version"))
+    texts = [script]
+    import asyncio
+    report = await asyncio.to_thread(validate_agent_variables_against_contacts, texts, contacts_to_check)
+    from server.brain.compiled_brain_artifact import business_from_unified_brain
+    from server.services.saas.contact_import_service import render_agent_prompt_for_contact
+    try:
+        preview_script = business_from_unified_brain(script)
+    except ValueError:
+        from server.realtime.gemini_audio_session import _split_brain_sections, _FLOW_PIN_TITLES, _PINNED_BUSINESS_TITLES
+        allowed_titles = {*_FLOW_PIN_TITLES, *_PINNED_BUSINESS_TITLES, "BODY"} - {"ENTITY TAGS"}
+        preview_script = "\n\n".join(body for title, body in _split_brain_sections(script) if title in allowed_titles)
+    preview_script = re.sub(r"<!--\s*section:[^>]*-->", "", preview_script).strip()
+    for preview in report["previews"]:
+        preview["renderedText"] = render_agent_prompt_for_contact(preview_script, contacts_to_check[preview["contactIndex"]])[:6000]
+    return {"ok": True, **report, "scriptVersion": version}
 
 
 @router.post("/api/campaigns")
-async def create_campaign(body: CampaignCreate, session: SessionData = Depends(require_app_session)):
-    require_permission(session, "app.campaigns.write")
-    factory = get_session_factory()
-    if factory is None:
-        return {"ok": False, "error": {"code": "config_error", "message": "Database not configured"}}
-    tenant = _tenant_id(session)
-    cid = uuid.uuid4()
-    async with factory() as db:
-        db.add(
-            Campaign(
-                campaign_id=cid,
-                tenant_id=tenant,
-                agent_id=uuid.UUID(body.agent_id),
-                name=body.name,
-                status="draft",
-                concurrency=body.concurrency,
-            )
+async def create_campaign(
+    request: Request,
+    body: CampaignCreate,
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
+    require_role_permission(ctx.role, "app.campaigns.write")
+    if not body.consent_confirmed:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "consent_required",
+                    "message": "You must confirm that you have obtained required legal consent for these recipient contacts.",
+                }
+            },
         )
-        await db.commit()
-    return {"ok": True, "campaign_id": str(cid)}
-
-
-@router.post("/api/campaigns/{campaign_id}/contacts/import")
-async def import_contacts(campaign_id: str, body: ContactImport, session: SessionData = Depends(require_app_session)):
-    require_permission(session, "app.campaigns.write")
     factory = get_session_factory()
     if factory is None:
         return {"ok": False, "error": {"code": "config_error", "message": "Database not configured"}}
-    imported = 0
+    from server.config.env import get_settings
+    from server.services.saas.contact_import_service import (
+        derive_names,
+        normalize_e164_phone,
+        resolve_contact_variables,
+    )
+    from server.db.models.phase5_models import Contact
+
+    settings = get_settings()
+    tenant_id = ctx.workspace_tenant_id
+    # Never trust client concurrency above platform headroom.
+    hard_cap = max(1, min(20, int(settings.campaign_max_concurrency or 20)))
+    concurrency = max(1, min(hard_cap, int(body.concurrency or 1)))
+    max_attempts = max(1, min(5, int(body.max_attempts or settings.campaign_default_retry_attempts or 3)))
+    retry_delay = max(5, min(24 * 60, int(body.retry_delay_minutes or 30)))
+    retry_rules = {
+        "max_attempts": max_attempts,
+        "retry_delay_minutes": retry_delay,
+    }
+    schedule: dict[str, Any] = {}
+    if body.from_e164:
+        schedule["from_e164"] = body.from_e164.strip()
+    if body.calling_window:
+        if body.calling_window.start == body.calling_window.end:
+            raise HTTPException(422, "Calling window start and end must differ")
+        schedule["calling_window"] = body.calling_window.model_dump()
+    if body.starts_at:
+        schedule["starts_at"] = body.starts_at.isoformat()
+    if body.expires_at:
+        if body.expires_at <= datetime.now(timezone.utc):
+            raise HTTPException(422, "Choose a future campaign expiry")
+        schedule["expires_at"] = body.expires_at.isoformat()
+    cid = uuid.uuid4()
+    imported_count = 0
+    client_ip = _client_ip(request) or "unknown"
+    user_agent = (request.headers.get("user-agent") or "unknown")[:255]
+    attested_user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
+
     async with factory() as db:
-        for c in body.contacts:
-            phone = c.get("phone_e164") or c.get("phoneE164") or c.get("phone")
-            if not phone:
+        from server.services.saas.call_admission import lock_tenant
+        await lock_tenant(db, tenant_id)
+        fingerprint = hashlib.sha256(json.dumps(body.model_dump(exclude={"client_request_id"}), sort_keys=True, default=str).encode()).hexdigest()
+        if body.client_request_id:
+            previous = (await db.execute(select(Campaign).where(Campaign.tenant_id == tenant_id,
+                Campaign.client_request_id == body.client_request_id))).scalar_one_or_none()
+            if previous:
+                if previous.request_fingerprint != fingerprint:
+                    raise HTTPException(409, "This campaign request already exists with different settings. Refresh your campaign list before trying again.")
+                total = (await db.execute(select(func.count()).select_from(CampaignContact).where(CampaignContact.campaign_id == previous.campaign_id))).scalar_one()
+                excluded = (await db.execute(select(func.count()).select_from(CampaignContact).where(CampaignContact.campaign_id == previous.campaign_id, CampaignContact.status == "dnc_excluded"))).scalar_one()
+                return _created_campaign_response(previous, total, excluded)
+        try:
+            agent_uuid = uuid.UUID(body.agent_id)
+        except ValueError:
+            raise HTTPException(404, "Agent not found")
+        agent = await db.get(Agent, agent_uuid)
+        if agent is None or agent.tenant_id != tenant_id:
+            raise HTTPException(status_code=404, detail={"error": {"code": "not_found", "message": "Agent not found"}})
+        if body.integrations:
+            from server.services.call_integrations import SelectionError, validate_selection
+
+            try:
+                selection = await validate_selection(str(tenant_id), str(agent.agent_id), body.integrations)
+            except SelectionError as exc:
+                raise HTTPException(status_code=exc.status_code, detail=exc.detail()) from None
+            if selection:
+                # Every campaign call inherits this set (resolved from the campaign at runtime).
+                schedule["integration_selection"] = selection
+
+        # Create Campaign record with legal attestation audit trail
+        camp = Campaign(
+            campaign_id=cid,
+            tenant_id=tenant_id,
+            client_request_id=body.client_request_id,
+            request_fingerprint=fingerprint,
+            agent_id=agent.agent_id,
+            name=body.name.strip(),
+            description=body.description.strip() if body.description else None,
+            default_country=body.default_country or "US",
+            status="draft",
+            concurrency=concurrency,
+            retry_rules=retry_rules,
+            schedule=schedule,
+            consent_confirmed=True,
+            consent_attestation_version=body.consent_version,
+            attested_by_user_id=attested_user_id,
+            attested_at=datetime.now(timezone.utc),
+            attested_ip=client_ip,
+            attested_user_agent=user_agent,
+        )
+        db.add(camp)
+
+        # Gather contacts list
+        raw_contact_list = list(body.contacts or [])
+        if body.followup_job_ids:
+            from server.services.saas.campaign_followups import bind_jobs
+            raw_contact_list = await bind_jobs(db, ctx, camp, body.followup_job_ids, datetime.now(timezone.utc))
+        if body.contact_list_id:
+            cl_contacts = await db.execute(
+                select(Contact).where(
+                    Contact.contact_list_id == uuid.UUID(body.contact_list_id),
+                    Contact.tenant_id == tenant_id,
+                ).limit(10001)
+            )
+            for r in cl_contacts.scalars().all():
+                raw_contact_list.append({
+                    "id": str(r.id),
+                    "phone": r.phone,
+                    "first_name": r.first_name,
+                    "last_name": r.last_name,
+                    "full_name": r.full_name,
+                    "email": r.email,
+                    "company": r.company,
+                    "job_title": r.job_title,
+                    "country": r.country,
+                    "city": r.city,
+                    "state": r.state,
+                    "timezone": r.timezone,
+                    "notes": r.notes,
+                    "custom_fields": r.custom_fields,
+                })
+
+        if len(raw_contact_list) > 10000:
+            raise HTTPException(422, "Split this campaign into batches of at most 10,000 contacts")
+        if any(isinstance(c, dict) and c.get("call_language") for c in raw_contact_list):
+            # Per-contact language (language-switch callbacks): each must be callable by this agent.
+            from server.services.saas.call_callback_service import resolve_workspace_agent
+            from server.services.saas.language_switch_service import validate_campaign_languages
+            await validate_campaign_languages(await resolve_workspace_agent(str(agent.agent_id), str(tenant_id)), raw_contact_list)
+        from server.services.saas.campaign_script import published_campaign_script, require_campaign_variables
+        import asyncio
+        version, script = await published_campaign_script(agent.active_compiled_brain_version)
+        if body.expected_script_version and body.expected_script_version != version:
+            raise HTTPException(409, "The agent script changed. Recheck contacts before launching.")
+        await asyncio.to_thread(require_campaign_variables, script, raw_contact_list)
+        camp.schedule = {**(camp.schedule or {}), "script_version": version}
+        # Process and snapshot contacts
+        active_dnc_set: set[str] = set()
+        if True:  # DNC exclusion cannot be disabled by a client.
+            dnc_rows = await db.execute(
+                select(DncEntry.phone_e164).where(
+                    DncEntry.tenant_id == tenant_id,
+                    DncEntry.active.is_(True),
+                )
+            )
+            active_dnc_set = set(dnc_rows.scalars().all())
+
+        dnd_excluded_count = 0
+        seen_phones: set[str] = set()
+        for index, c in enumerate(raw_contact_list):
+            raw_phone = str(c.get("phone") or c.get("phone_e164") or c.get("phoneE164") or "").strip()
+            if not raw_phone:
                 continue
+
+            # Normalize to E.164
+            e164, err = normalize_e164_phone(raw_phone, body.default_country)
+            if not e164:
+                continue
+
+            # Default keep first for duplicates in batch
+            if e164 in seen_phones:
+                continue
+            seen_phones.add(e164)
+
+            # Check DND list exclusion
+            is_dnc = e164 in active_dnc_set
+            contact_status = "dnc_excluded" if is_dnc else "pending"
+            if is_dnc:
+                dnd_excluded_count += 1
+
+            # Derive names & variables snapshot
+            c_derived = derive_names(dict(c))
+            if c_derived.get("timezone"):
+                try:
+                    ZoneInfo(str(c_derived["timezone"]))
+                except (ZoneInfoNotFoundError, ValueError):
+                    raise HTTPException(422, f"Contact row {index + 1} has an invalid timezone. Use an IANA timezone or review the contact before calling.") from None
+            c_derived["phone"] = e164
+            resolved_vars = resolve_contact_variables(c_derived)
+
+            contact_uuid = None
+            if c.get("id"):
+                try:
+                    candidate_id = uuid.UUID(str(c["id"]))
+                except (ValueError, TypeError):
+                    raise HTTPException(422, "Invalid contact identifier")
+                owned = (await db.execute(select(Contact.id).where(Contact.id == candidate_id,
+                    Contact.tenant_id == tenant_id))).scalar_one_or_none()
+                # Normalized uploads also carry temporary UUIDs. Link only a
+                # persisted contact owned by this workspace; never a foreign ID.
+                contact_uuid = owned
+
             db.add(
                 CampaignContact(
                     id=uuid.uuid4(),
-                    campaign_id=uuid.UUID(campaign_id),
-                    phone_e164=str(phone),
-                    metadata_=c,
+                    campaign_id=cid,
+                    contact_id=contact_uuid,
+                    phone_e164=e164,
+                    phone_snapshot=e164,
+                    status=contact_status,
+                    metadata_=c_derived,
+                    resolved_variables=resolved_vars,
+                    attempts=0,
                 )
             )
+            imported_count += 1
+
+        run_id = None
+        if body.auto_start and (imported_count - dnd_excluded_count) > 0:
+            from server.services.saas.campaign_runner import actor_context
+            run_id = uuid.uuid4()
+            camp.status = "running"
+            db.add(
+                CampaignRun(
+                    run_id=run_id,
+                    campaign_id=cid,
+                    status="running",
+                    started_at=datetime.now(timezone.utc),
+                    stats={"actor": actor_context(ctx)},
+                )
+            )
+
+        await db.commit()
+
+    if body.auto_start and run_id:
+        from server.services.saas.campaign_runner import spawn_campaign_runner
+        spawn_campaign_runner(str(cid), str(run_id), workspace_tenant_id=ctx.workspace_tenant_id)
+
+    return _created_campaign_response(camp, imported_count, dnd_excluded_count)
+
+
+def _created_campaign_response(camp, total, excluded):
+    row = {"id": str(camp.campaign_id), "campaignId": str(camp.campaign_id), "campaign_id": str(camp.campaign_id),
+        "name": camp.name, "description": camp.description, "defaultCountry": camp.default_country,
+        "status": camp.status, "agentId": str(camp.agent_id), "agent_id": str(camp.agent_id),
+        "concurrency": camp.concurrency, "retryRules": camp.retry_rules, "retry_rules": camp.retry_rules,
+        "schedule": camp.schedule, "totalContacts": total, "dndExcludedCount": excluded, "dnd_excluded_count": excluded}
+    return {"ok": True, "campaignId": str(camp.campaign_id), "campaign_id": str(camp.campaign_id),
+        "id": str(camp.campaign_id), "totalContacts": total, "dndExcludedCount": excluded,
+        "dnd_excluded_count": excluded, "campaign": row}
+
+
+@router.patch("/api/campaigns/{campaign_id}/status")
+async def patch_campaign_status(
+    campaign_id: str,
+    body: CampaignStatusPatch,
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
+    require_role_permission(ctx.role, "app.campaigns.write")
+    factory = get_session_factory()
+    if factory is None:
+        return {"ok": False}
+    if body.status == "running":
+        return await start_campaign(campaign_id, ctx)
+    if body.status == "paused":
+        return await pause_campaign(campaign_id, ctx)
+    return await cancel_campaign(campaign_id, ctx)
+
+
+@router.post("/api/campaigns/{campaign_id}/contacts/import")
+async def import_contacts(
+    campaign_id: str,
+    body: ContactImport,
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
+    require_role_permission(ctx.role, "app.campaigns.write")
+    factory = get_session_factory()
+    if factory is None:
+        return {"ok": False, "error": {"code": "config_error", "message": "Database not configured"}}
+    from server.services.saas.contact_import_service import derive_names, normalize_e164_phone, resolve_contact_variables
+    imported = 0
+    async with factory() as db:
+        from server.services.saas.campaign_runner import _lock_campaign
+        try:
+            cid = uuid.UUID(campaign_id)
+        except ValueError:
+            raise HTTPException(404, "Campaign not found")
+        camp = await _lock_campaign(db, cid, ctx.workspace_tenant_id)
+        if camp is None:
+            raise HTTPException(404, "Campaign not found")
+        if camp.status != "draft":
+            raise HTTPException(409, "Contacts can only be added to a draft campaign")
+        if (camp.schedule or {}).get("audience") == "followups":
+            raise HTTPException(409, "Create a separate campaign for additional follow-ups; this audience is already reserved")
+        existing = set((await db.execute(select(CampaignContact.phone_e164).where(CampaignContact.campaign_id == cid))).scalars())
+        dnc = set((await db.execute(select(DncEntry.phone_e164).where(DncEntry.tenant_id == ctx.workspace_tenant_id,
+            DncEntry.active.is_(True)))).scalars())
+        if len(existing) + len(body.contacts) > 10000:
+            raise HTTPException(422, "A campaign supports at most 10,000 contacts")
+        from server.services.saas.campaign_script import published_campaign_script, require_campaign_variables
+        import asyncio
+        agent = (await db.execute(select(Agent).where(Agent.agent_id == camp.agent_id,
+            Agent.tenant_id == ctx.workspace_tenant_id))).scalar_one_or_none()
+        if agent is None:
+            raise HTTPException(404, "Agent not found")
+        version, script = await published_campaign_script((camp.schedule or {}).get("script_version") or agent.active_compiled_brain_version)
+        await asyncio.to_thread(require_campaign_variables, script, body.contacts)
+        camp.schedule = {**(camp.schedule or {}), "script_version": version}
+        for c in body.contacts:
+            phone, error = normalize_e164_phone(str(c.get("phone_e164") or c.get("phoneE164") or c.get("phone") or ""), camp.default_country)
+            if error or not phone or phone in existing:
+                continue
+            existing.add(phone)
+            derived = derive_names({**c, "phone": phone})
+            db.add(CampaignContact(id=uuid.uuid4(), campaign_id=cid, phone_e164=phone,
+                phone_snapshot=phone, metadata_=derived, resolved_variables=resolve_contact_variables(derived),
+                status="dnc_excluded" if phone in dnc else "pending"))
             imported += 1
         await db.commit()
     return {"ok": True, "imported": imported}
 
 
 @router.post("/api/campaigns/{campaign_id}/start")
-async def start_campaign(campaign_id: str, session: SessionData = Depends(require_app_session)):
-    require_permission(session, "app.campaigns.write")
+async def start_campaign(campaign_id: str, ctx: ApiTenantContext = Depends(require_api_tenant)):
+    require_role_permission(ctx.role, "app.campaigns.write")
     factory = get_session_factory()
     if factory is None:
         return {"ok": False, "error": {"code": "config_error", "message": "Database not configured"}}
-    run_id = uuid.uuid4()
+    from server.services.saas.campaign_runner import _lock_campaign, actor_context, spawn_campaign_runner
     async with factory() as db:
-        result = await db.execute(select(Campaign).where(Campaign.campaign_id == uuid.UUID(campaign_id)))
-        camp = result.scalar_one_or_none()
+        try:
+            cid = uuid.UUID(campaign_id)
+        except ValueError:
+            raise HTTPException(404, "Campaign not found")
+        camp = await _lock_campaign(db, cid, ctx.workspace_tenant_id)
         if camp is None:
-            return {"ok": False, "error": {"code": "not_found", "message": "Campaign not found"}}
-        camp.status = "running"
-        db.add(
-            CampaignRun(
-                run_id=run_id,
-                campaign_id=camp.campaign_id,
-                status="running",
-                started_at=datetime.now(timezone.utc),
-            )
-        )
+            raise HTTPException(404, "Campaign not found")
+        if not camp.consent_confirmed:
+            raise HTTPException(409, "Campaign consent must be confirmed before starting")
+        if (camp.schedule or {}).get("expires_at") and datetime.fromisoformat(camp.schedule["expires_at"]) <= datetime.now(timezone.utc):
+            raise HTTPException(409, "This campaign window has expired. Create a new reviewed campaign.")
+        if camp.status in ("cancelled", "completed"):
+            raise HTTPException(409, "This campaign has ended. Create a new campaign to call again.")
+        run = (await db.execute(select(CampaignRun).where(CampaignRun.campaign_id == cid,
+            CampaignRun.status.in_(("running", "blocked", "requires_review")))
+            .order_by(CampaignRun.started_at.desc().nullslast()).limit(1).with_for_update())).scalar_one_or_none()
+        if (camp.schedule or {}).get("audience") == "followups" and run is not None:
+            from server.services.saas.campaign_followups import sync_progress
+            await sync_progress(db, camp, run)
+        eligible = (await db.execute(select(func.count()).select_from(CampaignContact).where(
+            CampaignContact.campaign_id == cid, or_(CampaignContact.status.in_(("dialing", "placed", "connected")),
+                CampaignContact.status.in_(("pending", "queued", "failed")) &
+                (CampaignContact.attempts < max(1, int((camp.retry_rules or {}).get("max_attempts") or 3))))))).scalar_one()
+        if not eligible:
+            raise HTTPException(409, "No eligible contacts remain. Review blocked or uncertain calls before retrying.")
+        from server.services.saas.campaign_script import published_campaign_script, require_campaign_variables
+        import asyncio
+        agent = (await db.execute(select(Agent).where(Agent.agent_id == camp.agent_id,
+            Agent.tenant_id == ctx.workspace_tenant_id))).scalar_one_or_none()
+        if agent is None:
+            raise HTTPException(404, "Agent not found")
+        version, script = await published_campaign_script((camp.schedule or {}).get("script_version") or agent.active_compiled_brain_version)
+        contacts = (await db.execute(select(CampaignContact).where(CampaignContact.campaign_id == cid,
+            CampaignContact.status.in_(("pending", "queued", "failed"))))).scalars().all()
+        await asyncio.to_thread(require_campaign_variables, script, [row.metadata_ or {} for row in contacts])
+        camp.schedule = {**(camp.schedule or {}), "script_version": version}
+        if run is None:
+            run = CampaignRun(run_id=uuid.uuid4(), campaign_id=cid, status="running", started_at=datetime.now(timezone.utc))
+            db.add(run)
+        run.status = camp.status = "running"
+        run.stats = {**(run.stats or {}), "actor": actor_context(ctx)}
+        run.ended_at = None
+        run_id = run.run_id
+        await db.execute(update(CampaignRun).where(CampaignRun.campaign_id == camp.campaign_id,
+            CampaignRun.run_id != run_id, CampaignRun.status.in_(("running", "blocked", "requires_review")))
+            .values(status="superseded", ended_at=datetime.now(timezone.utc)))
         await db.commit()
-    try:
-        from worker.dialer import enqueue_campaign_run
-
-        enqueue_campaign_run(campaign_id, str(run_id))
-    except Exception:
-        pass
-    return {"ok": True, "run_id": str(run_id), "status": "running"}
+    spawn_campaign_runner(campaign_id, str(run_id), workspace_tenant_id=ctx.workspace_tenant_id)
+    return {"ok": True, "runId": str(run_id), "run_id": str(run_id), "status": "running"}
 
 
 @router.post("/api/campaigns/{campaign_id}/pause")
-async def pause_campaign(campaign_id: str, session: SessionData = Depends(require_app_session)):
-    require_permission(session, "app.campaigns.write")
+async def pause_campaign(campaign_id: str, ctx: ApiTenantContext = Depends(require_api_tenant)):
+    require_role_permission(ctx.role, "app.campaigns.write")
     factory = get_session_factory()
     if factory is None:
         return {"ok": False}
     async with factory() as db:
-        result = await db.execute(select(Campaign).where(Campaign.campaign_id == uuid.UUID(campaign_id)))
-        camp = result.scalar_one_or_none()
-        if camp:
-            camp.status = "paused"
-            await db.commit()
+        from server.services.saas.campaign_runner import _lock_campaign
+        try:
+            cid = uuid.UUID(campaign_id)
+        except ValueError:
+            raise HTTPException(404, "Campaign not found")
+        camp = await _lock_campaign(db, cid, ctx.workspace_tenant_id)
+        if camp is None:
+            raise HTTPException(404, "Campaign not found")
+        if camp.status in ("completed", "cancelled"):
+            raise HTTPException(409, "Campaign has already ended")
+        camp.status = "paused"
+        await db.commit()
     return {"ok": True, "status": "paused"}
 
 
 @router.post("/api/campaigns/{campaign_id}/cancel")
-async def cancel_campaign(campaign_id: str, session: SessionData = Depends(require_app_session)):
-    require_permission(session, "app.campaigns.write")
+async def cancel_campaign(campaign_id: str, ctx: ApiTenantContext = Depends(require_api_tenant)):
+    require_role_permission(ctx.role, "app.campaigns.write")
     factory = get_session_factory()
     if factory is None:
         return {"ok": False}
     async with factory() as db:
-        result = await db.execute(select(Campaign).where(Campaign.campaign_id == uuid.UUID(campaign_id)))
-        camp = result.scalar_one_or_none()
-        if camp:
-            camp.status = "cancelled"
-            await db.commit()
+        from server.services.saas.campaign_runner import _lock_campaign
+        try:
+            cid = uuid.UUID(campaign_id)
+        except ValueError:
+            raise HTTPException(404, "Campaign not found")
+        camp = await _lock_campaign(db, cid, ctx.workspace_tenant_id)
+        if camp is None:
+            raise HTTPException(404, "Campaign not found")
+        if camp.status in ("completed", "cancelled"):
+            raise HTTPException(409, "Campaign has already ended")
+        camp.status = "cancelled"
+        if (camp.schedule or {}).get("audience") == "followups":
+            from server.services.saas.campaign_followups import cancel_pending
+            await cancel_pending(db, camp, datetime.now(timezone.utc))
+        await db.commit()
     return {"ok": True, "status": "cancelled"}
 
 
 @router.get("/api/campaigns/{campaign_id}/analytics")
-async def campaign_analytics(campaign_id: str, session: SessionData = Depends(require_app_session)):
-    require_permission(session, "app.calls.read")
+async def campaign_analytics(campaign_id: str, ctx: ApiTenantContext = Depends(require_api_tenant)):
+    require_role_permission(ctx.role, "app.calls.read")
     factory = get_session_factory()
     if factory is None:
         return {"attempts": 0, "connects": 0, "dispositions": {}}
     async with factory() as db:
-        contacts = await db.execute(
-            select(CampaignContact).where(CampaignContact.campaign_id == uuid.UUID(campaign_id))
-        )
-        rows = contacts.scalars().all()
-        statuses: dict[str, int] = {}
-        for r in rows:
-            statuses[r.status] = statuses.get(r.status, 0) + 1
-        return {"attempts": sum(statuses.values()), "connects": statuses.get("connected", 0), "dispositions": statuses}
+        campaign = await _campaign_for_tenant(db, campaign_id, ctx.workspace_tenant_id)
+        statuses = dict((await db.execute(select(CampaignContact.status, func.count()).where(
+            CampaignContact.campaign_id == uuid.UUID(campaign_id)).group_by(CampaignContact.status))).all())
+        attempts = (await db.execute(select(func.coalesce(func.sum(CampaignContact.attempts), 0)).where(
+            CampaignContact.campaign_id == uuid.UUID(campaign_id)))).scalar_one()
+        return {"status": campaign.status, "attempts": int(attempts), "connects": statuses.get("connected", 0) + statuses.get("completed", 0), "dispositions": statuses}
 
 
 @router.get("/api/dnc")
-async def list_dnc(session: SessionData = Depends(require_app_session)):
-    require_permission(session, "app.calls.read")
+async def list_dnc(
+    status: str = Query("active", description="active | inactive | all"),
+    search: str | None = Query(None, description="Phone search substring"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=500),
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
+    require_role_permission(ctx.role, "app.calls.read")
     factory = get_session_factory()
     if factory is None:
-        return {"entries": []}
-    tenant = _tenant_id(session)
+        return {"entries": [], "total": 0, "page": page, "limit": limit}
+    tenant_id = ctx.workspace_tenant_id
     async with factory() as db:
-        result = await db.execute(select(DncEntry).where(DncEntry.tenant_id == tenant))
-        return {"entries": [{"phone_e164": r.phone_e164, "reason": r.reason} for r in result.scalars().all()]}
+        q = select(DncEntry).where(DncEntry.tenant_id == tenant_id)
+        status_norm = (status or "active").strip().lower()
+        if status_norm == "active":
+            q = q.where(DncEntry.active.is_(True))
+        elif status_norm in ("inactive", "deactivated"):
+            q = q.where(DncEntry.active.is_(False))
+        # "all" does not filter by active
+        if search and search.strip():
+            clean_search = search.strip().replace("%", "").replace("_", "")
+            q = q.where(DncEntry.phone_e164.ilike(f"%{clean_search}%"))
+
+        from sqlalchemy import func
+
+        total = await db.scalar(select(func.count()).select_from(q.subquery())) or 0
+        offset = (page - 1) * limit
+        rows = await db.execute(q.order_by(DncEntry.added_at.desc()).offset(offset).limit(limit))
+        entries = []
+        for r in rows.scalars().all():
+            entries.append({
+                "id": str(r.id),
+                "phone_e164": r.phone_e164,
+                "phoneE164": r.phone_e164,
+                "reason": r.reason,
+                "source": getattr(r, "source", "manual") or "manual",
+                "active": getattr(r, "active", True),
+                "added_at": r.added_at.isoformat() if r.added_at else None,
+                "addedAt": r.added_at.isoformat() if r.added_at else None,
+                "removed_at": r.removed_at.isoformat() if getattr(r, "removed_at", None) else None,
+                "removedAt": r.removed_at.isoformat() if getattr(r, "removed_at", None) else None,
+                "removal_reason": getattr(r, "removal_reason", None),
+                "removalReason": getattr(r, "removal_reason", None),
+                "reconsent_confirmed": getattr(r, "reconsent_confirmed", False),
+                "reconsentConfirmed": getattr(r, "reconsent_confirmed", False),
+            })
+        return {"entries": entries, "total": total, "page": page, "limit": limit}
 
 
 @router.post("/api/dnc")
-async def add_dnc(body: DncBody, session: SessionData = Depends(require_app_session)):
-    require_permission(session, "app.campaigns.write")
+async def add_dnc(body: DncBody, ctx: ApiTenantContext = Depends(require_api_tenant)):
+    require_role_permission(ctx.role, "app.campaigns.write")
     factory = get_session_factory()
     if factory is None:
         return {"ok": False}
-    tenant = _tenant_id(session)
+    from server.services.saas.call_callback_service import normalize_e164
+
+    phone = (body.phone_e164 or "").strip()
+    norm_phone = normalize_e164(phone)
+    if not norm_phone:
+        raise HTTPException(422, "Enter a valid phone number, preferably with its country code")
+    tenant_id = ctx.workspace_tenant_id
+    user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
+
     async with factory() as db:
-        db.add(DncEntry(id=uuid.uuid4(), tenant_id=tenant, phone_e164=body.phone_e164, reason=body.reason))
+        from server.services.saas.call_admission import lock_tenant
+        await lock_tenant(db, tenant_id)
+        existing = await db.execute(
+            select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == norm_phone)
+        )
+        row = existing.scalar_one_or_none()
+        now = datetime.now(timezone.utc)
+        if row:
+            row.active = True
+            row.reason = body.reason or "manual_operator"
+            row.source = "operator_ui"
+            row.added_at = now
+            row.added_by_user_id = user_id
+            row.removed_at = None
+            row.removed_by_user_id = None
+            row.removal_reason = None
+            row.reconsent_confirmed = False
+        else:
+            db.add(
+                DncEntry(
+                    id=uuid.uuid4(),
+                    tenant_id=tenant_id,
+                    phone_e164=norm_phone,
+                    reason=body.reason or "manual_operator",
+                    source="operator_ui",
+                    active=True,
+                    added_at=now,
+                    added_by_user_id=user_id,
+                )
+            )
+        await _suppress_dnd_jobs(db, tenant_id, [norm_phone])
         await db.commit()
-    return {"ok": True}
+    return {"ok": True, "phone_e164": norm_phone, "active": True}
+
+
+@router.post("/api/dnc/bulk")
+async def bulk_add_dnc(body: DncBulkBody, ctx: ApiTenantContext = Depends(require_api_tenant)):
+    require_role_permission(ctx.role, "app.campaigns.write")
+    factory = get_session_factory()
+    if factory is None:
+        return {"ok": False, "added": 0}
+    from server.services.saas.call_callback_service import normalize_e164
+
+    tenant_id = ctx.workspace_tenant_id
+    user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
+    count = 0
+    now = datetime.now(timezone.utc)
+    normalized = {normalize_e164(str(p or "").strip()) for p in body.phones}
+    if None in normalized:
+        raise HTTPException(422, "Every DND entry must be a valid phone number; no changes were saved")
+
+    async with factory() as db:
+        from server.services.saas.call_admission import lock_tenant
+        await lock_tenant(db, tenant_id)
+        for norm in normalized:
+            existing = await db.execute(
+                select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == norm)
+            )
+            row = existing.scalar_one_or_none()
+            if row:
+                row.active = True
+                row.reason = body.reason or "bulk_upload"
+                row.source = "bulk_upload"
+                row.added_at = now
+                row.added_by_user_id = user_id
+                row.removed_at = None
+                row.removed_by_user_id = None
+                row.removal_reason = None
+                row.reconsent_confirmed = False
+            else:
+                db.add(
+                    DncEntry(
+                        id=uuid.uuid4(),
+                        tenant_id=tenant_id,
+                        phone_e164=norm,
+                        reason=body.reason or "bulk_upload",
+                        source="bulk_upload",
+                        active=True,
+                        added_at=now,
+                        added_by_user_id=user_id,
+                    )
+                )
+            count += 1
+        await _suppress_dnd_jobs(db, tenant_id, normalized)
+        await db.commit()
+    return {"ok": True, "added": count}
+
+
+@router.post("/api/dnc/{phone_e164}/deactivate")
+async def deactivate_dnc(
+    phone_e164: str,
+    body: DncDeactivateBody,
+    ctx: ApiTenantContext = Depends(require_api_tenant),
+):
+    require_role_permission(ctx.role, "app.campaigns.write")
+    if not body.reconsent_confirmed:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "reconsent_required",
+                    "message": "You must confirm that this contact has provided new authorization to receive calls.",
+                }
+            },
+        )
+    factory = get_session_factory()
+    if factory is None:
+        raise HTTPException(status_code=503, detail="Database required")
+    tenant_id = ctx.workspace_tenant_id
+    user_id = uuid.UUID(ctx.subject) if ctx.subscriber and ctx.subject else None
+
+    async with factory() as db:
+        from server.services.saas.call_admission import lock_tenant
+        from server.services.saas.call_callback_service import normalize_e164
+        await lock_tenant(db, tenant_id)
+        clean_phone = normalize_e164(phone_e164)
+        if not clean_phone:
+            raise HTTPException(422, "Choose a valid phone number")
+        entry = await db.execute(
+            select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == clean_phone)
+        )
+        row = entry.scalar_one_or_none()
+        if not row:
+            alt = f"+{clean_phone.lstrip('+')}" if not clean_phone.startswith("+") else clean_phone.lstrip("+")
+            entry2 = await db.execute(
+                select(DncEntry).where(DncEntry.tenant_id == tenant_id, DncEntry.phone_e164 == alt)
+            )
+            row = entry2.scalar_one_or_none()
+        if not row:
+            raise HTTPException(status_code=404, detail="DND entry not found")
+        if body.expected_added_at:
+            from server.services.saas.followup_policy import utc
+            if body.expected_added_at.tzinfo is None or utc(body.expected_added_at) != utc(row.added_at):
+                raise HTTPException(409, "This caller's preferences changed. Refresh the DND registry before reviewing removal.")
+        row.active = False
+        row.removed_at = datetime.now(timezone.utc)
+        row.removed_by_user_id = user_id
+        row.removal_reason = body.removal_reason.strip()
+        row.reconsent_confirmed = True
+        from server.db.models.phase5_models import AuditLog
+        db.add(AuditLog(tenant_id=tenant_id, actor=str(ctx.subject or "api"), action="dnd.remove",
+                        resource_type="dnd_entry", resource_id=str(row.id), source="subscriber",
+                        payload={"removalReason": body.removal_reason, "reconsentConfirmed": True}))
+        await db.commit()
+    return {"ok": True, "phone_e164": row.phone_e164, "active": False}
+
+
+async def _suppress_dnd_jobs(db, tenant_id, phones):
+    """Keep the registry and pending queue aligned in the same transaction."""
+    from server.db.models.followup_models import FollowUpJob
+    from server.services.saas.followup_retention import table_not_installed
+    from sqlalchemy.exc import DBAPIError
+    try:
+        async with db.begin_nested():
+            await db.execute(update(FollowUpJob).where(FollowUpJob.tenant_id == tenant_id,
+                FollowUpJob.phone.in_(phones), FollowUpJob.status.in_(("planning", "scheduled", "resolving", "needs_review")))
+                .values(status="suppressed", reason="do_not_call", lease_token=None, lease_until=None,
+                        updated_at=datetime.now(timezone.utc)))
+    except DBAPIError as exc:
+        if not table_not_installed(exc):
+            raise
 
 
 @router.get("/api/phone-numbers")
-async def list_phone_numbers(session: SessionData = Depends(require_app_session)):
-    require_permission(session, "app.integrations")
+async def list_phone_numbers(ctx: ApiTenantContext = Depends(require_api_tenant)):
+    require_role_permission(ctx.role, "app.integrations")
     factory = get_session_factory()
     if factory is None:
         return {"numbers": []}
-    tenant = _tenant_id(session)
     async with factory() as db:
-        result = await db.execute(select(PhoneNumber).where(PhoneNumber.tenant_id == tenant))
+        result = await db.execute(
+            select(PhoneNumber).where(PhoneNumber.tenant_id == ctx.tenant_id, PhoneNumber.released_at.is_(None))
+        )
         return {
             "numbers": [
-                {"id": str(r.id), "e164": r.e164, "status": r.status, "plivo_number_id": r.plivo_number_id}
+                {
+                    "id": str(r.id),
+                    "e164": r.e164,
+                    "status": r.status,
+                    "agentId": str(r.agent_id) if r.agent_id else None,
+                }
                 for r in result.scalars().all()
             ]
         }
 
 
 @router.post("/api/phone-numbers")
-async def add_phone_number(body: PhoneNumberBody, session: SessionData = Depends(require_app_session)):
-    require_permission(session, "app.integrations")
+async def add_phone_number(body: PhoneNumberBody, ctx: ApiTenantContext = Depends(require_api_tenant)):
+    require_role_permission(ctx.role, "app.integrations")
     factory = get_session_factory()
     if factory is None:
         return {"ok": False, "error": {"code": "config_error", "message": "Database not configured"}}
-    tenant = _tenant_id(session)
     nid = uuid.uuid4()
     async with factory() as db:
-        db.add(PhoneNumber(id=nid, tenant_id=tenant, e164=body.e164, status="connected"))
+        db.add(
+            PhoneNumber(
+                id=nid,
+                tenant_id=ctx.tenant_id,
+                e164=body.e164,
+                status="connected",
+                billing_source="manual",
+            )
+        )
         await db.commit()
     return {"ok": True, "id": str(nid), "e164": body.e164, "status": "connected"}

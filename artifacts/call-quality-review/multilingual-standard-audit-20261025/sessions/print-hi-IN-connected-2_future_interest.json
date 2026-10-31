@@ -1,0 +1,284 @@
+{
+  "key": "print-hi-IN-connected-2_future_interest",
+  "business": "print",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "2_future_interest",
+  "agent_id": "8e2752e3-b52b-52f5-bdf1-af80ab9a4d0a",
+  "call_id": "beff282c-5ed7-411d-83b0-d47e30b8dc57",
+  "session_id": "audit-print-hi-IN-connected-2_future_interest-6af121ea",
+  "compiled_checksum": "cfd95d7cb950b453ae4105b14f8396c15895d87e90fac58b5d8d190b85581b37",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 789,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है।\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"अगले महीने के लिए price जानना और callback preference\",\n    \"contact_preference\": \"callback\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ठीक है, कोई बात नहीं। Visiting cards के लिए rate pachis rupees per card है, minimum ek sau cards के साथ। अगले महीने के लिए मैं callback arrange करवा दूँ? आपको किस time call करवाना सही रहेगा?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_next_month\",\n        \"value\": \"true\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"callback_preference\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है।\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"अगले महीने के लिए price जानना और callback preference\",\n    \"contact_preference\": \"callback\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ठीक है, कोई बात नहीं। Visiting cards के लिए rate pachis rupees per card है, minimum ek sau cards के साथ। अगले महीने के लिए मैं callback arrange करवा दूँ? आपको किस time call करवाना सही रहेगा?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_next_month\",\n        \"value\": \"true\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"callback_preference\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 242,
+        "prompt_tokens": 4288,
+        "total_tokens": 4530,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, कोई बात नहीं। Visiting cards के लिए rate pachis rupees per card है, minimum ek sau cards के साथ। अगले महीने के लिए मैं callback arrange करवा दूँ? आपको किस time call करवाना सही रहेगा?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4288,
+          "output_tokens": 242,
+          "total_tokens": 4530
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested_next_month",
+              "value": "true"
+            },
+            {
+              "op": "update_summary",
+              "key": "callback_preference",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है।",
+          "remaining_request": "अगले महीने के लिए price जानना और callback preference",
+          "contact_preference": "callback",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.234
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 883,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'अभी की कीमत बताइए' and 'कुछ book मत कीजिए', then asked 'इस service के बारे में और क्या जानना चाहिए?' — goal_complete: script objective answered, no further qualification needed\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"ठीक है, visiting cards 25 rupees per card हैं minimum 100 cards के साथ. Wedding invitations का quote design और quantity के हिसाब से बनता है. क्या आप quote request के लिए अपना नाम और locality बताना चाहेंगे?\"\n,\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"interested_future\",\n            \"value\": \"Caller is interested for next month, explicitly declined booking now, asked for more info\"\n        }\n    ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'अभी की कीमत बताइए' and 'कुछ book मत कीजिए', then asked 'इस service के बारे में और क्या जानना चाहिए?' — goal_complete: script objective answered, no further qualification needed\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"ठीक है, visiting cards 25 rupees per card हैं minimum 100 cards के साथ. Wedding invitations का quote design और quantity के हिसाब से बनता है. क्या आप quote request के लिए अपना नाम और locality बताना चाहेंगे?\"\n,\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"interested_future\",\n            \"value\": \"Caller is interested for next month, explicitly declined booking now, asked for more info\"\n        }\n    ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 246,
+        "prompt_tokens": 4269,
+        "total_tokens": 4515,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, visiting cards 25 rupees per card हैं minimum 100 cards के साथ. Wedding invitations का quote design और quantity के हिसाब से बनता है. क्या आप quote request के लिए अपना नाम और locality बताना चाहेंगे?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4269,
+          "output_tokens": 246,
+          "total_tokens": 4515
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested_future",
+              "value": "Caller is interested for next month, explicitly declined booking now, asked for more info"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said 'अभी की कीमत बताइए' and 'कुछ book मत कीजिए', then asked 'इस service के बारे में और क्या जानना चाहिए?' — goal_complete: script objective answered, no further qualification needed",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.297
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 1,
+      "at": 1.235
+    },
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 2,
+      "at": 2.563
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 3,
+      "at": 2.61
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 1.219,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 1.313,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 2.656,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "beff282c-5ed7-411d-83b0-d47e30b8dc57",
+      "reason": "not_interested"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "753b5412f23cef470f498a55190675947caed1c4ac52687e8e73f1ebfbc26a86",
+  "prompt_chars": 18082,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, main Meera hoon ClearPrint Studio se. Kya main sahi vyakti se baat kar rahi hoon card printing ki zarooraton par baat karne ke liye?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है।",
+        "remaining_request": "अगले महीने के लिए price जानना और callback preference",
+        "contact_preference": "callback",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, कोई बात नहीं। Visiting cards के लिए rate pachis rupees per card है, minimum ek sau cards के साथ। अगले महीने के लिए मैं callback arrange करवा दूँ? आपको किस time call करवाना सही रहेगा?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said 'अभी की कीमत बताइए' and 'कुछ book मत कीजिए', then asked 'इस service के बारे में और क्या जानना चाहिए?' — goal_complete: script objective answered, no further qualification needed",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, visiting cards twenty five rupees per card हैं minimum one hundred cards के साथ. Wedding invitations का quote design और quantity के हिसाब से बनता है. क्या आप quote request के लिए अपना नाम और locality बताना चाहेंगे?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.656,
+  "hangup_count": 1
+}

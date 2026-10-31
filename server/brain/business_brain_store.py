@@ -3,23 +3,100 @@ Business brain store — per-agent sections and published versions.
 """
 from __future__ import annotations
 
+import asyncio
+import copy
 import hashlib
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from server.brain.sections import SECTION_LABELS, default_section_seeds
 from server.db.connection import get_session_factory
-from server.db.models.brain_models import BusinessBrainSection, BusinessBrainVersion
+from server.db.models.brain_models import (
+    BusinessBrainSection,
+    BusinessBrainVersion,
+    CompiledBrainSnapshot,
+)
+from server.db.models.entities import Agent
+from server.utils.errors import AppError, ErrorCode
 
 _MEM_SECTIONS: dict[str, list[dict[str, Any]]] = {}
 _MEM_VERSIONS: dict[str, list[dict[str, Any]]] = {}
+_MEM_LOCKS: dict[str, asyncio.Lock] = {}
+
+
+def draft_revision(sections: list[dict[str, Any]]) -> str:
+    """Include disabled runtime metadata; exclude non-semantic timestamps."""
+    fields = ("section_id", "type", "title", "raw_text", "order", "enabled")
+    rows = [{key: section.get(key) for key in fields} for section in sections]
+    rows.sort(key=lambda row: (int(row.get("order") or 0), str(row.get("section_id") or "")))
+    return hashlib.sha256(json.dumps(rows, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+
+
+def _check_revision(sections: list[dict[str, Any]], expected_revision: str | None) -> None:
+    if expected_revision is not None and draft_revision(sections) != expected_revision:
+        raise AppError(ErrorCode.CONFLICT, "This draft changed in another editor. Reload it before saving or publishing.", status_code=409)
+
+# Exact text of superseded default seeds, keyed by section type. Kept so
+# `ensure_default_sections` can tell "still an old default" apart from
+# "someone edited this" — only the former is re-seeded. A type can hold several
+# because a default may be revised more than once before an agent is recompiled.
+_LEGACY_DEFAULT_TEXTS: dict[str, tuple[str, ...]] = {
+    "identity_purpose": (
+        """VOICE CALL MODE — spoken assistant
+- You represent this business on a live phone call. For sales/lead work, act as its sales representative — warm, clear, on-brand.
+- Reply in the call language with everyday words the caller uses. Sound like a helpful colleague, not a policy page.
+- 1–2 short sentences. Ask a question only when you still need a fact — never a qualification checklist.
+- Never use bullet lists, markdown, or numbered steps in voice replies.
+- Never say you are an AI unless asked. Never say goodbye; the platform speaks the approved farewell after a close.
+- If they object, are busy, want WhatsApp, or say don't call — honor that. Do not keep selling.
+- Do not claim you sent a message, opened a ticket, made a booking, changed a contact preference, or handed work to a team unless it really happened.
+- Keep implementation details private. Never mention tools, connections, system access, capability, or "on this call"; state the honest business outcome.
+- If transcript is unclear, ask them to repeat once — do not guess.
+- Hesitation (hmm, umm, let me think) is not a cue to pitch or ask another question.
+- Sarcasm is not a buying signal. Missing facts: I'll check and get back to you.
+- If corrected, own it briefly and use the corrected fact. Harmless small talk gets one natural beat; do not leave the business role.
+- Greet with name + company + brief call purpose only on the first turn. A later hello means they are checking you are there — answer briefly and continue; do not restart the pitch.
+- Do not repeat the same pitch, facts, or next-step line every turn. Hang up only when they confirm they are done or confirm the next step — never on okay/thanks, and never just because details are already known. Busy: one callback offer, stay on the line.""",
+        # Intermediate revision, superseded within the same change: it dropped the
+        # busy-stay-on-the-line rule that test_hangup_judgment_critical requires.
+        """VOICE CALL MODE — spoken assistant
+- You represent this business on a live phone call. For sales/lead work, act as its sales representative — warm, clear, on-brand.
+- Reply in the call language with everyday words the caller uses. Sound like a helpful colleague, not a policy page.
+- Sarcasm is not a buying signal. Missing facts: I'll check and get back to you.""",
+    ),
+    "facts": (
+        """You are a helpful voice assistant for this business.
+- Prefer practical, accurate answers grounded in the brief and what the user said.
+- Keep domain facts conservative — if unsure, say so briefly in the call language.
+- Never invent prices, policies, salaries, capabilities, completed actions, or prior conversations.""",
+    ),
+    "flow_qualification": (
+        "Progress like a human on a live phone. Ask-if-unknown only; never re-ask completed fields; "
+        "never a numbered Question/Step tree. "
+        "Sales/lead loop: Understand → Answer first → ask only unknown fields "
+        "(interest, name, preference) → Recommend → Next step. "
+        "Dense dumps: use all facts; do not checklist. Send-details: honor and stop asking. "
+        "Appointment/service: need → preferred day/time → confirm slot. "
+        "Education: goal → availability → answer course/price → trial or enroll. "
+        "If they only wanted information, inform and stop converting. "
+        "If busy, one callback offer, no pitch, stay on the line.",
+        # Intermediate revision that dropped the qualifying-field list.
+        "Progress like a human on a live phone. Ask only for fields you do not have. "
+        "Send-details: honor and stop asking. "
+        "If they only wanted information, inform and stop converting.",
+    ),
+}
 
 
 def assemble_raw_business_prompt(sections: list[dict[str, Any]]) -> tuple[str, str]:
-    enabled = sorted([s for s in sections if s.get("enabled", True)], key=lambda x: int(x.get("order", 0)))
+    # Legacy console saves marked technical configuration as enabled. These rows
+    # configure the runtime; they are never spoken instructions or business facts.
+    metadata_titles = {"saas_voice_config", "saas_script_variables", "saas_call_end_policy", "saas_handling_rules", "Voice profile (console)", "Inbound routing prefs (console)"}
+    enabled = sorted([s for s in sections if s.get("enabled", True) and s.get("title") not in metadata_titles], key=lambda x: int(x.get("order", 0)))
     parts: list[str] = []
     for s in enabled:
         sid = s.get("section_id", "")
@@ -34,7 +111,7 @@ class BusinessBrainStore:
     async def ensure_default_sections(self, agent_id: str) -> list[dict[str, Any]]:
         existing = await self.get_sections(agent_id)
         if existing:
-            return existing
+            return await self._refresh_untouched_defaults(agent_id, existing)
         seeds = default_section_seeds()
         sections = [
             {
@@ -48,12 +125,52 @@ class BusinessBrainStore:
             }
             for seed in seeds
         ]
-        return await self.save_draft_sections(agent_id, sections)
+        try:
+            return await self.save_draft_sections(agent_id, sections, expected_revision=draft_revision([]))
+        except AppError as exc:
+            if exc.status_code != 409:
+                raise
+            return await self.get_sections(agent_id)
+
+    async def _refresh_untouched_defaults(
+        self, agent_id: str, sections: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """Re-seed sections still holding a superseded default, byte for byte.
+
+        The default seeds were slimmed because they restated the platform rules
+        every brain already carries. Agents created before that keep the old
+        text in the database, so they would never shrink. Matching on the exact
+        previous text is what makes this safe: a section the user has edited
+        does not match and is left completely alone.
+        """
+        if not _LEGACY_DEFAULT_TEXTS:
+            return sections
+        current = {seed.type: seed.raw_text for seed in default_section_seeds()}
+        updated = list(sections)
+        changed = False
+        for idx, section in enumerate(sections):
+            stype = section.get("type", "")
+            stored = (section.get("raw_text") or "").strip()
+            if not any(stored == legacy.strip() for legacy in _LEGACY_DEFAULT_TEXTS.get(stype, ())):
+                continue
+            replacement = current.get(stype)
+            if replacement is None or replacement.strip() == stored:
+                continue
+            updated[idx] = {**section, "raw_text": replacement}
+            changed = True
+        if not changed:
+            return sections
+        try:
+            return await self.save_draft_sections(agent_id, updated, expected_revision=draft_revision(sections))
+        except AppError as exc:
+            if exc.status_code != 409:
+                raise
+            return await self.get_sections(agent_id)
 
     async def get_sections(self, agent_id: str) -> list[dict[str, Any]]:
         factory = get_session_factory()
         if factory is None:
-            return list(_MEM_SECTIONS.get(agent_id, []))
+            return copy.deepcopy(_MEM_SECTIONS.get(agent_id, []))
 
         async with factory() as session:
             aid = uuid.UUID(agent_id)
@@ -62,7 +179,7 @@ class BusinessBrainStore:
             )
             return [self._section_row(r) for r in result.scalars()]
 
-    async def save_draft_sections(self, agent_id: str, sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    async def save_draft_sections(self, agent_id: str, sections: list[dict[str, Any]], *, expected_revision: str | None = None) -> list[dict[str, Any]]:
         factory = get_session_factory()
         normalized = []
         for s in sections:
@@ -80,14 +197,20 @@ class BusinessBrainStore:
             )
 
         if factory is None:
-            _MEM_SECTIONS[agent_id] = normalized
-            return normalized
+            async with _MEM_LOCKS.setdefault(agent_id, asyncio.Lock()):
+                _check_revision(_MEM_SECTIONS.get(agent_id, []), expected_revision)
+                _MEM_SECTIONS[agent_id] = copy.deepcopy(normalized)
+            return copy.deepcopy(normalized)
 
         async with factory() as session:
             aid = uuid.UUID(agent_id)
+            await session.execute(select(Agent.agent_id).where(Agent.agent_id == aid).with_for_update())
             result = await session.execute(select(BusinessBrainSection).where(BusinessBrainSection.agent_id == aid))
-            for row in result.scalars():
+            current = list(result.scalars())
+            _check_revision([self._section_row(row) for row in current], expected_revision)
+            for row in current:
                 await session.delete(row)
+            await session.flush()
             for s in normalized:
                 session.add(
                     BusinessBrainSection(
@@ -102,6 +225,45 @@ class BusinessBrainStore:
                 )
             await session.commit()
         return normalized
+
+    async def commit_reviewed_publication(
+        self, agent_id: str, *, expected_revision: str,
+        published: dict[str, Any], snapshot: dict[str, Any],
+        sections: list[dict[str, Any]] | None = None,
+    ) -> None:
+        """Compare the reviewed draft and activate its immutable snapshot atomically."""
+        factory = get_session_factory()
+        if factory is None:
+            async with _MEM_LOCKS.setdefault(agent_id, asyncio.Lock()):
+                _check_revision(_MEM_SECTIONS.get(agent_id, []), expected_revision)
+                if sections is not None:
+                    _MEM_SECTIONS[agent_id] = copy.deepcopy(sections)
+                _MEM_VERSIONS.setdefault(agent_id, []).append(copy.deepcopy(published))
+            return
+        aid = uuid.UUID(agent_id)
+        async with factory() as session:
+            agent = (await session.execute(select(Agent).where(Agent.agent_id == aid).with_for_update())).scalar_one()
+            current = (await session.execute(select(BusinessBrainSection).where(BusinessBrainSection.agent_id == aid))).scalars()
+            _check_revision([self._section_row(row) for row in current], expected_revision)
+            if sections is not None:
+                await session.execute(delete(BusinessBrainSection).where(BusinessBrainSection.agent_id == aid))
+                for section in sections:
+                    session.add(BusinessBrainSection(
+                        section_id=uuid.UUID(section["section_id"]), agent_id=aid,
+                        type=section["type"], title=section["title"], raw_text=section["raw_text"],
+                        order=int(section.get("order", 0)), enabled=bool(section.get("enabled", True)),
+                    ))
+            session.add(BusinessBrainVersion(
+                version_id=published["version_id"], agent_id=aid,
+                optimized_prompt=published["optimized_prompt"], optimizer_report=published["optimizer_report"],
+                source_checksum=published["source_checksum"], status="published", published_at=datetime.now(timezone.utc),
+            ))
+            session.add(CompiledBrainSnapshot(**{key: snapshot[key] for key in (
+                "compiled_version", "platform_version", "business_version", "static_rules_version",
+                "compiled_text", "checksum", "token_estimate",
+            )}))
+            agent.active_compiled_brain_version = snapshot["compiled_version"]
+            await session.commit()
 
     async def save_published_version(
         self,
@@ -144,7 +306,7 @@ class BusinessBrainStore:
     async def get_versions(self, agent_id: str) -> list[dict[str, Any]]:
         factory = get_session_factory()
         if factory is None:
-            return list(_MEM_VERSIONS.get(agent_id, []))
+            return copy.deepcopy(list(reversed(_MEM_VERSIONS.get(agent_id, []))))
 
         async with factory() as session:
             result = await session.execute(

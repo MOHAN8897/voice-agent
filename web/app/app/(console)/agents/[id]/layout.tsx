@@ -3,14 +3,16 @@ import { ConsolePage } from "@/components/console/ConsolePage";
 import { StatusBadge } from "@/components/console/StatusBadge";
 import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
 import { apiGet } from "@/lib/api";
+import { formatAgentLanguage } from "@/lib/agent-language";
 
 export default async function AgentLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { id: string };
+  params: Promise<{ id: string }> | { id: string };
 }) {
+  const resolvedParams = await Promise.resolve(params);
   let agent: {
     name?: string;
     status?: string;
@@ -20,17 +22,17 @@ export default async function AgentLayout({
     active_compiled_brain_version?: string | null;
   } = {};
   try {
-    const data = await apiGet<{ agent?: typeof agent }>(`/api/agents/${params.id}`);
+    const data = await apiGet<{ agent?: typeof agent }>(`/api/agents/${resolvedParams.id}`);
     agent = data.agent || {};
   } catch {
     /* use id */
   }
 
-  const agentName = agent.name || params.id;
+  const agentName = agent.name || resolvedParams.id;
   const status = agent.status || "";
   const env = agent.environment || "development";
   const tier = agent.default_tier || "medium";
-  const langs = (agent.languages || ["te-IN"]).join(", ");
+  const langLabel = formatAgentLanguage(agent);
   const version = agent.active_compiled_brain_version || "—";
 
   return (
@@ -48,15 +50,15 @@ export default async function AgentLayout({
         <div className="mt-3 flex flex-wrap gap-2">
           <SkeuoBadge tone="muted">Env {env}</SkeuoBadge>
           <SkeuoBadge tone="accent">Tier {tier}</SkeuoBadge>
-          <SkeuoBadge tone="info">{langs}</SkeuoBadge>
+          <SkeuoBadge tone="info">{langLabel}</SkeuoBadge>
           <SkeuoBadge tone="muted">v{version}</SkeuoBadge>
         </div>
-        <p className="mt-2 font-mono text-[10px] text-text-subtle">{params.id}</p>
-        <SetupProgressStrip agentId={params.id} portal="app" />
+        <p className="mt-2 font-mono text-[10px] text-text-subtle">{resolvedParams.id}</p>
+        <SetupProgressStrip agentId={resolvedParams.id} portal="app" />
       </div>
 
       <div className="mt-6">
-        <SkeuoWorkspaceNav agentId={params.id} portal="app" />
+        <SkeuoWorkspaceNav agentId={resolvedParams.id} portal="app" />
       </div>
       {children}
     </ConsolePage>

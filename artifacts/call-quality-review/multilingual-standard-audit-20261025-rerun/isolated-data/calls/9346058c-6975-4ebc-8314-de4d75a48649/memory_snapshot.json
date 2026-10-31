@@ -1,0 +1,10 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit",
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "hing yet. Answer this first: What are the sofa and kitchen cleaning prices, minimum seats, and is a visit already confirmed?\nassistant: The sofa cleaning is three hundred forty nine rupees per seat with a minimum of three seats, and kitchen cleaning is one thousand five hundred ninety nine rupees total. An enquiry is not a confirmed slot or paid order, so nothing is booked yet.\nuser: I do not need sofa cleaning, but I want kitchen cleaning. Can you explain it?\nassistant: Kitchen cleaning is one thousand five hundred ninety nine rupees total. Would you like to go ahead with an enquiry for that?"
+}

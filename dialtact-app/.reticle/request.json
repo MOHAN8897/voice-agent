@@ -1,0 +1,18 @@
+{
+  "request": "the section in image is showing numbers whcih arre not updating please fixthat show avaible popup only not shownumbers",
+  "statements": [
+    {
+      "text": "the section in image is showing numbers whcih arre not updating please fixthat show avaible popup only not shownumbers",
+      "source": "user",
+      "kind": "acceptance-criterion"
+    },
+    {
+      "text": "Call history uses a compact status dropdown without misleading call counts and requests the selected status from the server.",
+      "source": "agent",
+      "kind": "technical-constraint"
+    }
+  ],
+  "at": 1792578005994,
+  "shared": true,
+  "answeredByRun": "drive-lease-da1ed5cc-6f7e-4d55-b30b-8911c12d5073"
+}

@@ -1,6 +1,6 @@
 """
 Secret-safe structured logger — server/utils/logger.py
-Category toggles via .env: LOG_ENABLED, LOG_VOICE, LOG_STT, LOG_BRAIN, LOG_TTS, LOG_WS, LOG_PERF.
+Category toggles via .env: LOG_ENABLED, LOG_VOICE, LOG_STT, LOG_BRAIN, LOG_TTS, LOG_WS, LOG_PERF, LOG_PSTN.
 Set LOG_LEVEL=off or LOG_ENABLED=false to silence all logs.
 """
 from __future__ import annotations
@@ -89,6 +89,10 @@ def log_ws(msg: str, **kv: Any) -> None:
 
 def log_perf(msg: str, **kv: Any) -> None:
     _emit(logging.INFO, "perf", "[PERF]", msg, **kv)
+
+
+def log_pstn(msg: str, **kv: Any) -> None:
+    _emit(logging.INFO, "pstn", "[PSTN]", msg, **kv)
 
 
 def log_error(msg: str, **kv: Any) -> None:

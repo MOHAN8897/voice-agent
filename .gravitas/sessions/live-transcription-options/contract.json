@@ -1,0 +1,25 @@
+{
+  "mode": "implement",
+  "planning": "compact",
+  "delegation": "none",
+  "scope": [
+    "primary Gemini/Vobiz PSTN admission lifecycle",
+    "selected live transcription streaming",
+    "admin model selection/persistence",
+    "tenant safe transcript metadata"
+  ],
+  "requirements": [
+    "release confirmed no-dial/ended reservations; retain ambiguous real calls",
+    "Sarvam saaras:v3-realtime and OpenAI gpt-transcribe live streams selected by saved admin config",
+    "bounded queues/timeouts, shutdown flush, no provider fallback",
+    "persist live caller transcripts with status and selected model internally; safe tenant summary",
+    "focused regression, UI and SAST validation"
+  ],
+  "excluded": [
+    "secondary voice/carrier implementations",
+    "production configuration changes",
+    "schema or tenant billing rate changes",
+    "push/deploy"
+  ],
+  "allowed_maintenance": "Tenant-scoped admission reconciliation only after exact provider CDR confirms the linked call ended."
+}

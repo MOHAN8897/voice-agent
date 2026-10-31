@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_name": "still",
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "is completely fine, we can help you next month as well. A basic service costs four hundred ninety nine rupees, and a puncture repair is one hundred twenty rupees. Would you like to know anything else about our repairs?\nuser: Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?\nassistant: Parts are extra only after approval. Which repair type are you looking at, a basic service or a puncture?\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

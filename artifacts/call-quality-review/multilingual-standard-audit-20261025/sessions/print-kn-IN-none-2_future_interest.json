@@ -1,0 +1,335 @@
+{
+  "key": "print-kn-IN-none-2_future_interest",
+  "business": "print",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "123e1591-085d-566e-aeb7-d09ce9eaacb6",
+  "call_id": "cc94cdd5-9a0c-44ef-9e62-5c84001737e6",
+  "session_id": "audit-print-kn-IN-none-2_future_interest-9ac33652",
+  "compiled_checksum": "10efc4feebd2f5def4a62aadd9f98d61ec147152213ad7b984dde21e5af816ef",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 847,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"current prices\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Printed visiting cards ಗೆ per card 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ಇರಬೇಕು. Wedding invitations ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಇಲ್ಲ. ನಿಮಗೆ callback ಬೇಕಿದ್ರೆ ಮಾತ್ರ ಹೇಳಿ, ಇಲ್ಲ ಅಂದ್ರೆ ತೊಂದ್ರೆ ಇಲ್ಲ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮ\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_next_month\",\n        \"value\": \"true\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"callback_preference\",\n        \"value\": \"do_not_call\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"current prices\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Printed visiting cards ಗೆ per card 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ಇರಬೇಕು. Wedding invitations ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಇಲ್ಲ. ನಿಮಗೆ callback ಬೇಕಿದ್ರೆ ಮಾತ್ರ ಹೇಳಿ, ಇಲ್ಲ ಅಂದ್ರೆ ತೊಂದ್ರೆ ಇಲ್ಲ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮ\",\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_next_month\",\n        \"value\": \"true\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"callback_preference\",\n        \"value\": \"do_not_call\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 273,
+        "prompt_tokens": 4035,
+        "total_tokens": 4308,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Printed visiting cards ಗೆ per card 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ಇರಬೇಕು. Wedding invitations ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಇಲ್ಲ. ನಿಮಗೆ callback ಬೇಕಿದ್ರೆ ಮಾತ್ರ ಹೇಳಿ, ಇಲ್ಲ ಅಂದ್ರೆ ತೊಂದ್ರೆ ಇಲ್ಲ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮ",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4035,
+          "output_tokens": 273,
+          "total_tokens": 4308
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested_next_month",
+              "value": "true"
+            },
+            {
+              "op": "update_summary",
+              "key": "callback_preference",
+              "value": "do_not_call"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ.",
+          "remaining_request": "current prices",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.938
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 980,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"The caller explicitly said 'ಈಗ ಅಗತ್ಯವಿಲ್ಲ' (not needed now) and 'ಭವಿಷ್ಯದಲ್ಲಿ ನನಗೆ ಆಸಕ್ತಿ ಇದೆ' (interested in future), which is a clear not_interested for immediate action but leaves the door open. Per\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"caller wants to know more about the service\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Visiting cards ಪ್ರತಿ card-ಗೆ 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ಇರಬೇಕು. Wedding invitations-ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, fixed price ಇಲ್ಲ. Pune-ಗೆ delivery ಆಗೋಕೆ artwork approval ಆದ್ಮೇಲೆ ಐದು working days ಬೇಕಾಗುತ್ತೆ. ನಾವು cards ಮತ್ತೆ cash-\",\n    \"memory_update\": {\n      \"operations\": [\n        {\n          \"op\": \"update_summary\",\n          \"key\": \"interested_future\",\n          \"value\": \"caller is not interested now but may be interested in future\"\n        }\n      ]\n    }\n  }",
+      "sse_content_tail": "ot needed now) and 'ಭವಿಷ್ಯದಲ್ಲಿ ನನಗೆ ಆಸಕ್ತಿ ಇದೆ' (interested in future), which is a clear not_interested for immediate action but leaves the door open. Per\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"caller wants to know more about the service\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Visiting cards ಪ್ರತಿ card-ಗೆ 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ಇರಬೇಕು. Wedding invitations-ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, fixed price ಇಲ್ಲ. Pune-ಗೆ delivery ಆಗೋಕೆ artwork approval ಆದ್ಮೇಲೆ ಐದು working days ಬೇಕಾಗುತ್ತೆ. ನಾವು cards ಮತ್ತೆ cash-\",\n    \"memory_update\": {\n      \"operations\": [\n        {\n          \"op\": \"update_summary\",\n          \"key\": \"interested_future\",\n          \"value\": \"caller is not interested now but may be interested in future\"\n        }\n      ]\n    }\n  }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 283,
+        "prompt_tokens": 4015,
+        "total_tokens": 4298,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Visiting cards ಪ್ರತಿ card-ಗೆ 25 rupees ಆಗುತ್ತೆ, minimum 100 cards ಇರಬೇಕು. Wedding invitations-ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, fixed price ಇಲ್ಲ. Pune-ಗೆ delivery ಆಗೋಕೆ artwork approval ಆದ್ಮೇಲೆ ಐದು working days ಬೇಕಾಗುತ್ತೆ. ನಾವು cards ಮತ್ತೆ cash-",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4015,
+          "output_tokens": 283,
+          "total_tokens": 4298
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested_future",
+              "value": "caller is not interested now but may be interested in future"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "The caller explicitly said 'ಈಗ ಅಗತ್ಯವಿಲ್ಲ' (not needed now) and 'ಭವಿಷ್ಯದಲ್ಲಿ ನನಗೆ ಆಸಕ್ತಿ ಇದೆ' (interested in future), which is a clear not_interested for immediate action but leaves the door open. Per",
+          "remaining_request": "caller wants to know more about the service",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.984
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 527,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.'\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_future\",\n        \"value\": \"caller_not_interested_now_but_interested_next_month\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.'\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"interested_future\",\n        \"value\": \"caller_not_interested_now_but_interested_next_month\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 190,
+        "prompt_tokens": 4055,
+        "total_tokens": 4245,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4055,
+          "output_tokens": 190,
+          "total_tokens": 4245
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "interested_future",
+              "value": "caller_not_interested_now_but_interested_next_month"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.'",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.407
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 1,
+      "at": 0.937
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 2,
+      "at": 1.937
+    },
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 3,
+      "at": 3.359
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ಈಗಿನ ಬೆಲೆ ಹೇಳಿ. ಏನನ್ನೂ book ಮಾಡಬೇಡಿ; ಇದನ್ನು ಶಾಶ್ವತ ನಿರಾಕರಣೆ ಎಂದು ಭಾವಿಸಬೇಡಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.937,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "ಹೌದು, ಭವಿಷ್ಯದಲ್ಲಿ ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಾನು ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ. ಈ service ಬಗ್ಗೆ ಇನ್ನೇನು ತಿಳಿಯಬೇಕು?",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 0.984,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 1.406,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "3ba84f31e544aeb14c538247ec47e72cd1ec21f54671e7379e2dcd85dbb78a9f",
+  "prompt_chars": 17765,
+  "opening_seeded": "Namaskara, this is Meera from ClearPrint Studio. I am calling to assist you with our printing services. Would you like to know more about our visiting cards or wedding invitations?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ.",
+        "remaining_request": "current prices",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Printed visiting cards ಗೆ per card twenty five rupees ಆಗುತ್ತೆ, minimum one hundred cards ಇರಬೇಕು. Wedding invitations ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಇಲ್ಲ. ನಿಮಗೆ callback ಬೇಕಿದ್ರೆ ಮಾತ್ರ ಹೇಳಿ, ಇಲ್ಲ ಅಂದ್ರೆ ತೊಂದ್ರೆ ಇಲ್ಲ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "The caller explicitly said 'ಈಗ ಅಗತ್ಯವಿಲ್ಲ' (not needed now) and 'ಭವಿಷ್ಯದಲ್ಲಿ ನನಗೆ ಆಸಕ್ತಿ ಇದೆ' (interested in future), which is a clear not_interested for immediate action but leaves the door open. Per",
+        "remaining_request": "caller wants to know more about the service",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ಅರ್ಥ ಆಯ್ತು. Visiting cards ಪ್ರತಿ card-ಗೆ twenty five rupees ಆಗುತ್ತೆ, minimum one hundred cards ಇರಬೇಕು. Wedding invitations-ಗೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, fixed price ಇಲ್ಲ. Pune-ಗೆ delivery ಆಗೋಕೆ artwork approval ಆದ್ಮೇಲೆ ಐದು working days ಬೇಕಾಗುತ್ತೆ. ನಾವು cards ಮತ್ತೆ cash-.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said 'ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.'",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.375,
+  "hangup_count": 0
+}

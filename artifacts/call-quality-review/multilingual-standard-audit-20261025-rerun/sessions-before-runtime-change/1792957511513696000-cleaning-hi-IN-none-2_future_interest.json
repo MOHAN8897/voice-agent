@@ -1,0 +1,225 @@
+{
+  "key": "cleaning-hi-IN-none-2_future_interest",
+  "business": "cleaning",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "0af54b3b-2e52-5467-8d8d-282e03815984",
+  "call_id": "f3a9ec54-01f1-4209-94be-cf659fd79d32",
+  "session_id": "audit-cleaning-hi-IN-none-2_future_interest-8025be0d",
+  "compiled_checksum": "69e98222770e2e24f02661040eef848ed4e9f3d30154dd23b101bb2a21ea0d3c",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 168,
+      "sse_content_preview": "ठीक है, कोई बात नहीं। Sofa cleaning 349 rupees per seat है, minimum 3 seats, aur kitchen cleaning 1599 rupees total है। क्या आप inme se kisi ki details jaanna chahenge?",
+      "sse_content_tail": "ठीक है, कोई बात नहीं। Sofa cleaning 349 rupees per seat है, minimum 3 seats, aur kitchen cleaning 1599 rupees total है। क्या आप inme se kisi ki details jaanna chahenge?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 49,
+        "prompt_tokens": 4099,
+        "total_tokens": 4148,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, कोई बात नहीं। Sofa cleaning 349 rupees per seat है, minimum 3 seats, aur kitchen cleaning 1599 rupees total है। क्या आप inme se kisi ki details jaanna chahenge?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4099,
+          "output_tokens": 49,
+          "total_tokens": 4148
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.734
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 205,
+      "sse_content_preview": "हमारी services सिर्फ Pune में available हैं, Monday se Saturday subah 9 baje se shaam 6 baje tak. Team review ke liye enquiry submit karne ke liye, kya aap apna preferred naam aur locality bata sakte hain?",
+      "sse_content_tail": "हमारी services सिर्फ Pune में available हैं, Monday se Saturday subah 9 baje se shaam 6 baje tak. Team review ke liye enquiry submit karne ke liye, kya aap apna preferred naam aur locality bata sakte hain?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 48,
+        "prompt_tokens": 4173,
+        "total_tokens": 4221,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "हमारी services सिर्फ Pune में available हैं, Monday se Saturday subah 9 baje se shaam 6 baje tak. Team review ke liye enquiry submit karne ke liye, kya aap apna preferred naam aur locality bata sakte hain?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4173,
+          "output_tokens": 48,
+          "total_tokens": 4221
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.781
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ठीक है, कोई बात नहीं। Sofa cleaning three hundred forty nine rupees per seat है, minimum 3 seats, aur kitchen cleaning one thousand five hundred ninety nine rupees total है। क्या आप inme se kisi ki details jaanna chahenge?",
+      "turn": 1,
+      "at": 2.078
+    },
+    {
+      "text": "हमारी services सिर्फ Pune में available हैं, Monday se Saturday subah 9 baje se shaam 6 baje tak. मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन टीम को अनुरोध भेजने या follow-up का वादा नहीं कर सकता।",
+      "turn": 2,
+      "at": 4.344
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 3,
+      "at": 4.406
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।",
+      "spoken": "ठीक है, कोई बात नहीं। Sofa cleaning three hundred forty nine rupees per seat है, minimum 3 seats, aur kitchen cleaning one thousand five hundred ninety nine rupees total है। क्या आप inme se kisi ki details jaanna chahenge?",
+      "elapsed_s": 2.078,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?",
+      "spoken": "हमारी services सिर्फ Pune में available हैं, Monday se Saturday subah 9 baje se shaam 6 baje tak. मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन टीम को अनुरोध भेजने या follow-up का वादा नहीं कर सकता।",
+      "elapsed_s": 2.219,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 4.469,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "f3a9ec54-01f1-4209-94be-cf659fd79d32",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "62eb3e5b361717422b79802ecb8768c3fa08608d615d0b4a7cca5ea6497eafc7",
+  "prompt_chars": 17121,
+  "opening_seeded": "Namaste. Main Nila hoon FreshNest Cleaning se. Kya hum abhi safai sevaon ke bare mein baat kar sakte hain?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ठीक है, कोई बात नहीं। Sofa cleaning three hundred forty nine rupees per seat है, minimum 3 seats, aur kitchen cleaning one thousand five hundred ninety nine rupees total है। क्या आप inme se kisi ki details jaanna chahenge?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "हमारी services सिर्फ Pune में available हैं, Monday se Saturday subah 9 baje se shaam 6 baje tak. Team review ke liye enquiry submit karne ke liye, kya aap apna preferred naam aur locality bata sakte hain?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.469,
+  "hangup_count": 1,
+  "source_signature": "c545ec91901b6bf6a3eadfbeb58d4c160fe2846b70364f913fd4724fe00d89cd"
+}

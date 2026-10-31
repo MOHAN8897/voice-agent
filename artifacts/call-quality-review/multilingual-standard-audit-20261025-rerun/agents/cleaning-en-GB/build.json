@@ -1,0 +1,38 @@
+{
+  "business": "cleaning",
+  "language": "en-GB",
+  "analysis_status": 200,
+  "http_status": 422,
+  "elapsed_s": 117.609,
+  "request": {
+    "brief": "make Nila from FreshNest Cleaning, outbound friendly service information, Pune only. Messy note: sofa cleaning 349 rupees PER SEAT minimum 3 seats, kitchen cleaning 1599 rupees TOTAL. Old kitchen note 1299 is wrong; discard it, current kitchen fee 1599. Do not quote a whole sofa for 349. Mon-Sat 9am-6pm. No discount, refund or warranty policy supplied. Do not invent them. A caller rejecting sofa cleaning may still want kitchen cleaning. Answer prices and conditions first, never demand a name to answer. Goal explain services and, if wanted, submit an enquiry for team review after preferred name, service type, locality and consent. An enquiry is NOT a confirmed slot or paid order. If authorised CRM is connected save once after consent and confirm only the actual tool result. Without integration explain cannot save externally or confirm a visit; can discuss facts and note the request within this call. Future interest is welcome, not DNC, callbacks only when actually requested. Do not promise same-day arrival or a confirmed time. Do not give instructions for mixing toxic cleaning chemicals. Respect clear refusal and stop-contact. Optional fields optional.",
+    "language": "en-GB",
+    "employeeName": "Nila",
+    "agentRole": "sales",
+    "callDirection": "outbound",
+    "mode": "instant_lead",
+    "naturalSpokenStyle": true,
+    "requestId": "daf1f58e-cee7-44de-9948-0d23a358715a"
+  },
+  "response": {
+    "detail": {
+      "error": {
+        "code": "unsupported_language",
+        "message": "English (UK) is not available on the Standard Regional calling plan. Choose Hindi, English (India), Marathi, Kannada, Punjabi, Tamil, Telugu, Gujarati or Bengali.",
+        "tier": "medium",
+        "supportedLanguages": [
+          "hi-IN",
+          "en-IN",
+          "mr-IN",
+          "kn-IN",
+          "pa-IN",
+          "ta-IN",
+          "te-IN",
+          "gu-IN",
+          "bn-IN"
+        ]
+      }
+    }
+  },
+  "status": "creation_failed"
+}

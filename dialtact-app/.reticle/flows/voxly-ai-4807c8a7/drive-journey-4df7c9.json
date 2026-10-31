@@ -1,0 +1,118 @@
+{
+  "version": 2,
+  "name": "drive-journey-4df7c9",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790872791959,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-script",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 567,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "component",
+        "component": "SolidCard",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 648,
+          "column": 13
+        }
+      },
+      "args": {
+        "value": "DIRTY-FINAL-CHECK"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-back",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 492,
+          "column": 11
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-studio-leave-dialog"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "leave-save",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 472,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Search agents..."
+      },
+      "args": {
+        "value": "DIRTY-ROUND2"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Search agents..."
+      },
+      "args": {
+        "value": "DIRTY-ROUND3"
+      },
+      "action": "fill",
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

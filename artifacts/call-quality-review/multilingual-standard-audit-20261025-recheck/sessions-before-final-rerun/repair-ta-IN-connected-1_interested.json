@@ -1,0 +1,339 @@
+{
+  "key": "repair-ta-IN-connected-1_interested",
+  "business": "repair",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "1_interested",
+  "agent_id": "1282a9a2-f811-5ecc-bd00-99104492e625",
+  "call_id": "022f44b7-2cb5-4172-abdb-6956af46aa9d",
+  "session_id": "audit-repair-ta-IN-connected-1_interested-6877bfa0",
+  "compiled_checksum": "b94a67ef0f87a659a7f534bc6b51612637b1d339cd81987c110d1bd3ae7c7766",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 885,
+      "sse_content_preview": "{\n\n\"end_call\": {\"evidence\": \"Caller explicitly requested service, pricing, and terms; no further action or close triggered.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"}\n\n  \n, \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  ",
+      "sse_content_tail": "{\n\n\"end_call\": {\"evidence\": \"Caller explicitly requested service, pricing, and terms; no further action or close triggered.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"}\n\n  \n, \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  ",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.235
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 604,
+      "sse_content_preview": "{\"spoken_response\": \"சரிங்க. AC basic servicing 699 rupees, fridge inspection 399 rupees. Parts extra aagum, inspectionku aprom dhan approval kudutha dhan quote solla mudiyum. Namadhu timing Monday to Saturday, காலை 9 மணில இருந்து சாயங்காலம் 6 மணி வரைக்கும் இருக்கு. Ungalukku visit venuma?\"}AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Replacement parts extra தான், customer approval வந்த பிறகு தான் add பண்ணுவோம். உங்களுக்கு visit venumna மட்டும் ungaloda name, appliance type, locality, அப்பaram preferred date சொல்லுங்க. இத save பண்ணிக்கலாமா?",
+      "sse_content_tail": "{\"spoken_response\": \"சரிங்க. AC basic servicing 699 rupees, fridge inspection 399 rupees. Parts extra aagum, inspectionku aprom dhan approval kudutha dhan quote solla mudiyum. Namadhu timing Monday to Saturday, காலை 9 மணில இருந்து சாயங்காலம் 6 மணி வரைக்கும் இருக்கு. Ungalukku visit venuma?\"}AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Replacement parts extra தான், customer approval வந்த பிறகு தான் add பண்ணுவோம். உங்களுக்கு visit venumna மட்டும் ungaloda name, appliance type, locality, அப்பaram preferred date சொல்லுங்க. இத save பண்ணிக்கலாமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 4186,
+        "total_tokens": 4249,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. AC basic servicing 699 rupees, fridge inspection 399 rupees. Parts extra aagum, inspectionku aprom dhan approval kudutha dhan quote solla mudiyum. Namadhu timing Monday to Saturday, காலை 9 மணில இருந்து சாயங்காலம் 6 மணி வரைக்கும் இருக்கு. Ungalukku visit venuma?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 3984,
+          "output_tokens": 83,
+          "total_tokens": 4067
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.203
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1073,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly instructed not to book or save anything and only answer the question first; after answering, they did not engage with the next step and the conversation is stalled on a single query.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None; caller only wanted pricing clarification and refused booking.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "e next step and the conversation is stalled on a single query.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None; caller only wanted pricing clarification and refused booking.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.657
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 504,
+      "sse_content_preview": "{\n  \"spoken_response\": \"AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Replacement parts extra தான், customer approvalku aprom dhan add பண்ணுவோம். Inspection முடிஞ்சதுக்கு அப்புறம் தான் fixed repair quote சொல்ல முடியும். உங்களுக்கு visit arrange பண்ணட்டுமா?\"\n}Fridge inspection three hundred ninety nine rupees. கண்டிப்பா பண்ணிடலாம். Visit schedule பண்ண உங்க பெயர், locality, அப்புறம் எந்த date-ல வேணும்னு சொல்ல முடியுமா? Visithukku உங்க consent இருக்கா?",
+      "sse_content_tail": "{\n  \"spoken_response\": \"AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Replacement parts extra தான், customer approvalku aprom dhan add பண்ணுவோம். Inspection முடிஞ்சதுக்கு அப்புறம் தான் fixed repair quote சொல்ல முடியும். உங்களுக்கு visit arrange பண்ணட்டுமா?\"\n}Fridge inspection three hundred ninety nine rupees. கண்டிப்பா பண்ணிடலாம். Visit schedule பண்ண உங்க பெயர், locality, அப்புறம் எந்த date-ல வேணும்னு சொல்ல முடியுமா? Visithukku உங்க consent இருக்கா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 46,
+        "prompt_tokens": 4232,
+        "total_tokens": 4278,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Replacement parts extra தான், customer approvalku aprom dhan add பண்ணுவோம். Inspection முடிஞ்சதுக்கு அப்புறம் தான் fixed repair quote சொல்ல முடியும். உங்களுக்கு visit arrange பண்ணட்டுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4049,
+          "output_tokens": 66,
+          "total_tokens": 4115
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.64
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 542,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested fridge inspection and declined AC servicing, indicating a clear service need.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Fridge inspection visit\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"order_confirmed\",\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"service_interest\",\n      \"value\": \"Fridge inspection only; AC servicing declined\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested fridge inspection and declined AC servicing, indicating a clear service need.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Fridge inspection visit\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"order_confirmed\",\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"service_interest\",\n      \"value\": \"Fridge inspection only; AC servicing declined\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 171,
+        "prompt_tokens": 4095,
+        "total_tokens": 4266,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.531
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "error_type": "RuntimeError",
+      "finish_reason": null,
+      "elapsed_s": 0.375
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "சரிங்க. AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Parts extra aagum, inspectionku aprom dhan approval kudutha dhan quote solla mudiyum. Namadhu timing Monday to Saturday, காலை 9 மணில இருந்து சாயங்காலம் 6 மணி வரைக்கும் இருக்கு. Ungalukku visit venuma?",
+      "turn": 1,
+      "at": 3.609
+    },
+    {
+      "text": "AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Replacement parts extra தான், customer approvalku aprom dhan add பண்ணுவோம். Inspection முடிஞ்சதுக்கு அப்புறம் தான் fixed repair quote சொல்ல முடியும்.",
+      "turn": 2,
+      "at": 6.984
+    },
+    {
+      "text": "மன்னிக்கவும், எங்களுக்கு ஒரு தொழில்நுட்பச் சிக்கல் உள்ளது. தயவுசெய்து எங்களை மீண்டும் அழைக்கவும். நன்றி.",
+      "turn": 3,
+      "at": 9.828
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.",
+      "spoken": "சரிங்க. AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Parts extra aagum, inspectionku aprom dhan approval kudutha dhan quote solla mudiyum. Namadhu timing Monday to Saturday, காலை 9 மணில இருந்து சாயங்காலம் 6 மணி வரைக்கும் இருக்கு. Ungalukku visit venuma?",
+      "elapsed_s": 3.609,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: AC servicing, fridge inspection விலை என்ன? Replacement parts அதில் சேருமா?",
+      "spoken": "AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Replacement parts extra தான், customer approvalku aprom dhan add பண்ணுவோம். Inspection முடிஞ்சதுக்கு அப்புறம் தான் fixed repair quote சொல்ல முடியும்.",
+      "elapsed_s": 3.343,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "எனக்கு AC servicing வேண்டாம், ஆனால் fridge inspection வேண்டும். உதவ முடியுமா?",
+      "spoken": "மன்னிக்கவும், எங்களுக்கு ஒரு தொழில்நுட்பச் சிக்கல் உள்ளது. தயவுசெய்து எங்களை மீண்டும் அழைக்கவும். நன்றி.",
+      "elapsed_s": 2.875,
+      "requests": 2,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 9.875,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "022f44b7-2cb5-4172-abdb-6956af46aa9d",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "0016676bd505a7f0e5781127962353681320bed078bba7d94af25bea214053ef",
+  "prompt_chars": 17257,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Vanakkam, naan Ravi pesuren SafeFix Home Serviceilirundhu. Ungalukku engaloda appliance service mattum pricing pathi therinjika mudiyuma?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க. AC basic servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Parts extra aagum, inspectionku aprom dhan approval kudutha dhan quote solla mudiyum. Namadhu timing Monday to Saturday, காலை 9 மணில இருந்து சாயங்காலம் 6 மணி வரைக்கும் இருக்கு. Ungalukku visit venuma?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "AC servicing six hundred ninety nine rupees, fridge inspection three hundred ninety nine rupees. Replacement parts extra தான், customer approvalku aprom dhan add பண்ணுவோம். Inspection முடிஞ்சதுக்கு அப்புறம் தான் fixed repair quote சொல்ல முடியும்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 9.875,
+  "hangup_count": 1
+}

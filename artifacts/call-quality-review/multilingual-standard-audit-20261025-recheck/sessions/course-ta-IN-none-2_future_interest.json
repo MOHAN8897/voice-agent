@@ -1,0 +1,286 @@
+{
+  "key": "course-ta-IN-none-2_future_interest",
+  "business": "course",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "13132fd6-d72a-5ef9-81a9-47b201ed6188",
+  "call_id": "685b549f-b3c3-4d0d-9598-c0448b486841",
+  "session_id": "audit-course-ta-IN-none-2_future_interest-167a2e60",
+  "compiled_checksum": "6de945f219536e3f862422a7bf903732ed8c2be0a2a89e7a29eaaacb4b90f85f",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 807,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'இப்போ தேவையில்லை' and 'நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க' — indicating not interested now but open later; also asked for price.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Price for next month\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"சரிங்க, தற்போதைய கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் உங்களுக்கு ஆர்வம் இருக்குறத நான் note பண்ணிக்கிறேன். இப்போதைக்கு வேற ஏதாச்சும் தகவல் வேணுமா?\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"set_preference\",\n      \"key\": \"contact_later\",\n      \"value\": \"true\"\n    },\n    {\n      \"op\": \"set_preference\",\n      \"key\": \"preferred_month\",\n      \"value\": \"next_month\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'இப்போ தேவையில்லை' and 'நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க' — indicating not interested now but open later; also asked for price.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Price for next month\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"சரிங்க, தற்போதைய கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் உங்களுக்கு ஆர்வம் இருக்குறத நான் note பண்ணிக்கிறேன். இப்போதைக்கு வேற ஏதாச்சும் தகவல் வேணுமா?\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"set_preference\",\n      \"key\": \"contact_later\",\n      \"value\": \"true\"\n    },\n    {\n      \"op\": \"set_preference\",\n      \"key\": \"preferred_month\",\n      \"value\": \"next_month\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 274,
+        "prompt_tokens": 4360,
+        "total_tokens": 4634,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, தற்போதைய கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் உங்களுக்கு ஆர்வம் இருக்குறத நான் note பண்ணிக்கிறேன். இப்போதைக்கு வேற ஏதாச்சும் தகவல் வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4360,
+          "output_tokens": 274,
+          "total_tokens": 4634
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "set_preference",
+              "key": "contact_later",
+              "value": "true"
+            },
+            {
+              "op": "set_preference",
+              "key": "preferred_month",
+              "value": "next_month"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "Caller said 'இப்போ தேவையில்லை' and 'நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க' — indicating not interested now but open later; also asked for price.",
+          "remaining_request": "Price for next month",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.453
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 673,
+      "sse_content_preview": "{ \"end_call\":        { \"evidence\": \"Future interest confirmed, no callback requested, asked for more info\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"wants to know more about the service\", \"contact_preference\": \"do_not_call\" }\n, \"action_claimed\":   \"none\"\n, \"spoken_response\": \"இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை நடக்கும். இதுல அடிப்படை விஷயங்களை கத்துக்கலாம். இது சம்பந்தமா வேற ஏதாச்சும் details வேணுமா?\"\n, \"memory_update\":   { \"operations\": [ { \"op\": \"update_summary\", \"key\": \"contact_later\", \"value\": \"true\" }, { \"op\": \"update_summary\", \"key\": \"preferred_month\", \"value\": \"next_month\" } ] } }",
+      "sse_content_tail": "{ \"end_call\":        { \"evidence\": \"Future interest confirmed, no callback requested, asked for more info\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"wants to know more about the service\", \"contact_preference\": \"do_not_call\" }\n, \"action_claimed\":   \"none\"\n, \"spoken_response\": \"இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை நடக்கும். இதுல அடிப்படை விஷயங்களை கத்துக்கலாம். இது சம்பந்தமா வேற ஏதாச்சும் details வேணுமா?\"\n, \"memory_update\":   { \"operations\": [ { \"op\": \"update_summary\", \"key\": \"contact_later\", \"value\": \"true\" }, { \"op\": \"update_summary\", \"key\": \"preferred_month\", \"value\": \"next_month\" } ] } }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 210,
+        "prompt_tokens": 4473,
+        "total_tokens": 4683,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை நடக்கும். இதுல அடிப்படை விஷயங்களை கத்துக்கலாம். இது சம்பந்தமா வேற ஏதாச்சும் details வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4473,
+          "output_tokens": 210,
+          "total_tokens": 4683
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "contact_later",
+              "value": "true"
+            },
+            {
+              "op": "update_summary",
+              "key": "preferred_month",
+              "value": "next_month"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Future interest confirmed, no callback requested, asked for more info",
+          "remaining_request": "wants to know more about the service",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.329
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "சரிங்க, தற்போதைய கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் உங்களுக்கு ஆர்வம் இருக்குறத நான் note பண்ணிக்கிறேன். இப்போதைக்கு வேற ஏதாச்சும் தகவல் வேணுமா?",
+      "turn": 1,
+      "at": 1.469
+    },
+    {
+      "text": "இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை நடக்கும். இதுல அடிப்படை விஷயங்களை கத்துக்கலாம். இது சம்பந்தமா வேற ஏதாச்சும் details வேணுமா?",
+      "turn": 2,
+      "at": 2.813
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 3,
+      "at": 2.844
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "இப்போ தேவையில்லை, ஆனால் அடுத்த மாதம் எனக்கு ஆர்வம் இருக்கு. தற்போதைய விலையைச் சொல்லுங்க. எதையும் book செய்யாதீங்க; நான் நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க.",
+      "spoken": "சரிங்க, தற்போதைய கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் உங்களுக்கு ஆர்வம் இருக்குறத நான் note பண்ணிக்கிறேன். இப்போதைக்கு வேற ஏதாச்சும் தகவல் வேணுமா?",
+      "elapsed_s": 1.453,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "ஆமாம், எதிர்காலத்தில் எனக்கு ஆர்வம் இருக்கு. இப்போ நான் பிறகு call செய்யச் சொல்லவில்லை. இந்த service பற்றி இன்னும் என்ன தெரிஞ்சுக்கணும்?",
+      "spoken": "இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை நடக்கும். இதுல அடிப்படை விஷயங்களை கத்துக்கலாம். இது சம்பந்தமா வேற ஏதாச்சும் details வேணுமா?",
+      "elapsed_s": 1.328,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 2.891,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "685b549f-b3c3-4d0d-9598-c0448b486841",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "9c507a47457da560070f48934087e1d6242a614453d74d03fdeb73c197cf054e",
+  "prompt_chars": 19307,
+  "opening_seeded": "வணக்கம், நான் பிரைட் பாத் ஸ்கில்ஸ் நிறுவனத்திலிருந்து அனன்யா பேசுகிறேன். வயது பதினெட்டு மற்றும் அதற்கு மேற்பட்டவர்களுக்கான எங்கள் ஆறு வார ஆன்லைன் பைத்தான் பயிற்சி வகுப்பைப் பற்றி சொல்ல அழைக்கிறேன். இது பற்றி பேச இது சரியான நேரமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Caller said 'இப்போ தேவையில்லை' and 'நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க' — indicating not interested now but open later; also asked for price.",
+        "remaining_request": "Price for next month",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "சரிங்க, தற்போதைய கட்டணம் நாலாயிரத்து தொள்ளாயிரத்து தொண்ணூறு ரூபாய் தான். அடுத்த மாதம் உங்களுக்கு ஆர்வம் இருக்குறத நான் note பண்ணிக்கிறேன். இப்போதைக்கு வேற ஏதாச்சும் தகவல் வேணுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Future interest confirmed, no callback requested, asked for more info",
+        "remaining_request": "wants to know more about the service",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "இந்த ஆறு வார ஆன்லைன் பைத்தான் வகுப்பு வார நாட்களில் மாலை ஏழு மணி முதல் எட்டு மணி வரை நடக்கும். இதுல அடிப்படை விஷயங்களை கத்துக்கலாம். இது சம்பந்தமா வேற ஏதாச்சும் details வேணுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.891,
+  "hangup_count": 1
+}

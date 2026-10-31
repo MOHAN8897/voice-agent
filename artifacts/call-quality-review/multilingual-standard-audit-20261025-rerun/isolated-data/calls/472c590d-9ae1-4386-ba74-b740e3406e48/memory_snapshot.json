@@ -1,0 +1,6 @@
+{
+  "facts": {},
+  "preferences": {},
+  "important_context": "",
+  "summary": "Basic bicycle service four hundred ninety nine rupees की है, और puncture repair one hundred twenty rupees का होता है। Parts का खर्चा सिर्फ आपकी approval के बाद ही लगेगा। क्या आपको अभी service करवानी है?\nuser: अभी कुछ book या save मत कीजिए। पहले मेरा सवाल बताइए: साइकिल basic service और puncture repair की कीमत क्या है? क्या parts शामिल हैं?\nassistant: Parts extra हैं, वो भी तभी लगेंगे जब आपकी approval होगी। आपको किस तरह का repair करवाना है, basic service या puncture?\nuser: ठीक है, धन्यवाद।\nassistant: ठीक है। अगर आप बाद में enquiry save करवाना चाहें, तो मुझे बता दीजिएगा। अभी और कुछ पूछना है आपको?"
+}

@@ -1,0 +1,526 @@
+[
+  {
+    "language": "en-IN",
+    "caller_key": "future",
+    "variant": "current_full",
+    "status": "IncompleteTurnError",
+    "finish_reason": "whitespace_stall",
+    "elapsed_s": 3.063
+  },
+  {
+    "language": "en-IN",
+    "caller_key": "future",
+    "variant": "speech_only",
+    "result": {
+      "done": true,
+      "text": "Understood. AC basic servicing is 699 rupees and fridge inspection is 399 rupees. For repairs, parts are extra only after your approval and we cannot give a fixed quote before inspection. We are open Monday to Saturday from 9am to 6pm. Since you mentioned next month, would you like to request a visit then?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 3832,
+        "output_tokens": 80,
+        "total_tokens": 3912,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": []
+      },
+      "end_call": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": null,
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.656
+  },
+  {
+    "language": "en-IN",
+    "caller_key": "details",
+    "variant": "current_full",
+    "result": {
+      "done": true,
+      "text": "AC basic servicing is 699 rupees and fridge inspection is 399 rupees. Replacement parts are extra and only after your approval, so there is no fixed repair quote before inspection.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 3828,
+        "output_tokens": 231,
+        "total_tokens": 4059,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "update_summary",
+            "key": "pricing_disclosed",
+            "value": "AC basic servicing 699 rupees, fridge inspection 399 rupees, parts extra after approval, no fixed repair quote before inspection"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "caller explicitly said do not book or save anything yet and asked only for pricing",
+        "remaining_request": "pricing and parts inclusion",
+        "contact_preference": "end_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": "order_confirmed",
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.984
+  },
+  {
+    "language": "en-IN",
+    "caller_key": "details",
+    "variant": "speech_only",
+    "result": {
+      "done": true,
+      "text": "AC basic servicing is 699 rupees and fridge inspection is 399 rupees. For repairs, parts are extra only after your approval, and we cannot give a fixed quote before inspection.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 3828,
+        "output_tokens": 52,
+        "total_tokens": 3880,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": []
+      },
+      "end_call": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": null,
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.578
+  },
+  {
+    "language": "te-IN",
+    "caller_key": "future",
+    "variant": "current_full",
+    "result": {
+      "done": true,
+      "text": "సరేనండి, అర్థమైంది. మా AC basic servicing 699 rupees, ఫ్రిజ్ తనిఖీ 399 rupees అండి. మీరు తర్వాత ఎప్పుడు కావాలన్నా మమ్మల్ని సంప్రదించవచ్చు. సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4100,
+        "output_tokens": 306,
+        "total_tokens": 4406,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "update_summary",
+            "key": "AC_basic_servicing_pricing",
+            "value": "699 rupees"
+          },
+          {
+            "op": "update_summary",
+            "key": "Fridge_inspection_pricing",
+            "value": "399 rupees"
+          },
+          {
+            "op": "update_summary",
+            "key": "Customer_interest_timeline",
+            "value": "Next month"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Current need not now, interested next month, do not book, not a permanent opt-out.",
+        "remaining_request": "Pricing information shared; no booking.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": "none",
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 1.782
+  },
+  {
+    "language": "te-IN",
+    "caller_key": "future",
+    "variant": "speech_only",
+    "result": {
+      "done": true,
+      "text": "తప్పకుండా అండి. మా AC basic servicing 699 rupees, ఫ్రిజ్ inspection 399 rupees అవుతుంది. మీరు తర్వాత అనుకున్నా పర్వాలేదు అండి. మీకు ఏ అప్లయన్స్ గురించి details కావాలి?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4100,
+        "output_tokens": 60,
+        "total_tokens": 4160,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": []
+      },
+      "end_call": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": null,
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.64
+  },
+  {
+    "language": "te-IN",
+    "caller_key": "details",
+    "variant": "current_full",
+    "result": {
+      "done": true,
+      "text": "సరేనండి, అర్థమైంది. మా దగ్గర AC basic servicing 699 rupees, fridge inspection 399 rupees అవుతుంది. Replacement parts అన్నీ extra ఉంటాయి, inspection తర్వాత మీ approval తీసుకున్నాకే తీసుకుంటాం. ప్రస్తుతం ఇంకేమైనా details కావాలా అండి?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4099,
+        "output_tokens": 199,
+        "total_tokens": 4298,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "update_summary",
+            "key": "pricing_answered",
+            "value": "AC_699_fridge_399_parts_extra"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "No booking or saving now — just answer prices first.",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": "order_confirmed",
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 1.141
+  },
+  {
+    "language": "te-IN",
+    "caller_key": "details",
+    "variant": "speech_only",
+    "result": {
+      "done": true,
+      "text": "Sure అండి. AC basic servicing 699 rupees, fridge inspection 399 rupees అవుతుంది. Replacement parts extra ఉంటాయి అండి, అది కూడా మీ approval తీసుకున్న తర్వాతే. Inspection కి ముందు మేము ఎటువంటి fixed repair quote ఇవ్వము. ఇంకేమైనా details కావాలా అండి?",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4099,
+        "output_tokens": 72,
+        "total_tokens": 4171,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": []
+      },
+      "end_call": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": null,
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.703
+  },
+  {
+    "language": "hi-IN",
+    "caller_key": "future",
+    "variant": "current_full",
+    "result": {
+      "done": true,
+      "text": "ठीक है, समझ गया। Pune में AC basic servicing 699 rupees ki hai aur fridge inspection 399 rupees ki hai. Parts extra hote hain aur approval ke baad hi lagte hain. Time dene ke liye धन्यवाद। नमस्कार।",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 3912,
+        "output_tokens": 234,
+        "total_tokens": 4146,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "update_summary",
+            "key": "user_interest",
+            "value": "Interested next month; asked for current pricing; declined immediate booking; opted out of future contact"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है",
+        "remaining_request": "अगले महीने service के लिए current pricing जानना",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": "order_confirmed",
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 1.031
+  },
+  {
+    "language": "hi-IN",
+    "caller_key": "future",
+    "variant": "speech_only",
+    "result": {
+      "done": true,
+      "text": "समझ गया, कोई बात नहीं. Pune mein AC basic servicing 699 rupees ki hai aur fridge inspection 399 rupees ki hai. Parts extra lagenge aur sirf approval ke baad. Jab bhi aapko visit chahiye ho, tab bata dijiyega.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 3912,
+        "output_tokens": 66,
+        "total_tokens": 3978,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": []
+      },
+      "end_call": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": null,
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.656
+  },
+  {
+    "language": "hi-IN",
+    "caller_key": "details",
+    "variant": "current_full",
+    "status": "IncompleteTurnError",
+    "finish_reason": "whitespace_stall",
+    "elapsed_s": 0.563
+  },
+  {
+    "language": "hi-IN",
+    "caller_key": "details",
+    "variant": "speech_only",
+    "result": {
+      "done": true,
+      "text": "देखिए, AC basic servicing 699 rupees ki hai aur fridge inspection 399 rupees ki hai. Parts extra hote hain aur sirf customer approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed repair quote nahi milta hai.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 3912,
+        "output_tokens": 60,
+        "total_tokens": 3972,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": []
+      },
+      "end_call": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": null,
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.578
+  },
+  {
+    "language": "ta-IN",
+    "caller_key": "future",
+    "variant": "current_full",
+    "status": "IncompleteTurnError",
+    "finish_reason": "length",
+    "elapsed_s": 2.265
+  },
+  {
+    "language": "ta-IN",
+    "caller_key": "future",
+    "variant": "speech_only",
+    "status": "IncompleteTurnError",
+    "finish_reason": "whitespace_stall",
+    "elapsed_s": 0.844
+  },
+  {
+    "language": "ta-IN",
+    "caller_key": "details",
+    "variant": "current_full",
+    "status": "IncompleteTurnError",
+    "finish_reason": "length",
+    "elapsed_s": 2.578
+  },
+  {
+    "language": "ta-IN",
+    "caller_key": "details",
+    "variant": "speech_only",
+    "status": "IncompleteTurnError",
+    "finish_reason": "whitespace_stall",
+    "elapsed_s": 2.641
+  },
+  {
+    "language": "kn-IN",
+    "caller_key": "future",
+    "variant": "current_full",
+    "status": "IncompleteTurnError",
+    "finish_reason": "whitespace_stall",
+    "elapsed_s": 0.891
+  },
+  {
+    "language": "kn-IN",
+    "caller_key": "future",
+    "variant": "speech_only",
+    "status": "IncompleteTurnError",
+    "finish_reason": "whitespace_stall",
+    "elapsed_s": 1.203
+  },
+  {
+    "language": "kn-IN",
+    "caller_key": "details",
+    "variant": "current_full",
+    "result": {
+      "done": true,
+      "text": "AC basic servicing 699 rupees ಮತ್ತೆ fridge inspection 399 rupees irutte. Parts extra irutte, customer approval nanthara mathra haakuvevu. Inspection madade fixed repair quote neduvarilla. Nimma time-ge thanks. Nammavaru matte call madidre problem illa.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 3903,
+        "output_tokens": 234,
+        "total_tokens": 4137,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "update_summary",
+            "key": "pricing_inquiry",
+            "value": "AC basic servicing 699 rupees, fridge inspection 399 rupees. Parts extra after approval. No fixed quote before inspection."
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said do not book or save anything yet, and asked for AC servicing and fridge inspection pricing and whether replacement parts are included.",
+        "remaining_request": "None. Caller only wanted pricing and parts info.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": "none",
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 1.344
+  },
+  {
+    "language": "kn-IN",
+    "caller_key": "details",
+    "variant": "speech_only",
+    "result": {
+      "done": true,
+      "text": "AC basic servicing 699 rupees ಮತ್ತೆ fridge inspection 399 rupees ಆಗುತ್ತೆ. Parts extra ಇರುತ್ತೆ, customer approval ಆದ್ಮೇಲೆ ಮಾತ್ರ ಹಾಕ್ತೀವಿ. Inspection ಮಾಡದೆ fixed repair quote ಕೊಡೋಕೆ ಆಗಲ್ಲ.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 3903,
+        "output_tokens": 57,
+        "total_tokens": 3960,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": []
+      },
+      "end_call": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "action_claimed": null,
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.64
+  }
+]

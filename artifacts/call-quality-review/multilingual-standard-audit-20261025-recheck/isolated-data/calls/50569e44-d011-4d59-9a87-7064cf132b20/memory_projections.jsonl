@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-25T17:10:28.114462Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T17:10:32.192756Z", "include_summary": true, "projection": "[Preferences]\ninterested: yes"}
+{"turn_seq": 5, "ts": "2026-10-25T17:10:34.896760Z", "include_summary": true, "projection": "[Preferences]\ninterested: yes"}
+{"turn_seq": 7, "ts": "2026-10-25T17:10:34.925348Z", "include_summary": false, "projection": "[Preferences]\ninterested: yes"}

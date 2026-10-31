@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-console-entry-is-reachable-so-billing-and-wallet": {
+      "declaredAt": 1790958453070,
+      "id": "flow:drive-console-entry-is-reachable-so-billing-and-wallet",
+      "state": "declared",
+      "statement": "Console entry is reachable so billing and wallet UI can be verified without admin/env leaks.",
+      "status": "proposed",
+      "subject": "drive-console-entry-is-reachable-so-bill",
+      "surface": {
+        "flow": "drive-console-entry-is-reachable-so-billing-and-wallet"
+      },
+      "updatedAt": 1790958453320
+    }
+  },
+  "subject": "drive-console-entry-is-reachable-so-bill",
+  "version": 1
+}

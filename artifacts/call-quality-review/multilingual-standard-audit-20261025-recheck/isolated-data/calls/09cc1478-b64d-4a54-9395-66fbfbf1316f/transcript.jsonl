@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "My preferred name is Audit Customer and email audit.customer@example.invalid. Please save my enquiry and preferred time tomorrow at 3pm for the team to review. I consent to submitting the request; do not claim an order or booking is confirmed.", "ts": "2026-10-25T16:53:03.510149Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:53:04.826663Z", "brain_latency_ms": 766}
+{"seq": 3, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T16:53:04.840436Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T16:53:04.856626Z", "brain_latency_ms": 3}

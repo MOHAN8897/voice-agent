@@ -1,0 +1,16 @@
+{
+  "stage": "employee_script_review",
+  "language": "hi-IN",
+  "output": {
+    "passed": true,
+    "issues": [],
+    "fixed_script": {
+      "opening": "Namaste, mera naam Ananya hai BrightPath Skills se. Kya yeh adult beginner Python course ke baare mein baat karne ka sahi samay hai?",
+      "call_flow": "Hamara adult beginner Python course online hai, 6 weeks chalta hai, weekdays mein shaam 7 se 8 baje tak. Yeh 18 saal aur usse adhik umr ke liye hai. Total fee 4999 rupees hai. Kya aapko pehle se koi coding ka anubhav hai?",
+      "call_to_action": "Agar aap demo ya counselling session request karna chahte hain, toh kya main aapki anumati se aapka preferred naam, email aur preferred time note kar sakti hoon?",
+      "objection_handling": "Agar aapko fee zyada lage, toh total fee 4999 rupees hai aur koi discount ya instalment plan authorised nahi hai. Isme koi placement, job guarantee ya income promise nahi hai. Agar aap exams ke baad judna chahte hain, toh woh swagat hai.",
+      "unknown_information": "Refund rules, exact next batch date aur seat vacancies ki jaankari mere paas abhi uplabdh nahi hai, aur main ise invent nahi kar sakti.",
+      "closing": " apna samay dene ke liye bahut dhanyawad. Aapka din shubh rahe."
+    }
+  }
+}

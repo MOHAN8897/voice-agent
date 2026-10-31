@@ -1,0 +1,12 @@
+{
+  "stage": "employee_script_write",
+  "language": "en-IN",
+  "output": {
+    "opening": "Hello, my name is Ananya from BrightPath Skills. Is this a good time to talk about our adult beginner Python course?",
+    "call_flow": "The course runs for six weeks online on weekdays from seven pm to eight pm, for adults aged eighteen and above. The total fee is four thousand nine hundred ninety-nine rupees. There is no placement or job guarantee, and no income promise. If the user asks about coding experience, ask if they have coded before. If the user wants a demo or counselling, ask for permission to collect their preferred name, email, and preferred time.",
+    "call_to_action": "May I have your preferred name, email, and preferred time to submit your demo request?",
+    "objection_handling": "If the user asks about the price, state that the fee is four thousand nine hundred ninety-nine rupees total with no discounts or instalments. If the user mentions an old price of three thousand nine hundred ninety-nine rupees, state that the current fee is four thousand nine hundred ninety-nine rupees only. If the user says they already know Python, acknowledge it and explain the course relevance without a repetitive pitch. If the user says not interested or wants to wait until after exams, respect the decline and note their preference for future interest without calling it a rejection.",
+    "unknown_information": "If asked about refund rules, exact next batch dates, vacancies, payment links, or bookings, state that the information is unavailable.",
+    "closing": "Thank you for your time today. Have a great day."
+  }
+}

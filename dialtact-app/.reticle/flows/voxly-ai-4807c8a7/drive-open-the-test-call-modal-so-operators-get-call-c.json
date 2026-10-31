@@ -1,0 +1,81 @@
+{
+  "version": 2,
+  "name": "drive-open-the-test-call-modal-so-operators-get-call-c",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790851323593,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-test-call",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call-panel-inner"
+        }
+      },
+      "page": "/console"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "test-call-mode-phone",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentTestCallPanel.jsx",
+          "line": 269,
+          "column": 11
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "test-call-live-number"
+            }
+          },
+          {
+            "kind": "text",
+            "contains": "Live number"
+          },
+          {
+            "kind": "text",
+            "contains": "Wallet $"
+          }
+        ]
+      },
+      "page": "/console"
+    }
+  ],
+  "startPath": "/console",
+  "intent": "Open the test call modal so operators get call chrome with timer and 3D avatar.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/console"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/console"
+    }
+  ],
+  "author": {
+    "agent": "cursor-vscode"
+  },
+  "intentId": "flow:drive-open-the-test-call-modal-so-operators-get-call-c"
+}

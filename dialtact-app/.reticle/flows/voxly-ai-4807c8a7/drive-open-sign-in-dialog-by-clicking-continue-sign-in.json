@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "name": "drive-open-sign-in-dialog-by-clicking-continue-sign-in",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791947808778,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Continue — sign in"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Sign in to your console"
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Open sign-in dialog by clicking Continue - sign in",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "antigravity-client"
+  },
+  "intentId": "flow:drive-open-sign-in-dialog-by-clicking-continue-sign-in"
+}

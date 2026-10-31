@@ -1,0 +1,149 @@
+{
+  "key": "cycle-ta-IN-none-1b_direct_tool_request",
+  "business": "cycle",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "a8a625e5-7e5f-5320-8624-1a990a8d6419",
+  "call_id": "ab92b4d8-e02b-4624-a0a1-ba3dfd6060f0",
+  "session_id": "audit-cycle-ta-IN-none-1b_direct_tool_request-e6dc1dc5",
+  "compiled_checksum": "386ce2e8b1908900b6637a9f204489aefc5ecb99083f14f116174db28e20e614",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 196,
+      "sse_content_preview": "புரியுதுங்க. என்னால enquiry-யை team-க்கு அனுப்பவோ, email அனுப்பவோ முடியாதுங்க, அதுதான் என்னோட limitation. பஞ்சர் பழுதுபார்ப்பு Adyar-இல் 120 rupees ஆகும். உங்களுக்கு இப்பவே இத note பண்ணிக்கட்டுமா?",
+      "sse_content_tail": "புரியுதுங்க. என்னால enquiry-யை team-க்கு அனுப்பவோ, email அனுப்பவோ முடியாதுங்க, அதுதான் என்னோட limitation. பஞ்சர் பழுதுபார்ப்பு Adyar-இல் 120 rupees ஆகும். உங்களுக்கு இப்பவே இத note பண்ணிக்கட்டுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 58,
+        "prompt_tokens": 4048,
+        "total_tokens": 4106,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "புரியுதுங்க. என்னால enquiry-யை team-க்கு அனுப்பவோ, email அனுப்பவோ முடியாதுங்க, அதுதான் என்னோட limitation. பஞ்சர் பழுதுபார்ப்பு Adyar-இல் 120 rupees ஆகும். உங்களுக்கு இப்பவே இத note பண்ணிக்கட்டுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4048,
+          "output_tokens": 58,
+          "total_tokens": 4106
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.64
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "புரியுதுங்க. என்னால enquiry-யை team-க்கு அனுப்பவோ, email அனுப்பவோ முடியாதுங்க, அதுதான் என்னோட limitation. பஞ்சர் பழுதுபார்ப்பு Adyar-இல் one hundred twenty rupees ஆகும். உங்களுக்கு இப்பவே இத note பண்ணிக்கட்டுமா?",
+      "turn": 1,
+      "at": 2.156
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 2,
+      "at": 2.187
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want puncture repair in Adyar, Chennai; preferred review time tomorrow at 3pm. இந்த enquiry-யை team reviewக்கு submit செய்யுங்க. என் சம்மதம் இருக்கு. Booking அல்லது order confirmன்னு சொல்லாதீங்க.",
+      "spoken": "புரியுதுங்க. என்னால enquiry-யை team-க்கு அனுப்பவோ, email அனுப்பவோ முடியாதுங்க, அதுதான் என்னோட limitation. பஞ்சர் பழுதுபார்ப்பு Adyar-இல் one hundred twenty rupees ஆகும். உங்களுக்கு இப்பவே இத note பண்ணிக்கட்டுமா?",
+      "elapsed_s": 2.14,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 2.234,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "ab92b4d8-e02b-4624-a0a1-ba3dfd6060f0",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "45f4750d5bdc872d08ff26870e3bbcd367e77fd20ed325e5433dc1d87338cf81",
+  "prompt_chars": 16716,
+  "opening_seeded": "வணக்கம், நான் CityCycle Repairs-இல் இருந்து அர்ஜுன் பேசுகிறேன். நான் ஒரு AI உதவியாளர். உங்களுக்கு பேச இப்போது நேரம் இருக்கிறதா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "புரியுதுங்க. என்னால enquiry-யை team-க்கு அனுப்பவோ, email அனுப்பவோ முடியாதுங்க, அதுதான் என்னோட limitation. பஞ்சர் பழுதுபார்ப்பு Adyar-இல் one hundred twenty rupees ஆகும். உங்களுக்கு இப்பவே இத note பண்ணிக்கட்டுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.234,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

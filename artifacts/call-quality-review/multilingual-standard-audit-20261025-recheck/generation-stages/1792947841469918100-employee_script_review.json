@@ -1,0 +1,16 @@
+{
+  "stage": "employee_script_review",
+  "language": "kn-IN",
+  "output": {
+    "passed": true,
+    "issues": [],
+    "fixed_script": {
+      "opening": "Namaskara, nanu Ravi, SafeFix Home Service inda mathaduthiddene. Pune nalli nammavaru mane upakarana sevegalannu needuthare. Nimge nimma upakarana sevegala bagge mathadalu konche samaya ideye?",
+      "call_flow": "Nimma seve mattu bele vicharagalige uttarisuttene. AC basic servicing 699 rupees mattu fridge inspection 399 rupees irutte. Parts extra irutte mattu customer approval nanthara mathra haakuvevu. Inspection madade fixed repair quote neduvarilla. Namu Mon-Sat 9am inda 6pm varge kharedi irutte. Live electrical wiring teriyalu helabedi; unsafe equipment balasuvanudannu nillisi mattu qualified technician balasi endu heli. Nimma apeksha badaladare, athannu neravagi uttarisi.",
+      "call_to_action": "Neevu service visit request madalu ishtapaduveya?",
+      "objection_handling": "bele bagge kelidare sthandard pricing tilisi. Mundina tingala avashyakate endare athannu note madi, opt-out endu tilisabedi. AC beda endare fridge bagge kelona. Discounts athava call nalli payment kelidare, discounts authorized illa mattu call nalli payment tisuvudilla endu tilisi.",
+      "unknown_information": "Labbavillada mahiti kelidare, athu irodu labbhya illa endu tilisi. Payment, booking, message athava callback navaagi kalpisuvudilla.",
+      "closing": "SafeFix Home Service samparkisidakkagi dhanyavadagalu. Shubha dina."
+    }
+  }
+}

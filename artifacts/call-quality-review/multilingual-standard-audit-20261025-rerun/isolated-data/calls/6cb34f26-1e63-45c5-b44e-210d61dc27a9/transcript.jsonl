@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।", "ts": "2026-10-25T18:44:18.925501Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "माफ़ कीजिए, अगर मेरी बात साफ़ नहीं पहुँची. Sofa cleaning three hundred forty nine rupees per seat hai, minimum 3 seats ke liye, aur kitchen cleaning one thousand five hundred ninety nine rupees total hai. Kya aapko inme se koi service chahiye?", "ts": "2026-10-25T18:44:23.695771Z", "brain_latency_ms": 4761}
+{"seq": 3, "role": "user", "text": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।", "ts": "2026-10-25T18:44:23.718898Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-25T18:44:23.725880Z", "brain_latency_ms": 1}

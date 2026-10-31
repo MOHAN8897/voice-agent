@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "name": "drive-journey-10800a",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790873110236,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-script",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 567,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "component",
+        "component": "SolidCard",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 648,
+          "column": 13
+        }
+      },
+      "args": {
+        "value": "DIRTY-R3"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-back",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 492,
+          "column": 11
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Open builder"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-script",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 567,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "component",
+        "component": "SolidCard",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 648,
+          "column": 13
+        }
+      },
+      "args": {
+        "value": "OPENING LINE\nHello, thank you for calling."
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-back",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 492,
+          "column": 11
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-studio-leave-dialog"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "leave-save",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 472,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

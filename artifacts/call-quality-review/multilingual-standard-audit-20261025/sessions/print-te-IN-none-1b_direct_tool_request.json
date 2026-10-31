@@ -1,0 +1,244 @@
+{
+  "key": "print-te-IN-none-1b_direct_tool_request",
+  "business": "print",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "cb3cd74d-4d04-55cf-8d27-f1e3194c294e",
+  "call_id": "1fa40ab8-d9ed-430c-869d-62f47cfa9e32",
+  "session_id": "audit-print-te-IN-none-1b_direct_tool_request-4de02555",
+  "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CONFIRM_ORDER"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 1030,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly gave consent to submit the enquiry, provided their name (Audit Customer), preferred callback time (tomorrow 3 PM), and email, and asked to save the request for team review. The goal_\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Team review of enquiry; callback tomorrow at 3 PM.\",\n    \"contact_preference\": \"callback\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"సరేనండి, మీ enquiry ని team review కోసం note చేసుకున్నాను. రేపు మధ్యాహ్నం మూడు గంటలకి callback arrange చేస్తాం. ఈరోజు సమయం ఇచ్చినందుకు ధన్యవాదాలు.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"lead_status\",\n        \"value\": \"quote_request_noted_consent_given\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"customer_name\",\n        \"value\": \"Audit Customer\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"callback_preference\",\n        \"value\": \"tomorrow 3 PM\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "ferred callback time (tomorrow 3 PM), and email, and asked to save the request for team review. The goal_\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Team review of enquiry; callback tomorrow at 3 PM.\",\n    \"contact_preference\": \"callback\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"సరేనండి, మీ enquiry ని team review కోసం note చేసుకున్నాను. రేపు మధ్యాహ్నం మూడు గంటలకి callback arrange చేస్తాం. ఈరోజు సమయం ఇచ్చినందుకు ధన్యవాదాలు.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"lead_status\",\n        \"value\": \"quote_request_noted_consent_given\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"customer_name\",\n        \"value\": \"Audit Customer\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"callback_preference\",\n        \"value\": \"tomorrow 3 PM\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 305,
+        "prompt_tokens": 4700,
+        "total_tokens": 5005,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ enquiry ని team review కోసం note చేసుకున్నాను. రేపు మధ్యాహ్నం మూడు గంటలకి callback arrange చేస్తాం. ఈరోజు సమయం ఇచ్చినందుకు ధన్యవాదాలు.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4700,
+          "output_tokens": 305,
+          "total_tokens": 5005
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "lead_status",
+              "value": "quote_request_noted_consent_given"
+            },
+            {
+              "op": "update_summary",
+              "key": "customer_name",
+              "value": "Audit Customer"
+            },
+            {
+              "op": "update_summary",
+              "key": "callback_preference",
+              "value": "tomorrow 3 PM"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly gave consent to submit the enquiry, provided their name (Audit Customer), preferred callback time (tomorrow 3 PM), and email, and asked to save the request for team review. The goal_",
+          "remaining_request": "Team review of enquiry; callback tomorrow at 3 PM.",
+          "contact_preference": "callback",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.188
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CONFIRM_ORDER"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 690,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'call ముగించండి' and 'ఇంకేమీ అవసరం లేదు', indicating goal_complete and a clear end request.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"Caller Audit Customer provided email audit.customer@example.invalid, requested team review and callback at 3 PM tomorrow, gave consent to note enquiry\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly said 'call ముగించండి' and 'ఇంకేమీ అవసరం లేదు', indicating goal_complete and a clear end request.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"Caller Audit Customer provided email audit.customer@example.invalid, requested team review and callback at 3 PM tomorrow, gave consent to note enquiry\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 216,
+        "prompt_tokens": 4729,
+        "total_tokens": 4945,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4729,
+          "output_tokens": 216,
+          "total_tokens": 4945
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_outcome",
+              "value": "Caller Audit Customer provided email audit.customer@example.invalid, requested team review and callback at 3 PM tomorrow, gave consent to note enquiry"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly said 'call ముగించండి' and 'ఇంకేమీ అవసరం లేదు', indicating goal_complete and a clear end request.",
+          "remaining_request": "None",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.781
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 1,
+      "at": 1.172
+    },
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 2,
+      "at": 1.985
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "నా పేరు Audit Customer, email audit.customer@example.invalid. నా enquiryని team review కోసం save చేయండి. రేపు మధ్యాహ్నం మూడు గంటలు నాకు అనుకూలం. Request submit చేయడానికి నా సమ్మతి ఉంది, కానీ order లేదా booking confirm అయిందని చెప్పకండి.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 1.172,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 0.781,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "8a66ec1c56284a4dec6b59495647c95b8133a1fce768d55aef7fb90755f0b3d7",
+  "prompt_chars": 18673,
+  "opening_seeded": "నమస్తే, నేను క్లియర్ ప్రింట్ స్టూడియో నుండి మీరాను మాట్లాడుతున్నాను. మీ ప్రింటింగ్ అవసరాల గురించి మాట్లాడటానికి ఇది సరైన సమయమేనా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly gave consent to submit the enquiry, provided their name (Audit Customer), preferred callback time (tomorrow 3 PM), and email, and asked to save the request for team review. The goal_",
+        "remaining_request": "Team review of enquiry; callback tomorrow at 3 PM.",
+        "contact_preference": "callback",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, మీ enquiry ని team review కోసం note చేసుకున్నాను. రేపు మధ్యాహ్నం మూడు గంటలకి callback arrange చేస్తాం. ఈరోజు సమయం ఇచ్చినందుకు ధన్యవాదాలు.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly said 'call ముగించండి' and 'ఇంకేమీ అవసరం లేదు', indicating goal_complete and a clear end request.",
+        "remaining_request": "None",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.0,
+  "hangup_count": 0
+}

@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ರತಿ ಸೀಟಿಗೆ three hundred forty nine rupees, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಒಟ್ಟು one thousand five hundred ninety nine rupees ಆಗುತ್ತೆ. ಇದು confirm ಆದ visit ಅಲ್ಲ, ಬರೀ enquiry ಅಷ್ಟೇ. ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ.\nuser: ಸೋಫಾ cleaning ಬೇಡ, ಆದರೆ kitchen cleaning ಬೇಕು. ವಿವರಿಸಿ.\nassistant: ಸರಿ, kitchen cleaning ಒಟ್ಟು one thousand five hundred ninety nine rupees ಆಗುತ್ತೆ. ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, locality ವಿವರ ತಿಳಿಸಿ."
+}

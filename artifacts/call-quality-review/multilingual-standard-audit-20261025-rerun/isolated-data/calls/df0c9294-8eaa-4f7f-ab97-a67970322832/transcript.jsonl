@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.", "ts": "2026-10-25T19:02:46.072057Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. Please note this is not a confirmed slot or paid order. Is there anything else I can help you with?", "ts": "2026-10-25T19:02:49.349945Z", "brain_latency_ms": 3262}
+{"seq": 3, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T19:02:49.360197Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T19:02:49.367914Z", "brain_latency_ms": 1}

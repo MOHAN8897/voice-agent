@@ -1,0 +1,74 @@
+{
+  "key": "language-te-IN-none-3b_stop_contact",
+  "business": "language",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "7d5b5b86-e5f0-51bc-a4cf-15492750cf1f",
+  "call_id": "39b830f6-a92a-48ac-9731-e2a7e46a013e",
+  "session_id": "audit-language-te-IN-none-3b_stop_contact-4d2a0893",
+  "compiled_checksum": "f88a37529a880a3098d197723d5f7c682d261178428f6ad3f96fdf472a5f59f6",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 0.031
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "నాకు మళ్లీ call చేయకండి. భవిష్యత్తు calls నుంచి నా పేరు తీసేసి ఈ call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.078,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "39b830f6-a92a-48ac-9731-e2a7e46a013e",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "6eb2490e2d076f3951581076d96815503206b79a895379001273514be44f3d65",
+  "prompt_chars": 18865,
+  "opening_seeded": "నమస్కారం, నా పేరు సానా SpeakEasy Language Studio నుండి మాట్లాడుతున్నాను. మన ఆన్‌లైన్ ఇంగ్లీష్ తరగతుల గురించిన సమాచారం ఇవ్వడానికి కాల్ చేశాను. ఇప్పుడు మాట్లాడటానికి తగిన సమయమేనా? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.078,
+  "hangup_count": 1,
+  "source_signature": "f22325fa3f608c0524c8afc9a14908696812152c9af5311fda442ff7a042a834"
+}

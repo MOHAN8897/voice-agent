@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।", "ts": "2026-10-25T17:08:52.336890Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "देखिए, AC basic servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina fixed repair quote nahi milta.", "ts": "2026-10-25T17:08:55.222275Z", "brain_latency_ms": 2835}
+{"seq": 3, "role": "user", "text": "अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?", "ts": "2026-10-25T17:08:55.233824Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "AC servicing six hundred ninety nine rupees ki hai aur fridge inspection three hundred ninety nine rupees ki hai. Replacement parts extra hote hain aur sirf aapki approval ke baad hi lagaye jaate hain, inspection ke bina koi fixed quote nahi milta hai.", "ts": "2026-10-25T17:08:57.977843Z", "brain_latency_ms": 2703}
+{"seq": 5, "role": "user", "text": "ठीक है, धन्यवाद।", "ts": "2026-10-25T17:08:57.988093Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ठीक है। अगर आपको visit schedule karni ho toh bataiye, warna main baad mein callback arrange kar sakta hoon. Aap kya prefer karenge?", "ts": "2026-10-25T17:09:00.542247Z", "brain_latency_ms": 2431}
+{"seq": 7, "role": "user", "text": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।", "ts": "2026-10-25T17:09:00.562975Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-25T17:09:00.570326Z", "brain_latency_ms": 1}

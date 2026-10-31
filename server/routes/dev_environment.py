@@ -23,22 +23,30 @@ class EnvironmentPatch(BaseModel):
     deepseek_api_key: str | None = None
     cartesia_api_key: str | None = None
     gemini_api_key: str | None = None
-    exotel_api_key: str | None = None
-    exotel_api_token: str | None = None
+    telnyx_api_key: str | None = None
+    vobiz_auth_token: str | None = None
     enable_sarvam: bool | None = None
     enable_openai: bool | None = None
     enable_deepseek: bool | None = None
     enable_cartesia: bool | None = None
     enable_gemini: bool | None = None
-    enable_exotel: bool | None = None
+    enable_telnyx: bool | None = None
+    enable_vobiz: bool | None = None
     enable_benchmarks: bool | None = None
+    enable_prewarm_greeting: bool | None = None
     voice_agent_config_mode: str | None = None
     voice_agent_tier: str | None = None
     app_environment: str | None = None
-    exotel_account_sid: str | None = None
-    exotel_subdomain: str | None = None
-    exotel_exophone: str | None = None
-    exotel_webhook_base_url: str | None = None
+    telephony_provider: str | None = None
+    telnyx_connection_id: str | None = None
+    telnyx_phone_number: str | None = None
+    telnyx_outbound_voice_profile_id: str | None = None
+    vobiz_auth_id: str | None = None
+    vobiz_app_id: str | None = None
+    vobiz_phone_number: str | None = None
+    vobiz_webhook_base_url: str | None = None
+    sarvam_llm_models_csv: str | None = Field(None, max_length=2000)
+    gemini_tts_models_csv: str | None = Field(None, max_length=2000)
 
 
 def _patch_dict(body: EnvironmentPatch) -> dict[str, Any]:
@@ -109,9 +117,7 @@ async def dev_environment_reload(session: SessionData = Depends(require_dev_sess
     """Reload overlay file and re-init provider registry without changing values."""
     require_permission(session, "dev.stack.write")
     dev_secrets_store.reload()
-    from server.config.env import get_settings
-    from server.providers import init_provider_registry
+    from server.services.dev_runtime import notify_dev_overlay_changed
 
-    get_settings.cache_clear()
-    init_provider_registry()
+    notify_dev_overlay_changed()
     return {"ok": True, "environment": dev_secrets_store.snapshot()}

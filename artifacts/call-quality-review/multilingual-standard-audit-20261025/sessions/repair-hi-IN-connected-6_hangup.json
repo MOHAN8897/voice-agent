@@ -1,0 +1,396 @@
+{
+  "key": "repair-hi-IN-connected-6_hangup",
+  "business": "repair",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "ee74c1a4-b235-5a77-99ad-00da15da64d8",
+  "call_id": "bc099b52-d088-4f73-b81f-fb46a9767b35",
+  "session_id": "audit-repair-hi-IN-connected-6_hangup-e56a5cfe",
+  "compiled_checksum": "c1b2b2e6daf7ab67800f136acdf6fc382ccb97cdd15925f7fc2a342260aae8d2",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 856,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"User expressed interest and asked for service, price, and terms; no refusal or opt-out.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"देखिए, AC basic servicing 699 rupees aur fridge inspection 399 rupees mein available hai. Parts ka charge extra hota hai aur woh sirf aapke approval ke baad hi lagta hai, inspection se pehle koi fixed quote nahi milta. Humari timings Monday se Saturday, subah 9 baje se shaam 6 bJ\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_fact\",\n        \"key\": \"user_interested\",\n        \"value\": \"true\"\n      },\n      {\n        \"op\": \"set_fact\",\n        \"key\": \"user_asked_pricing_terms\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"User expressed interest and asked for service, price, and terms; no refusal or opt-out.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"देखिए, AC basic servicing 699 rupees aur fridge inspection 399 rupees mein available hai. Parts ka charge extra hota hai aur woh sirf aapke approval ke baad hi lagta hai, inspection se pehle koi fixed quote nahi milta. Humari timings Monday se Saturday, subah 9 baje se shaam 6 bJ\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"set_fact\",\n        \"key\": \"user_interested\",\n        \"value\": \"true\"\n      },\n      {\n        \"op\": \"set_fact\",\n        \"key\": \"user_asked_pricing_terms\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 275,
+        "prompt_tokens": 4089,
+        "total_tokens": 4364,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "देखिए, AC basic servicing 699 rupees aur fridge inspection 399 rupees mein available hai. Parts ka charge extra hota hai aur woh sirf aapke approval ke baad hi lagta hai, inspection se pehle koi fixed quote nahi milta. Humari timings Monday se Saturday, subah 9 baje se shaam 6 bJ",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4089,
+          "output_tokens": 275,
+          "total_tokens": 4364
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "set_fact",
+              "key": "user_interested",
+              "value": "true"
+            },
+            {
+              "op": "set_fact",
+              "key": "user_asked_pricing_terms",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "User expressed interest and asked for service, price, and terms; no refusal or opt-out.",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.031
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 949,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"समझ गया। AC basic servicing 699 rupees और fridge inspection 399 rupees है। Parts का charge extra hota hai aur woh sirf aapke approval ke baad hi lagta hai, inspection se pehle koi fixed repair quote nahi milta. SafeFix Home Service se baat karne ke liye shukriya. Aapka din shubh.\",\n    \"memory_update\": {\n      \"operations\": [\n        {\n          \"op\": \"update_summary\",\n          \"key\": \"user_interested\",\n          \"value\": \"true\"\n        },\n        {\n          \"op\": \"update_summary\",\n          \"key\": \"user_asked_pricing_terms\",\n          \"value\": \"true\"\n        }\n      ]\n    }\n}",
+      "sse_content_tail": "ा save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"समझ गया। AC basic servicing 699 rupees और fridge inspection 399 rupees है। Parts का charge extra hota hai aur woh sirf aapke approval ke baad hi lagta hai, inspection se pehle koi fixed repair quote nahi milta. SafeFix Home Service se baat karne ke liye shukriya. Aapka din shubh.\",\n    \"memory_update\": {\n      \"operations\": [\n        {\n          \"op\": \"update_summary\",\n          \"key\": \"user_interested\",\n          \"value\": \"true\"\n        },\n        {\n          \"op\": \"update_summary\",\n          \"key\": \"user_asked_pricing_terms\",\n          \"value\": \"true\"\n        }\n      ]\n    }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 294,
+        "prompt_tokens": 4109,
+        "total_tokens": 4403,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "समझ गया। AC basic servicing 699 rupees और fridge inspection 399 rupees है। Parts का charge extra hota hai aur woh sirf aapke approval ke baad hi lagta hai, inspection se pehle koi fixed repair quote nahi milta. SafeFix Home Service se baat karne ke liye shukriya. Aapka din shubh.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4109,
+          "output_tokens": 294,
+          "total_tokens": 4403
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "user_interested",
+              "value": "true"
+            },
+            {
+              "op": "update_summary",
+              "key": "user_asked_pricing_terms",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?",
+          "remaining_request": "None",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.891
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 600,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"ठीक है, धन्यवाद।\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ठीक है, SafeFix Home Service se baat karne ke liye shukriya. Aapka din shubh ho. Namaste.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"user_interested\",\n        \"value\": \"true\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"user_asked_pricing_terms\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"ठीक है, धन्यवाद।\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"order_claimed\": false,\n  \"spoken_response\": \"ठीक है, SafeFix Home Service se baat karne ke liye shukriya. Aapka din shubh ho. Namaste.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"user_interested\",\n        \"value\": \"true\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"user_asked_pricing_terms\",\n        \"value\": \"true\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 216,
+        "prompt_tokens": 4133,
+        "total_tokens": 4349,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, SafeFix Home Service se baat karne ke liye shukriya. Aapka din shubh ho. Namaste.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4133,
+          "output_tokens": 216,
+          "total_tokens": 4349
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "user_interested",
+              "value": "true"
+            },
+            {
+              "op": "update_summary",
+              "key": "user_asked_pricing_terms",
+              "value": "true"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "ठीक है, धन्यवाद।",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.719
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 1,
+      "at": 1.031
+    },
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 2,
+      "at": 1.938
+    },
+    {
+      "text": "ज़रूर, बताइए।",
+      "turn": 3,
+      "at": 2.656
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 4,
+      "at": 2.688
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 1.015,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 0.891,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ठीक है, धन्यवाद।",
+      "spoken": "ज़रूर, बताइए।",
+      "elapsed_s": 0.703,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 2.734,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "bc099b52-d088-4f73-b81f-fb46a9767b35",
+      "reason": "not_interested"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "232255b2e4830950f7aad61ed56f3d4215047029b54815303b5f8c369cd9e2ae",
+  "prompt_chars": 17354,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, mera naam Ravi hai SafeFix Home Service se. Kya hum home appliance service ya pricing ke baare mein baat kar sakte hain?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "User expressed interest and asked for service, price, and terms; no refusal or opt-out.",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "देखिए, AC basic servicing six hundred ninety nine rupees aur fridge inspection three hundred ninety nine rupees mein available hai. Parts ka charge extra hota hai aur woh sirf aapke approval ke baad hi lagta hai, inspection se pehle koi fixed quote nahi milta. Humari timings Monday se Saturday, subah 9 baje se shaam 6 bJ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?",
+        "remaining_request": "None",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "समझ गया। AC basic servicing six hundred ninety nine rupees और fridge inspection three hundred ninety nine rupees है। Parts का charge extra hota hai aur woh sirf aapke approval ke baad hi lagta hai, inspection se pehle koi fixed repair quote nahi milta. SafeFix Home Service se baat karne ke liye shukriya. Aapka din shubh.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "user_asked_question"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "ठीक है, धन्यवाद।",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, SafeFix Home Service se baat karne ke liye shukriya. Aapka din shubh ho. Namaste.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 2.734,
+  "hangup_count": 1
+}

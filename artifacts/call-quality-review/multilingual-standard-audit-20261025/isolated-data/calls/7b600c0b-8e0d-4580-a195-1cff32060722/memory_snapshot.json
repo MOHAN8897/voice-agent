@@ -1,0 +1,12 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {
+    "p_name": "Audit Customer",
+    "p_email": "audit.customer@example.invalid",
+    "p_preferred_time": "ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆ"
+  },
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": ""
+}

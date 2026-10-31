@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "e ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರಿಸಿ: Final course fee, duration ಮತ್ತು class timing ಏನು? Fluency ಅಥವಾ job guarantee ಇದೆಯಾ?\nassistant: Course fee six thousand four hundred ninety nine rupees ಇದೆ, ಆರು ವಾರ ಇರುತ್ತೆ, ಮತ್ತೆ weekends 10am ಇಂದ 11am ವರೆಗೆ classes ನಡೆಯುತ್ತೆ. ನಮಗೆ job ಅಥವಾ fluency guarantee ಏನು ಇರಲ್ಲ. ನೀವು ಯಾವ ಕಾರಣಕ್ಕೆ ಕಲಿಯಬೇಕು ಅಂತ ಅನ್ಕೊಂಡಿದ್ದೀರಾ?\nuser: Job guarantee ಬೇಡ, ಆದರೆ spoken English ಕಲಿಯಲು ಆಸಕ್ತಿ ಇದೆ. Course ವಿವರಿಸಿ.\nassistant: ಸರಿ, ನಾವು job ಅಥವಾ fluency guarantee ಕೊಡಲ್ಲ. ಈ course-ನಲ್ಲಿ ನೀವು online ಮೂಲಕ spoken English ಕಲಿಯಬಹುದು. ನಿಮಗೆ ಯಾವ ತರಹದ learning goal ಇದೆ ಅಂತ ಹೇಳ್ತೀರಾ?"
+}

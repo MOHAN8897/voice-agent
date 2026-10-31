@@ -12,13 +12,17 @@ def build(
     *,
     include_summary: bool = False,
     max_tokens: int | None = None,
+    caller_text: str = "",
 ) -> str:
     """
     Render live projection C.
     If rolling summary is sent as a separate input[2], pass include_summary=False
     so C stays structured slots only (singularity rule).
     """
-    snap = snapshot or {}
+    from server.call.memory_guard import suppress_stale_conclusions
+
+    # The caller's current words outrank a stored note from an earlier turn.
+    snap = suppress_stale_conclusions(snapshot or {}, caller_text)
     cap = max_tokens if max_tokens is not None else get_settings().memory_projection_max_tokens
     cap = max(40, min(int(cap), 300))
 
@@ -31,7 +35,7 @@ def build(
     if facts:
         fact_line = " | ".join(f"{k}: {v}" for k, v in facts.items() if v)
         if fact_line:
-            sections.append(("facts", f"[Facts]\n{fact_line}"))
+            sections.append(("facts", f"[Facts — do not re-ask]\n{fact_line}"))
     if prefs:
         pref_line = " | ".join(f"{k}: {v}" for k, v in prefs.items() if v)
         if pref_line:

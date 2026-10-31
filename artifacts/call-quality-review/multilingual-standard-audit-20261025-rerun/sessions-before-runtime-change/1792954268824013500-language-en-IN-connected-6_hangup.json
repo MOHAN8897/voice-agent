@@ -1,0 +1,445 @@
+{
+  "key": "language-en-IN-connected-6_hangup",
+  "business": "language",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "30e9f522-cc97-5431-81bc-71fd1d2fec3d",
+  "call_id": "0e30f481-0305-47b6-a504-d5cbeb0265eb",
+  "session_id": "audit-language-en-IN-connected-6_hangup-e23332c1",
+  "compiled_checksum": "a62e37a9b4ff923dc518e063310ac928cc53371370efc9c459d73910dfa24bc2",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 183,
+      "sse_content_preview": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. May I know your main learning goal?",
+      "sse_content_tail": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. May I know your main learning goal?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 54,
+        "prompt_tokens": 4118,
+        "total_tokens": 4172,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. May I know your main learning goal?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4118,
+          "output_tokens": 54,
+          "total_tokens": 4172
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.579
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 191,
+      "sse_content_preview": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. Which details would you like to know first?",
+      "sse_content_tail": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. Which details would you like to know first?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 4078,
+        "total_tokens": 4133,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. Which details would you like to know first?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4078,
+          "output_tokens": 55,
+          "total_tokens": 4133
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.531
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 215,
+      "sse_content_preview": "The final fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees, and no discounts are authorised. Which details would you like to know next?",
+      "sse_content_tail": "The final fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees, and no discounts are authorised. Which details would you like to know next?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 57,
+        "prompt_tokens": 4212,
+        "total_tokens": 4269,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "The final fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees, and no discounts are authorised. Which details would you like to know next?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4212,
+          "output_tokens": 57,
+          "total_tokens": 4269
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.766
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 215,
+      "sse_content_preview": "The final fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees, and no discounts are authorised. Which details would you like to know next?",
+      "sse_content_tail": "The final fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees, and no discounts are authorised. Which details would you like to know next?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 57,
+        "prompt_tokens": 4172,
+        "total_tokens": 4229,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "The final fee is 6499 rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees, and no discounts are authorised. Which details would you like to know next?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4172,
+          "output_tokens": 57,
+          "total_tokens": 4229
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.593
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 128,
+      "sse_content_preview": "You are welcome. Would you like to share your main learning goal, or shall we note down an enquiry for the team to review later?",
+      "sse_content_tail": "You are welcome. Would you like to share your main learning goal, or shall we note down an enquiry for the team to review later?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 29,
+        "prompt_tokens": 4254,
+        "total_tokens": 4283,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "You are welcome. Would you like to share your main learning goal, or shall we note down an enquiry for the team to review later?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4254,
+          "output_tokens": 29,
+          "total_tokens": 4283
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.547
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 87,
+      "sse_content_preview": "You're welcome. Would you like to share what you're hoping to achieve with the classes?",
+      "sse_content_tail": "You're welcome. Would you like to share what you're hoping to achieve with the classes?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 22,
+        "prompt_tokens": 4214,
+        "total_tokens": 4236,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "You're welcome. Would you like to share what you're hoping to achieve with the classes?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4214,
+          "output_tokens": 22,
+          "total_tokens": 4236
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.531
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is six thousand four hundred ninety nine rupees. Which details would you like to know first?",
+      "turn": 1,
+      "at": 4.235
+    },
+    {
+      "text": "The final fee is six thousand four hundred ninety nine rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees, and no discounts are authorised. Which details would you like to know next?",
+      "turn": 2,
+      "at": 8.75
+    },
+    {
+      "text": "You're welcome. Would you like to share what you're hoping to achieve with the classes?",
+      "turn": 3,
+      "at": 13.125
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 4,
+      "at": 13.141
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is six thousand four hundred ninety nine rupees. Which details would you like to know first?",
+      "elapsed_s": 4.235,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Answer this first: What is the final fee, duration and class timing, and do you guarantee fluency or a job?",
+      "spoken": "The final fee is six thousand four hundred ninety nine rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees, and no discounts are authorised. Which details would you like to know next?",
+      "elapsed_s": 4.5,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "Okay, thanks.",
+      "spoken": "You're welcome. Would you like to share what you're hoping to achieve with the classes?",
+      "elapsed_s": 4.343,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 13.188,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "0e30f481-0305-47b6-a504-d5cbeb0265eb",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "58ff2953752897dd3b79a85556f0c2245f1eca6368ce40f44287c9bd60127dab",
+  "prompt_chars": 17661,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, this is Sana calling from SpeakEasy Language Studio. I am an AI assistant reaching out regarding your interest in our adult spoken-English classes. Do you have a quick moment to talk?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is six thousand four hundred ninety nine rupees. Which details would you like to know first?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "The final fee is six thousand four hundred ninety nine rupees for six weeks, with classes on weekends from 10am to 11am. We do not offer job, fluency, or income guarantees, and no discounts are authorised. Which details would you like to know next?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "You're welcome. Would you like to share what you're hoping to achieve with the classes?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 13.188,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

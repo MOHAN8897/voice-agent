@@ -1,0 +1,322 @@
+{
+  "key": "cleaning-te-IN-connected-2_future_interest",
+  "business": "cleaning",
+  "language": "te-IN",
+  "integration": true,
+  "scenario": "2_future_interest",
+  "agent_id": "c493e3a7-baed-557d-a3c5-869e16993cb5",
+  "call_id": "5c030ea1-be90-4485-a209-066be9d05444",
+  "session_id": "audit-cleaning-te-IN-connected-2_future_interest-8a564f86",
+  "compiled_checksum": "b7e0ea7cc6d37b07f10be23918097b732b4a30180276f9754a53308cd87c6676",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 308,
+      "sse_content_preview": "తప్పకుండా అండి. సోఫా క్లీనింగ్ ప్రతి సీటుకు 349 rupees పడుతుంది, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం 1599 rupees అవుతుంది. సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు మేము available ఉంటాము. వచ్చే నెల కోసం మా team పరిశీలన కోసం ఒక enquiry submit చేయమంటారా? దీనికి మీ consent కావాలి.",
+      "sse_content_tail": "తప్పకుండా అండి. సోఫా క్లీనింగ్ ప్రతి సీటుకు 349 rupees పడుతుంది, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం 1599 rupees అవుతుంది. సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు మేము available ఉంటాము. వచ్చే నెల కోసం మా team పరిశీలన కోసం ఒక enquiry submit చేయమంటారా? దీనికి మీ consent కావాలి.",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 89,
+        "prompt_tokens": 4352,
+        "total_tokens": 4441,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. సోఫా క్లీనింగ్ ప్రతి సీటుకు 349 rupees పడుతుంది, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం 1599 rupees అవుతుంది. సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు మేము available ఉంటాము. వచ్చే నెల కోసం మా team పరిశీలన కోసం ఒక enquiry submit చేయమంటారా? దీనికి మీ consent కావాలి.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4352,
+          "output_tokens": 89,
+          "total_tokens": 4441
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.656
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 180,
+      "sse_content_preview": "సరేనండి, no problem. సోఫా క్లీనింగ్ ప్రతి సీటుకు 349 రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం 1599 రూపాయలు అవుతుంది. మీకు ఏ service గురించి ఇంకా details కావాలి అండి?",
+      "sse_content_tail": "సరేనండి, no problem. సోఫా క్లీనింగ్ ప్రతి సీటుకు 349 రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం 1599 రూపాయలు అవుతుంది. మీకు ఏ service గురించి ఇంకా details కావాలి అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 59,
+        "prompt_tokens": 4312,
+        "total_tokens": 4371,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, no problem. సోఫా క్లీనింగ్ ప్రతి సీటుకు 349 రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం 1599 రూపాయలు అవుతుంది. మీకు ఏ service గురించి ఇంకా details కావాలి అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4312,
+          "output_tokens": 59,
+          "total_tokens": 4371
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 266,
+      "sse_content_preview": "అలాగేనండి, future interest కి welcome. మేము సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు పనిచేస్తాము. మీకు నచ్చితే, మా team review కోసం ఒక enquiry submit చేయగలను. దానికి మీ పేరు, service type, మరియు మీ area చెప్తారా అండి? దీనికోసం మీ permission ఉందా?",
+      "sse_content_tail": "అలాగేనండి, future interest కి welcome. మేము సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు పనిచేస్తాము. మీకు నచ్చితే, మా team review కోసం ఒక enquiry submit చేయగలను. దానికి మీ పేరు, service type, మరియు మీ area చెప్తారా అండి? దీనికోసం మీ permission ఉందా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 74,
+        "prompt_tokens": 4440,
+        "total_tokens": 4514,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "అలాగేనండి, future interest కి welcome. మేము సోమవారం నుండి శనివారం వరకు ఉదయం 9 నుండి సాయంత్రం 6 గంటల వరకు పనిచేస్తాము. మీకు నచ్చితే, మా team review కోసం ఒక enquiry submit చేయగలను. దానికి మీ పేరు, service type, మరియు మీ area చెప్తారా అండి? దీనికోసం మీ permission ఉందా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4440,
+          "output_tokens": 74,
+          "total_tokens": 4514
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.563
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 140,
+      "sse_content_preview": "మా team review కోసం ఒక enquiry submit చేయగలను అండి. మీకు నచ్చితే మీ పేరు, service type, మరియు మీ locality చెప్తారా? దీనికోసం మీ అనుమతి ఉందా?",
+      "sse_content_tail": "మా team review కోసం ఒక enquiry submit చేయగలను అండి. మీకు నచ్చితే మీ పేరు, service type, మరియు మీ locality చెప్తారా? దీనికోసం మీ అనుమతి ఉందా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 36,
+        "prompt_tokens": 4400,
+        "total_tokens": 4436,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "మా team review కోసం ఒక enquiry submit చేయగలను అండి. మీకు నచ్చితే మీ పేరు, service type, మరియు మీ locality చెప్తారా? దీనికోసం మీ అనుమతి ఉందా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4400,
+          "output_tokens": 36,
+          "total_tokens": 4436
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.531
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, no problem. సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine రూపాయలు అవుతుంది. మీకు ఏ service గురించి ఇంకా details కావాలి అండి?",
+      "turn": 1,
+      "at": 4.313
+    },
+    {
+      "text": "మా team review కోసం ఒక enquiry submit చేయగలను అండి. మీకు నచ్చితే మీ పేరు, service type, మరియు మీ locality చెప్తారా? దీనికోసం మీ అనుమతి ఉందా?",
+      "turn": 2,
+      "at": 8.703
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 3,
+      "at": 8.75
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "ఇప్పుడైతే అవసరం లేదు, కానీ వచ్చే నెల నాకు ఆసక్తి ఉంది. ప్రస్తుత ధర చెప్పండి. ఏదీ book చేయకండి, దీన్ని శాశ్వతంగా వద్దన్నట్టు అనుకోకండి.",
+      "spoken": "సరేనండి, no problem. సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine రూపాయలు అవుతుంది. మీకు ఏ service గురించి ఇంకా details కావాలి అండి?",
+      "elapsed_s": 4.313,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "అవును, భవిష్యత్తులో నాకు ఆసక్తి ఉంది. ఇప్పుడే తర్వాత call చేయమని నేను అడగడం లేదు. ఈ service గురించి ఇంకా ఏం తెలుసుకోవాలి?",
+      "spoken": "మా team review కోసం ఒక enquiry submit చేయగలను అండి. మీకు నచ్చితే మీ పేరు, service type, మరియు మీ locality చెప్తారా? దీనికోసం మీ అనుమతి ఉందా?",
+      "elapsed_s": 4.375,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 8.797,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "5c030ea1-be90-4485-a209-066be9d05444",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "f10ab62a74d7cad422fa4a84beda6e6c2d242c651407990080d2be7c27658ffc",
+  "prompt_chars": 17763,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "హలో, నా పేరు నీల, ఫ్రెష్‌నెస్ట్ క్లీనింగ్ నుండి. మేము పూణేలో మాత్రమే క్లీనింగ్ సర్వీసులు అందిస్తున్నాము. మాట్లాడటానికి ఇది సరైన సమయమేనా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "సరేనండి, no problem. సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine రూపాయలు అవుతుంది. మీకు ఏ service గురించి ఇంకా details కావాలి అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "మా team review కోసం ఒక enquiry submit చేయగలను అండి. మీకు నచ్చితే మీ పేరు, service type, మరియు మీ locality చెప్తారా? దీనికోసం మీ అనుమతి ఉందా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 8.813,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

@@ -1,5 +1,6 @@
 import { AgentSummaryPanel } from "@/components/agents/AgentSummaryPanel";
 
-export default function DevAgentSummaryPage({ params }: { params: { id: string } }) {
-  return <AgentSummaryPanel agentId={params.id} basePath={`/dev/agents/${params.id}`} />;
+export default async function DevAgentSummaryPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <AgentSummaryPanel agentId={id} basePath={`/dev/agents/${id}`} />;
 }

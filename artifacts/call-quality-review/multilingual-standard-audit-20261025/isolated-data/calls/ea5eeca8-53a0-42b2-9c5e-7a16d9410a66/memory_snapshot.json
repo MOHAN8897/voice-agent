@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "user: हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।\nassistant: ज़रूर, बताइए।\nuser: अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: क्या आप शादी के निमंत्रण भी print करते हैं? कीमत और delivery time क्या है?\nassistant: ज़रूर, बताइए।\nuser: मुझे visiting cards नहीं चाहिए, लेकिन शादी के निमंत्रण चाहिए। क्या आप बनाते हैं?\nassistant: ज़रूर, बताइए।"
+}

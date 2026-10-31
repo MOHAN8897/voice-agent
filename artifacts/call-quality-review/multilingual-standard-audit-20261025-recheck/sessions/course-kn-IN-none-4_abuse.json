@@ -1,0 +1,190 @@
+{
+  "key": "course-kn-IN-none-4_abuse",
+  "business": "course",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "80e482df-388c-5272-ad7e-645030ca2af1",
+  "call_id": "60b691df-bd7a-4a5f-9858-2fd8e833c74d",
+  "session_id": "audit-course-kn-IN-none-4_abuse-b8509324",
+  "compiled_checksum": "ed09dfcb8ccd2fb90a508f3088ace1176edc25314edc630a784fb6774e9c36ad",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 2094,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller called me a useless idiot and told me to stop repeating and answer the price question.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Price information.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\",\n  \"spoken_response\": \"\"\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_finish": "length",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 2.859
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 175,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ಕೋರ್ಸ್ total fee 4999 rupees ಇದೆ. ನಿಮಗೆ coding ಬಗ್ಗೆ ಏನಾದ್ರೂ experience ಇದೆಯಾ ಅಂತ ತಿಳ್ಕೊಬಹುದಾ?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ಕೋರ್ಸ್ total fee 4999 rupees ಇದೆ. ನಿಮಗೆ coding ಬಗ್ಗೆ ಏನಾದ್ರೂ experience ಇದೆಯಾ ಅಂತ ತಿಳ್ಕೊಬಹುದಾ?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 61,
+        "prompt_tokens": 4256,
+        "total_tokens": 4317,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ಕೋರ್ಸ್ total fee 4999 rupees ಇದೆ. ನಿಮಗೆ coding ಬಗ್ಗೆ ಏನಾದ್ರೂ experience ಇದೆಯಾ ಅಂತ ತಿಳ್ಕೊಬಹುದಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4256,
+          "output_tokens": 61,
+          "total_tokens": 4317
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ಕೋರ್ಸ್ total fee four thousand nine hundred ninety nine rupees ಇದೆ. ನಿಮಗೆ coding ಬಗ್ಗೆ ಏನಾದ್ರೂ experience ಇದೆಯಾ ಅಂತ ತಿಳ್ಕೊಬಹುದಾ?",
+      "turn": 1,
+      "at": 3.438
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 2,
+      "at": 3.469
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "ನೀನು ಕೆಲಸಕ್ಕೆ ಬಾರದ ಮೂರ್ಖ. ಅದೇ ಮಾತನ್ನು ಹೇಳುವುದನ್ನು ನಿಲ್ಲಿಸಿ ಬೆಲೆಯ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡು.",
+      "spoken": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ಕೋರ್ಸ್ total fee four thousand nine hundred ninety nine rupees ಇದೆ. ನಿಮಗೆ coding ಬಗ್ಗೆ ಏನಾದ್ರೂ experience ಇದೆಯಾ ಅಂತ ತಿಳ್ಕೊಬಹುದಾ?",
+      "elapsed_s": 3.422,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "ನಾನು ನಿನ್ನನ್ನು ಕೊಂದುಹಾಕುತ್ತೇನೆ. ಈ call ಈಗಲೇ ಮುಗಿಸು.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 3.516,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "60b691df-bd7a-4a5f-9858-2fd8e833c74d",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "06260f7a52e8c560a3f327dca9312efe1a1176945a796658a0db12b4b3930cc5",
+  "prompt_chars": 19101,
+  "opening_seeded": "Namaskara, I am Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our beginner Python course? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಕ್ಷಮಿಸಿ, ನಿಮಗೆ ಬೇಸರ ಆಗಿದ್ರೆ ದಯವಿಟ್ಟು ಅರ್ಥ ಮಾಡ್ಕೊಳ್ಳಿ. ಕೋರ್ಸ್ total fee four thousand nine hundred ninety nine rupees ಇದೆ. ನಿಮಗೆ coding ಬಗ್ಗೆ ಏನಾದ್ರೂ experience ಇದೆಯಾ ಅಂತ ತಿಳ್ಕೊಬಹುದಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.516,
+  "hangup_count": 1
+}

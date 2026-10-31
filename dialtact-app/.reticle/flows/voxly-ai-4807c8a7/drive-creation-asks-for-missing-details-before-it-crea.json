@@ -1,0 +1,232 @@
+{
+  "version": 2,
+  "name": "drive-creation-asks-for-missing-details-before-it-crea",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1792775056011,
+  "steps": [
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "testid",
+        "value": "employee-brief-input",
+        "source": {
+          "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+          "line": 273,
+          "column": 11
+        }
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "employee-brief-input",
+            "source": {
+              "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+              "line": 273,
+              "column": 11
+            }
+          },
+          "args": {},
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "employee-language-select",
+            "source": {
+              "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+              "line": 321,
+              "column": 13
+            }
+          },
+          "args": {},
+          "action": "select"
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "create-next",
+        "source": {
+          "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+          "line": 412,
+          "column": 7
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "employee-answer-agent_name"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "testid",
+        "value": "employee-answer-agent_name",
+        "source": {
+          "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+          "line": 229,
+          "column": 19
+        }
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "employee-answer-agent_name",
+            "source": {
+              "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+              "line": 229,
+              "column": 19
+            }
+          },
+          "args": {},
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "employee-answer-offer",
+            "source": {
+              "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+              "line": 229,
+              "column": 19
+            }
+          },
+          "args": {},
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "employee-unknown-refund_policy",
+            "source": {
+              "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+              "line": 242,
+              "column": 21
+            }
+          },
+          "args": {},
+          "action": "click"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "create-next",
+            "source": {
+              "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+              "line": 412,
+              "column": 7
+            }
+          },
+          "args": {},
+          "action": "click",
+          "expect": {
+            "kind": "element",
+            "query": {
+              "testid": "employee-answer-next_step"
+            }
+          }
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "testid",
+        "value": "employee-answer-next_step",
+        "source": {
+          "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+          "line": 229,
+          "column": 19
+        }
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "testid",
+            "value": "employee-answer-next_step",
+            "source": {
+              "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+              "line": 229,
+              "column": 19
+            }
+          },
+          "args": {},
+          "action": "fill"
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "create-next",
+        "source": {
+          "file": "voxly-ai/src/console/modules/CreateAgentWizard.jsx",
+          "line": 412,
+          "column": 7
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "text",
+            "contains": "Saved for calls",
+            "scope": "[data-testid='script-save-status']"
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "employee-clarification-panel"
+            },
+            "absent": true
+          },
+          {
+            "kind": "route",
+            "contains": "agent=clarified-agent"
+          }
+        ]
+      },
+      "page": "/"
+    }
+  ],
+  "intent": "Creation asks for missing details before it creates an agent.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-creation-asks-for-missing-details-before-it-crea"
+}

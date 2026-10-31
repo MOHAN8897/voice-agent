@@ -1,0 +1,103 @@
+{
+  "status": "local_changes_verified_with_deployment_gates",
+  "implemented": [
+    "DB tenant call reservations and idempotency, campaign creation idempotency, DB campaign execution leases and restart recovery, bounded contact claims, last-minute pause/DNC checks, delayed retries, uncertain request review, realistic connected counts",
+    "full bounded CSV/XLSX/saved-list import, upload expansion/size/column/row limits, real PostgreSQL parent flush",
+    "one-page shared campaign setup with review, progressive advanced options, consent, failure recovery and modal focus trapping",
+    "atomic primary media token consumption and distributed stream claim, fail-closed tenant/wallet checks, Redis log redaction",
+    "HTTP-only operator transport, bounded JSON buffering, privacy/security response headers, public crawlable URLs and prerendered HTML, admin noindex",
+    "Separated calls-per-second pacing from simultaneous call capacity; held ambiguous 2xx/408/5xx responses without redial",
+    "Preserved bounded contact personalization through prewarm and primary call start; prevented template/control aliases overriding canonical fields",
+    "Moved tenant and configured wallet checks ahead of inbound transfer routing; bounded transactional shared metadata and media replay claims",
+    "Random password salts and current KDF work factor with legacy verification and login upgrade; password work runs off the voice event loop",
+    "Server-authoritative campaign statuses and at most four coalesced statistics requests, including React effect remounts"
+  ],
+  "observed_checks": [
+    {
+      "name": "Gravitas-owned primary regression run",
+      "result": "PASS: 226 passed, 2 integration-only skipped, 1 warning; skipped coverage executed with owned PostgreSQL/Redis below"
+    },
+    {
+      "name": "Real PostgreSQL race, migration and failure checks",
+      "result": "25 passed, 1 warning; generated schemas on owned loopback PostgreSQL 17 only"
+    },
+    {
+      "name": "Real Redis metadata and media-auth checks",
+      "result": "7 passed, 1 warning; owned loopback Redis 7 only"
+    },
+    {
+      "name": "Playwright campaign/public/script-editor flows",
+      "result": "17 passed; 390, 820 and 1440 widths; synthetic intercepted APIs, no real calls"
+    },
+    {
+      "name": "Production frontend build",
+      "result": "PASS: Vite build and six public prerendered HTML pages"
+    },
+    {
+      "name": "Admin TypeScript",
+      "result": "PASS: npx tsc --noEmit --pretty false"
+    },
+    {
+      "name": "Changed Python source correctness lint",
+      "result": "PASS: Ruff E9,F821,F822,F823; diff whitespace check passed"
+    },
+    {
+      "name": "SAST",
+      "result": "PASS: final post-change scan exit 0; 0 findings, 0 errors; 1288 targets; 290 effective rules; ignored paths remain outside coverage"
+    },
+    {
+      "name": "Bandit high severity",
+      "result": "0 high findings, 0 skipped files"
+    },
+    {
+      "name": "Production dependency audits",
+      "result": "0 known vulnerabilities in installed Python environment and Voxly/web production npm dependencies"
+    },
+    {
+      "name": "Reticle",
+      "result": "dashboard completed labels, absent pause actions and analytics 200 verified yes, net grade; public heading/route yes; partial state coverage. Campaign launch durable consequence was unknown without response-body capture; Playwright checked the mocked create payload separately"
+    },
+    {
+      "name": "ZAP baseline",
+      "result": "0 fail, one retained informational non-storable-content warning, exit 2; privacy no-store intentional"
+    },
+    {
+      "name": "ZAP API active scan",
+      "result": "57 URLs; eight SQL-injection heuristics reproduced as identical auth/config rejections with no DB; HTTP-only local target and unavailable DB/OAuth/email alerts retained. Authenticated staging unverified"
+    },
+    {
+      "name": "Strix",
+      "result": "No assessment: Gemini 3.8 preflight timeout; discovery-listed 2.5 recovery model unavailable to this account. Direct model diagnostics confirmed timeout/404; no penetration-test pass claimed"
+    },
+    {
+      "name": "Graph",
+      "result": "graft build succeeded: 10081 nodes, 26592 edges, 1186 files"
+    }
+  ],
+  "pending": [
+    "Apply additive migration041 via normal approved deployment procedure before new API/worker code; no production schema changes made",
+    "Authenticated staging DAST, deployed HTTPS/headers and real primary carrier callback/call checks",
+    "Sustained production-like load benchmark and aggregate purchased carrier quota budgeting where tenants share an upstream account",
+    "Working Strix model connection and an actual completed penetration assessment",
+    "Automated privileged reconciliation for unknown carrier outcomes is not included; reservations intentionally require verified callback/operator review"
+  ],
+  "constraints": [
+    "No real calls, no production migrations/config writes, no push requested, preserve earlier uncommitted work",
+    "Only primary Gemini/Vobiz functional flows; broad generic source security checks",
+    "No staging URL provided; isolated localhost only",
+    "Do not claim complete penetration test or live deployment coverage"
+  ],
+  "user_decisions": [
+    {
+      "decision": "Keep current workspace deletion behavior",
+      "date": "2026-10-20",
+      "effect": "No deletion API or dialog changes; authenticated owner and confirmation word remain sufficient"
+    }
+  ],
+  "cleanup": [
+    "Owned isolated PostgreSQL and Redis containers stopped",
+    "Owned isolated scan API stopped; no port8011 listener remains",
+    "Public Reticle session yielded; synthetic dashboard helper exited on its automatic timer",
+    "Owned Vite server left running at localhost:5173 for local public UI review"
+  ]
+}

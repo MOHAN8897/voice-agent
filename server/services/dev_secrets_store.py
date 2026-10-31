@@ -14,9 +14,10 @@ _SECRET_FIELDS = frozenset(
         "sarvam_api_key",
         "deepseek_api_key",
         "cartesia_api_key",
+        "gnani_api_key",
         "gemini_api_key",
-        "exotel_api_key",
-        "exotel_api_token",
+        "telnyx_api_key",
+        "vobiz_auth_token",
     }
 )
 
@@ -27,8 +28,11 @@ _TOGGLE_FIELDS = frozenset(
         "enable_deepseek",
         "enable_gemini",
         "enable_cartesia",
-        "enable_exotel",
+        "enable_gnani",
+        "enable_telnyx",
+        "enable_vobiz",
         "enable_benchmarks",
+        "enable_prewarm_greeting",
     }
 )
 
@@ -37,14 +41,33 @@ _STRING_FIELDS = frozenset(
         "voice_agent_config_mode",
         "voice_agent_tier",
         "app_environment",
-        "exotel_account_sid",
-        "exotel_subdomain",
-        "exotel_exophone",
-        "exotel_webhook_base_url",
+        "telephony_provider",
+        "telnyx_connection_id",
+        "telnyx_phone_number",
+        "telnyx_outbound_voice_profile_id",
+        "vobiz_auth_id",
+        "vobiz_app_id",
+        "vobiz_phone_number",
+        "vobiz_webhook_base_url",
+        "sarvam_llm_models_csv",
+        "gemini_tts_models_csv",
     }
 )
 
 ALLOWED_PATCH_KEYS = _SECRET_FIELDS | _TOGGLE_FIELDS | _STRING_FIELDS
+
+
+_MOCK_TEST_SECRETS = frozenset(
+    {
+        "gem-test",
+        "gem-overlay",
+        "sk-overlay",
+        "ds-overlay",
+        "sk-test",
+        "test-key",
+        "unit-test-placeholder",
+    }
+)
 
 
 def _mask_secret(value: str) -> str:
@@ -59,34 +82,51 @@ class DevSecretsStore:
     def __init__(self) -> None:
         self._lock = threading.RLock()
         self._overlay: dict[str, Any] = {}
+        self._mtime: float = 0.0
         self._load()
 
     def _path(self) -> Path:
         return get_settings().data_path / "dev_secrets.json"
 
+    def _maybe_reload(self) -> None:
+        path = self._path()
+        if not path.exists():
+            return
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            return
+        if mtime != self._mtime:
+            self._load()
+
     def _load(self) -> None:
         path = self._path()
         if not path.exists():
             self._overlay = {}
+            self._mtime = 0.0
             return
         try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
+            raw = json.loads(path.read_text(encoding="utf-8-sig"))
             self._overlay = raw if isinstance(raw, dict) else {}
+            self._mtime = path.stat().st_mtime
         except (json.JSONDecodeError, OSError):
             self._overlay = {}
+            self._mtime = 0.0
         self._sync_provider_toggles_from_keys()
 
     def _sync_provider_toggles_from_keys(self) -> None:
         """Auto-enable provider toggles when a dev overlay API key is present."""
         pairs = [
             ("cartesia_api_key", "enable_cartesia"),
+            ("gnani_api_key", "enable_gnani"),
             ("deepseek_api_key", "enable_deepseek"),
             ("gemini_api_key", "enable_gemini"),
+            ("telnyx_api_key", "enable_telnyx"),
         ]
         changed = False
         for secret_key, toggle_key in pairs:
             secret = self._overlay.get(secret_key)
-            if secret and str(secret).strip() and not self._overlay.get(toggle_key):
+            if secret and str(secret).strip() and toggle_key not in self._overlay:
                 self._overlay[toggle_key] = True
                 changed = True
         if changed:
@@ -108,20 +148,29 @@ class DevSecretsStore:
     def effective(self, field: str, default: Any = None) -> Any:
         settings = get_settings()
         with self._lock:
-            if field in self._overlay and self._overlay[field] is not None:
+            self._maybe_reload()
+            if field in self._overlay:
                 val = self._overlay[field]
-                if field in _SECRET_FIELDS and val == "":
-                    pass
-                else:
-                    return val
+                if val is None:
+                    return getattr(settings, field, default)
+                if field in (_SECRET_FIELDS | _STRING_FIELDS) and val == "":
+                    return ""
+                return val
         return getattr(settings, field, default)
 
     def effective_secret(self, field: str) -> str | None:
+        settings = get_settings()
         val = self.effective(field)
         if val is None:
             return None
         text = str(val).strip()
-        return text or None
+        if not text:
+            return None
+        if text in _MOCK_TEST_SECRETS:
+            env_val = getattr(settings, field, None)
+            if env_val and str(env_val).strip() and str(env_val).strip() not in _MOCK_TEST_SECRETS:
+                return str(env_val).strip()
+        return text
 
     def update(self, patch: dict[str, Any]) -> dict[str, Any]:
         applied: list[str] = []
@@ -133,8 +182,11 @@ class DevSecretsStore:
                 rejected.append({"field": key, "reason": "not_allowed"})
                 continue
             if key in _SECRET_FIELDS:
-                if value is None or (isinstance(value, str) and not value.strip()):
-                    rejected.append({"field": key, "reason": "empty_secret"})
+                if value is None:
+                    rejected.append({"field": key, "reason": "null_secret"})
+                    continue
+                if isinstance(value, str) and not value.strip():
+                    clean[key] = ""
                     continue
                 clean[key] = str(value).strip()
                 if key == "cartesia_api_key" and "enable_cartesia" not in patch:
@@ -143,17 +195,18 @@ class DevSecretsStore:
                     clean["enable_deepseek"] = True
                 elif key == "gemini_api_key" and "enable_gemini" not in patch:
                     clean["enable_gemini"] = True
+                elif key == "telnyx_api_key" and "enable_telnyx" not in patch:
+                    clean["enable_telnyx"] = True
             elif key in _TOGGLE_FIELDS:
                 clean[key] = bool(value)
             elif key in _STRING_FIELDS:
                 if value is None:
                     rejected.append({"field": key, "reason": "null_value"})
                     continue
-                text = str(value).strip()
-                if not text:
-                    rejected.append({"field": key, "reason": "empty_string"})
+                if isinstance(value, str) and not value.strip():
+                    clean[key] = ""
                     continue
-                clean[key] = text
+                clean[key] = str(value).strip()
 
         with self._lock:
             self._overlay.update(clean)
@@ -162,10 +215,9 @@ class DevSecretsStore:
             path.write_text(json.dumps(self._overlay, indent=2), encoding="utf-8")
             applied = list(clean.keys())
 
-        from server.providers import init_provider_registry
+        from server.services.dev_runtime import notify_dev_overlay_changed
 
-        get_settings.cache_clear()
-        init_provider_registry()
+        notify_dev_overlay_changed()
         snapshot = self.snapshot()
         snapshot["applied_keys"] = applied
         snapshot["rejected"] = rejected
@@ -181,10 +233,9 @@ class DevSecretsStore:
                 path = self._path()
                 path.write_text(json.dumps(self._overlay, indent=2), encoding="utf-8")
 
-        from server.providers import init_provider_registry
+        from server.services.dev_runtime import notify_dev_overlay_changed
 
-        get_settings.cache_clear()
-        init_provider_registry()
+        notify_dev_overlay_changed()
         snap = self.snapshot()
         snap["removed"] = field if removed else None
         return snap
@@ -212,6 +263,7 @@ class DevSecretsStore:
                 self._secret_row("SARVAM_API_KEY", "sarvam_api_key", settings, overlay),
                 self._secret_row("DEEPSEEK_API_KEY", "deepseek_api_key", settings, overlay),
                 self._secret_row("CARTESIA_API_KEY", "cartesia_api_key", settings, overlay),
+                self._secret_row("GNANI_API_KEY", "gnani_api_key", settings, overlay),
                 self._secret_row("GEMINI_API_KEY", "gemini_api_key", settings, overlay),
             ],
             "provider_toggles": [
@@ -219,16 +271,44 @@ class DevSecretsStore:
                 self._toggle_row("ENABLE_OPENAI", "enable_openai", settings, overlay),
                 self._toggle_row("ENABLE_DEEPSEEK", "enable_deepseek", settings, overlay),
                 self._toggle_row("ENABLE_CARTESIA", "enable_cartesia", settings, overlay),
+                self._toggle_row("ENABLE_GNANI", "enable_gnani", settings, overlay),
                 self._toggle_row("ENABLE_GEMINI", "enable_gemini", settings, overlay),
             ],
+            "llm_defaults": [
+                self._string_row("SARVAM_LLM_ALLOWED_MODELS", "sarvam_llm_models_csv", settings, overlay),
+                self._string_row("GEMINI_TTS_ALLOWED_MODELS", "gemini_tts_models_csv", settings, overlay),
+                {
+                    "env_name": "GEMINI_MODEL",
+                    "field": "gemini_model",
+                    "value": settings.gemini_model,
+                    "source": "env",
+                    "type": "string",
+                    "editable": False,
+                    "hint": "HTTP Gemini for classic stacks. Live PSTN E2E uses gemini-3.8-live from Test Studio stack.",
+                },
+                {
+                    "env_name": "VOICE_PIPELINE_MODE",
+                    "field": "voice_pipeline_mode",
+                    "value": settings.voice_pipeline_mode,
+                    "source": "env",
+                    "type": "string",
+                    "editable": False,
+                    "hint": "Env default when dial has no stack_override. Test Studio PSTN realtime sets pipeline per call.",
+                },
+            ],
             "telephony": [
-                self._toggle_row("ENABLE_EXOTEL", "enable_exotel", settings, overlay),
-                self._secret_row("EXOTEL_API_KEY", "exotel_api_key", settings, overlay),
-                self._secret_row("EXOTEL_API_TOKEN", "exotel_api_token", settings, overlay),
-                self._string_row("EXOTEL_ACCOUNT_SID", "exotel_account_sid", settings, overlay),
-                self._string_row("EXOTEL_SUBDOMAIN", "exotel_subdomain", settings, overlay),
-                self._string_row("EXOTEL_EXOPHONE", "exotel_exophone", settings, overlay),
-                self._string_row("EXOTEL_WEBHOOK_BASE_URL", "exotel_webhook_base_url", settings, overlay),
+                self._string_row("TELEPHONY_PROVIDER", "telephony_provider", settings, overlay),
+                self._toggle_row("ENABLE_TELNYX", "enable_telnyx", settings, overlay),
+                self._secret_row("TELNYX_API_KEY", "telnyx_api_key", settings, overlay),
+                self._string_row("TELNYX_CONNECTION_ID", "telnyx_connection_id", settings, overlay),
+                self._string_row("TELNYX_PHONE_NUMBER", "telnyx_phone_number", settings, overlay),
+                self._string_row("TELNYX_OUTBOUND_VOICE_PROFILE_ID", "telnyx_outbound_voice_profile_id", settings, overlay),
+                self._toggle_row("ENABLE_VOBIZ", "enable_vobiz", settings, overlay),
+                self._string_row("VOBIZ_AUTH_ID", "vobiz_auth_id", settings, overlay),
+                self._secret_row("VOBIZ_AUTH_TOKEN", "vobiz_auth_token", settings, overlay),
+                self._string_row("VOBIZ_APP_ID", "vobiz_app_id", settings, overlay),
+                self._string_row("VOBIZ_PHONE_NUMBER", "vobiz_phone_number", settings, overlay),
+                self._string_row("VOBIZ_WEBHOOK_BASE_URL", "vobiz_webhook_base_url", settings, overlay),
             ],
         }
         return {
@@ -252,9 +332,13 @@ class DevSecretsStore:
 
     @staticmethod
     def _string_row(env_name: str, field: str, settings: Any, overlay: dict[str, Any]) -> dict[str, Any]:
-        source = "overlay" if field in overlay else "env"
-        val = overlay.get(field) if field in overlay else getattr(settings, field, None)
-        text = str(val or "").strip()
+        if field in overlay:
+            source = "overlay"
+            raw = overlay[field]
+            text = "" if raw == "" else str(raw or "").strip()
+        else:
+            source = "env"
+            text = str(getattr(settings, field, None) or "").strip()
         return {
             "env_name": env_name,
             "field": field,
@@ -263,13 +347,21 @@ class DevSecretsStore:
             "source": source,
             "type": "string",
             "editable": True,
+            "cleared": field in overlay and overlay.get(field) == "",
         }
 
     @staticmethod
     def _secret_row(env_name: str, field: str, settings: Any, overlay: dict[str, Any]) -> dict[str, Any]:
-        source = "overlay" if field in overlay else "env"
-        effective = overlay.get(field) if field in overlay else getattr(settings, field, None)
-        effective = str(effective or "").strip()
+        if field in overlay:
+            source = "overlay"
+            raw = overlay[field]
+            if raw == "":
+                effective = ""
+            else:
+                effective = str(raw or "").strip()
+        else:
+            source = "env"
+            effective = str(getattr(settings, field, None) or "").strip()
         return {
             "env_name": env_name,
             "field": field,
@@ -278,6 +370,7 @@ class DevSecretsStore:
             "source": source,
             "type": "secret",
             "editable": True,
+            "cleared": field in overlay and overlay.get(field) == "",
         }
 
     @staticmethod

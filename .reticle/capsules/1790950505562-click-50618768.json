@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "element ?",
+  "observed": "no element matched {\"testid\":\"activity-range-label\"}",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": ""
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1790950505562-click-50618768",
+  "createdAt": 1790950505563,
+  "seen": 1,
+  "lastSeenAt": 1790950505563
+}

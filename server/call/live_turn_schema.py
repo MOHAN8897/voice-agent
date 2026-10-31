@@ -1,14 +1,97 @@
 """Live-turn structured output schema (CD-016) and streaming spoken_response extractor."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
+from server.call.close_decision import parse_close_proposal
+
+# end_call leads the object so the decision is readable before any spoken text,
+# and the proof order is evidence -> intent -> decision. The server owns the
+# farewell: a close turn never supplies one, and its spoken text is withheld
+# until the gate decides.
 LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["spoken_response", "memory_update"],
+    "required": ["end_call", "action_claimed", "spoken_response", "memory_update"],
     "properties": {
-        "spoken_response": {"type": "string", "maxLength": 4000},
+        "end_call": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": [
+                "evidence",
+                "reason",
+                "decision",
+                "remaining_request",
+                "contact_preference",
+            ],
+            "properties": {
+                # Exact words copied from the caller's current turn, or "".
+                "evidence": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "description": (
+                        "Exact words from the caller's CURRENT turn that prove the intent. "
+                        "Copy them; never paraphrase or quote an earlier turn."
+                    ),
+                },
+                "reason": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "goodbye",
+                        "firm_refusal",
+                        "not_interested",
+                        "goal_complete",
+                        "abuse",
+                        "out_of_scope",
+                    ],
+                    "description": "The caller's intent, proven by evidence.",
+                },
+                "decision": {
+                    "type": "string",
+                    "enum": ["continue", "clarify", "close", "callback"],
+                    "description": (
+                        "Default is continue. Close only when evidence proves a goodbye, "
+                        "stop-contact request, clear decline, or completed objective. A "
+                        "price, service or product question is never a reason to close."
+                    ),
+                },
+                # What the caller still wants, if anything; blocks a close.
+                "remaining_request": {"type": "string", "maxLength": 240},
+                "contact_preference": {
+                    "type": "string",
+                    "enum": ["none", "end_call", "do_not_call", "callback"],
+                },
+            },
+        },
+        # Readable before spoken_response, so an action claim can be held until
+        # the server has the matching typed proof from a tool result.
+        "action_claimed": {
+            "type": "string",
+            "enum": [
+                "none",
+                "enquiry_saved",
+                "appointment_requested",
+                "appointment_confirmed",
+                "order_confirmed",
+            ],
+            "description": (
+                "The strongest completed action this turn tells the caller about. "
+                "Use a non-none value only when the matching tool returned success "
+                "in this call; otherwise none. A requested or pending appointment "
+                "is not appointment_confirmed."
+            ),
+        },
+        "spoken_response": {
+            "type": "string",
+            "description": (
+                "The words the caller hears: a complete factual answer in natural "
+                "sentences, never clipped to a character count. On a close decision "
+                "this must be empty: the platform speaks the approved farewell, "
+                "never the model."
+            ),
+        },
         "memory_update": {
             "type": "object",
             "additionalProperties": False,
@@ -16,7 +99,9 @@ LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
             "properties": {
                 "operations": {
                     "type": "array",
-                    "maxItems": 32,
+                    # Three short facts must fit alongside the reply floor; the
+                    # model may not spend the turn budget on a memory dump.
+                    "maxItems": 3,
                     "items": {
                         "type": "object",
                         "additionalProperties": False,
@@ -31,8 +116,8 @@ LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
                                     "update_summary",
                                 ],
                             },
-                            "key": {"type": "string", "maxLength": 64},
-                            "value": {"type": "string", "maxLength": 500},
+                            "key": {"type": "string", "maxLength": 48},
+                            "value": {"type": "string", "maxLength": 150},
                         },
                     },
                 }
@@ -41,6 +126,23 @@ LIVE_TURN_JSON_SCHEMA: dict[str, Any] = {
     },
 }
 
+# The decision is written after the evidence and reason, before any spoken
+# text. Scanning stops at the spoken_response key, so a decision-shaped fragment
+# inside the reply can never open the gate early. JSON-escaped copies of the
+# caller's words cannot match: their closing quote is preceded by a backslash.
+_PREVIEW_DECISION = re.compile(r'"decision"\s*:\s*"(continue|clarify|close|callback)"')
+ACTION_CLAIM_VALUES: tuple[str, ...] = (
+    "none",
+    "enquiry_saved",
+    "appointment_requested",
+    "appointment_confirmed",
+    "order_confirmed",
+)
+_PREVIEW_ACTION_CLAIM = re.compile(
+    r'"action_claimed"\s*:\s*"(none|enquiry_saved|appointment_requested|'
+    r'appointment_confirmed|order_confirmed)"'
+)
+
 TEXT_FORMAT_LIVE_TURN: dict[str, Any] = {
     "format": {
         "type": "json_schema",
@@ -48,6 +150,26 @@ TEXT_FORMAT_LIVE_TURN: dict[str, Any] = {
         "strict": True,
         "schema": LIVE_TURN_JSON_SCHEMA,
     }
+}
+
+# One bounded recovery contract. The 2026-10-25 audit measured the full control
+# schema failing (whitespace tails / length) where a speech-only schema completed
+# 3/3, so a failed first attempt switches contract instead of re-asking the same
+# one. No close, order or memory claim is trusted from this reduced reply: the
+# server keeps the call open and the next structured turn resumes control state.
+LIVE_SPEECH_JSON_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["spoken_response"],
+    "properties": {
+        "spoken_response": {
+            "type": "string",
+            "description": (
+                "The complete answer the caller hears. Never speak a goodbye, and "
+                "never claim an action succeeded unless the prior tool result proved it."
+            ),
+        },
+    },
 }
 
 
@@ -65,6 +187,7 @@ class SpokenResponseExtractor:
         self._escape = False
         self._spoken: list[str] = []
         self._emitted = 0
+        self._preview_decision: str | None = None
 
     @property
     def raw_text(self) -> str:
@@ -75,6 +198,11 @@ class SpokenResponseExtractor:
         if self._mode == "plain":
             return self.raw_text
         return "".join(self._spoken)
+
+    @property
+    def spoken_complete(self) -> bool:
+        """True once the spoken_response string is closed and no more speech follows."""
+        return self._mode == "json" and self._seek == "done"
 
     def feed(self, chunk: str) -> str:
         if not chunk:
@@ -146,6 +274,75 @@ class SpokenResponseExtractor:
         if not isinstance(ops, list):
             return {"operations": []}
         return {"operations": ops}
+
+    def preview_decision(self) -> str | None:
+        """The close decision as soon as the JSON head makes it readable.
+
+        None means unknown (or not in schema order); callers must treat unknown
+        as 'hold', never as 'safe to speak a farewell'.
+        """
+        if self._preview_decision is not None:
+            return self._preview_decision
+        if self._mode != "json":
+            return None
+        head = self.raw_text
+        spoken_at = head.find('"spoken_response"')
+        if spoken_at >= 0:
+            head = head[:spoken_at]
+        if '"end_call"' not in head:
+            return None
+        match = _PREVIEW_DECISION.search(head)
+        if match:
+            self._preview_decision = match.group(1)
+        return self._preview_decision
+
+    def preview_action_claim(self) -> str | None:
+        """The claimed action as soon as the JSON head makes it readable.
+
+        None means the flag is not readable yet; callers must treat unknown as
+        'not allowed to claim' while the text is held, never as safe.
+        """
+        if self._mode != "json":
+            return None
+        head = self.raw_text
+        spoken_at = head.find('"spoken_response"')
+        if spoken_at >= 0:
+            head = head[:spoken_at]
+        if '"action_claimed"' not in head:
+            return None
+        match = _PREVIEW_ACTION_CLAIM.search(head)
+        return match.group(1) if match else None
+
+    def parse_action_claim(self) -> str | None:
+        payload = self._parsed_object()
+        value = payload.get("action_claimed") if payload else None
+        return value if value in ACTION_CLAIM_VALUES else None
+
+    def parse_end_call(self) -> dict[str, Any]:
+        payload = self._parsed_object()
+        raw = payload.get("end_call") if payload else None
+        if not isinstance(raw, dict):
+            return {
+                "should_end": False,
+                "decision": "continue",
+                "reason": "none",
+                "evidence": "",
+                "remaining_request": "",
+                "contact_preference": "",
+                "farewell": "",
+                "conflict": False,
+            }
+        proposal = parse_close_proposal(raw)
+        return {
+            "should_end": proposal.should_end,
+            "decision": proposal.decision,
+            "reason": proposal.reason,
+            "evidence": proposal.evidence,
+            "remaining_request": proposal.remaining_request,
+            "contact_preference": proposal.contact_preference,
+            "farewell": proposal.farewell,
+            "conflict": proposal.conflict,
+        }
 
     def structured_parse_failed(self) -> bool:
         """True when structured JSON was required but missing or invalid (SLO/parse fallback)."""

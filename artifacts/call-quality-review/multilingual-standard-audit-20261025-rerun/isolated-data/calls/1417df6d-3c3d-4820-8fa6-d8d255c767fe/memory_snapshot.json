@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "isit ఇప్పుడే confirm అయిందా?\nassistant: సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి అండి. కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine రూపాయలు అవుతుంది. ఇది కేవలం enquiry మాత్రమే అండి, visit confirm అవ్వలేదు, booking కూడా అవ్వలేదు. మీకు ఈ services లో ఏది కావాలి అండి?\nuser: సోఫా cleaning వద్దు, కానీ kitchen cleaning కావాలి. వివరాలు చెప్పండి.\nassistant: సరేనండి, కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred and ninety nine రూపాయలు అవుతుంది. మా team దీన్ని review చేయడానికి మీ పేరు, locality చెప్తారా? అనుమతి ఉంటే enquiry submit చేస్తాను."
+}

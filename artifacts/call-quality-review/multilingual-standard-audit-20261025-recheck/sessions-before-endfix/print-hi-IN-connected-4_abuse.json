@@ -1,0 +1,281 @@
+{
+  "key": "print-hi-IN-connected-4_abuse",
+  "business": "print",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "4_abuse",
+  "agent_id": "2fc12aaa-fef8-53c9-81db-07efa7f84427",
+  "call_id": "6f9e2c25-9757-44f5-85c8-075ad41c488b",
+  "session_id": "audit-print-hi-IN-connected-4_abuse-f4a6845b",
+  "compiled_checksum": "e91bf22969093f6a27742c03010544073c3466fd7eebb112e2acaf08eed62852",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 250,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Abuse: hostile or threatening\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"},\n\n\"action_claimed\": \"none\", \"spoken_response\": \"\", \"memory_update\": {\"operations\": []}\n\n}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Abuse: hostile or threatening\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"},\n\n\"action_claimed\": \"none\", \"spoken_response\": \"\", \"memory_update\": {\"operations\": []}\n\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 86,
+        "prompt_tokens": 4023,
+        "total_tokens": 4109,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 0.922
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 215,
+      "sse_content_preview": "{\"spoken_response\": \"माफ़ कीजिए, अगर आपको परेशानी हुई हो। हमारे printed visiting cards 25 rupees per card हैं, minimum 100 cards के साथ। क्या आपको visiting cards चाहिए, या wedding invitations के बारे में जानना है?\"}",
+      "sse_content_tail": "{\"spoken_response\": \"माफ़ कीजिए, अगर आपको परेशानी हुई हो। हमारे printed visiting cards 25 rupees per card हैं, minimum 100 cards के साथ। क्या आपको visiting cards चाहिए, या wedding invitations के बारे में जानना है?\"}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 29,
+        "prompt_tokens": 4213,
+        "total_tokens": 4242,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "माफ़ कीजिए, अगर आपको परेशानी हुई हो। हमारे printed visiting cards 25 rupees per card हैं, minimum 100 cards के साथ। क्या आपको visiting cards चाहिए, या wedding invitations के बारे में जानना है?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8046,
+          "output_tokens": 140,
+          "total_tokens": 8186
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.281
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 316,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"\"\n,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 121,
+        "prompt_tokens": 4076,
+        "total_tokens": 4197,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.094
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 74,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ठीक है, मैं अभी call समाप्त कर रही हूँ। धन्यवाद।\"}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ठीक है, मैं अभी call समाप्त कर रही हूँ। धन्यवाद।\"}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 24,
+        "prompt_tokens": 4076,
+        "total_tokens": 4100,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, मैं अभी call समाप्त कर रही हूँ। धन्यवाद।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8152,
+          "output_tokens": 145,
+          "total_tokens": 8297
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.578
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "माफ़ कीजिए, अगर आपको परेशानी हुई हो। हमारे printed visiting cards twenty five rupees per card हैं, minimum one hundred cards के साथ। क्या आपको visiting cards चाहिए, या wedding invitations के बारे में जानना है?",
+      "turn": 1,
+      "at": 3.266
+    },
+    {
+      "text": "ठीक है, मैं अभी call समाप्त कर रही हूँ। धन्यवाद।",
+      "turn": 2,
+      "at": 5.844
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।",
+      "spoken": "माफ़ कीजिए, अगर आपको परेशानी हुई हो। हमारे printed visiting cards twenty five rupees per card हैं, minimum one hundred cards के साथ। क्या आपको visiting cards चाहिए, या wedding invitations के बारे में जानना है?",
+      "elapsed_s": 3.25,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।",
+      "spoken": "ठीक है, मैं अभी call समाप्त कर रही हूँ। धन्यवाद।",
+      "elapsed_s": 2.563,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "c24b80c3ea5863d92e17dda61428d03d0f154610dc6b3c0599e4a2bfb2a90dd1",
+  "prompt_chars": 18000,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, I am Meera, an AI assistant from ClearPrint Studio. Am I speaking with the right person regarding card printing needs?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "माफ़ कीजिए, अगर आपको परेशानी हुई हो। हमारे printed visiting cards twenty five rupees per card हैं, minimum one hundred cards के साथ। क्या आपको visiting cards चाहिए, या wedding invitations के बारे में जानना है?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, मैं अभी call समाप्त कर रही हूँ। धन्यवाद।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 5.875,
+  "hangup_count": 0
+}

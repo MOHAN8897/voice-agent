@@ -1,0 +1,74 @@
+{
+  "key": "cleaning-hi-IN-none-3_complete_rejection",
+  "business": "cleaning",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "0af54b3b-2e52-5467-8d8d-282e03815984",
+  "call_id": "ce8891ce-7bc6-4969-9153-ca97aef95857",
+  "session_id": "audit-cleaning-hi-IN-none-3_complete_rejection-a54f80ec",
+  "compiled_checksum": "69e98222770e2e24f02661040eef848ed4e9f3d30154dd23b101bb2a21ea0d3c",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 1,
+      "at": 0.015
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "नहीं, धन्यवाद। मुझे आपकी service या product नहीं चाहिए। कृपया call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.062,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "ce8891ce-7bc6-4969-9153-ca97aef95857",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "62eb3e5b361717422b79802ecb8768c3fa08608d615d0b4a7cca5ea6497eafc7",
+  "prompt_chars": 17121,
+  "opening_seeded": "Namaste. Main Nila hoon FreshNest Cleaning se. Kya hum abhi safai sevaon ke bare mein baat kar sakte hain?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.062,
+  "hangup_count": 1,
+  "source_signature": "f22325fa3f608c0524c8afc9a14908696812152c9af5311fda442ff7a042a834"
+}

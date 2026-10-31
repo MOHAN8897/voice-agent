@@ -1,0 +1,151 @@
+{
+  "intents": {
+    "inline:empty-voice-filter-combinations-display-zero-ava-a9cbb92f": {
+      "binding": {
+        "contains": "0 Telugu voices match your filters",
+        "kind": "text",
+        "visible": true
+      },
+      "declaredAt": 1793106313299,
+      "id": "inline:empty-voice-filter-combinations-display-zero-ava-a9cbb92f",
+      "provenBy": {
+        "at": 1793112114218,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112114218"
+      },
+      "state": "proved",
+      "statement": "Empty voice filter combinations display zero availability without changing the saved voice.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentVoicePanel.jsx"
+        ]
+      },
+      "updatedAt": 1793112114231
+    },
+    "inline:tenants-explicitly-approve-callback-automation-a-527478e7": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "add-dnc-button"
+            },
+            "state": "visible"
+          },
+          {
+            "kind": "net",
+            "method": "GET",
+            "status": 200,
+            "urlContains": "/api/dnc"
+          }
+        ]
+      },
+      "declaredAt": 1793198225636,
+      "id": "inline:tenants-explicitly-approve-callback-automation-a-527478e7",
+      "provenBy": {
+        "at": 1793206016574,
+        "grade": "net",
+        "runId": "drive-a54a9e84cec3c600",
+        "verdictId": "reticle_act_and_wait:1793206016574"
+      },
+      "state": "proved",
+      "statement": "Tenants explicitly approve callback automation and charges, review unclear callback times, and manage caller opt-outs before follow-up calls can run.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/FollowUpSettingsCard.jsx"
+        ]
+      },
+      "updatedAt": 1793206016597
+    },
+    "inline:the-farewell-category-exposes-its-editor-directl-7eee2c31": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-studio-farewell"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793041118569,
+      "id": "inline:the-farewell-category-exposes-its-editor-directl-7eee2c31",
+      "provenBy": {
+        "at": 1793044279088,
+        "grade": "presence",
+        "runId": "drive-see64b5d7-7691-47c8-8779-613cf6d6b3c9",
+        "verdictId": "reticle_act_and_wait:1793044279088"
+      },
+      "state": "proved",
+      "statement": "The Farewell category exposes its editor directly while retaining other draft fields.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/SectionNav.jsx"
+        ]
+      },
+      "updatedAt": 1793044279110
+    },
+    "inline:the-recording-compliance-category-exposes-its-ed-24538ee1": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-recording-disclosure-toggle"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793041250760,
+      "id": "inline:the-recording-compliance-category-exposes-its-ed-24538ee1",
+      "provenBy": {
+        "at": 1793044295509,
+        "grade": "presence",
+        "runId": "drive-see64b5d7-7691-47c8-8779-613cf6d6b3c9",
+        "verdictId": "reticle_act_and_wait:1793044295509"
+      },
+      "state": "proved",
+      "statement": "The Recording & compliance category exposes its editor directly while retaining other draft fields.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/SectionNav.jsx"
+        ]
+      },
+      "updatedAt": 1793044295537
+    },
+    "inline:voice-gender-counts-reflect-the-selected-voice-s-aa052cdb": {
+      "binding": {
+        "kind": "element",
+        "query": {
+          "name": "Male (0)",
+          "role": "button"
+        },
+        "state": "visible"
+      },
+      "declaredAt": 1793106313172,
+      "id": "inline:voice-gender-counts-reflect-the-selected-voice-s-aa052cdb",
+      "provenBy": {
+        "at": 1793112114012,
+        "grade": "presence",
+        "runId": "drive-f86f66ffc63cc243",
+        "verdictId": "reticle_act_and_wait:1793112114012"
+      },
+      "state": "proved",
+      "statement": "Voice gender counts reflect the selected voice style, including zero available voices.",
+      "status": "proved",
+      "subject": "agent-workspace",
+      "surface": {
+        "files": [
+          "src/console/modules/agent-workspace/AgentVoicePanel.jsx"
+        ]
+      },
+      "updatedAt": 1793112114031
+    }
+  },
+  "subject": "agent-workspace",
+  "version": 1
+}

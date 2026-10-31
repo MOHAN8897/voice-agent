@@ -1,0 +1,26 @@
+{
+  "intents": {
+    "flow:drive-the-marketing-page-plays-the-product-s-own-neura": {
+      "binding": {
+        "flow": "drive-the-marketing-page-plays-the-product-s-own-neura"
+      },
+      "declaredAt": 1791015913723,
+      "id": "flow:drive-the-marketing-page-plays-the-product-s-own-neura",
+      "provenBy": {
+        "at": 1791946872249,
+        "grade": "asserted",
+        "verdictId": "flow_replay:drive-the-marketing-page-plays-the-product-s-own-neura:1791946872249"
+      },
+      "state": "proved",
+      "statement": "the marketing page plays the product's own neural voice per industry, driven by real audio rather than a browser speech voice",
+      "status": "proved",
+      "subject": "drive-the-marketing-page-plays-the-produ",
+      "surface": {
+        "flow": "drive-the-marketing-page-plays-the-product-s-own-neura"
+      },
+      "updatedAt": 1791946872264
+    }
+  },
+  "subject": "drive-the-marketing-page-plays-the-produ",
+  "version": 1
+}

@@ -1,0 +1,38 @@
+{
+  "business": "language",
+  "language": "en-GB",
+  "analysis_status": 422,
+  "http_status": 422,
+  "elapsed_s": 117.625,
+  "request": {
+    "brief": "create Sana, SpeakEasy Language Studio. Adult spoken-English classes online, six weeks, weekends 10am-11am, age 18+. Current total course fee 6499 rupees. An old note says 5499: WRONG, discard obsolete amount, final 6499 only. No job, fluency or income guarantee and no discount authorised. Exact next batch date, vacancies and refund rules unknown. Purpose answer class questions honestly, ask learning goal only if useful. If caller wants demo or counselling, preferred name and email plus consent permit a CRM enquiry for team review when integration connected. Saved enquiry does not mean demo time, seat, payment or admission confirmed. No integration means cannot send an email, save externally or confirm a demo. No need for delivery address, quantity, income or phone checklist. Someone refusing a job guarantee may still want learning support. Future interest after exams is welcome, never permanent DNC. Callback consent must be explicit. Do not help cheating, hacking exam systems or impersonation. Respect refusal and explicit ending; natural professional conversation, answer first.",
+    "language": "en-GB",
+    "employeeName": "Sana",
+    "agentRole": "sales",
+    "callDirection": "outbound",
+    "mode": "instant_lead",
+    "naturalSpokenStyle": true,
+    "requestId": "38559ade-0e05-4f48-b23c-122b72f6c8ec"
+  },
+  "response": {
+    "detail": {
+      "error": {
+        "code": "unsupported_language",
+        "message": "English (UK) is not available on the Standard Regional calling plan. Choose Hindi, English (India), Marathi, Kannada, Punjabi, Tamil, Telugu, Gujarati or Bengali.",
+        "tier": "medium",
+        "supportedLanguages": [
+          "hi-IN",
+          "en-IN",
+          "mr-IN",
+          "kn-IN",
+          "pa-IN",
+          "ta-IN",
+          "te-IN",
+          "gu-IN",
+          "bn-IN"
+        ]
+      }
+    }
+  },
+  "status": "creation_failed"
+}

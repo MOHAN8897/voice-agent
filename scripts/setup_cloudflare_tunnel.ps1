@@ -1,5 +1,5 @@
-# One-time Cloudflare named tunnel for hustlelabs.in (stable api-dev / app-dev URLs)
-# Prerequisite: hustlelabs.in must be added to your Cloudflare account (DNS on Cloudflare).
+# One-time Cloudflare named tunnel for dialtact.com (stable api-dev / app-dev URLs)
+# Prerequisite: dialtact.com must be added to your Cloudflare account (DNS on Cloudflare).
 #
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File scripts/setup_cloudflare_tunnel.ps1
@@ -9,10 +9,12 @@
 param(
     [switch]$LoginOnly,
     [string]$TunnelName = "voice-agent-dev",
-    [string]$ApiHost = "api-dev.hustlelabs.in",
-    [string]$AppHost = "app-dev.hustlelabs.in",
+    [string]$ApiHost = "api-dev.dialtact.com",
+    [string]$AppHost = "app-dev.dialtact.com",
     [int]$ApiPort = 8000,
-    [int]$AppPort = 3000
+    # 5173 is Dialtact, the product UI. It proxies /api and /ws to 8000 and /dev to the
+    # admin panel on 3000, so one public hostname covers product + back office.
+    [int]$AppPort = 5173
 )
 
 $ErrorActionPreference = "Stop"
@@ -34,7 +36,7 @@ function Ensure-Login {
     }
     Write-Host ""
     Write-Host "=== Cloudflare login required ==="
-    Write-Host "A browser window will open. Log in and authorize hustlelabs.in."
+    Write-Host "A browser window will open. Log in and authorize dialtact.com."
     Write-Host "If it does not open, copy the URL printed by cloudflared."
     Write-Host ""
     & cloudflared tunnel login
@@ -67,7 +69,7 @@ if ($existing -match "(?m)^[0-9a-f-]{36}\s+$([regex]::Escape($TunnelName))\s") {
     }
 }
 if (-not $tunnelId) {
-    Write-Error "Could not create or find tunnel '$TunnelName'. Is hustlelabs.in on Cloudflare?"
+    Write-Error "Could not create or find tunnel '$TunnelName'. Is dialtact.com on Cloudflare?"
 }
 
 $credFile = Join-Path $CloudflaredDir "$tunnelId.json"
@@ -104,8 +106,10 @@ if (Test-Path $EnvFile) {
     $lines = Get-Content $EnvFile
     $map = @{
         "PUBLIC_TUNNEL_URL"      = $publicApi
-        "EXOTEL_WEBHOOK_BASE_URL" = $publicApi
+        "VOBIZ_WEBHOOK_BASE_URL" = $publicApi
         "CLIENT_URL"             = "https://$AppHost"
+        "PUBLIC_APP_URL"         = "https://$AppHost"
+        "DIALTACT_FRONTEND_URL"     = "https://$AppHost"
     }
     foreach ($key in $map.Keys) {
         $val = $map[$key]
@@ -120,7 +124,7 @@ if (Test-Path $EnvFile) {
         if (-not $found) { $lines += "$key=$val" }
     }
     Set-Content -Path $EnvFile -Value $lines
-    Write-Host "Updated .env (PUBLIC_TUNNEL_URL, EXOTEL_WEBHOOK_BASE_URL, CLIENT_URL)."
+    Write-Host "Updated .env (PUBLIC_TUNNEL_URL, VOBIZ_WEBHOOK_BASE_URL, CLIENT_URL, DIALTACT_FRONTEND_URL)."
 }
 
 # web/.env.local for stable public API when testing from browser
@@ -136,8 +140,10 @@ Write-Host ""
 Write-Host "=== Cloudflare tunnel ready ==="
 Write-Host "Stable API:  https://$ApiHost"
 Write-Host "Stable App:  https://$AppHost"
-Write-Host "Exotel passthru:  https://$ApiHost/api/exotel/passthru"
-Write-Host "Exotel callback: https://$ApiHost/api/exotel/status-callback"
+Write-Host "  product (Dialtact)   https://$AppHost"
+Write-Host "  admin panel          https://$AppHost/dev/login"
+Write-Host "Vobiz answer:  https://$ApiHost/api/vobiz/answer"
+Write-Host "Vobiz hangup: https://$ApiHost/api/vobiz/hangup"
 Write-Host ""
 Write-Host "Start stack:  npm run dev:up -KillStale"
 Write-Host "Start tunnel: npm run dev:cf-tunnel"

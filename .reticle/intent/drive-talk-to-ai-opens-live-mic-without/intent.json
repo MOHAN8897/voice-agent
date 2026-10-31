@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-talk-to-ai-opens-live-mic-without-requesting-mic": {
+      "declaredAt": 1790928331901,
+      "id": "flow:drive-talk-to-ai-opens-live-mic-without-requesting-mic",
+      "state": "declared",
+      "statement": "Talk to AI opens Live Mic without requesting microphone on open.",
+      "status": "proposed",
+      "subject": "drive-talk-to-ai-opens-live-mic-without",
+      "surface": {
+        "flow": "drive-talk-to-ai-opens-live-mic-without-requesting-mic"
+      },
+      "updatedAt": 1790928332127
+    }
+  },
+  "subject": "drive-talk-to-ai-opens-live-mic-without",
+  "version": 1
+}

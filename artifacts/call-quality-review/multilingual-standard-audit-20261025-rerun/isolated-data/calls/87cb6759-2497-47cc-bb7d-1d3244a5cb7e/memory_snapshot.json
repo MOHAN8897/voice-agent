@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "course fee, duration और class timing क्या है? Fluency या job की guarantee है?\nassistant: Course की total fee six thousand four hundred ninety nine rupees है, duration छह हफ्ते का है और class timing weekends पर सुबह दस से ग्यारह बजे तक है। वैसे fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन यह learning support के लिए अच्छा रहेगा।\nuser: मुझे job guarantee नहीं चाहिए, लेकिन spoken English सीखनी है। Course बताइए।\nassistant: समझ गई, spoken English सीखना ही हमारा focus है। क्या आप demo या counselling के लिए अपना preferred name और email share कर सकते हैं? और क्या मैं आपकी enquiry save कर लूँ?"
+}

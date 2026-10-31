@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ತರಿಸಿ: ಸೈಕಲ್ basic service ಮತ್ತು puncture repair ಬೆಲೆ ಎಷ್ಟು? Parts ಕೂಡ ಇದರಲ್ಲಿ ಸೇರಿವೆಯಾ?\nassistant: Basic service four hundred ninety nine ರೂಪಾಯಿ ಮತ್ತು ಪಂಕ್ಚರ್ repair one hundred twenty ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಪಾರ್ಟ್ಸ್ ಬೆಲೆ ಇದರಲ್ಲಿ ಸೇರಿಲ್ಲ, ಯಾವುದೇ extra ಪಾರ್ಟ್ಸ್ ಹಾಕಬೇಕಾದರೆ ನಿಮ್ಮ permission ತಗೊಂಡೇ ಹಾಕ್ತೀವಿ. ನಿಮಗೆ ಯಾವ service ಬೇಕು?\nuser: Basic service ಬೇಡ, ಆದರೆ puncture repair ಬೇಕು. ಸಹಾಯ ಮಾಡುತ್ತೀರಾ?\nassistant: ಸರಿ, ಪಂಕ್ಚರ್ repair one hundred twenty ರೂಪಾಯಿ ಆಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ area-ದಲ್ಲಿ service ಬೇಕು? ನಿಮ್ಮ ವಿನಂತಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ ಎಂದು ನನಗೆ ದೃಢೀಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಅದನ್ನು ಮುಗಿದಿದೆ ಎಂದು ಪರಿಗಣಿಸಬೇಡಿ."
+}

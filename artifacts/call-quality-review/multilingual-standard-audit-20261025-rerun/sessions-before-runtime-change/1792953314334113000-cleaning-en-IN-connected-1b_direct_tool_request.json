@@ -1,0 +1,221 @@
+{
+  "key": "cleaning-en-IN-connected-1b_direct_tool_request",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "69c3a1f9-9bb0-5fc5-b8af-5cf5e13d0283",
+  "call_id": "d6924e3e-18fb-4a00-976b-1e4992b59c3d",
+  "session_id": "audit-cleaning-en-IN-connected-1b_direct_tool_request-14b90dfe",
+  "compiled_checksum": "5a25d6a9a1e56b4248a00a7ed913ce26430c3226a93d4ae617e7e7e2d1c9293a",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4229,
+        "total_tokens": 4291,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4229,
+          "output_tokens": 62,
+          "total_tokens": 4291
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-ab6ab741a04046ce",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Kitchen cleaning in Baner, Pune\", \"preferred_time\": \"Tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.5
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 189,
+      "sse_content_preview": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed slot or paid order, so please note that. Is there anything else you need help with today?",
+      "sse_content_tail": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed slot or paid order, so please note that. Is there anything else you need help with today?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 4495,
+        "total_tokens": 4540,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed slot or paid order, so please note that. Is there anything else you need help with today?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4495,
+          "output_tokens": 45,
+          "total_tokens": 4540
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.531
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Kitchen cleaning in Baner, Pune",
+        "preferred_time": "Tomorrow at 3pm"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed slot or paid order, so please note that. Is there anything else you need help with today?",
+      "turn": 1,
+      "at": 4.359
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 2,
+      "at": 4.375
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.",
+      "spoken": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed slot or paid order, so please note that. Is there anything else you need help with today?",
+      "elapsed_s": 4.359,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 4.422,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "d6924e3e-18fb-4a00-976b-1e4992b59c3d",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "23682e89b99a0ffbe82046a24f58960907ce34dea61daea3adc20a16c6e3540c",
+  "prompt_chars": 17509,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, I am Nila, an AI assistant with FreshNest Cleaning. Am I speaking with the homeowner today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed slot or paid order, so please note that. Is there anything else you need help with today?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.422,
+  "hangup_count": 1,
+  "source_signature": "00b9e42dcca6c1a17a9c97073faea0d8bd0c70cea6df1df91b5bda50b8604b4c"
+}

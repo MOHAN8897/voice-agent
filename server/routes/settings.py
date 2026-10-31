@@ -12,6 +12,7 @@ from typing import Optional
 from server.config.constants import constants
 from server.config.env import get_settings
 from server.providers import resolve_stack_for_session
+from server.providers.voice_inventory import voices_for_model
 from server.utils.log_config import get_log_flags
 from server.prompts.voice_defaults import (
     DEFAULT_BEHAVIOUR_INSTRUCTIONS,
@@ -73,7 +74,13 @@ async def catalog():
             "useProviderRegistry": use_registry,
         },
         "stt": {
-            "models": [{"id": k, "label": v["label"], "modes": v["modes"]} for k, v in constants.STT_MODELS.items()],
+            "models": (
+                [{"id": k, "label": v["label"], "modes": v["modes"]} for k, v in constants.STT_MODELS.items()]
+                + [
+                    {"id": k, "label": v["label"], "modes": v.get("modes", ["transcribe"])}
+                    for k, v in constants.CARTESIA_STT_MODELS.items()
+                ]
+            ),
             "modes": constants.STT_MODES,
             "streamTypes": constants.STT_STREAM_TYPES,
             "languages": list(constants.SUPPORTED_LANGUAGES.keys()) + ["unknown"],
@@ -81,8 +88,12 @@ async def catalog():
         },
         "tts": {
             "models": [{"id": k, "label": v["label"], "pace": v["pace"], "temperature": v["temperature"]} for k, v in constants.TTS_MODELS.items()],
-            "speakersV3": constants.TTS_SPEAKERS_V3,
-            "speakersV2": constants.TTS_SPEAKERS_V2,
+            "speakersV3": [row["providerVoiceId"] for row in voices_for_model("sarvam", "bulbul:v3")],
+            "speakersV2": [row["providerVoiceId"] for row in voices_for_model("sarvam", "bulbul:v2")],
+            "speakersByModel": {
+                model: [row["providerVoiceId"] for row in voices_for_model("sarvam", model)]
+                for model in constants.TTS_MODELS
+            },
             "codecs": constants.TTS_CODECS,
             "bitrates": constants.TTS_BITRATES,
             "sampleRates": constants.TTS_SAMPLE_RATES,
@@ -107,16 +118,16 @@ async def catalog():
             "reasoningEfforts": list(OPENAI_REASONING_EFFORTS),
             "modelPresets": OPENAI_MODEL_PRESETS,
             "maxTokens": [50, 800],
-            "brainPromptBudget": [1500, 2500],
+            "brainPromptBudget": [1500, 10000],
             "modelGroups": [
                 {"label": "GPT-5 family (voice-tuned)", "models": allowed_models},
             ],
             "defaults": {
-                "openaiModel": "gpt-5.6-luna",
-                "openaiMaxTokens": OPENAI_MODEL_PRESETS["gpt-5.6-luna"]["openaiMaxTokens"],
+                "openaiModel": "gpt-6-luna",
+                "openaiMaxTokens": OPENAI_MODEL_PRESETS["gpt-6-luna"]["openaiMaxTokens"],
                 "openaiTemperature": 0.7,
-                "openaiReasoningEffort": OPENAI_MODEL_PRESETS["gpt-5.6-luna"]["openaiReasoningEffort"],
-                "brainPromptBudgetTokens": OPENAI_MODEL_PRESETS["gpt-5.6-luna"]["brainPromptBudgetTokens"],
+                "openaiReasoningEffort": OPENAI_MODEL_PRESETS["gpt-6-luna"]["openaiReasoningEffort"],
+                "brainPromptBudgetTokens": OPENAI_MODEL_PRESETS["gpt-6-luna"]["brainPromptBudgetTokens"],
                 "bargeMinWords": 3,
                 "bargeRequireVad": True,
                 "sttSilenceMs": 500,
@@ -231,10 +242,17 @@ async def post_runtime(body: RuntimePatch):
     except Exception as e:
         # e.g., get_settings() ConfigError inside openaiModel validation
         raise HTTPException(status_code=500, detail={"error": {"code": "config_error", "message": str(e)[:300]}}) from e
-    return {"ok": True, "sessionId": body.sessionId, "values": values}
+    persisted = await runtime_settings.persist_to_db(body.sessionId)
+    return {"ok": True, "sessionId": body.sessionId, "values": values, "persistedToDb": persisted}
 
 
 @router.delete("/api/settings/runtime")
 async def delete_runtime(sessionId: str = Query("default")):
     runtime_settings.clear(sessionId)
+    try:
+        from server.services.saved_runtime_store import delete as delete_saved
+
+        await delete_saved(sessionId)
+    except Exception:
+        pass
     return {"ok": True, "sessionId": sessionId, "cleared": True}

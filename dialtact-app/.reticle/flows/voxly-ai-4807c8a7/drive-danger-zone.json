@@ -1,0 +1,80 @@
+{
+  "version": 2,
+  "name": "drive-danger-zone",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791891448568,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "nav-settings",
+        "source": {
+          "file": "src/console/Sidebar.jsx",
+          "line": 301,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Danger Zone"
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "danger-zone-delete-button",
+        "source": {
+          "file": "src/console/modules/SettingsModule.jsx",
+          "line": 290,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Takeout"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Cancel"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "antigravity-client"
+  }
+}

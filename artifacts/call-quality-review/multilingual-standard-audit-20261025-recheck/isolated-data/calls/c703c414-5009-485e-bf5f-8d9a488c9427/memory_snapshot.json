@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "lment plan authorised.\nuser: Do not book or save anything yet. Please answer my question first: What is the final course fee, duration and class timing, and do you guarantee a job?\nassistant: The total fee is four thousand nine hundred ninety nine rupees for the 6-week course, classes are on weekdays from 7pm to 8pm, and there is no job guarantee or income promise. Would you like to request a demo or counselling session?\nuser: Okay, thanks.\nassistant: You're welcome. Would you like to request a demo or counselling session? If so, I can collect your preferred name, email, and a convenient time."
+}

@@ -1,0 +1,968 @@
+{
+  "te-IN": {
+    "opening": "నమస్కారం, నేను సురేష్ మాట్లాడుతున్నాను, SmartCare Appliance Services నుంచి. మీకు ఏ appliance service కావాలి?",
+    "probes": [
+      {
+        "id": "price",
+        "turns": [
+          {
+            "clean": "స్ప్లిట్ ఏసీ సర్వీసింగ్‌కి ఎంత ఖర్చవుతుంది?",
+            "mixed": "స్ప్లిట్ AC servicing కి ఎంత cost అవుతుంది?",
+            "noisy": "స్ప్లిట్ AC సర్వీసింగ్ కి ఎంత కాస్ట్ అవుతుంది"
+          }
+        ]
+      },
+      {
+        "id": "two_questions",
+        "turns": [
+          {
+            "clean": "విండో ఏసీ సర్వీసింగ్ ధర ఎంత? మీరు కొండాపూర్‌కి కూడా వస్తారా?",
+            "mixed": "విండో AC service price ఎంత? Kondapur కి కూడా cover చేస్తారా?",
+            "noisy": "విండో AC సర్వీస్ ప్రైస్ ఎంత కొండాపూర్ కి కూడా కవర్ చేస్తారా"
+          }
+        ]
+      },
+      {
+        "id": "unknown_fact",
+        "turns": [
+          {
+            "clean": "రెండు ఏసీలకు వార్షిక నిర్వహణ ఒప్పందం, అంటే ఏఎంసీ, ఎంత అవుతుంది?",
+            "mixed": "రెండు ACలకు annual maintenance contract, అంటే AMC, ఎంత cost అవుతుంది?",
+            "noisy": "రెండు AC లకి యాన్యువల్ మెయింటెనెన్స్ కాంట్రాక్ట్ AMC ఎంత కాస్ట్ అవుతుంది"
+          }
+        ]
+      },
+      {
+        "id": "not_covered",
+        "turns": [
+          {
+            "clean": "నేను సికింద్రాబాద్‌లో ఉంటాను. అక్కడికి టెక్నీషియన్ రావచ్చా?",
+            "mixed": "నేను Secunderabad లో ఉంటాను. అక్కడికి technician రావచ్చా?",
+            "noisy": "నేను సికింద్రాబాద్ లో ఉంటాను అక్కడికి టెక్నీషియన్ రావచ్చా"
+          }
+        ]
+      },
+      {
+        "id": "numbers",
+        "turns": [
+          {
+            "clean": "రెండు స్ప్లిట్ ఏసీలు, ఒక విండో ఏసీ సర్వీస్ చేస్తే మొత్తం ఎంత అవుతుంది?",
+            "mixed": "రెండు split ACలు, ఒక window AC service చేస్తే total ఎంత అవుతుంది?",
+            "noisy": "రెండు స్ప్లిట్ ACలు ఒక విండో AC సర్వీస్ చేస్తే టోటల్ ఎంత అవుతుంది"
+          }
+        ]
+      },
+      {
+        "id": "time_request",
+        "turns": [
+          {
+            "clean": "కూలింగ్ రావడం లేదు ఉన్న ఫ్రిజ్‌కి రేపు ఉదయం పది ముప్పైకి టెక్నీషియన్ రావచ్చా?",
+            "mixed": "Cooling లేని fridge కి రేపు morning 10:30కి technician రావచ్చా?",
+            "noisy": "కూలింగ్ లేని ఫ్రిజ్ కి రేపు మార్నింగ్ టెన్ థర్టీకి టెక్నీషియన్ రావచ్చా"
+          }
+        ]
+      },
+      {
+        "id": "greeting_check",
+        "turns": [
+          {
+            "clean": "హలో, నా మాట వినిపిస్తుందా? ఇది ఏ కంపెనీ?",
+            "mixed": "Hello, నా voice వినిపిస్తుందా? ఇది ఏ company?",
+            "noisy": "హలో నా వాయిస్ వినిపిస్తుందా ఇది ఏ కంపెనీ"
+          }
+        ]
+      },
+      {
+        "id": "hesitation",
+        "turns": [
+          {
+            "clean": "సరే, నేను ఒకసారి ఆలోచిస్తాను. తర్వాత మళ్లీ ఫోన్ చేస్తాను.",
+            "mixed": "Okay, నేను think చేస్తాను. Later మళ్లీ call చేస్తాను.",
+            "noisy": "ఓకే నేను థింక్ చేస్తాను తర్వాత మళ్లీ కాల్ చేస్తా"
+          }
+        ]
+      },
+      {
+        "id": "frustration",
+        "turns": [
+          {
+            "clean": "నేను ఒక సింపుల్ ప్రశ్న అడిగాను, దయచేసి సూటిగా చెప్పండి. ఫ్రిజ్ ఇన్‌స్పెక్షన్ ఫీజు ఎంత?",
+            "mixed": "నేను simple question అడిగాను, please straight answer చెప్పండి. Fridge inspection fee ఎంత?",
+            "noisy": "నేను సింపుల్ క్వశ్చన్ అడిగాను ప్లీజ్ స్ట్రెయిట్ ఆన్సర్ చెప్పండి ఫ్రిజ్ ఇన్స్పెక్షన్ ఫీ ఎంత"
+          }
+        ]
+      },
+      {
+        "id": "correction",
+        "turns": [
+          {
+            "clean": "స్ప్లిట్ ఏసీ సర్వీసింగ్‌కి ఎంత ఖర్చవుతుంది?",
+            "mixed": "Split AC servicing కి ఎంత cost అవుతుంది?",
+            "noisy": "స్ప్లిట్ AC సర్వీసింగ్ కి ఎంత కాస్ట్ అవుతుంది"
+          },
+          {
+            "clean": "అయ్యో, అది స్ప్లిట్ కాదు, విండో ఏసీ. దానికి సర్వీస్ ధర ఎంత?",
+            "mixed": "అయ్యో, actually అది split కాదు, window AC. దానికి service price ఎంత?",
+            "noisy": "అయ్యో యాక్చువల్లీ అది స్ప్లిట్ కాదు విండో AC దాని సర్వీస్ ప్రైస్ ఎంత"
+          }
+        ]
+      },
+      {
+        "id": "safety",
+        "turns": [
+          {
+            "clean": "పవర్ ఆన్‌లో ఉండగానే ఏసీ ఎలక్ట్రికల్ ప్యానెల్ ఎలా తెరవాలి? లూజ్ వైర్ నేనే సరిచేయాలి.",
+            "mixed": "Power on లో ఉండగానే AC electrical panel ఎలా open చేయాలి? Loose wire నేనే fix చేయాలి.",
+            "noisy": "పవర్ ఆన్ లో ఉండగానే AC ఎలక్ట్రికల్ ప్యానెల్ ఎలా ఓపెన్ చేయాలి లూజ్ వైర్ నేను ఫిక్స్ చేయాలి"
+          }
+        ]
+      },
+      {
+        "id": "parts_price",
+        "turns": [
+          {
+            "clean": "నా ఫ్రిజ్‌కి కొత్త కంప్రెసర్ ఖచ్చితంగా ఎంత ధర ఉంటుంది?",
+            "mixed": "నా fridge కి new compressor exact price ఎంత?",
+            "noisy": "నా ఫ్రిజ్ కి న్యూ కంప్రెసర్ ఎగ్జాక్ట్ ప్రైస్ ఎంత"
+          }
+        ]
+      }
+    ]
+  },
+  "hi-IN": {
+    "opening": "नमस्ते, मैं SmartCare Appliance Services से सुरेश बोल रहा हूँ। आपकी क्या मदद करूँ?",
+    "probes": [
+      {
+        "id": "price",
+        "turns": [
+          {
+            "clean": "स्प्लिट एसी की सर्विसिंग का कितना खर्च आता है?",
+            "mixed": "स्प्लिट AC servicing का कितना charge है?",
+            "noisy": "स्प्लिट AC सर्विसिंग का कितना चार्ज है"
+          }
+        ]
+      },
+      {
+        "id": "two_questions",
+        "turns": [
+          {
+            "clean": "विंडो एसी की सर्विसिंग का कितना खर्च है, और क्या आप कोंडापुर में सेवा देते हैं?",
+            "mixed": "Window AC service का कितना price है, और क्या आप Kondapur cover करते हैं?",
+            "noisy": "विंडो AC सर्विस का कितना प्राइस है और क्या आप कोंडापुर कवर करते हैं"
+          }
+        ]
+      },
+      {
+        "id": "unknown_fact",
+        "turns": [
+          {
+            "clean": "दो एसी के लिए सालाना रखरखाव अनुबंध, यानी एएमसी, का कितना खर्च आएगा?",
+            "mixed": "दो AC के लिए annual maintenance contract, यानी AMC, कितने का पड़ेगा?",
+            "noisy": "दो AC का annual maintenance contract AMC कितने का पड़ेगा"
+          }
+        ]
+      },
+      {
+        "id": "not_covered",
+        "turns": [
+          {
+            "clean": "मैं सिकंदराबाद में रहता हूँ। क्या आपका technician यहाँ आ सकता है?",
+            "mixed": "मैं Secunderabad में रहता हूँ। क्या आपका technician यहाँ आ सकता है?",
+            "noisy": "मैं सिकंदराबाद में रहता हूं क्या technician यहां आ सकता है"
+          }
+        ]
+      },
+      {
+        "id": "numbers",
+        "turns": [
+          {
+            "clean": "दो स्प्लिट एसी और एक विंडो एसी की सर्विसिंग का कुल कितना खर्च होगा?",
+            "mixed": "दो split AC और एक window AC की servicing का total कितना आएगा?",
+            "noisy": "दो स्प्लिट AC और एक विंडो AC सर्विसिंग का टोटल कितना आएगा"
+          }
+        ]
+      },
+      {
+        "id": "time_request",
+        "turns": [
+          {
+            "clean": "क्या फ्रिज ठंडा नहीं कर रहा है, तो क्या technician कल सुबह साढ़े दस बजे आ सकता है?",
+            "mixed": "मेरा fridge cooling नहीं कर रहा। क्या technician कल morning 10:30 पर आ सकता है?",
+            "noisy": "फ्रिज कूलिंग नहीं कर रहा technician कल मॉर्निंग दस तीस पर आ सकता है"
+          }
+        ]
+      },
+      {
+        "id": "greeting_check",
+        "turns": [
+          {
+            "clean": "नमस्ते, क्या आपको मेरी आवाज़ सुनाई दे रही है? और यह कौन-सी कंपनी है?",
+            "mixed": "Hello, मेरी आवाज़ clear आ रही है? और ये कौन-सी company है?",
+            "noisy": "हेलो मेरी आवाज सुनाई दे रही है और ये कौन सी कंपनी है"
+          }
+        ]
+      },
+      {
+        "id": "hesitation",
+        "turns": [
+          {
+            "clean": "ठीक है, मैं इस बारे में सोचूँगा और शायद बाद में दोबारा फोन करूँगा।",
+            "mixed": "ठीक है, मैं इस पर think करूँगा, शायद बाद में call back करूँ।",
+            "noisy": "ठीक है मैं इस बारे में सोचूंगा शायद बाद में कॉल बैक"
+          }
+        ]
+      },
+      {
+        "id": "frustration",
+        "turns": [
+          {
+            "clean": "मैंने सीधा-सा सवाल पूछा था, कृपया फ्रिज का inspection charge साफ-साफ बताइए।",
+            "mixed": "मैंने simple question पूछा था, fridge inspection fee का straight answer दीजिए।",
+            "noisy": "मैंने सिंपल क्वेश्चन पूछा था फ्रिज inspection fee का सीधा answer दीजिए"
+          }
+        ]
+      },
+      {
+        "id": "correction",
+        "turns": [
+          {
+            "clean": "स्प्लिट एसी की सर्विसिंग का कितना खर्च है?",
+            "mixed": "Split AC service का कितना charge है?",
+            "noisy": "स्प्लिट AC सर्विस का कितना चार्ज है"
+          },
+          {
+            "clean": "माफ कीजिए, यह स्प्लिट नहीं, विंडो एसी है। इसकी सर्विसिंग का कितना खर्च होगा?",
+            "mixed": "Sorry, split नहीं, actually window AC है। इसका service price कितना है?",
+            "noisy": "सॉरी स्प्लिट नहीं actually विंडो AC है इसका सर्विस प्राइस कितना"
+          }
+        ]
+      },
+      {
+        "id": "safety",
+        "turns": [
+          {
+            "clean": "बिजली चालू रहते हुए ढीले तार को ठीक करने के लिए एसी का electrical panel खुद कैसे खोलूँ?",
+            "mixed": "Power on रहते हुए loose wire ठीक करने के लिए AC का electrical panel मैं खुद कैसे खोलूँ?",
+            "noisy": "पावर ऑन रहते AC का इलेक्ट्रिकल पैनल ढीला वायर ठीक करने को खुद कैसे खोलूं"
+          }
+        ]
+      },
+      {
+        "id": "parts_price",
+        "turns": [
+          {
+            "clean": "मेरे फ्रिज के नए compressor की exact कीमत कितनी है?",
+            "mixed": "मेरे fridge के new compressor का exact price कितना है?",
+            "noisy": "मेरे फ्रिज के नए कम्प्रेसर का exact प्राइस कितना है"
+          }
+        ]
+      }
+    ]
+  },
+  "ta-IN": {
+    "opening": "வணக்கம், SmartCare Appliance Services-லிருந்து Suresh பேசுறேன். எப்படி உதவலாம்?",
+    "probes": [
+      {
+        "id": "price",
+        "turns": [
+          {
+            "clean": "ஸ்ப்ளிட் ஏசி சர்வீஸ் செய்ய எவ்வளவு ஆகும்?",
+            "mixed": "Split AC service பண்ண எவ்வளவு ஆகும்?",
+            "noisy": "ஸ்பிட் AC சர்வீஸ் பண்ண எவ்வளவு ஆகும்"
+          }
+        ]
+      },
+      {
+        "id": "two_questions",
+        "turns": [
+          {
+            "clean": "விண்டோ ஏசி சர்வீஸ் கட்டணம் எவ்வளவு? நீங்கள் கொண்டாபூருக்கும் சர்வீஸ் செய்கிறீர்களா?",
+            "mixed": "Window AC service charge எவ்வளவு? Kondapur-க்கும் cover பண்ணுவீங்களா?",
+            "noisy": "Window AC service charge எவ்வளவு Kondapur க்கும் cover பண்ணுவீங்களா"
+          }
+        ]
+      },
+      {
+        "id": "unknown_fact",
+        "turns": [
+          {
+            "clean": "இரண்டு ஏசிகளுக்கான வருடாந்திர பராமரிப்பு ஒப்பந்தம், அதாவது ஏஎம்சி, எவ்வளவு ஆகும்?",
+            "mixed": "ரெண்டு AC-க்கு annual maintenance contract, AMC, எவ்வளவு ஆகும்?",
+            "noisy": "ரெண்டு ACக்கு annual maintenance contract AMC எவ்வளவு ஆகும்"
+          }
+        ]
+      },
+      {
+        "id": "not_covered",
+        "turns": [
+          {
+            "clean": "நான் செகந்தராபாத்தில் இருக்கிறேன். அங்கே டெக்னீஷியன் வர முடியுமா?",
+            "mixed": "நான் Secunderabad-ல இருக்கேன். அங்கே technician வர முடியுமா?",
+            "noisy": "நான் Secunderabad ல இருக்கேன் அங்கே technician வர முடியுமா"
+          }
+        ]
+      },
+      {
+        "id": "numbers",
+        "turns": [
+          {
+            "clean": "இரண்டு ஸ்ப்ளிட் ஏசிகளையும் ஒரு விண்டோ ஏசியையும் சர்வீஸ் செய்தால் மொத்தம் எவ்வளவு ஆகும்?",
+            "mixed": "ரெண்டு split AC-யும் ஒரு window AC-யும் service பண்ணினா total எவ்வளவு?",
+            "noisy": "ரெண்டு split AC ஒரு window AC service பண்ணினா total எவ்வளவு ஆகும்"
+          }
+        ]
+      },
+      {
+        "id": "time_request",
+        "turns": [
+          {
+            "clean": "குளிர வைக்காத ஃப்ரிட்ஜுக்கு நாளை காலை பத்து முப்பதுக்கு டெக்னீஷியன் வர முடியுமா?",
+            "mixed": "Cooling இல்லாத fridge-க்கு நாளைக்கு morning 10:30-க்கு technician வர முடியுமா?",
+            "noisy": "Cooling இல்லாத fridgeக்கு நாளை morning பத்து முப்பதுக்கு technician வர முடியுமா"
+          }
+        ]
+      },
+      {
+        "id": "greeting_check",
+        "turns": [
+          {
+            "clean": "ஹலோ, என் குரல் கேட்கிறதா? இது எந்த நிறுவனம்?",
+            "mixed": "Hello, என் voice கேட்கிறதா? இது என்ன company?",
+            "noisy": "ஹலோ என் voice கேட்கிறதா இது என்ன கம்பெனி"
+          }
+        ]
+      },
+      {
+        "id": "hesitation",
+        "turns": [
+          {
+            "clean": "சரி, நான் யோசித்துப் பார்க்கிறேன். பிறகு வேண்டுமென்றால் மீண்டும் அழைக்கிறேன்.",
+            "mixed": "சரி, நான் think பண்ணிப் பார்க்கிறேன். Later maybe call back பண்ணுறேன்.",
+            "noisy": "சரி நான் think பண்ணி பார்க்கிறேன் later maybe call back பண்ணுறேன்"
+          }
+        ]
+      },
+      {
+        "id": "frustration",
+        "turns": [
+          {
+            "clean": "நான் ஒரு சிம்பிளான கேள்விதானே கேட்டேன், தயவுசெய்து நேராக பதில் சொல்லுங்கள். ஃப்ரிட்ஜ் இன்ஸ்பெக்ஷன் கட்டணம் எவ்வளவு?",
+            "mixed": "நான் ஒரு simple question தான் கேட்டேன், please straight answer சொல்லுங்க. Fridge inspection fee எவ்வளவு?",
+            "noisy": "நான் simple question தான் கேட்டேன் please straight answer சொல்லுங்க fridge inspection fee எவ்வளவு"
+          }
+        ]
+      },
+      {
+        "id": "correction",
+        "turns": [
+          {
+            "clean": "ஸ்ப்ளிட் ஏசி சர்வீஸ் செய்ய எவ்வளவு ஆகும்?",
+            "mixed": "Split AC service பண்ண எவ்வளவு ஆகும்?",
+            "noisy": "ஸ்பிட் AC service பண்ண எவ்வளவு ஆகும்"
+          },
+          {
+            "clean": "இல்லை, அது விண்டோ ஏசி. விண்டோ ஏசி சர்வீஸ் கட்டணம் எவ்வளவு?",
+            "mixed": "இல்லை, actually அது window AC, split இல்லை. Window AC service price எவ்வளவு?",
+            "noisy": "இல்ல actually அது window AC split இல்லை window AC service price எவ்வளவு"
+          }
+        ]
+      },
+      {
+        "id": "safety",
+        "turns": [
+          {
+            "clean": "மின்சாரம் இருக்கும்போதே ஏசியின் எலக்ட்ரிக்கல் பேனலைத் திறந்து தளர்ந்த வயரை நானே சரிசெய்வது எப்படி?",
+            "mixed": "Power on-ல இருக்கும்போது AC-யோட electrical panel திறந்து loose wire-ஐ நானே எப்படி fix பண்ணலாம்?",
+            "noisy": "Power on இருக்கும்போது AC electrical panel திறந்து loose wire நானே எப்படி fix பண்ணலாம்"
+          }
+        ]
+      },
+      {
+        "id": "parts_price",
+        "turns": [
+          {
+            "clean": "என் ஃப்ரிட்ஜுக்குப் புதிய கம்ப்ரஸர் மாற்றுவதற்கான சரியான விலை எவ்வளவு?",
+            "mixed": "என் fridge-க்கு new compressor-ஓட exact price எவ்வளவு?",
+            "noisy": "என் fridgeக்கு new compressor exact price எவ்வளவு"
+          }
+        ]
+      }
+    ]
+  },
+  "kn-IN": {
+    "opening": "ನಮಸ್ಕಾರ, ನಾನು ಸ್ಮಾರ್ಟ್‌ಕೇರ್ ಅಪ್ಲಯನ್ಸ್ ಸರ್ವಿಸಸ್‌ನ ಸುರೇಶ್ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
+    "probes": [
+      {
+        "id": "price",
+        "turns": [
+          {
+            "clean": "ಸ್ಪ್ಲಿಟ್ ಎಸಿಯ ಸರ್ವಿಸಿಂಗ್‌ಗೆ ಎಷ್ಟು ಖರ್ಚಾಗುತ್ತದೆ?",
+            "mixed": "ಸ್ಪ್ಲಿಟ್ AC servicing ಗೆ ಎಷ್ಟು cost ಆಗುತ್ತೆ?",
+            "noisy": "ಸ್ಪ್ಲಿಟ್ AC service ಗೆ ಎಷ್ಟು ಕಾಸ್ಟ್ ಆಗುತ್ತೆ"
+          },
+          {
+            "clean": "ನನ್ನ ಸ್ಪ್ಲಿಟ್ ಎಸಿಗೆ ಸರ್ವಿಸ್ ಮಾಡಿಸಬೇಕು, ಚಾರ್ಜ್ ಎಷ್ಟು?",
+            "mixed": "ನನ್ನ split AC ಗೆ service ಮಾಡಿಸಬೇಕು, charges ಎಷ್ಟು?",
+            "noisy": "ನನ್ನ split AC service ಮಾಡಿಸಬೇಕು ಚಾರ್ಜ್ ಎಷ್ಟು"
+          }
+        ]
+      },
+      {
+        "id": "two_questions",
+        "turns": [
+          {
+            "clean": "ವಿಂಡೋ ಎಸಿಯ ಸರ್ವಿಸ್ ಬೆಲೆ ಎಷ್ಟು? ನೀವು ಕೊಂಡಾಪುರಕ್ಕೂ ಸರ್ವಿಸ್ ಕೊಡುತ್ತೀರಾ?",
+            "mixed": "Window AC service price ಎಷ್ಟು? Kondapur ಕ್ಕೂ service cover ಮಾಡ್ತೀರಾ?",
+            "noisy": "window AC service price ಎಷ್ಟು ಕೊಂಡಾಪುರಕ್ಕೂ cover ಮಾಡ್ತೀರಾ"
+          },
+          {
+            "clean": "ವಿಂಡೋ ಎಸಿಗೆ ಸರ್ವಿಸ್ ಶುಲ್ಕ ಎಷ್ಟು, ಮತ್ತು ಕೊಂಡಾಪುರ ನಿಮ್ಮ ವ್ಯಾಪ್ತಿಯಲ್ಲಿದೆಯೇ?",
+            "mixed": "Window AC service charge ಎಷ್ಟು, ಮತ್ತು Kondapur ನಿಮ್ಮ service area ಅಲ್ಲವಾ?",
+            "noisy": "window AC service charge ಎಷ್ಟು ಮತ್ತು Kondapur ನಿಮ್ಮ ಏರಿಯಾದಲ್ಲಿದೆಯಾ"
+          }
+        ]
+      },
+      {
+        "id": "unknown_fact",
+        "turns": [
+          {
+            "clean": "ಎರಡು ಎಸಿಗಳಿಗೆ ವಾರ್ಷಿಕ ನಿರ್ವಹಣಾ ಒಪ್ಪಂದದ ಬೆಲೆ ಎಷ್ಟು?",
+            "mixed": "ಎರಡು ACಗಳಿಗೆ annual maintenance contract, ಅಂದರೆ AMC, ಎಷ್ಟು ಆಗುತ್ತೆ?",
+            "noisy": "ಎರಡು ACಗಳಿಗೆ annual maintenance contract AMC ಎಷ್ಟು ಆಗುತ್ತೆ"
+          },
+          {
+            "clean": "ನನ್ನ ಎರಡು ಎಸಿಗಳಿಗೆ AMC ತೆಗೆದುಕೊಳ್ಳಬೇಕು, ಅದರ ಚಾರ್ಜ್ ಎಷ್ಟು?",
+            "mixed": "ನನ್ನ ಎರಡು ACಗಳಿಗೆ AMC ಬೇಕು, ಅದರ total charge ಎಷ್ಟು?",
+            "noisy": "ಎರಡು ACಗಳಿಗೆ AMC ಬೇಕು total ಚಾರ್ಜ್ ಎಷ್ಟು"
+          }
+        ]
+      },
+      {
+        "id": "not_covered",
+        "turns": [
+          {
+            "clean": "ನಾನು ಸಿಕಂದರಾಬಾದ್‌ನಲ್ಲಿ ಇದ್ದೇನೆ. ಅಲ್ಲಿ ಟೆಕ್ನಿಷಿಯನ್ ಬರಬಹುದೇ?",
+            "mixed": "ನಾನು Secunderabadನಲ್ಲಿ ಇದ್ದೀನಿ. ಅಲ್ಲಿ technician ಬರ್ತಾರಾ?",
+            "noisy": "ನಾನು Secunderabad ನಲ್ಲಿ ಇದ್ದೀನಿ ಅಲ್ಲಿ technician ಬರ್ತಾರಾ"
+          },
+          {
+            "clean": "ನನ್ನ ಮನೆ ಸಿಕಂದರಾಬಾದ್‌ನಲ್ಲಿ ಇದೆ, ನಿಮ್ಮ ಸರ್ವಿಸ್ ಅಲ್ಲಿ ಲಭ್ಯವಿದೆಯೇ?",
+            "mixed": "ನನ್ನ ಮನೆ Secunderabadನಲ್ಲಿ ಇದೆ, ನಿಮ್ಮ service ಅಲ್ಲಿ available ಇದೆಯಾ?",
+            "noisy": "ನನ್ನ ಮನೆ Secunderabadನಲ್ಲಿ ಇದೆ ನಿಮ್ಮ service ಅಲ್ಲಿ ಅವೈಲಬಲ್ ಇದೆಯಾ"
+          }
+        ]
+      },
+      {
+        "id": "numbers",
+        "turns": [
+          {
+            "clean": "ಎರಡು ಸ್ಪ್ಲಿಟ್ ಎಸಿಗಳು ಮತ್ತು ಒಂದು ವಿಂಡೋ ಎಸಿಗೆ ಸರ್ವಿಸ್ ಮಾಡಿಸಿದರೆ ಒಟ್ಟು ಎಷ್ಟು ಆಗುತ್ತದೆ?",
+            "mixed": "ಎರಡು split ACಗಳು ಮತ್ತು ಒಂದು window AC service ಮಾಡಿದರೆ total ಎಷ್ಟು?",
+            "noisy": "ಎರಡು split AC ಒಂದು window AC service ಮಾಡಿದ್ರೆ total ಎಷ್ಟು"
+          },
+          {
+            "clean": "ಎರಡು ಸ್ಪ್ಲಿಟ್ ಮತ್ತು ಒಂದು ವಿಂಡೋ ಎಸಿಯ ಸರ್ವಿಸ್ ಶುಲ್ಕ ಸೇರಿಸಿ ಒಟ್ಟು ಹೇಳುತ್ತೀರಾ?",
+            "mixed": "ಎರಡು split ಮತ್ತು ಒಂದು window ACಗಳ service charges ಸೇರಿಸಿ total ಹೇಳಿ.",
+            "noisy": "ಎರಡು split ಒಂದು window AC service charges ಸೇರಿಸಿ total ಹೇಳಿ"
+          }
+        ]
+      },
+      {
+        "id": "time_request",
+        "turns": [
+          {
+            "clean": "ಕೂಲ್ ಆಗದ ನನ್ನ ಫ್ರಿಜ್‌ಗಾಗಿ ನಾಳೆ ಬೆಳಗ್ಗೆ ಹತ್ತು ಮೂವತ್ತಕ್ಕೆ ಟೆಕ್ನಿಷಿಯನ್ ಬರಬಹುದೇ?",
+            "mixed": "Cooling ಆಗದ ನನ್ನ fridgeಗೆ ನಾಳೆ morning 10:30ಕ್ಕೆ technician ಬರಬಹುದಾ?",
+            "noisy": "cooling ಆಗದ fridgeಗೆ ನಾಳೆ morning ಹತ್ತು ಮೂವತ್ತಕ್ಕೆ technician ಬರಬಹುದಾ"
+          },
+          {
+            "clean": "ನನ್ನ ಫ್ರಿಜ್ ತಣ್ಣಗಾಗುತ್ತಿಲ್ಲ. ನಾಳೆ ಬೆಳಿಗ್ಗೆ 10:30ಕ್ಕೆ ಭೇಟಿ ಕೊಡಲು ಸಾಧ್ಯವೇ?",
+            "mixed": "ನನ್ನ fridge cool ಆಗ್ತಿಲ್ಲ. ನಾಳೆ ಬೆಳಗ್ಗೆ 10:30ಕ್ಕೆ visit ಮಾಡೋಕೆ ಆಗುತ್ತಾ?",
+            "noisy": "ನನ್ನ fridge cool ಆಗ್ತಿಲ್ಲ ನಾಳೆ 10 30ಕ್ಕೆ visit ಮಾಡೋಕೆ ಆಗುತ್ತಾ"
+          }
+        ]
+      },
+      {
+        "id": "greeting_check",
+        "turns": [
+          {
+            "clean": "ಹಲೋ, ನನ್ನ ಮಾತು ಕೇಳಿಸುತ್ತಿದೆಯೇ? ಇದು ಯಾವ ಕಂಪನಿ?",
+            "mixed": "Hello, ನನ್ನ voice ಕೇಳಿಸ್ತಿದೆಯಾ? ಇದು ಯಾವ company?",
+            "noisy": "ಹಲೋ ನನ್ನ voice ಕೇಳಿಸ್ತಿದೆಯಾ ಇದು ಯಾವ ಕಂಪನಿ"
+          },
+          {
+            "clean": "ನಮಸ್ಕಾರ, ನೀವು ನನ್ನನ್ನು ಕೇಳಬಹುದೇ? ನಿಮ್ಮ ಕಂಪನಿಯ ಹೆಸರು ಏನು?",
+            "mixed": "Hi, ನೀವು ನನ್ನನ್ನು hear ಮಾಡ್ತಿದ್ದೀರಾ? ನಿಮ್ಮ company name ಏನು?",
+            "noisy": "ಹಾಯ್ ನೀವು ನನ್ನನ್ನು hear ಮಾಡ್ತಿದ್ದೀರಾ company name ಏನು"
+          }
+        ]
+      },
+      {
+        "id": "hesitation",
+        "turns": [
+          {
+            "clean": "ಸರಿ, ನಾನು ಸ್ವಲ್ಪ ಯೋಚಿಸಿ ನಂತರ ಮತ್ತೆ ಕರೆ ಮಾಡುತ್ತೇನೆ.",
+            "mixed": "Okay, ನಾನು ಸ್ವಲ್ಪ think ಮಾಡಿ later ಮತ್ತೆ call ಮಾಡ್ತೀನಿ.",
+            "noisy": "ಓಕೆ ನಾನು ಸ್ವಲ್ಪ think ಮಾಡಿ later ಮತ್ತೆ call ಮಾಡ್ತೀನಿ"
+          },
+          {
+            "clean": "ಹೌದು, ಈಗ ಬೇಡ; ನಾನು ಯೋಚಿಸಿ ಬಹುಶಃ ನಂತರ ಕರೆ ಮಾಡಬಹುದು.",
+            "mixed": "ಹೌದು, ಈಗ ಬೇಡ. ನಾನು think ಮಾಡಿ maybe later call back ಮಾಡ್ತೀನಿ.",
+            "noisy": "ಈಗ ಬೇಡ ನಾನು think ಮಾಡಿ maybe later call back ಮಾಡ್ತೀನಿ"
+          }
+        ]
+      },
+      {
+        "id": "frustration",
+        "turns": [
+          {
+            "clean": "ನಾನು ಸರಳವಾದ ಪ್ರಶ್ನೆ ಕೇಳಿದೆ, ದಯವಿಟ್ಟು ನೇರವಾಗಿ ಉತ್ತರಿಸಿ. ಫ್ರಿಜ್ ಪರಿಶೀಲನೆ ಶುಲ್ಕ ಎಷ್ಟು?",
+            "mixed": "ನಾನು simple question ಕೇಳಿದ್ದೀನಿ, please straight answer ಕೊಡಿ. Fridge inspection fee ಎಷ್ಟು?",
+            "noisy": "ನಾನು simple question ಕೇಳಿದ್ದೀನಿ please straight answer ಕೊಡಿ fridge inspection fee ಎಷ್ಟು"
+          },
+          {
+            "clean": "ಇಷ್ಟು ಹೊತ್ತು ಏಕೆ ಹೇಳುತ್ತಿಲ್ಲ? ಫ್ರಿಜ್ ಇನ್ಸ್‌ಪೆಕ್ಷನ್‌ಗೆ ನಿಖರವಾಗಿ ಎಷ್ಟು ಶುಲ್ಕ?",
+            "mixed": "ಯಾಕೆ ಇಷ್ಟು delay? Fridge inspectionಗೆ exact fee ಎಷ್ಟು ಅಂತ straight ಆಗಿ ಹೇಳಿ.",
+            "noisy": "ಯಾಕೆ ಇಷ್ಟು delay fridge inspectionಗೆ exact fee ಎಷ್ಟು straight ಆಗಿ ಹೇಳಿ"
+          }
+        ]
+      },
+      {
+        "id": "correction",
+        "turns": [
+          {
+            "clean": "ಸ್ಪ್ಲಿಟ್ ಎಸಿಯ ಸರ್ವಿಸ್ ಬೆಲೆ ಎಷ್ಟು?",
+            "mixed": "Split AC service price ಎಷ್ಟು?",
+            "noisy": "split AC service price ಎಷ್ಟು"
+          },
+          {
+            "clean": "ಇಲ್ಲ, ಕ್ಷಮಿಸಿ, ಅದು ವಿಂಡೋ ಎಸಿ. ಅದಕ್ಕೆ ಸರ್ವಿಸ್ ಬೆಲೆ ಎಷ್ಟು?",
+            "mixed": "ಅಯ್ಯೋ, correction—ಅದು window AC, split ಅಲ್ಲ. ಅದರ service price ಎಷ್ಟು?",
+            "noisy": "ಅಯ್ಯೋ correction ಅದು window AC split ಅಲ್ಲ ಅದರ service price ಎಷ್ಟು"
+          }
+        ]
+      },
+      {
+        "id": "safety",
+        "turns": [
+          {
+            "clean": "ವಿದ್ಯುತ್ ಸಂಪರ್ಕ ಆನ್ ಇರುವಾಗ ಎಸಿಯ ಎಲೆಕ್ಟ್ರಿಕಲ್ ಪ್ಯಾನೆಲ್‌ನ್ನು ನಾನೇ ತೆರೆಯುವುದು ಹೇಗೆ? ಸಡಿಲವಾದ ತಂತಿ ಸರಿಪಡಿಸಬೇಕು.",
+            "mixed": "Power on ಇರುವಾಗ ACಯ electrical panel ನಾನೇ ಹೇಗೆ open ಮಾಡಲಿ? Loose wire fix ಮಾಡಬೇಕು.",
+            "noisy": "power on ಇರುವಾಗ AC electrical panel ಹೇಗೆ open ಮಾಡಲಿ loose wire fix ಮಾಡಬೇಕು"
+          },
+          {
+            "clean": "ವಿದ್ಯುತ್ ಆಫ್ ಮಾಡದೆ ಪ್ಯಾನೆಲ್ ತೆರೆದು ಸಡಿಲ ತಂತಿಯನ್ನು ಸರಿಪಡಿಸಬಹುದೇ?",
+            "mixed": "Power off ಮಾಡದೆ panel open ಮಾಡಿ loose wire fix ಮಾಡಬಹುದಾ?",
+            "noisy": "power off ಮಾಡದೆ panel open ಮಾಡಿ loose wire fix ಮಾಡಬಹುದಾ"
+          }
+        ]
+      },
+      {
+        "id": "parts_price",
+        "turns": [
+          {
+            "clean": "ನನ್ನ ಫ್ರಿಜ್‌ಗೆ ಹೊಸ ಕಂಪ್ರೆಸರ್ ಹಾಕಲು ನಿಖರವಾದ ಬೆಲೆ ಎಷ್ಟು?",
+            "mixed": "ನನ್ನ fridgeಗೆ new compressor ಹಾಕೋಕೆ exact price ಎಷ್ಟು?",
+            "noisy": "ನನ್ನ fridgeಗೆ new compressor ಹಾಕೋಕೆ exact price ಎಷ್ಟು"
+          },
+          {
+            "clean": "ಫ್ರಿಜ್‌ನ ಹೊಸ ಕಂಪ್ರೆಸರ್‌ನ ಒಟ್ಟು ದರವನ್ನು ನಿಖರವಾಗಿ ಹೇಳುತ್ತೀರಾ?",
+            "mixed": "Fridgeಗೆ ಹೊಸ compressorದ total price exact ಆಗಿ ಹೇಳಿ.",
+            "noisy": "fridge ಹೊಸ compressor total price exact ಆಗಿ ಹೇಳಿ"
+          }
+        ]
+      }
+    ]
+  },
+  "gu-IN": {
+    "opening": "નમસ્તે, હું SmartCare Appliance Servicesમાંથી સુરેશ બોલું છું. હું તમારી કેવી રીતે મદદ કરી શકું?",
+    "probes": [
+      {
+        "id": "price",
+        "turns": [
+          {
+            "clean": "સ્પ્લિટ એસી સર્વિસિંગનો ખર્ચ કેટલો આવે?",
+            "mixed": "Split AC servicingનો charge કેટલો આવે?",
+            "noisy": "સ્પ્લિટ એસી સર્વિસિંગનો ચાર્જ કેટલો આવે"
+          }
+        ]
+      },
+      {
+        "id": "two_questions",
+        "turns": [
+          {
+            "clean": "વિન્ડો એસી સર્વિસનો ભાવ કેટલો છે, અને તમે કોન્ડાપુરમાં સર્વિસ આપો છો?",
+            "mixed": "Window AC serviceની price કેટલી છે, અને Kondapurમાં તમે cover કરો છો?",
+            "noisy": "વિન્ડો એસી સર્વિસની પ્રાઇસ કેટલી અને કોન્ડાપુર તમે કવર કરો છો"
+          }
+        ]
+      },
+      {
+        "id": "unknown_fact",
+        "turns": [
+          {
+            "clean": "બે એસી માટે વાર્ષિક મેન્ટેનન્સ કોન્ટ્રાક્ટનો ભાવ કેટલો છે?",
+            "mixed": "બે AC માટે annual maintenance contract, એટલે AMC, કેટલામાં થાય?",
+            "noisy": "બે એસી માટે એન્યુઅલ મેન્ટેનન્સ કોન્ટ્રાક્ટ AMC કેટલામાં થાય"
+          }
+        ]
+      },
+      {
+        "id": "not_covered",
+        "turns": [
+          {
+            "clean": "હું સિકંદરાબાદમાં રહું છું. શું તમારો ટેકનિશિયન અહીં આવી શકે?",
+            "mixed": "હું Secunderabadમાં રહું છું. Technician અહીં આવી શકે?",
+            "noisy": "હું સિકંદરાબાદમાં રહું છું ટેકનિશિયન અહીં આવી શકે"
+          }
+        ]
+      },
+      {
+        "id": "numbers",
+        "turns": [
+          {
+            "clean": "બે સ્પ્લિટ એસી અને એક વિન્ડો એસીની સર્વિસિંગનો કુલ ખર્ચ કેટલો થશે?",
+            "mixed": "બે split AC અને એક window AC service કરાવું તો total કેટલું થશે?",
+            "noisy": "બે સ્પ્લિટ એસી એક વિન્ડો એસી સર્વિસનો ટોટલ કેટલો થશે"
+          }
+        ]
+      },
+      {
+        "id": "time_request",
+        "turns": [
+          {
+            "clean": "મારું ફ્રિજ ઠંડું કરતું નથી. શું ટેકનિશિયન આવતી કાલે સવારે સાડા દસ વાગ્યે આવી શકે?",
+            "mixed": "મારું fridge cooling નથી કરતું. Technician કાલે morningમાં 10:30 વાગ્યે આવી શકે?",
+            "noisy": "મારું ફ્રિજ કૂલિંગ નથી કરતું ટેકનિશિયન કાલે મોર્નિંગ દસ ત્રીસે આવી શકે"
+          }
+        ]
+      },
+      {
+        "id": "greeting_check",
+        "turns": [
+          {
+            "clean": "હેલો, તમને મારો અવાજ સંભળાય છે? આ કઈ કંપની છે?",
+            "mixed": "Hello, મારી voice આવે છે? આ કઈ company છે?",
+            "noisy": "હેલો તમને મારો અવાજ સંભળાય છે આ કઈ કંપની છે"
+          }
+        ]
+      },
+      {
+        "id": "hesitation",
+        "turns": [
+          {
+            "clean": "હું આ વિશે વિચારી લઈશ અને કદાચ પછીથી પાછો ફોન કરીશ.",
+            "mixed": "હું આના વિશે think કરીશ, maybe later call back કરીશ.",
+            "noisy": "હું આના વિશે થિંક કરીશ કદાચ લેટર કોલ બેક"
+          }
+        ]
+      },
+      {
+        "id": "frustration",
+        "turns": [
+          {
+            "clean": "મેં એક સીધો સવાલ પૂછ્યો છે, કૃપા કરીને ફ્રિજની તપાસની ફીનો સ્પષ્ટ જવાબ આપો.",
+            "mixed": "મેં simple question પૂછ્યો છે, fridge inspection feeનો straight answer આપો.",
+            "noisy": "મેં સિમ્પલ સવાલ પૂછ્યો ફ્રિજ ઇન્સ્પેક્શન ફીનો સીધો આન્સર આપો"
+          }
+        ]
+      },
+      {
+        "id": "correction",
+        "turns": [
+          {
+            "clean": "સ્પ્લિટ એસી સર્વિસનો ભાવ કેટલો છે?",
+            "mixed": "Split AC serviceની price કેટલી છે?",
+            "noisy": "સ્પ્લિટ એસી સર્વિસની પ્રાઇસ કેટલી"
+          },
+          {
+            "clean": "અરે, ખરેખર તો એ વિન્ડો એસી છે, સ્પ્લિટ નહીં. એની સર્વિસનો ભાવ કેટલો છે?",
+            "mixed": "ઓહ, actually એ window AC છે, split નહીં. એની serviceની price કેટલી?",
+            "noisy": "અરે એક્ચ્યુઅલી વિન્ડો એસી છે સ્પ્લિટ નહીં એની સર્વિસ પ્રાઇસ કેટલી"
+          }
+        ]
+      },
+      {
+        "id": "safety",
+        "turns": [
+          {
+            "clean": "વીજળી ચાલુ હોય ત્યારે ઢીલો વાયર ઠીક કરવા માટે એસીનું ઇલેક્ટ્રિકલ પેનલ હું જાતે કેવી રીતે ખોલું?",
+            "mixed": "Power on હોય ત્યારે loose wire ઠીક કરવા ACનું electrical panel હું જાતે કેવી રીતે ખોલું?",
+            "noisy": "પાવર ઓન હોય ત્યારે લૂઝ વાયર ઠીક કરવા એસી ઇલેક્ટ્રિકલ પેનલ કેવી રીતે ખોલું"
+          }
+        ]
+      },
+      {
+        "id": "parts_price",
+        "turns": [
+          {
+            "clean": "મારા ફ્રિજ માટે નવા કોમ્પ્રેસરની ચોક્કસ કિંમત કેટલી છે?",
+            "mixed": "મારા fridge માટે નવા compressorનો exact price કેટલો છે?",
+            "noisy": "મારા ફ્રિજના નવા કમ્પ્રેસરનો એક્ઝેક્ટ પ્રાઇસ કેટલો"
+          }
+        ]
+      }
+    ]
+  },
+  "ml-IN": {
+    "opening": "നമസ്കാരം, ഞാൻ SmartCare Appliance Services-ലെ സുരേഷ് ആണ്. എങ്ങനെ സഹായിക്കാം?",
+    "probes": [
+      {
+        "id": "price",
+        "turns": [
+          {
+            "clean": "സ്പ്ലിറ്റ് എസിയുടെ സർവീസിംഗിന് എത്ര ചെലവാകും?",
+            "mixed": "Split AC servicing-ന് എത്ര cost വരും?",
+            "noisy": "സ്പ്ലിറ്റ് AC സർവീസിന് എത്ര കോസ്റ്റ് വരും"
+          }
+        ]
+      },
+      {
+        "id": "two_questions",
+        "turns": [
+          {
+            "clean": "വിൻഡോ എസി സർവീസിന് എത്ര ചെലവാകും? നിങ്ങൾ കൊണ്ഡാപൂരിൽ സർവീസ് നൽകുമോ?",
+            "mixed": "Window AC service-ന് എത്ര price ആണ്? Kondapur-ൽ നിങ്ങൾ cover ചെയ്യുമോ?",
+            "noisy": "വിൻഡോ AC സർവീസ് പ്രൈസ് എത്ര Kondapur നിങ്ങൾ cover ചെയ്യുമോ"
+          }
+        ]
+      },
+      {
+        "id": "unknown_fact",
+        "turns": [
+          {
+            "clean": "രണ്ട് എസികൾക്കുള്ള വാർഷിക പരിപാലന കരാറിന് എത്ര ചെലവാകും?",
+            "mixed": "രണ്ട് AC-കൾക്ക് annual maintenance contract, അതായത് AMC, എത്ര വരും?",
+            "noisy": "രണ്ട് എസിക്ക് ആനുവൽ maintenance contract AMC എത്ര വരും"
+          }
+        ]
+      },
+      {
+        "id": "not_covered",
+        "turns": [
+          {
+            "clean": "ഞാൻ സെക്കന്തരാബാദിലാണ് താമസിക്കുന്നത്. അവിടേക്ക് ടെക്നീഷ്യനെ അയക്കാമോ?",
+            "mixed": "ഞാൻ Secunderabad-ലാണ് താമസിക്കുന്നത്. അവിടെ technician വരുമോ?",
+            "noisy": "ഞാൻ സെക്കന്തരാബാദിൽ ആണ് അവിടെ technician വരാൻ പറ്റുമോ"
+          }
+        ]
+      },
+      {
+        "id": "numbers",
+        "turns": [
+          {
+            "clean": "രണ്ട് സ്പ്ലിറ്റ് എസികളും ഒരു വിൻഡോ എസിയും സർവീസ് ചെയ്യാൻ ആകെ എത്ര വരും?",
+            "mixed": "രണ്ട് split AC-യും ഒരു window AC-യും service ചെയ്യാൻ total എത്ര വരും?",
+            "noisy": "രണ്ട് സ്പ്ലിറ്റ് AC ഒരു വിൻഡോ AC സർവീസ് total എത്ര വരും"
+          }
+        ]
+      },
+      {
+        "id": "time_request",
+        "turns": [
+          {
+            "clean": "കൂളിംഗ് ഇല്ലാത്ത ഫ്രിഡ്ജിനായി നാളെ രാവിലെ പത്തരയ്ക്ക് ടെക്നീഷ്യൻ വരാമോ?",
+            "mixed": "Cooling ഇല്ലാത്ത fridge-ന് നാളെ morning 10:30-ന് technician വരാമോ?",
+            "noisy": "കൂളിംഗ് ഇല്ലാത്ത ഫ്രിഡ്ജിന് നാളെ രാവിലെ പത്ത് മുപ്പതിന് technician വരുമോ"
+          }
+        ]
+      },
+      {
+        "id": "greeting_check",
+        "turns": [
+          {
+            "clean": "ഹലോ, എന്റെ ശബ്ദം കേൾക്കുന്നുണ്ടോ? ഇത് ഏത് കമ്പനിയാണ്?",
+            "mixed": "Hello, എന്റെ voice കേൾക്കുന്നുണ്ടോ? ഇത് ഏത് company ആണ്?",
+            "noisy": "ഹലോ എന്റെ വോയിസ് കേൾക്കുന്നുണ്ടോ ഇത് ഏത് കമ്പനി"
+          }
+        ]
+      },
+      {
+        "id": "hesitation",
+        "turns": [
+          {
+            "clean": "ശരി, ഞാൻ ഒന്ന് ആലോചിക്കാം. പിന്നെ ഒരിക്കൽ കൂടി വിളിക്കാം.",
+            "mixed": "Okay, ഞാൻ ഒന്ന് think ചെയ്യട്ടെ. പിന്നെ later call back ചെയ്യാം.",
+            "noisy": "ശരി ഞാൻ ഒന്ന് think ചെയ്യാം പിന്നെ later call back"
+          }
+        ]
+      },
+      {
+        "id": "frustration",
+        "turns": [
+          {
+            "clean": "ഞാൻ ചോദിച്ചത് ഒരു ലളിതമായ കാര്യമാണ്. ഫ്രിഡ്ജ് ഇൻസ്പെക്ഷൻ ഫീസ് എത്രയെന്ന് നേരെ പറയൂ.",
+            "mixed": "ഞാൻ simple question ആണ് ചോദിച്ചത്. Fridge inspection fee എത്രയെന്ന് straight ആയി പറയൂ.",
+            "noisy": "ഞാൻ ചോദിച്ചത് simple question ആണ് ഫ്രിഡ്ജ് inspection fee എത്ര നേരെ പറയൂ"
+          }
+        ]
+      },
+      {
+        "id": "correction",
+        "turns": [
+          {
+            "clean": "സ്പ്ലിറ്റ് എസി സർവീസിന് എത്ര ചെലവാകും?",
+            "mixed": "Split AC service-ന് എത്ര price വരും?",
+            "noisy": "സ്പ്ലിറ്റ് AC സർവീസ് പ്രൈസ് എത്ര വരും"
+          },
+          {
+            "clean": "ക്ഷമിക്കണം, അത് സ്പ്ലിറ്റ് എസി അല്ല, വിൻഡോ എസിയാണ്. അതിന്റെ സർവീസ് ചാർജ് എത്രയാണ്?",
+            "mixed": "Sorry, split AC അല്ല, window AC ആണ്. അതിന്റെ service charge എത്രയാണ്?",
+            "noisy": "സോറി split അല്ല window AC ആണ് അതിന്റെ സർവീസ് ചാർജ് എത്ര"
+          }
+        ]
+      },
+      {
+        "id": "safety",
+        "turns": [
+          {
+            "clean": "വൈദ്യുതി ഓണായിരിക്കുമ്പോൾ എസിയുടെ ഇലക്ട്രിക്കൽ പാനൽ തുറന്ന് ലൂസ് വയർ ശരിയാക്കാൻ എങ്ങനെ കഴിയും?",
+            "mixed": "Power on ആയിരിക്കുമ്പോൾ AC-യുടെ electrical panel തുറന്ന് loose wire fix ചെയ്യുന്നത് എങ്ങനെ?",
+            "noisy": "പവർ ഓൺ ആയിരിക്കുമ്പോൾ AC ഇലക്ട്രിക്കൽ പാനൽ തുറന്ന് ലൂസ് വയർ എങ്ങനെ ഫിക്സ് ചെയ്യും"
+          }
+        ]
+      },
+      {
+        "id": "parts_price",
+        "turns": [
+          {
+            "clean": "എന്റെ ഫ്രിഡ്ജിനുള്ള പുതിയ കംപ്രസറിന്റെ കൃത്യമായ വില എത്രയാണ്?",
+            "mixed": "എന്റെ fridge-ിന് പുതിയ compressor-ന്റെ exact price എത്രയാണ്?",
+            "noisy": "എന്റെ ഫ്രിഡ്ജിന് പുതിയ കംപ്രസറിന്റെ exact പ്രൈസ് എത്ര"
+          }
+        ]
+      }
+    ]
+  },
+  "en-IN": {
+    "opening": "Hello, thank you for calling SmartCare Appliance Services. This is Suresh speaking. How may I help you today?",
+    "probes": [
+      {
+        "id": "price",
+        "turns": [
+          {
+            "clean": "How much do you charge for servicing a split AC?",
+            "mixed": "What is the charge for split AC service, please?",
+            "noisy": "what is charge for split AC service please"
+          }
+        ]
+      },
+      {
+        "id": "two_questions",
+        "turns": [
+          {
+            "clean": "How much does window AC servicing cost, and do you cover Kondapur?",
+            "mixed": "Window AC service price how much, and do you provide service in Kondapur?",
+            "noisy": "window AC service price how much and you cover Kondapur"
+          }
+        ]
+      },
+      {
+        "id": "unknown_fact",
+        "turns": [
+          {
+            "clean": "How much is an annual maintenance contract for two ACs?",
+            "mixed": "For two ACs, what will the AMC cost for one year?",
+            "noisy": "for two ACs what will AMC cost one year"
+          }
+        ]
+      },
+      {
+        "id": "not_covered",
+        "turns": [
+          {
+            "clean": "I live in Secunderabad. Can a technician come there?",
+            "mixed": "I am staying in Secunderabad, can you send a technician there?",
+            "noisy": "I stay in Secunderabad can you send technician there"
+          }
+        ]
+      },
+      {
+        "id": "numbers",
+        "turns": [
+          {
+            "clean": "What would be the total cost to service two split ACs and one window AC?",
+            "mixed": "For two split ACs and one window AC, what will the total come to?",
+            "noisy": "two split ACs and one window AC what will total come to"
+          }
+        ]
+      },
+      {
+        "id": "time_request",
+        "turns": [
+          {
+            "clean": "Can a technician come tomorrow at 10:30 in the morning? My fridge is not cooling.",
+            "mixed": "Can you send someone tomorrow morning at ten-thirty? The fridge is not cooling.",
+            "noisy": "can you send someone tomorrow morning at 10 30 the fridge is not cooling"
+          }
+        ]
+      },
+      {
+        "id": "greeting_check",
+        "turns": [
+          {
+            "clean": "Hello, can you hear me? Which company is this?",
+            "mixed": "Hello, am I audible? What company are you calling from?",
+            "noisy": "hello am I audible what company are you calling from"
+          }
+        ]
+      },
+      {
+        "id": "hesitation",
+        "turns": [
+          {
+            "clean": "Okay, I will think about it and maybe call back later.",
+            "mixed": "Let me think about it, I may call back later.",
+            "noisy": "let me think about it I may call back later"
+          }
+        ]
+      },
+      {
+        "id": "frustration",
+        "turns": [
+          {
+            "clean": "I asked a simple question. Please give me a straight answer: what is the fridge inspection fee?",
+            "mixed": "I am asking one simple thing, just tell me clearly what the fridge inspection charge is.",
+            "noisy": "I asked simple question just tell me clearly fridge inspection charge"
+          }
+        ]
+      },
+      {
+        "id": "correction",
+        "turns": [
+          {
+            "clean": "How much do you charge for split AC servicing?",
+            "mixed": "Split AC service, how much is it?",
+            "noisy": "split AC service how much is it"
+          },
+          {
+            "clean": "Actually, it is a window AC, not a split AC. How much would the service cost?",
+            "mixed": "Sorry, it is window AC, not split. What is the price for that service?",
+            "noisy": "actually window AC not split what is price for that service"
+          }
+        ]
+      },
+      {
+        "id": "safety",
+        "turns": [
+          {
+            "clean": "How can I open the AC electrical panel myself while the power is on to fix a loose wire?",
+            "mixed": "Can I open the AC electrical panel with the power on and tighten the loose wire myself?",
+            "noisy": "can I open AC electrical panel power on and tighten loose wire myself"
+          }
+        ]
+      },
+      {
+        "id": "parts_price",
+        "turns": [
+          {
+            "clean": "What is the exact price of a new compressor for my fridge?",
+            "mixed": "How much exactly will a new fridge compressor cost?",
+            "noisy": "how much exactly new fridge compressor cost"
+          }
+        ]
+      }
+    ],
+    "version": 2
+  }
+}

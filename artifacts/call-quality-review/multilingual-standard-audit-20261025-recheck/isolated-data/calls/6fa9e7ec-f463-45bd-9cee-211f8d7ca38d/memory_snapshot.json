@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "turday, ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ open ಇರ್ತೀವಿ.\nuser: ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: AC servicing ಮತ್ತು fridge inspection ಬೆಲೆ ಎಷ್ಟು? Replacement parts ಅದರಲ್ಲಿ ಸೇರಿವೆಯಾ?\nassistant: Parts extra irutte, customer approval nanthara mathra haakuvevu. Inspection madade fixed repair quote neduvarilla. Neevu service visit request madalu ishtapaduveya?\nuser: ನನಗೆ AC servicing ಬೇಡ, ಆದರೆ fridge inspection ಬೇಕು. ಸಹಾಯ ಮಾಡುತ್ತೀರಾ?\nassistant: ಖಂಡಿತ, fridge inspection-ಗೆ ನಾವು ಸಹಾಯ ಮಾಡ್ತೀವಿ. Visit request ಮಾಡೋಕೆ ನಿಮ್ಮ ಹೆಸರು, locality ಮತ್ತೆ ಯಾವ date-ಗೆ ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?."
+}

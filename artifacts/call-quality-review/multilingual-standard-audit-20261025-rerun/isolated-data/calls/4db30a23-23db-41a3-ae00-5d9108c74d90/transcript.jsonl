@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.", "ts": "2026-10-25T19:20:02.677556Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "கோபப்பட வேண்டாம். இந்த ஆறு வார online class-க்கான மொத்த கட்டணம் six thousand four hundred ninety nine rupees. உங்களுக்கு learning goal என்னன்னு தெரிஞ்சுக்கலாமா?", "ts": "2026-10-25T19:20:03.925958Z", "brain_latency_ms": 1231}
+{"seq": 3, "role": "user", "text": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.", "ts": "2026-10-25T19:20:03.943746Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.", "ts": "2026-10-25T19:20:03.960114Z", "brain_latency_ms": 2}

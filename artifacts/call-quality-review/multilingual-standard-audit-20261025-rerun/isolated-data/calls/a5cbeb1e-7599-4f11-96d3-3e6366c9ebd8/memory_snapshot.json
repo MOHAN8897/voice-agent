@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "l. If you need support, please contact local emergency services or a trusted professional. Is there something else I can assist you with today?\nuser: Fine, leave that topic. Please answer the original business question about price and conditions.\nassistant: Sure. Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. Would you like to hear more about either service?\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

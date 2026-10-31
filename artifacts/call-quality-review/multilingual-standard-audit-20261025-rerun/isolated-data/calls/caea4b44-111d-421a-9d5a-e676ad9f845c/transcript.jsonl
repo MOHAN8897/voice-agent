@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।", "ts": "2026-10-25T18:55:19.049804Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Basic service four hundred ninety nine rupees की है और puncture repair one hundred twenty rupees का होता है। Parts का charge approval के बाद ही लगेगा। आपको कौन सी service की ज़रूरत है?", "ts": "2026-10-25T18:55:21.001985Z", "brain_latency_ms": 1947}
+{"seq": 3, "role": "user", "text": "अभी कुछ book या save मत कीजिए। पहले मेरा सवाल बताइए: साइकिल basic service और puncture repair की कीमत क्या है? क्या parts शामिल हैं?", "ts": "2026-10-25T18:55:21.035862Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Basic service four hundred ninety nine rupees की है और puncture repair one hundred twenty rupees का होता है। Parts extra only after approval होते हैं, वो included नहीं हैं। आपको किस तरह की repair चाहिए?", "ts": "2026-10-25T18:55:23.384680Z", "brain_latency_ms": 2338}
+{"seq": 5, "role": "user", "text": "ठीक है, धन्यवाद।", "ts": "2026-10-25T18:55:23.395862Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ठीक है। क्या आपको अभी किसी specific repair की ज़रूरत है, या और कुछ जानना है?", "ts": "2026-10-25T18:55:25.417988Z", "brain_latency_ms": 2013}
+{"seq": 7, "role": "user", "text": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।", "ts": "2026-10-25T18:55:25.475002Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-25T18:55:25.481954Z", "brain_latency_ms": 1}

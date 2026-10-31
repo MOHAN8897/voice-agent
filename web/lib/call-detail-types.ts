@@ -18,6 +18,18 @@ export type TraceTurn = {
   memory_ops_applied?: number;
   memory_merge_ms?: number;
   errors?: string[];
+  input_tokens?: number;
+  output_tokens?: number;
+  cached_tokens?: number;
+  cache_write_tokens?: number;
+  input_audio_tokens?: number;
+  output_audio_tokens?: number;
+  cost_usd?: number;
+  cost_inr?: number;
+  llm_model?: string;
+  pipeline?: string;
+  user_text?: string;
+  assistant_text?: string;
 };
 
 export type TracePayload = {
@@ -34,10 +46,48 @@ export type MemoryEvent = {
   at?: string;
 };
 
+export type CallUsage = {
+  pipeline?: string;
+  llm_model?: string;
+  input_tokens?: number;
+  output_tokens?: number;
+  input_audio_tokens?: number;
+  output_audio_tokens?: number;
+  input_image_tokens?: number;
+  cached_tokens?: number;
+  turns?: number;
+  cost_usd?: number;
+  cost_inr?: number;
+  duration_sec?: number;
+  cost_usd_per_min?: number;
+  cost_inr_per_min?: number;
+  model_cost_usd_per_min?: number;
+  model_cost_inr_per_min?: number;
+  telnyx_usd_per_min?: number;
+  telnyx_inr_per_min?: number;
+  gemini_list_audio_inr_per_min?: number;
+  gemini_list_audio_input_usd_per_min?: number;
+  gemini_list_audio_output_usd_per_min?: number;
+  fx_rate_inr?: number;
+  fx_source?: string;
+  fx_as_of?: string;
+  gst_inr?: number;
+  model_cost_usd?: number;
+  model_cost_inr?: number;
+  telnyx_usd?: number;
+  telnyx_inr?: number;
+  post_call_transcript_usd?: number;
+  post_call_transcript_inr?: number;
+  post_call_transcript_model?: string;
+  transcription_billing?: string;
+};
+
 export type CallMeta = {
   call_id?: string;
   agent_id?: string;
   channel?: string;
+  pipeline?: string;
+  caller_id?: string;
   tier?: string;
   disposition?: string;
   duration_sec?: number;
@@ -52,6 +102,21 @@ export type CallMeta = {
   resolved_stack?: Record<string, unknown>;
   finalization?: Record<string, unknown>;
   status?: string;
+  usage?: CallUsage;
+  cost_usd?: number;
+  cost_inr?: number;
+  cost_inr_per_min?: number;
+  model_cost_inr?: number;
+  telnyx_inr?: number;
+  post_call_transcript?: { status?: string; model?: string; lines?: number };
+  transcript_source?: string;
+  audio?: { mix?: boolean; user?: boolean; agent?: boolean };
+  /**
+   * Set by the API when it withheld the platform-internal parts of the record
+   * (wholesale carrier cost, upstream model rates, resolved stack, PSTN forensics).
+   * The UI uses it to show the customer-facing view instead of empty rows.
+   */
+  internal_fields_hidden?: boolean;
 };
 
 export type MemorySnapshot = {
@@ -68,8 +133,13 @@ export type OutcomePayload = {
   summary_en?: string;
   next_action?: string | null;
   extracted_fields?: Record<string, string>;
+  facts?: Record<string, string>;
+  status_tags?: string[];
   objections?: string[];
   notes?: string | null;
+  generation_ok?: boolean;
+  generated_at?: string;
+  model?: string;
 };
 
 export type CallDetailData = {
@@ -92,3 +162,50 @@ export type UnifiedTimelineEvent = {
   ms?: number;
   ts?: string;
 };
+
+export type CrmContact = {
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  email?: string;
+  company?: string;
+  disposition?: string;
+  summary?: string;
+  next_action?: string | null;
+  call_id?: string;
+  duration_sec?: number;
+  started_at?: string;
+};
+
+export type CallAnalyticsData = {
+  call_id: string;
+  sentiment: "positive" | "neutral" | "negative";
+  sentiment_score: number;
+  sentiment_label: string;
+  resolution_status: "resolved" | "action_required" | "closed_lost" | "invalid" | "inconclusive";
+  disposition: string;
+  disposition_confidence: number;
+  summary_en: string;
+  summary_te?: string;
+  next_action?: string | null;
+  objections?: string[];
+  status_tags?: string[];
+  facts?: Record<string, string>;
+  duration_sec: number;
+  started_at?: string;
+  has_recording: boolean;
+  recording_source: string;
+  talk_time: {
+    user_turns: number;
+    agent_turns: number;
+    user_words: number;
+    agent_words: number;
+    total_words: number;
+    user_ratio: number;
+    agent_ratio: number;
+  };
+  contact: CrmContact;
+  crm_sync_ready: boolean;
+};
+

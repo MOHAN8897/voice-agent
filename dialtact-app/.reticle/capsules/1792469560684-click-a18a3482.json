@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "origin": "failed-assert",
+  "expected": "element \"Work email\"",
+  "observed": "no 'textbox' named 'Work email'; saw: Work Email, Password",
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "",
+        "source": {
+          "file": "src/components/Navbar.jsx",
+          "line": 102,
+          "column": 11
+        }
+      },
+      "action": "click"
+    }
+  ],
+  "id": "1792469560684-click-a18a3482",
+  "createdAt": 1792469560684,
+  "seen": 1,
+  "lastSeenAt": 1792469560684
+}

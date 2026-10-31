@@ -1,0 +1,74 @@
+{
+  "key": "cleaning-en-IN-none-3_complete_rejection",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "69c3a1f9-9bb0-5fc5-b8af-5cf5e13d0283",
+  "call_id": "b8de8f8e-3b11-4afd-983a-e502f1717519",
+  "session_id": "audit-cleaning-en-IN-none-3_complete_rejection-fb086834",
+  "compiled_checksum": "5a25d6a9a1e56b4248a00a7ed913ce26430c3226a93d4ae617e7e7e2d1c9293a",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "No thank you. I do not want your service or product. Please end this call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.078,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "b8de8f8e-3b11-4afd-983a-e502f1717519",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "23682e89b99a0ffbe82046a24f58960907ce34dea61daea3adc20a16c6e3540c",
+  "prompt_chars": 17509,
+  "opening_seeded": "Hello, I am Nila, an AI assistant with FreshNest Cleaning. Am I speaking with the homeowner today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.078,
+  "hangup_count": 1,
+  "source_signature": "00b9e42dcca6c1a17a9c97073faea0d8bd0c70cea6df1df91b5bda50b8604b4c"
+}

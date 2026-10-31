@@ -2,10 +2,11 @@ import { apiGet } from "@/lib/api";
 import { Panel } from "@/components/console/Panel";
 import { EmptyState } from "@/components/console/EmptyState";
 
-export default async function AgentVersionsPage({ params }: { params: { id: string } }) {
+export default async function AgentVersionsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let versions: unknown[] = [];
   try {
-    const data = await apiGet<{ versions?: unknown[] }>(`/api/agents/${params.id}/business-brain/versions`);
+    const data = await apiGet<{ versions?: unknown[] }>(`/api/agents/${id}/business-brain/versions`);
     versions = data.versions || [];
   } catch {
     versions = [];

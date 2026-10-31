@@ -1,0 +1,104 @@
+{
+  "version": 2,
+  "name": "drive-journey-34a999",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790923766982,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Open builder"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-voice",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 580,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Preview Voice"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Open builder"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-voice",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 584,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Preview Voice"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "voice-preview-spoke"
+        }
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "cursor-vscode"
+  }
+}

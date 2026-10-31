@@ -1,0 +1,223 @@
+{
+  "key": "cleaning-en-IN-none-2_future_interest",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "69c3a1f9-9bb0-5fc5-b8af-5cf5e13d0283",
+  "call_id": "042b4e82-a024-4d70-bada-21981df6d86a",
+  "session_id": "audit-cleaning-en-IN-none-2_future_interest-77aa62ca",
+  "compiled_checksum": "5a25d6a9a1e56b4248a00a7ed913ce26430c3226a93d4ae617e7e7e2d1c9293a",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 222,
+      "sse_content_preview": "No problem at all. Sofa cleaning is 349 rupees per seat with a minimum of three seats, and kitchen cleaning is 1599 rupees total. Would you like to share your preferred name and locality so we can note this for next month?",
+      "sse_content_tail": "No problem at all. Sofa cleaning is 349 rupees per seat with a minimum of three seats, and kitchen cleaning is 1599 rupees total. Would you like to share your preferred name and locality so we can note this for next month?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 54,
+        "prompt_tokens": 4109,
+        "total_tokens": 4163,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "No problem at all. Sofa cleaning is 349 rupees per seat with a minimum of three seats, and kitchen cleaning is 1599 rupees total. Would you like to share your preferred name and locality so we can note this for next month?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4109,
+          "output_tokens": 54,
+          "total_tokens": 4163
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.75
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 117,
+      "sse_content_preview": "Our working hours are Monday to Saturday from 9am to 6pm. Would you like to go ahead with an enquiry for team review?",
+      "sse_content_tail": "Our working hours are Monday to Saturday from 9am to 6pm. Would you like to go ahead with an enquiry for team review?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 30,
+        "prompt_tokens": 4180,
+        "total_tokens": 4210,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our working hours are Monday to Saturday from 9am to 6pm. Would you like to go ahead with an enquiry for team review?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4180,
+          "output_tokens": 30,
+          "total_tokens": 4210
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.593
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "No problem at all. Sofa cleaning is three hundred forty nine rupees per seat with a minimum of three seats, and kitchen cleaning is one thousand five hundred ninety nine rupees total. Would you like to share your preferred name and locality so we can note this for next month?",
+      "turn": 1,
+      "at": 1.859
+    },
+    {
+      "text": "Our working hours are Monday to Saturday from 9am to 6pm. Would you like to go ahead with an enquiry for team review?",
+      "turn": 2,
+      "at": 3.937
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 3,
+      "at": 3.984
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.",
+      "spoken": "No problem at all. Sofa cleaning is three hundred forty nine rupees per seat with a minimum of three seats, and kitchen cleaning is one thousand five hundred ninety nine rupees total. Would you like to share your preferred name and locality so we can note this for next month?",
+      "elapsed_s": 1.859,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?",
+      "spoken": "Our working hours are Monday to Saturday from 9am to 6pm. Would you like to go ahead with an enquiry for team review?",
+      "elapsed_s": 2.062,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 4.047,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "042b4e82-a024-4d70-bada-21981df6d86a",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "23682e89b99a0ffbe82046a24f58960907ce34dea61daea3adc20a16c6e3540c",
+  "prompt_chars": 17509,
+  "opening_seeded": "Hello, I am Nila, an AI assistant with FreshNest Cleaning. Am I speaking with the homeowner today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "No problem at all. Sofa cleaning is three hundred forty nine rupees per seat with a minimum of three seats, and kitchen cleaning is one thousand five hundred ninety nine rupees total. Would you like to share your preferred name and locality so we can note this for next month?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "Our working hours are Monday to Saturday from 9am to 6pm. Would you like to go ahead with an enquiry for team review?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.047,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

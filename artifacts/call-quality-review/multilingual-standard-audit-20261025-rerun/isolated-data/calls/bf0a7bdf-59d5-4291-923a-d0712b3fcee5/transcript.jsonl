@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.", "ts": "2026-10-25T18:33:15.198817Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "A basic service costs four hundred ninety nine rupees and a puncture repair is one hundred twenty rupees. Parts are extra only after approval. We are open Tuesday to Sunday from 9 am to 6 pm. Would you like me to note this interest for next month?", "ts": "2026-10-25T18:33:17.349049Z", "brain_latency_ms": 2137}
+{"seq": 3, "role": "user", "text": "Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?", "ts": "2026-10-25T18:33:17.359766Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Our timings are Tuesday to Sunday, from 9 AM to 6 PM. Which repair are you considering?", "ts": "2026-10-25T18:33:19.484821Z", "brain_latency_ms": 2119}
+{"seq": 5, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T18:33:19.527071Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T18:33:19.530387Z", "brain_latency_ms": 1}

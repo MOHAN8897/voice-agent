@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-agent-workspace-navigation-exposes-expansion-and": {
+      "declaredAt": 1793087435630,
+      "id": "flow:drive-agent-workspace-navigation-exposes-expansion-and",
+      "state": "declared",
+      "statement": "Agent workspace navigation exposes expansion and the settings save action without losing the editor.",
+      "status": "proposed",
+      "subject": "drive-agent-workspace-navigation-exposes",
+      "surface": {
+        "flow": "drive-agent-workspace-navigation-exposes-expansion-and"
+      },
+      "updatedAt": 1793087435641
+    }
+  },
+  "subject": "drive-agent-workspace-navigation-exposes",
+  "version": 1
+}

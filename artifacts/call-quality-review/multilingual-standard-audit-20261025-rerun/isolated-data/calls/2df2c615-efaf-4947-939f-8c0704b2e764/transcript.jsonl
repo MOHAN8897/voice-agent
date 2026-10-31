@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "No thank you. I do not want your service or product. Please end this call.", "ts": "2026-10-25T18:39:31.251153Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T18:39:31.257547Z", "brain_latency_ms": 1}

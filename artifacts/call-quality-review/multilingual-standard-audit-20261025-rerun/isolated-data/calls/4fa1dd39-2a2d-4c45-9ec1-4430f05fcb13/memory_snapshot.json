@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "కు సమాధానం చెప్పండి: సైకిల్ basic service, puncture repair ధరలు ఎంత? Parts కూడా ఆ ధరలో ఉన్నాయా?\nassistant: Basic service four hundred ninety nine rupees అండి, పంక్చర్ repair one hundred twenty rupees అవుతుంది. Parts ఖర్చు మాత్రం మీ అనుమతి తీసుకున్న తర్వాతే అదనంగా ఉంటాయి. మీకు ఏ repair కావాలని అనుకుంటున్నారు?\nuser: Basic service వద్దు, కానీ puncture repair కావాలి. చేయగలరా?\nassistant: తప్పకుండా అండి, పంక్చర్ repair one hundred twenty rupees కే చేస్తాము. మరి మీ పేరు, locality వివరాలు చెప్తారా అండి? మీ permission తో మా team కి ఒక enquiry లాగా save చేస్తాము. ఇది అపాయింట్‌మెంట్ confirm చేయదు. సరేనా?"
+}

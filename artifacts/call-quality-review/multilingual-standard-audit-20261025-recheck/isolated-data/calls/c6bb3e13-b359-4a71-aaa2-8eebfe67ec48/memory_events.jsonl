@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-25T17:07:09.328911Z", "source": "model", "operations": [{"op": "append_context", "value": "Caller asked unrelated cricket match question and what business offers. Ananya explained BrightPath Skills adult beginner 6-week online Python course."}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T17:07:12.643664Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

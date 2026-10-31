@@ -1,0 +1,216 @@
+[
+  {
+    "language": "en-IN",
+    "variant": "tools_full_schema",
+    "result": {
+      "done": true,
+      "text": "Thank you for sharing those details, Audit Customer. Let me save this quote request for our team review now.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4228,
+        "output_tokens": 305,
+        "total_tokens": 4533,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "update_summary",
+            "key": "name",
+            "value": "Audit Customer"
+          },
+          {
+            "op": "update_summary",
+            "key": "email",
+            "value": "audit.customer@example.invalid"
+          },
+          {
+            "op": "update_summary",
+            "key": "request",
+            "value": "Quote for 200 wedding invitations"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly requested saving the enquiry via connected integration, provided all required details (name Audit Customer, email audit.customer@example.invalid, request for 200 wedding invitations,",
+        "remaining_request": "none",
+        "contact_preference": "end_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 1.157
+  },
+  {
+    "language": "en-IN",
+    "variant": "tools_no_schema",
+    "result": {
+      "done": true,
+      "text": "",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4228,
+        "output_tokens": 69,
+        "total_tokens": 4297,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        {
+          "type": "function",
+          "id": "chatcmpl-tool-80bb940d303a39df",
+          "function": {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Quote for 200 wedding invitations delivered to Baner, Pune\", \"preferred_time\": \"tomorrow at 3pm\"}"
+          }
+        }
+      ]
+    },
+    "status": "completed",
+    "elapsed_s": 0.265
+  },
+  {
+    "language": "en-IN",
+    "variant": "tools_no_schema_required",
+    "result": {
+      "done": true,
+      "text": "",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4228,
+        "output_tokens": 69,
+        "total_tokens": 4297,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        {
+          "type": "function",
+          "id": "chatcmpl-tool-a677be122eab4b9d",
+          "function": {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Quote for 200 wedding invitations delivered to Baner, Pune\", \"preferred_time\": \"tomorrow at 3pm\"}"
+          }
+        }
+      ]
+    },
+    "status": "completed",
+    "elapsed_s": 0.328
+  },
+  {
+    "language": "te-IN",
+    "variant": "tools_full_schema",
+    "result": {
+      "done": true,
+      "text": "సరేనండి, మీ details అన్నీ note చేసుకున్నాను. ఒక్క నిమిషం, దీన్ని మా team review కోసం save చేస్తున్నాను.",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4411,
+        "output_tokens": 316,
+        "total_tokens": 4727,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "stop",
+      "memory_update": {
+        "operations": [
+          {
+            "op": "set_fact",
+            "key": "lead/product_interest",
+            "value": "wedding_invitations"
+          },
+          {
+            "op": "set_fact",
+            "key": "lead/quantity",
+            "value": "200"
+          },
+          {
+            "op": "set_fact",
+            "key": "lead/delivery_locality",
+            "value": "Baner, Pune"
+          }
+        ]
+      },
+      "end_call": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly requests saving the enquiry with consent: 'I consent to saving this enquiry for team review now. Please submit it with your connected enquiry integration. This is not a confirmed or.",
+        "remaining_request": "Wedding invitation quote for 200 pieces to Baner, Pune; name Audit Customer; email audit.customer@example.invalid; preferred time tomorrow 3pm.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "memory_parse_failed": false
+    },
+    "status": "completed",
+    "elapsed_s": 0.969
+  },
+  {
+    "language": "te-IN",
+    "variant": "tools_no_schema",
+    "result": {
+      "done": true,
+      "text": "",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4411,
+        "output_tokens": 69,
+        "total_tokens": 4480,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        {
+          "type": "function",
+          "id": "chatcmpl-tool-a21f8a6f433f2893",
+          "function": {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Quote for 200 wedding invitations delivered to Baner, Pune\", \"preferred_time\": \"tomorrow at 3pm\"}"
+          }
+        }
+      ]
+    },
+    "status": "completed",
+    "elapsed_s": 0.297
+  },
+  {
+    "language": "te-IN",
+    "variant": "tools_no_schema_required",
+    "result": {
+      "done": true,
+      "text": "",
+      "language_context": {},
+      "usage": {
+        "input_tokens": 4411,
+        "output_tokens": 69,
+        "total_tokens": 4480,
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "finish_reason": "tool_calls",
+      "tool_calls": [
+        {
+          "type": "function",
+          "id": "chatcmpl-tool-84ee0dd479928403",
+          "function": {
+            "name": "CRM_CREATE_ENQUIRY",
+            "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Quote for 200 wedding invitations delivered to Baner, Pune\", \"preferred_time\": \"tomorrow at 3pm\"}"
+          }
+        }
+      ]
+    },
+    "status": "completed",
+    "elapsed_s": 0.375
+  }
+]

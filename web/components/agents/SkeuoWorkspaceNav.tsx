@@ -30,12 +30,14 @@ export function SetupProgressStrip({
     <div className="mt-4 flex flex-wrap gap-1 rounded-skeuo-md border border-surface-border-subtle skeuo-inset p-1">
       {SETUP_STAGES.map((stage) => {
         const href =
-          "externalTestStudio" in stage && stage.externalTestStudio && portal === "dev"
-            ? `/dev/test-studio?agent=${agentId}`
+          "externalTestStudio" in stage && stage.externalTestStudio
+            ? portal === "dev"
+              ? `/dev/test-studio/${agentId}`
+              : `/app/test-studio/${agentId}`
             : `${base}/${stage.slug}`;
         const active =
-          "externalTestStudio" in stage && stage.externalTestStudio && portal === "dev"
-            ? pathname.startsWith("/dev/test-studio")
+          "externalTestStudio" in stage && stage.externalTestStudio
+            ? pathname === href || pathname.startsWith(`${href}/`)
             : pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link
@@ -65,11 +67,15 @@ export function SkeuoWorkspaceNav({
 }) {
   const pathname = usePathname();
   const base = portal === "dev" ? `/dev/agents/${agentId}` : `/app/agents/${agentId}`;
+  const tabs =
+    portal === "dev"
+      ? [...AGENT_WORKSPACE_TABS, { slug: "fallback", label: "Outage Announcement" }]
+      : AGENT_WORKSPACE_TABS;
 
   return (
     <nav className="mb-6 border-b border-surface-border-subtle pb-2" aria-label="Agent workspace">
       <div className="flex flex-wrap gap-1">
-        {AGENT_WORKSPACE_TABS.map((tab) => {
+        {tabs.map((tab) => {
           const href = `${base}/${tab.slug}`;
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
@@ -87,10 +93,17 @@ export function SkeuoWorkspaceNav({
             </Link>
           );
         })}
-        <Link href={`${portal === "dev" ? `/dev/test-studio?agent=${agentId}` : `${base}/test`}`} className="ml-auto">
+        <Link
+          href={portal === "dev" ? `/dev/test-studio/${agentId}` : `/app/test-studio/${agentId}`}
+          className="ml-auto"
+        >
           <SkeuoButton
             variant={
-              (portal === "dev" ? pathname.startsWith("/dev/test-studio") : pathname.endsWith("/test"))
+              (
+                portal === "dev"
+                  ? pathname === `/dev/test-studio/${agentId}` || pathname.startsWith(`/dev/test-studio/${agentId}/`)
+                  : pathname === `/app/test-studio/${agentId}` || pathname.startsWith(`/app/test-studio/${agentId}/`)
+              )
                 ? "primary"
                 : "metal"
             }

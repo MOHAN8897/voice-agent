@@ -1,0 +1,19 @@
+{
+  "intents": {
+    "flow:drive-the-single-workspace-test-call-action-opens-the": {
+      "declaredAt": 1792818942435,
+      "id": "flow:drive-the-single-workspace-test-call-action-opens-the",
+      "source": "decided on the dashboard",
+      "state": "declared",
+      "statement": "The single workspace Test call action opens the test dialog after a voice setup is saved.",
+      "status": "proved",
+      "subject": "drive-the-single-workspace-test-call-act",
+      "surface": {
+        "flow": "drive-the-single-workspace-test-call-action-opens-the"
+      },
+      "updatedAt": 1792818945139
+    }
+  },
+  "subject": "drive-the-single-workspace-test-call-act",
+  "version": 1
+}

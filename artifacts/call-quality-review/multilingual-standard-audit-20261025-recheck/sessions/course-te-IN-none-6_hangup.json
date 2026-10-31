@@ -1,0 +1,413 @@
+{
+  "key": "course-te-IN-none-6_hangup",
+  "business": "course",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "3fb67e11-427f-505d-9768-907a832cd354",
+  "call_id": "d4e710f6-9e2d-4956-b995-23a9c10ff046",
+  "session_id": "audit-course-te-IN-none-6_hangup-7e79870f",
+  "compiled_checksum": "a3beaeea4d8bbdd077219e70ebac805f1983c237a7a542e9ee534f19d4614bfb",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 979,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"User expressed interest and asked for service, price, and conditions; next step is demo/counselling request with consent.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Details about service, price, and conditions.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "e, price, and conditions; next step is demo/counselling request with consent.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Details about service, price, and conditions.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.14
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 255,
+      "sse_content_preview": "{\n  \"spoken_response\": \"తప్పకుండా అండి. ఈ కోర్సు మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. ఇందులో ఎలాంటి ప్లేస్‌మెంట్ లేదా ఉద్యోగ హామీ ఉండదు, అలాగే డిస్కౌంట్ లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు కోడింగ్ అనుభవం ఏమైనా ఉందా అండి?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"తప్పకుండా అండి. ఈ కోర్సు మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. ఇందులో ఎలాంటి ప్లేస్‌మెంట్ లేదా ఉద్యోగ హామీ ఉండదు, అలాగే డిస్కౌంట్ లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు కోడింగ్ అనుభవం ఏమైనా ఉందా అండి?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 79,
+        "prompt_tokens": 4479,
+        "total_tokens": 4558,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. ఈ కోర్సు మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. ఇందులో ఎలాంటి ప్లేస్‌మెంట్ లేదా ఉద్యోగ హామీ ఉండదు, అలాగే డిస్కౌంట్ లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు కోడింగ్ అనుభవం ఏమైనా ఉందా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4479,
+          "output_tokens": 79,
+          "total_tokens": 4558
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.266
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 779,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Course final fee, duration, class timings, Job guarantee\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"సరేనండి, మీ ప్రశ్నలన్నీ క్లియర్ అయ్యాయి. మీకు ఎప్పుడు వీలైతే అప్పుడు మమ్మల్ని సంప్రదించవచ్చు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller inquired about final fee (4999 rupees), duration (6 weeks), class timings (Mon-Fri 7pm-8pm), and job guarantee. They explicitly declined to be.\"}\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Course final fee, duration, class timings, Job guarantee\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\n\"spoken_response\": \"సరేనండి, మీ ప్రశ్నలన్నీ క్లియర్ అయ్యాయి. మీకు ఎప్పుడు వీలైతే అప్పుడు మమ్మల్ని సంప్రదించవచ్చు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller inquired about final fee (4999 rupees), duration (6 weeks), class timings (Mon-Fri 7pm-8pm), and job guarantee. They explicitly declined to be.\"}\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 251,
+        "prompt_tokens": 4557,
+        "total_tokens": 4808,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ ప్రశ్నలన్నీ క్లియర్ అయ్యాయి. మీకు ఎప్పుడు వీలైతే అప్పుడు మమ్మల్ని సంప్రదించవచ్చు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4557,
+          "output_tokens": 251,
+          "total_tokens": 4808
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller inquired about final fee (4999 rupees), duration (6 weeks), class timings (Mon-Fri 7pm-8pm), and job guarantee. They explicitly declined to be."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి",
+          "remaining_request": "Course final fee, duration, class timings, Job guarantee",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.11
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 659,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"సరే అండి, ధన్యవాదాలు.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller expressed interest in the course, asked about fee (4999 INR), duration (6 weeks), timings (Mon-Fri 7pm-8pm), and job guarantee. Clarified no PL\"},\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"Caller thanked and ended the call.\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"సరే అండి, ధన్యవాదాలు.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"action_claimed\": \"none\"\n,\n\"spoken_response\": \"\"\n,\n\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller expressed interest in the course, asked about fee (4999 INR), duration (6 weeks), timings (Mon-Fri 7pm-8pm), and job guarantee. Clarified no PL\"},\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_outcome\",\n        \"value\": \"Caller thanked and ended the call.\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 230,
+        "prompt_tokens": 4594,
+        "total_tokens": 4824,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.156
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 77,
+      "sse_content_preview": "{\n  \"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 28,
+        "prompt_tokens": 4594,
+        "total_tokens": 4622,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 9188,
+          "output_tokens": 258,
+          "total_tokens": 9446
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.641
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా అండి. ఈ కోర్సు మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. ఇందులో ఎలాంటి ప్లేస్‌మెంట్ లేదా ఉద్యోగ హామీ ఉండదు, అలాగే డిస్కౌంట్ లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు కోడింగ్ అనుభవం ఏమైనా ఉందా అండి?",
+      "turn": 1,
+      "at": 2.422
+    },
+    {
+      "text": "సరేనండి, మీ ప్రశ్నలన్నీ క్లియర్ అయ్యాయి. మీకు ఎప్పుడు వీలైతే అప్పుడు మమ్మల్ని సంప్రదించవచ్చు.",
+      "turn": 2,
+      "at": 3.563
+    },
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 3,
+      "at": 5.36
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 4,
+      "at": 5.391
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.",
+      "spoken": "తప్పకుండా అండి. ఈ కోర్సు మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. ఇందులో ఎలాంటి ప్లేస్‌మెంట్ లేదా ఉద్యోగ హామీ ఉండదు, అలాగే డిస్కౌంట్ లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు కోడింగ్ అనుభవం ఏమైనా ఉందా అండి?",
+      "elapsed_s": 2.406,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: Course final fee, duration, class timings ఏమిటి? Job guarantee ఇస్తారా?",
+      "spoken": "సరేనండి, మీ ప్రశ్నలన్నీ క్లియర్ అయ్యాయి. మీకు ఎప్పుడు వీలైతే అప్పుడు మమ్మల్ని సంప్రదించవచ్చు.",
+      "elapsed_s": 1.125,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "సరే అండి, ధన్యవాదాలు.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 1.766,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 5.438,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "d4e710f6-9e2d-4956-b995-23a9c10ff046",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "b8c8673bfd3b51f4b9f3acd639afaf2498d6e0b345be9df2a69de51870f2f775",
+  "prompt_chars": 19516,
+  "opening_seeded": "నమస్కారం, నా పేరు అనన్య, బ్రైట్‌పాత్ స్కిల్స్ నుండి మాట్లాడుతున్నాను. వయోజనుల కోసం మా ఆన్‌లైన్ బిగినర్ పైథాన్ కోర్సు గురించి చెప్పడానికి కాల్ చేశాను. ఇప్పుడు మాట్లాడానికి మీకు సమయం ఉందా? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "తప్పకుండా అండి. ఈ కోర్సు మొత్తం ఫీజు నాలుగు వేల తొమ్మిది వందల తొంభై తొమ్మిది రూపాయలు మాత్రమే. ఇందులో ఎలాంటి ప్లేస్‌మెంట్ లేదా ఉద్యోగ హామీ ఉండదు, అలాగే డిస్కౌంట్ లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు కోడింగ్ అనుభవం ఏమైనా ఉందా అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి",
+        "remaining_request": "Course final fee, duration, class timings, Job guarantee",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, మీ ప్రశ్నలన్నీ క్లియర్ అయ్యాయి. మీకు ఎప్పుడు వీలైతే అప్పుడు మమ్మల్ని సంప్రదించవచ్చు. సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 5.438,
+  "hangup_count": 1
+}

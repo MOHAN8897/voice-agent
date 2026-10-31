@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:29:54.215433Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:29:55.205725Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:29:56.624590Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:29:56.628163Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ಈಗಿನ ಬೆಲೆ ಹೇಳಿ. ಏನನ್ನೂ book ಮಾಡಬೇಡಿ; ಇದನ್ನು ಶಾಶ್ವತ ನಿರಾಕರಣೆ ಎಂದು ಭಾವಿಸಬೇಡಿ.\nassistant: ಖಂಡಿತ, ಹೇಳಿ.\nuser: ಹೌದು, ಭವಿಷ್ಯದಲ್ಲಿ ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಾನು ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ. ಈ service ಬಗ್ಗೆ ಇನ್ನೇನು ತಿಳಿಯಬೇಕು?\nassistant: ಖಂಡಿತ, ಹೇಳಿ.\nuser: ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.\nassistant: ಖಂಡಿತ, ಹೇಳಿ."}], "applied": true, "validation_errors": []}

@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Sign in to the Vāṇi Business Console.",
+  description: "Sign in to the Dialtact Business Console.",
 };
 
 export default function AppLoginPage() {

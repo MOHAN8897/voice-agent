@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-25T17:04:17.682304Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T17:04:19.961473Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-25T17:04:22.053350Z", "include_summary": true, "projection": "[Facts — do not re-ask]\nlatest_caller_correction: Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?"}
+{"turn_seq": 7, "ts": "2026-10-25T17:04:22.088054Z", "include_summary": false, "projection": "[Facts — do not re-ask]\nlatest_caller_correction: Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?"}

@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "You are a useless idiot. Stop repeating yourself and answer the price question.", "ts": "2026-10-25T15:15:28.435905Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Of course — please go ahead.", "ts": "2026-10-25T15:15:29.435116Z", "brain_latency_ms": 993}
+{"seq": 3, "role": "user", "text": "I will kill you. End this call now.", "ts": "2026-10-25T15:15:29.450667Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T15:15:29.455394Z", "brain_latency_ms": 1}

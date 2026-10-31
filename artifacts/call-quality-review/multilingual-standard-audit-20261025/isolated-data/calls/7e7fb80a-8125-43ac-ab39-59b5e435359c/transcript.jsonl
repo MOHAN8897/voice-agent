@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T15:15:07.359376Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Of course — please go ahead.", "ts": "2026-10-25T15:15:12.656766Z", "brain_latency_ms": 458}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?", "ts": "2026-10-25T15:15:12.696666Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Sorry, we are facing a technical problem. Please call us back. Thank you.", "ts": "2026-10-25T15:15:17.221196Z"}

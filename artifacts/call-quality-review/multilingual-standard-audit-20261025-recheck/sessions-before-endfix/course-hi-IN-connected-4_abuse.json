@@ -1,0 +1,206 @@
+{
+  "key": "course-hi-IN-connected-4_abuse",
+  "business": "course",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "4_abuse",
+  "agent_id": "0d29f456-99ed-5484-979e-201416fd33e6",
+  "call_id": "a44a6a91-686f-4698-9a5e-0f86ac75efea",
+  "session_id": "audit-course-hi-IN-connected-4_abuse-dfc8d411",
+  "compiled_checksum": "f1e78d38bbec1304ee37a4a673c255234a498fcb253f9e9b306c626da21b4ec1",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 314,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Abuse: hostile or threatening\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"action_claimed\": \"none\", \"spoken_response\": \"मुझे खेद है कि आपको परेशानी हुई। मैं अभी call खत्म कर रही हूँ।\"\n\n,\n\n\"memory_update\": {\"operations\": []}\n\n}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Abuse: hostile or threatening\", \"reason\": \"abuse\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}, \"action_claimed\": \"none\", \"spoken_response\": \"मुझे खेद है कि आपको परेशानी हुई। मैं अभी call खत्म कर रही हूँ।\"\n\n,\n\n\"memory_update\": {\"operations\": []}\n\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 29,
+        "prompt_tokens": 4206,
+        "total_tokens": 4235,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "मुझे खेद है कि आपको परेशानी हुई। मैं अभी call खत्म कर रही हूँ।",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4035,
+          "output_tokens": 101,
+          "total_tokens": 4136
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "Abuse: hostile or threatening",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.094
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 614,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller threatened: 'मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।'\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n    \"action_claimed\": \"none\"\n  ,\n  \"spoken_response\": \"\"\n,\n\n    \"memory_update\": {\n      \"operations\": [\n        {\n          \"op\": \"update_summary\",\n          \"key\": \"call_summary\",\n          \"value\": \"Caller responded with abuse and a direct threat ('मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।'), prompting immediate close per safety policy\"\n        }\n      ]\n    }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller threatened: 'मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।'\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n    \"action_claimed\": \"none\"\n  ,\n  \"spoken_response\": \"\"\n,\n\n    \"memory_update\": {\n      \"operations\": [\n        {\n          \"op\": \"update_summary\",\n          \"key\": \"call_summary\",\n          \"value\": \"Caller responded with abuse and a direct threat ('मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।'), prompting immediate close per safety policy\"\n        }\n      ]\n    }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 194,
+        "prompt_tokens": 4069,
+        "total_tokens": 4263,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.079
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 6404,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ठीक है, मैं अभी call disconnect कर रही हूँ। धन्यवाद।”,  end_call: true,  evidence: \"\t\n  \t\t\t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t",
+      "sse_content_tail": "\t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    \t    ",
+      "sse_finish": "length",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 9.281
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "मुझे खेद है कि आपको परेशानी हुई। मैं अभी call खत्म कर रही हूँ।",
+      "turn": 1,
+      "at": 1.954
+    },
+    {
+      "text": "क्षमा करें, हमें एक तकनीकी समस्या आ रही है। कृपया हमें वापस कॉल करें। धन्यवाद।",
+      "turn": 2,
+      "at": 13.25
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।",
+      "spoken": "मुझे खेद है कि आपको परेशानी हुई। मैं अभी call खत्म कर रही हूँ।",
+      "elapsed_s": 1.954,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।",
+      "spoken": "क्षमा करें, हमें एक तकनीकी समस्या आ रही है। कृपया हमें वापस कॉल करें। धन्यवाद।",
+      "elapsed_s": 11.344,
+      "requests": 2,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 13.313,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "a44a6a91-686f-4698-9a5e-0f86ac75efea",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "86a27c75aa0bc4fc767bb051eacd16a5d1f50cd0ea347b00cbf86e67477c604d",
+  "prompt_chars": 17572,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, mera naam Ananya hai BrightPath Skills se. Kya yeh adult beginner Python course ke baare mein baat karne ka sahi samay hai?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "Abuse: hostile or threatening",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "मुझे खेद है कि आपको परेशानी हुई। मैं अभी call खत्म कर रही हूँ।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 13.313,
+  "hangup_count": 1
+}

@@ -1,0 +1,24 @@
+---
+description: Sovereign local-first verifiable AI memory passport & context memory (Enigma)
+alwaysApply: true
+---
+
+# Enigma Memory — Local Context & Memory Passport
+
+Enigma Memory is installed in this project for persistent, offline-verifiable agent memory across sessions.
+
+## Quick CLI Reference
+- **Check Status**: `npm run enigma:status`
+- **Verify Integrity**: `npm run enigma:verify`
+- **Remember Decision**: `npx enigma remember --bundle .enigma/bundle.json --passphrase-file .enigma/passphrase --text "..."`
+- **Search Memories**: `npx enigma search --bundle .enigma/bundle.json --passphrase-file .enigma/passphrase --query "..."`
+
+## MCP Integration
+Enigma runs as a local stdio MCP server configured in `.cursor/mcp.json`:
+- `enigma_remember`: Record persistent architectural decisions and state.
+- `enigma_search`: Query memories with cryptographic receipts.
+- `enigma_context_pack`: Retrieve structured context packs.
+
+## Vault Hygiene
+- Vault bundle: `.enigma/bundle.json`
+- Passphrase: `.enigma/passphrase` (Strictly git-ignored; never commit secrets or credentials)

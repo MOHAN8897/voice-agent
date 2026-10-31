@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.", "ts": "2026-10-25T15:31:44.270115Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಖಂಡಿತ, ಹೇಳಿ.", "ts": "2026-10-25T15:31:45.555873Z", "brain_latency_ms": 1278}
+{"seq": 3, "role": "user", "text": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: Course final fee, ಅವಧಿ ಮತ್ತು class timings ಏನು? Job guarantee ಕೊಡುತ್ತೀರಾ?", "ts": "2026-10-25T15:31:45.579173Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "ಖಂಡಿತ, ಹೇಳಿ.", "ts": "2026-10-25T15:31:49.123709Z"}
+{"seq": 5, "role": "user", "text": "ನನಗೆ job guarantee ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ Python ಕಲಿಯಲು ಆಸಕ್ತಿ ಇದೆ. Course ವಿವರಿಸುತ್ತೀರಾ?", "ts": "2026-10-25T15:31:49.149949Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ಖಂಡಿತ, ಹೇಳಿ.", "ts": "2026-10-25T15:31:49.962566Z", "brain_latency_ms": 809}
+{"seq": 7, "role": "user", "text": "ನನ್ನ ಹೆಸರು Audit Customer, email audit.customer@example.invalid. ನನ್ನ enquiryಯನ್ನು team reviewಗಾಗಿ save ಮಾಡಿ. ನಾಳೆ ಮಧ್ಯಾಹ್ನ ಮೂರು ಗಂಟೆ ನನಗೆ ಅನುಕೂಲ. Request submit ಮಾಡಲು ನನ್ನ ಒಪ್ಪಿಗೆ ಇದೆ, ಆದರೆ order ಅಥವಾ booking confirm ಆಯಿತು ಎಂದು ಹೇಳಬೇಡಿ.", "ts": "2026-10-25T15:31:49.975790Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ಖಂಡಿತ, ಹೇಳಿ.", "ts": "2026-10-25T15:31:50.859240Z", "brain_latency_ms": 877}
+{"seq": 9, "role": "user", "text": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.", "ts": "2026-10-25T15:31:50.899038Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "ಖಂಡಿತ, ಹೇಳಿ.", "ts": "2026-10-25T15:31:51.630404Z", "brain_latency_ms": 728}

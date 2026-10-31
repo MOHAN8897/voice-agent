@@ -1,0 +1,239 @@
+{
+  "version": 2,
+  "name": "drive-creating-an-agent-lands-the-operator-on-the-agen",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790834468175,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Continue — sign in"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "alex@company.com"
+      },
+      "args": {
+        "value": "repro.wizard@example.com"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "••••••••••••"
+      },
+      "args": {
+        "value": "ReproPass123!"
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Sign In"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Create AI Employee"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "employee-brief-input"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "employee-brief-input",
+        "source": {
+          "file": "src/console/modules/CreateAgentWizard.jsx",
+          "line": 183,
+          "column": 11
+        }
+      },
+      "args": {
+        "value": "Agent name is Maya. Business is Riverside Dental Clinic in Boston. Call patients to book cleanings, collect the patient name and callback number."
+      },
+      "action": "fill",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "create-next",
+        "source": {
+          "file": "src/console/modules/CreateAgentWizard.jsx",
+          "line": 315,
+          "column": 7
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-tab-overview"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-overview",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 407,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-script",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 407,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-calls",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 407,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-voice",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 407,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-tab-settings",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 407,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-settings-name"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-settings-toggle-status"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-settings-number"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-settings-buy-number"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-settings-toggle-status"
+            }
+          }
+        ]
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Creating an agent lands the operator on the agent workspace Overview tab, where per-agent call activity and pipeline are visible.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "reticle-cli"
+  },
+  "intentId": "flow:drive-creating-an-agent-lands-the-operator-on-the-agen"
+}

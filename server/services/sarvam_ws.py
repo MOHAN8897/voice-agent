@@ -15,27 +15,158 @@ STT realtime: wss://api.sarvam.ai/speech-to-text-realtime/ws
 
 TTS WS: wss://api.sarvam.ai/text-to-speech/ws?model=bulbul:v3&send_completion_event=true
   client→srv: {"type":"config","data":{speaker,language_code,pace,min_buffer_size,max_chunk_length,
-               output_audio_codec,output_audio_bitrate,temperature(v3),sample_rate?}}
+               output_audio_codec,speech_sample_rate,temperature(v3)}}
               {"type":"text","data":{"text":"..."}} (≤2500, <500 rec) | {"type":"flush"} | {"type":"ping"}
   srv→client: audio chunks (base64 in data.audio) | event notification | error
   NOTE: no server-side cancel — barge-in is client-side.
 """
 from __future__ import annotations
 
+import asyncio
+
+import inspect
 from typing import Any
 
 import websockets  # provided by uvicorn[standard]
 
-from server.config.constants import constants
+from server.config.constants import constants, provider_language_code
 from server.config.env import get_settings
+from server.services.voice_stt_runtime import sarvam_vad_config
 
 
 def _connect(url: str, headers: dict[str, str], **kw: Any):
-    """websockets v13+: additional_headers; older: extra_headers."""
+    """Select the installed client API before connect defers work until await."""
+    parameters = inspect.signature(websockets.connect).parameters
+    header_name = "additional_headers" if "additional_headers" in parameters else "extra_headers"
+    return websockets.connect(url, **{header_name: headers}, max_size=None, **kw)
+
+
+def _handshake_status(exc: BaseException) -> int | None:
+    """HTTP status of a rejected WebSocket upgrade (websockets 10-14 shapes)."""
+    response = getattr(exc, "response", None)
+    status = getattr(response, "status_code", None) or getattr(exc, "status_code", None)
     try:
-        return websockets.connect(url, additional_headers=headers, max_size=None, **kw)
-    except TypeError:  # pragma: no cover - older lib
-        return websockets.connect(url, extra_headers=headers, max_size=None, **kw)
+        return int(status) if status is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _handshake_body(exc: BaseException) -> bytes | None:
+    response = getattr(exc, "response", None)
+    body = getattr(response, "body", None)
+    return body if isinstance(body, (bytes, bytearray)) else None
+
+
+#: How long a freshly opened realtime stream is watched for an immediate close.
+#: Sarvam closes an exhausted key's STT stream within a few hundred ms of the upgrade.
+EARLY_CLOSE_WINDOW_S = 0.4
+
+_QUOTA_WORDS = ("credit", "quota", "balance", "insufficient", "payment", "limit")
+_AUTH_WORDS = ("unauthor", "invalid api", "api key", "forbidden", "subscription")
+
+
+async def _early_close_status(ws: Any) -> tuple[int, str] | None:
+    """``(http_like_status, reason)`` if the server closed the new stream at once.
+
+    Waits on the close handshake only, so no frame is consumed. A stream still
+    open after the window, or a normal close, returns None.
+    """
+    wait_closed = getattr(ws, "wait_closed", None)
+    if wait_closed is None:
+        return None
+    try:
+        await asyncio.wait_for(wait_closed(), timeout=EARLY_CLOSE_WINDOW_S)
+    except asyncio.TimeoutError:
+        return None
+    except Exception:  # noqa: BLE001 -- a broken probe must not fail the connect.
+        return None
+    code = getattr(ws, "close_code", None)
+    reason = str(getattr(ws, "close_reason", "") or "")
+    lowered = reason.lower()
+    if code in (1000, 1001, None) and not lowered:
+        return None
+    if any(word in lowered for word in _AUTH_WORDS) or code in (1008, 4001, 4003, 4401, 4403):
+        return 401, reason
+    if any(word in lowered for word in _QUOTA_WORDS) or code in (1003, 4002, 4029, 4402):
+        return 402, reason or "insufficient_quota"
+    return 503, reason
+
+
+class _FailoverConnect:
+    """Drop-in for ``websockets.connect(...)``: awaitable and ``async with``.
+
+    A handshake rejected for credits / quota / auth retries the upgrade with
+    the next Sarvam key before the caller sees anything.
+    """
+
+    def __init__(self, url: str, component: str, label: str, connect_kwargs: dict[str, Any]) -> None:
+        self._url = url
+        self._component = component
+        self._label = label
+        self._kwargs = connect_kwargs
+        self._ws = None
+        from server.services.sarvam_keys import sarvam_key_pool
+
+        self._attempts = sarvam_key_pool.plan()
+        # websockets.connect() is lazy, so building the first attempt now
+        # costs nothing and keeps the URL/headers inspectable before await.
+        self._first = (
+            _connect(url, {"api-subscription-key": self._attempts[0][1]}, **connect_kwargs)
+            if self._attempts else None
+        )
+
+    async def _open(self):
+        from server.services import provider_health as ph
+        from server.services.sarvam_keys import _handle_rejection, no_key_available, sarvam_key_pool
+
+        attempts = self._attempts
+        if not attempts:
+            raise no_key_available(self._component, self._label)
+        for index, (slot, key) in enumerate(attempts):
+            sarvam_key_pool.mark_attempt(slot)
+            try:
+                pending = self._first if index == 0 else _connect(
+                    self._url, {"api-subscription-key": key}, **self._kwargs)
+                ws = await pending
+            except Exception as exc:
+                status = _handshake_status(exc)
+                if status is None:
+                    ph.record_exception(exc, provider="sarvam", component=self._component, key_slot=slot)
+                    raise
+                if _handle_rejection(attempts, index, component=self._component, status=status,
+                                     body=_handshake_body(exc)):
+                    continue
+                raise
+            rejected = await _early_close_status(ws) if self._component == "stt" else None
+            if rejected is not None:
+                # Realtime STT accepts the upgrade on an exhausted key, then closes it
+                # (code 1003 with a credits reason). Treat that as a rejected key.
+                status, reason = rejected
+                if _handle_rejection(attempts, index, component=self._component, status=status,
+                                     body=reason.encode("utf-8", "replace")):
+                    continue
+                raise ph.ProviderFailure(
+                    f"{self._label} closed the stream right after connecting ({reason or 'no reason'})",
+                    provider="sarvam", component=self._component,
+                    category=ph.classify("sarvam", status=status, body=reason.encode("utf-8", "replace")),
+                    status=status, key_slot=slot, all_keys_failed=True,
+                )
+            sarvam_key_pool.report_success(slot, component=self._component)
+            return ws
+        raise no_key_available(self._component, self._label)
+
+    def __await__(self):
+        return self._open().__await__()
+
+    async def __aenter__(self):
+        self._ws = await self._open()
+        return self._ws
+
+    async def __aexit__(self, exc_type, exc, tb):
+        ws, self._ws = self._ws, None
+        if ws is not None:
+            await ws.close()
+        return False
 
 
 def _resolve_realtime_stt_model(model: str | None = None) -> str:
@@ -59,12 +190,13 @@ def connect_stt_realtime(
     silence_duration_ms: int | None = None,
     threshold: float | None = None,
     min_speech_duration_ms: int | None = None,
-    high_vad_sensitivity: bool = True,
+    prefix_padding_ms: int | None = None,
+    high_vad_sensitivity: bool = False,
     model: str | None = None,
 ):
     settings = get_settings()
     params = {
-        "language_code": language_code,
+        "language_code": provider_language_code(language_code, provider="sarvam", stage="stt"),
         "model": _resolve_realtime_stt_model(model),
         "stream_type": stream_type,
         "mode": mode,
@@ -72,22 +204,20 @@ def connect_stt_realtime(
         "encoding": "linear16",
         "sample_rate": str(sample_rate),
     }
-    if silence_duration_ms is not None:
-        params["silence_duration_ms"] = str(silence_duration_ms)
-    if threshold is not None:
-        params["threshold"] = str(threshold)
-    if min_speech_duration_ms is not None:
-        params["min_speech_duration_ms"] = str(min_speech_duration_ms)
-    if high_vad_sensitivity:
-        params["high_vad_sensitivity"] = "true"
+    vad = sarvam_vad_config({
+        "silence_duration_ms": silence_duration_ms, "threshold": threshold,
+        "min_speech_duration_ms": min_speech_duration_ms, "prefix_padding_ms": prefix_padding_ms,
+    })
+    params.update({key: str(value) for key, value in vad.items()})
+    # Explicit VAD controls supersede the legacy high-sensitivity shortcut.
     qs = "&".join(f"{k}={v}" for k, v in params.items())
     url = f"{constants.SARVAM_STT_REALTIME_WS}?{qs}"
-    headers = {"api-subscription-key": settings.sarvam_api_key}
-    return _connect(url, headers, ping_interval=20, ping_timeout=20)
+    return _FailoverConnect(url, "stt", "Sarvam realtime speech-to-text",
+                            {"ping_interval": 20, "ping_timeout": 20})
 
 
 def connect_tts_ws(model: str = "bulbul:v3"):
     settings = get_settings()
     url = f"{constants.SARVAM_TTS_WS}?model={model}&send_completion_event=true"
-    headers = {"api-subscription-key": settings.sarvam_api_key}
-    return _connect(url, headers, ping_interval=None)  # we send app-level pings per protocol
+    # We send app-level pings per protocol.
+    return _FailoverConnect(url, "tts", "Sarvam text-to-speech WebSocket", {"ping_interval": None})

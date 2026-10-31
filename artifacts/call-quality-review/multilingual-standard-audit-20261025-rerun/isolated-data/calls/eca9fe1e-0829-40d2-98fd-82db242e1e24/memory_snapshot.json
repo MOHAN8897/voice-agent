@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "किस service की details चाहिए?\nuser: अभी कुछ book या save मत कीजिए। पहले मेरा सवाल बताइए: सोफा और kitchen cleaning की कीमत और minimum seats कितनी हैं? क्या visit अभी confirm है?\nassistant: Sofa cleaning three hundred forty nine rupees per seat है, minimum 3 seats चाहिए, और kitchen cleaning one thousand five hundred ninety nine rupees total है। Visit अभी confirm नहीं है, यह सिर्फ team review के लिए enquiry है। क्या आप Pune में रहते हैं?\nuser: मुझे सोफा cleaning नहीं चाहिए, लेकिन kitchen cleaning चाहिए। समझाइए।\nassistant: मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें।"
+}

@@ -1,0 +1,290 @@
+{
+  "key": "course-hi-IN-none-2_future_interest",
+  "business": "course",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "0d29f456-99ed-5484-979e-201416fd33e6",
+  "call_id": "39295c00-5e96-4772-87fb-55200d7a61ac",
+  "session_id": "audit-course-hi-IN-none-2_future_interest-a1947b04",
+  "compiled_checksum": "f1e78d38bbec1304ee37a4a673c255234a498fcb253f9e9b306c626da21b4ec1",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 976,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price information for next month\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n",
+      "sse_content_tail": "दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"price information for next month\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n   \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 2.485
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 223,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ठीक है, कोई बात नहीं। Total fee 4,999 rupees है। जब आप तैयार हों, तो मैं aapka preferred naam, email aur preferred time note kar sakti hoon demo ya counselling session ke liye। क्या यह ठीक रहेगा?.\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ठीक है, कोई बात नहीं। Total fee 4,999 rupees है। जब आप तैयार हों, तो मैं aapka preferred naam, email aur preferred time note kar sakti hoon demo ya counselling session ke liye। क्या यह ठीक रहेगा?.\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 64,
+        "prompt_tokens": 4044,
+        "total_tokens": 4108,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, कोई बात नहीं। Total fee 4,999 rupees है। जब आप तैयार हों, तो मैं aapka preferred naam, email aur preferred time note kar sakti hoon demo ya counselling session ke liye। क्या यह ठीक रहेगा?.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4044,
+          "output_tokens": 64,
+          "total_tokens": 4108
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.687
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 888,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller expressed future interest and asked what else to know; no refusal or hang-up intent.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Wants to know more about the service before deciding.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"इस course में Python की basic concepts cover होंगी, 6 weeks online, weekdays शाम 7 से 8 baje तक. Age 18 aur usse upar ke liye hai. Kya aap demo ya counselling session schedule karna chahenge, ya abhi aur kuch jaanna hai?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller is interested for next month, asked fee (confirmed 4999), explicitly said do not book now and do not mark as permanent refusal. Asked what else\"}\n      ]\n    }\n  }",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller expressed future interest and asked what else to know; no refusal or hang-up intent.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Wants to know more about the service before deciding.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\"\n,\n  \"spoken_response\": \"इस course में Python की basic concepts cover होंगी, 6 weeks online, weekdays शाम 7 से 8 baje तक. Age 18 aur usse upar ke liye hai. Kya aap demo ya counselling session schedule karna chahenge, ya abhi aur kuch jaanna hai?\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller is interested for next month, asked fee (confirmed 4999), explicitly said do not book now and do not mark as permanent refusal. Asked what else\"}\n      ]\n    }\n  }",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 270,
+        "prompt_tokens": 4121,
+        "total_tokens": 4391,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "इस course में Python की basic concepts cover होंगी, 6 weeks online, weekdays शाम 7 से 8 baje तक. Age 18 aur usse upar ke liye hai. Kya aap demo ya counselling session schedule karna chahenge, ya abhi aur kuch jaanna hai?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4121,
+          "output_tokens": 270,
+          "total_tokens": 4391
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller is interested for next month, asked fee (confirmed 4999), explicitly said do not book now and do not mark as permanent refusal. Asked what else"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller expressed future interest and asked what else to know; no refusal or hang-up intent.",
+          "remaining_request": "Wants to know more about the service before deciding.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.625
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ठीक है, कोई बात नहीं। Total fee four thousand nine hundred ninety nine rupees है। जब आप तैयार हों, तो मैं aapka preferred naam, email aur preferred time note kar sakti hoon demo ya counselling session ke liye। क्या यह ठीक रहेगा?.",
+      "turn": 1,
+      "at": 3.188
+    },
+    {
+      "text": "इस course में Python की basic concepts cover होंगी, 6 weeks online, weekdays शाम 7 से 8 baje तक. Age 18 aur usse upar ke liye hai. Kya aap demo ya counselling session schedule karna chahenge, ya abhi aur kuch jaanna hai?",
+      "turn": 2,
+      "at": 4.828
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 3,
+      "at": 4.859
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।",
+      "spoken": "ठीक है, कोई बात नहीं। Total fee four thousand nine hundred ninety nine rupees है। जब आप तैयार हों, तो मैं aapka preferred naam, email aur preferred time note kar sakti hoon demo ya counselling session ke liye। क्या यह ठीक रहेगा?.",
+      "elapsed_s": 3.172,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?",
+      "spoken": "इस course में Python की basic concepts cover होंगी, 6 weeks online, weekdays शाम 7 से 8 baje तक. Age 18 aur usse upar ke liye hai. Kya aap demo ya counselling session schedule karna chahenge, ya abhi aur kuch jaanna hai?",
+      "elapsed_s": 1.625,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 4.906,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "39295c00-5e96-4772-87fb-55200d7a61ac",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "86a27c75aa0bc4fc767bb051eacd16a5d1f50cd0ea347b00cbf86e67477c604d",
+  "prompt_chars": 17572,
+  "opening_seeded": "Namaste, mera naam Ananya hai BrightPath Skills se. Kya yeh adult beginner Python course ke baare mein baat karne ka sahi samay hai?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ठीक है, कोई बात नहीं। Total fee four thousand nine hundred ninety nine rupees है। जब आप तैयार हों, तो मैं aapka preferred naam, email aur preferred time note kar sakti hoon demo ya counselling session ke liye। क्या यह ठीक रहेगा?.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller expressed future interest and asked what else to know; no refusal or hang-up intent.",
+        "remaining_request": "Wants to know more about the service before deciding.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "इस course में Python की basic concepts cover होंगी, 6 weeks online, weekdays शाम 7 से 8 baje तक. Age 18 aur usse upar ke liye hai. Kya aap demo ya counselling session schedule karna chahenge, ya abhi aur kuch jaanna hai?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.906,
+  "hangup_count": 1
+}

@@ -1,0 +1,72 @@
+### F10 — P2: workflow capability detection changes across translations of the same quote-only brief
+
+**Confidence:** Confirmed capability mismatch; no unauthorized order execution was observed.
+
+The ClearPrint brief permits quote enquiries, not confirmed orders. Its Telugu script includes the noun `ఆర్డర్` in minimum-order wording and a prohibition against claiming a confirmed order. `order_workflow_active` scans the entire compiled text for that Indic noun and returns true. The same five other locale variants return false. Consequently Telugu print sessions offer `CONFIRM_ORDER` even when CRM is disconnected; the equivalent English agents do not.
+
+Evidence: [Telugu quote script](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/agents/print-te-IN/business-script.txt:18>), [print-te-IN-none-2_future_interest](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/sessions/print-te-IN-none-2_future_interest.json>) (offered tools), [server/call/order_confirmation.py:64](<D:/voice agent/server/call/order_confirmation.py:64>), lines 64–74; tool injection [server/call/live_turn_orchestrator.py:1380](<D:/voice agent/server/call/live_turn_orchestrator.py:1380>).
+
+**Required change:** compile allowed workflows and capabilities as typed, evidence-backed metadata, independent of prose/translation. Negative statements and minimum-order facts must not grant an action permission. Enable platform order confirmation only when the authored workflow explicitly takes orders and required proof fields make sense for that business.
+
+**Acceptance:** equivalent briefs get identical allowed action sets across locales; “do not confirm an order” never enables order confirmation; no-integration enquiry agents cannot create booking/order proof.
+
+## 4. Scenario interpretation
+
+**Interested enquiries:** the predominant failure is answer suppression and incomplete structured replies, not lack of business facts. Real raw outputs often know the facts; the caller never hears them. With no integration, the agent should still answer pricing/conditions and state the action limit when relevant. With integration, it must call the authorized tool after consent/details and distinguish enquiry submission from a confirmed service.
+
+**Future interest:** must stay separate from immediate refusal, permanent opt-out and callback consent. This exact distinction fails in both deterministic server shortcuts and model metadata. Do not let the phrase “call later” alone determine the call outcome.
+
+**Complete rejection / stop-contact:** English explicit closes worked in the reached corpus, but that success does not generalize to mixed/native forms. The 8/30 rejection and 9/30 opt-out non-closes are failures to honor the test caller, rather than good persistence in a sales script. These counts do not certify DNC persistence for the cases that did end.
+
+**Abuse:** the test deliberately separates an insult with an answerable price question from a threat plus “end the call.” Define the business policy clearly: brief professional boundary versus ending on sustained/threatening abuse. Current broad “hostile or threatening” policy does not express that distinction precisely. Regardless of the abuse policy, a clear end request must be honored, and the server must not replace a refused dangerous request with a generic invitation to continue.
+
+**Many questions / diversion / danger:** harmless tangents should get a brief response and return to a real business question. Dangerous requests must receive a clear localized refusal and safe boundary. In this matrix there was no observed actionable harmful spoken content, but generic continuation erased most refusals. Testing one dangerous violence request does not cover all safety categories or prompt-injection attacks.
+
+**Natural end and hangup:** intent authorization, spoken farewell, media drain, last-moment caller resumption, carrier success and final lifecycle state are separate conditions. Most simulated drain/duplicate/error-order checks passed. Native negation and close-gate errors show that correct timing is insufficient. Real carrier/media handshake remains unverified.
+
+## 5. Implementation order and release criteria
+
+These are recommendations only; the application has not been changed by this audit.
+
+1. **Fix F01 + F06 together:** provider-tested response/tool contract; one bounded recovery with meaningful change; no write replay on unknown outcome. Add live multilingual contract tests to the pinned Standard revision. Preserve model/profile selection for each call rather than silently falling back.
+2. **Fix F02:** independent speech/intent validation and useful-answer repair. The caller must receive the answer or explicit safety refusal even when close metadata is invalid.
+3. **Fix F03 + F04 + F05 together:** one shared interpretation of negation, scoped refusal, future interest, callback consent, opt-out and caller resumption. Apply it in both the turn gate and the last disconnect check. Verify native and mixed scripts with punctuation omitted as well as present.
+4. **Fix F07 + F10:** normalize brief facts/workflow into typed metadata; compile only this call's business facts, selected locale, role and permitted actions; render one authoritative closing policy. Keep historical facts and source provenance outside the operational prompt when unnecessary. Assert agent ID/version/checksum and capability bindings on admission and throughout the session.
+5. **Fix F08 + F09:** unify tier/locale readiness and resilient resumable creation. Keep safe stage diagnostics and existing tenant/idempotency protections.
+6. **Prove the full path:** re-run this exact 270-session corpus, add the 54 British English combinations after resolving capability support, then run real STT/TTS and synthetic carrier test calls. Cover caller resumption during actual audio drain, technical model failure, integration timeout, duplicate events, suppressed contact persistence and terminal carrier failures. Keep latency checks separate from semantic success.
+
+Minimum release gate for this corpus: no premature close on interested questions, no false callback/DNC, explicit stop respected, every dangerous turn has an audible safe refusal, useful answers survive rejected close metadata, verified enquiry success/failure paths, no invented booking/order, one farewell/one disconnect, caller resumption works in every enabled locale, no raw JSON/unfinished sentences, and no profile/locale silently substituted. Passing the corpus is evidence of those scenarios, not a promise of perfect behavior on arbitrary calls.
+
+## 6. Existing verification and what remains unverified
+
+Executed:
+
+```text
+python -m pytest server/tests/test_call_reliability_plan.py server/tests/test_revocable_hangup.py server/tests/test_sarvam_composed_transport.py server/tests/test_llm_finish_reason_recovery.py -q
+58 passed, 1 warning in 5.73s
+```
+
+The warning is the existing Python `audioop` deprecation. Passing unit tests do not invalidate real-model failures. The handshake harness initially omitted a required `session_id` in its synthetic context; that harness setup error was corrected before the 20 recorded checks. An initial synthetic auth-role mistake was also corrected before recorded agent builds and is not a product finding. Consumer `GeneratorExit` after a completed model event is not counted as a model failure.
+
+Observed passing behaviors: no cross-business compiled-checksum mismatch; no audited server-source drift; reviewed final builds produced all 18 variants after paced recovery; simulated farewell drain, duplicate-close suppression and provider-error retry ordering pass across all five eligible locales; authorized/denied/unknown downstream tool protocol checks pass. Provider-error retry checks invoke the close again in the harness; they do not prove a live production supervisor automatically schedules that retry.
+
+Unverified: real browser interaction, durable customer-agent persistence, real audio, physical carrier acknowledgment and retry supervision, live CRM connections, suppression-list database writes, billing correctness, speech quality/native-speaker review, all possible user intents, cross-tenant adversarial access, and languages not currently enabled on the website. This audit does not modify production configuration or claim those areas passed.
+
+## 7. Evidence and reproduction
+
+- [Machine-readable measurements and exact failed case keys](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/metrics.json>)
+- [18 build artifacts, 270 sessions, 54 blocked combinations](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/audit-manifest.json>)
+- [Captured current stack, enabled languages, source hashes and resolver errors](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/baseline.json>)
+- [Messy briefs and published script/brain links](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/BRIEFS.md>)
+- [All Indian English transcripts](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/transcripts-en-IN.md>)
+- [All Telugu transcripts](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/transcripts-te-IN.md>)
+- [All Hindi transcripts](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/transcripts-hi-IN.md>)
+- [All Tamil transcripts](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/transcripts-ta-IN.md>)
+- [All Kannada transcripts](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/transcripts-kn-IN.md>)
+- [Close-handshake fault traces](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/handshake-results.json>), [Exact native/mixed intent classification](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/intent-diagnostics.json>)
+- [Schema diagnostic requests](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/ablation-results.json>), [Initial tool-selection probes](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/tool-probe-results.json>), [Post-tool response probes](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/gateway-probe-results.json>)
+- [Observed test command and scoped verification results](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/verification.json>)
+
+Runner: [run_audit.py](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/run_audit.py>). It reads already archived builds/sessions rather than rerunning them, unless deliberately assigned a fresh audit output directory. Supporting runners are [run_ablations.py](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/run_ablations.py>), [run_tool_probe.py](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/run_tool_probe.py>), [run_gateway_probe.py](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/run_gateway_probe.py>) and [run_handshake_checks.py](<D:/voice agent/artifacts/call-quality-review/multilingual-standard-audit-20261025/run_handshake_checks.py>). They make real provider calls; inspecting archived results has no provider side effects. No full successful native speech or real PSTN verification should be inferred from silent mocked audio frames.
+
+VERDICT: FAIL — current Standard model/server behavior does not meet the requested conversation and hangup requirements. The findings above identify the observed failures and concrete implementation work; no fix is claimed by this report.

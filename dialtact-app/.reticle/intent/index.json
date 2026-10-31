@@ -1,0 +1,815 @@
+{
+  "entries": [
+    {
+      "id": "inline:choosing-a-tier-confirms-that-its-voice-setup-wa-a5d9e928",
+      "statement": "Choosing a tier confirms that its voice setup was saved.",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:selecting-a-filtered-voice-saves-that-exact-voic-2856511b",
+      "statement": "Selecting a filtered voice saves that exact voice before the tenant can…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:selecting-a-style-filtered-voice-saves-its-exact-7cc1ddd7",
+      "statement": "Selecting a style-filtered voice saves its exact identity before the ag…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:tenants-can-filter-complete-provider-voice-lists-d02617d7",
+      "statement": "Tenants can filter complete provider voice lists by style without chang…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:tenants-can-filter-the-complete-model-voice-list-df4456be",
+      "statement": "Tenants can filter the complete model voice list by supplier style with…",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:the-saved-voice-tier-remains-selected-after-relo-d6966828",
+      "statement": "The saved voice tier remains selected after reloading the voice catalog.",
+      "status": "proved",
+      "subject": "agent-workspace"
+    },
+    {
+      "id": "inline:campaigns-that-the-server-marks-completed-no-lon-0c4dd1d9",
+      "statement": "Campaigns that the server marks completed no longer show a pause action.",
+      "status": "proved",
+      "subject": "analytics"
+    },
+    {
+      "id": "inline:a-failed-integration-authorization-leaves-it-dis-7ed7502f",
+      "statement": "A failed integration authorization leaves it disconnected, shows an err…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
+      "id": "inline:a-failed-verification-request-preserves-the-sele-28e5ed7c",
+      "statement": "A failed verification request preserves the selected number and legal d…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
+      "id": "inline:a-fresh-provider-approved-kyc-status-replaces-th-5ee18213",
+      "statement": "A fresh provider-approved KYC status replaces the verification form wit…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
+      "id": "inline:admin-saves-the-selected-live-recognizer-while-t-69812cf9",
+      "statement": "Admin saves the selected live recognizer while the Gemini conversation…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
+      "id": "inline:csv-column-mapping-and-published-script-placehol-7eb73f09",
+      "statement": "CSV column mapping and published script placeholders resolve to the sel…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
+      "id": "inline:failed-hosted-verification-preserves-the-tenant-939df19d",
+      "statement": "Failed hosted verification preserves the tenant's locked business ident…",
+      "status": "proved",
+      "subject": "api"
+    },
+    {
+      "id": "inline:sign-in-with-the-isolated-test-backend-to-inspec-14c0e319",
+      "statement": "Sign in with the isolated test backend to inspect the call history.",
+      "status": "proposed",
+      "subject": "api"
+    },
+    {
+      "id": "inline:the-administrator-s-chosen-live-transcription-mo-299a097d",
+      "statement": "The administrator's chosen live transcription model persists across sav…",
+      "status": "proposed",
+      "subject": "api"
+    },
+    {
+      "id": "inline:a-failed-script-publication-must-show-an-error-a-93b77cb5",
+      "statement": "A failed script publication must show an error and leave the tenant's e…",
+      "status": "proposed",
+      "subject": "business-brain"
+    },
+    {
+      "id": "inline:a-browser-test-call-reaches-a-connected-listen-o-2133b570",
+      "statement": "A browser test call reaches a connected listen-only state when micropho…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:a-tenant-must-complete-a-new-objection-concern-a-d840d1e5",
+      "statement": "A tenant must complete a new objection concern and reply before the dra…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:a-workspace-can-open-billing-and-review-wallet-a-03c2ac0b",
+      "statement": "A workspace can open billing and review wallet and payment activity.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:an-integration-requires-the-secure-connection-fo-11a61bb9",
+      "statement": "An integration requires the secure connection form before it can become…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:campaign-setup-validates-the-complete-contact-im-7e146ff7",
+      "statement": "Campaign setup validates the complete contact import before launch. Thi…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:choosing-a-number-opens-hosted-kyc-preparation-w-1035a4be",
+      "statement": "Choosing a number opens hosted KYC preparation with the selection and p…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:creation-asks-for-missing-details-before-it-crea-6171458f",
+      "statement": "Creation asks for missing details before it creates an agent.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:operators-can-open-call-history-and-choose-a-sta-f4acfc37",
+      "statement": "Operators can open call history and choose a status from a compact drop…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:selecting-a-call-status-filters-call-history-thr-20932975",
+      "statement": "Selecting a call status filters call history through the API without di…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:tenant-settings-exposes-phone-service-kyc-with-p-a3a16e03",
+      "statement": "Tenant settings exposes phone-service KYC with persisted business ident…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:tenants-prepare-recipients-and-review-a-campaign-f3bd2f6f",
+      "statement": "Tenants prepare recipients and review a campaign on one setup page.",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:tenants-preview-the-personalized-script-for-an-a-b7deabdc",
+      "statement": "Tenants preview the personalized script for an actual selected campaign…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:tenants-see-available-number-inventory-and-the-a-b7143605",
+      "statement": "Tenants see available number inventory and the admin monthly price befo…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:the-completed-clarification-answers-create-the-a-b23233ed",
+      "statement": "The completed clarification answers create the agent and open its saved…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:the-launched-synthetic-campaign-is-visible-in-th-9fa77178",
+      "statement": "The launched synthetic campaign is visible in the campaign list after t…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "inline:the-single-workspace-test-call-action-opens-the-fbaeaae4",
+      "statement": "The single workspace Test call action opens the test dialog after a voi…",
+      "status": "proved",
+      "subject": "console"
+    },
+    {
+      "id": "primary-script-review",
+      "statement": "Tenants can review an unsaved calling script without saving it; publish…",
+      "status": "proposed",
+      "subject": "console"
+    },
+    {
+      "id": "flow:drive-a-browser-test-call-reaches-a-connected-listen-o",
+      "statement": "A browser test call reaches a connected listen-only state when micropho…",
+      "status": "proved",
+      "subject": "drive-a-browser-test-call-reaches-a-conn"
+    },
+    {
+      "id": "flow:drive-a-deployment-whose-mail-provider-cannot-deliver",
+      "statement": "a deployment whose mail provider cannot deliver says so, and hands back…",
+      "status": "proved",
+      "subject": "drive-a-deployment-whose-mail-provider-c"
+    },
+    {
+      "id": "flow:drive-a-workspace-can-open-billing-and-review-wallet-a",
+      "statement": "A workspace can open billing and review wallet and payment activity.",
+      "status": "proved",
+      "subject": "drive-a-workspace-can-open-billing-and-r"
+    },
+    {
+      "id": "flow:drive-admin-saves-the-selected-live-recognizer-while-t",
+      "statement": "Admin saves the selected live recognizer while the Gemini conversation…",
+      "status": "proved",
+      "subject": "drive-admin-saves-the-selected-live-reco"
+    },
+    {
+      "id": "flow:drive-billing-page-shows-wallet-only-no-subscription-p",
+      "statement": "Billing page shows wallet only, no subscription plans",
+      "status": "proved",
+      "subject": "drive-billing-page-shows-wallet-only-no"
+    },
+    {
+      "id": "flow:drive-business-hours-and-timezone-saved-from-the-agent",
+      "statement": "Business hours and timezone saved from the agent workspace reach the sa…",
+      "status": "proposed",
+      "subject": "drive-business-hours-and-timezone-saved"
+    },
+    {
+      "id": "flow:drive-campaign-setup-validates-the-complete-contact-im",
+      "statement": "Campaign setup validates the complete contact import before launch. Thi…",
+      "status": "proved",
+      "subject": "drive-campaign-setup-validates-the-compl"
+    },
+    {
+      "id": "flow:drive-changing-a-lead-s-pipeline-stage-from-the-agent",
+      "statement": "Changing a lead's pipeline stage from the agent workspace writes throug…",
+      "status": "proposed",
+      "subject": "drive-changing-a-lead-s-pipeline-stage-f"
+    },
+    {
+      "id": "flow:drive-creating-an-agent-lands-the-operator-on-the-agen",
+      "statement": "Creating an agent lands the operator on the agent workspace Overview ta…",
+      "status": "proved",
+      "subject": "drive-creating-an-agent-lands-the-operat"
+    },
+    {
+      "id": "flow:drive-creating-an-ai-employee-lands-the-operator-in-th",
+      "statement": "Creating an AI employee lands the operator in the agent workspace with…",
+      "status": "proved",
+      "subject": "drive-creating-an-ai-employee-lands-the"
+    },
+    {
+      "id": "flow:drive-creation-asks-for-missing-details-before-it-crea",
+      "statement": "Creation asks for missing details before it creates an agent.",
+      "status": "proved",
+      "subject": "drive-creation-asks-for-missing-details"
+    },
+    {
+      "id": "flow:drive-csv-column-mapping-and-published-script-placehol",
+      "statement": "CSV column mapping and published script placeholders resolve to the sel…",
+      "status": "proved",
+      "subject": "drive-csv-column-mapping-and-published-s"
+    },
+    {
+      "id": "flow:drive-enter-test-email-mohansaiteja-99-gmail-com-into",
+      "statement": "Enter test email mohansaiteja.99@gmail.com into signin form",
+      "status": "proposed",
+      "subject": "drive-enter-test-email-mohansaiteja-99-g"
+    },
+    {
+      "id": "flow:drive-every-industry-on-the-landing-page-plays-a-real",
+      "statement": "every industry on the landing page plays a real clip rendered by the li…",
+      "status": "proved",
+      "subject": "drive-every-industry-on-the-landing-page"
+    },
+    {
+      "id": "flow:drive-open-sign-in-dialog-by-clicking-continue-sign-in",
+      "statement": "Open sign-in dialog by clicking Continue - sign in",
+      "status": "proved",
+      "subject": "drive-open-sign-in-dialog-by-clicking-co"
+    },
+    {
+      "id": "flow:drive-open-the-test-call-modal-so-operators-get-call-c",
+      "statement": "Open the test call modal so operators get call chrome with timer and 3D…",
+      "status": "proved",
+      "subject": "drive-open-the-test-call-modal-so-operat"
+    },
+    {
+      "id": "flow:drive-operator-confirms-bulk-campaign-create-returned",
+      "statement": "Operator confirms bulk campaign create returned success and dialer star…",
+      "status": "proved",
+      "subject": "drive-operator-confirms-bulk-campaign-cr"
+    },
+    {
+      "id": "flow:drive-public-footer-links-open-the-privacy-page-at-a-c",
+      "statement": "Public footer links open the privacy page at a crawlable URL.",
+      "status": "proved",
+      "subject": "drive-public-footer-links-open-the-priva"
+    },
+    {
+      "id": "flow:drive-refreshing-call-history-keeps-tenant-data-loaded",
+      "statement": "Refreshing call history keeps tenant data loaded without session-expire…",
+      "status": "proposed",
+      "subject": "drive-refreshing-call-history-keeps-tena"
+    },
+    {
+      "id": "flow:drive-signup-completes",
+      "statement": "signup-completes",
+      "status": "proposed",
+      "subject": "drive-signup-completes"
+    },
+    {
+      "id": "flow:drive-tenants-can-filter-the-complete-model-voice-list",
+      "statement": "Tenants can filter the complete model voice list by supplier style with…",
+      "status": "proved",
+      "subject": "drive-tenants-can-filter-the-complete-mo"
+    },
+    {
+      "id": "flow:drive-tenants-prepare-recipients-and-review-a-campaign",
+      "statement": "Tenants prepare recipients and review a campaign on one setup page.",
+      "status": "proved",
+      "subject": "drive-tenants-prepare-recipients-and-rev"
+    },
+    {
+      "id": "flow:drive-tenants-should-see-only-approved-voice-stack-cho",
+      "statement": "Tenants should see only approved voice stack choices for the language t…",
+      "status": "proposed",
+      "subject": "drive-tenants-should-see-only-approved-v"
+    },
+    {
+      "id": "flow:drive-the-loaded-mascot-remains-interactive-after-init",
+      "statement": "The loaded mascot remains interactive after initial loading and opens i…",
+      "status": "proved",
+      "subject": "drive-the-loaded-mascot-remains-interact"
+    },
+    {
+      "id": "flow:drive-the-marketing-page-plays-the-product-s-own-neura",
+      "statement": "the marketing page plays the product's own neural voice per industry, d…",
+      "status": "proved",
+      "subject": "drive-the-marketing-page-plays-the-produ"
+    },
+    {
+      "id": "flow:drive-the-open-builder-action-on-an-agent-card-enters",
+      "statement": "The Open builder action on an agent card enters the workspace with Over…",
+      "status": "proposed",
+      "subject": "drive-the-open-builder-action-on-an-agen"
+    },
+    {
+      "id": "flow:drive-the-single-workspace-test-call-action-opens-the",
+      "statement": "The single workspace Test call action opens the test dialog after a voi…",
+      "status": "proved",
+      "subject": "drive-the-single-workspace-test-call-act"
+    },
+    {
+      "id": "flow:drive-the-tenant-voice-editor-only-offers-administrato",
+      "statement": "The tenant voice editor only offers administrator-approved, ready low o…",
+      "status": "proved",
+      "subject": "drive-the-tenant-voice-editor-only-offer"
+    },
+    {
+      "id": "inline:public-footer-links-open-the-privacy-page-at-a-c-ade9b80b",
+      "statement": "Public footer links open the privacy page at a crawlable URL.",
+      "status": "proved",
+      "subject": "privacy"
+    },
+    {
+      "id": "inline:visitors-can-read-a-main-heading-on-the-public-s-c83ab695",
+      "statement": "Visitors can read a main heading on the public support URL.",
+      "status": "proposed",
+      "subject": "support"
+    },
+    {
+      "id": "inline:visitors-can-read-the-main-support-heading-at-th-a7155303",
+      "statement": "Visitors can read the main support heading at the public support URL.",
+      "status": "proved",
+      "subject": "support"
+    },
+    {
+      "id": "inline:a-deployment-whose-mail-provider-cannot-deliver-4c2a706c",
+      "statement": "a deployment whose mail provider cannot deliver says so, and hands back…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-new-signup-can-complete-email-verification-and-9f4d8f65",
+      "statement": "A new signup can complete email verification and land signed in on the…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b36101c2",
+      "statement": "A signed-in subscriber's workspace loads from the API: /api/agents answ…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-signed-in-subscriber-s-workspace-loads-from-th-b5fd5c7b",
+      "statement": "A signed-in subscriber's workspace loads from the API: the agent and ph…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-subscriber-holding-a-session-token-for-a-since-8411239e",
+      "statement": "A subscriber holding a session token for a since-deleted workspace reco…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-subscriber-s-console-workspace-sync-completes-d4c45a80",
+      "statement": "A subscriber's console workspace sync completes with every resource loa…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-subscriber-whose-session-token-pointed-at-a-de-26a03115",
+      "statement": "A subscriber whose session token pointed at a deleted workspace ends up…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-tenant-can-launch-a-validated-campaign-once-an-cfab10fc",
+      "statement": "A tenant can launch a validated campaign once and return to the campaig…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-tenant-can-open-the-sign-in-form-before-select-23141429",
+      "statement": "A tenant can open the sign-in form before selecting an approved voice p…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:a-tenant-can-sign-in-before-opening-the-voice-ed-cd853617",
+      "statement": "A tenant can sign in before opening the voice editor.",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:after-de-duplicating-the-landing-copy-the-voice-ebe61ed7",
+      "statement": "after de-duplicating the landing copy, the voice showcase still plays r…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:after-login-console-sync-completes-without-sessi-2b4953d2",
+      "statement": "After login, console sync completes without session-expired banner; Cal…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:an-authenticated-tenant-can-open-the-agent-works-d0f0b8ab",
+      "statement": "An authenticated tenant can open the agent workspace and view only voic…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:billing-has-no-fleet-subscription-plan-section-7e3ebf3f",
+      "statement": "Billing has no Fleet Subscription Plan section",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:billing-is-wallet-only-with-no-fleet-subscriptio-cd10753a",
+      "statement": "Billing is wallet-only with no fleet subscription plans",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:billing-page-shows-wallet-only-no-subscription-p-0085ec59",
+      "statement": "Billing page shows wallet only, no subscription plans",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:business-hours-and-timezone-saved-from-the-agent-53028e3d",
+      "statement": "Business hours and timezone saved from the agent workspace reach the sa…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:call-history-uses-one-status-dropdown-and-reques-09b1a6be",
+      "statement": "Call history uses one status dropdown and requests the selected status…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:changing-a-lead-s-pipeline-stage-from-the-agent-8213a879",
+      "statement": "Changing a lead's pipeline stage from the agent workspace writes throug…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:click-connect-account-for-google-calendar-to-tes-62ceae5e",
+      "statement": "Click Connect Account for Google Calendar to test OAuth connect flow in…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:click-continue-sign-in-to-open-sign-in-modal-3180a56d",
+      "statement": "Click Continue - sign in to open sign-in modal",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:connect-google-calendar-integration-in-console-bb4d0c1f",
+      "statement": "Connect Google Calendar integration in console",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:console-sync-banner-is-gone-agents-load-from-api-9dc641e8",
+      "statement": "Console sync banner is gone; agents load from API without Not found",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:console-sync-banner-is-gone-and-phone-line-count-c7d1974d",
+      "statement": "Console sync banner is gone and phone line count shows assigned number",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:creating-an-agent-lands-the-operator-on-the-agen-5e758005",
+      "statement": "Creating an agent lands the operator on the agent workspace Overview ta…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:creating-an-ai-employee-lands-the-operator-in-th-254f8110",
+      "statement": "Creating an AI employee lands the operator in the agent workspace with…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:customer-initiates-razorpay-wallet-top-up-for-in-6e0faf57",
+      "statement": "Customer initiates Razorpay wallet top-up for INR 415",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:customer-tops-up-wallet-with-razorpay-inr-no-str-91055f6a",
+      "statement": "Customer tops up wallet with Razorpay INR — no Stripe path",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:disconnect-google-calendar-integration-from-work-a22621de",
+      "statement": "Disconnect Google Calendar integration from workspace",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:enter-password-into-signin-form-7516e62a",
+      "statement": "Enter password into signin form",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:enter-test-email-mohansaiteja-99-gmail-com-into-8e72a9b1",
+      "statement": "Enter test email mohansaiteja.99@gmail.com into signin form",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:every-industry-on-the-landing-page-plays-a-real-982871e2",
+      "statement": "every industry on the landing page plays a real clip rendered by the li…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:google-calendar-card-shows-connect-button-after-8d769aac",
+      "statement": "Google Calendar card shows Connect button after disconnection",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:google-calendar-shows-active-status-and-disconne-9ac7af4a",
+      "statement": "Google Calendar shows Active status and Disconnect button after OAuth a…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:google-sign-in-returns-the-user-to-the-dialtact-c73bf1fb",
+      "statement": "Google sign-in returns the user to the Dialtact console with an authent…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:open-sign-in-dialog-b1476163",
+      "statement": "Open sign-in dialog",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:open-sign-in-dialog-by-clicking-continue-sign-in-f80d4c52",
+      "statement": "Open sign-in dialog by clicking Continue - sign in",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:open-test-call-modal-from-agent-workspace-header-2ee9f12c",
+      "statement": "Open test call modal from agent workspace header so the call chrome wit…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:open-the-test-call-modal-so-operators-get-call-c-08cc1200",
+      "statement": "Open the test call modal so operators get call chrome with timer and 3D…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-confirms-bulk-campaign-create-returned-1729483f",
+      "statement": "Operator confirms bulk campaign create returned success and dialer star…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-opens-calls-tab-to-dial-outbound-and-ru-0a5d5787",
+      "statement": "Operator opens Calls tab to dial outbound and run bulk concurrent campa…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-opens-mohan-agent-builder-to-place-outb-cd07e743",
+      "statement": "Operator opens Mohan agent builder to place outbound and bulk campaign…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-opens-outbound-dial-panel-to-place-a-li-41c58251",
+      "statement": "Operator opens Outbound dial panel to place a live PSTN call and start…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-places-a-live-outbound-pstn-call-to-918-50cb110a",
+      "statement": "Operator places a live outbound PSTN call to +918897908470 from the age…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:operator-places-a-live-outbound-pstn-call-to-918-9342a5d5",
+      "statement": "Operator places a live outbound PSTN call to +918897908470 from Mohan a…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:platform-admin-views-tenant-wallet-balances-in-i-9888e2f0",
+      "statement": "Platform admin views tenant wallet balances in INR and can adjust them",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:re-connect-google-calendar-to-leave-it-active-fo-f38b107b",
+      "statement": "Re-connect Google Calendar to leave it active for workspace",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:redeeming-a-password-reset-link-leaves-the-perso-c75c8cb8",
+      "statement": "redeeming a password reset link leaves the person signed in on their co…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:redeeming-a-password-reset-link-signs-the-person-6bf8ef40",
+      "statement": "redeeming a password reset link signs the person straight into their co…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:refresh-reloads-call-stats-and-history-without-a-78af6dd9",
+      "statement": "Refresh reloads call stats and history without auth failure.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:refreshing-call-history-keeps-tenant-data-loaded-8abd72d5",
+      "statement": "Refreshing call history keeps tenant data loaded without session-expire…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:retry-sync-is-unnecessary-because-data-already-l-50c88dac",
+      "statement": "Retry sync is unnecessary because data already loaded",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:saving-a-voice-setup-does-not-leave-an-unpublish-4d9c7736",
+      "statement": "Saving a voice setup does not leave an unpublished script change.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:saving-from-the-agent-workspace-script-tab-persi-554e2153",
+      "statement": "Saving from the agent workspace Script tab persists the calling script…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:submit-sign-in-form-ca9989d4",
+      "statement": "Submit sign in form",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:submit-signin-form-and-authenticate-as-mohansait-32cb9afe",
+      "statement": "Submit signin form and authenticate as mohansaiteja.99@gmail.com",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:switch-test-call-to-live-number-mode-without-pst-8756a1fb",
+      "statement": "Switch test call to live-number mode without PSTN wording.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:tenants-can-choose-a-ready-tier-and-then-select-efb3a926",
+      "statement": "Tenants can choose a ready tier and then select its supported engine, m…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:tenants-should-see-only-approved-voice-stack-cho-6967d6aa",
+      "statement": "Tenants should see only approved voice stack choices for the language t…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:the-loaded-mascot-remains-interactive-after-init-9a01a3b6",
+      "statement": "The loaded mascot remains interactive after initial loading and opens i…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:the-marketing-page-plays-the-product-s-own-neura-275c6600",
+      "statement": "the marketing page plays the product's own neural voice per industry, d…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:the-open-builder-action-on-an-agent-card-enters-dab944d9",
+      "statement": "The Open builder action on an agent card enters the workspace with Over…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:the-phone-number-buying-experience-never-present-c934920e",
+      "statement": "The phone number buying experience never presents seeded demo numbers a…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:the-tenant-can-open-an-agent-voice-editor-and-se-3aefa5f9",
+      "statement": "The tenant can open an agent voice editor and sees only administrator-a…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:the-tenant-voice-editor-only-offers-administrato-299bbc15",
+      "statement": "The tenant voice editor only offers administrator-approved, ready low o…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:verify-login-error-is-displayed-7fdafc32",
+      "statement": "Verify login error is displayed",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:verify-reticle-connects-to-the-running-voxly-con-2de77407",
+      "statement": "Verify Reticle connects to the running Voxly console and reads live DOM…",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:voxly-ai-landing-instrumented-after-reticle-init-7b0c610e",
+      "statement": "voxly-ai landing instrumented after Reticle init",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "inline:wallet-balance-shown-in-dollars-on-the-test-call-5d90d096",
+      "statement": "Wallet balance shown in dollars on the test call chrome.",
+      "status": "proved",
+      "subject": "unsorted"
+    },
+    {
+      "id": "primary-call-status-filter",
+      "statement": "Call history uses a compact status dropdown without misleading call cou…",
+      "status": "proposed",
+      "subject": "unsorted"
+    },
+    {
+      "id": "signup-completes",
+      "statement": "A person who creates an account with an email and a password can finish…",
+      "status": "proposed",
+      "subject": "unsorted"
+    }
+  ],
+  "version": 1
+}

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from server.call.call_store import call_store
+from server.call.call_store import call_store, _parse_uuid
 from server.config.env import get_settings
 
 
@@ -64,3 +64,65 @@ async def test_pagination_and_tenant_scope(store):
     )
     assert dated_total == 1
     assert dated[0]["call_id"] == "c2"
+
+
+@pytest.mark.asyncio
+async def test_tag_counts_and_filters_are_tenant_scoped(store):
+    t1 = "11111111-1111-1111-1111-111111111111"
+    t2 = "22222222-2222-2222-2222-222222222222"
+    a1 = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    await store.insert(
+        {**_rec("c1", t1, a1, "2026-08-25T10:00:00"), "status_tags": ["intent:pricing", "outcome:qualified"]}
+    )
+    await store.insert(
+        {**_rec("c2", t1, a1, "2026-08-25T11:00:00"), "status_tags": ["intent:pricing"]}
+    )
+    await store.insert(
+        {**_rec("c3", t2, a1, "2026-08-25T12:00:00"), "status_tags": ["intent:pricing"]}
+    )
+
+    assert await store.list_tags(tenant_id=t1) == [
+        {"tag": "intent:pricing", "count": 2},
+        {"tag": "outcome:qualified", "count": 1},
+    ]
+    assert await store.list_tags(tenant_id=t2) == [{"tag": "intent:pricing", "count": 1}]
+
+    any_rows, _ = await store.list_calls(tenant_id=t1, tags=["outcome:qualified"], tag_match="any")
+    assert [row["call_id"] for row in any_rows] == ["c1"]
+    all_rows, _ = await store.list_calls(
+        tenant_id=t1, tags=["intent:pricing", "outcome:qualified"], tag_match="all"
+    )
+    assert [row["call_id"] for row in all_rows] == ["c1"]
+    foreign_rows, _ = await store.list_calls(tenant_id=t1, tags=["intent:pricing"])
+    assert {row["call_id"] for row in foreign_rows} == {"c1", "c2"}
+
+
+def test_parse_uuid_rejects_telnyx_control_id():
+    assert _parse_uuid("v3:Y2FsbF8...") is None
+    assert _parse_uuid("not-a-uuid") is None
+    assert _parse_uuid("11111111-1111-1111-1111-111111111111") is not None
+
+
+@pytest.mark.asyncio
+async def test_list_tags_casts_nullable_agent_param_for_postgres(monkeypatch):
+    """asyncpg cannot infer a type for a bare `:agent_id IS NULL`, which 500'd /api/calls/tags."""
+    captured = {}
+
+    class FakeSession:
+        async def execute(self, statement, params):
+            captured["sql"] = str(statement)
+            captured["params"] = params
+            return []
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc):
+            return False
+
+    monkeypatch.setattr(
+        "server.call.call_store.get_session_factory", lambda: lambda: FakeSession()
+    )
+    await call_store.list_tags(tenant_id="11111111-1111-1111-1111-111111111111")
+    assert "CAST(:agent_id AS uuid) IS NULL" in captured["sql"]
+    assert "calls.agent_id = CAST(:agent_id AS uuid)" in captured["sql"]

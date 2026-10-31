@@ -1,0 +1,6 @@
+{
+  "facts": {},
+  "preferences": {},
+  "important_context": "",
+  "summary": "invitations के लिए design और quantity के हिसाब से quote बनता है।\nuser: अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: क्या आप शादी के निमंत्रण भी print करते हैं? कीमत और delivery time क्या है?\nassistant: जी, wedding invitations भी print होते हैं, लेकिन इसकी कीमत design और quantity पर depend करती है, fixed rate available नहीं है। Delivery Pune में by post होती है, artwork approval के पाँच working days बाद। क्या आप quote के लिए अपना नाम और locality बता सकते हैं?\nuser: ठीक है, धन्यवाद।\nassistant: ठीक है। अगर आप quote लेना चाहें, तो अपना preferred name और delivery locality बता दीजिए।"
+}

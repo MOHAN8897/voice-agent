@@ -1,0 +1,75 @@
+{
+  "key": "cleaning-hi-IN-connected-3_complete_rejection",
+  "business": "cleaning",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "3_complete_rejection",
+  "agent_id": "0af54b3b-2e52-5467-8d8d-282e03815984",
+  "call_id": "b31499f3-ad6a-415f-9a8b-f1af307e7c79",
+  "session_id": "audit-cleaning-hi-IN-connected-3_complete_rejection-5bb82ebb",
+  "compiled_checksum": "69e98222770e2e24f02661040eef848ed4e9f3d30154dd23b101bb2a21ea0d3c",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "नहीं, धन्यवाद। मुझे आपकी service या product नहीं चाहिए। कृपया call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.313,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.078,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "b31499f3-ad6a-415f-9a8b-f1af307e7c79",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "62eb3e5b361717422b79802ecb8768c3fa08608d615d0b4a7cca5ea6497eafc7",
+  "prompt_chars": 17121,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste. Main Nila hoon FreshNest Cleaning se. Kya hum abhi safai sevaon ke bare mein baat kar sakte hain?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.313,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

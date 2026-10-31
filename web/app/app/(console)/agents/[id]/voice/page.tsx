@@ -15,14 +15,15 @@ type TierRow = {
   error?: string;
 };
 
-export default async function AgentVoicePage({ params }: { params: { id: string } }) {
+export default async function AgentVoicePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   let defaultTier = "medium";
   let tiers: TierRow[] = [];
   let providers: Array<{ id: string; healthy?: boolean; configured?: boolean }> = [];
   let configMode = "env";
 
   try {
-    const agent = await apiGet<{ agent?: { default_tier?: string } }>(`/api/agents/${params.id}`);
+    const agent = await apiGet<{ agent?: { default_tier?: string } }>(`/api/agents/${id}`);
     defaultTier = agent.agent?.default_tier || "medium";
   } catch {
     /* keep default */
@@ -48,7 +49,7 @@ export default async function AgentVoicePage({ params }: { params: { id: string 
   return (
     <ConsolePage>
       <AgentVoiceModelsPanel
-        agentId={params.id}
+        agentId={id}
         initialTier={defaultTier}
         tiers={tiers}
         providers={providers}

@@ -1,0 +1,300 @@
+{
+  "key": "cleaning-kn-IN-none-6_hangup",
+  "business": "cleaning",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "6_hangup",
+  "agent_id": "620b91b3-28c1-51e3-a355-209b23866181",
+  "call_id": "acc7758f-d493-4c25-a29e-160bbd27a1f0",
+  "session_id": "audit-cleaning-kn-IN-none-6_hangup-103adb24",
+  "compiled_checksum": "f09999d11d3f678389e1d0fd2f449e21b4b76e5ac95de3f9dec0309d48a06d70",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 289,
+      "sse_content_preview": "ಖಂಡಿತ. Sofa cleaning ಗೆ ಪ್ರತಿ seat ಗೆ 349 rupees ಆಗುತ್ತೆ, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಒಟ್ಟು 1599 rupees ಆಗುತ್ತೆ. ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಮಾತ್ರ ಸೇವೆ ಸಿಗುತ್ತೆ. ನಮ್ಮಲ್ಲಿ ಯಾವುದೇ discount, refund ಅಥವಾ warranty ಇಲ್ಲ. ನಿಮಗೆ ಯಾವ service ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "sse_content_tail": "ಖಂಡಿತ. Sofa cleaning ಗೆ ಪ್ರತಿ seat ಗೆ 349 rupees ಆಗುತ್ತೆ, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಒಟ್ಟು 1599 rupees ಆಗುತ್ತೆ. ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಮಾತ್ರ ಸೇವೆ ಸಿಗುತ್ತೆ. ನಮ್ಮಲ್ಲಿ ಯಾವುದೇ discount, refund ಅಥವಾ warranty ಇಲ್ಲ. ನಿಮಗೆ ಯಾವ service ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 86,
+        "prompt_tokens": 4302,
+        "total_tokens": 4388,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಖಂಡಿತ. Sofa cleaning ಗೆ ಪ್ರತಿ seat ಗೆ 349 rupees ಆಗುತ್ತೆ, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಒಟ್ಟು 1599 rupees ಆಗುತ್ತೆ. ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಮಾತ್ರ ಸೇವೆ ಸಿಗುತ್ತೆ. ನಮ್ಮಲ್ಲಿ ಯಾವುದೇ discount, refund ಅಥವಾ warranty ಇಲ್ಲ. ನಿಮಗೆ ಯಾವ service ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4302,
+          "output_tokens": 86,
+          "total_tokens": 4388
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.718
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 263,
+      "sse_content_preview": "ಸೋಫಾ cleaning ಗೆ ಪ್ರತಿ seat ಗೆ 349 rupees, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಗೆ ಒಟ್ಟು 1599 rupees ಆಗುತ್ತೆ. ಇದು confirmed visit ಅಲ್ಲ, ಬರೀ enquiry ಅಷ್ಟೇ. ನಿಮ್ಮ details ನ ನಮ್ಮ team review ಗೆ ಕಳಿಸಲಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ತಿಳಿಸಿ.",
+      "sse_content_tail": "ಸೋಫಾ cleaning ಗೆ ಪ್ರತಿ seat ಗೆ 349 rupees, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಗೆ ಒಟ್ಟು 1599 rupees ಆಗುತ್ತೆ. ಇದು confirmed visit ಅಲ್ಲ, ಬರೀ enquiry ಅಷ್ಟೇ. ನಿಮ್ಮ details ನ ನಮ್ಮ team review ಗೆ ಕಳಿಸಲಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ತಿಳಿಸಿ.",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 71,
+        "prompt_tokens": 4379,
+        "total_tokens": 4450,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸೋಫಾ cleaning ಗೆ ಪ್ರತಿ seat ಗೆ 349 rupees, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಗೆ ಒಟ್ಟು 1599 rupees ಆಗುತ್ತೆ. ಇದು confirmed visit ಅಲ್ಲ, ಬರೀ enquiry ಅಷ್ಟೇ. ನಿಮ್ಮ details ನ ನಮ್ಮ team review ಗೆ ಕಳಿಸಲಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ತಿಳಿಸಿ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4379,
+          "output_tokens": 71,
+          "total_tokens": 4450
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.688
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 200,
+      "sse_content_preview": "ಸರಿ, ಯಾವುದೇ discount, refund ಅಥವಾ warranty policy ಲಭ್ಯವಿಲ್ಲ. ನಿಮ್ಮ ಅನುಕೂಲಕ್ಕಾಗಿ ಈ enquiry ಯನ್ನು ನಮ್ಮ ತಂಡದ ಪರಿಶೀಲನೆಗೆ submit ಮಾಡ್ಬೇಕಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ವಿವರ ತಿಳಿಸಿ.",
+      "sse_content_tail": "ಸರಿ, ಯಾವುದೇ discount, refund ಅಥವಾ warranty policy ಲಭ್ಯವಿಲ್ಲ. ನಿಮ್ಮ ಅನುಕೂಲಕ್ಕಾಗಿ ಈ enquiry ಯನ್ನು ನಮ್ಮ ತಂಡದ ಪರಿಶೀಲನೆಗೆ submit ಮಾಡ್ಬೇಕಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ವಿವರ ತಿಳಿಸಿ.",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 50,
+        "prompt_tokens": 4422,
+        "total_tokens": 4472,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ಯಾವುದೇ discount, refund ಅಥವಾ warranty policy ಲಭ್ಯವಿಲ್ಲ. ನಿಮ್ಮ ಅನುಕೂಲಕ್ಕಾಗಿ ಈ enquiry ಯನ್ನು ನಮ್ಮ ತಂಡದ ಪರಿಶೀಲನೆಗೆ submit ಮಾಡ್ಬೇಕಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ವಿವರ ತಿಳಿಸಿ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4422,
+          "output_tokens": 50,
+          "total_tokens": 4472
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.625
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ. Sofa cleaning ಗೆ ಪ್ರತಿ seat ಗೆ three hundred forty nine rupees ಆಗುತ್ತೆ, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಒಟ್ಟು one thousand five hundred ninety nine rupees ಆಗುತ್ತೆ. ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಮಾತ್ರ ಸೇವೆ ಸಿಗುತ್ತೆ. ನಮ್ಮಲ್ಲಿ ಯಾವುದೇ discount, refund ಅಥವಾ warranty ಇಲ್ಲ.",
+      "turn": 1,
+      "at": 2.25
+    },
+    {
+      "text": "ಸೋಫಾ cleaning ಗೆ ಪ್ರತಿ seat ಗೆ three hundred forty nine rupees, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಗೆ ಒಟ್ಟು one thousand five hundred ninety nine rupees ಆಗುತ್ತೆ. ಇದು confirmed visit ಅಲ್ಲ, ಬರೀ enquiry ಅಷ್ಟೇ. ಈ ಕರೆಯಲ್ಲಿ ವಿವರಗಳನ್ನು note ಮಾಡಬಹುದು, ಆದರೆ ತಂಡಕ್ಕೆ ವಿನಂತಿ ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ತಿಳಿಸಿ.",
+      "turn": 2,
+      "at": 4.422
+    },
+    {
+      "text": "ಸರಿ, ಯಾವುದೇ discount, refund ಅಥವಾ warranty policy ಲಭ್ಯವಿಲ್ಲ. ಈ ಕರೆಯಲ್ಲಿ ವಿವರಗಳನ್ನು note ಮಾಡಬಹುದು, ಆದರೆ ತಂಡಕ್ಕೆ ವಿನಂತಿ ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ವಿವರ ತಿಳಿಸಿ.",
+      "turn": 3,
+      "at": 6.579
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 4,
+      "at": 6.61
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.",
+      "spoken": "ಖಂಡಿತ. Sofa cleaning ಗೆ ಪ್ರತಿ seat ಗೆ three hundred forty nine rupees ಆಗುತ್ತೆ, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಒಟ್ಟು one thousand five hundred ninety nine rupees ಆಗುತ್ತೆ. ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಮಾತ್ರ ಸೇವೆ ಸಿಗುತ್ತೆ. ನಮ್ಮಲ್ಲಿ ಯಾವುದೇ discount, refund ಅಥವಾ warranty ಇಲ್ಲ.",
+      "elapsed_s": 2.25,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರಿಸಿ: ಸೋಫಾ ಮತ್ತು kitchen cleaning ಬೆಲೆ, minimum seats ಎಷ್ಟು? Visit ಈಗಲೇ confirm ಆಗಿದೆಯಾ?",
+      "spoken": "ಸೋಫಾ cleaning ಗೆ ಪ್ರತಿ seat ಗೆ three hundred forty nine rupees, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಗೆ ಒಟ್ಟು one thousand five hundred ninety nine rupees ಆಗುತ್ತೆ. ಇದು confirmed visit ಅಲ್ಲ, ಬರೀ enquiry ಅಷ್ಟೇ. ಈ ಕರೆಯಲ್ಲಿ ವಿವರಗಳನ್ನು note ಮಾಡಬಹುದು, ಆದರೆ ತಂಡಕ್ಕೆ ವಿನಂತಿ ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ತಿಳಿಸಿ.",
+      "elapsed_s": 2.156,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "ಸರಿ, ಧನ್ಯವಾದಗಳು.",
+      "spoken": "ಸರಿ, ಯಾವುದೇ discount, refund ಅಥವಾ warranty policy ಲಭ್ಯವಿಲ್ಲ. ಈ ಕರೆಯಲ್ಲಿ ವಿವರಗಳನ್ನು note ಮಾಡಬಹುದು, ಆದರೆ ತಂಡಕ್ಕೆ ವಿನಂತಿ ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ವಿವರ ತಿಳಿಸಿ.",
+      "elapsed_s": 2.141,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 6.672,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "acc7758f-d493-4c25-a29e-160bbd27a1f0",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "aa8320f545d811a579620af0982e0b4836e9dea40088a2fd3faab9bed66eb7c7",
+  "prompt_chars": 17874,
+  "opening_seeded": "ನಮಸ್ಕಾರ, ನಾನು FreshNest Cleaning ನಿಂದ Nila ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ನಾವು ಪುಣೆಯಲ್ಲಿ ಮಾತ್ರ ಸೇವೆ ಒದಗಿಸುತ್ತೇವೆ. ನಮ್ಮ ಸೇವೆಗಳು ಮತ್ತು ಬೆಲೆಗಳ ಬಗ್ಗೆ ನಿಮಗೆ ಮಾಹಿತಿ ನೀಡಲು ಇದು ಸೂಕ್ತ ಸಮಯವೇ?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ಖಂಡಿತ. Sofa cleaning ಗೆ ಪ್ರತಿ seat ಗೆ three hundred forty nine rupees ಆಗುತ್ತೆ, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಒಟ್ಟು one thousand five hundred ninety nine rupees ಆಗುತ್ತೆ. ಸೋಮವಾರದಿಂದ ಶನಿವಾರದವರೆಗೆ ಬೆಳಿಗ್ಗೆ 9 ರಿಂದ ಸಂಜೆ 6 ರವರೆಗೆ ಮಾತ್ರ ಸೇವೆ ಸಿಗುತ್ತೆ. ನಮ್ಮಲ್ಲಿ ಯಾವುದೇ discount, refund ಅಥವಾ warranty ಇಲ್ಲ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "ಸೋಫಾ cleaning ಗೆ ಪ್ರತಿ seat ಗೆ three hundred forty nine rupees, ಕನಿಷ್ಠ 3 seats ಇರಬೇಕು. Kitchen cleaning ಗೆ ಒಟ್ಟು one thousand five hundred ninety nine rupees ಆಗುತ್ತೆ. ಇದು confirmed visit ಅಲ್ಲ, ಬರೀ enquiry ಅಷ್ಟೇ. ನಿಮ್ಮ details ನ ನಮ್ಮ team review ಗೆ ಕಳಿಸಲಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ತಿಳಿಸಿ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "ಸರಿ, ಯಾವುದೇ discount, refund ಅಥವಾ warranty policy ಲಭ್ಯವಿಲ್ಲ. ನಿಮ್ಮ ಅನುಕೂಲಕ್ಕಾಗಿ ಈ enquiry ಯನ್ನು ನಮ್ಮ ತಂಡದ ಪರಿಶೀಲನೆಗೆ submit ಮಾಡ್ಬೇಕಾ? ಹಾಗಿದ್ರೆ ನಿಮ್ಮ ಹೆಸರು, ಯಾವ service ಬೇಕು ಮತ್ತು locality ವಿವರ ತಿಳಿಸಿ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.672,
+  "hangup_count": 1,
+  "source_signature": "c545ec91901b6bf6a3eadfbeb58d4c160fe2846b70364f913fd4724fe00d89cd"
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "trial": 0,
+    "model": "sarvam-105b-conversations",
+    "transport": "json",
+    "chars": 0,
+    "finish": "stop",
+    "usage": {
+      "completion_tokens": 38,
+      "prompt_tokens": 5047,
+      "total_tokens": 5085,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": {
+        "audio_tokens": null,
+        "cached_tokens": 4992,
+        "created_cache_tokens": 32,
+        "multimodal_tokens": null
+      }
+    },
+    "text": ""
+  },
+  {
+    "trial": 1,
+    "model": "sarvam-105b-conversations",
+    "transport": "json",
+    "chars": 0,
+    "finish": "stop",
+    "usage": {
+      "completion_tokens": 29,
+      "prompt_tokens": 5047,
+      "total_tokens": 5076,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": {
+        "audio_tokens": null,
+        "cached_tokens": 4992,
+        "created_cache_tokens": 32,
+        "multimodal_tokens": null
+      }
+    },
+    "text": ""
+  },
+  {
+    "trial": 2,
+    "model": "sarvam-105b-conversations",
+    "transport": "json",
+    "chars": 0,
+    "finish": "stop",
+    "usage": {
+      "completion_tokens": 38,
+      "prompt_tokens": 5047,
+      "total_tokens": 5085,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": {
+        "audio_tokens": null,
+        "cached_tokens": 4992,
+        "created_cache_tokens": 32,
+        "multimodal_tokens": null
+      }
+    },
+    "text": ""
+  }
+]

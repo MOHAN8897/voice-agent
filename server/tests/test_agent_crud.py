@@ -3,13 +3,14 @@ from fastapi.testclient import TestClient
 
 import server.app as app_mod
 from server.config.env import get_settings
+from server.tests.conftest import DEV_TEST_BASE_URL
 
 
 def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    return TestClient(app_mod.app, base_url=DEV_TEST_BASE_URL)
 
 
 def _dev_headers(c: TestClient) -> dict[str, str]:
@@ -19,10 +20,17 @@ def _dev_headers(c: TestClient) -> dict[str, str]:
     return {"X-CSRF-Token": csrf}
 
 
-def test_list_agents_has_default(monkeypatch):
+def _dev_client(monkeypatch) -> TestClient:
     monkeypatch.setenv("DEV_PORTAL_USERNAME", "dev")
     monkeypatch.setenv("DEV_PORTAL_PASSWORD", "devpass")
     c = _client(monkeypatch)
+    login = c.post("/api/dev/login", json={"username": "dev", "password": "devpass"})
+    assert login.status_code == 200
+    return c
+
+
+def test_list_agents_has_default(monkeypatch):
+    c = _dev_client(monkeypatch)
     r = c.get("/api/agents")
     assert r.status_code == 200
     agents = r.json()["agents"]
@@ -30,10 +38,25 @@ def test_list_agents_has_default(monkeypatch):
     get_settings.cache_clear()
 
 
+def test_create_agent_respects_language(monkeypatch):
+    c = _dev_client(monkeypatch)
+    created = c.post("/api/agents", json={"name": "Priya", "languages": ["en-IN"]})
+    assert created.status_code == 200
+    agent = created.json()["agent"]
+    assert agent["languages"] == ["en-IN"]
+    patched = c.patch(f"/api/agents/{agent['agent_id']}", json={"languages": ["hi-IN"]})
+    assert patched.status_code == 200
+    assert patched.json()["agent"]["languages"] == ["hi-IN"]
+    deleted = c.delete(f"/api/agents/{agent['agent_id']}")
+    assert deleted.status_code == 200
+    listed = c.get("/api/agents")
+    ids = [a["agent_id"] for a in listed.json()["agents"]]
+    assert agent["agent_id"] not in ids
+    get_settings.cache_clear()
+
+
 def test_create_and_patch_agent(monkeypatch):
-    monkeypatch.setenv("DEV_PORTAL_USERNAME", "dev")
-    monkeypatch.setenv("DEV_PORTAL_PASSWORD", "devpass")
-    c = _client(monkeypatch)
+    c = _dev_client(monkeypatch)
     created = c.post("/api/agents", json={"name": "sales-bot"})
     assert created.status_code == 200
     agent_id = created.json()["agent"]["agent_id"]

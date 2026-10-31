@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ok அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: AC servicing, fridge inspection விலை என்ன? Replacement parts அதில் சேருமா?\nassistant: Parts எல்லாம் extra தான்ங்க, customer approval குடுத்ததுக்கு அப்புறம் தான் வரும். Inspection முடிஞ்சதுக்கு அப்புறம் தான் fixed repair quote சொல்ல முடியும். வேற ஏதாச்சும் details வேணுமா?\nuser: எனக்கு AC servicing வேண்டாம், ஆனால் fridge inspection வேண்டும். உதவ முடியுமா?\nassistant: கண்டிப்பா பண்ணலாம். Fridge inspection three hundred ninety nine rupees வரும். Visit schedule பண்ணனும்னா உங்க name, locality, அப்புறம் எந்த date-ல வேணும்னு சொல்லுங்க."
+}

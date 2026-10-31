@@ -1,0 +1,147 @@
+{
+  "key": "course-te-IN-none-3_complete_rejection",
+  "business": "course",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "04d3f017-991a-555b-8fb1-395966015aeb",
+  "call_id": "bfa858e5-2185-4970-af1a-970b4e0eb93f",
+  "session_id": "audit-course-te-IN-none-3_complete_rejection-a7ac1986",
+  "compiled_checksum": "9a84e639fcb1f76099f626f524ab8944306b87c16d60c3996f62a42596a27922",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 694,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"వద్దండి, ధన్యవాదాలు. మీ service లేదా product నాకు అవసరం లేదు. దయచేసి call ముగించండి.\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n    \"order_claimed\": false,\n    \"spoken_response\": \"సరేనండి, అర్థమైంది. మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller gave firm refusal and requested to end the call.\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"contact_preference\",\n        \"value\": \"do_not_call\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"వద్దండి, ధన్యవాదాలు. మీ service లేదా product నాకు అవసరం లేదు. దయచేసి call ముగించండి.\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n    \"order_claimed\": false,\n    \"spoken_response\": \"సరేనండి, అర్థమైంది. మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller gave firm refusal and requested to end the call.\"\n      },\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"contact_preference\",\n        \"value\": \"do_not_call\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 237,
+        "prompt_tokens": 4168,
+        "total_tokens": 4405,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, అర్థమైంది. మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4168,
+          "output_tokens": 237,
+          "total_tokens": 4405
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller gave firm refusal and requested to end the call."
+            },
+            {
+              "op": "update_summary",
+              "key": "contact_preference",
+              "value": "do_not_call"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "firm_refusal",
+          "evidence": "వద్దండి, ధన్యవాదాలు. మీ service లేదా product నాకు అవసరం లేదు. దయచేసి call ముగించండి.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.766
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 0.765
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "వద్దండి, ధన్యవాదాలు. మీ service లేదా product నాకు అవసరం లేదు. దయచేసి call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.812,
+      "requests": 1,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.812,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "bfa858e5-2185-4970-af1a-970b4e0eb93f",
+      "reason": "not_interested"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "71d38200d4eda5d18e920356aeccafad15e0fbf7c25354f24dba2bd041b6b7b4",
+  "prompt_chars": 17637,
+  "opening_seeded": "Namaskaram, nenu Ananya ni BrightPath Skills nunchi. Manam adult beginner Python course gurinchi matladukovadaniki call chesamu, ippudu matladadaniki samayam undha?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "వద్దండి, ధన్యవాదాలు. మీ service లేదా product నాకు అవసరం లేదు. దయచేసి call ముగించండి.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, అర్థమైంది. మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "not_interested",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.812,
+  "hangup_count": 1
+}

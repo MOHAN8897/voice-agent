@@ -1,0 +1,375 @@
+{
+  "key": "cleaning-en-IN-none-1_interested",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": false,
+  "scenario": "1_interested",
+  "agent_id": "4bf37ebd-fbc9-5c3f-9218-8020b68ebb68",
+  "call_id": "7dccf36c-d653-492e-854d-944b19518bff",
+  "session_id": "audit-cleaning-en-IN-none-1_interested-0cfa7814",
+  "compiled_checksum": "2b7e6a316d693379d21e9c43e155493c13c45c6409a8f5aa911f12851d3f9e36",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 193,
+      "sse_content_preview": "Our sofa cleaning is 349 rupees per seat, with a minimum of 3 seats. Kitchen cleaning is 1599 rupees total. We work Monday to Saturday, 9 AM to 6 PM. Would you like to go ahead with an enquiry?",
+      "sse_content_tail": "Our sofa cleaning is 349 rupees per seat, with a minimum of 3 seats. Kitchen cleaning is 1599 rupees total. We work Monday to Saturday, 9 AM to 6 PM. Would you like to go ahead with an enquiry?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 56,
+        "prompt_tokens": 4232,
+        "total_tokens": 4288,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Our sofa cleaning is 349 rupees per seat, with a minimum of 3 seats. Kitchen cleaning is 1599 rupees total. We work Monday to Saturday, 9 AM to 6 PM. Would you like to go ahead with an enquiry?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4232,
+          "output_tokens": 56,
+          "total_tokens": 4288
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.719
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 311,
+      "sse_content_preview": "Sofa cleaning is three hundred forty nine rupees per seat, minimum 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No, a visit is not confirmed yet, and I cannot save anything externally right now. Would you like to share your preferred name and locality for an enquiry instead?",
+      "sse_content_tail": "Sofa cleaning is three hundred forty nine rupees per seat, minimum 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No, a visit is not confirmed yet, and I cannot save anything externally right now. Would you like to share your preferred name and locality for an enquiry instead?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 4305,
+        "total_tokens": 4368,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Sofa cleaning is three hundred forty nine rupees per seat, minimum 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No, a visit is not confirmed yet, and I cannot save anything externally right now. Would you like to share your preferred name and locality for an enquiry instead?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4305,
+          "output_tokens": 63,
+          "total_tokens": 4368
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.75
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 177,
+      "sse_content_preview": "Kitchen cleaning is one thousand five hundred ninety nine rupees total. It is available Monday to Saturday, 9 AM to 6 PM. Would you like me to submit an enquiry for team review?",
+      "sse_content_tail": "Kitchen cleaning is one thousand five hundred ninety nine rupees total. It is available Monday to Saturday, 9 AM to 6 PM. Would you like me to submit an enquiry for team review?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 40,
+        "prompt_tokens": 4362,
+        "total_tokens": 4402,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Kitchen cleaning is one thousand five hundred ninety nine rupees total. It is available Monday to Saturday, 9 AM to 6 PM. Would you like me to submit an enquiry for team review?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4362,
+          "output_tokens": 40,
+          "total_tokens": 4402
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.641
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 12,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 259,
+      "sse_content_preview": "Got it, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total. I can note this request within the call, but I cannot save it externally or confirm a visit. Would you like me to submit this enquiry for team review now?",
+      "sse_content_tail": "Got it, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total. I can note this request within the call, but I cannot save it externally or confirm a visit. Would you like me to submit this enquiry for team review now?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 4662,
+        "total_tokens": 4717,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Got it, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total. I can note this request within the call, but I cannot save it externally or confirm a visit. Would you like me to submit this enquiry for team review now?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4662,
+          "output_tokens": 55,
+          "total_tokens": 4717
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.672
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Our sofa cleaning is three hundred forty nine rupees per seat, with a minimum of 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. We work Monday to Saturday, 9 AM to 6 PM. Would you like to go ahead with an enquiry?",
+      "turn": 1,
+      "at": 0.765
+    },
+    {
+      "text": "Sofa cleaning is three hundred forty nine rupees per seat, minimum 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No, a visit is not confirmed yet, and I cannot save anything externally right now.",
+      "turn": 2,
+      "at": 3.047
+    },
+    {
+      "text": "Kitchen cleaning is one thousand five hundred ninety nine rupees total. It is available Monday to Saturday, 9 AM to 6 PM. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up.",
+      "turn": 3,
+      "at": 5.125
+    },
+    {
+      "text": "Got it, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up.",
+      "turn": 4,
+      "at": 7.375
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 5,
+      "at": 7.406
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "Our sofa cleaning is three hundred forty nine rupees per seat, with a minimum of 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. We work Monday to Saturday, 9 AM to 6 PM. Would you like to go ahead with an enquiry?",
+      "elapsed_s": 0.75,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Answer this first: What are the sofa and kitchen cleaning prices, minimum seats, and is a visit already confirmed?",
+      "spoken": "Sofa cleaning is three hundred forty nine rupees per seat, minimum 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No, a visit is not confirmed yet, and I cannot save anything externally right now.",
+      "elapsed_s": 2.266,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "I do not need sofa cleaning, but I want kitchen cleaning. Can you explain it?",
+      "spoken": "Kitchen cleaning is one thousand five hundred ninety nine rupees total. It is available Monday to Saturday, 9 AM to 6 PM. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up.",
+      "elapsed_s": 2.032,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.",
+      "spoken": "Got it, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total. I can keep a note during this call, but I cannot send this request to the team or promise a follow-up.",
+      "elapsed_s": 2.219,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 7.468,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "7dccf36c-d653-492e-854d-944b19518bff",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "d149385fc706a512129f88d7877e49417b93dd56789f7d4d317178a9a381a1dc",
+  "prompt_chars": 18158,
+  "opening_seeded": "Hello, this is Nila calling on behalf of FreshNest Cleaning. We provide professional cleaning services in Pune only. Would you like to hear about our sofa or kitchen cleaning services?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Our sofa cleaning is three hundred forty nine rupees per seat, with a minimum of 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. We work Monday to Saturday, 9 AM to 6 PM. Would you like to go ahead with an enquiry?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "Sofa cleaning is three hundred forty nine rupees per seat, minimum 3 seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No, a visit is not confirmed yet, and I cannot save anything externally right now.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "Kitchen cleaning is one thousand five hundred ninety nine rupees total. It is available Monday to Saturday, 9 AM to 6 PM. Would you like me to submit an enquiry for team review?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "Got it, Audit Customer. Kitchen cleaning in Baner is one thousand five hundred ninety nine rupees total. I can note this request within the call, but I cannot save it externally or confirm a visit. Would you like me to submit this enquiry for team review now?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 7.468,
+  "hangup_count": 1,
+  "source_signature": "c545ec91901b6bf6a3eadfbeb58d4c160fe2846b70364f913fd4724fe00d89cd"
+}

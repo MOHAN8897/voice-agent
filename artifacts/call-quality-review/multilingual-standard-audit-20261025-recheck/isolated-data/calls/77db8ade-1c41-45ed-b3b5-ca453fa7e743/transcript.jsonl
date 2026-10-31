@@ -1,0 +1,6 @@
+{"seq": 1, "role": "user", "text": "I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.", "ts": "2026-10-25T16:53:55.579761Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:53:58.187397Z", "brain_latency_ms": 2192}
+{"seq": 3, "role": "user", "text": "Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?", "ts": "2026-10-25T16:53:58.199460Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Our adult beginner Python course is six weeks online, weekdays from 7 PM to 8 PM, for age 18 and above. The total fee is four thousand nine hundred ninety nine rupees. There is no placement or job guarantee, and no discount or instalment plan is authorised.", "ts": "2026-10-25T16:54:00.950887Z", "brain_latency_ms": 2167}
+{"seq": 5, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T16:54:00.957795Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T16:54:00.964297Z", "brain_latency_ms": 1}

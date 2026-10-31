@@ -1,0 +1,33 @@
+{
+  "intents": {
+    "flow:drive-handling-rules-publish-through-the-real-editor-r": {
+      "binding": {
+        "flow": "drive-handling-rules-publish-through-the-real-editor-r"
+      },
+      "declaredAt": 1793126985017,
+      "id": "flow:drive-handling-rules-publish-through-the-real-editor-r",
+      "state": "bound",
+      "statement": "Handling rules publish through the real editor; read-only tenants can inspect CRM contacts without mutation controls.",
+      "status": "proposed",
+      "subject": "drive-handling-rules-publish-through-the",
+      "surface": {
+        "flow": "drive-handling-rules-publish-through-the-real-editor-r"
+      },
+      "updatedAt": 1793126985058
+    },
+    "flow:drive-handling-rules-publish-through-the-real-editor-r-e8e16e": {
+      "declaredAt": 1793127097545,
+      "id": "flow:drive-handling-rules-publish-through-the-real-editor-r-e8e16e",
+      "state": "declared",
+      "statement": "Handling rules publish through the real editor; read-only tenants can inspect CRM contacts without mutation controls.",
+      "status": "proposed",
+      "subject": "drive-handling-rules-publish-through-the",
+      "surface": {
+        "flow": "drive-handling-rules-publish-through-the-real-editor-r-e8e16e"
+      },
+      "updatedAt": 1793127097574
+    }
+  },
+  "subject": "drive-handling-rules-publish-through-the",
+  "version": 1
+}

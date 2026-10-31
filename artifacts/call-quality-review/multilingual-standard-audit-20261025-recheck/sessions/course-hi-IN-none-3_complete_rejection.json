@@ -1,0 +1,73 @@
+{
+  "key": "course-hi-IN-none-3_complete_rejection",
+  "business": "course",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "0d29f456-99ed-5484-979e-201416fd33e6",
+  "call_id": "ac93358e-8648-47f1-98b2-d438b4b86b46",
+  "session_id": "audit-course-hi-IN-none-3_complete_rejection-ca0b61b1",
+  "compiled_checksum": "f1e78d38bbec1304ee37a4a673c255234a498fcb253f9e9b306c626da21b4ec1",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 1,
+      "at": 0.015
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "नहीं, धन्यवाद। मुझे आपकी service या product नहीं चाहिए। कृपया call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.062,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "ac93358e-8648-47f1-98b2-d438b4b86b46",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "86a27c75aa0bc4fc767bb051eacd16a5d1f50cd0ea347b00cbf86e67477c604d",
+  "prompt_chars": 17572,
+  "opening_seeded": "Namaste, mera naam Ananya hai BrightPath Skills se. Kya yeh adult beginner Python course ke baare mein baat karne ka sahi samay hai?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.062,
+  "hangup_count": 1
+}

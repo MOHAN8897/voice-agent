@@ -1,0 +1,27 @@
+{
+  "business": "course",
+  "language": "kn-IN",
+  "http_status": 502,
+  "elapsed_s": 33.235,
+  "request": {
+    "brief": "Ananya is agent name, not caller name. BrightPath Skills outbound information/counselling.\nsell our adult beginner Python course, 6 weeks online, weekdays 7pm-8pm, age 18 and above.\nfee final is 4999 rupees TOTAL. An old note says 3999 but that is WRONG, discard old fee, current fee 4999 only.\nNo placement or job guarantee, no income promise, no discount or instalment plan authorised.\nPurpose explain course, answer questions honestly, ask about coding experience only if useful.\nIf user wants a demo/counselling request collect preferred name and email with permission and preferred time.\nWhen authorised enquiry/CRM integration exists submit request with consent; a successful request does not mean seat/payment confirmed.\nNo integration: tell them cannot send email or confirm demo, can note their preference within this call.\nFuture interest after exams is welcome, do not call it rejection or DNC; callbacks only when caller requests and capability permits.\nRefund rules, exact next batch date and vacancies not supplied: unknown. Do not invent.\nDo not ask for passwords, exam answers, OTPs or card details. If person already knows Python answer relevance, no repetitive pitch.\nKeep optional questions optional, don't demand a name before giving fee. Respect a real decline.",
+    "language": "kn-IN",
+    "employeeName": "Ananya",
+    "agentRole": "sales",
+    "callDirection": "outbound",
+    "mode": "instant_lead",
+    "naturalSpokenStyle": true,
+    "requestId": "fa57d65a-002a-4c3f-8862-2cbff799bda7"
+  },
+  "response": {
+    "detail": {
+      "error": {
+        "code": "script_compile_failed",
+        "message": "Script generation failed. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+        "agentId": "228e6d86-452e-543f-86c5-4faa0fe5fcf1",
+        "draftRetained": true
+      }
+    }
+  },
+  "status": "creation_failed"
+}

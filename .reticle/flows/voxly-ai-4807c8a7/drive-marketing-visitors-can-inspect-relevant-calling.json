@@ -1,0 +1,119 @@
+{
+  "version": 2,
+  "name": "drive-marketing-visitors-can-inspect-relevant-calling",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1793129443086,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Customer support"
+      },
+      "args": {},
+      "action": "focus",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Customer support"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "expect": {
+        "kind": "text",
+        "contains": "Make the first conversation count",
+        "visible": true
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "What happens after the call?"
+      },
+      "args": {},
+      "action": "focus",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "What happens after the call?"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "expect": {
+        "kind": "text",
+        "contains": "Callback requests do not automatically schedule a redial.",
+        "visible": true
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Explore workspace pricing"
+      },
+      "args": {},
+      "action": "focus",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Explore workspace pricing"
+      },
+      "args": {
+        "text": "Enter"
+      },
+      "action": "press",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "auth-modal"
+        },
+        "state": "visible"
+      },
+      "timeoutMs": 15000,
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Marketing visitors can inspect relevant calling workflows, understand follow-up limits, and enter workspace pricing through sign-in on desktop and mobile.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "mcp",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-marketing-visitors-can-inspect-relevant-calling"
+}

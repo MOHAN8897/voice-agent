@@ -1,0 +1,235 @@
+"""Unit tests for dynamic tier duplication, fault isolation, and Gemini 3.8 Live tier integration."""
+from __future__ import annotations
+
+import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from server.services.saas.voice_stack_profiles import (
+    canonical_voice_tier,
+    validate_composed_profile,
+    VoiceProfileError,
+)
+from server.services.saas.voice_stack_defaults import recommended_composed_profile
+from server.services.pstn_stack import normalize_pstn_stack_override
+from server.services.saas.pstn_saas_stack import saas_stack_override_for_agent
+from server.providers.catalog_refresh import apply_live_fx_to_catalog
+
+
+def test_canonical_voice_tier_allows_custom_and_premium():
+    # Base canonical tiers
+    assert canonical_voice_tier("low") == "low"
+    assert canonical_voice_tier("medium") == "medium"
+    assert canonical_voice_tier("premium") == "premium"
+    assert canonical_voice_tier("LOW") == "low"
+    assert canonical_voice_tier("  Premium  ") == "premium"
+
+    # Custom dynamic tiers
+    assert canonical_voice_tier("low_copy_1") == "low_copy_1"
+    assert canonical_voice_tier("med_copy_2") == "med_copy_2"
+    assert canonical_voice_tier("custom_tier") == "custom_tier"
+    assert canonical_voice_tier("tier_123") == "tier_123"
+
+    # Invalid slug characters or lengths
+    with pytest.raises(VoiceProfileError):
+        canonical_voice_tier("invalid slug with spaces")
+    with pytest.raises(VoiceProfileError):
+        canonical_voice_tier("tier-with-hyphens!")
+    with pytest.raises(VoiceProfileError):
+        canonical_voice_tier("a" * 25)  # > 20 characters
+    with pytest.raises(VoiceProfileError):
+        canonical_voice_tier("")
+
+
+def test_recommended_composed_profile_premium():
+    prof = recommended_composed_profile("premium", allow_premium=True)
+    assert prof["schemaVersion"] == 1
+    assert prof["stt"]["provider"] == "gemini"
+    assert prof["stt"]["model"] == "gemini-3.8-live-audio"
+    assert prof["llm"]["provider"] == "gemini"
+    assert prof["llm"]["modelId"] == "gemini-3.8-live"
+    assert prof["llm"]["apiMode"] == "websocket"
+    assert prof["engines"][0]["models"][0]["model"] == "gemini-3.8-live"
+    assert prof["engines"][0]["models"][0]["apiMode"] == "websocket"
+
+
+def test_validate_composed_profile_custom_tier():
+    profile_payload = {
+        "schemaVersion": 1,
+        "enabled": True,
+        "label": "My Custom Low Copy",
+        "supportedLanguages": ["te-IN", "en-IN"],
+        "stt": {"provider": "sarvam", "model": "saaras:v2"},
+        "llm": {"provider": "gemini", "modelId": "gemini-2.0-flash", "apiMode": "chat_completions_v1"},
+        "engines": [
+            {
+                "id": "sarvam",
+                "label": "Sarvam Bulbul",
+                "models": [
+                    {
+                        "id": "bulbul:v3",
+                        "label": "bulbul:v3",
+                        "provider": "sarvam",
+                        "model": "bulbul:v3",
+                        "apiMode": "websocket",
+                        "voices": [
+                            {"id": "voice-shubh", "providerVoiceId": "shubh", "label": "Shubh", "languages": ["te-IN", "en-IN"]}
+                        ],
+                    }
+                ],
+            }
+        ],
+        "evidence": {
+            "sarvamModelAccess": True,
+            "sttVerified": True,
+            "ttsCatalogVerified": True,
+            "toolsVerified": True,
+            "capacityVerified": True,
+            "mediaFormatsVerified": True,
+            "credentialRefConfigured": True,
+        },
+    }
+
+    validated = validate_composed_profile(profile_payload, tier="low_copy_1", allow_premium=True)
+    assert validated["label"] == "My Custom Low Copy"
+    assert validated["engines"][0]["models"][0]["model"] == "bulbul:v3"
+
+
+def test_pstn_stack_normalization_for_premium_and_composed():
+    # Premium tier with realtime pipeline
+    premium_raw = {
+        "pipeline": "realtime_voice",
+        "language": "te-IN",
+        "llm": {"provider": "gemini", "model": "gemini-3.8-live"},
+        "realtime_voice": {
+            "voice": "Puck",
+            "turn_detection": "server_vad",
+        },
+    }
+    norm_prem, _ = normalize_pstn_stack_override(premium_raw, language="te-IN", tier="premium")
+    assert norm_prem["pipeline"] == "realtime_voice"
+    assert norm_prem["llm"]["model"] == "gemini-3.8-live"
+
+    # Composed custom duplicated tier with full stages snapshot
+    composed_raw = {
+        "pipeline": "composed_voice",
+        "voice_flow": "composed_stages",
+        "language": "te-IN",
+        "_voice_stack_snapshot": {"tier": "low_copy_1"},
+        "stt": {"provider": "sarvam", "model": "saaras:v2", "config": {}},
+        "llm": {"provider": "gemini", "model": "gemini-2.0-flash", "config": {}},
+        "tts": {"provider": "sarvam", "model": "bulbul:v3", "config": {}},
+    }
+    norm_comp, _ = normalize_pstn_stack_override(composed_raw, language="te-IN", tier="low_copy_1")
+    assert norm_comp["pipeline"] == "composed_voice"
+    assert norm_comp["stt"]["provider"] == "sarvam"
+
+
+@pytest.mark.asyncio
+async def test_saas_stack_override_for_agent_routing(monkeypatch):
+    from server.services.saas import voice_stack_profiles
+
+    monkeypatch.setattr(voice_stack_profiles, "_load_rates_without_fallback", AsyncMock(return_value={
+        "pstn_premium_rate_usd_micros_per_min": 120000, "pstn_premium_rate_inr_paise_per_min": 1200,
+        "premium_rate_version": 1, "fx_rate_inr": 100}))
+    agent = {
+        "id": "agent-test-123",
+        "default_tier": "premium",
+        "voice_settings": {"language": "te-IN"},
+    }
+
+    with patch("server.services.saas.pstn_saas_stack.resolve_platform_phone_stack") as mock_stack:
+        mock_stack.return_value = {
+            "pipeline": "realtime_voice",
+            "language": "te-IN",
+            "llm": {"provider": "gemini", "model": "gemini-3.8-live"},
+            "realtime_voice": {"voice": "Puck"},
+        }
+        override = await saas_stack_override_for_agent(agent)
+        assert override["pipeline"] == "realtime_voice"
+        assert override["llm"]["model"] == "gemini-3.8-live"
+
+
+def test_catalog_refresh_fx_fallback():
+    with patch("server.services.usage_pricing.resolve_fx_rate_inr", side_effect=Exception("FX network error")):
+        catalog = {"providers": []}
+        result = apply_live_fx_to_catalog(catalog)
+        assert result.get("fx_rate_inr") == 94.0
+
+
+@pytest.mark.asyncio
+async def test_voice_stacks_catalog_includes_custom_duplicated_tiers():
+    from server.routes.voice_stacks import voice_stack_catalog
+
+    mock_records = {
+        "low": {"profile": {"enabled": True, "engines": []}, "revision": 1},
+        "medium": {"profile": {"enabled": True, "engines": []}, "revision": 1},
+        "low_copy_1": {
+            "profile": {
+                "label": "Custom Regional Stack",
+                "retailRateInr": 4.5,
+                "enabled": True,
+                "supportedLanguages": ["te-IN"],
+                "evidence": {
+                    "sarvamModelAccess": True,
+                    "sttVerified": True,
+                    "ttsCatalogVerified": True,
+                    "toolsVerified": True,
+                    "capacityVerified": True,
+                    "mediaFormatsVerified": True,
+                    "credentialRefConfigured": True,
+                },
+                "stt": {"provider": "sarvam", "model": "saaras:v2"},
+                "llm": {"provider": "gemini", "modelId": "gemini-2.0-flash", "apiMode": "chat_completions_v1"},
+                "engines": [
+                    {
+                        "id": "gnani-engine",
+                        "label": "Gnani Indian Speech",
+                        "models": [
+                            {
+                                "id": "timbre-v3.0",
+                                "label": "Timbre Expressive",
+                                "provider": "gnani",
+                                "model": "timbre-v3.0",
+                                "apiMode": "websocket",
+                                "voices": [
+                                    {"id": "voice-gnani-1", "label": "Voice 1", "languages": ["te-IN"]},
+                                    {"id": "voice-gnani-3", "label": "Voice 3", "languages": ["te-IN"]},
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+            "revision": 2,
+            "publicAliases": {
+                "engines": {"gnani-engine": "eng_gnani_1"},
+                "models": {"gnani-engine::timbre-v3.0": "mod_gnani_1"},
+                "voices": {
+                    "gnani-engine::timbre-v3.0::voice-gnani-1": "voc_gnani_1",
+                    "gnani-engine::timbre-v3.0::voice-gnani-3": "voc_gnani_3",
+                },
+            },
+        },
+    }
+
+    mock_rates = {
+        "pstn_low_rate_usd_micros_per_min": 50000,
+        "pstn_low_rate_inr_paise_per_min": 450,
+        "low_rate_version": 1,
+        "fx_rate_inr": 90,
+        "pstn_rate_usd_micros_per_min": 150000,
+        "pstn_rate_inr_paise_per_min": 1400,
+        "version": 1,
+    }
+
+    with patch("server.routes.voice_stacks.load_profile_records", AsyncMock(return_value=mock_records)):
+        with patch("server.routes.voice_stacks._load_rates_without_fallback", AsyncMock(return_value=mock_rates)):
+            with patch("server.services.saas.voice_stack_profiles._runtime_profile_blockers", return_value=[]):
+                res = await voice_stack_catalog(language="te-IN")
+            assert "profiles" in res
+            tier_names = [p["tier"] for p in res["profiles"]]
+            assert "low_copy_1" in tier_names
+            custom_p = next(p for p in res["profiles"] if p["tier"] == "low_copy_1")
+            assert custom_p["label"] == "Custom Regional Stack"
+            assert custom_p["tier"] == "low_copy_1"
+            assert custom_p["ready"] is True

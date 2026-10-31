@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /*?auth_error=*
+Disallow: /*?auth_code=*
+
+Sitemap: https://www.dialtact.com/sitemap.xml

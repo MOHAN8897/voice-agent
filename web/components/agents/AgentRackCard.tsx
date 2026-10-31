@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SkeuoBadge } from "@/components/ui/skeuo/SkeuoBadge";
 import { SkeuoButton, SkeuoStatusLight } from "@/components/ui/skeuo";
 import { cn } from "@/lib/cn";
+import { formatAgentLanguage } from "@/lib/agent-language";
 
 export type AgentRackItem = {
   agent_id: string;
@@ -26,8 +27,10 @@ export function AgentRackCard({
   agent: AgentRackItem;
   portal?: "app" | "dev";
 }) {
+  const testHref =
+    portal === "dev" ? `/dev/test-studio/${agent.agent_id}` : `/app/test-studio/${agent.agent_id}`;
   const base = portal === "dev" ? `/dev/agents/${agent.agent_id}` : `/app/agents/${agent.agent_id}`;
-  const langs = (agent.languages || ["te-IN"]).join(", ");
+  const langs = formatAgentLanguage(agent);
   const version = agent.active_compiled_brain_version || "—";
   const env = agent.environment || "development";
   const health = healthStatus(agent.status);
@@ -76,7 +79,7 @@ export function AgentRackCard({
           <Link href={`${base}/summary`}>
             <SkeuoButton variant="primary" size="sm">Open agent</SkeuoButton>
           </Link>
-          <Link href={`${base}/test`}>
+          <Link href={testHref}>
             <SkeuoButton variant="metal" size="sm">Test</SkeuoButton>
           </Link>
           <SkeuoBadge tone={agent.status === "active" ? "success" : "muted"}>{agent.status}</SkeuoBadge>

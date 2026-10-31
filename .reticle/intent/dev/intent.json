@@ -1,0 +1,60 @@
+{
+  "intents": {
+    "inline:admin-previews-edited-gst-rules-without-saving-t-f4e359ad": {
+      "binding": {
+        "contains": "INR 1200.00",
+        "kind": "text",
+        "visible": true
+      },
+      "declaredAt": 1793111871197,
+      "id": "inline:admin-previews-edited-gst-rules-without-saving-t-f4e359ad",
+      "provenBy": {
+        "at": 1793112063434,
+        "grade": "presence",
+        "runId": "drive-18b0ca116baadda4",
+        "verdictId": "reticle_act_and_wait:1793112063434"
+      },
+      "state": "proved",
+      "statement": "Admin previews edited GST rules without saving them or creating a payment.",
+      "status": "proved",
+      "subject": "dev",
+      "surface": {
+        "route": "/dev/stack"
+      },
+      "updatedAt": 1793112063474
+    },
+    "inline:platform-admins-can-inspect-each-pstn-tier-s-sav-26368601": {
+      "binding": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "contains": "Saved · revision 3",
+            "kind": "text"
+          },
+          {
+            "contains": "An approved native retail rate for this tier has not been configured.",
+            "kind": "text"
+          }
+        ]
+      },
+      "declaredAt": 1792609336473,
+      "id": "inline:platform-admins-can-inspect-each-pstn-tier-s-sav-26368601",
+      "provenBy": {
+        "at": 1792609336935,
+        "grade": "presence",
+        "runId": "drive-lease-95336eb5-d9e8-4ed4-a5f7-a2de877922c4",
+        "verdictId": "reticle_act_and_wait:1792609336935"
+      },
+      "state": "proved",
+      "statement": "Platform admins can inspect each PSTN tier’s saved profile and readiness while native tier prices are incomplete.",
+      "status": "proved",
+      "subject": "dev",
+      "surface": {
+        "route": "/dev/stack"
+      },
+      "updatedAt": 1792609337019
+    }
+  },
+  "subject": "dev",
+  "version": 1
+}

@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "isit अभी confirm है?\nassistant: Sofa cleaning three hundred forty nine rupees per seat है और minimum 3 seats चाहिए। Kitchen cleaning one thousand five hundred ninety nine rupees total है। मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता। क्या आप Pune में रहते हैं?\nuser: मुझे सोफा cleaning नहीं चाहिए, लेकिन kitchen cleaning चाहिए। समझाइए।\nassistant: Kitchen cleaning one thousand five hundred ninety nine rupees total है। मैं इस कॉल में बात नोट कर सकता हूँ, लेकिन बाहरी सिस्टम में इसे भेज या follow-up तय नहीं कर सकता। Kya aapka locality Pune mein hai?"
+}

@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { cn } from "@/lib/cn";
 import { LogoutButton } from "@/components/auth/LogoutButton";
-import { DevNav } from "@/components/dev/DevNav";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { InstrumentSidebar, MobileShellHeader } from "@/components/shell/InstrumentSidebar";
 import { ShellTopBar } from "@/components/shell/ShellTopBar";
+import { DevShellEntityLabel } from "@/components/dev/DevShellEntityLabel";
 
 export function DevShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const wideWorkspace = /\/test-studio\/[^/]+/.test(pathname);
 
   const footer = (
     <>
@@ -24,22 +29,22 @@ export function DevShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-surface-chassis">
-      <InstrumentSidebar subtitle="Developer Portal" nav={<DevNav />} footer={footer} />
+      <InstrumentSidebar subtitle="Developer Portal" nav={<AdminNav />} footer={footer} />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <MobileShellHeader open={open} onToggle={() => setOpen((v) => !v)} nav={<DevNav />} footer={footer} />
+        <MobileShellHeader open={open} onToggle={() => setOpen((v) => !v)} nav={<AdminNav />} footer={footer} />
 
         <ShellTopBar
           productLabel="Voice Agent"
-          entityLabel="Platform Control"
+          entityLabel={<DevShellEntityLabel />}
           environment="development"
           connectionStatus="ok"
           tier="admin"
           profileLabel="Dev session"
         />
 
-        <main className="flex-1 overflow-auto p-5 md:p-8">
-          <div className="mx-auto max-w-shell">{children}</div>
+        <main className="flex min-h-0 flex-1 overflow-auto p-5 md:p-8">
+          <div className={cn("mx-auto w-full", wideWorkspace ? "max-w-none" : "max-w-shell")}>{children}</div>
         </main>
       </div>
     </div>

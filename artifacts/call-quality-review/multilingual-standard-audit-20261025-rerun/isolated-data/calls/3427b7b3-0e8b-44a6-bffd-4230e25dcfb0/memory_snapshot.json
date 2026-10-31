@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "duration, class timing என்ன? Fluency அல்லது job guarantee இருக்கா?\nassistant: மொத்த course fee ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய், ஆறு வாரங்கள் ஆன்லைன் வகுப்பு, வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை நடக்கும். இதுல எந்த job guarantee-யும் இல்ல. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா?\nuser: Job guarantee வேண்டாம், ஆனால் spoken English கத்துக்க ஆர்வம் இருக்கு. Course சொல்லுங்க.\nassistant: சரிங்க, job guarantee எதுவும் இல்லை, ஆனா spoken English கத்துக்கறதுக்கு இந்த ஆறு வார online class ரொம்ப useful-ஆ இருக்கும். உங்களுக்கு டெமோ அல்லது counseling ஏதாச்சும் வேணுமா?"
+}

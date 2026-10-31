@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "name": "drive-dev-admin-activity-ccc4f4",
+  "createdAt": 1790951702464,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "cell",
+        "name": "admin.note"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "activity-payload"
+        }
+      },
+      "page": "/dev/admin/activity"
+    }
+  ],
+  "startPath": "/dev/admin/activity",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/dev/admin/activity"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/dev/admin/activity"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  }
+}

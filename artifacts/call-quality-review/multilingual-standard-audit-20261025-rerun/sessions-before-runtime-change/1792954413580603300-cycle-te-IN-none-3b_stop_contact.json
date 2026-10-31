@@ -1,0 +1,74 @@
+{
+  "key": "cycle-te-IN-none-3b_stop_contact",
+  "business": "cycle",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "7640831e-15d9-57fe-8f3c-9acd9c39e5c1",
+  "call_id": "17f83d8a-99a0-4ad8-83a7-4fe017727f20",
+  "session_id": "audit-cycle-te-IN-none-3b_stop_contact-17e8c24e",
+  "compiled_checksum": "cc2b7a6b60713e363adb9b53a3fc84f22aebcd1bcfcbf228494ee7499e95e4d0",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 1,
+      "at": 0.015
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "నాకు మళ్లీ call చేయకండి. భవిష్యత్తు calls నుంచి నా పేరు తీసేసి ఈ call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.078,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "17f83d8a-99a0-4ad8-83a7-4fe017727f20",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "b1eb4409eb21fc6fe7f111ccdb25904624b9374aec5f51f11bb93fd07f97667f",
+  "prompt_chars": 17380,
+  "opening_seeded": "నమస్కారం, నేను సిటీసైకిల్ రిపేర్స్ నుండి అర్జున్‌ని. సైకిల్ మరమ్మతులు లేదా సేవలకు సంబంధించి మీ ప్రశ్నలకు సమాధానం ఇవ్వడానికి నేను కాల్ చేస్తున్నాను. ఈ సమయంలో మాట్లాడటానికి మీకు కొంచెం సమయం ఉందా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.078,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

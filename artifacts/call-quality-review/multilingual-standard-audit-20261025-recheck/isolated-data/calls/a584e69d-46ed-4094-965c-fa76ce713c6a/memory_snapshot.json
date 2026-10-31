@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "rough. Please don't treat it as done.\nuser: Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?\nassistant: Yes, we do print wedding invitations, though the price depends on the design and quantity. For visiting cards, it is twenty-five rupees per card with a minimum order of one hundred cards. Delivery to Pune takes five working days after artwork approval.\nuser: Okay, thanks.\nassistant: You're welcome. Which type of card would you like, visiting cards or wedding invitations, and how many do you need?"
+}

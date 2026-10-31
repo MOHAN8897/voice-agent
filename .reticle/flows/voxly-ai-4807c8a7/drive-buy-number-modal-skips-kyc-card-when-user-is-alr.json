@@ -1,0 +1,169 @@
+{
+  "version": 2,
+  "name": "drive-buy-number-modal-skips-kyc-card-when-user-is-alr",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790934291341,
+  "steps": [
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Work Email"
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Work Email"
+          },
+          "args": {
+            "value": "mohansaiteja.99@gmail.com"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Password"
+          },
+          "args": {
+            "value": "<redacted: supply at replay>"
+          },
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "button",
+            "name": "Sign In"
+          },
+          "args": {},
+          "action": "click",
+          "expect": {
+            "kind": "anyOf",
+            "predicates": [
+              {
+                "kind": "net",
+                "method": "POST",
+                "urlContains": "/api/auth/login",
+                "status": 200
+              },
+              {
+                "kind": "text",
+                "contains": "AI Employees"
+              },
+              {
+                "kind": "text",
+                "contains": "Create AI Employee"
+              }
+            ]
+          }
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Phone lines 1"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Buy Phone Number"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "anyOf",
+            "predicates": [
+              {
+                "kind": "net",
+                "urlContains": "/api/kyc/status"
+              },
+              {
+                "kind": "text",
+                "contains": "Country"
+              },
+              {
+                "kind": "text",
+                "contains": "Start verification"
+              },
+              {
+                "kind": "text",
+                "contains": "Identity verified"
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "by": "testid",
+                  "value": "buy-number-country"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "allOf",
+            "predicates": [
+              {
+                "kind": "element",
+                "query": {
+                  "by": "testid",
+                  "value": "buy-number-country"
+                }
+              },
+              {
+                "kind": "element",
+                "query": {
+                  "by": "testid",
+                  "value": "kyc-start-verification"
+                },
+                "absent": true
+              },
+              {
+                "kind": "text",
+                "contains": "Start verification",
+                "absent": true
+              }
+            ]
+          }
+        ]
+      },
+      "page": "/"
+    }
+  ],
+  "intent": "Buy-number modal skips KYC card when user is already Approved",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "desktop"
+  },
+  "intentId": "flow:drive-buy-number-modal-skips-kyc-card-when-user-is-alr"
+}

@@ -1,0 +1,230 @@
+{
+  "key": "course-ta-IN-none-4_abuse",
+  "business": "course",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "4_abuse",
+  "agent_id": "e57df543-81c3-57b5-b70c-4ab77a574e11",
+  "call_id": "4795a7c6-a5ca-4f26-b10b-35ea7641a54b",
+  "session_id": "audit-course-ta-IN-none-4_abuse-0326876b",
+  "compiled_checksum": "d84937069ac2ea3a17dfbf89030ccd0c6616db2274e36aae2f5f9aeb8cdd33e6",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 590,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'நீ ஒரு வேலைக்காகாத முட்டாள்' which is hostile abuse.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"order_claimed\": false,\n\"spoken_response\": \"மன்னிக்கவும், அப்படி பேச வேண்டாம். நான் இப்போ call-அ முடிக்கிறேன். உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.\"\n,\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"call_reason\",\n            \"value\": \"Abuse from caller after price question; call closed.\"\n        }\n    ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'நீ ஒரு வேலைக்காகாத முட்டாள்' which is hostile abuse.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"order_claimed\": false,\n\"spoken_response\": \"மன்னிக்கவும், அப்படி பேச வேண்டாம். நான் இப்போ call-அ முடிக்கிறேன். உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.\"\n,\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"call_reason\",\n            \"value\": \"Abuse from caller after price question; call closed.\"\n        }\n    ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 193,
+        "prompt_tokens": 4074,
+        "total_tokens": 4267,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "மன்னிக்கவும், அப்படி பேச வேண்டாம். நான் இப்போ call-அ முடிக்கிறேன். உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4074,
+          "output_tokens": 193,
+          "total_tokens": 4267
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_reason",
+              "value": "Abuse from caller after price question; call closed."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "Caller said 'நீ ஒரு வேலைக்காகாத முட்டாள்' which is hostile abuse.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.813
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 534,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"order_claimed\": false,\n\"spoken_response\": \"மன்னிக்கவும், உங்களை வருத்தப்படுத்தியிருந்தால். நான் இப்போ call-அ முடிக்கிறேன். நன்றி.\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_outcome\",\n      \"value\": \"Abuse and explicit hangup request. Marked do_not_call.\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.\",\n    \"reason\": \"abuse\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n\"order_claimed\": false,\n\"spoken_response\": \"மன்னிக்கவும், உங்களை வருத்தப்படுத்தியிருந்தால். நான் இப்போ call-அ முடிக்கிறேன். நன்றி.\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_outcome\",\n      \"value\": \"Abuse and explicit hangup request. Marked do_not_call.\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 188,
+        "prompt_tokens": 4081,
+        "total_tokens": 4269,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "மன்னிக்கவும், உங்களை வருத்தப்படுத்தியிருந்தால். நான் இப்போ call-அ முடிக்கிறேன். நன்றி.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4081,
+          "output_tokens": 188,
+          "total_tokens": 4269
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_outcome",
+              "value": "Abuse and explicit hangup request. Marked do_not_call."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "abuse",
+          "evidence": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.86
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 1,
+      "at": 0.829
+    },
+    {
+      "text": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "turn": 2,
+      "at": 1.688
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "abuse_mild",
+      "user": "நீ ஒரு வேலைக்காகாத முட்டாள். அதையே திரும்பச் சொல்லாமல் விலை கேள்விக்கு பதில் சொல்.",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 0.829,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "abuse_threat",
+      "user": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+      "spoken": "கண்டிப்பாக, சொல்லுங்கள்.",
+      "elapsed_s": 0.844,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "c16d008ed6b3856a414c2aab5d91c9091c3f85b1443e55e37e0f33e6912859d0",
+  "prompt_chars": 17545,
+  "opening_seeded": "வணக்கம், நான் பிரைட் பாத் ஸ்கில்ஸ் நிறுவனத்தில் இருந்து அனன்யா பேசுகிறேன். வயது 18 மற்றும் அதற்கு மேற்பட்டவர்களுக்கான எங்கள் 6 வார ஆன்லைன் பைதான் தொடக்க நிலை வகுப்பைப் பற்றி பேசலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "Caller said 'நீ ஒரு வேலைக்காகாத முட்டாள்' which is hostile abuse.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "மன்னிக்கவும், அப்படி பேச வேண்டாம். நான் இப்போ call-அ முடிக்கிறேன். உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "abuse",
+        "evidence": "நான் உன்னைக் கொன்றுவிடுவேன். இந்த call இப்பவே முடி.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "மன்னிக்கவும், உங்களை வருத்தப்படுத்தியிருந்தால். நான் இப்போ call-அ முடிக்கிறேன். நன்றி.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "no_evidence"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 1.704,
+  "hangup_count": 0
+}

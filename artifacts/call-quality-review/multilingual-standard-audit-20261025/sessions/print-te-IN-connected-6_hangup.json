@@ -1,0 +1,386 @@
+{
+  "key": "print-te-IN-connected-6_hangup",
+  "business": "print",
+  "language": "te-IN",
+  "integration": true,
+  "scenario": "6_hangup",
+  "agent_id": "cb3cd74d-4d04-55cf-8d27-f1e3194c294e",
+  "call_id": "b3d5f030-10fa-42c6-8ea6-93d37ad79426",
+  "session_id": "audit-print-te-IN-connected-6_hangup-ba032f05",
+  "compiled_checksum": "d9ea04e88b578eeca3836b70ef82a6da1679a869665f6fc09a5a4228f6436bfa",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY",
+        "CONFIRM_ORDER"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 2
+      },
+      "sse_content_chars": 861,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested details/conditions and did not confirm a next step; no tool result to claim.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Details about service, pricing, and conditions.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కో కార్డ్ 25 రూపాయలు, minimum 100 కార్డ్స్ ఉండాలి. పెళ్లి పత్రికలకైతే design మరియు quantity బట్టి price మారుతుంది. artwork approval తర్వాత ఐదు working days లో Pune కి delivery అవుతుంది. Cash on delivery కూడా accept చేస్తాం. అయితే refund పాలసీ\",\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"customer_interest\",\n            \"value\": \"Interested, asked for pricing and conditions\"\n        }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested details/conditions and did not confirm a next step; no tool result to claim.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Details about service, pricing, and conditions.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కో కార్డ్ 25 రూపాయలు, minimum 100 కార్డ్స్ ఉండాలి. పెళ్లి పత్రికలకైతే design మరియు quantity బట్టి price మారుతుంది. artwork approval తర్వాత ఐదు working days లో Pune కి delivery అవుతుంది. Cash on delivery కూడా accept చేస్తాం. అయితే refund పాలసీ\",\n\"memory_update\": {\n    \"operations\": [\n        {\n            \"op\": \"update_summary\",\n            \"key\": \"customer_interest\",\n            \"value\": \"Interested, asked for pricing and conditions\"\n        }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 242,
+        "prompt_tokens": 4792,
+        "total_tokens": 5034,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కో కార్డ్ 25 రూపాయలు, minimum 100 కార్డ్స్ ఉండాలి. పెళ్లి పత్రికలకైతే design మరియు quantity బట్టి price మారుతుంది. artwork approval తర్వాత ఐదు working days లో Pune కి delivery అవుతుంది. Cash on delivery కూడా accept చేస్తాం. అయితే refund పాలసీ",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4792,
+          "output_tokens": 242,
+          "total_tokens": 5034
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "customer_interest",
+              "value": "Interested, asked for pricing and conditions"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly requested details/conditions and did not confirm a next step; no tool result to claim.",
+          "remaining_request": "Details about service, pricing, and conditions.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.921
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY",
+        "CONFIRM_ORDER"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": true,
+        "tools": 2
+      },
+      "sse_content_chars": 5681,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Caller explicitly said 'do not book or save anything right now' and only asked for information; no next step agreed.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"None\", \"contact_preference\": \"do_not_call\"}, \"order_claimed\": false, \"spoken_response\": \"తప్పకుండా అండి. Wedding invitations అందుబాటులో ఉన్నాయి, కానీ design మరియు quantity బట్టి price మారుతుంది, సో fixed rate ఉండదు. ఆర్ట్‌వర్క్ అప్రూవల్ అయ్యాక ఐదు working days లో Pune కి delivery అవుతుంది. మీకు విజిటింగ్ కార్డ్స్ కావాలా లేక wedding invitations గురించే తెలుసుకోవాలా అ?\"\n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n       ",
+      "sse_content_tail": "        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n        \n",
+      "sse_finish": "length",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 1.813
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY",
+        "CONFIRM_ORDER"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 2
+      },
+      "sse_content_chars": 661,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly thanked and accepted the information, indicating goal completion with no further request.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller inquired about wedding invitations, pricing, and delivery. Informed that wedding invitation pricing varies by design and quantity with no fixed\"\n    }\n  ]\n}\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly thanked and accepted the information, indicating goal completion with no further request.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"none\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\"order_claimed\": false,\n\"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n,\n\"memory_update\": {\n  \"operations\": [\n    {\n      \"op\": \"update_summary\",\n      \"key\": \"call_summary\",\n      \"value\": \"Caller inquired about wedding invitations, pricing, and delivery. Informed that wedding invitation pricing varies by design and quantity with no fixed\"\n    }\n  ]\n}\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 195,
+        "prompt_tokens": 4886,
+        "total_tokens": 5081,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4886,
+          "output_tokens": 195,
+          "total_tokens": 5081
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller inquired about wedding invitations, pricing, and delivery. Informed that wedding invitation pricing varies by design and quantity with no fixed"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Caller explicitly thanked and accepted the information, indicating goal completion with no further request.",
+          "remaining_request": "none",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.781
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY",
+        "CONFIRM_ORDER"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 10,
+        "schema": true,
+        "tools": 2
+      },
+      "sse_content_chars": 439,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested to end the call: 'నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.'\",\n    \"reason\": \"goodbye\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n    \"order_claimed\": false,\n    \"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n  ,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested to end the call: 'నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.'\",\n    \"reason\": \"goodbye\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n    \"order_claimed\": false,\n    \"spoken_response\": \"సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.\"\n  ,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 153,
+        "prompt_tokens": 5029,
+        "total_tokens": 5182,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 5029,
+          "output_tokens": 153,
+          "total_tokens": 5182
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goodbye",
+          "evidence": "Caller explicitly requested to end the call: 'నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.'",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.563
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 1,
+      "at": 0.906
+    },
+    {
+      "text": "తప్పకుండా అండి. Wedding invitations అందుబాటులో ఉన్నాయి, కానీ design మరియు quantity బట్టి price మారుతుంది, సో fixed rate ఉండదు. ఆర్ట్‌వర్క్ అప్రూవల్ అయ్యాక ఐదు working days లో Pune కి delivery అవుతుంది. మీకు విజిటింగ్ కార్డ్స్ కావాలా లేక wedding invitations గురించే తెలుసుకోవాలా అ?",
+      "turn": 2,
+      "at": 2.75
+    },
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 3,
+      "at": 3.531
+    },
+    {
+      "text": "తప్పకుండా, చెప్పండి.",
+      "turn": 4,
+      "at": 4.125
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 0.906,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: మీరు wedding invitations కూడా print చేస్తారా? ధర, delivery time ఎంత?",
+      "spoken": "తప్పకుండా అండి. Wedding invitations అందుబాటులో ఉన్నాయి, కానీ design మరియు quantity బట్టి price మారుతుంది, సో fixed rate ఉండదు. ఆర్ట్‌వర్క్ అప్రూవల్ అయ్యాక ఐదు working days లో Pune కి delivery అవుతుంది. మీకు విజిటింగ్ కార్డ్స్ కావాలా లేక wedding invitations గురించే తెలుసుకోవాలా అ?",
+      "elapsed_s": 1.829,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "ack",
+      "user": "సరే అండి, ధన్యవాదాలు.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 0.766,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "తప్పకుండా, చెప్పండి.",
+      "elapsed_s": 0.579,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "8a66ec1c56284a4dec6b59495647c95b8133a1fce768d55aef7fb90755f0b3d7",
+  "prompt_chars": 18673,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "నమస్తే, నేను క్లియర్ ప్రింట్ స్టూడియో నుండి మీరాను మాట్లాడుతున్నాను. మీ ప్రింటింగ్ అవసరాల గురించి మాట్లాడటానికి ఇది సరైన సమయమేనా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly requested details/conditions and did not confirm a next step; no tool result to claim.",
+        "remaining_request": "Details about service, pricing, and conditions.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "తప్పకుండా అండి. విజిటింగ్ కార్డ్స్ ఒక్కో కార్డ్ 25 రూపాయలు, minimum one hundred కార్డ్స్ ఉండాలి. పెళ్లి పత్రికలకైతే design మరియు quantity బట్టి price మారుతుంది. artwork approval తర్వాత ఐదు working days లో Pune కి delivery అవుతుంది. Cash on delivery కూడా accept చేస్తాం. అయితే refund పాలసీ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "తప్పకుండా అండి. Wedding invitations అందుబాటులో ఉన్నాయి, కానీ design మరియు quantity బట్టి price మారుతుంది, సో fixed rate ఉండదు. ఆర్ట్‌వర్క్ అప్రూవల్ అయ్యాక ఐదు working days లో Pune కి delivery అవుతుంది. మీకు విజిటింగ్ కార్డ్స్ కావాలా లేక wedding invitations గురించే తెలుసుకోవాలా అ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Caller explicitly thanked and accepted the information, indicating goal completion with no further request.",
+        "remaining_request": "none",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goodbye",
+        "evidence": "Caller explicitly requested to end the call: 'నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.'",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.14,
+  "hangup_count": 0
+}

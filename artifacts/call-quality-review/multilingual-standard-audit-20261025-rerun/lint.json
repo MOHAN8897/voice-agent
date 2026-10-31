@@ -1,0 +1,756 @@
+[
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 63,
+      "row": 23
+    },
+    "filename": "D:\\voice agent\\server\\brain\\employee_script_pipeline.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from __future__ import annotations\n\nimport asyncio\nimport hashlib\nimport json\nimport logging\nimport os\nimport re\nimport uuid\nimport weakref\nfrom dataclasses import replace\nfrom typing import TYPE_CHECKING, Any, TypeVar\n\nimport httpx\nfrom pydantic import BaseModel, ConfigDict, Field, ValidationError\n\nfrom server.brain.brief_contract import (\n    BriefValidationError,\n    brief_issue,\n    clean_person_name,\n    normalize_generation_config,\n    source_supported,\n    validate_brief_requirements,\n)\nfrom server.brain.fact_canon import canonicalize_superseded_facts\nfrom server.call.call_end_policy import closing_policy_section\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 25
+          },
+          "location": {
+            "column": 1,
+            "row": 2
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 2
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 2,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 133,
+      "row": 28
+    },
+    "filename": "D:\\voice agent\\server\\brain\\employee_script_pipeline.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 133,
+            "row": 28
+          },
+          "location": {
+            "column": 129,
+            "row": 28
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 129,
+      "row": 28
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 28,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "UP037",
+    "end_location": {
+      "column": 63,
+      "row": 40
+    },
+    "filename": "D:\\voice agent\\server\\brain\\employee_script_pipeline.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "weakref.WeakKeyDictionary[Any, asyncio.Semaphore]",
+          "end_location": {
+            "column": 63,
+            "row": 40
+          },
+          "location": {
+            "column": 12,
+            "row": 40
+          }
+        }
+      ],
+      "message": "Remove quotes"
+    },
+    "location": {
+      "column": 12,
+      "row": 40
+    },
+    "message": "Remove quotes from type annotation",
+    "name": "quoted-annotation",
+    "noqa_row": 40,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/quoted-annotation"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 64,
+      "row": 374
+    },
+    "filename": "D:\\voice agent\\server\\brain\\employee_script_pipeline.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "    from server.agent.brain_prompt_composer import estimate_tokens\n    from server.brain.agent_script_compiler import (\n        AgentScriptResult,\n        _opening_line_is_language_compatible,\n        _platform_call_rules,\n        reassemble_brain_from_script,\n        validate_agent_script,\n    )\n    from server.brain.agent_spec import AgentSpec, Evidenced, WorkflowRequirement\n    from server.brain.script_entities import build_script_entities, with_entity_tags_section\n    from server.call.call_end_policy import normalize_call_end_policy\n    from server.prompts.voice_defaults import default_style_for\n",
+          "end_location": {
+            "column": 1,
+            "row": 375
+          },
+          "location": {
+            "column": 1,
+            "row": 366
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 5,
+      "row": 366
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 366,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "ISC004",
+    "end_location": {
+      "column": 80,
+      "row": 402
+    },
+    "filename": "D:\\voice agent\\server\\brain\\employee_script_pipeline.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "(",
+          "end_location": {
+            "column": 17,
+            "row": 400
+          },
+          "location": {
+            "column": 17,
+            "row": 400
+          }
+        },
+        {
+          "content": ")",
+          "end_location": {
+            "column": 80,
+            "row": 402
+          },
+          "location": {
+            "column": 80,
+            "row": 402
+          }
+        }
+      ],
+      "message": "Did you forget a comma?"
+    },
+    "location": {
+      "column": 17,
+      "row": 400
+    },
+    "message": "Unparenthesized implicit string concatenation in collection",
+    "name": "implicit-string-concatenation-in-collection-literal",
+    "noqa_row": 400,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/implicit-string-concatenation-in-collection-literal"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 49,
+      "row": 44
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from __future__ import annotations\r\n\r\nimport asyncio\r\nimport re\r\nimport time\r\nfrom collections.abc import AsyncIterator\r\nfrom typing import Any\r\n\r\nfrom server.call import call_context, memory_guard\r\nfrom server.call import memory_projection as memory_projection_mod\r\nfrom server.call.action_proof import (\r\n    PROOF_ORDER_CONFIRMED,\r\n    claim_has_proof,\r\n    proof_set,\r\n    replace_unproven_claims,\r\n    unproven_claim,\r\n)\r\nfrom server.call.call_ledger import call_ledger\r\nfrom server.call.callback_close import advance_callback_close\r\nfrom server.call.caller_detail_capture import caller_detail_memory_operations\r\nfrom server.call.close_decision import continuation_line_for, parse_close_proposal\r\nfrom server.call.end_call_validate import (\r\n    caller_requested_callback,\r\n    memory_with_live_lead,\r\n    validate_end_call,\r\n)\r\nfrom server.call.hangup_judge import agent_spoke_terminal_farewell\r\nfrom server.call.live_turn_schema import LIVE_SPEECH_JSON_SCHEMA, LIVE_TURN_JSON_SCHEMA\r\nfrom server.call.memory_manager import memory_manager\r\nfrom server.call.order_confirmation import (\r\n    CONFIRM_ORDER_TOOL,\r\n    has_order_proof,\r\n    record_order_confirmation,\r\n)\r\nfrom server.call.rolling_summary import maybe_refresh_rolling_summary\r\nfrom server.call.turn_coordinator import drain, lock_for\r\nfrom server.config.env import get_settings\r\nfrom server.providers.llm_protocol import IncompleteTurnError\r\nfrom server.services.openai_brain_service import generate_response, generate_response_stream\r\nfrom server.services.pstn_debug import log_pstn\r\nfrom server.services.voice_pipeline_limits import LiveReplyStreamCap, clamp_live_spoken_reply\r\nfrom server.utils.logger import log_perf, logger\r\n\r\n",
+          "end_location": {
+            "column": 1,
+            "row": 46
+          },
+          "location": {
+            "column": 1,
+            "row": 2
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 2
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 2,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "F401",
+    "end_location": {
+      "column": 47,
+      "row": 38
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from server.call.turn_coordinator import lock_for",
+          "end_location": {
+            "column": 57,
+            "row": 38
+          },
+          "location": {
+            "column": 1,
+            "row": 38
+          }
+        }
+      ],
+      "message": "Remove unused import: `server.call.turn_coordinator.drain`"
+    },
+    "location": {
+      "column": 42,
+      "row": 38
+    },
+    "message": "`server.call.turn_coordinator.drain` imported but unused",
+    "name": "unused-import",
+    "noqa_row": 38,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-import"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 70
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 70
+          },
+          "location": {
+            "column": 5,
+            "row": 70
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 70
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 70,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 79
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 79
+          },
+          "location": {
+            "column": 5,
+            "row": 79
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 79
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 79,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 84
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 84
+          },
+          "location": {
+            "column": 5,
+            "row": 84
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 84
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 84,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 92
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 92
+          },
+          "location": {
+            "column": 5,
+            "row": 92
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 92
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 92,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 17,
+      "row": 186
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 5
+          },
+          "location": {
+            "column": 1,
+            "row": 5
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 17,
+            "row": 186
+          },
+          "location": {
+            "column": 13,
+            "row": 186
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 13,
+      "row": 186
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 186,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 214
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 214
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 214,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 352
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 352
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 352,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "F821",
+    "end_location": {
+      "column": 59,
+      "row": 644
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 40,
+      "row": 644
+    },
+    "message": "Undefined name `server_farewell_for`",
+    "name": "undefined-name",
+    "noqa_row": 644,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/undefined-name"
+  },
+  {
+    "cell": null,
+    "code": "S110",
+    "end_location": {
+      "column": 29,
+      "row": 735
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 21,
+      "row": 734
+    },
+    "message": "`try`-`except`-`pass` detected, consider logging the exception",
+    "name": "try-except-pass",
+    "noqa_row": 734,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 37,
+      "row": 734
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 28,
+      "row": 734
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 734,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 33,
+      "row": 1718
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 24,
+      "row": 1718
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 1718,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 1822
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 1822
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 1822,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 1919
+    },
+    "filename": "D:\\voice agent\\server\\call\\live_turn_orchestrator.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 1919
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 1919,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "RUF015",
+    "end_location": {
+      "column": 56,
+      "row": 26
+    },
+    "filename": "D:\\voice agent\\server\\tests\\test_close_speech_gate.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "next(iter(LIVE_TURN_JSON_SCHEMA[\"properties\"]))",
+          "end_location": {
+            "column": 56,
+            "row": 26
+          },
+          "location": {
+            "column": 12,
+            "row": 26
+          }
+        }
+      ],
+      "message": "Replace with `next(iter(LIVE_TURN_JSON_SCHEMA[\"properties\"]))`"
+    },
+    "location": {
+      "column": 12,
+      "row": 26
+    },
+    "message": "Prefer `next(iter(LIVE_TURN_JSON_SCHEMA[\"properties\"]))` over single element slice",
+    "name": "unnecessary-iterable-allocation-for-first-element",
+    "noqa_row": 26,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unnecessary-iterable-allocation-for-first-element"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 44,
+      "row": 15
+    },
+    "filename": "D:\\voice agent\\server\\tests\\test_employee_script_pipeline.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import copy\nimport json\nimport re\nfrom types import SimpleNamespace\nfrom unittest.mock import AsyncMock\n\nimport pytest\nfrom fastapi import FastAPI\nfrom fastapi.testclient import TestClient\n\nfrom server.brain import employee_script_pipeline as pipeline\nfrom server.brain.brief_contract import BriefValidationError\nfrom server.brain.employee_script_pipeline import GenerationStageError\nfrom server.providers.base import LLMConfig\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 18
+          },
+          "location": {
+            "column": 1,
+            "row": 2
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 2
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 2,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 61,
+      "row": 236
+    },
+    "filename": "D:\\voice agent\\server\\tests\\test_employee_script_pipeline.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "    import httpx\n\n    from server.providers.gemini_llm import GeminiLLMAdapter\n",
+          "end_location": {
+            "column": 1,
+            "row": 237
+          },
+          "location": {
+            "column": 1,
+            "row": 235
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 5,
+      "row": 235
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 235,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  }
+]

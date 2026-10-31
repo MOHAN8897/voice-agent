@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T15:16:23.858368Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Of course — please go ahead.", "ts": "2026-10-25T15:16:24.770179Z", "brain_latency_ms": 908}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Please answer my question first: What is the final course fee, duration and class timing, and do you guarantee a job?", "ts": "2026-10-25T15:16:24.794832Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Of course — please go ahead.", "ts": "2026-10-25T15:16:25.752560Z", "brain_latency_ms": 954}
+{"seq": 5, "role": "user", "text": "Okay, thanks.", "ts": "2026-10-25T15:16:25.775259Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "Of course — please go ahead.", "ts": "2026-10-25T15:16:27.094146Z", "brain_latency_ms": 1316}
+{"seq": 7, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T15:16:27.117448Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T15:16:27.123086Z", "brain_latency_ms": 1}

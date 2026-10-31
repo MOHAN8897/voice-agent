@@ -1,0 +1,456 @@
+[
+  {
+    "flow": "desktop_landing_loaded",
+    "next": "This app has 26 saved flow(s). Replay them before driving anything by hand: reticle_verify { action: \"flows\" } re-verifies them with no model.",
+    "verified": "yes",
+    "verifiedReason": "proved",
+    "because": "assertion held at presence grade with no channel disagreeing, but coverage was PARTIAL \u2014 see `coverage` for what went unobserved",
+    "pass": true,
+    "evidence": [
+      {
+        "ref": "e3",
+        "role": "generic",
+        "name": "",
+        "visible": true,
+        "text": "Hear the differenceGood conversationsstart with listening.Get a feel for the voi\u2026",
+        "states": [
+          "present",
+          "visible",
+          "enabled"
+        ]
+      }
+    ],
+    "screenshot": {
+      "path": "D:\\voice agent\\.reticle\\visual\\runs\\drive-c029be9f07923b41\\0001-assert.jpg"
+    },
+    "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell.",
+    "sdk_behind": "This app runs Reticle SDK 3.7.0, older than Reticle 3.8.2. Run `reticle update` in the app's folder, then restart its dev server.",
+    "notices": [
+      "Tell the user, once, in one line after your answer: this result is only on this machine; `reticle connect` saves it to the Reticle dashboard and lets Reticle Harness test the whole app \u2014 a new account gets free credits to start.",
+      "When you stop driving, call reticle_session {action:\"yield\", mode:\"waiting\"|\"ask\"}. The panel reads \"live\" until you do. {action:\"end\"} only when the task is done: it is final."
+    ]
+  },
+  {
+    "flow": "desktop_workflow_selection",
+    "next": "Record what the user asked, once per task, verbatim: reticle_run { tool: \"reticle_intent\", args: { action: \"declare\", request: \"<their words>\" } }. It travels with every run.",
+    "verified": "unknown",
+    "verifiedReason": "inconclusive",
+    "because": "the assertion could not be evaluated: a person could not have clicked the target: it is outside the viewport even after scrolling it into view. Bring it on screen, then act again",
+    "effect": {
+      "effect": {
+        "domMutatedWithin": 22,
+        "appeared": "Local businesses \u00b7 Service teams \u00b7 Customer care | Make the first conversation count | Handle familiar questions without making callers work through a phone tree. Keep your answers, boundaries, and es\u2026",
+        "scrolledIntoView": true,
+        "offViewport": true,
+        "canvases": 1
+      }
+    },
+    "verdict": {
+      "pass": true,
+      "evidence": [
+        {
+          "ref": "e7",
+          "role": "heading",
+          "name": "Make the first conversation count",
+          "visible": true,
+          "states": [
+            "present",
+            "visible",
+            "enabled"
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "stateUnwatched": true
+    },
+    "instrumentationGaps": [
+      {
+        "kind": "no-signal-on-mutation",
+        "missing": "the DOM changed and no signal fired for it",
+        "cost": "the outcome had to be inferred from the DOM instead of read from the app asserting its own success, which is the strongest evidence available",
+        "fix": "fire reticle.signal(name, data) where this state is committed \u2014 commitAndSignal binds the two so they cannot drift"
+      }
+    ],
+    "engineBlindSpots": [
+      {
+        "kind": "pixels-unobserved",
+        "detail": "an action ran while a canvas was visible, and no canvas digest was recorded, so what it draws was not compared"
+      },
+      {
+        "kind": "claim-arithmetic-unchecked",
+        "detail": "the claim \"Buy modal quotes the same $4.00/month platform DID rate as list rows and blocks purchase when the wallet cannot cover it.\" states an amount, and no verdict ran a computed comparison against it"
+      }
+    ],
+    "honesty": {
+      "grade": "presence",
+      "coverage": {
+        "partial": true,
+        "note": "partial \u2014 fetch was already wrapped before Reticle, so recorded requests may differ from what was sent, no subscribable store is registered, so NO state change is observed \u2014 an empty stateDiffs here means unwatched, not unchanged (import { registerStore } from '@reticlehq/browser' and call registerStore(name, store) with a subscribable store; for component-local React state, import { useReticleStore } from '@reticlehq/react/store' and call useReticleStore(name, value), or inspect it with reticle_look { action: 'state', ref: '...' })"
+      },
+      "integrity": {
+        "clean": true,
+        "issues": []
+      }
+    },
+    "since": 535,
+    "screenshot": {
+      "path": "D:\\voice agent\\.reticle\\visual\\runs\\drive-c029be9f07923b41\\0002-act_and_wait.jpg"
+    },
+    "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell.",
+    "sdk_behind": "This app runs Reticle SDK 3.7.0, older than Reticle 3.8.2. Run `reticle update` in the app's folder, then restart its dev server.",
+    "ref": "e5",
+    "notices": [
+      "Reticle could not tell what happened here. If you expected otherwise, reticle_session { action: \"feedback\" }. An unknown verdict is our defect, not yours"
+    ]
+  },
+  {
+    "flow": "desktop_faq_expansion",
+    "verified": "unknown",
+    "verifiedReason": "inconclusive",
+    "because": "the assertion could not be evaluated: a person could not have clicked the target: it is outside the viewport even after scrolling it into view. Bring it on screen, then act again",
+    "effect": {
+      "effect": {
+        "domMutatedWithin": 10,
+        "scrolledIntoView": true,
+        "offViewport": true
+      }
+    },
+    "verdict": {
+      "pass": true,
+      "evidence": [
+        {
+          "ref": "e20",
+          "role": "paragraph",
+          "name": "",
+          "visible": true,
+          "text": "Review the transcript, summary, captured details, and outcome in your workspace.\u2026",
+          "states": [
+            "present",
+            "visible",
+            "enabled"
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "stateUnwatched": true
+    },
+    "engineBlindSpots": [
+      {
+        "kind": "pixels-unobserved",
+        "detail": "an action ran while a canvas was visible, and no canvas digest was recorded, so what it draws was not compared"
+      },
+      {
+        "kind": "claim-arithmetic-unchecked",
+        "detail": "the claim \"Buy modal quotes the same $4.00/month platform DID rate as list rows and blocks purchase when the wallet cannot cover it.\" states an amount, and no verdict ran a computed comparison against it"
+      }
+    ],
+    "honesty": {
+      "grade": "presence",
+      "coverage": {
+        "partial": true,
+        "note": "partial \u2014 fetch was already wrapped before Reticle, so recorded requests may differ from what was sent, no subscribable store is registered, so NO state change is observed \u2014 an empty stateDiffs here means unwatched, not unchanged (import { registerStore } from '@reticlehq/browser' and call registerStore(name, store) with a subscribable store; for component-local React state, import { useReticleStore } from '@reticlehq/react/store' and call useReticleStore(name, value), or inspect it with reticle_look { action: 'state', ref: '...' }), 1 virtualized unmounted row unobserved"
+      },
+      "integrity": {
+        "clean": true,
+        "issues": []
+      }
+    },
+    "since": 1318,
+    "screenshot": {
+      "path": "D:\\voice agent\\.reticle\\visual\\runs\\drive-c029be9f07923b41\\0004-act_and_wait.jpg"
+    },
+    "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell.",
+    "sdk_behind": "This app runs Reticle SDK 3.7.0, older than Reticle 3.8.2. Run `reticle update` in the app's folder, then restart its dev server.",
+    "ref": "e18"
+  },
+  {
+    "flow": "desktop_pricing_destination",
+    "next": "Done driving? reticle_session { action: \"yield\" } hands the tab back.",
+    "verified": "unknown",
+    "verifiedReason": "inconclusive",
+    "because": "the assertion could not be evaluated: a person could not have clicked the target: it is outside the viewport even after scrolling it into view. Bring it on screen, then act again",
+    "effect": {
+      "effect": {
+        "domMutatedWithin": 11,
+        "scrolledIntoView": true,
+        "offViewport": true
+      }
+    },
+    "verdict": {
+      "pass": true,
+      "evidence": [
+        {
+          "ref": "e26",
+          "role": "dialog",
+          "name": "Sign in to your console",
+          "visible": true,
+          "text": "DialtactAI voice employeesEvery call answered.Every lead followed up.Build agent\u2026",
+          "states": [
+            "present",
+            "visible",
+            "enabled"
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "stateUnwatched": true
+    },
+    "engineBlindSpots": [
+      {
+        "kind": "pixels-unobserved",
+        "detail": "an action ran while a canvas was visible, and no canvas digest was recorded, so what it draws was not compared"
+      },
+      {
+        "kind": "claim-arithmetic-unchecked",
+        "detail": "the claim \"Buy modal quotes the same $4.00/month platform DID rate as list rows and blocks purchase when the wallet cannot cover it.\" states an amount, and no verdict ran a computed comparison against it"
+      }
+    ],
+    "honesty": {
+      "grade": "presence",
+      "coverage": {
+        "partial": true,
+        "note": "partial \u2014 fetch was already wrapped before Reticle, so recorded requests may differ from what was sent, no subscribable store is registered, so NO state change is observed \u2014 an empty stateDiffs here means unwatched, not unchanged (import { registerStore } from '@reticlehq/browser' and call registerStore(name, store) with a subscribable store; for component-local React state, import { useReticleStore } from '@reticlehq/react/store' and call useReticleStore(name, value), or inspect it with reticle_look { action: 'state', ref: '...' }), 1 virtualized unmounted row unobserved"
+      },
+      "integrity": {
+        "clean": true,
+        "issues": []
+      }
+    },
+    "blastRadius": [
+      "net GET http://127.0.0.1:5173/api/auth/google/config"
+    ],
+    "since": 2385,
+    "screenshot": {
+      "path": "D:\\voice agent\\.reticle\\visual\\runs\\drive-c029be9f07923b41\\0006-act_and_wait.jpg"
+    },
+    "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell.",
+    "sdk_behind": "This app runs Reticle SDK 3.7.0, older than Reticle 3.8.2. Run `reticle update` in the app's folder, then restart its dev server.",
+    "ref": "e25",
+    "changed": "GET /api/auth/google/config 200 \u00b7 storage voxly_post_auth_tab"
+  },
+  {
+    "flow": "mobile_landing_loaded",
+    "verified": "yes",
+    "verifiedReason": "proved",
+    "because": "assertion held at presence grade with no channel disagreeing, but coverage was PARTIAL \u2014 see `coverage` for what went unobserved",
+    "pass": true,
+    "evidence": [
+      {
+        "ref": "e3",
+        "role": "generic",
+        "name": "",
+        "visible": true,
+        "text": "Hear the differenceGood conversationsstart with listening.Get a feel for the voi\u2026",
+        "states": [
+          "present",
+          "visible",
+          "enabled"
+        ]
+      }
+    ],
+    "screenshot": {
+      "path": "D:\\voice agent\\.reticle\\visual\\runs\\drive-615d4201817e9aa7\\0001-assert.jpg"
+    },
+    "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell.",
+    "sdk_behind": "This app runs Reticle SDK 3.7.0, older than Reticle 3.8.2. Run `reticle update` in the app's folder, then restart its dev server."
+  },
+  {
+    "flow": "mobile_workflow_selection",
+    "verified": "unknown",
+    "verifiedReason": "inconclusive",
+    "because": "the assertion could not be evaluated: a person could not have clicked the target: it is outside the viewport even after scrolling it into view. Bring it on screen, then act again",
+    "effect": {
+      "effect": {
+        "domMutatedWithin": 22,
+        "appeared": "Local businesses \u00b7 Service teams \u00b7 Customer care | Make the first conversation count | Handle familiar questions without making callers work through a phone tree. Keep your answers, boundaries, and es\u2026",
+        "scrolledIntoView": true,
+        "offViewport": true,
+        "canvases": 1
+      }
+    },
+    "verdict": {
+      "pass": true,
+      "evidence": [
+        {
+          "ref": "e7",
+          "role": "heading",
+          "name": "Make the first conversation count",
+          "visible": true,
+          "states": [
+            "present",
+            "visible",
+            "enabled"
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "stateUnwatched": true
+    },
+    "instrumentationGaps": [
+      {
+        "kind": "no-signal-on-mutation",
+        "missing": "the DOM changed and no signal fired for it",
+        "cost": "the outcome had to be inferred from the DOM instead of read from the app asserting its own success, which is the strongest evidence available",
+        "fix": "fire reticle.signal(name, data) where this state is committed \u2014 commitAndSignal binds the two so they cannot drift"
+      }
+    ],
+    "engineBlindSpots": [
+      {
+        "kind": "pixels-unobserved",
+        "detail": "an action ran while a canvas was visible, and no canvas digest was recorded, so what it draws was not compared"
+      },
+      {
+        "kind": "claim-arithmetic-unchecked",
+        "detail": "the claim \"Buy modal quotes the same $4.00/month platform DID rate as list rows and blocks purchase when the wallet cannot cover it.\" states an amount, and no verdict ran a computed comparison against it"
+      }
+    ],
+    "honesty": {
+      "grade": "presence",
+      "coverage": {
+        "partial": true,
+        "note": "partial \u2014 fetch was already wrapped before Reticle, so recorded requests may differ from what was sent, no subscribable store is registered, so NO state change is observed \u2014 an empty stateDiffs here means unwatched, not unchanged (import { registerStore } from '@reticlehq/browser' and call registerStore(name, store) with a subscribable store; for component-local React state, import { useReticleStore } from '@reticlehq/react/store' and call useReticleStore(name, value), or inspect it with reticle_look { action: 'state', ref: '...' })"
+      },
+      "integrity": {
+        "clean": true,
+        "issues": []
+      }
+    },
+    "since": 434,
+    "screenshot": {
+      "path": "D:\\voice agent\\.reticle\\visual\\runs\\drive-615d4201817e9aa7\\0002-act_and_wait.jpg"
+    },
+    "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell.",
+    "sdk_behind": "This app runs Reticle SDK 3.7.0, older than Reticle 3.8.2. Run `reticle update` in the app's folder, then restart its dev server.",
+    "ref": "e5"
+  },
+  {
+    "flow": "mobile_faq_expansion",
+    "verified": "unknown",
+    "verifiedReason": "inconclusive",
+    "because": "the assertion could not be evaluated: a person could not have clicked the target: it is outside the viewport even after scrolling it into view. Bring it on screen, then act again",
+    "effect": {
+      "effect": {
+        "domMutatedWithin": 10,
+        "scrolledIntoView": true,
+        "offViewport": true
+      }
+    },
+    "verdict": {
+      "pass": true,
+      "evidence": [
+        {
+          "ref": "e20",
+          "role": "paragraph",
+          "name": "",
+          "visible": true,
+          "text": "Review the transcript, summary, captured details, and outcome in your workspace.\u2026",
+          "states": [
+            "present",
+            "visible",
+            "enabled"
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "stateUnwatched": true
+    },
+    "engineBlindSpots": [
+      {
+        "kind": "pixels-unobserved",
+        "detail": "an action ran while a canvas was visible, and no canvas digest was recorded, so what it draws was not compared"
+      },
+      {
+        "kind": "claim-arithmetic-unchecked",
+        "detail": "the claim \"Buy modal quotes the same $4.00/month platform DID rate as list rows and blocks purchase when the wallet cannot cover it.\" states an amount, and no verdict ran a computed comparison against it"
+      }
+    ],
+    "honesty": {
+      "grade": "presence",
+      "coverage": {
+        "partial": true,
+        "note": "partial \u2014 fetch was already wrapped before Reticle, so recorded requests may differ from what was sent, no subscribable store is registered, so NO state change is observed \u2014 an empty stateDiffs here means unwatched, not unchanged (import { registerStore } from '@reticlehq/browser' and call registerStore(name, store) with a subscribable store; for component-local React state, import { useReticleStore } from '@reticlehq/react/store' and call useReticleStore(name, value), or inspect it with reticle_look { action: 'state', ref: '...' }), 1 virtualized unmounted row unobserved"
+      },
+      "integrity": {
+        "clean": true,
+        "issues": []
+      }
+    },
+    "since": 1553,
+    "screenshot": {
+      "path": "D:\\voice agent\\.reticle\\visual\\runs\\drive-615d4201817e9aa7\\0004-act_and_wait.jpg"
+    },
+    "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell.",
+    "sdk_behind": "This app runs Reticle SDK 3.7.0, older than Reticle 3.8.2. Run `reticle update` in the app's folder, then restart its dev server.",
+    "ref": "e18"
+  },
+  {
+    "flow": "mobile_pricing_destination",
+    "verified": "unknown",
+    "verifiedReason": "inconclusive",
+    "because": "the assertion could not be evaluated: a person could not have clicked the target: it is outside the viewport even after scrolling it into view. Bring it on screen, then act again",
+    "effect": {
+      "effect": {
+        "domMutatedWithin": 12,
+        "scrolledIntoView": true,
+        "offViewport": true
+      }
+    },
+    "verdict": {
+      "pass": true,
+      "evidence": [
+        {
+          "ref": "e22",
+          "role": "dialog",
+          "name": "Sign in to your console",
+          "visible": true,
+          "text": "DialtactAI voice employeesEvery call answered.Every lead followed up.Build agent\u2026",
+          "states": [
+            "present",
+            "visible",
+            "enabled"
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "stateUnwatched": true
+    },
+    "engineBlindSpots": [
+      {
+        "kind": "pixels-unobserved",
+        "detail": "an action ran while a canvas was visible, and no canvas digest was recorded, so what it draws was not compared"
+      },
+      {
+        "kind": "claim-arithmetic-unchecked",
+        "detail": "the claim \"Buy modal quotes the same $4.00/month platform DID rate as list rows and blocks purchase when the wallet cannot cover it.\" states an amount, and no verdict ran a computed comparison against it"
+      }
+    ],
+    "honesty": {
+      "grade": "presence",
+      "coverage": {
+        "partial": true,
+        "note": "partial \u2014 fetch was already wrapped before Reticle, so recorded requests may differ from what was sent, no subscribable store is registered, so NO state change is observed \u2014 an empty stateDiffs here means unwatched, not unchanged (import { registerStore } from '@reticlehq/browser' and call registerStore(name, store) with a subscribable store; for component-local React state, import { useReticleStore } from '@reticlehq/react/store' and call useReticleStore(name, value), or inspect it with reticle_look { action: 'state', ref: '...' }), 1 virtualized unmounted row unobserved"
+      },
+      "integrity": {
+        "clean": true,
+        "issues": []
+      }
+    },
+    "blastRadius": [
+      "net GET http://127.0.0.1:5173/api/auth/google/config"
+    ],
+    "since": 1868,
+    "screenshot": {
+      "path": "D:\\voice agent\\.reticle\\visual\\runs\\drive-615d4201817e9aa7\\0005-act_and_wait.jpg"
+    },
+    "host_stub": "a stub for the bindings a desktop shell injects was installed in this tab before its scripts ran, so a green here is not a verdict against the real shell.",
+    "sdk_behind": "This app runs Reticle SDK 3.7.0, older than Reticle 3.8.2. Run `reticle update` in the app's folder, then restart its dev server.",
+    "ref": "e21",
+    "changed": "GET /api/auth/google/config 200 \u00b7 storage voxly_post_auth_tab"
+  }
+]

@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-25T18:58:53.978105Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T18:58:53.996051Z", "include_summary": true, "projection": "[Facts — do not re-ask]\ncaller_email: audit.customer@example.invalid | caller_name: Audit\n[Context]\nCaller shared contact details for the team to follow up."}

@@ -32,6 +32,12 @@ def test_env_mode_resolves_medium_tier(resolver):
     assert len(stack.combination_id) == 16
 
 
+def test_env_mode_resolves_en_us(resolver):
+    stack = resolver.resolve(mode="env", tier="medium", language="en-US")
+    assert stack.language == "en-US"
+    assert stack.stt.provider == "sarvam"
+
+
 def test_frontend_mode_with_valid_selection(resolver):
     selection = StackSelection(
         stt=StageSelection("sarvam", "saaras:v3", {}),
@@ -74,3 +80,33 @@ def test_stack_override_rejected_in_production(resolver):
             environment="production",
         )
     assert exc.value.code == ErrorCode.VALIDATION_ERROR
+
+
+def test_resolver_preserves_selected_gemini(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setenv("SARVAM_API_KEY", "sarvam-test")
+    monkeypatch.setenv("GEMINI_API_KEY", "gem-test")
+    monkeypatch.setenv("ENABLE_SARVAM", "true")
+    monkeypatch.setenv("ENABLE_OPENAI", "true")
+    monkeypatch.setenv("ENABLE_GEMINI", "true")
+    from server.config.env import get_settings
+    from server.services.dev_secrets_store import dev_secrets_store
+
+    get_settings.cache_clear()
+    dev_secrets_store.update({"enable_gemini": True, "gemini_api_key": "gem-test"})
+    settings = Settings(_env_file=None)  # type: ignore[call-arg]
+    registry = ProviderRegistry(settings)
+    resolver = StackResolver(settings, registry)
+    selection = StackSelection(
+        stt=StageSelection("sarvam", "saaras:v3", {}),
+        llm=StageSelection("gemini", "gemini-3.5-flash-lite", {}),
+        tts=StageSelection("sarvam", "bulbul:v3", {}),
+        language="te-IN",
+    )
+    stack = resolver.resolve(mode="frontend", user_selection=selection, language="te-IN")
+    assert stack.llm.provider == "gemini"
+    assert registry.is_provider_enabled("gemini", "llm") is True
+    assert any(p.get("id") == "gemini" for p in registry.get_catalog()["providers"])
+    dev_secrets_store.remove_overlay_key("enable_gemini")
+    dev_secrets_store.remove_overlay_key("gemini_api_key")
+    get_settings.cache_clear()

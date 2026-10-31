@@ -8,8 +8,16 @@ from server.config.env import get_settings
 
 
 def tenant_id_from_request(request: Request) -> str:
-    """Resolve tenant_id from app/dev session or DEFAULT_TENANT_ID."""
+    """Resolve tenant_id from Bearer JWT, app/dev session, or DEFAULT_TENANT_ID."""
     settings = get_settings()
+    if settings.saas_auth_enabled:
+        from server.auth.jwt_tokens import decode_access_token
+
+        auth = request.headers.get("authorization") or ""
+        if auth.lower().startswith("bearer "):
+            claims = decode_access_token(auth.split(" ", 1)[1].strip())
+            if claims and claims.tenant_id:
+                return claims.tenant_id
     names = cookie_names()
     for cookie_name, kind in ((names["app"], "app"), (names["dev"], "dev")):
         token = request.cookies.get(cookie_name)

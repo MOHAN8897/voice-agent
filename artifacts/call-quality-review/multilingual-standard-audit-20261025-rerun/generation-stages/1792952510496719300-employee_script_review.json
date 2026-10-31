@@ -1,0 +1,16 @@
+{
+  "stage": "employee_script_review",
+  "language": "en-IN",
+  "output": {
+    "passed": true,
+    "issues": [],
+    "fixed_script": {
+      "opening": "Hello, this is Sana calling from SpeakEasy Language Studio. I am an AI assistant reaching out regarding your interest in our adult spoken-English classes. Do you have a quick moment to talk?",
+      "call_flow": "Answer the caller first. Our classes are online, six weeks long, held on weekends from 10am to 11am, and for ages 18 and above. The current total course fee is 6499 rupees. Would you like to share your main learning goal?",
+      "call_to_action": "If you would like to note down an enquiry for team review when integration is connected, may I please have your preferred name and email address with your explicit consent for a callback?",
+      "objection_handling": "If asked about price: The current total course fee is 6499 rupees, and an old note saying 5499 is wrong. If asked about guarantees: We do not offer job, fluency, or income guarantees, and no discounts are authorised. If asked about later: Future interest after exams is always welcome. If asked about sending details or batch dates: The exact next batch date, available vacancies, and refund rules are currently unknown.",
+      "unknown_information": "The exact next batch date, available vacancies, and refund rules are unknown. Saved enquiry does not mean demo time, seat, payment, or admission is confirmed. We have no integration to send emails or save externally.",
+      "closing": "Thank you for your time today. Have a wonderful day ahead."
+    }
+  }
+}

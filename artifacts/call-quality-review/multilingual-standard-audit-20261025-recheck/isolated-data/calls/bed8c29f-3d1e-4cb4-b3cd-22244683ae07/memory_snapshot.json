@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "rint ಮಾಡುತ್ತೀರಾ? ಬೆಲೆ ಮತ್ತು delivery time ಎಷ್ಟು?\nassistant: ಹೌದು, ನಾವು wedding invitations ಕೂಡ print ಮಾಡ್ತೀವಿ. ಆದ್ರೆ design ಮತ್ತೆ quantity ಮೇಲೆ quote depend ಆಗುತ್ತೆ, so fixed price ಅಂತೇನಿಲ್ಲ. Pune-ಗೆ artwork approval ಆದ್ಮೇಲೆ five working days-ಅಲ್ಲಿ delivery ಆಗುತ್ತೆ. ನಿಮಗೆ ಯಾವ ತರಹದ invitation ಬೇಕು, ಎಷ್ಟು quantity ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?\nuser: ನನಗೆ visiting cards ಬೇಡ, ಆದರೆ ಮದುವೆಯ ಆಮಂತ್ರಣಗಳು ಬೇಕು. ನೀವು ಮಾಡುತ್ತೀರಾ?\nassistant: ಖಂಡಿತ, ನಾವು wedding invitations print ಮಾಡ್ತೀವಿ. Design ಮತ್ತೆ quantity ಮೇಲೆ quote fix ಆಗುತ್ತೆ. Quote request-ಗೆ ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ Pune-ನಲ್ಲಿ ಯಾವ area-ಗೆ delivery ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?"
+}

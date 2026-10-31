@@ -14,7 +14,13 @@ async def check_redis_health() -> dict[str, Any]:
     try:
         import redis
 
-        client = redis.from_url(url, decode_responses=True)
+        # Short timeouts so /api/health never stalls share/dev wait probes.
+        client = redis.from_url(
+            url,
+            decode_responses=True,
+            socket_connect_timeout=0.5,
+            socket_timeout=0.5,
+        )
         client.ping()
         return {"ok": True, "configured": True, "message": "connected"}
     except Exception as e:

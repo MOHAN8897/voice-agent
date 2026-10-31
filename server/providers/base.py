@@ -7,9 +7,23 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol, runtime_checkable
 
-TierName = Literal["low", "medium", "premium"]
+TierName = str  # Built-in and persisted custom tier slugs.
 ConfigMode = Literal["env", "frontend"]
 ProviderStage = Literal["stt", "llm", "tts"]
+
+
+class StructuredOutputTruncated(RuntimeError):
+    """A structured completion stopped at its output-token limit before the JSON closed.
+
+    Raised instead of "repairing" the cut JSON, which would silently save a half
+    summary. Callers retry with a larger ``max_output_tokens``.
+    """
+
+    def __init__(self, provider: str, max_output_tokens: int | None, reason: str = "length") -> None:
+        super().__init__(f"{provider} structured output truncated ({reason}) at max_output_tokens={max_output_tokens}")
+        self.provider = provider
+        self.max_output_tokens = max_output_tokens
+        self.reason = reason
 
 
 @dataclass(frozen=True)
@@ -53,7 +67,20 @@ class ResolvedStack:
 
     @staticmethod
     def _safe_config(cfg: dict[str, Any]) -> dict[str, Any]:
-        return {k: v for k, v in cfg.items() if k not in ("api_key", "secret")}
+        sensitive = {"apikey", "secret", "clientsecret", "password", "authorization", "authid",
+                     "authtoken", "accesstoken", "refreshtoken", "connectionid", "accountkey",
+                     "apisubscriptionkey", "token", "accesskey", "webhookurl", "webhookendpoint"}
+
+        def scrub(value: Any) -> Any:
+            if isinstance(value, dict):
+                return {key: scrub(item) for key, item in value.items()
+                        if (normalized := "".join(c for c in str(key).lower() if c.isalnum())) not in sensitive
+                        and not normalized.endswith(("apikey", "clientsecret"))}
+            if isinstance(value, list):
+                return [scrub(item) for item in value]
+            return value
+
+        return scrub(cfg)
 
 
 @dataclass
@@ -90,6 +117,11 @@ class TTSConfig:
     speaker: str = "shubh"
     pace: float | None = None
     temperature: float | None = None
+    # Cartesia Sonic generation_config (director knobs — not an LLM text prompt)
+    emotion: str | None = None
+    speed: float | None = None
+    volume: float | None = None
+    pitch: float | None = None
 
 
 @runtime_checkable

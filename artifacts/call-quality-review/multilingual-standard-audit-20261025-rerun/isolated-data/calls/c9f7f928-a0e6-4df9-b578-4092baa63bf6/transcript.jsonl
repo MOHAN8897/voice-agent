@@ -1,0 +1,2 @@
+{"seq": 1, "role": "user", "text": "कोर्स की कुल फ़ीस कितनी है और क्लास का समय क्या है?", "ts": "2026-10-25T19:00:29.682375Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Course की total fee six thousand four hundred ninety nine rupees है, और classes weekends पर सुबह 10 से 11 baje तक चलती हैं। क्या आपको इसके बारे में और कुछ जानना है?", "ts": "2026-10-25T19:00:30.343797Z", "brain_latency_ms": 649}

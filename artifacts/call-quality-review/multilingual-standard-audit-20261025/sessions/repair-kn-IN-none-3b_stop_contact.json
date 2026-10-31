@@ -1,0 +1,171 @@
+{
+  "key": "repair-kn-IN-none-3b_stop_contact",
+  "business": "repair",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "5f4913c1-ae60-5ad4-bfd0-7ebb2d1346b5",
+  "call_id": "ac0c34d1-86a2-49cb-9c14-dabd2f1c7ba9",
+  "session_id": "audit-repair-kn-IN-none-3b_stop_contact-31953412",
+  "compiled_checksum": "d80cb14678672e8f79b86130b3f36443ee0f42737ee8a25f2728536661b85465",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 3262,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"remove name from future calls\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n   ",
+      "sse_content_tail": "    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_finish": "length",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "length",
+      "elapsed_s": 1.781
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 4582,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"remove name from future calls\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n   ",
+      "sse_content_tail": "    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "CancelledError",
+      "finish_reason": null,
+      "elapsed_s": 2.734
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 657,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Do not call again / remove name from future calls\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"order_claimed\": false\n  ,\n  \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಇಚ್ಛೆಯನ್ನು ನಾನು note ಮಾಡ್ಕೊತೀನಿ. ಇನ್ನು ಮುಂದೆ ನಿಮಗೆ calls ಬರಲ್ಲ. ಧನ್ಯವಾದಗಳು.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"do_not_call\",\n        \"value\": \"Customer explicitly requested no future calls and name removal.\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.\",\n    \"reason\": \"firm_refusal\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Do not call again / remove name from future calls\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  ,\n  \"order_claimed\": false\n  ,\n  \"spoken_response\": \"ಸರಿ, ನಿಮ್ಮ ಇಚ್ಛೆಯನ್ನು ನಾನು note ಮಾಡ್ಕೊತೀನಿ. ಇನ್ನು ಮುಂದೆ ನಿಮಗೆ calls ಬರಲ್ಲ. ಧನ್ಯವಾದಗಳು.\"\n  ,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"do_not_call\",\n        \"value\": \"Customer explicitly requested no future calls and name removal.\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 215,
+        "prompt_tokens": 4074,
+        "total_tokens": 4289,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, ನಿಮ್ಮ ಇಚ್ಛೆಯನ್ನು ನಾನು note ಮಾಡ್ಕೊತೀನಿ. ಇನ್ನು ಮುಂದೆ ನಿಮಗೆ calls ಬರಲ್ಲ. ಧನ್ಯವಾದಗಳು.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4074,
+          "output_tokens": 215,
+          "total_tokens": 4289
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "do_not_call",
+              "value": "Customer explicitly requested no future calls and name removal."
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "firm_refusal",
+          "evidence": "ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.",
+          "remaining_request": "Do not call again / remove name from future calls",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.891
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "turn": 1,
+      "at": 5.39
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.",
+      "spoken": "ಖಂಡಿತ, ಹೇಳಿ.",
+      "elapsed_s": 5.406,
+      "requests": 3,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    }
+  ],
+  "carrier": [],
+  "events": [],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "a4405d787fd7a9f6c3d89b05b176ee25a3365b9e77b516224e273236d26e008a",
+  "prompt_chars": 17494,
+  "opening_seeded": "ನಮಸ್ಕಾರ, ನಾನು ರವಿ, ಸೇಫ್‌ಫಿಕ್ಸ್ ಹೋಮ್ ಸರ್ವಿಸ್‌ನಿಂದ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ಇದು ನಮ್ಮ ಸೇವೆಗಳು ಮತ್ತು ಬೆಲೆಗಳ ಬಗ್ಗೆ ತಿಳಿಸಲು ಮಾಡಿದ ಕರೆ. ಈಗ ಮಾತನಾಡಲು ಇದು ಸರಿಯಾದ ಸಮಯವೇ?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.",
+        "remaining_request": "Do not call again / remove name from future calls",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, ನಿಮ್ಮ ಇಚ್ಛೆಯನ್ನು ನಾನು note ಮಾಡ್ಕೊತೀನಿ. ಇನ್ನು ಮುಂದೆ ನಿಮಗೆ calls ಬರಲ್ಲ. ಧನ್ಯವಾದಗಳು.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 5.421,
+  "hangup_count": 0
+}

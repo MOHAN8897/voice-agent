@@ -1,0 +1,10 @@
+{"seq": 1, "role": "user", "text": "Yes, I am interested. Please explain the service, price and any conditions.", "ts": "2026-10-25T16:53:50.721631Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:53:53.176562Z", "brain_latency_ms": 1938}
+{"seq": 3, "role": "user", "text": "Do not book or save anything yet. Please answer my question first: What is the final course fee, duration and class timing, and do you guarantee a job?", "ts": "2026-10-25T16:53:53.186776Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:53:55.913804Z", "brain_latency_ms": 2306}
+{"seq": 5, "role": "user", "text": "I don't need a job guarantee, but I am interested in learning Python. Can you explain the course?", "ts": "2026-10-25T16:53:55.924488Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:53:58.500692Z", "brain_latency_ms": 1975}
+{"seq": 7, "role": "user", "text": "My preferred name is Audit Customer and email audit.customer@example.invalid. Please save my enquiry and preferred time tomorrow at 3pm for the team to review. I consent to submitting the request; do not claim an order or booking is confirmed.", "ts": "2026-10-25T16:53:58.517428Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "I couldn't confirm that your request went through. Please don't treat it as done.", "ts": "2026-10-25T16:54:01.451815Z", "brain_latency_ms": 2919}
+{"seq": 9, "role": "user", "text": "You have answered my questions. I do not need anything else. Goodbye, end the call.", "ts": "2026-10-25T16:54:01.473536Z", "partial": false}
+{"seq": 10, "role": "assistant", "text": "Thank you for your time. Goodbye.", "ts": "2026-10-25T16:54:01.481845Z", "brain_latency_ms": 1}

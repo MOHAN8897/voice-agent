@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:28:09.309834Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:28:10.087270Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:28:10.814239Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 5, "ts": "2026-10-25T15:28:10.816799Z", "source": "rolling_summary", "operations": [{"op": "update_summary", "value": "user: ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.\nassistant: கண்டிப்பாக, சொல்லுங்கள்.\nuser: இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: நீங்க திருமண அழைப்பிதழ்களும் print செய்வீங்களா? விலை, delivery time என்ன?\nassistant: கண்டிப்பாக, சொல்லுங்கள்.\nuser: சரி, நன்றி.\nassistant: கண்டிப்பாக, சொல்லுங்கள்."}], "applied": true, "validation_errors": []}
+{"turn_seq": 7, "ts": "2026-10-25T15:28:11.447095Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

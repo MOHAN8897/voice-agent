@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, LargeBinary, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -25,9 +25,29 @@ class Tenant(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     plan: Mapped[str] = mapped_column(String(50), default="dev")
+    # status CHECK: active | quarantined | deleting | deleted
+    status: Mapped[str] = mapped_column(String(30), default="active")
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
+    limits: Mapped[dict] = mapped_column(JSONB, default=dict)
+    default_agent_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # --- Deletion lifecycle (migration 033) ---
+    deleted_by_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    deletion_reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    scheduled_purge_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    restored_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    legal_hold: Mapped[bool] = mapped_column(Boolean, default=False)
+    billing_source: Mapped[str] = mapped_column(String(30), default="self_serve")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
-    agents: Mapped[list["Agent"]] = relationship(back_populates="tenant")
+    default_agent: Mapped["Agent | None"] = relationship(
+        foreign_keys=[default_agent_id],
+        post_update=True,
+    )
+    agents: Mapped[list["Agent"]] = relationship(
+        back_populates="tenant",
+        foreign_keys="Agent.tenant_id",
+    )
     calls: Mapped[list["Call"]] = relationship(back_populates="tenant")
 
 
@@ -43,10 +63,54 @@ class Agent(Base):
     languages: Mapped[list[str]] = mapped_column(ARRAY(String), default=["te-IN"])
     memory_schema: Mapped[str] = mapped_column(String(64), default="compact_v1")
     environment: Mapped[str] = mapped_column(String(50), default="development")
+    voice_settings: Mapped[dict] = mapped_column(JSONB, default=dict)
+    recording_disclosure_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    recording_disclosure_text: Mapped[str] = mapped_column(
+        String(255), default="This call may be recorded for quality and training purposes."
+    )
+    #: When true the technical-failure apology may promise a callback — but only
+    #: after a pending CallCallback row is committed. Otherwise the clip asks the
+    #: caller to call back instead.
+    technical_fallback_promise_callback: Mapped[bool] = mapped_column(Boolean, default=True)
+    #: Console note only. Typed text is never synthesized during a TTS outage;
+    #: playback uses an uploaded clip or the platform recording.
+    technical_fallback_text: Mapped[str] = mapped_column(String(255), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
-    tenant: Mapped["Tenant"] = relationship(back_populates="agents")
+    tenant: Mapped["Tenant"] = relationship(
+        back_populates="agents",
+        foreign_keys=[tenant_id],
+    )
     calls: Mapped[list["Call"]] = relationship(back_populates="agent")
+
+
+class AgentFallbackClip(Base):
+    """Tenant-uploaded pre-recorded clip for TTS-outage announcements.
+
+    Stored as normalized mono 8 kHz 16-bit PCM so the call path never decodes or
+    resamples during an outage. One clip per agent, language and variant.
+    """
+
+    __tablename__ = "agent_fallback_clips"
+    __table_args__ = (
+        UniqueConstraint("agent_id", "language", "variant", name="uq_agent_fallback_clip"),
+    )
+
+    clip_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True
+    )
+    agent_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=False, index=True
+    )
+    language: Mapped[str] = mapped_column(String(16), nullable=False)
+    #: callback_promise | call_back | disclosure
+    variant: Mapped[str] = mapped_column(String(24), nullable=False)
+    pcm_bytes: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    sample_rate: Mapped[int] = mapped_column(Integer, nullable=False, default=8000)
+    duration_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 class TierAssignment(Base):
@@ -93,8 +157,95 @@ class Call(Base):
     finalization_status: Mapped[str] = mapped_column(String(20), default="pending")
     storage_path: Mapped[str] = mapped_column(String(512), nullable=False)
     end_reason: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    #: Canonical status (server/call/call_status.py). Materialised so it can be
+    #: filtered in SQL; NULL on rows written before the column existed, and
+    #: derived on read for those.
+    status: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    #: Browser practice sessions (channel="browser"). Not a real conversation:
+    #: excluded from call rollups and never recorded. Live PSTN calls are false.
+    is_test: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    #: Snapshotted billing rates when call connected — guarantees calls are never re-priced if admin rates change.
+    applied_rate_usd_cents_per_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    applied_rate_usd_micros_per_min: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    applied_rate_inr_paise_per_min: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    applied_fx_rate_inr: Mapped[float | None] = mapped_column(Numeric(10, 4), nullable=True)
+    rate_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: Voice profile (tier stack) revision admitted for this call. An admin edit
+    #: to the tier mid-call bumps the profile revision; this call keeps the stack
+    #: it started with, and this column says which one that was.
+    voice_profile_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    #: Owner-facing taxonomy produced after the call (see server/call/outcome_schema.py).
+    #: GIN-indexed so the console can filter a tenant's history by tag.
+    status_tags: Mapped[list[str]] = mapped_column(ARRAY(String(48)), default=list, server_default="{}")
     last_heartbeat_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     tenant: Mapped["Tenant"] = relationship(back_populates="calls")
     agent: Mapped["Agent"] = relationship(back_populates="calls")
+
+
+class CallAttempt(Base):
+    """One ringing event, persisted even when the call never connects.
+
+    A ``calls`` row only exists once media streams, so a caller who rings out and
+    hangs up used to leave no trace at all. This table is the "attempt" half of the
+    model: ``linked_call_id`` points at the ``calls`` row when the attempt became a
+    real conversation, and is NULL while the attempt is missed/declined/voicemail.
+    Written only from the carrier webhook, never on the answered path.
+    """
+
+    __tablename__ = "call_attempts"
+    __table_args__ = (
+        UniqueConstraint("provider_call_control_id", name="uq_call_attempt_control"),
+    )
+
+    attempt_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True)
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agents.agent_id"), nullable=True)
+    provider: Mapped[str] = mapped_column(String(30), default="telnyx")
+    provider_call_control_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    direction: Mapped[str] = mapped_column(String(20), default="inbound")
+    from_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    to_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    linked_call_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("calls.call_id"), nullable=True)
+    #: Canonical status (server/call/call_status.py).
+    status: Mapped[str] = mapped_column(String(20), default="in_progress", index=True)
+    #: Why the ingress decided what it decided: answered, inbound_disabled,
+    #: after_hours_voicemail, after_hours_hangup, carrier_hangup, …
+    policy_reason: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    end_reason: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, index=True)
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+
+class CallCallback(Base):
+    """A user- or system-initiated attempt to call a missed caller back.
+
+    Owns idempotency (unique ``dial_request_id``) and the audit trail, and is the
+    extension point for AI redial and scheduled callbacks.
+    """
+
+    __tablename__ = "call_callbacks"
+    __table_args__ = (
+        UniqueConstraint("dial_request_id", name="uq_call_callback_dial_request"),
+    )
+
+    callback_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.tenant_id"), nullable=False, index=True)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=True)
+    original_call_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("calls.call_id"), nullable=True)
+    original_attempt_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("call_attempts.attempt_id"), nullable=True)
+    agent_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    to_e164: Mapped[str] = mapped_column(String(32), nullable=False)
+    from_e164: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    dial_request_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    #: manual | ai_redial | scheduled — the reason the dial happened.
+    mode: Mapped[str] = mapped_column(String(30), default="manual")
+    status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
+    provider: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    provider_call_control_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    error: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)

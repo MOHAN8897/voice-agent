@@ -1,0 +1,31 @@
+{
+  "mode": "debug",
+  "objective": "Adopt the dial-time Gemini session and play its cached greeting immediately on authenticated Vobiz media readiness, once per call",
+  "planning": "compact",
+  "context_depth": "dependency",
+  "verification_depth": "impact",
+  "delegation": "none",
+  "reason_codes": ["confirmed-runtime-failure", "shared-lifecycle", "multiple-files"],
+  "acceptance_criteria": [
+    "Prepared session is found under outbound tracking, provider request or answered call ID, including a fast-answer race",
+    "The first cached audio frame is sent before post-answer lifecycle/database work completes",
+    "The same Gemini adapter is adopted for conversation without greeting regeneration",
+    "Cached opening is delivered once; duplicate start/pickup events cannot replay it",
+    "A silent delivery note and concise prompt prohibit repeated introductions except when caller asks identity",
+    "Cleanup cancels early playback and closes any unadopted session",
+    "Architecture is recorded for future repository agents; auth and admission gates remain intact"
+  ],
+  "allowed_write_scope": [
+    "server/routes/dev_telephony.py",
+    "server/services/pstn_prewarm.py",
+    "server/services/vobiz_pstn_bridge.py",
+    "server/services/pstn_realtime_voice_core.py",
+    "server/realtime/gemini_audio_session.py",
+    "server/realtime/providers/gemini_voice.py",
+    "server/tests/test_primary_pstn_lifecycle.py",
+    "server/tests/test_immediate_pstn_opening.py",
+    "AGENTS.md",
+    ".gravitas/sessions/pstn-immediate-opening/"
+  ],
+  "non_goals": ["production config changes", "deployment", "billing rate changes", "auth changes", "secondary flow audit"]
+}

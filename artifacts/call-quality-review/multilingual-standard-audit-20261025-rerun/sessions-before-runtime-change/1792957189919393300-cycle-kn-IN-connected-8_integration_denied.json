@@ -1,0 +1,222 @@
+{
+  "key": "cycle-kn-IN-connected-8_integration_denied",
+  "business": "cycle",
+  "language": "kn-IN",
+  "integration": true,
+  "scenario": "8_integration_denied",
+  "agent_id": "f5a79515-a0d2-5b65-906d-0dad26c62217",
+  "call_id": "d01b3165-6b8a-47a9-b67c-ba4079cf75eb",
+  "session_id": "audit-cycle-kn-IN-connected-8_integration_denied-5bab9aee",
+  "compiled_checksum": "d93974aaef8f4b67e05c7d2e8cfc340be9288980a7ef5aabd76478bb6dc212d8",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 4074,
+        "total_tokens": 4137,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4074,
+          "output_tokens": 63,
+          "total_tokens": 4137
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-b98a40ae55896fc5",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"puncture repair in Adyar, Chennai\", \"preferred_time\": \"tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.563
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 174,
+      "sse_content_preview": "ಕ್ಷಮಿಸಿ, ಸದ್ಯಕ್ಕೆ ನಿಮ್ಮ enquiry ದಾಖಲಿಸಲು ಆಗಲಿಲ್ಲ. ನಮ್ಮ team ಇಂದ ನಿಮಗೆ direct ಆಗಿ contact ಮಾಡ್ತಾರೆ. puncture repair ಗೆ 120 ರೂಪಾಯಿ ಆಗುತ್ತೆ, ಸರಿನಾ? ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿತ್ತಾ?",
+      "sse_content_tail": "ಕ್ಷಮಿಸಿ, ಸದ್ಯಕ್ಕೆ ನಿಮ್ಮ enquiry ದಾಖಲಿಸಲು ಆಗಲಿಲ್ಲ. ನಮ್ಮ team ಇಂದ ನಿಮಗೆ direct ಆಗಿ contact ಮಾಡ್ತಾರೆ. puncture repair ಗೆ 120 ರೂಪಾಯಿ ಆಗುತ್ತೆ, ಸರಿನಾ? ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿತ್ತಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 53,
+        "prompt_tokens": 4339,
+        "total_tokens": 4392,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಕ್ಷಮಿಸಿ, ಸದ್ಯಕ್ಕೆ ನಿಮ್ಮ enquiry ದಾಖಲಿಸಲು ಆಗಲಿಲ್ಲ. ನಮ್ಮ team ಇಂದ ನಿಮಗೆ direct ಆಗಿ contact ಮಾಡ್ತಾರೆ. puncture repair ಗೆ 120 ರೂಪಾಯಿ ಆಗುತ್ತೆ, ಸರಿನಾ? ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿತ್ತಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4339,
+          "output_tokens": 53,
+          "total_tokens": 4392
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": true,
+        "action_proofs": [],
+        "order_proof": false,
+        "action_outcome_unconfirmed": true
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.625
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "puncture repair in Adyar, Chennai",
+        "preferred_time": "tomorrow at 3pm"
+      },
+      "turn": 1,
+      "mode": "8_integration_denied"
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "ನಿಮ್ಮ ವಿನಂತಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ ಎಂದು ನನಗೆ ದೃಢೀಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಅದನ್ನು ಮುಗಿದಿದೆ ಎಂದು ಪರಿಗಣಿಸಬೇಡಿ. ನಮ್ಮ team ಇಂದ ನಿಮಗೆ direct ಆಗಿ contact ಮಾಡ್ತಾರೆ. puncture repair ಗೆ one hundred twenty ರೂಪಾಯಿ ಆಗುತ್ತೆ, ಸರಿನಾ? ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿತ್ತಾ?",
+      "turn": 1,
+      "at": 4.406
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 2,
+      "at": 4.453
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want puncture repair in Adyar, Chennai; preferred review time tomorrow at 3pm. ಈ enquiry team reviewಗೆ submit ಮಾಡಿ. ನನ್ನ ಒಪ್ಪಿಗೆ ಇದೆ. Booking ಅಥವಾ order confirm ಅಂತ ಹೇಳಬೇಡಿ.",
+      "spoken": "ನಿಮ್ಮ ವಿನಂತಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ ಎಂದು ನನಗೆ ದೃಢೀಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಅದನ್ನು ಮುಗಿದಿದೆ ಎಂದು ಪರಿಗಣಿಸಬೇಡಿ. ನಮ್ಮ team ಇಂದ ನಿಮಗೆ direct ಆಗಿ contact ಮಾಡ್ತಾರೆ. puncture repair ಗೆ one hundred twenty ರೂಪಾಯಿ ಆಗುತ್ತೆ, ಸರಿನಾ? ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿತ್ತಾ?",
+      "elapsed_s": 4.406,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 4.5,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "d01b3165-6b8a-47a9-b67c-ba4079cf75eb",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "e790ebeb19697467032eeb0092349c7a61e88a40ed26e7d52c70d9da8469ef9b",
+  "prompt_chars": 16746,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "ನಮಸ್ಕಾರ, ನಾನು ಸಿಟಿ ಸೈಕಲ್ ರಿಪೇರ್ಸ್ ನಿಂದ ಅರ್ಜುನ್ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ. ನಾವು ಸೈಕಲ್ ರಿಪೇರ್ ಮತ್ತು ಸೇವೆಗಳ ಬಗ್ಗೆ ಮಾಹಿತಿ ನೀಡುತ್ತಿದ್ದೇವೆ. ಈಗ ಮಾತನಾಡಲು ನಿಮಗೆ ಸಮಯವಿದೆಯೇ?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ಕ್ಷಮಿಸಿ, ಸದ್ಯಕ್ಕೆ ನಿಮ್ಮ enquiry ದಾಖಲಿಸಲು ಆಗಲಿಲ್ಲ. ನಮ್ಮ team ಇಂದ ನಿಮಗೆ direct ಆಗಿ contact ಮಾಡ್ತಾರೆ. puncture repair ಗೆ one hundred twenty ರೂಪಾಯಿ ಆಗುತ್ತೆ, ಸರಿನಾ? ಬೇರೆ ಏನಾದ್ರೂ ಮಾಹಿತಿ ಬೇಕಿತ್ತಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.515,
+  "hangup_count": 1,
+  "source_signature": "4953ed948fb444454219f6ca39d300be531437f9524613024d6794fbbd21733f"
+}

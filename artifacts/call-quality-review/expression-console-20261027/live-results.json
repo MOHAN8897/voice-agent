@@ -1,0 +1,123 @@
+{
+  "tiers": [
+    {
+      "tier": "premium",
+      "revision": 5,
+      "enabled": false,
+      "llm": {
+        "apiMode": "websocket",
+        "modelId": "gemini-3.8-live",
+        "provider": "gemini"
+      },
+      "ttsModels": [
+        {
+          "provider": "gemini",
+          "model": "gemini-3.8-live"
+        }
+      ]
+    },
+    {
+      "tier": "medium",
+      "revision": 97,
+      "enabled": true,
+      "llm": {
+        "apiMode": "chat_completions_v1",
+        "modelId": "sarvam-105b-conversations",
+        "provider": "sarvam"
+      },
+      "ttsModels": [
+        {
+          "provider": "sarvam",
+          "model": "bulbul:v3"
+        }
+      ]
+    },
+    {
+      "tier": "low",
+      "revision": 41,
+      "enabled": true,
+      "llm": {
+        "apiMode": "chat_completions_v1",
+        "modelId": "sarvam-105b-conversations",
+        "provider": "sarvam"
+      },
+      "ttsModels": [
+        {
+          "provider": "gemini",
+          "model": "gemini-3.8-flash-lite-tts"
+        }
+      ]
+    },
+    {
+      "tier": "medium_copy_1",
+      "revision": 37,
+      "enabled": true,
+      "llm": {
+        "apiMode": "chat_completions_v1",
+        "modelId": "sarvam-105b-conversations",
+        "provider": "sarvam"
+      },
+      "ttsModels": [
+        {
+          "provider": "gnani",
+          "model": "timbre-v3.0"
+        }
+      ]
+    }
+  ],
+  "llm": [
+    {
+      "scenario": "positive",
+      "caller": "మీ service నచ్చింది! మా office opening కోసం cards తీసుకోవాలని చాలా excited గా ఉన్నాను!",
+      "speech": "<excited> వినడానికి చాలా సంతోషంగా ఉందండి! మా visiting cards ఒక్కొక్కటి twenty five rupees ఉంటాయి, delivery రెండు రోజుల్లో అవుతుంది. మీకు ఎన్ని cards కావాలో చెప్తారా?",
+      "elapsed_s": 0.625,
+      "nonempty": true,
+      "expected_tag_present": true,
+      "standalone_honorific_count": 0
+    },
+    {
+      "scenario": "slow",
+      "caller": "కొంచెం నెమ్మదిగా చెప్పండి, ఒక్క card ధర ఎంత?",
+      "speech": "<slow> ఒక్క visiting card price twenty five rupees అవుతుంది. మీకు వేరే ఏమైనా details కావాలా?",
+      "elapsed_s": 0.484,
+      "nonempty": true,
+      "expected_tag_present": true,
+      "standalone_honorific_count": 0
+    },
+    {
+      "scenario": "neutral",
+      "caller": "Delivery కి ఎన్ని రోజులు పడుతుంది?",
+      "speech": "Delivery రెండు రోజుల్లో అవుతుంది. మీకు ఇంకేమైనా details కావాలా?",
+      "elapsed_s": 0.5,
+      "nonempty": true,
+      "standalone_honorific_count": 0
+    },
+    {
+      "scenario": "objection",
+      "caller": "ఒక్క card కి ఇరవై ఐదు రూపాయలా? చాలా ఎక్కువగా ఉంది.",
+      "speech": "అవును, ఒక్క visiting card price twenty five rupees ఉంటుంది. మీకు ఎందుకు ఎక్కువగా అనిపిస్తుందో కొంచెం చెప్తారా?",
+      "elapsed_s": 0.531,
+      "nonempty": true,
+      "standalone_honorific_count": 0
+    }
+  ],
+  "tts": [
+    {
+      "scenario": "positive",
+      "pcm_bytes": 317440,
+      "sample_rate": 16000,
+      "seconds": 9.92,
+      "elapsed_s": 3.282,
+      "file": "positive.wav"
+    },
+    {
+      "scenario": "slow",
+      "pcm_bytes": 202240,
+      "sample_rate": 16000,
+      "seconds": 6.32,
+      "elapsed_s": 2.656,
+      "file": "slow.wav"
+    }
+  ],
+  "pass": true
+}

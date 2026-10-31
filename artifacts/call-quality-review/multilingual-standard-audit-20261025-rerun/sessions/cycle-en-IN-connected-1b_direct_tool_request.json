@@ -1,0 +1,221 @@
+{
+  "key": "cycle-en-IN-connected-1b_direct_tool_request",
+  "business": "cycle",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "aa28347a-5d38-5476-b3a1-3bd540c1fb68",
+  "call_id": "a44a4448-7cef-48a7-914a-1ed222376108",
+  "session_id": "audit-cycle-en-IN-connected-1b_direct_tool_request-d104159a",
+  "compiled_checksum": "2d566b01061493fce1edfd5d4fc733c96312f4c1a27f05d81c2ff3cb9039cd9f",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 4140,
+        "total_tokens": 4203,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4140,
+          "output_tokens": 63,
+          "total_tokens": 4203
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-9b946341aec43373",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"puncture repair in Adyar, Chennai\", \"preferred_time\": \"tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.672
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 208,
+      "sse_content_preview": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, so our team will get back to you on the preferred time. Is there anything else I can help you with?",
+      "sse_content_tail": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, so our team will get back to you on the preferred time. Is there anything else I can help you with?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 50,
+        "prompt_tokens": 4434,
+        "total_tokens": 4484,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, so our team will get back to you on the preferred time. Is there anything else I can help you with?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4434,
+          "output_tokens": 50,
+          "total_tokens": 4484
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.562
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "puncture repair in Adyar, Chennai",
+        "preferred_time": "tomorrow at 3pm"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, so our team will get back to you on the preferred time. Is there anything else I can help you with?",
+      "turn": 1,
+      "at": 4.266
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 2,
+      "at": 4.297
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want puncture repair in Adyar, Chennai; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.",
+      "spoken": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, so our team will get back to you on the preferred time. Is there anything else I can help you with?",
+      "elapsed_s": 4.25,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 4.375,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "a44a4448-7cef-48a7-914a-1ed222376108",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "4cd0cc0eca0e7b08238e658b2c18ec673960578bd2e7bb40a1cc26828755e8f5",
+  "prompt_chars": 17209,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, this is Arjun calling from CityCycle Repairs. As an AI assistant, I am calling to answer any questions you have about our bicycle repairs. Are you looking for bicycle repair assistance today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "Your enquiry has been saved with reference AUDIT-ENQUIRY-1 for team review. This is not a confirmed booking, so our team will get back to you on the preferred time. Is there anything else I can help you with?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.375,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

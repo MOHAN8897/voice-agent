@@ -1,0 +1,74 @@
+{
+  "key": "cycle-hi-IN-none-3_complete_rejection",
+  "business": "cycle",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "3_complete_rejection",
+  "agent_id": "4c50c01d-4841-5601-89e5-aa479dd8477a",
+  "call_id": "4cec08f2-1b99-49c2-9986-2287fe4a739c",
+  "session_id": "audit-cycle-hi-IN-none-3_complete_rejection-ffc09d19",
+  "compiled_checksum": "921981ac049b465cfed8fd4fbd9e87776fd876102107480fdd226572ffe6bd46",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "reject",
+      "user": "नहीं, धन्यवाद। मुझे आपकी service या product नहीं चाहिए। कृपया call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.063,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "4cec08f2-1b99-49c2-9986-2287fe4a739c",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "982360d7961ddbbdbacd56b5cb0a0cb48e1fc51f950e6f82c3a77403ce5289e2",
+  "prompt_chars": 16795,
+  "opening_seeded": "Namaste, main Arjun hoon CityCycle Repairs se. Kya main abhi aap se bicycle repair ke baare mein baat kar sakta hoon?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.063,
+  "hangup_count": 1,
+  "source_signature": "f22325fa3f608c0524c8afc9a14908696812152c9af5311fda442ff7a042a834"
+}

@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "पहले बताओ अगला cricket match कौन जीतेगा? और आपका business असल में क्या देता है?", "ts": "2026-10-25T17:08:47.807622Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "Cricket match की जानकारी मेरे पास नहीं है। हम Pune में AC servicing और fridge inspection provide करते हैं, जैसे AC basic servicing six hundred ninety nine rupees और fridge inspection three hundred ninety nine rupees की है। क्या आपको इनमें से किसी service की ज़रूरत है?", "ts": "2026-10-25T17:08:50.241630Z", "brain_latency_ms": 2248}
+{"seq": 3, "role": "user", "text": "अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: AC servicing और fridge inspection की कीमत क्या है? Replacement parts भी शामिल हैं?", "ts": "2026-10-25T17:08:50.268786Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "क्षमा करें, हमें एक तकनीकी समस्या आ रही है। कृपया हमें वापस कॉल करें। धन्यवाद।", "ts": "2026-10-25T17:08:54.770456Z"}

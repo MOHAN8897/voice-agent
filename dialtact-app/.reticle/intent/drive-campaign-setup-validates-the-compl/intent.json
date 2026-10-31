@@ -1,0 +1,19 @@
+{
+  "intents": {
+    "flow:drive-campaign-setup-validates-the-complete-contact-im": {
+      "declaredAt": 1792503420582,
+      "id": "flow:drive-campaign-setup-validates-the-complete-contact-im",
+      "source": "decided on the dashboard",
+      "state": "declared",
+      "statement": "Campaign setup validates the complete contact import before launch. This run uses isolated synthetic API responses.",
+      "status": "proved",
+      "subject": "drive-campaign-setup-validates-the-compl",
+      "surface": {
+        "flow": "drive-campaign-setup-validates-the-complete-contact-im"
+      },
+      "updatedAt": 1792503423032
+    }
+  },
+  "subject": "drive-campaign-setup-validates-the-compl",
+  "version": 1
+}

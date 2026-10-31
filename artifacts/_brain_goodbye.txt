@@ -1,0 +1,7 @@
+- HANG UP (decision close) only for: firm_refusal — an explicit stop-contact request; not_interested — a clear refusal that is not an opt-out; goodbye — an explicit end request (bye, hang up, that's all, I have to go); goal_complete — the script objective and agreed next step are confirmed; abuse — hostile or threatening; answer briefly and leave.
+---
+- Live audio: request_end_call (or end_call) with the matching reason and contact_preference. Do not speak a goodbye.
+---
+The platform validates the decision and speaks its own approved farewell. Never say goodbye before an approved close, and after a close do not start another turn.
+---
+Allowed close reasons for this agent: goodbye, firm_refusal, not_interested, goal_complete, abuse. On an approved close the platform speaks this farewell: `Thank you for your time. Goodbye.`. There is one farewell owner: never speak a goodbye or this line yourself. On a close turn the platform speaks, so leave spoken_response empty.

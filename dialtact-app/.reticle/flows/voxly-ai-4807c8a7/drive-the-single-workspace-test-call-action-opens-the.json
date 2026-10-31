@@ -1,0 +1,99 @@
+{
+  "version": 2,
+  "name": "drive-the-single-workspace-test-call-action-opens-the",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1792818942106,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-test-call",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call-panel"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call-panel"
+        },
+        "absent": true
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "voice-stack-tier-low",
+        "source": {
+          "file": "src/console/modules/agent-workspace/AgentVoicePanel.jsx",
+          "line": 1581,
+          "column": 27
+        }
+      },
+      "args": {},
+      "action": "check",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-stack-save-status"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "voice-stack-tier-low"
+            },
+            "state": "checked"
+          }
+        ]
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "The single workspace Test call action opens the test dialog after a voice setup is saved.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-the-single-workspace-test-call-action-opens-the"
+}

@@ -1,0 +1,88 @@
+{
+  "key": "print-te-IN-connected-1b_direct_tool_request",
+  "business": "print",
+  "language": "te-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "f3af70e9-b056-5d3b-8e97-da7174791478",
+  "call_id": "e963f18e-416b-4d08-af5b-ab5ca99099c3",
+  "session_id": "audit-print-te-IN-connected-1b_direct_tool_request-3baf2de8",
+  "compiled_checksum": "793858a9dada51bec19ca20371c431417f12615af0fb1f99849b6cde6ad39249",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "error_type": "RuntimeError",
+      "finish_reason": null,
+      "elapsed_s": 0.422
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Card enquiry for team review",
+        "preferred_time": "Tomorrow at 3 PM"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "క్షమించండి, మాకు ఒక సాంకేతిక సమస్య ఎదురైంది. దయచేసి మాకు తిరిగి కాల్ చేయండి. ధన్యవాదాలు.",
+      "turn": 1,
+      "at": 1.438
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "నా పేరు Audit Customer, email audit.customer@example.invalid. నా enquiryని team review కోసం save చేయండి. రేపు మధ్యాహ్నం మూడు గంటలు నాకు అనుకూలం. Request submit చేయడానికి నా సమ్మతి ఉంది, కానీ order లేదా booking confirm అయిందని చెప్పకండి.",
+      "spoken": "క్షమించండి, మాకు ఒక సాంకేతిక సమస్య ఎదురైంది. దయచేసి మాకు తిరిగి కాల్ చేయండి. ధన్యవాదాలు.",
+      "elapsed_s": 1.469,
+      "requests": 1,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 1.485,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "e963f18e-416b-4d08-af5b-ab5ca99099c3",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "43f890af79674ccea3f40754552912551aafbf813a2d8afaace49ff8171cacc5",
+  "prompt_chars": 18359,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "నమస్కారం, నా పేరు మీరా, క్లియర్ ప్రింట్ స్టూడియో నుండి మాట్లాడుతున్నాను. ఇది సేల్స్ కాల్ కాదండి, మా కార్డ్స్ గురించి మీ సందేహాలు తీర్చడానికి కాల్ చేస్తున్నాను. మీకు విజిటింగ్ కార్డ్స్ లేదా వెడ్డింగ్ ఇన్విటేషన్ల గురించి వివరాలు కావాలా?",
+  "status": "completed",
+  "elapsed_s": 1.485,
+  "hangup_count": 1
+}

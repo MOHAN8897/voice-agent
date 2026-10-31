@@ -1,0 +1,223 @@
+{
+  "key": "cleaning-hi-IN-none-2_future_interest",
+  "business": "cleaning",
+  "language": "hi-IN",
+  "integration": false,
+  "scenario": "2_future_interest",
+  "agent_id": "ecdd85e3-226b-5cd6-8714-2a63b5afa03f",
+  "call_id": "87efeedf-943c-4b63-b324-bf095fc03aa2",
+  "session_id": "audit-cleaning-hi-IN-none-2_future_interest-46ead62d",
+  "compiled_checksum": "0c2fcd9b9891880207ff585f3f61d0a66c16fa9a33b9c59e664552201ded2f9a",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 175,
+      "sse_content_preview": "ठीक है, समझ गई। Sofa cleaning 349 rupees per seat है, minimum 3 seats के लिए, और kitchen cleaning 1599 rupees total है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+      "sse_content_tail": "ठीक है, समझ गई। Sofa cleaning 349 rupees per seat है, minimum 3 seats के लिए, और kitchen cleaning 1599 rupees total है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 50,
+        "prompt_tokens": 4121,
+        "total_tokens": 4171,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ठीक है, समझ गई। Sofa cleaning 349 rupees per seat है, minimum 3 seats के लिए, और kitchen cleaning 1599 rupees total है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4121,
+          "output_tokens": 50,
+          "total_tokens": 4171
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.547
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 145,
+      "sse_content_preview": "हम सिर्फ Pune में काम करते हैं और हमारा समय Monday to Saturday सुबह 9 से शाम 6 बजे तक है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+      "sse_content_tail": "हम सिर्फ Pune में काम करते हैं और हमारा समय Monday to Saturday सुबह 9 से शाम 6 बजे तक है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 38,
+        "prompt_tokens": 4192,
+        "total_tokens": 4230,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "हम सिर्फ Pune में काम करते हैं और हमारा समय Monday to Saturday सुबह 9 से शाम 6 बजे तक है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4192,
+          "output_tokens": 38,
+          "total_tokens": 4230
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.469
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ठीक है, समझ गई। Sofa cleaning three hundred forty nine rupees per seat है, minimum 3 seats के लिए, और kitchen cleaning one thousand five hundred ninety nine rupees total है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+      "turn": 1,
+      "at": 1.375
+    },
+    {
+      "text": "हम सिर्फ Pune में काम करते हैं और हमारा समय Monday to Saturday सुबह 9 से शाम 6 बजे तक है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+      "turn": 2,
+      "at": 3.531
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 3,
+      "at": 3.547
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "अभी जरूरत नहीं है, लेकिन अगले महीने मुझे दिलचस्पी है। अभी की कीमत बताइए। कुछ book मत कीजिए और इसे हमेशा के लिए मना करना मत समझिए।",
+      "spoken": "ठीक है, समझ गई। Sofa cleaning three hundred forty nine rupees per seat है, minimum 3 seats के लिए, और kitchen cleaning one thousand five hundred ninety nine rupees total है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+      "elapsed_s": 1.375,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "हाँ, भविष्य में मुझे दिलचस्पी है। मैं अभी बाद में call करने के लिए नहीं कह रहा हूँ। इस service के बारे में और क्या जानना चाहिए?",
+      "spoken": "हम सिर्फ Pune में काम करते हैं और हमारा समय Monday to Saturday सुबह 9 से शाम 6 बजे तक है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+      "elapsed_s": 2.125,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 3.594,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "87efeedf-943c-4b63-b324-bf095fc03aa2",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "6114353fe86c56b639b94fab33c1ba7f6e971516b32bd95d18fc2541cf0ef55a",
+  "prompt_chars": 17322,
+  "opening_seeded": "Namaste. Main Nila bol rahi hoon FreshNest Cleaning se. Kya aapko hamari cleaning services ke baare mein jaankari chahiye?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "ठीक है, समझ गई। Sofa cleaning three hundred forty nine rupees per seat है, minimum 3 seats के लिए, और kitchen cleaning one thousand five hundred ninety nine rupees total है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "हम सिर्फ Pune में काम करते हैं और हमारा समय Monday to Saturday सुबह 9 से शाम 6 बजे तक है। क्या मैं team review के लिए आपकी enquiry submit कर दूँ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 3.609,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

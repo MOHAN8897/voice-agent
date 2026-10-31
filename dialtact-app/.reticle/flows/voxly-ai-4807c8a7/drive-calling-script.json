@@ -1,0 +1,237 @@
+{
+  "version": 2,
+  "name": "drive-calling-script",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1791901197906,
+  "steps": [
+    {
+      "tool": "reticle_act_sequence",
+      "anchor": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Work Email"
+      },
+      "steps": [
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Work Email"
+          },
+          "args": {},
+          "action": "fill"
+        },
+        {
+          "tool": "reticle_act",
+          "anchor": {
+            "kind": "role",
+            "role": "textbox",
+            "name": "Password"
+          },
+          "args": {},
+          "action": "fill"
+        }
+      ],
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Sign In"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Sign In"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "tour-close-btn"
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Build"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Calling script"
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "insert-variable-btn",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1002,
+          "column": 21
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Include Fallback Defaults"
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "insert-token-first-name",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1047,
+          "column": 23
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "preview-script-toggle",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 986,
+          "column": 17
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Live Telephony Prompt View"
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "select-sample-lead-1",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1138,
+          "column": 19
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Tests Fallbacks"
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "preview-script-toggle",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 986,
+          "column": 17
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "script-textarea"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "preset-objection-price",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 1246,
+          "column": 15
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "text",
+            "contains": "Rule #1"
+          },
+          {
+            "kind": "text",
+            "contains": "PRICE"
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-studio-save-inline",
+        "source": {
+          "file": "src/console/modules/AgentStudioModule.jsx",
+          "line": 753,
+          "column": 13
+        }
+      },
+      "args": {},
+      "action": "click",
+      "page": "/"
+    }
+  ],
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "antigravity-client"
+  }
+}

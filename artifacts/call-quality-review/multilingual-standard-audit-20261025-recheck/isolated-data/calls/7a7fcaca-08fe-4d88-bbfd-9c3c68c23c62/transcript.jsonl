@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "तुम निकम्मे बेवकूफ हो। वही बात दोहराना बंद करो और कीमत वाले सवाल का जवाब दो।", "ts": "2026-10-25T17:17:56.802922Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "माफ़ कीजिए, अगर आपको बुरा लगा हो। Pune में AC basic servicing six hundred ninety nine rupees की है और fridge inspection three hundred ninety nine rupees की है। Parts extra lagenge, wo bhi sirf approval ke baad. Kya aapko kisi specific appliance ke liye visit book karni hai?", "ts": "2026-10-25T17:17:58.919135Z", "brain_latency_ms": 1900}
+{"seq": 3, "role": "user", "text": "मैं तुम्हें जान से मार दूँगा। यह call अभी समाप्त करो।", "ts": "2026-10-25T17:17:58.945246Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "समय देने के लिए धन्यवाद। नमस्कार।", "ts": "2026-10-25T17:17:58.954113Z", "brain_latency_ms": 2}

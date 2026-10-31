@@ -1,0 +1,220 @@
+{
+  "key": "cycle-hi-IN-connected-8_integration_denied",
+  "business": "cycle",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "8_integration_denied",
+  "agent_id": "4c50c01d-4841-5601-89e5-aa479dd8477a",
+  "call_id": "afd387b6-d28f-4edb-8c9d-f6a3e1f3f7d7",
+  "session_id": "audit-cycle-hi-IN-connected-8_integration_denied-fa1dca75",
+  "compiled_checksum": "921981ac049b465cfed8fd4fbd9e87776fd876102107480fdd226572ffe6bd46",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 63,
+        "prompt_tokens": 4008,
+        "total_tokens": 4071,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4008,
+          "output_tokens": 63,
+          "total_tokens": 4071
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-bf250f991bacef56",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"puncture repair in Adyar, Chennai\", \"preferred_time\": \"tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.532
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 191,
+      "sse_content_preview": "माफ़ कीजिए, system में enquiry save नहीं हो पाई। मेरी तरफ से यह confirm नहीं हो सका, इसलिए team review के लिए details अभी आगे नहीं बढ़ पाई हैं। क्या मैं किसी और चीज़ में आपकी मदद कर सकता हूँ?",
+      "sse_content_tail": "माफ़ कीजिए, system में enquiry save नहीं हो पाई। मेरी तरफ से यह confirm नहीं हो सका, इसलिए team review के लिए details अभी आगे नहीं बढ़ पाई हैं। क्या मैं किसी और चीज़ में आपकी मदद कर सकता हूँ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 47,
+        "prompt_tokens": 4273,
+        "total_tokens": 4320,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "माफ़ कीजिए, system में enquiry save नहीं हो पाई। मेरी तरफ से यह confirm नहीं हो सका, इसलिए team review के लिए details अभी आगे नहीं बढ़ पाई हैं। क्या मैं किसी और चीज़ में आपकी मदद कर सकता हूँ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4273,
+          "output_tokens": 47,
+          "total_tokens": 4320
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.546
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "puncture repair in Adyar, Chennai",
+        "preferred_time": "tomorrow at 3pm"
+      },
+      "turn": 1,
+      "mode": "8_integration_denied"
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "माफ़ कीजिए, system में enquiry save नहीं हो पाई। मेरी तरफ से यह confirm नहीं हो सका, इसलिए team review के लिए details अभी आगे नहीं बढ़ पाई हैं। क्या मैं किसी और चीज़ में आपकी मदद कर सकता हूँ?",
+      "turn": 1,
+      "at": 4.296
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 2,
+      "at": 4.343
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want puncture repair in Adyar, Chennai; preferred review time tomorrow at 3pm. यह enquiry team review के लिए submit कीजिए। मेरी सहमति है। Booking या order confirm मत बताइए।",
+      "spoken": "माफ़ कीजिए, system में enquiry save नहीं हो पाई। मेरी तरफ से यह confirm नहीं हो सका, इसलिए team review के लिए details अभी आगे नहीं बढ़ पाई हैं। क्या मैं किसी और चीज़ में आपकी मदद कर सकता हूँ?",
+      "elapsed_s": 4.281,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 4.39,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "afd387b6-d28f-4edb-8c9d-f6a3e1f3f7d7",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "982360d7961ddbbdbacd56b5cb0a0cb48e1fc51f950e6f82c3a77403ce5289e2",
+  "prompt_chars": 16795,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, main Arjun hoon CityCycle Repairs se. Kya main abhi aap se bicycle repair ke baare mein baat kar sakta hoon?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "माफ़ कीजिए, system में enquiry save नहीं हो पाई। मेरी तरफ से यह confirm नहीं हो सका, इसलिए team review के लिए details अभी आगे नहीं बढ़ पाई हैं। क्या मैं किसी और चीज़ में आपकी मदद कर सकता हूँ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.39,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

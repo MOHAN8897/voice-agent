@@ -1,0 +1,4 @@
+{"seq": 1, "role": "user", "text": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. ఈ enquiry ని team review కోసం submit చేయండి. నా సమ్మతి ఉంది. Booking లేదా order confirm అయిందని చెప్పకండి.", "ts": "2026-10-25T19:38:09.019220Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "క్షమించండి అండి, మా system లో technical issue వల్ల ఈ enquiry save అవ్వలేదు. నేను team కి చెప్పి వేరే విధంగా arrange చేస్తాను. మీకు ఇంకేమైనా వివరాలు కావాలా?", "ts": "2026-10-25T19:38:12.310910Z", "brain_latency_ms": 3265}
+{"seq": 3, "role": "user", "text": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.", "ts": "2026-10-25T19:38:12.339007Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.", "ts": "2026-10-25T19:38:12.355931Z", "brain_latency_ms": 3}

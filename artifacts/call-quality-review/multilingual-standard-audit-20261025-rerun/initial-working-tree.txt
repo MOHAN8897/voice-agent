@@ -1,0 +1,69 @@
+ M server/brain/agent_script_compiler.py
+ M server/brain/agent_service.py
+ M server/brain/agent_spec_script_builder.py
+ M server/brain/brain_prompt_validate.py
+ M server/brain/compiled_brain_artifact.py
+ M server/brain/compiled_brain_service.py
+ M server/brain/employee_script_pipeline.py
+ M server/brain/script_entities.py
+ M server/call/call_end_policy.py
+ M server/call/call_lifecycle_service.py
+ M server/call/callback_close.py
+ M server/call/close_call_executor.py
+ M server/call/close_decision.py
+ M server/call/end_call_validate.py
+ M server/call/live_turn_orchestrator.py
+ M server/call/live_turn_schema.py
+ M server/call/order_confirmation.py
+ M server/providers/deepseek_llm.py
+ M server/providers/gemini_llm.py
+ M server/providers/sarvam_llm.py
+ M server/routes/agents.py
+ M server/routes/app_agents.py
+ M server/services/openai_brain_service.py
+ M server/services/pstn_voice_core.py
+ M server/services/saas/voice_stack_profiles.py
+ M server/services/tool_router.py
+ M server/services/voice_pipeline_limits.py
+ M server/tests/test_brain_calling_script_api.py
+ M server/tests/test_brain_prompt.py
+ M server/tests/test_browser_composed_lifecycle.py
+ M server/tests/test_close_speech_gate.py
+ M server/tests/test_employee_script_pipeline.py
+ M server/tests/test_gemini_integration_protocol.py
+ M server/tests/test_integration_security_hardening.py
+ M server/tests/test_live_turn_orchestrator.py
+ M server/tests/test_llm_finish_reason_recovery.py
+ M server/tests/test_order_confirmation.py
+ M server/tests/test_pstn_reply_watchdog.py
+ M server/tests/test_pstn_technical_fallback.py
+ M server/tests/test_pstn_turn_failure_delivery.py
+ M server/tests/test_pstn_vad_barge_audit.py
+ M server/tests/test_script_entities_realign.py
+ M voxly-ai/src/console/modules/CreateAgentWizard.jsx
+ M voxly-ai/src/console/modules/agent-creation/index.js
+ M voxly-ai/src/services/api.js
+?? artifacts/_brain_goodbye.txt
+?? artifacts/_brain_probe.txt
+?? artifacts/_canon_probe.txt
+?? artifacts/_f02_probe.txt
+?? artifacts/_intent_cases.txt
+?? artifacts/_intent_lines.txt
+?? artifacts/_intent_result.txt
+?? artifacts/call-quality-review/2026-10-25-hangup-audit.md
+?? artifacts/call-quality-review/2026-10-25-reconstructed-live-prompt.txt
+?? artifacts/call-quality-review/2026-10-25-saved-call-brain.txt
+?? artifacts/call-quality-review/multilingual-standard-audit-20261025-recheck/
+?? artifacts/call-quality-review/multilingual-standard-audit-20261025-rerun/
+?? artifacts/call-quality-review/multilingual-standard-audit-20261025/
+?? docs/plans/
+?? server/brain/capabilities.py
+?? server/brain/fact_canon.py
+?? server/call/action_proof.py
+?? server/call/caller_intent.py
+?? server/tests/test_action_capabilities.py
+?? server/tests/test_call_reliability_plan.py
+?? server/tests/test_composed_action_protocol.py
+?? server/tests/test_creation_readiness_and_recovery.py
+?? server/tests/test_multilingual_close_intent_audit.py
+?? server/tests/test_revocable_hangup.py

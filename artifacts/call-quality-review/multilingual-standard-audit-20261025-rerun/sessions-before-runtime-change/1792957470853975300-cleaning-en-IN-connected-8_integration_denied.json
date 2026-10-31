@@ -1,0 +1,222 @@
+{
+  "key": "cleaning-en-IN-connected-8_integration_denied",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "8_integration_denied",
+  "agent_id": "4bf37ebd-fbc9-5c3f-9218-8020b68ebb68",
+  "call_id": "6af5ed7b-c335-4d3f-ab48-520dc2ceefff",
+  "session_id": "audit-cleaning-en-IN-connected-8_integration_denied-1c8efbc9",
+  "compiled_checksum": "2b7e6a316d693379d21e9c43e155493c13c45c6409a8f5aa911f12851d3f9e36",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 70,
+        "prompt_tokens": 4316,
+        "total_tokens": 4386,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4316,
+          "output_tokens": 70,
+          "total_tokens": 4386
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-b2325ea88bb72bfa",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Kitchen cleaning in Baner, Pune, preferred time tomorrow at 3pm\", \"preferred_time\": \"tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.672
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 249,
+      "sse_content_preview": "I’m afraid the enquiry could not be saved right now because our system isn’t connected. I’ve noted your request for kitchen cleaning in Baner at 3 PM tomorrow, but this isn’t a confirmed slot or paid order. Is there anything else you’d like to know?",
+      "sse_content_tail": "I’m afraid the enquiry could not be saved right now because our system isn’t connected. I’ve noted your request for kitchen cleaning in Baner at 3 PM tomorrow, but this isn’t a confirmed slot or paid order. Is there anything else you’d like to know?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4588,
+        "total_tokens": 4650,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "I’m afraid the enquiry could not be saved right now because our system isn’t connected. I’ve noted your request for kitchen cleaning in Baner at 3 PM tomorrow, but this isn’t a confirmed slot or paid order. Is there anything else you’d like to know?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4588,
+          "output_tokens": 62,
+          "total_tokens": 4650
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": true,
+        "action_proofs": [],
+        "order_proof": false,
+        "action_outcome_unconfirmed": true
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.734
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Kitchen cleaning in Baner, Pune, preferred time tomorrow at 3pm",
+        "preferred_time": "tomorrow at 3pm"
+      },
+      "turn": 1,
+      "mode": "8_integration_denied"
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "I’m afraid the enquiry could not be saved right now because our system isn’t connected. I couldn't confirm that your request went through. Please don't treat it as done. Is there anything else you’d like to know?",
+      "turn": 1,
+      "at": 4.282
+    },
+    {
+      "text": "Thank you for your time. Goodbye.",
+      "turn": 2,
+      "at": 4.297
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. Please submit this enquiry for team review. I consent. Do not claim a booking or order is confirmed.",
+      "spoken": "I’m afraid the enquiry could not be saved right now because our system isn’t connected. I couldn't confirm that your request went through. Please don't treat it as done. Is there anything else you’d like to know?",
+      "elapsed_s": 4.282,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "You have answered my questions. I do not need anything else. Goodbye, end the call.",
+      "spoken": "Thank you for your time. Goodbye.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 4.344,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "6af5ed7b-c335-4d3f-ab48-520dc2ceefff",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "d149385fc706a512129f88d7877e49417b93dd56789f7d4d317178a9a381a1dc",
+  "prompt_chars": 18158,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, this is Nila calling on behalf of FreshNest Cleaning. We provide professional cleaning services in Pune only. Would you like to hear about our sofa or kitchen cleaning services?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "I’m afraid the enquiry could not be saved right now because our system isn’t connected. I’ve noted your request for kitchen cleaning in Baner at 3 PM tomorrow, but this isn’t a confirmed slot or paid order. Is there anything else you’d like to know?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye."
+      },
+      "spoken_text": "Thank you for your time. Goodbye.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "Thank you for your time. Goodbye.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.344,
+  "hangup_count": 1,
+  "source_signature": "c545ec91901b6bf6a3eadfbeb58d4c160fe2846b70364f913fd4724fe00d89cd"
+}

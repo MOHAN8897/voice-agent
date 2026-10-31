@@ -1,0 +1,322 @@
+{
+  "key": "language-ta-IN-connected-2_future_interest",
+  "business": "language",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "2_future_interest",
+  "agent_id": "1557575e-e441-56ca-ab6d-89d0b81299d9",
+  "call_id": "023fbae8-1053-4a97-b95a-dae140cfdab9",
+  "session_id": "audit-language-ta-IN-connected-2_future_interest-58949e6a",
+  "compiled_checksum": "6f8104d7a8c5c3b787bc284a4e53444f57bdac783432ab7a136254cbcd2ebd24",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 210,
+      "sse_content_preview": "கண்டிப்பா, அடுத்த மாதம் interest இருக்குன்னு சொன்னதுக்கு thanks. தற்போதைய மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய். எதிர்கால interest-க்கு எங்களை contact பண்ண தயங்க வேண்டாம். வேற ஏதாவது details வேணுமா?",
+      "sse_content_tail": "கண்டிப்பா, அடுத்த மாதம் interest இருக்குன்னு சொன்னதுக்கு thanks. தற்போதைய மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய். எதிர்கால interest-க்கு எங்களை contact பண்ண தயங்க வேண்டாம். வேற ஏதாவது details வேணுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 4101,
+        "total_tokens": 4156,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "கண்டிப்பா, அடுத்த மாதம் interest இருக்குன்னு சொன்னதுக்கு thanks. தற்போதைய மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய். எதிர்கால interest-க்கு எங்களை contact பண்ண தயங்க வேண்டாம். வேற ஏதாவது details வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4101,
+          "output_tokens": 55,
+          "total_tokens": 4156
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.672
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 264,
+      "sse_content_preview": "கண்டிப்பா, அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். தற்போதைய மொத்த கட்டணம் 6,499 rupees இருக்கு. எங்களோட classes ஆறு வாரங்கள், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை online-ல நடக்கும். உங்களுக்கு வேற ஏதாச்சும் details வேணுமா?",
+      "sse_content_tail": "கண்டிப்பா, அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். தற்போதைய மொத்த கட்டணம் 6,499 rupees இருக்கு. எங்களோட classes ஆறு வாரங்கள், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை online-ல நடக்கும். உங்களுக்கு வேற ஏதாச்சும் details வேணுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 73,
+        "prompt_tokens": 4061,
+        "total_tokens": 4134,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "கண்டிப்பா, அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். தற்போதைய மொத்த கட்டணம் 6,499 rupees இருக்கு. எங்களோட classes ஆறு வாரங்கள், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை online-ல நடக்கும். உங்களுக்கு வேற ஏதாச்சும் details வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4061,
+          "output_tokens": 73,
+          "total_tokens": 4134
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.625
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 336,
+      "sse_content_preview": "புரியுது, நீங்க இப்போதைக்கு எதுவும் book பண்ண வேண்டாம். எங்க classes ஆறு வாரங்கள் ஆன்லைன்ல நடக்கும், வார இறுதி நாட்கள் காலை பத்து மணி முதல் பதினொன்று மணி வரைக்கும் இருக்கும். உங்களுக்கு டெமோ அல்லது counseling ஏதாவது வேணுமா? அப்படி வேணும்னா உங்க பெயரையும் email-ஐயும் மட்டும் சொல்லுங்க, எங்க team review பண்றதுக்காக record பண்ணிக்கிறேன்.",
+      "sse_content_tail": "புரியுது, நீங்க இப்போதைக்கு எதுவும் book பண்ண வேண்டாம். எங்க classes ஆறு வாரங்கள் ஆன்லைன்ல நடக்கும், வார இறுதி நாட்கள் காலை பத்து மணி முதல் பதினொன்று மணி வரைக்கும் இருக்கும். உங்களுக்கு டெமோ அல்லது counseling ஏதாவது வேணுமா? அப்படி வேணும்னா உங்க பெயரையும் email-ஐயும் மட்டும் சொல்லுங்க, எங்க team review பண்றதுக்காக record பண்ணிக்கிறேன்.",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 85,
+        "prompt_tokens": 4181,
+        "total_tokens": 4266,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "புரியுது, நீங்க இப்போதைக்கு எதுவும் book பண்ண வேண்டாம். எங்க classes ஆறு வாரங்கள் ஆன்லைன்ல நடக்கும், வார இறுதி நாட்கள் காலை பத்து மணி முதல் பதினொன்று மணி வரைக்கும் இருக்கும். உங்களுக்கு டெமோ அல்லது counseling ஏதாவது வேணுமா? அப்படி வேணும்னா உங்க பெயரையும் email-ஐயும் மட்டும் சொல்லுங்க, எங்க team review பண்றதுக்காக record பண்ணிக்கிறேன்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4181,
+          "output_tokens": 85,
+          "total_tokens": 4266
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.719
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 178,
+      "sse_content_preview": "சரிங்க. இந்த வகுப்புகள் ஆறு வாரங்கள் ஆன்லைனில் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். உங்களுக்கு டெமோ அல்லது counseling ஏதாச்சும் வேணுமா?",
+      "sse_content_tail": "சரிங்க. இந்த வகுப்புகள் ஆறு வாரங்கள் ஆன்லைனில் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். உங்களுக்கு டெமோ அல்லது counseling ஏதாச்சும் வேணுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 44,
+        "prompt_tokens": 4141,
+        "total_tokens": 4185,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. இந்த வகுப்புகள் ஆறு வாரங்கள் ஆன்லைனில் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். உங்களுக்கு டெமோ அல்லது counseling ஏதாச்சும் வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4141,
+          "output_tokens": 44,
+          "total_tokens": 4185
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.562
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "கண்டிப்பா, அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். தற்போதைய மொத்த கட்டணம் six thousand four hundred ninety nine rupees இருக்கு. எங்களோட classes ஆறு வாரங்கள், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை online-ல நடக்கும். உங்களுக்கு வேற ஏதாச்சும் details வேணுமா?",
+      "turn": 1,
+      "at": 4.344
+    },
+    {
+      "text": "சரிங்க. இந்த வகுப்புகள் ஆறு வாரங்கள் ஆன்லைனில் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். உங்களுக்கு டெமோ அல்லது counseling ஏதாச்சும் வேணுமா?",
+      "turn": 2,
+      "at": 8.735
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 3,
+      "at": 8.75
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "இப்போ தேவையில்லை, ஆனால் அடுத்த மாதம் எனக்கு ஆர்வம் இருக்கு. தற்போதைய விலையைச் சொல்லுங்க. எதையும் book செய்யாதீங்க; நான் நிரந்தரமாக மறுத்ததாக எடுத்துக்காதீங்க.",
+      "spoken": "கண்டிப்பா, அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். தற்போதைய மொத்த கட்டணம் six thousand four hundred ninety nine rupees இருக்கு. எங்களோட classes ஆறு வாரங்கள், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை online-ல நடக்கும். உங்களுக்கு வேற ஏதாச்சும் details வேணுமா?",
+      "elapsed_s": 4.344,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "ஆமாம், எதிர்காலத்தில் எனக்கு ஆர்வம் இருக்கு. இப்போ நான் பிறகு call செய்யச் சொல்லவில்லை. இந்த service பற்றி இன்னும் என்ன தெரிஞ்சுக்கணும்?",
+      "spoken": "சரிங்க. இந்த வகுப்புகள் ஆறு வாரங்கள் ஆன்லைனில் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். உங்களுக்கு டெமோ அல்லது counseling ஏதாச்சும் வேணுமா?",
+      "elapsed_s": 4.375,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 8.813,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "023fbae8-1053-4a97-b95a-dae140cfdab9",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "fddbda827552053fc2f3507c5d09e7033a8dd638e98b01a40f11d7b39dab9e34",
+  "prompt_chars": 17234,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "வணக்கம், நான் SpeakEasy Language Studio நிறுவனத்திலிருந்து சானா பேசுகிறேன். ஆன்லைன் ஆங்கில வகுப்புகள் பற்றிய உங்கள் கேள்விகளுக்கு பதிலளிக்கலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "கண்டிப்பா, அடுத்த மாதம் ஆர்வம் இருக்குன்னு சொன்னதுக்கு ரொம்ப சந்தோஷம். தற்போதைய மொத்த கட்டணம் six thousand four hundred ninety nine rupees இருக்கு. எங்களோட classes ஆறு வாரங்கள், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை online-ல நடக்கும். உங்களுக்கு வேற ஏதாச்சும் details வேணுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "சரிங்க. இந்த வகுப்புகள் ஆறு வாரங்கள் ஆன்லைனில் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். உங்களுக்கு டெமோ அல்லது counseling ஏதாச்சும் வேணுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 8.813,
+  "hangup_count": 1,
+  "source_signature": "71c123cb84e67a31cb6e9ad30a865b83e0e9057844ea3eab299c270a8af06a15"
+}

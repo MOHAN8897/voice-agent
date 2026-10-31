@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "है?\nassistant: Course की total fee six thousand four hundred ninety nine rupees है, और यह छह हफ्ते का online program है जो weekends पर सुबह दस से ग्यारह बजे तक चलता है. देखिए, fluency या job की कोई guarantee नहीं दी जा सकती, लेकिन यह आपकी learning support के लिए अच्छा रहेगा.\nuser: मुझे job guarantee नहीं चाहिए, लेकिन spoken English सीखनी है। Course बताइए।\nassistant: ठीक है, spoken English सीखना ही हमारा focus है. Aisi koi job ya fluency guarantee nahi di ja sakti, लेकिन यह learning support के लिए बहुत अच्छा है. क्या आप demo या counselling के लिए अपना preferred name और email share करना चाहेंगे?"
+}

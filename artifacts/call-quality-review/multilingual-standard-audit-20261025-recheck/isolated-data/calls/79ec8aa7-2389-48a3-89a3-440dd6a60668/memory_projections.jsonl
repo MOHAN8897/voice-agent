@@ -1,0 +1,4 @@
+{"turn_seq": 1, "ts": "2026-10-25T17:31:07.668125Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T17:31:10.111861Z", "include_summary": true, "projection": "[Context]\nCaller expressed interest in the adult beginner Python course. Asked for service, price, and terms. Explained: 6 weeks online, weekdays 7-8pm, age 18+"}
+{"turn_seq": 5, "ts": "2026-10-25T17:31:13.535387Z", "include_summary": true, "projection": "[Context]\nCaller expressed interest in the adult beginner Python course. Asked for service, price, and terms. Explained: 6 weeks online, weekdays 7-8pm, age 18+"}
+{"turn_seq": 7, "ts": "2026-10-25T17:31:13.576033Z", "include_summary": false, "projection": "[Context]\nCaller expressed interest in the adult beginner Python course. Asked for service, price, and terms. Explained: 6 weeks online, weekdays 7-8pm, age 18+"}

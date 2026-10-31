@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:29:06.173433Z", "source": "model", "operations": [{"op": "set_preference", "key": "interested_next_month", "value": "true"}, {"op": "set_preference", "key": "current_fee", "value": "4999"}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:29:07.279564Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

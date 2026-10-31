@@ -40,7 +40,14 @@ async def init_db() -> bool:
     if not settings.database_url:
         return False
     url = _to_async_url(settings.database_url)
-    _engine = create_async_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=10)
+    _engine = create_async_engine(
+        url,
+        pool_pre_ping=True,
+        pool_size=settings.db_pool_size,
+        max_overflow=settings.db_max_overflow,
+        pool_timeout=settings.db_pool_timeout,
+        pool_recycle=settings.db_pool_recycle,
+    )
     _session_factory = async_sessionmaker(_engine, expire_on_commit=False)
     return True
 
@@ -62,6 +69,23 @@ async def check_db_health() -> dict[str, Any]:
     try:
         async with _engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
-        return {"ok": True, "configured": True, "message": "connected"}
+        pool = getattr(_engine.sync_engine, "pool", None)
+        pool_metrics: dict[str, int] = {}
+        if pool is not None:
+            try:
+                pool_metrics = {
+                    "size": pool.size(),
+                    "checkedin": pool.checkedin(),
+                    "checkedout": pool.checkedout(),
+                    "overflow": pool.overflow(),
+                }
+            except Exception:
+                pass
+        return {
+            "ok": True,
+            "configured": True,
+            "message": "connected",
+            "pool": pool_metrics,
+        }
     except Exception as e:
         return {"ok": False, "configured": True, "message": str(e)[:200]}

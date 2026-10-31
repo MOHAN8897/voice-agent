@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import uuid
+from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import func, or_, select, text, update
 
+from server.call.call_status import CALL_STATUSES, is_valid_call_status, status_for_record
 from server.db.connection import get_session_factory
-from server.db.models.entities import Call
+from server.db.models.entities import Call, CallAttempt
 
 _MEM: dict[str, dict[str, Any]] = {}
 
@@ -23,12 +25,19 @@ def _as_dt(value: Any) -> datetime | None:
     return None
 
 
+def _parse_uuid(value: str) -> uuid.UUID | None:
+    try:
+        return uuid.UUID(str(value))
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
 def _row_to_dict(row: Call) -> dict[str, Any]:
-    return {
+    record: dict[str, Any] = {
         "call_id": str(row.call_id),
         "tenant_id": str(row.tenant_id),
         "agent_id": str(row.agent_id),
@@ -47,8 +56,64 @@ def _row_to_dict(row: Call) -> dict[str, Any]:
         "finalization_status": row.finalization_status,
         "storage_path": row.storage_path,
         "end_reason": row.end_reason,
+        "is_test": bool(row.is_test),
+        "applied_rate_usd_cents_per_min": row.applied_rate_usd_cents_per_min,
+        "applied_rate_usd_micros_per_min": row.applied_rate_usd_micros_per_min,
+        "applied_rate_inr_paise_per_min": row.applied_rate_inr_paise_per_min,
+        "applied_fx_rate_inr": float(row.applied_fx_rate_inr) if row.applied_fx_rate_inr is not None else None,
+        "rate_version": row.rate_version,
+        "voice_profile_revision": getattr(row, "voice_profile_revision", None),
+        "status_tags": list(row.status_tags or []),
         "last_heartbeat_at": row.last_heartbeat_at.isoformat() if row.last_heartbeat_at else None,
     }
+    # Rows written before the status column keep status=None; derive it so every
+    # consumer (console, callbacks, analytics) sees the same canonical value.
+    record["status"] = status_for_record(record)
+    return record
+
+
+#: Tenants whose pre-status rows were already materialised in this process.
+_LEGACY_STATUS_DONE: set[str] = set()
+_LEGACY_BATCH = 5000
+
+
+async def _materialize_legacy_statuses(session: Any, tenant_id: str) -> None:
+    """Write the canonical status onto a tenant's ended rows that predate the column.
+
+    Status filters run in SQL, so an ended row with ``status IS NULL`` would otherwise
+    drop out of them. The value written is exactly what ``status_for_record`` derives
+    on read. Runs once per tenant per process and never fails the read.
+    """
+    if tenant_id in _LEGACY_STATUS_DONE:
+        return
+    tenant_uuid = _parse_uuid(tenant_id)
+    if tenant_uuid is None:
+        return
+    try:
+        rows = (
+            await session.execute(
+                select(
+                    Call.call_id, Call.direction, Call.duration_sec, Call.end_reason,
+                    Call.disposition, Call.ended_at,
+                ).where(
+                    Call.tenant_id == tenant_uuid,
+                    Call.status.is_(None),
+                    Call.ended_at.isnot(None),
+                ).limit(_LEGACY_BATCH)
+            )
+        ).all()
+        for row in rows:
+            await session.execute(
+                update(Call)
+                .where(Call.call_id == row.call_id)
+                .values(status=status_for_record(dict(row._mapping)))
+            )
+        if rows:
+            await session.commit()
+        if len(rows) < _LEGACY_BATCH:
+            _LEGACY_STATUS_DONE.add(tenant_id)
+    except Exception:
+        await session.rollback()
 
 
 class CallStore:
@@ -56,6 +121,7 @@ class CallStore:
         factory = get_session_factory()
         if factory is None:
             stored = dict(record)
+            stored.setdefault("status_tags", [])
             for key in ("started_at", "last_heartbeat_at", "ended_at"):
                 val = stored.get(key)
                 if isinstance(val, datetime):
@@ -79,6 +145,14 @@ class CallStore:
                 started_at=record.get("started_at") or _utcnow(),
                 finalization_status=record.get("finalization_status", "pending"),
                 storage_path=record["storage_path"],
+                is_test=bool(record.get("is_test", False)),
+                applied_rate_usd_cents_per_min=record.get("applied_rate_usd_cents_per_min"),
+                applied_rate_usd_micros_per_min=record.get("applied_rate_usd_micros_per_min"),
+                applied_rate_inr_paise_per_min=record.get("applied_rate_inr_paise_per_min"),
+                applied_fx_rate_inr=record.get("applied_fx_rate_inr"),
+                rate_version=record.get("rate_version"),
+                voice_profile_revision=record.get("voice_profile_revision"),
+                status_tags=record.get("status_tags") or [],
                 last_heartbeat_at=record.get("last_heartbeat_at") or _utcnow(),
             )
             if isinstance(row.started_at, str):
@@ -93,8 +167,12 @@ class CallStore:
             rec = _MEM.get(call_id)
             return dict(rec) if rec else None
 
+        parsed = _parse_uuid(call_id)
+        if parsed is None:
+            return None
+
         async with factory() as session:
-            result = await session.execute(select(Call).where(Call.call_id == uuid.UUID(call_id)))
+            result = await session.execute(select(Call).where(Call.call_id == parsed))
             row = result.scalar_one_or_none()
             return _row_to_dict(row) if row else None
 
@@ -109,6 +187,7 @@ class CallStore:
                 val = rec.get(key)
                 if isinstance(val, datetime):
                     rec[key] = val.isoformat()
+            rec["status"] = status_for_record(rec)
             return dict(rec)
 
         allowed = {
@@ -117,13 +196,40 @@ class CallStore:
             "disposition",
             "finalization_status",
             "end_reason",
+            "status",
+            "status_tags",
             "last_heartbeat_at",
         }
+        parsed = _parse_uuid(call_id)
+        if parsed is None:
+            return None
         values = {k: v for k, v in fields.items() if k in allowed}
+        if not values:
+            return await self.get(call_id)
+        values = await self._with_materialized_status(call_id, values)
         async with factory() as session:
-            await session.execute(update(Call).where(Call.call_id == uuid.UUID(call_id)).values(**values))
+            await session.execute(update(Call).where(Call.call_id == parsed).values(**values))
             await session.commit()
         return await self.get(call_id)
+
+    async def _with_materialized_status(self, call_id: str, values: dict[str, Any]) -> dict[str, Any]:
+        """Keep the materialised ``status`` column in step with the lifecycle fields.
+
+        A caller may pass an explicit status; otherwise it is recomputed from the
+        merged current+incoming row so the column always equals what
+        ``status_for_record`` would derive on read.
+        """
+        explicit = values.pop("status", None)
+        if is_valid_call_status(explicit):
+            values["status"] = str(explicit).strip().lower()
+            return values
+        if not ({"ended_at", "duration_sec", "disposition", "end_reason"} & set(values)):
+            return values
+        current = await self.get(call_id)
+        probe = {**(current or {}), **values}
+        probe["ended_at"] = _as_dt(values.get("ended_at")) or current.get("ended_at")
+        values["status"] = status_for_record(probe)
+        return values
 
     async def list_calls(
         self,
@@ -135,9 +241,18 @@ class CallStore:
         until: str | None = None,
         limit: int = 20,
         offset: int = 0,
+        statuses: list[str] | None = None,
+        direction: str | None = None,
+        include_tests: bool = False,
+        tags: list[str] | None = None,
+        tag_match: str = "any",
+        max_limit: int = 100,
     ) -> tuple[list[dict[str, Any]], int]:
-        limit = max(1, min(limit, 100))
+        limit = max(1, min(limit, max_limit))
         offset = max(0, offset)
+        wanted = {s for s in (statuses or []) if s in CALL_STATUSES}
+        wanted_tags = [str(tag).strip() for tag in (tags or []) if str(tag).strip()]
+        match_all = tag_match == "all"
         factory = get_session_factory()
         if factory is None:
             rows = list(_MEM.values())
@@ -147,6 +262,16 @@ class CallStore:
                 rows = [r for r in rows if r.get("agent_id") == agent_id]
             if disposition:
                 rows = [r for r in rows if r.get("disposition") == disposition]
+            if direction:
+                rows = [r for r in rows if (r.get("direction") or "") == direction]
+            if not include_tests:
+                rows = [r for r in rows if not r.get("is_test")]
+            if wanted_tags:
+                tag_set = set(wanted_tags)
+                if match_all:
+                    rows = [r for r in rows if tag_set.issubset(set(r.get("status_tags") or []))]
+                else:
+                    rows = [r for r in rows if tag_set & set(r.get("status_tags") or [])]
             if since:
                 since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
                 rows = [r for r in rows if _as_dt(r.get("started_at")) is not None and _as_dt(r.get("started_at")) >= since_dt]
@@ -154,34 +279,98 @@ class CallStore:
                 until_dt = datetime.fromisoformat(until.replace("Z", "+00:00"))
                 rows = [r for r in rows if _as_dt(r.get("started_at")) is not None and _as_dt(r.get("started_at")) <= until_dt]
             rows.sort(key=lambda r: r.get("started_at") or "", reverse=True)
+            if wanted:
+                # in_progress is derived (ended_at IS NULL), so it can never match
+                # the materialised column — filter it in Python alongside the rest.
+                rows = [r for r in rows if _matches_status(r, wanted)]
             return rows[offset : offset + limit], len(rows)
 
         async with factory() as session:
             stmt = select(Call)
-            count_stmt = select(Call)
             if tenant_id:
                 stmt = stmt.where(Call.tenant_id == uuid.UUID(tenant_id))
-                count_stmt = count_stmt.where(Call.tenant_id == uuid.UUID(tenant_id))
             if agent_id:
                 stmt = stmt.where(Call.agent_id == uuid.UUID(agent_id))
-                count_stmt = count_stmt.where(Call.agent_id == uuid.UUID(agent_id))
             if disposition:
                 stmt = stmt.where(Call.disposition == disposition)
-                count_stmt = count_stmt.where(Call.disposition == disposition)
+            if direction:
+                stmt = stmt.where(Call.direction == direction)
+            if not include_tests:
+                stmt = stmt.where(Call.is_test.is_(False))
+            if wanted_tags:
+                tag_clause = (
+                    Call.status_tags.contains(wanted_tags)
+                    if match_all
+                    else Call.status_tags.overlap(wanted_tags)
+                )
+                stmt = stmt.where(tag_clause)
             if since:
                 since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
                 stmt = stmt.where(Call.started_at >= since_dt)
-                count_stmt = count_stmt.where(Call.started_at >= since_dt)
             if until:
                 until_dt = datetime.fromisoformat(until.replace("Z", "+00:00"))
                 stmt = stmt.where(Call.started_at <= until_dt)
-                count_stmt = count_stmt.where(Call.started_at <= until_dt)
-            total_result = await session.execute(count_stmt)
-            total = len(total_result.scalars().all())
+            if wanted:
+                if tenant_id:
+                    await _materialize_legacy_statuses(session, tenant_id)
+                in_sql = [s for s in wanted if s != "in_progress"]
+                clauses = []
+                if in_sql:
+                    clauses.append(Call.status.in_(in_sql))
+                if "in_progress" in wanted:
+                    clauses.append(Call.ended_at.is_(None))
+                if clauses:
+                    stmt = stmt.where(clauses[0] if len(clauses) == 1 else or_(*clauses))
+            total = int(
+                (await session.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one() or 0
+            )
             result = await session.execute(
                 stmt.order_by(Call.started_at.desc()).offset(offset).limit(limit)
             )
             return [_row_to_dict(r) for r in result.scalars()], total
+
+    async def list_tags(
+        self,
+        *,
+        tenant_id: str,
+        agent_id: str | None = None,
+        limit: int = 300,
+    ) -> list[dict[str, Any]]:
+        """Distinct tags in a tenant's connected-call history, most used first."""
+        limit = max(1, min(limit, 500))
+        factory = get_session_factory()
+        if factory is None:
+            counts: Counter[str] = Counter()
+            for rec in _MEM.values():
+                if str(rec.get("tenant_id")) != str(tenant_id) or rec.get("is_test"):
+                    continue
+                if agent_id and str(rec.get("agent_id")) != str(agent_id):
+                    continue
+                counts.update(rec.get("status_tags") or [])
+            return [{"tag": tag, "count": count} for tag, count in counts.most_common(limit)]
+
+        tenant_uuid = _parse_uuid(tenant_id)
+        if tenant_uuid is None:
+            return []
+        agent_uuid = _parse_uuid(agent_id) if agent_id else None
+        sql = text(
+            """
+            SELECT tag, count(*)::int AS tag_count
+            FROM calls, unnest(calls.status_tags) AS tag
+            WHERE calls.tenant_id = :tenant_id
+              AND calls.is_test = false
+              AND (CAST(:agent_id AS uuid) IS NULL OR calls.agent_id = CAST(:agent_id AS uuid))
+            GROUP BY tag
+            ORDER BY tag_count DESC, tag ASC
+            LIMIT :limit
+            """
+        )
+        async with factory() as session:
+            result = await session.execute(
+                sql,
+                {"tenant_id": tenant_uuid, "agent_id": agent_uuid, "limit": limit},
+            )
+            return [{"tag": str(row.tag), "count": int(row.tag_count)} for row in result]
 
     async def list_stale_open(self, older_than: datetime) -> list[dict[str, Any]]:
         factory = get_session_factory()
@@ -211,8 +400,344 @@ class CallStore:
             result = await session.execute(select(Call).where(Call.ended_at.is_(None)))
             return [_row_to_dict(r) for r in result.scalars()]
 
+    async def list_pending_finalization(self, limit: int = 100) -> list[dict[str, Any]]:
+        """List calls that have ended but finalization_status is still pending or processing."""
+        factory = get_session_factory()
+        if factory is None:
+            return [
+                dict(rec)
+                for rec in _MEM.values()
+                if rec.get("ended_at") and rec.get("finalization_status") in ("pending", "processing")
+            ][:limit]
+        async with factory() as session:
+            result = await session.execute(
+                select(Call)
+                .where(
+                    Call.ended_at.is_not(None),
+                    Call.finalization_status.in_(["pending", "processing"]),
+                )
+                .order_by(Call.started_at.desc())
+                .limit(limit)
+            )
+            return [_row_to_dict(r) for r in result.scalars()]
+
+    async def terminate_tenant_calls(self, tenant_id: str) -> int:
+        """Hang up all in-flight calls for a quarantined tenant.
+
+        Updates every open call (ended_at IS NULL) for the tenant with a terminal
+        status of ``tenant_quarantined``. This is a best-effort post-commit side
+        effect; failures are logged but never propagate to the caller.
+
+        Returns the number of calls terminated.
+        """
+        import uuid as _uuid
+
+        now = _utcnow()
+        factory = get_session_factory()
+        if factory is None:
+            count = 0
+            for call_id, rec in list(_MEM.items()):
+                if str(rec.get("tenant_id")) == str(tenant_id) and not rec.get("ended_at"):
+                    rec["ended_at"] = now.isoformat()
+                    rec["end_reason"] = "tenant_quarantined"
+                    rec["status"] = "completed"
+                    count += 1
+            return count
+
+        try:
+            parsed = _uuid.UUID(str(tenant_id))
+        except (ValueError, AttributeError):
+            return 0
+
+        async with factory() as session:
+            result = await session.execute(
+                update(Call)
+                .where(Call.tenant_id == parsed, Call.ended_at.is_(None))
+                .values(ended_at=now, end_reason="tenant_quarantined", status="completed")
+            )
+            await session.commit()
+            return result.rowcount if result.rowcount is not None else 0
+
     def reset_for_tests(self) -> None:
         _MEM.clear()
+        _ATTEMPT_MEM.clear()
 
 
+def _matches_status(record: dict[str, Any], wanted: set[str]) -> bool:
+    return status_for_record(record) in wanted
+
+
+def _attempt_row_to_dict(row: CallAttempt) -> dict[str, Any]:
+    return {
+        "attempt_id": str(row.attempt_id),
+        "tenant_id": str(row.tenant_id),
+        "agent_id": str(row.agent_id) if row.agent_id else None,
+        "provider": row.provider,
+        "provider_call_control_id": row.provider_call_control_id,
+        "direction": row.direction,
+        "from_number": row.from_number,
+        "to_number": row.to_number,
+        "linked_call_id": str(row.linked_call_id) if row.linked_call_id else None,
+        "status": status_for_record(
+            {
+                "status": row.status,
+                "direction": row.direction,
+                "duration_sec": _attempt_duration(row),
+                "end_reason": row.end_reason,
+                "ended_at": row.ended_at.isoformat() if row.ended_at else None,
+            }
+        ),
+        "policy_reason": row.policy_reason,
+        "end_reason": row.end_reason,
+        "started_at": row.started_at.isoformat() if row.started_at else None,
+        "answered_at": row.answered_at.isoformat() if row.answered_at else None,
+        "ended_at": row.ended_at.isoformat() if row.ended_at else None,
+        "duration_sec": _attempt_duration(row),
+    }
+
+
+def _attempt_duration(row: CallAttempt) -> int | None:
+    if not row.started_at or not row.ended_at:
+        return None
+    return max(0, int((row.ended_at - row.started_at).total_seconds()))
+
+
+_ATTEMPT_MEM: dict[str, dict[str, Any]] = {}
+
+
+class CallAttemptStore:
+    """Ringing events, persisted even when the call never connects.
+
+    Every method is failure-tolerant by contract: the carrier webhook must never be
+    blocked or failed by this store, so callers wrap these in try/except and the
+    in-memory path is used when no database is configured.
+    """
+
+    async def upsert_by_control(
+        self,
+        control_id: str,
+        *,
+        tenant_id: str,
+        agent_id: str | None = None,
+        provider: str = "telnyx",
+        direction: str = "inbound",
+        from_number: str | None = None,
+        to_number: str | None = None,
+        status: str = "in_progress",
+        policy_reason: str | None = None,
+        started_at: datetime | None = None,
+    ) -> dict[str, Any] | None:
+        control = str(control_id or "").strip()
+        if not control:
+            return None
+        factory = get_session_factory()
+        if factory is None:
+            rec = _ATTEMPT_MEM.get(control) or {
+                "attempt_id": str(uuid.uuid4()),
+                "tenant_id": str(tenant_id),
+                "provider_call_control_id": control,
+            }
+            rec.update(
+                {
+                    "agent_id": agent_id,
+                    "provider": provider,
+                    "direction": direction,
+                    "from_number": from_number,
+                    "to_number": to_number,
+                    "status": status,
+                    "policy_reason": policy_reason,
+                    "started_at": (started_at or _utcnow()).isoformat(),
+                    "answered_at": None,
+                    "ended_at": None,
+                }
+            )
+            _ATTEMPT_MEM[control] = rec
+            return dict(rec)
+
+        async with factory() as session:
+            result = await session.execute(
+                select(CallAttempt).where(CallAttempt.provider_call_control_id == control)
+            )
+            row = result.scalar_one_or_none()
+            if row is None:
+                row = CallAttempt(
+                    attempt_id=uuid.uuid4(),
+                    tenant_id=uuid.UUID(str(tenant_id)),
+                    provider_call_control_id=control,
+                )
+                session.add(row)
+            row.provider = provider
+            row.direction = direction
+            row.from_number = from_number
+            row.to_number = to_number
+            row.status = status
+            row.policy_reason = policy_reason
+            if agent_id:
+                parsed = _parse_uuid(agent_id)
+                if parsed is not None:
+                    row.agent_id = parsed
+            if started_at is not None:
+                row.started_at = started_at
+            elif row.started_at is None:
+                row.started_at = _utcnow()
+            await session.commit()
+            await session.refresh(row)
+            return _attempt_row_to_dict(row)
+
+    async def ensure_attempt(self, control_id: str, **fields: Any) -> dict[str, Any] | None:
+        """Create the attempt row when it does not exist yet; never overwrite one.
+
+        Dial replays and duplicate webhooks call this repeatedly, so a later call
+        must not reset an attempt that already rang out back to ``in_progress``.
+        """
+        control = str(control_id or "").strip()
+        if not control or not fields.get("tenant_id"):
+            return None
+        factory = get_session_factory()
+        if factory is None:
+            existing = _ATTEMPT_MEM.get(control)
+            if existing is not None:
+                return dict(existing)
+            return await self.upsert_by_control(control, **fields)
+        async with factory() as session:
+            row = (
+                await session.execute(
+                    select(CallAttempt).where(CallAttempt.provider_call_control_id == control)
+                )
+            ).scalar_one_or_none()
+            if row is not None:
+                return _attempt_row_to_dict(row)
+        return await self.upsert_by_control(control, **fields)
+
+    async def finalize_by_control(
+        self,
+        control_id: str,
+        *,
+        status: str,
+        end_reason: str | None = None,
+        linked_call_id: str | None = None,
+        answered: bool = False,
+    ) -> dict[str, Any] | None:
+        control = str(control_id or "").strip()
+        if not control:
+            return None
+        now = _utcnow()
+        factory = get_session_factory()
+        if factory is None:
+            rec = _ATTEMPT_MEM.get(control)
+            if not rec:
+                return None
+            if rec.get("linked_call_id") and not linked_call_id:
+                # A duplicate/late hangup must not turn a connected call into "missed".
+                rec.setdefault("ended_at", now.isoformat())
+                return dict(rec)
+            rec["status"] = status
+            rec["end_reason"] = end_reason
+            rec["ended_at"] = now.isoformat()
+            if answered:
+                rec["answered_at"] = (now).isoformat()
+            if linked_call_id:
+                rec["linked_call_id"] = linked_call_id
+            return dict(rec)
+
+        async with factory() as session:
+            result = await session.execute(
+                select(CallAttempt).where(CallAttempt.provider_call_control_id == control)
+            )
+            row = result.scalar_one_or_none()
+            if row is None:
+                return None
+            if row.linked_call_id is not None and not linked_call_id:
+                if row.ended_at is None:
+                    row.ended_at = now
+                    await session.commit()
+                    await session.refresh(row)
+                return _attempt_row_to_dict(row)
+            row.status = status
+            row.end_reason = end_reason
+            row.ended_at = now
+            if answered:
+                row.answered_at = now
+            parsed_call = _parse_uuid(linked_call_id) if linked_call_id else None
+            if parsed_call is not None:
+                row.linked_call_id = parsed_call
+            await session.commit()
+            await session.refresh(row)
+            return _attempt_row_to_dict(row)
+
+    async def link_to_call(self, control_id: str, call_id: str) -> None:
+        await self.finalize_by_control(
+            control_id, status="answered", end_reason="answered", linked_call_id=call_id, answered=True
+        )
+
+    async def list_attempts(
+        self,
+        *,
+        tenant_id: str | None = None,
+        agent_id: str | None = None,
+        since: str | None = None,
+        until: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+        statuses: list[str] | None = None,
+        direction: str | None = None,
+        exclude_linked: bool = False,
+        max_limit: int = 500,
+    ) -> tuple[list[dict[str, Any]], int]:
+        limit = max(1, min(limit, max_limit))
+        offset = max(0, offset)
+        wanted = {s for s in (statuses or []) if s in CALL_STATUSES}
+        factory = get_session_factory()
+        if factory is None:
+            rows = list(_ATTEMPT_MEM.values())
+            if tenant_id:
+                rows = [r for r in rows if str(r.get("tenant_id")) == str(tenant_id)]
+            if agent_id:
+                rows = [r for r in rows if str(r.get("agent_id") or "") == str(agent_id)]
+            if direction:
+                rows = [r for r in rows if (r.get("direction") or "inbound") == direction]
+            if exclude_linked:
+                rows = [r for r in rows if not r.get("linked_call_id")]
+            if wanted:
+                rows = [r for r in rows if _matches_status(r, wanted)]
+            rows.sort(key=lambda r: r.get("started_at") or "", reverse=True)
+            return [dict(r) for r in rows[offset : offset + limit]], len(rows)
+
+        async with factory() as session:
+            stmt = select(CallAttempt)
+            if tenant_id:
+                stmt = stmt.where(CallAttempt.tenant_id == uuid.UUID(tenant_id))
+            if agent_id:
+                stmt = stmt.where(CallAttempt.agent_id == uuid.UUID(agent_id))
+            if direction:
+                stmt = stmt.where(
+                    or_(CallAttempt.direction == direction, CallAttempt.direction.is_(None))
+                    if direction == "inbound"
+                    else CallAttempt.direction == direction
+                )
+            if exclude_linked:
+                stmt = stmt.where(CallAttempt.linked_call_id.is_(None))
+            if wanted:
+                # Attempt status is NOT NULL and always materialised.
+                stmt = stmt.where(CallAttempt.status.in_(wanted))
+            if since:
+                since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
+                stmt = stmt.where(CallAttempt.started_at >= since_dt)
+            if until:
+                until_dt = datetime.fromisoformat(until.replace("Z", "+00:00"))
+                stmt = stmt.where(CallAttempt.started_at <= until_dt)
+            total = int(
+                (await session.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one() or 0
+            )
+            result = await session.execute(
+                stmt.order_by(CallAttempt.started_at.desc()).offset(offset).limit(limit)
+            )
+            return [_attempt_row_to_dict(r) for r in result.scalars()], total
+
+    def reset_for_tests(self) -> None:
+        _ATTEMPT_MEM.clear()
+        _LEGACY_STATUS_DONE.clear()
+
+
+call_attempt_store = CallAttemptStore()
 call_store = CallStore()

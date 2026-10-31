@@ -1,0 +1,8 @@
+{"seq": 1, "role": "user", "text": "ಹೌದು, ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಿಮ್ಮ service, ಬೆಲೆ ಮತ್ತು ಷರತ್ತುಗಳ ಬಗ್ಗೆ ಹೇಳಿ.", "ts": "2026-10-25T17:34:51.580266Z", "partial": false}
+{"seq": 2, "role": "assistant", "text": "ಖಂಡಿತ. ಇದು ಆರು ವಾರಗಳ online course, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ಇರುತ್ತೆ, ಮತ್ತೆ age 18 plus ಇರಬೇಕು. Total fee ಬಂದು four thousand nine hundred ninety nine rupees. ನಾವು ಯಾವುದೇ placement guarantee, job promise ಅಥವಾ discount ಕೊಡ್ತಾ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?", "ts": "2026-10-25T17:34:53.344705Z", "brain_latency_ms": 1553}
+{"seq": 3, "role": "user", "text": "ಈಗ ಏನನ್ನೂ book ಅಥವಾ save ಮಾಡಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: Course final fee, ಅವಧಿ ಮತ್ತು class timings ಏನು? Job guarantee ಕೊಡುತ್ತೀರಾ?", "ts": "2026-10-25T17:34:53.355440Z", "partial": false}
+{"seq": 4, "role": "assistant", "text": "Total fee four thousand nine hundred ninety nine rupees ಆಗುತ್ತೆ. Course ಆರು ವಾರ ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ classes ಇರುತ್ತೆ. ನಾವು ಯಾವುದೇ job guarantee ಅಥವಾ placement ಕೊಡುವುದಿಲ್ಲ, ಹಾಗೆ ಯಾವುದೇ income promise ಕೂಡ ಇಲ್ಲ. ನಿಮಗೆ ಮುಂಚೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?", "ts": "2026-10-25T17:34:56.136805Z", "brain_latency_ms": 2380}
+{"seq": 5, "role": "user", "text": "ಸರಿ, ಧನ್ಯವಾದಗಳು.", "ts": "2026-10-25T17:34:56.151079Z", "partial": false}
+{"seq": 6, "role": "assistant", "text": "ಸರಿ. ನಿಮಗೆ coding experience ಏನಾದ್ರೂ ಇದೆಯಾ?", "ts": "2026-10-25T17:34:57.873955Z", "brain_latency_ms": 1435}
+{"seq": 7, "role": "user", "text": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.", "ts": "2026-10-25T17:34:57.888700Z", "partial": false}
+{"seq": 8, "role": "assistant", "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.", "ts": "2026-10-25T17:34:57.897327Z", "brain_latency_ms": 1}

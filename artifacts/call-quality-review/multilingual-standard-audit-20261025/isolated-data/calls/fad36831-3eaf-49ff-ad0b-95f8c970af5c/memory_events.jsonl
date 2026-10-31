@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:15:27.214692Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:15:27.945956Z", "source": "model", "operations": [{"op": "set_fact", "key": "latest_caller_correction", "value": "Do not book or save anything yet. Please answer my question first: Do you print wedding invitations too, and what is the price and delivery time?"}], "applied": true, "validation_errors": []}

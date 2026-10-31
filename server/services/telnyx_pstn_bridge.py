@@ -1,0 +1,1768 @@
+"""Telnyx media stream bridge — L16 RTP over WebSocket ↔ STT/Brain/TTS."""
+from __future__ import annotations
+
+import asyncio
+import base64
+import json
+import logging
+import time
+import uuid
+from dataclasses import dataclass
+from typing import Any
+
+from fastapi import WebSocket
+from starlette.websockets import WebSocketDisconnect
+from uvicorn.protocols.utils import ClientDisconnected
+
+from server.services.audio_transcode import (
+    StreamingPcmResampler,
+    alaw_to_pcm16,
+    chunk_mulaw_frames,
+    convert_g711,
+    g711_dbfs,
+    mulaw_to_pcm16,
+    pcm16_chunk_to_mulaw_frames,
+    pcm16_to_alaw,
+    pcm16_to_mulaw,
+)
+from server.services.pstn_debug import log_pstn, log_pstn_summary, mark
+from server.services.pstn_media_flow import CallMediaConfig, new_ws_id, pstn_media_flow
+from server.services.pstn_voice_core import pstn_call_options
+from server.services.pstn_voice_flow import create_pstn_voice_loop
+from server.services.telnyx_client import TELNYX_RTP_CODEC, TELNYX_RTP_SAMPLE_RATE
+from server.utils.logger import log_tts, log_ws
+
+logger = logging.getLogger(__name__)
+
+# Telnyx L16 wire @ 16 kHz — matches Sarvam linear16 and avoids G.711 transcoding.
+_WIRE_SAMPLE_RATE = TELNYX_RTP_SAMPLE_RATE
+# TEST 5/6 playout: bounded queue + single 20 ms pacer in _out_worker (no PLC / no prime).
+MAX_AUDIO_QUEUE_FRAMES = 15
+QUEUE_HIGH_WATERMARK = 12
+QUEUE_LOW_WATERMARK = 6
+QUEUE_FRAME_MS = 20
+# Kept for metrics API compatibility; live PSTN path does not use concealment.
+PLAYOUT_CONCEALMENT_MAX_FRAMES = 0
+# How long an answered call may produce no agent audio before it is ended. A greeting
+# plus first-token latency is a few seconds even on a cold provider session, so this
+# is generous; the point is to stop billing an unbounded mute call, not to race a
+# slow synthesis. Overridable per environment via TELNYX_FIRST_AUDIO_GRACE_SEC.
+_DEFAULT_FIRST_AUDIO_GRACE_SEC = 12.0
+
+
+def _default_first_audio_grace_sec() -> float:
+    try:
+        from server.config.env import get_settings
+
+        value = float(get_settings().telnyx_first_audio_grace_sec)
+        if value > 0:
+            return value
+    except Exception:
+        pass
+    return _DEFAULT_FIRST_AUDIO_GRACE_SEC
+
+
+# Module-level so tests can shrink it; the watchdog reads this, not a captured value.
+FIRST_OUTBOUND_AUDIO_GRACE_SEC = _default_first_audio_grace_sec()
+
+MEDIA_SEND_TIMEOUT_SEC = 2.0
+active_telnyx_bridges: dict[str, "TelnyxPstnBridge"] = {}
+_admission_lock = asyncio.Lock()
+
+
+class _OutboundPreAnswerStream(RuntimeError):
+    """Ring-time media WS for an outbound call — must not own the live path."""
+
+
+def _pstn_direction(raw: Any, *, default: str = "outbound") -> str:
+    value = str(raw or "").strip().lower()
+    if value in ("outbound", "outgoing", "outbound-api"):
+        return "outbound"
+    if value in ("inbound", "incoming"):
+        return "inbound"
+    return default
+
+
+def _resolve_billed_user_id(merged: dict[str, Any]) -> str | None:
+    raw = merged.get("billed_user_id")
+    if not raw:
+        return None
+    try:
+        return str(uuid.UUID(str(raw)))
+    except ValueError:
+        return None
+
+
+async def _billed_user_for_did(e164: str | None) -> str | None:
+    number = str(e164 or "").strip()
+    if not number:
+        return None
+    from sqlalchemy import select
+
+    from server.db.connection import get_session_factory
+    from server.db.models.phase5_models import PhoneNumber
+    from server.db.models.saas_models import NumberPurchase
+
+    factory = get_session_factory()
+    if factory is None:
+        return None
+    async with factory() as session:
+        pn = (
+            await session.execute(
+                select(PhoneNumber).where(PhoneNumber.e164 == number, PhoneNumber.released_at.is_(None))
+            )
+        ).scalar_one_or_none()
+        if pn is None or pn.purchase_id is None:
+            return None
+        purchase = await session.get(NumberPurchase, pn.purchase_id)
+        if purchase and purchase.user_id:
+            return str(purchase.user_id)
+    return None
+
+
+@dataclass(frozen=True)
+class OutboundFrame:
+    payload: bytes
+    codec: str
+    turn_id: str | None
+    generation_id: str | None
+
+
+class TelnyxPstnBridge:
+    def __init__(self, ws: WebSocket) -> None:
+        self.ws = ws
+        self.call_control_id: str | None = None
+        self.call_id: str | None = None
+        self.agent_id: str | None = None
+        self.tier: str | None = None
+        self.session_id: str = "pstn"
+        self.caller_id: str | None = None
+        self._voice: PstnVoiceLoop | None = None
+        self._closed = False
+        self._wire_sample_rate = _WIRE_SAMPLE_RATE
+        self._wire_codec = TELNYX_RTP_CODEC
+        self._media_frames_in = 0
+        self._media_frames_out = 0
+        self.ws_id = new_ws_id()
+        self._configured_media = CallMediaConfig(
+            codec=TELNYX_RTP_CODEC,
+            sample_rate=TELNYX_RTP_SAMPLE_RATE,
+            channels=1,
+        )
+        self._negotiated_media = self._configured_media
+        self._ws_send_lock = asyncio.Lock()
+        self._hangup_lock = asyncio.Lock()
+        self._playback_marks: dict[str, asyncio.Future] = {}
+        self._out_queue: asyncio.Queue[OutboundFrame] = asyncio.Queue(maxsize=MAX_AUDIO_QUEUE_FRAMES)
+        self._queue_space: asyncio.Condition | None = None
+        self._queue_metrics: dict[str, int] = {
+            "queue_high_watermark_events": 0,
+            "producer_backpressure_wait_ms": 0,
+            "producer_backpressure_wait_count": 0,
+            "playout_underrun_count": 0,
+            "playout_concealment_frames": 0,
+            "playout_hold_clock_frames": 0,
+            "normal_speech_dropped_frames": 0,
+            "barge_in_discarded_frames": 0,
+            "hangup_discarded_frames": 0,
+        }
+        self._out_task: asyncio.Task | None = None
+        self._silence_watchdog_task: asyncio.Task | None = None
+        self._logged_first_out = False
+        self._client_meta: dict[str, Any] = {}
+        self._token_meta: dict[str, Any] = {}
+        self._start_handled = False
+        self._owns_call = False
+        self._invalid_generations: set[str] = set()
+        self._bidirectional_mode = "rtp"
+        self._mp3_sending = False
+        self._out_sending = False
+        self._source_audio_buf = bytearray()
+        self._source_audio_generation: str | None = None
+        self._last_mp3_sent_at = 0.0
+        self._outbound_l16_to_8k: StreamingPcmResampler | None = None
+        self._inbound_l16_resampler: StreamingPcmResampler | None = None
+        self._outbound_pcm8k_buf = bytearray()
+        self._outbound_8k_to_l16: StreamingPcmResampler | None = None
+        self._outbound_l16_buf = bytearray()
+        self._invalid_generation_order: list[str] = []
+        self._voice_loop_task: asyncio.Task | None = None
+        self._playback = None
+        self._playout_primed = False
+        self._last_out_frame_at = 0.0
+        self._last_outgoing_payload: bytes | None = None
+        self._concealment_streak = 0
+        self._queue_peak_call = 0
+        self._queue_peak_turn = 0
+        self._turn_metrics_baseline: dict[str, int] | None = None
+        self._cleanup_done = False
+        self._cleaned_voice_loop = False
+        self._cleaned_out_task = False
+        self._cleaned_voice = False
+        self._cleaned_lifecycle = False
+        self._cleaned_registry = False
+        self._hangup_sent = False
+
+    async def run(self, *, agent_id: str | None, tier: str | None, token_meta: dict[str, Any] | None) -> None:
+        self._token_meta = dict(token_meta or {})
+        self.agent_id = agent_id or self._token_meta.get("agent_id")
+        self.tier = tier or self._token_meta.get("tier")
+        exit_reason = "media_disconnected"
+        try:
+            while not self._closed:
+                # Before media `start`, Telnyx may hold the socket open through the full
+                # ring window (timeout_secs) with only a `connected` frame. Closing on a
+                # 35s idle here killed outbound streams while the phone was still ringing.
+                recv_timeout = 90.0 if not self._start_handled else 35.0
+                try:
+                    message = await asyncio.wait_for(self.ws.receive(), timeout=recv_timeout)
+                except asyncio.TimeoutError:
+                    if not self._start_handled:
+                        log_pstn(
+                            "stream.wait_start",
+                            control=self.call_control_id,
+                            call_id=self.call_id,
+                            timeout_s=recv_timeout,
+                        )
+                        logger.info(
+                            "[TELNYX] waiting for stream start control=%s (%.0fs quiet)",
+                            self.call_control_id,
+                            recv_timeout,
+                        )
+                        continue
+                    # After start, Telnyx with send_silence_when_idle should keep media flowing.
+                    # Prolonged silence => dead socket without a close frame (2.7).
+                    log_pstn(
+                        "stream.idle_timeout",
+                        control=self.call_control_id,
+                        call_id=self.call_id,
+                        timeout_s=recv_timeout,
+                    )
+                    logger.warning(
+                        "[TELNYX] websocket idle timeout control=%s",
+                        self.call_control_id,
+                    )
+                    break
+                except WebSocketDisconnect as exc:
+                    log_pstn("stream.disconnected", control=self.call_control_id,
+                             call_id=self.call_id, close_code=exc.code)
+                    logger.info("[TELNYX] websocket closed code=%s", exc.code)
+                    break
+                if message.get("type") == "websocket.disconnect":
+                    log_pstn("stream.disconnected", control=self.call_control_id,
+                             call_id=self.call_id, close_code=message.get("code"))
+                    break
+                raw = message.get("text")
+                if not raw:
+                    if message.get("bytes") is not None and not self._start_handled:
+                        log_pstn(
+                            "stream.binary_frame",
+                            control=self.call_control_id,
+                            bytes=len(message.get("bytes") or b""),
+                        )
+                    continue
+                ev = json.loads(raw)
+                event = ev.get("event") or ""
+                if not self._start_handled and event not in {"media"}:
+                    log_pstn(
+                        "stream.frame",
+                        control=self.call_control_id,
+                        event=event,
+                        keys=sorted(ev.keys())[:12],
+                    )
+                if event == "connected":
+                    log_pstn("stream.connected", control=self.call_control_id)
+                    log_ws("Telnyx stream connected", control=self.call_control_id)
+                    continue
+                if event == "start":
+                    if self._start_handled:
+                        continue
+                    self._start_handled = True
+                    try:
+                        await self._on_start(ev)
+                        if self._closed:
+                            exit_reason = "stream_start_failed"
+                            break
+                        # Media WS start is the ground-truth stream_connected signal.
+                        if self.call_control_id:
+                            from server.services.telnyx_client import telnyx_call_registry
+
+                            telnyx_call_registry.upsert(
+                                self.call_control_id,
+                                {
+                                    "stream_connected": True,
+                                    "stream_started": True,
+                                    "stream_failed": False,
+                                    "stream_state": "connected",
+                                    "status": "streaming",
+                                },
+                            )
+                            log_pstn(
+                                "PSTN_STREAM",
+                                call_id=self.call_id,
+                                control=self.call_control_id,
+                                event="stream_connected",
+                                source="ws_start",
+                            )
+                    except _OutboundPreAnswerStream:
+                        self._start_handled = False
+                        log_pstn(
+                            "stream.pre_answer_ignored",
+                            control=self.call_control_id,
+                            reason="outbound_ring",
+                        )
+                        break
+                    except Exception:
+                        self._start_handled = False
+                        raise
+                elif event == "media":
+                    await self._on_media(ev)
+                elif event == "error":
+                    payload = ev.get("payload") or {}
+                    log_pstn(
+                        "stream.error",
+                        timer_key=self.call_control_id,
+                        control=self.call_control_id,
+                        call_id=self.call_id,
+                        code=payload.get("code"),
+                        title=payload.get("title"),
+                        detail=str(payload.get("detail") or ev)[:200],
+                    )
+                    logger.warning("[TELNYX] stream error %s", payload or ev)
+                elif event == "mark":
+                    # Telnyx returns queued marks after clear — used as barge clear ACK (4.6).
+                    name = (ev.get("mark") or {}).get("name") or ev.get("name")
+                    log_pstn(
+                        "stream.mark",
+                        control=self.call_control_id,
+                        call_id=self.call_id,
+                        name=str(name or "")[:80],
+                    )
+                    self._ack_playback_mark(str(name or ""))
+                    if self._playback is not None and hasattr(self._playback, "on_provider_mark"):
+                        try:
+                            self._playback.on_provider_mark(name)
+                        except Exception:
+                            pass
+                elif event == "stop":
+                    exit_reason = "stop"
+                    log_pstn("stream.stop", timer_key=self.call_control_id, control=self.call_control_id)
+                    logger.info("[TELNYX] stream stop")
+                    break
+        finally:
+            try:
+                await asyncio.shield(self._cleanup(exit_reason))
+            except asyncio.CancelledError:
+                await self._cleanup(exit_reason)
+                raise
+
+    async def _decode_client_state(self, start: dict[str, Any]) -> None:
+        raw = start.get("client_state")
+        if not raw:
+            return
+        try:
+            meta = json.loads(base64.b64decode(str(raw)).decode())
+            if not isinstance(meta, dict):
+                return
+            self._client_meta = {**self._client_meta, **meta}
+            self.agent_id = self.agent_id or meta.get("agent_id")
+            self.tier = self.tier or meta.get("tier")
+        except Exception:
+            pass
+
+    async def _on_start(self, ev: dict[str, Any]) -> None:
+        start = ev.get("start") or ev
+        self.call_control_id = start.get("call_control_id") or ev.get("call_control_id")
+        if not self.call_control_id:
+            raise ValueError("Telnyx start is missing call_control_id")
+        expected_control = self._token_meta.get("call_control_id")
+        if expected_control and expected_control != self.call_control_id:
+            raise ValueError("Stream token does not belong to this call")
+        self.caller_id = start.get("from") or start.get("caller")
+        self._called_id = start.get("to") or start.get("called")
+        media = start.get("media_format") or {}
+        raw_codec = str(media.get("encoding") or media.get("codec") or "L16").upper()
+        if "L16" in raw_codec:
+            self._wire_codec = "L16"
+        elif "PCMA" in raw_codec or "ALAW" in raw_codec:
+            self._wire_codec = "PCMA"
+        elif "PCMU" in raw_codec or "MULAW" in raw_codec or "ULAW" in raw_codec:
+            self._wire_codec = "PCMU"
+        else:
+            self._wire_codec = raw_codec
+        self._wire_sample_rate = int(media.get("sample_rate") or (16000 if self._wire_codec == "L16" else 8000))
+        channels = int(media.get("channels") or 1)
+        await self._decode_client_state(start)
+        from server.services.telnyx_client import telnyx_call_registry
+
+        peek = telnyx_call_registry.get(self.call_control_id) or {}
+        merged_early = {**self._client_meta, **self._token_meta, **peek}
+        if (
+            _pstn_direction(merged_early.get("direction"), default="inbound") == "outbound"
+            and not peek.get("answered_handled")
+        ):
+            log_pstn(
+                "stream.pre_answer_ignored",
+                control=self.call_control_id,
+                reason="outbound_not_answered",
+            )
+            raise _OutboundPreAnswerStream("outbound media before answer")
+
+        self._negotiated_media = CallMediaConfig(
+            codec=self._wire_codec,
+            sample_rate=self._wire_sample_rate,
+            channels=channels,
+        )
+        from server.config.env import get_settings
+
+        settings = get_settings()
+        max_calls = max(1, int(getattr(settings, "telnyx_max_concurrent_calls", 50) or 50))
+        async with _admission_lock:
+            if self.call_control_id in active_telnyx_bridges:
+                raise RuntimeError("A media session already owns this call")
+            if len(active_telnyx_bridges) >= max_calls:
+                log_pstn(
+                    "admission.rejected",
+                    control=self.call_control_id,
+                    active=len(active_telnyx_bridges),
+                    max=max_calls,
+                )
+                raise RuntimeError(f"telnyx concurrent call limit reached ({max_calls})")
+            active_telnyx_bridges[self.call_control_id or self.ws_id] = self
+            self._owns_call = True
+        from server.services.telnyx_client import telnyx_call_registry
+
+        # Receipt of WS start is media proof even while lifecycle/provider setup runs.
+        # Otherwise a slow cold start triggers the connect watchdog on a healthy socket.
+        telnyx_call_registry.upsert(self.call_control_id, {
+            "stream_connected": True, "stream_failed": False, "stream_state": "connected",
+        })
+        pstn_media_flow.start(
+            external_id=self.call_control_id or self.ws_id,
+            ws_id=self.ws_id,
+            configured=self._configured_media,
+        )
+        mismatches = pstn_media_flow.negotiate(self.call_control_id or self.ws_id, self._negotiated_media)
+        if mismatches:
+            log_pstn(
+                "media.negotiation.mismatch",
+                control=self.call_control_id,
+                ws_id=self.ws_id,
+                configured=self._configured_media.codec,
+                negotiated=self._negotiated_media.codec,
+                failures=mismatches,
+            )
+
+        from server.services.telnyx_client import telnyx_call_registry
+
+        local = telnyx_call_registry.get(self.call_control_id or "") or {}
+        merged_local = {**self._client_meta, **self._token_meta, **local}
+        self.agent_id = self.agent_id or merged_local.get("agent_id")
+        if not self.agent_id:
+            from server.brain.agent_service import agent_service
+
+            self.agent_id = await agent_service.resolve_default_agent_id()
+        if not self.agent_id:
+            raise RuntimeError("No PSTN agent could be resolved")
+        self.tier = self.tier or merged_local.get("tier")
+        merged_local["agent_id"] = self.agent_id
+        if (
+            _pstn_direction(merged_local.get("direction"), default="inbound") == "inbound"
+            and not merged_local.get("stack_override")
+            and merged_local.get("inherit_test_studio_config") is None
+        ):
+            # Dev inbound with no platform/SaaS stack: inherit Test Studio.
+            # Do not force this when SaaS inbound already attached stack_override.
+            merged_local["inherit_test_studio_config"] = True
+        pstn_opts = pstn_call_options(merged_local)
+        self.tier = pstn_opts.get("tier") or self.tier
+        log_pstn(
+            "stream.start",
+            timer_key=self.call_control_id,
+            control=self.call_control_id,
+            agent_id=self.agent_id,
+            from_e164=self.caller_id,
+            sample_rate=self._wire_sample_rate,
+            codec=self._wire_codec,
+            channels=channels,
+            ws_id=self.ws_id,
+            config_session=pstn_opts.get("config_session_id"),
+        )
+
+        try:
+            prewarm = None
+            if self.agent_id and self.call_control_id:
+                from server.services.pstn_prewarm import take_prewarm_for_answer
+
+                try:
+                    prewarm = await take_prewarm_for_answer(
+                        "telnyx", self.call_control_id,
+                        fallback_external_id=merged_local.get("prewarm_external_id"),
+                    )
+                except Exception as exc:
+                    log_pstn("prewarm.adopt_failed", control=self.call_control_id, error=str(exc)[:160])
+            self._prewarm_bundle = prewarm
+            if self.agent_id:
+                from server.call.call_lifecycle_service import call_lifecycle_service
+
+                direction = _pstn_direction(merged_local.get("direction"), default="inbound")
+                billed_user_id = _resolve_billed_user_id(merged_local)
+                if not billed_user_id:
+                    did = (
+                        merged_local.get("from")
+                        if direction == "outbound"
+                        else (merged_local.get("to") or getattr(self, "_called_id", None))
+                    )
+                from server.services.telnyx_client import telnyx_call_registry
+
+                reg_row = (
+                    telnyx_call_registry.get(self.call_control_id) if self.call_control_id else {}
+                ) or {}
+                inbound_policy = reg_row.get("inbound_policy") or {}
+                is_voicemail = str(inbound_policy.get("route") or "").lower() == "voicemail"
+
+                started = await call_lifecycle_service.start(
+                    agent_id=self.agent_id,
+                    session_id=f"pstn-telnyx-{self.call_control_id}",
+                    config_session_id=pstn_opts.get("config_session_id"),
+                    channel="pstn",
+                    direction=direction,
+                    tier=self.tier,
+                    caller_id=self.caller_id,
+                    stack_override=pstn_opts.get("stack_override"),
+                    language=str(pstn_opts.get("language") or "te-IN"),
+                    realtime_prewarm_key=prewarm.realtime_key if prewarm else None,
+                    billed_user_id=billed_user_id,
+                    contact=merged_local.get("contact"),
+                    voicemail_mode=is_voicemail,
+                )
+                self.call_id = started["call_id"]
+                pstn_media_flow.bind_call_id(self.call_control_id or self.ws_id, self.call_id)
+                self.session_id = started["session_id"]
+                from server.services.telnyx_client import telnyx_call_registry
+
+                reg_row = (
+                    telnyx_call_registry.get(self.call_control_id) if self.call_control_id else {}
+                ) or {}
+                callee = str(
+                    merged_local.get("to")
+                    or reg_row.get("callee_e164")
+                    or reg_row.get("to")
+                    or getattr(self, "_called_id", "")
+                    or ""
+                ).strip()
+                if self.call_id:
+                    from datetime import datetime, timezone
+
+                    from server.call.call_ledger import call_ledger
+
+                    patch = call_ledger.read_meta(self.call_id) or {}
+                    if callee:
+                        patch["callee_e164"] = callee
+                    if reg_row.get("dial_request_id"):
+                        patch["dial_request_id"] = reg_row.get("dial_request_id")
+                    if not patch.get("connected_at"):
+                        patch["connected_at"] = (
+                            datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                        )
+                    call_ledger.write_meta(self.call_id, patch)
+                from server.services.pstn_debug import record_milestone
+
+                mark(self.call_id)
+                if self.call_control_id:
+                    record_milestone(self.call_control_id, "voice_loop_started")
+                log_pstn(
+                    "call.started",
+                    timer_key=self.call_control_id,
+                    control=self.call_control_id,
+                    call_id=self.call_id,
+                    combo=started.get("combination_id"),
+                )
+                if self.call_control_id:
+                    telnyx_call_registry.upsert(
+                        self.call_control_id,
+                        {
+                            "internal_call_id": self.call_id,
+                            "linked_call_id": self.call_id,
+                            "status": "streaming",
+                            "last_event": "stream-start",
+                        },
+                    )
+                    # The ringing attempt became a real conversation — link them so
+                    # history shows one entry, not a missed call plus a call.
+                    try:
+                        from server.call.call_store import call_attempt_store
+
+                        await call_attempt_store.link_to_call(self.call_control_id, self.call_id)
+                    except Exception:
+                        logger.warning(
+                            "[TELNYX] attempt link failed control=%s call=%s",
+                            self.call_control_id,
+                            self.call_id,
+                            exc_info=True,
+                        )
+                    try:
+                        from server.services.telnyx_recordings import attach_pending_recording
+
+                        await attach_pending_recording(self.call_control_id, self.call_id)
+                    except Exception:
+                        logger.warning(
+                            "[TELNYX] pending recording attach failed control=%s",
+                            self.call_control_id,
+                            exc_info=True,
+                        )
+                logger.info("[TELNYX] stream started call_id=%s control=%s", self.call_id, self.call_control_id)
+
+            self._out_task = asyncio.create_task(self._out_worker())
+            from server.services.pstn_playback import TelnyxQueuePlayback
+
+            def _drain_queue() -> int:
+                interrupted = 0
+                while True:
+                    try:
+                        self._out_queue.get_nowait()
+                        interrupted += 1
+                    except asyncio.QueueEmpty:
+                        break
+                return interrupted
+
+            self._playback = TelnyxQueuePlayback(
+                queue_size=lambda: self._out_queue.qsize(),
+                drain=_drain_queue,
+                frame_ms=20.0,
+                sending=lambda: self._mp3_sending or self._out_sending,
+                wait_for_capacity=self._wait_for_playout_capacity,
+                metrics_snapshot=self.playout_metrics_snapshot,
+                begin_turn_metrics=self.begin_turn_playout_metrics,
+                end_turn_metrics=self.end_turn_playout_metrics,
+            )
+            from server.realtime.models import uses_realtime_voice
+
+            e2e = uses_realtime_voice(stack_override=pstn_opts.get("stack_override"))
+            self._voice = create_pstn_voice_loop(
+                stack_override=pstn_opts.get("stack_override"),
+                session_id=self.session_id,
+                call_id=self.call_id,
+                on_agent_wire=self._send_agent_wire,
+                sample_rate=_WIRE_SAMPLE_RATE,
+                tts_session_id=pstn_opts.get("tts_session_id"),
+                config_session_id=pstn_opts.get("config_session_id"),
+                tts_output_codec="linear16" if e2e or self._bidirectional_mode != "mp3" else "mp3",
+                is_agent_audio_active=self._playback.is_active,
+                playback=self._playback,
+            )
+            self._voice.set_barge_handler(self._barge_in)
+            self._voice.set_hangup_handler(self._provider_hangup)
+            self._voice_loop_task = asyncio.create_task(self._start_voice_loop())
+            if (direction == "outbound" and not self._client_meta.get("skip_greeting")
+                    and not self._client_meta.get("test_mode")):
+                self._silence_watchdog_task = asyncio.create_task(self._watch_first_outbound_audio())
+        except Exception as exc:
+            from server.services.telnyx_client import telnyx_call_registry
+
+            logger.exception("[TELNYX] stream start failed control=%s: %s", self.call_control_id, exc)
+            if self.call_control_id:
+                telnyx_call_registry.upsert(
+                    self.call_control_id,
+                    {
+                        "status": "stream-error",
+                        "last_event": "stream-error",
+                        "error": str(exc)[:200],
+                        "failure_reason": "stream_start_failed",
+                        "ended": True,
+                    },
+                )
+            try:
+                await asyncio.wait_for(self._provider_hangup(), timeout=4.0)
+            except Exception:
+                logger.warning("[TELNYX] stream start hangup did not complete", exc_info=True)
+            try:
+                await self.ws.close(code=1011)
+            except Exception:
+                pass
+            self._closed = True
+            return
+
+    async def _watch_first_outbound_audio(self) -> None:
+        """End an answered call that never produces audio, instead of billing silence.
+
+        A missing or empty opening greeting, a provider that returns no frames, and a
+        cancelled playout all look identical from the carrier's side: the customer
+        hears nothing. Previously the call stayed up until they gave up and hung up,
+        so the tenant paid for a mute line. Ending it makes the failure bounded and
+        visible, and is the same outcome the callee would have chosen a moment later.
+        """
+        try:
+            grace = FIRST_OUTBOUND_AUDIO_GRACE_SEC
+            await asyncio.sleep(grace)
+        except asyncio.CancelledError:
+            return
+        if self._closed or self._media_frames_out > 0:
+            return
+        pstn_media_flow.emit(
+            self._flow_id(), "outbound_sent", "outbound", status="failed",
+            detail="FIRST_OUTBOUND_AUDIO_TIMEOUT", queue_size=self._out_queue.qsize(),
+        )
+        log_pstn(
+            "media.out.silent",
+            call_id=self.call_id,
+            control=self.call_control_id,
+            reason="no_outbound_audio_after_grace",
+            grace_sec=grace,
+            frames_in=self._media_frames_in,
+        )
+        logger.error(
+            "[TELNYX] answered call produced no outbound audio in %.0fs; hanging up"
+            " control=%s call_id=%s",
+            grace,
+            self.call_control_id,
+            self.call_id,
+        )
+        self._closed = True
+        try:
+            await asyncio.wait_for(self._provider_hangup(), timeout=4.0)
+        except Exception:
+            logger.warning("[TELNYX] silent-call hangup failed", exc_info=True)
+        try:
+            await self.ws.close(code=1011)
+        except Exception:
+            pass
+
+    async def _start_voice_loop(self) -> None:
+        if not self._voice:
+            return
+        try:
+            skip_greeting = bool(
+                self._client_meta.get("skip_greeting")
+                or self._client_meta.get("test_mode") == "cartesia_bilingual"
+            )
+            prewarm = getattr(self, "_prewarm_bundle", None)
+            # An operator-set greeting on the agent's telephony profile wins over the
+            # brain-derived opening. Absent or blank, the prewarm text is used exactly
+            profile_greeting = ""
+            is_voicemail = False
+            try:
+                from server.services.telnyx_client import telnyx_call_registry
+
+                live = (
+                    telnyx_call_registry.get(self.call_control_id) if self.call_control_id else {}
+                ) or {}
+                profile_greeting = str(live.get("inbound_greeting") or "").strip()
+                inbound_policy = live.get("inbound_policy") or {}
+                is_voicemail = str(inbound_policy.get("route") or "").lower() == "voicemail"
+            except Exception:
+                profile_greeting = ""
+                is_voicemail = False
+
+            if not profile_greeting and is_voicemail:
+                lang = str(pstn_opts.get("language") or "te-IN").lower()
+                if lang.startswith("te"):
+                    profile_greeting = "నమస్కారం, మా కార్యాలయం ప్రస్తుతం మూసివేయబడింది. దయచేసి మీ పేరు, ఫోన్ నంబర్ మరియు సందేశాన్ని చెప్పండి, మేము త్వరలోనే సంప్రదిస్తాము."
+                else:
+                    profile_greeting = "Hello, thanks for calling. Our offices are currently closed. Please leave your name, phone number, and a brief message, and we will get back to you soon."
+
+            greeting_text = profile_greeting or (prewarm.greeting_text if prewarm else None)
+            greeting_frames = None if profile_greeting else (prewarm.greeting_wire_frames if prewarm else None)
+            await self._voice.start_call(
+                play_greeting=bool(self.call_id) and not skip_greeting,
+                greeting_wire_frames=greeting_frames,
+                greeting_text=greeting_text,
+            )
+            from server.services.pstn_prewarm import record_bundle_greeting_usage
+
+            await record_bundle_greeting_usage(self.call_id, prewarm)
+            if self._client_meta.get("test_mode") == "cartesia_bilingual":
+                await self._run_cartesia_bilingual_test()
+        except Exception as exc:
+            from server.services.telnyx_client import telnyx_call_registry
+
+            if self.call_control_id:
+                telnyx_call_registry.upsert(self.call_control_id, {
+                    "error": str(exc)[:200], "failure_reason": "voice_start_failed",
+                })
+            log_pstn(
+                "lifecycle.failed",
+                timer_key=self.call_control_id,
+                control=self.call_control_id,
+                call_id=self.call_id,
+                error_type=type(exc).__name__,
+                error=str(exc)[:200],
+            )
+            logger.exception("[TELNYX] voice loop failed control=%s: %s", self.call_control_id, exc)
+            # A failed startup must not leave an answered, billable silent call.
+            try:
+                await asyncio.wait_for(self._provider_hangup(), timeout=4.0)
+            except Exception:
+                logger.warning("[TELNYX] startup failure hangup did not complete", exc_info=True)
+            finally:
+                await self._cleanup("voice_start_failed")
+                try:
+                    await self.ws.close(code=1011)
+                except Exception:
+                    pass
+
+    async def _on_media(self, ev: dict[str, Any]) -> None:
+        if not self._voice:
+            return
+        media = ev.get("media") or {}
+        track = str(media.get("track") or "").lower()
+        # both_tracks echoes our TTS on outbound — only feed caller audio to STT.
+        if track == "outbound":
+            return
+        payload = media.get("payload") or media.get("chunk")
+        if not payload:
+            return
+        wire = base64.b64decode(payload)
+        if self._wire_codec == "L16":
+            pcm = wire
+            if self._wire_sample_rate != _WIRE_SAMPLE_RATE:
+                if (
+                    self._inbound_l16_resampler is None
+                    or self._inbound_l16_resampler.from_rate != self._wire_sample_rate
+                    or self._inbound_l16_resampler.to_rate != _WIRE_SAMPLE_RATE
+                ):
+                    self._inbound_l16_resampler = StreamingPcmResampler(
+                        self._wire_sample_rate, _WIRE_SAMPLE_RATE
+                    )
+                pcm = self._inbound_l16_resampler.feed(pcm)
+                if not pcm:
+                    return
+        elif self._wire_codec == "PCMU":
+            if self._inbound_l16_resampler is None:
+                self._inbound_l16_resampler = StreamingPcmResampler(8000, _WIRE_SAMPLE_RATE)
+            pcm = self._inbound_l16_resampler.feed(mulaw_to_pcm16(wire, target_rate=8000))
+        elif self._wire_codec == "PCMA":
+            if self._inbound_l16_resampler is None:
+                self._inbound_l16_resampler = StreamingPcmResampler(8000, _WIRE_SAMPLE_RATE)
+            pcm = self._inbound_l16_resampler.feed(alaw_to_pcm16(wire, target_rate=8000))
+        else:  # guarded by CallMediaConfig, defensive for future codecs
+            raise ValueError(f"unsupported negotiated codec {self._wire_codec}")
+        self._media_frames_in += 1
+        level = None if self._wire_codec == "L16" else g711_dbfs(wire, self._wire_codec)
+        pstn_media_flow.emit(
+            self.call_control_id or self.ws_id,
+            "inbound_audio",
+            "inbound",
+            codec=self._wire_codec,
+            sample_rate=self._wire_sample_rate,
+            channels=self._negotiated_media.channels,
+            bytes=len(wire),
+            frames=1,
+            duration_ms=self._negotiated_media.duration_ms(len(wire)),
+            queue_size=self._out_queue.qsize(),
+            level_dbfs=level,
+        )
+        if self._media_frames_in == 1:
+            log_pstn(
+                "media.in.first",
+                timer_key=self.call_control_id,
+                control=self.call_control_id,
+                call_id=self.call_id,
+                bytes=len(pcm),
+            )
+            log_ws("Telnyx first inbound media", control=self.call_control_id, bytes=len(pcm))
+        await self._voice.feed_user_pcm16(pcm)
+        pstn_media_flow.emit(
+            self.call_control_id or self.ws_id,
+            "stt_audio",
+            "inbound",
+            turn_id=self._voice.current_turn_id,
+            codec="PCM16",
+            sample_rate=_WIRE_SAMPLE_RATE,
+            channels=1,
+            bytes=len(pcm),
+            frames=1,
+            duration_ms=len(pcm) * 1000 / (_WIRE_SAMPLE_RATE * 2),
+            queue_size=self._out_queue.qsize(),
+        )
+
+    def _playout_gate(self) -> asyncio.Condition:
+        if self._queue_space is None:
+            self._queue_space = asyncio.Condition()
+        return self._queue_space
+
+    def _flow_id(self) -> str:
+        return self.call_control_id or self.ws_id
+
+    def _generation_cancelled(self, generation_id: str | None, playback: Any | None = None) -> bool:
+        if self._closed:
+            return True
+        if generation_id and generation_id in self._invalid_generations:
+            return True
+        tracker = playback if playback is not None else getattr(self, "_playback", None)
+        if tracker is not None and not tracker.is_generation_valid(generation_id):
+            return True
+        return False
+
+    def _note_queue_metric(self, key: str, amount: int) -> None:
+        self._queue_metrics[key] = int(self._queue_metrics.get(key) or 0) + amount
+        pstn_media_flow.increment(self._flow_id(), key, amount)
+
+    def _track_queue_depth(self) -> None:
+        depth = self._out_queue.qsize()
+        self._queue_peak_call = max(self._queue_peak_call, depth)
+        if self._turn_metrics_baseline is not None:
+            self._queue_peak_turn = max(self._queue_peak_turn, depth)
+
+    def begin_turn_playout_metrics(self) -> None:
+        self._turn_metrics_baseline = dict(self._queue_metrics)
+        self._queue_peak_turn = self._out_queue.qsize()
+        self._track_queue_depth()
+
+    def end_turn_playout_metrics(self) -> dict[str, int]:
+        baseline = self._turn_metrics_baseline or {}
+        keys = (
+            "playout_underrun_count",
+            "playout_concealment_frames",
+            "producer_backpressure_wait_count",
+            "producer_backpressure_wait_ms",
+            "playout_hold_clock_frames",
+        )
+        delta = {key: int(self._queue_metrics.get(key, 0)) - int(baseline.get(key, 0)) for key in keys}
+        delta["queue_peak"] = self._queue_peak_turn
+        self._turn_metrics_baseline = None
+        self._queue_peak_turn = 0
+        return delta
+
+    def _note_stale_discard(self, n: int = 1) -> None:
+        """Obsolete audio after barge/hangup — never counted as normal-speech loss."""
+        if n <= 0:
+            return
+        self._note_queue_metric("barge_in_discarded_frames", n)
+
+    def _discard_queued_frames(self) -> int:
+        discarded = 0
+        while True:
+            try:
+                self._out_queue.get_nowait()
+                discarded += 1
+            except asyncio.QueueEmpty:
+                break
+        return discarded
+
+    async def _signal_queue_space(self, *, force: bool = False) -> None:
+        if not force and self._out_queue.qsize() >= QUEUE_LOW_WATERMARK:
+            return
+        gate = self._playout_gate()
+        async with gate:
+            gate.notify_all()
+
+    async def _wait_for_playout_capacity(self, generation_id: str | None) -> bool:
+        """Block the TTS producer until the RTP queue is below the low watermark.
+
+        Local WS read-pause is not provider-side flow control. We still wait rather
+        than drop speech. Returns False if barge-in or hangup cancelled the wait.
+        """
+        playback = getattr(self, "_playback", None)
+        if self._generation_cancelled(generation_id, playback):
+            return False
+        if self._out_queue.qsize() < QUEUE_HIGH_WATERMARK:
+            return True
+        gate = self._playout_gate()
+        wait_started = time.monotonic()
+        self._note_queue_metric("queue_high_watermark_events", 1)
+        log_pstn(
+            "outbound.queue.backpressure",
+            control=self.call_control_id,
+            call_id=self.call_id,
+            queue=self._out_queue.qsize(),
+            high=QUEUE_HIGH_WATERMARK,
+            low=QUEUE_LOW_WATERMARK,
+        )
+        async with gate:
+            while self._out_queue.qsize() >= QUEUE_LOW_WATERMARK:
+                playback = getattr(self, "_playback", None)
+                if self._generation_cancelled(generation_id, playback):
+                    return False
+                try:
+                    await asyncio.wait_for(gate.wait(), timeout=0.2)
+                except asyncio.TimeoutError:
+                    continue
+        waited_ms = int((time.monotonic() - wait_started) * 1000)
+        self._note_queue_metric("producer_backpressure_wait_ms", waited_ms)
+        self._note_queue_metric("producer_backpressure_wait_count", 1)
+        playback = getattr(self, "_playback", None)
+        return not self._generation_cancelled(generation_id, playback)
+
+    def _tts_still_generating(self) -> bool:
+        voice = self._voice
+        if voice is None:
+            return False
+        if getattr(voice, "_tts_active", False) or getattr(voice, "_response_open", False):
+            return True
+        session = getattr(voice, "_active_tts_session", None)
+        return session is not None and not getattr(session, "_closed", True)
+
+    def _tts_awaiting_audio(self) -> bool:
+        voice = self._voice
+        if voice is None:
+            return False
+        session = getattr(voice, "_active_tts_session", None)
+        return session is not None and bool(getattr(session, "_awaiting_audio", False))
+
+    def playout_metrics_snapshot(self) -> dict[str, int]:
+        return dict(self._queue_metrics)
+
+    def _playout_end_of_speech(self) -> bool:
+        """True only when agent audio is genuinely finished (safe to hard-underrun)."""
+        if self._tts_awaiting_audio() or self._tts_still_generating():
+            return False
+        if self._out_queue.qsize() > 0:
+            return False
+        voice = self._voice
+        if voice is not None:
+            if getattr(voice, "_tts_active", False) or getattr(voice, "_response_open", False):
+                return False
+            playing = getattr(voice, "_agent_audio_playing", None)
+            if callable(playing):
+                try:
+                    if playing():
+                        return False
+                except Exception:
+                    pass
+        return True
+
+    def _agent_audio_expected(self) -> bool:
+        voice = self._voice
+        if voice is None:
+            return False
+        if getattr(voice, "_tts_active", False) or getattr(voice, "_response_open", False):
+            return True
+        playing = getattr(voice, "_agent_audio_playing", None)
+        if callable(playing):
+            try:
+                return bool(playing())
+            except Exception:
+                return False
+        return bool(getattr(voice, "_farewell_response_active", False))
+
+    async def _out_worker(self) -> None:
+        """Send one RTP frame every 20 ms — monotonic deadline pacing (audit A3)."""
+        frame_interval = 0.02
+        next_send = time.monotonic()
+        buffered_generation: object = object()
+        try:
+            while not self._closed:
+                self._out_sending = False
+                try:
+                    frame = await asyncio.wait_for(self._out_queue.get(), timeout=frame_interval)
+                except asyncio.TimeoutError:
+                    if self._agent_audio_expected() and self._out_queue.qsize() == 0:
+                        self._note_queue_metric("playout_underrun_count", 1)
+                    continue
+                playback = getattr(self, "_playback", None)
+                chunk = frame.payload
+                if frame.generation_id and frame.generation_id in self._invalid_generations:
+                    self._note_stale_discard()
+                    continue
+                if playback is not None and not playback.is_generation_valid(frame.generation_id):
+                    self._note_stale_discard()
+                    continue
+                if frame.codec != self._negotiated_media.codec:
+                    log_pstn(
+                        "outbound.frame.drop",
+                        control=self.call_control_id,
+                        reason="codec_mismatch",
+                        got=frame.codec,
+                        expected=self._negotiated_media.codec,
+                    )
+                    continue
+                if len(chunk) != self._negotiated_media.frame_bytes:
+                    log_pstn(
+                        "outbound.frame.drop",
+                        control=self.call_control_id,
+                        reason="frame_size",
+                        got=len(chunk),
+                        expected=self._negotiated_media.frame_bytes,
+                    )
+                    continue
+                # Keep up to 60 ms of lookahead at speech start / after a gap.
+                # No samples are repeated or dropped; short completed turns do
+                # not wait, and cancellation is rechecked before the send.
+                if frame.generation_id != buffered_generation or (
+                    self._last_out_frame_at and time.monotonic() - self._last_out_frame_at > 0.06
+                ):
+                    self._out_sending = True  # held frame is still audible work
+                    deadline = time.monotonic() + 0.06
+                    while (
+                        self._out_queue.qsize() < 2
+                        and self._tts_still_generating()
+                        and not self._closed
+                        and not self._generation_cancelled(frame.generation_id, playback)
+                        and time.monotonic() < deadline
+                    ):
+                        await asyncio.sleep(0.005)
+                    buffered_generation = frame.generation_id
+                # Schedule before sending. Rebase late deadlines so idle periods
+                # never create a burst of catch-up frames.
+                next_send = max(next_send, time.monotonic())
+                await asyncio.sleep(max(0.0, next_send - time.monotonic()))
+                if self._last_out_frame_at:
+                    lag_ms = int((time.monotonic() - self._last_out_frame_at) * 1000) - QUEUE_FRAME_MS
+                    if lag_ms > 200 and self._out_queue.qsize() > 0:
+                        log_pstn("media.out.playout_gap", control=self.call_control_id,
+                                 call_id=self.call_id, lag_ms=lag_ms, queued=self._out_queue.qsize())
+                self._out_sending = True
+                encoded = base64.b64encode(chunk).decode("ascii")
+                message = json.dumps({"event": "media", "media": {"payload": encoded}})
+                async with self._ws_send_lock:
+                    if self._closed or (
+                        frame.generation_id in self._invalid_generations
+                        or (playback is not None and not playback.is_generation_valid(frame.generation_id))
+                    ):
+                        self._note_stale_discard()
+                        continue
+                    await asyncio.wait_for(self.ws.send_text(message), timeout=MEDIA_SEND_TIMEOUT_SEC)
+                    if self._voice is not None and hasattr(self._voice, "_promote_queued_tts_to_heard"):
+                        self._voice._promote_queued_tts_to_heard()
+                self._last_outgoing_payload = chunk
+                self._last_out_frame_at = time.monotonic()
+                self._media_frames_out += 1
+                if self._media_frames_out == 1 and self.call_control_id:
+                    from server.services.pstn_debug import record_milestone
+
+                    record_milestone(self.call_control_id, "first_outbound_sent")
+                await self._signal_queue_space()
+                pstn_media_flow.emit(
+                    self.call_control_id or self.ws_id,
+                    "outbound_sent",
+                    "outbound",
+                    turn_id=frame.turn_id,
+                    generation_id=frame.generation_id,
+                    codec=frame.codec,
+                    sample_rate=self._negotiated_media.sample_rate,
+                    channels=self._negotiated_media.channels,
+                    bytes=len(chunk),
+                    frames=1,
+                    duration_ms=self._negotiated_media.duration_ms(len(chunk)),
+                    queue_size=self._out_queue.qsize(),
+                    level_dbfs=g711_dbfs(chunk, frame.codec) if frame.codec in {"PCMU", "PCMA"} else None,
+                    extra={"base64_length": len(encoded), "json_length": len(message)},
+                )
+                if not self._logged_first_out:
+                    self._logged_first_out = True
+                    log_pstn(
+                        "media.out.first",
+                        timer_key=self.call_control_id,
+                        control=self.call_control_id,
+                        call_id=self.call_id,
+                        frames=1,
+                        bytes=len(chunk),
+                        codec=self._wire_codec,
+                    )
+                    log_tts(
+                        "Telnyx first outbound audio",
+                        control=self.call_control_id,
+                        frames=1,
+                        bytes=len(chunk),
+                    )
+                if self._media_frames_out in (50, 200, 500):
+                    log_pstn(
+                        "media.out.progress",
+                        timer_key=self.call_control_id,
+                        call_id=self.call_id,
+                        frames_out=self._media_frames_out,
+                        queue_qsize=self._out_queue.qsize(),
+                    )
+                next_send += frame_interval
+        except asyncio.CancelledError:
+            pass
+        except (ClientDisconnected, WebSocketDisconnect, RuntimeError, asyncio.TimeoutError) as exc:
+            # The carrier socket can drop mid-call. One failed send used to close the
+            # bridge outright, which silenced the agent for the rest of an answered,
+            # billable call. End the call instead of leaving it running mute: a hangup
+            # is a visible, non-billable outcome, unlike a customer hearing nothing.
+            log_pstn(
+                "media.out.socket_lost",
+                call_id=self.call_id,
+                control=self.call_control_id,
+                error_type=type(exc).__name__,
+                close_code=getattr(exc, "code", None),
+                error=f"{type(exc).__name__}: {str(exc)[:160]}" or type(exc).__name__,
+                frames_out=self._media_frames_out,
+                queued=self._out_queue.qsize(),
+            )
+            pstn_media_flow.emit(
+                self._flow_id(), "outbound_sent", "outbound", status="failed",
+                detail=f"MEDIA_SEND_FAILED:{type(exc).__name__}", queue_size=self._out_queue.qsize(),
+            )
+            self._closed = True
+            try:
+                await asyncio.wait_for(self._provider_hangup(), timeout=4.0)
+            except Exception:
+                logger.warning("[TELNYX] hangup after media socket loss failed", exc_info=True)
+            try:
+                await self.ws.close(code=1001)
+            except Exception:
+                pass
+        except Exception as exc:
+            pstn_media_flow.emit(
+                self.call_control_id or self.ws_id,
+                "outbound_sent",
+                "outbound",
+                status="failed",
+                detail=str(exc)[:200],
+                queue_size=self._out_queue.qsize(),
+            )
+            log_pstn("media.out.failed", call_id=self.call_id, control=self.call_control_id,
+                     error_type=type(exc).__name__, error=str(exc)[:200])
+            logger.exception("[TELNYX] outbound worker failed: %s", str(exc)[:200])
+            self._closed = True
+            try:
+                await asyncio.wait_for(self._provider_hangup(), timeout=4.0)
+            except Exception:
+                logger.warning("[TELNYX] hangup after playout failure failed", exc_info=True)
+            try:
+                await self.ws.close(code=1011)
+            except Exception:
+                pass
+        finally:
+            self._out_sending = False
+
+    async def _send_agent_mp3(self, mp3: bytes) -> None:
+        """Telnyx mp3 bidirectional mode — one base64 MP3 blob per message (1 msg/sec limit)."""
+        if not mp3:
+            return
+        generation_id = self._voice.current_generation_id if self._voice else None
+        if generation_id and generation_id in self._invalid_generations:
+            self._note_stale_discard()
+            return
+        elapsed = time.monotonic() - self._last_mp3_sent_at
+        if elapsed < 1.0:
+            await asyncio.sleep(1.0 - elapsed)
+        if generation_id and generation_id in self._invalid_generations:
+            return
+        encoded = base64.b64encode(mp3).decode("ascii")
+        message = json.dumps({"event": "media", "media": {"payload": encoded}})
+        self._mp3_sending = True
+        try:
+            async with self._ws_send_lock:
+                await self.ws.send_text(message)
+        finally:
+            self._mp3_sending = False
+        self._last_mp3_sent_at = time.monotonic()
+        self._media_frames_out += 1
+        pstn_media_flow.emit(
+            self.call_control_id or self.ws_id,
+            "outbound_sent",
+            "outbound",
+            turn_id=self._voice.current_turn_id if self._voice else None,
+            generation_id=generation_id,
+            codec="MP3",
+            sample_rate=24000,
+            channels=1,
+            bytes=len(mp3),
+            frames=1,
+            queue_size=0,
+            status="healthy",
+            extra={"base64_length": len(encoded), "json_length": len(message), "mode": "mp3"},
+        )
+        if not self._logged_first_out:
+            self._logged_first_out = True
+            log_pstn(
+                "media.out.first",
+                timer_key=self.call_control_id,
+                control=self.call_control_id,
+                call_id=self.call_id,
+                frames=1,
+                bytes=len(mp3),
+                codec="MP3",
+                mode="mp3",
+            )
+
+    def _l16_chunks_to_pcmu(self, chunks: list[bytes]) -> list[bytes]:
+        """Resample L16→8 kHz with continuous ratecv state, then μ-law frame."""
+        l16_rate = int(self._negotiated_media.sample_rate or 16000)
+        if self._outbound_l16_to_8k is None or self._outbound_l16_to_8k.from_rate != l16_rate:
+            self._outbound_l16_to_8k = StreamingPcmResampler(l16_rate, 8000)
+            self._outbound_pcm8k_buf = bytearray()
+        out: list[bytes] = []
+        for chunk in chunks:
+            self._outbound_pcm8k_buf.extend(self._outbound_l16_to_8k.feed(chunk))
+            while len(self._outbound_pcm8k_buf) >= 320:
+                frame = bytes(self._outbound_pcm8k_buf[:320])
+                del self._outbound_pcm8k_buf[:320]
+                out.append(pcm16_to_mulaw(frame, sample_rate=8000))
+        return out
+
+    async def _send_agent_wire(self, wire: bytes) -> None:
+        """Enqueue Telnyx RTP payloads — or send MP3 blobs in mp3 bidirectional mode."""
+        from server.services.pstn_realtime_voice_core import PstnRealtimeVoiceLoop
+
+        realtime_pcm = isinstance(self._voice, PstnRealtimeVoiceLoop)
+        if self._bidirectional_mode == "mp3" and not realtime_pcm:
+            await self._send_agent_mp3(wire)
+            return
+        source_codec = self._voice.current_output_codec if self._voice else "PCMU"
+        target_codec = self._negotiated_media.codec
+        generation_id = self._voice.current_generation_id if self._voice else None
+        turn_id = self._voice.current_turn_id if self._voice else None
+        if generation_id != self._source_audio_generation:
+            self._source_audio_buf.clear()
+            self._outbound_pcm8k_buf.clear()
+            self._outbound_l16_buf.clear()
+            self._outbound_l16_to_8k = None
+            self._outbound_8k_to_l16 = None
+            self._source_audio_generation = generation_id
+        source_frame_bytes = 640 if source_codec == "L16" else 160
+        if len(wire) == source_frame_bytes and not self._source_audio_buf:
+            framed_wire = wire
+        else:
+            self._source_audio_buf.extend(wire)
+            complete = len(self._source_audio_buf) // source_frame_bytes * source_frame_bytes
+            framed_wire = bytes(self._source_audio_buf[:complete])
+            del self._source_audio_buf[:complete]
+        if not framed_wire:
+            return
+        if source_codec == "PCMU":
+            source_chunks = chunk_mulaw_frames(framed_wire, sample_rate=8000)
+        elif source_codec == "L16":
+            source_chunks = _chunk_l16_rtp(framed_wire, _WIRE_SAMPLE_RATE)
+        else:
+            raise ValueError(f"unsupported TTS output codec {source_codec}")
+
+        if source_codec in {"PCMU", "PCMA"} and target_codec in {"PCMU", "PCMA"}:
+            chunks = [convert_g711(chunk, source_codec, target_codec) for chunk in source_chunks]
+        elif source_codec == "L16" and target_codec in {"PCMU", "PCMA"}:
+            # Stateful 16k→8k across frames — one-shot ratecv per frame caused crackle.
+            pcmu_chunks = self._l16_chunks_to_pcmu(source_chunks)
+            chunks = [convert_g711(chunk, "PCMU", target_codec) for chunk in pcmu_chunks]
+        elif source_codec == "PCMU" and target_codec == "L16":
+            chunks = []
+            for chunk in source_chunks:
+                pcm = mulaw_to_pcm16(chunk, 8000)
+                if self._outbound_8k_to_l16 is None:
+                    self._outbound_8k_to_l16 = StreamingPcmResampler(8000, 16000)
+                    # ratecv has one output-sample startup latency. Hold the first
+                    # sample once, then preserve all subsequent samples across frames.
+                    self._outbound_l16_buf.extend(pcm[:2])
+                self._outbound_l16_buf.extend(self._outbound_8k_to_l16.feed(pcm))
+                while len(self._outbound_l16_buf) >= 640:
+                    chunks.append(bytes(self._outbound_l16_buf[:640]))
+                    del self._outbound_l16_buf[:640]
+        elif source_codec == target_codec:
+            chunks = source_chunks
+        else:
+            raise ValueError(f"unsupported outbound conversion {source_codec}->{target_codec}")
+        outbound_codec = target_codec
+        if outbound_codec != self._negotiated_media.codec:
+            log_pstn(
+                "outbound.convert.drop",
+                control=self.call_control_id,
+                reason="codec_mismatch",
+                got=outbound_codec,
+                expected=self._negotiated_media.codec,
+            )
+            return
+        if self._negotiated_media.sample_rate not in {8000, 16000} or self._negotiated_media.channels != 1:
+            log_pstn(
+                "outbound.convert.drop",
+                control=self.call_control_id,
+                reason="media_shape",
+                sample_rate=self._negotiated_media.sample_rate,
+                channels=self._negotiated_media.channels,
+            )
+            return
+        if self._media_frames_out == 0 and self._out_queue.empty():
+            log_pstn(
+                "media.out.queued",
+                timer_key=self.call_control_id,
+                call_id=self.call_id,
+                wire_bytes=len(wire),
+                rtp_frames=len(chunks),
+                wire_mulaw=source_codec == "PCMU",
+                source_codec=source_codec,
+                outbound_codec=outbound_codec,
+            )
+        for chunk in chunks:
+            playback = getattr(self, "_playback", None)
+            if self._generation_cancelled(generation_id, playback):
+                return
+            frame = OutboundFrame(
+                payload=chunk,
+                codec=outbound_codec,
+                turn_id=turn_id,
+                generation_id=generation_id,
+            )
+            while True:
+                playback = getattr(self, "_playback", None)
+                if self._generation_cancelled(generation_id, playback):
+                    return
+                if self._closed:
+                    return
+                try:
+                    self._out_queue.put_nowait(frame)
+                    self._track_queue_depth()
+                    break
+                except asyncio.QueueFull:
+                    if self._generation_cancelled(generation_id, playback):
+                        return
+                    if self._closed:
+                        return
+                    self._note_queue_metric("producer_backpressure_wait_count", 1)
+                    await asyncio.sleep(0.01)
+            playback = getattr(self, "_playback", None)
+            if self._generation_cancelled(generation_id, playback):
+                # Frame is already queued; the worker/barge path discards it as obsolete.
+                return
+            queue_size = self._out_queue.qsize()
+            queue_status = "delayed" if queue_size >= QUEUE_HIGH_WATERMARK else "healthy"
+            pstn_media_flow.emit(
+                self.call_control_id or self.ws_id,
+                "converter",
+                "outbound",
+                turn_id=frame.turn_id,
+                generation_id=frame.generation_id,
+                codec=outbound_codec,
+                sample_rate=self._negotiated_media.sample_rate,
+                channels=1,
+                bytes=len(chunk),
+                frames=1,
+                duration_ms=self._negotiated_media.duration_ms(len(chunk)),
+                queue_size=queue_size,
+                detail=f"{source_codec}->{outbound_codec}",
+                status=queue_status,
+            )
+            pstn_media_flow.emit(
+                self.call_control_id or self.ws_id,
+                "outbound_queued",
+                "outbound",
+                turn_id=frame.turn_id,
+                generation_id=frame.generation_id,
+                codec=outbound_codec,
+                sample_rate=self._negotiated_media.sample_rate,
+                channels=1,
+                bytes=len(chunk),
+                frames=1,
+                duration_ms=self._negotiated_media.duration_ms(len(chunk)),
+                queue_size=queue_size,
+                status=queue_status,
+            )
+
+    async def drain_outbound(self, *, timeout_s: float = 2.5) -> bool:
+        """Wait until the outbound RTP queue drains so farewell audio can play."""
+        deadline = time.monotonic() + max(0.2, float(timeout_s))
+        while time.monotonic() < deadline:
+            if self._out_queue.empty() and not self._mp3_sending and not self._out_sending:
+                # One extra frame period so the last queued frame can leave the worker.
+                await asyncio.sleep(0.04)
+                if self._out_queue.empty() and not self._out_sending:
+                    return True
+            await asyncio.sleep(0.02)
+        log_pstn(
+            "hangup.drain.timeout",
+            control=self.call_control_id,
+            call_id=self.call_id,
+            queue=self._out_queue.qsize(),
+        )
+        return False
+
+    def _ack_playback_mark(self, name: str) -> None:
+        waiter = self._playback_marks.get(name)
+        if waiter is not None and not waiter.done():
+            waiter.set_result(True)
+
+    async def _wait_provider_playback(self, timeout_s: float = 1.0) -> bool:
+        """A matching mark acknowledges playback, not just websocket delivery."""
+        if self._closed:
+            return False
+        import uuid
+
+        name = f"farewell-{uuid.uuid4().hex}"
+        waiter = asyncio.get_running_loop().create_future()
+        self._playback_marks[name] = waiter
+        try:
+            async with asyncio.timeout(timeout_s):
+                async with self._ws_send_lock:
+                    await self.ws.send_text(json.dumps({"event": "mark", "mark": {"name": name}}))
+                return bool(await waiter)
+        except Exception as exc:
+            # Bound failures: never leave a billed caller leg open for a lost ACK.
+            log_pstn("hangup.playback_mark.unconfirmed", call_id=self.call_id, error=type(exc).__name__)
+            return False
+        finally:
+            self._playback_marks.pop(name, None)
+
+    async def _provider_hangup(self) -> None:
+        async with self._hangup_lock:
+            if not self.call_control_id or self._hangup_sent:
+                return
+            from server.services.telnyx_client import TelnyxClient
+
+            drained = await self.drain_outbound(timeout_s=14.0) if not self._closed else False
+            if drained:
+                await self._wait_provider_playback()
+            # Latch only success. Concurrent calls serialize; failure remains retryable.
+            await TelnyxClient().hangup(self.call_control_id)
+            self._hangup_sent = True
+            log_pstn("hangup.provider", control=self.call_control_id, call_id=self.call_id)
+
+    async def _barge_in(self) -> None:
+        generation_id = (getattr(self._voice, "_barge_generation", None)
+                         or self._voice.current_generation_id) if self._voice else None
+        playback = getattr(self, "_playback", None)
+        generation_id = generation_id or (playback.current_generation() if playback else None)
+        self._playout_primed = False
+        self._last_outgoing_payload = None
+        self._concealment_streak = 0
+        self._source_audio_buf.clear()
+        self._outbound_pcm8k_buf.clear()
+        self._outbound_l16_buf.clear()
+        self._outbound_l16_to_8k = None
+        self._outbound_8k_to_l16 = None
+        if playback is not None:
+            playback.invalidate_generation(generation_id)
+            interrupted = playback.clear()
+        else:
+            if generation_id:
+                self._invalid_generations.add(generation_id)
+                self._invalid_generation_order.append(generation_id)
+            interrupted = 0
+            while True:
+                try:
+                    self._out_queue.get_nowait()
+                    interrupted += 1
+                except asyncio.QueueEmpty:
+                    break
+        if generation_id:
+            self._invalid_generations.add(generation_id)
+            if not self._invalid_generation_order or self._invalid_generation_order[-1] != generation_id:
+                self._invalid_generation_order.append(generation_id)
+            # Prune stale gens (FIFO — sets alone are unordered).
+            while len(self._invalid_generation_order) > 12:
+                old = self._invalid_generation_order.pop(0)
+                self._invalid_generations.discard(old)
+        if interrupted:
+            self._note_queue_metric("barge_in_discarded_frames", interrupted)
+            pstn_media_flow.increment(
+                self.call_control_id or self.ws_id, "interrupted_frames", interrupted
+            )
+        await self._signal_queue_space(force=True)
+        pstn_media_flow.emit(
+            self.call_control_id or self.ws_id,
+            "queue_cleared",
+            "outbound",
+            turn_id=self._voice.current_turn_id if self._voice else None,
+            generation_id=generation_id,
+            frames=interrupted,
+            queue_size=0,
+            status="processing",
+            detail="caller barge-in",
+        )
+        log_pstn(
+            "PROVIDER_CLEAR",
+            control=self.call_control_id,
+            call_id=self.call_id,
+            frames=interrupted,
+            generation_id=generation_id,
+            queue_ms=playback.queued_ms() if playback else 0,
+        )
+        async with self._ws_send_lock:
+            for waiter in self._playback_marks.values():
+                if not waiter.done():
+                    waiter.set_result(False)
+            await self.ws.send_text(json.dumps({"event": "clear"}))
+        pstn_media_flow.emit(self.call_control_id or self.ws_id, "remote_cleared", "outbound", generation_id=generation_id)
+
+    async def _run_cartesia_bilingual_test(self) -> None:
+        """Cartesia L16 @ 16 kHz — Telugu (Indian voice) then English (US accent)."""
+        if not self._voice:
+            return
+        from server.services.cartesia_voices import fetch_cartesia_voices
+
+        voices = await fetch_cartesia_voices()
+        indian = next((v for v in voices if v.get("region") == "indian_english"), None)
+        telugu = next((v for v in voices if v.get("region") == "telugu"), indian)
+        english = next((v for v in voices if v.get("region") == "english"), None)
+        indian_id = str((telugu or indian or {}).get("id") or "79a125e8-cd45-4c13-8a67-0491c5ad1b8a")
+        english_id = str((english or {}).get("id") or "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4")
+        telugu_msg = (
+            "Namaste! Nenu Priya, SKM Plants nundi matladutunnanu. "
+            "Meeku ela help cheyagalanu?"
+        )
+        english_msg = (
+            "Hello! This is Priya from SKM Plants. "
+            "How can I help you today?"
+        )
+        log_pstn(
+            "cartesia_bilingual.start",
+            call_id=self.call_id,
+            telugu_voice=indian_id[:8],
+            english_voice=english_id[:8],
+        )
+        await self._voice.speak(telugu_msg, speaker=indian_id, language_code="te-IN")
+        await asyncio.sleep(0.8)
+        await self._voice.speak(english_msg, speaker=english_id, language_code="en-IN")
+        log_pstn("cartesia_bilingual.done", call_id=self.call_id)
+
+    async def test_agent_audio(self) -> None:
+        await self.speak_test_text(
+            "Signal test one. Signal test two. Signal test three. "
+            "నమస్కారం, ఇది ఏజెంట్ ఆడియో పరీక్ష."
+        )
+
+    async def speak_test_text(self, text: str, *, language_code: str = "en-IN") -> None:
+        for _ in range(50):
+            if self._voice:
+                break
+            await asyncio.sleep(0.1)
+        if not self._voice:
+            raise RuntimeError("voice loop is not ready")
+        await self._voice.speak(text, language_code=language_code)
+
+    async def _cleanup(self, reason: str) -> None:
+        """Idempotent staged cleanup — safe to call twice after a mid-await cancel (12.3)."""
+        if self._cleanup_done:
+            return
+        self._closed = True
+        if reason == "media_disconnected" and self._owns_call and self.call_control_id:
+            from server.services.telnyx_client import telnyx_call_registry
+
+            row = telnyx_call_registry.get(self.call_control_id) or {}
+            if not row.get("ended") and not self._hangup_sent:
+                try:
+                    await self._provider_hangup()
+                except Exception as exc:
+                    log_pstn("hangup.media_failure.failed", control=self.call_control_id, error=str(exc)[:160])
+        if self.call_id:
+            try:
+                from server.services.pstn_forensics import flush_meta
+
+                await asyncio.to_thread(flush_meta, self.call_id)
+            except Exception:
+                pass
+        if self.call_control_id and self.call_id:
+            try:
+                from server.services.telnyx_recordings import attach_pending_recording
+
+                await attach_pending_recording(self.call_control_id, self.call_id)
+            except Exception:
+                logger.warning(
+                    "[TELNYX] pending recording attach on cleanup failed control=%s",
+                    self.call_control_id,
+                    exc_info=True,
+                )
+        await self._signal_queue_space(force=True)
+        if not self._cleaned_voice_loop:
+            watchdog = self._silence_watchdog_task
+            if (watchdog and not watchdog.done()
+                    and watchdog is not asyncio.current_task()):
+                watchdog.cancel()
+            for task in (
+                self._voice_loop_task,
+                self._silence_watchdog_task,
+            ):
+                if task and not task.done() and task is not asyncio.current_task():
+                    task.cancel()
+                    try:
+                        await task
+                    except (asyncio.CancelledError, Exception):
+                        pass
+            self._cleaned_voice_loop = True
+        leftover = self._discard_queued_frames()
+        if leftover:
+            self._note_queue_metric("hangup_discarded_frames", leftover)
+        await self._signal_queue_space(force=True)
+        if not self._cleaned_out_task:
+            if self._out_task and not self._out_task.done():
+                self._out_task.cancel()
+                try:
+                    await self._out_task
+                except (asyncio.CancelledError, Exception):
+                    pass
+            self._cleaned_out_task = True
+        if not self._cleaned_voice:
+            if self._voice:
+                try:
+                    await self._voice.close()
+                    background = getattr(self._voice, "_background_hangup_task", None)
+                    if background is not None and background is not asyncio.current_task():
+                        await asyncio.shield(background)
+                except Exception:
+                    pass
+                self._voice = None
+            self._cleaned_voice = True
+        if not self._cleaned_lifecycle and self.call_id:
+            from server.call.call_lifecycle_service import call_lifecycle_service
+
+            try:
+                await asyncio.wait_for(
+                    call_lifecycle_service.end(self.call_id, reason="pstn_hangup"),
+                    timeout=5.0,
+                )
+            except asyncio.TimeoutError:
+                log_pstn("lifecycle.end.timeout", call_id=self.call_id, timeout_s=5.0)
+            except Exception:
+                pass
+            self._cleaned_lifecycle = True
+        elif not self._cleaned_lifecycle:
+            self._cleaned_lifecycle = True
+        if not self._cleaned_registry:
+            if active_telnyx_bridges.get(self.call_control_id) is self:
+                active_telnyx_bridges.pop(self.call_control_id, None)
+            if active_telnyx_bridges.get(self.ws_id) is self:
+                active_telnyx_bridges.pop(self.ws_id, None)
+            if self.call_control_id and self._owns_call:
+                bidirectional_ok = self._media_frames_in > 0 and self._media_frames_out > 0
+                from server.services.telnyx_client import telnyx_call_registry
+
+                health_score: int | None = None
+                failures: list[str] = []
+                flow_snap = pstn_media_flow.snapshot(self.call_control_id or self.ws_id)
+                if flow_snap:
+                    health = flow_snap.get("health") or {}
+                    health_score = int(health.get("score") or 0) or None
+                    failures = list(health.get("failures") or flow_snap.get("failures") or [])
+
+                telnyx_call_registry.upsert(
+                    self.call_control_id,
+                    {
+                        "status": "completed",
+                        "stream_connected": False,
+                        "stream_state": "ended",
+                        "ended": True,
+                        "last_event": reason,
+                        "media_frames_in": self._media_frames_in,
+                        "media_frames_out": self._media_frames_out,
+                        "bidirectional_ok": bidirectional_ok,
+                        "health_score": health_score,
+                    },
+                )
+                if self.call_id:
+                    from server.call.call_context import get as get_ctx
+                    from server.services.production_canary import record_canary_call
+
+                    ctx = get_ctx(self.call_id)
+                    record_canary_call(
+                        call_id=self.call_id,
+                        external_id=self.call_control_id,
+                        bidirectional_ok=bidirectional_ok,
+                        media_in=self._media_frames_in,
+                        media_out=self._media_frames_out,
+                        health_score=health_score,
+                        failures=failures,
+                        compiled_brain_version=ctx.compiled_brain_version if ctx else None,
+                        combination_id=ctx.resolved_stack.combination_id if ctx and ctx.resolved_stack else None,
+                    )
+                log_pstn_summary(
+                    provider="telnyx",
+                    external_id=self.call_control_id,
+                    call_id=self.call_id,
+                    media_in=self._media_frames_in,
+                    media_out=self._media_frames_out,
+                    reason=reason,
+                )
+                pstn_media_flow.finish(self.call_control_id)
+            self._cleaned_registry = True
+        self._cleanup_done = True
+
+
+def _chunk_l16_rtp(pcm16: bytes, sample_rate: int = 16000) -> list[bytes]:
+    frame_bytes = int(sample_rate * 20 / 1000) * 2
+    chunks: list[bytes] = []
+    for i in range(0, len(pcm16), frame_bytes):
+        chunk = pcm16[i : i + frame_bytes]
+        if len(chunk) < frame_bytes:
+            chunk = chunk + b"\x00" * (frame_bytes - len(chunk))
+        chunks.append(chunk)
+    return chunks

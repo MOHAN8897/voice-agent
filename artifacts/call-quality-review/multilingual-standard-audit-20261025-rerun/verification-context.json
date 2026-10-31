@@ -1,0 +1,8 @@
+{
+  "working_memory_enabled": true,
+  "enable_call_archive": true,
+  "memory_extraction_fallback": false,
+  "rolling_summary_interval_turns": 5,
+  "database_boundary": "isolated: database_url=None",
+  "redis_boundary": "isolated: redis_url=None"
+}

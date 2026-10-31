@@ -1,0 +1,73 @@
+{
+  "key": "print-kn-IN-none-3b_stop_contact",
+  "business": "print",
+  "language": "kn-IN",
+  "integration": false,
+  "scenario": "3b_stop_contact",
+  "agent_id": "ffeba09d-28b1-582c-a920-77041b45cb0d",
+  "call_id": "9e9d6f28-a827-4768-85af-850d798babe0",
+  "session_id": "audit-print-kn-IN-none-3b_stop_contact-2277a361",
+  "compiled_checksum": "0766dd5a0844b9f086e671d6a886612dd21888b82dc082be19f46bd0548b6f2a",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 1,
+      "at": 0.016
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "optout",
+      "user": "ನನಗೆ ಮತ್ತೆ call ಮಾಡಬೇಡಿ. ಮುಂದೆ ಮಾಡುವ callsನಿಂದ ನನ್ನ ಹೆಸರು ತೆಗೆದು ಈ call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.063,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "9e9d6f28-a827-4768-85af-850d798babe0",
+      "reason": "firm_refusal"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "a1b3114e81541dda54b7964ad8b0ad3137932f5f9d29bfd13f429a91e0d8c4ba",
+  "prompt_chars": 18434,
+  "opening_seeded": "Namaskara, this is Meera calling from ClearPrint Studio. I am reaching out to share information about our cards and answer any questions you might have. Would you like to discuss our card options today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "firm_refusal",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "do_not_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 0.063,
+  "hangup_count": 1
+}

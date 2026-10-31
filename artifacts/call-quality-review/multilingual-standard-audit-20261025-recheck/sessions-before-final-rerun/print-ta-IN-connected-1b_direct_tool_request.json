@@ -1,0 +1,193 @@
+{
+  "key": "print-ta-IN-connected-1b_direct_tool_request",
+  "business": "print",
+  "language": "ta-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "bdce67d6-051d-5df0-b945-525173a1f672",
+  "call_id": "9d95bf63-7ef4-4c92-b168-172827a024fe",
+  "session_id": "audit-print-ta-IN-connected-1b_direct_tool_request-fa9a1d0e",
+  "compiled_checksum": "76b288f72889bc9041f0c28adf9f13370a846e99cba4f1b6a4bb91f33ad390dc",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 576,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"Enquiry saved successfully; caller did not ask for anything further and the goal is complete.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}\n\n,\n\n\"action_claimed\": \"enquiry_saved\"\n\n,\n\n\"spoken_response\": \"உங்க enquiry save ஆயிடுச்சு, reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team review-க்காக மட்டும் தான், order confirm ஆகல. உங்க time-க்கு நன்றி. வணக்கம்.\"\n\n,\n\n\"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"enquiry_saved\", \"value\": \"AUDIT-ENQUIRY-1\"}]}\n\n}",
+      "sse_content_tail": "{\"end_call\": {\"evidence\": \"Enquiry saved successfully; caller did not ask for anything further and the goal is complete.\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"\", \"contact_preference\": \"do_not_call\"}\n\n,\n\n\"action_claimed\": \"enquiry_saved\"\n\n,\n\n\"spoken_response\": \"உங்க enquiry save ஆயிடுச்சு, reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team review-க்காக மட்டும் தான், order confirm ஆகல. உங்க time-க்கு நன்றி. வணக்கம்.\"\n\n,\n\n\"memory_update\": {\"operations\": [{\"op\": \"update_summary\", \"key\": \"enquiry_saved\", \"value\": \"AUDIT-ENQUIRY-1\"}]}\n\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 172,
+        "prompt_tokens": 4451,
+        "total_tokens": 4623,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "உங்க enquiry save ஆயிடுச்சு, reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team review-க்காக மட்டும் தான், order confirm ஆகல. உங்க time-க்கு நன்றி. வணக்கம்.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4451,
+          "output_tokens": 172,
+          "total_tokens": 4623
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "enquiry_saved",
+              "value": "AUDIT-ENQUIRY-1"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "goal_complete",
+          "evidence": "Enquiry saved successfully; caller did not ask for anything further and the goal is complete.",
+          "remaining_request": "",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "enquiry_saved",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.047
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Visiting card enquiry",
+        "preferred_time": "Tomorrow 3 PM"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "உங்க enquiry save ஆயிடுச்சு, reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team review-க்காக மட்டும் தான், order confirm ஆகல.",
+      "turn": 1,
+      "at": 1.719
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 2,
+      "at": 1.75
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "என் பெயர் Audit Customer, email audit.customer@example.invalid. என் enquiryயை team reviewக்காக save செய்யுங்க. நாளை பிற்பகல் மூன்று மணி எனக்கு வசதி. Request submit செய்ய சம்மதிக்கிறேன்; order அல்லது booking confirm ஆனதாகச் சொல்லாதீங்க.",
+      "spoken": "உங்க enquiry save ஆயிடுச்சு, reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team review-க்காக மட்டும் தான், order confirm ஆகல.",
+      "elapsed_s": 1.719,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 1.797,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "9d95bf63-7ef4-4c92-b168-172827a024fe",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "94dea0198bbca67e7df4548ae910d6d0dc08cefbb5ee961965f358043fdd266a",
+  "prompt_chars": 18310,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Vanakkam, I am Meera calling from ClearPrint Studio. Am I speaking with the right person to discuss your card printing needs today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "goal_complete",
+        "evidence": "Enquiry saved successfully; caller did not ask for anything further and the goal is complete.",
+        "remaining_request": "",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "உங்க enquiry save ஆயிடுச்சு, reference number வந்து AUDIT-ENQUIRY-1. இது வெறும் team review-க்காக மட்டும் தான், order confirm ஆகல. உங்க time-க்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "evidence_not_quoted"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 1.797,
+  "hangup_count": 1
+}

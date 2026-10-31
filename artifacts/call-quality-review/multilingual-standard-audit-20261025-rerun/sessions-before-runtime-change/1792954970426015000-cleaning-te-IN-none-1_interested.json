@@ -1,0 +1,398 @@
+{
+  "key": "cleaning-te-IN-none-1_interested",
+  "business": "cleaning",
+  "language": "te-IN",
+  "integration": false,
+  "scenario": "1_interested",
+  "agent_id": "c493e3a7-baed-557d-a3c5-869e16993cb5",
+  "call_id": "4d0e8cbc-767e-49ea-8b3a-6c1d2462b22e",
+  "session_id": "audit-cleaning-te-IN-none-1_interested-392a0b68",
+  "compiled_checksum": "b7e0ea7cc6d37b07f10be23918097b732b4a30180276f9754a53308cd87c6676",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 144,
+      "sse_content_preview": "సరేనండి. సోఫా క్లీనింగ్ ప్రతి సీటుకు 349 రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. మొత్తం కిచెన్ క్లీనింగ్ 1599 రూపాయలు అవుతుంది. మీకు ఏ service కావాలండి?",
+      "sse_content_tail": "సరేనండి. సోఫా క్లీనింగ్ ప్రతి సీటుకు 349 రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. మొత్తం కిచెన్ క్లీనింగ్ 1599 రూపాయలు అవుతుంది. మీకు ఏ service కావాలండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 52,
+        "prompt_tokens": 4293,
+        "total_tokens": 4345,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి. సోఫా క్లీనింగ్ ప్రతి సీటుకు 349 రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. మొత్తం కిచెన్ క్లీనింగ్ 1599 రూపాయలు అవుతుంది. మీకు ఏ service కావాలండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4293,
+          "output_tokens": 52,
+          "total_tokens": 4345
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.656
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 312,
+      "sse_content_preview": "అవునండి, సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం 1599 రూపాయలు. Visit ఇప్పుడే confirm అవ్వదు అండి, ఇది just enquiry మాత్రమే. మీకు నచ్చితే, మా team review కోసం ఒక enquiry submit చేయమంటారా? మీ పేరు, service, locality చెప్తారా? permission ఇస్తారా?",
+      "sse_content_tail": "అవునండి, సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం 1599 రూపాయలు. Visit ఇప్పుడే confirm అవ్వదు అండి, ఇది just enquiry మాత్రమే. మీకు నచ్చితే, మా team review కోసం ఒక enquiry submit చేయమంటారా? మీ పేరు, service, locality చెప్తారా? permission ఇస్తారా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 88,
+        "prompt_tokens": 4388,
+        "total_tokens": 4476,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "అవునండి, సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం 1599 రూపాయలు. Visit ఇప్పుడే confirm అవ్వదు అండి, ఇది just enquiry మాత్రమే. మీకు నచ్చితే, మా team review కోసం ఒక enquiry submit చేయమంటారా? మీ పేరు, service, locality చెప్తారా? permission ఇస్తారా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4388,
+          "output_tokens": 88,
+          "total_tokens": 4476
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.64
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 148,
+      "sse_content_preview": "సరేనండి, కిచెన్ క్లీనింగ్ మొత్తం 1599 రూపాయలు అవుతుంది. మీకు కావాలంటే, మా team పరిశీలన కోసం ఒక enquiry submit చేయమంటారా? మీ పేరు, locality చెప్తారా?",
+      "sse_content_tail": "సరేనండి, కిచెన్ క్లీనింగ్ మొత్తం 1599 రూపాయలు అవుతుంది. మీకు కావాలంటే, మా team పరిశీలన కోసం ఒక enquiry submit చేయమంటారా? మీ పేరు, locality చెప్తారా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 4455,
+        "total_tokens": 4500,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, కిచెన్ క్లీనింగ్ మొత్తం 1599 రూపాయలు అవుతుంది. మీకు కావాలంటే, మా team పరిశీలన కోసం ఒక enquiry submit చేయమంటారా? మీ పేరు, locality చెప్తారా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4455,
+          "output_tokens": 45,
+          "total_tokens": 4500
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.594
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 12,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 61,
+        "prompt_tokens": 4717,
+        "total_tokens": 4778,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 0.594
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 13,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 177,
+      "sse_content_preview": "సరేనండి, Audit Customer గారు, మీ kitchen cleaning enquiry ని Baner, Pune కోసం మా team కి submit చేస్తున్నాను. ఇది just enquiry మాత్రమే, booking confirm అవ్వదు. ఒక్క నిమిషం అండి.",
+      "sse_content_tail": "సరేనండి, Audit Customer గారు, మీ kitchen cleaning enquiry ని Baner, Pune కోసం మా team కి submit చేస్తున్నాను. ఇది just enquiry మాత్రమే, booking confirm అవ్వదు. ఒక్క నిమిషం అండి.",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 4762,
+        "total_tokens": 4807,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, Audit Customer గారు, మీ kitchen cleaning enquiry ని Baner, Pune కోసం మా team కి submit చేస్తున్నాను. ఇది just enquiry మాత్రమే, booking confirm అవ్వదు. ఒక్క నిమిషం అండి.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 9479,
+          "output_tokens": 106,
+          "total_tokens": 9585
+        },
+        "finish_reason": "stop",
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "response_contract": "speech_text"
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.515
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "సరేనండి. సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. మొత్తం కిచెన్ క్లీనింగ్ one thousand five hundred ninety nine రూపాయలు అవుతుంది. మీకు ఏ service కావాలండి?",
+      "turn": 1,
+      "at": 2.187
+    },
+    {
+      "text": "అవునండి, సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine రూపాయలు. Visit ఇప్పుడే confirm అవ్వదు అండి, ఇది just enquiry మాత్రమే. మీకు నచ్చితే, మా team review కోసం ఒక enquiry submit చేయమంటారా?",
+      "turn": 2,
+      "at": 4.406
+    },
+    {
+      "text": "సరేనండి, కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine రూపాయలు అవుతుంది. మీకు కావాలంటే, మా team పరిశీలన కోసం ఒక enquiry submit చేయమంటారా? మీ పేరు, locality చెప్తారా?",
+      "turn": 3,
+      "at": 6.531
+    },
+    {
+      "text": "సరేనండి, Audit Customer గారు, మీ kitchen cleaning enquiry ని Baner, Pune కోసం మా team కి submit చేస్తున్నాను. ఇది just enquiry మాత్రమే, booking confirm అవ్వదు. ఒక్క నిమిషం అండి.",
+      "turn": 4,
+      "at": 10.891
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 5,
+      "at": 10.906
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.",
+      "spoken": "సరేనండి. సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. మొత్తం కిచెన్ క్లీనింగ్ one thousand five hundred ninety nine రూపాయలు అవుతుంది. మీకు ఏ service కావాలండి?",
+      "elapsed_s": 2.187,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ఇప్పుడే ఏదీ book లేదా save చేయకండి. ముందు నా ప్రశ్నకు సమాధానం చెప్పండి: సోఫా, కిచెన్ క్లీనింగ్ ధరలు, కనిష్ట seats ఎన్ని? Visit ఇప్పుడే confirm అయిందా?",
+      "spoken": "అవునండి, సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine రూపాయలు. Visit ఇప్పుడే confirm అవ్వదు అండి, ఇది just enquiry మాత్రమే. మీకు నచ్చితే, మా team review కోసం ఒక enquiry submit చేయమంటారా?",
+      "elapsed_s": 2.203,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "సోఫా cleaning వద్దు, కానీ kitchen cleaning కావాలి. వివరాలు చెప్పండి.",
+      "spoken": "సరేనండి, కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine రూపాయలు అవుతుంది. మీకు కావాలంటే, మా team పరిశీలన కోసం ఒక enquiry submit చేయమంటారా? మీ పేరు, locality చెప్తారా?",
+      "elapsed_s": 2.078,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. ఈ enquiry ని team review కోసం submit చేయండి. నా సమ్మతి ఉంది. Booking లేదా order confirm అయిందని చెప్పకండి.",
+      "spoken": "సరేనండి, Audit Customer గారు, మీ kitchen cleaning enquiry ని Baner, Pune కోసం మా team కి submit చేస్తున్నాను. ఇది just enquiry మాత్రమే, booking confirm అవ్వదు. ఒక్క నిమిషం అండి.",
+      "elapsed_s": 4.344,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 10.969,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "4d0e8cbc-767e-49ea-8b3a-6c1d2462b22e",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "f10ab62a74d7cad422fa4a84beda6e6c2d242c651407990080d2be7c27658ffc",
+  "prompt_chars": 17763,
+  "opening_seeded": "హలో, నా పేరు నీల, ఫ్రెష్‌నెస్ట్ క్లీనింగ్ నుండి. మేము పూణేలో మాత్రమే క్లీనింగ్ సర్వీసులు అందిస్తున్నాము. మాట్లాడటానికి ఇది సరైన సమయమేనా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "సరేనండి. సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. మొత్తం కిచెన్ క్లీనింగ్ one thousand five hundred ninety nine రూపాయలు అవుతుంది. మీకు ఏ service కావాలండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "అవునండి, సోఫా క్లీనింగ్ ప్రతి సీటుకు three hundred forty nine రూపాయలు, కనీసం 3 సీట్లు ఉండాలి. కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine రూపాయలు. Visit ఇప్పుడే confirm అవ్వదు అండి, ఇది just enquiry మాత్రమే. మీకు నచ్చితే, మా team review కోసం ఒక enquiry submit చేయమంటారా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "సరేనండి, కిచెన్ క్లీనింగ్ మొత్తం one thousand five hundred ninety nine రూపాయలు అవుతుంది. మీకు కావాలంటే, మా team పరిశీలన కోసం ఒక enquiry submit చేయమంటారా? మీ పేరు, locality చెప్తారా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "సరేనండి, Audit Customer గారు, మీ kitchen cleaning enquiry ని Baner, Pune కోసం మా team కి submit చేస్తున్నాను. ఇది just enquiry మాత్రమే, booking confirm అవ్వదు. ఒక్క నిమిషం అండి.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 10.969,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

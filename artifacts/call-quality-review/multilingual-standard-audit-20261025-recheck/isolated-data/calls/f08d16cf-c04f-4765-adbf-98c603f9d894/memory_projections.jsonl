@@ -1,0 +1,5 @@
+{"turn_seq": 1, "ts": "2026-10-25T17:10:41.132015Z", "include_summary": true, "projection": ""}
+{"turn_seq": 3, "ts": "2026-10-25T17:10:42.537126Z", "include_summary": true, "projection": ""}
+{"turn_seq": 5, "ts": "2026-10-25T17:10:44.552630Z", "include_summary": true, "projection": "[Facts — do not re-ask]\npricing_answered: AC 699, fridge 399, parts extra post-approval"}
+{"turn_seq": 7, "ts": "2026-10-25T17:10:46.492142Z", "include_summary": false, "projection": "[Facts — do not re-ask]\npricing_answered: AC 699, fridge 399, parts extra post-approval"}
+{"turn_seq": 9, "ts": "2026-10-25T17:10:46.510659Z", "include_summary": false, "projection": "[Facts — do not re-ask]\npricing_answered: AC 699, fridge 399, parts extra post-approval | caller_email: audit.customer@example.invalid\n[Context]\nCaller shared contact details for the team to follow up."}

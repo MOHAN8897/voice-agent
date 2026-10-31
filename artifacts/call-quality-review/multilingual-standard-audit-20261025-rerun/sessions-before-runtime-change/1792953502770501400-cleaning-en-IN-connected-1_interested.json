@@ -1,0 +1,250 @@
+{
+  "key": "cleaning-en-IN-connected-1_interested",
+  "business": "cleaning",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "1_interested",
+  "agent_id": "69c3a1f9-9bb0-5fc5-b8af-5cf5e13d0283",
+  "call_id": "ab8ca5a9-455d-47f2-9d28-0f9e268bb592",
+  "session_id": "audit-cleaning-en-IN-connected-1_interested-596da906",
+  "compiled_checksum": "5a25d6a9a1e56b4248a00a7ed913ce26430c3226a93d4ae617e7e7e2d1c9293a",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 223,
+      "sse_content_preview": "We offer sofa cleaning at 349 rupees per seat, minimum three seats, and kitchen cleaning at 1599 rupees total. We work Monday to Saturday from 9am to 6pm. Would you like to hear more about sofa cleaning or kitchen cleaning?",
+      "sse_content_tail": "We offer sofa cleaning at 349 rupees per seat, minimum three seats, and kitchen cleaning at 1599 rupees total. We work Monday to Saturday from 9am to 6pm. Would you like to hear more about sofa cleaning or kitchen cleaning?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 57,
+        "prompt_tokens": 4132,
+        "total_tokens": 4189,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "We offer sofa cleaning at 349 rupees per seat, minimum three seats, and kitchen cleaning at 1599 rupees total. We work Monday to Saturday from 9am to 6pm. Would you like to hear more about sofa cleaning or kitchen cleaning?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4132,
+          "output_tokens": 57,
+          "total_tokens": 4189
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.641
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 205,
+      "sse_content_preview": "We offer sofa cleaning at 349 rupees per seat, minimum three seats, and kitchen cleaning at 1599 rupees total. Our hours are Monday to Saturday, 9am to 6pm. Which service would you like to know more about?",
+      "sse_content_tail": "We offer sofa cleaning at 349 rupees per seat, minimum three seats, and kitchen cleaning at 1599 rupees total. Our hours are Monday to Saturday, 9am to 6pm. Which service would you like to know more about?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 55,
+        "prompt_tokens": 4065,
+        "total_tokens": 4120,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "We offer sofa cleaning at 349 rupees per seat, minimum three seats, and kitchen cleaning at 1599 rupees total. Our hours are Monday to Saturday, 9am to 6pm. Which service would you like to know more about?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4065,
+          "output_tokens": 55,
+          "total_tokens": 4120
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.64
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 266,
+      "sse_content_preview": "Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No visit is confirmed yet, this is just an enquiry for team review. Which service would you like to go ahead with?",
+      "sse_content_tail": "Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No visit is confirmed yet, this is just an enquiry for team review. Which service would you like to go ahead with?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 54,
+        "prompt_tokens": 4203,
+        "total_tokens": 4257,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Sofa cleaning is three hundred forty nine rupees per seat, minimum three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. No visit is confirmed yet, this is just an enquiry for team review. Which service would you like to go ahead with?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4203,
+          "output_tokens": 54,
+          "total_tokens": 4257
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.547
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "error_type": "CancelledError",
+      "finish_reason": null,
+      "elapsed_s": 0.703
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "We offer sofa cleaning at three hundred forty nine rupees per seat, minimum three seats, and kitchen cleaning at one thousand five hundred ninety nine rupees total. Our hours are Monday to Saturday, 9am to 6pm. Which service would you like to know more about?",
+      "turn": 1,
+      "at": 4.297
+    },
+    {
+      "text": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "turn": 2,
+      "at": 8.844
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "Yes, I am interested. Please explain the service, price and any conditions.",
+      "spoken": "We offer sofa cleaning at three hundred forty nine rupees per seat, minimum three seats, and kitchen cleaning at one thousand five hundred ninety nine rupees total. Our hours are Monday to Saturday, 9am to 6pm. Which service would you like to know more about?",
+      "elapsed_s": 4.297,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "Do not book or save anything yet. Answer this first: What are the sofa and kitchen cleaning prices, minimum seats, and is a visit already confirmed?",
+      "spoken": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "elapsed_s": 4.594,
+      "requests": 2,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 8.906,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "ab8ca5a9-455d-47f2-9d28-0f9e268bb592",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "23682e89b99a0ffbe82046a24f58960907ce34dea61daea3adc20a16c6e3540c",
+  "prompt_chars": 17509,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, I am Nila, an AI assistant with FreshNest Cleaning. Am I speaking with the homeowner today?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "We offer sofa cleaning at three hundred forty nine rupees per seat, minimum three seats, and kitchen cleaning at one thousand five hundred ninety nine rupees total. Our hours are Monday to Saturday, 9am to 6pm. Which service would you like to know more about?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 8.906,
+  "hangup_count": 1,
+  "source_signature": "f4d9ffd3ee35a64a4fc0d9be13b04fe8b9d3218b62849fa4d8c4be2901620ad3"
+}

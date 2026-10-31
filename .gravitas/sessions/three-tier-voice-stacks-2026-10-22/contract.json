@@ -1,0 +1,25 @@
+{
+  "mode": "implement",
+  "objective": "Implement the three-tier voice stack plan while preserving legacy routing and the Premium Gemini Live baseline; keep approval-dependent profiles disabled.",
+  "acceptance_criteria": [
+    "Legacy agents without stackSelectionVersion retain their existing universal voice stack and tier behavior.",
+    "Canonical tier aliases normalize explicitly; unknown and disabled selections fail closed.",
+    "Validated tenant voice settings save atomically with a server-owned revision and stale revision conflicts.",
+    "Admin stack profiles and revisions reuse TierAssignment.stack_payload and ConfigVersion; startup does not overwrite persisted assignments.",
+    "Composed stack preparation and call execution use one immutable snapshot and never allocate Gemini Live or silently fall back to another model.",
+    "Premium retains its existing prepared Live session and one-time opening behavior.",
+    "Tenant-facing settings, catalog, previews, and errors expose only public aliases and approved retail rates.",
+    "Admin UI can configure and inspect readiness without exposing credentials to tenants or enabling unapproved profiles.",
+    "Adapters enforce bounded async I/O, cancellation, media validation, usage capture, and deterministic cleanup.",
+    "Changed acceptance criteria have fresh focused tests/static checks and user-visible flows have a Reticle verdict; external staging/production blockers are reported separately."
+  ],
+  "non_goals": [
+    "No production activation, production config mutation, or schema migration execution.",
+    "No invented provider model, public model alias, voice capability, retail rate, FX value, or quality claim.",
+    "No rewrite of Premium realtime voice internals as the implementation path for composed stacks."
+  ],
+  "risk": "high",
+  "budget": "deep",
+  "allowed_write_scope": ["server/", "voxly-ai/", "web/", ".gravitas/sessions/three-tier-voice-stacks-2026-10-22/"],
+  "verification": "impact"
+}

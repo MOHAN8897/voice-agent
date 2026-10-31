@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ಬೇಡಿ. ಮೊದಲು ನನ್ನ ಪ್ರಶ್ನೆಗೆ ಉತ್ತರ ಕೊಡಿ: AC servicing ಮತ್ತು fridge inspection ಬೆಲೆ ಎಷ್ಟು? Replacement parts ಅದರಲ್ಲಿ ಸೇರಿವೆಯಾ?\nassistant: AC servicing six hundred ninety nine rupees ಮತ್ತೆ fridge inspection three hundred ninety nine rupees ಆಗುತ್ತೆ. Replacement parts extra irutte, customer approval nanthara mathra haakuvevu. Inspection madade fixed repair quote neduvarilla.\nuser: ನನಗೆ AC servicing ಬೇಡ, ಆದರೆ fridge inspection ಬೇಕು. ಸಹಾಯ ಮಾಡುತ್ತೀರಾ?\nassistant: ಖಂಡಿತ, fridge inspection three hundred ninety nine rupees ಗೆ ಮಾಡಬಹುದು. ಈ visit request-ಗೆ ನಿಮ್ಮ ಹೆಸರು, area ಮತ್ತೆ ಯಾವತ್ತು ಬರಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?"
+}

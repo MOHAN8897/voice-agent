@@ -15,7 +15,7 @@ def test_projection_priority_and_slots():
         include_summary=False,
         max_tokens=150,
     )
-    assert "[Facts]" in text
+    assert "[Facts — do not re-ask]" in text
     assert "Ravi" in text
     assert "[Preferences]" in text
     assert "[Summary]" not in text
@@ -51,8 +51,22 @@ def test_projection_truncates_to_budget():
     from server.agent.brain_prompt_composer import estimate_tokens
 
     assert estimate_tokens(text) <= 55
-    assert "[Facts]" in text
+    assert "[Facts" in text
 
 
 def test_empty_snapshot_renders_empty():
     assert build({}, include_summary=True) == ""
+
+
+def test_current_caller_words_override_a_stale_decline_note():
+    snap = {
+        "facts": {"outcome": "firm refusal", "product": "visiting cards"},
+        "preferences": {},
+        "important_context": "",
+        "summary": "",
+    }
+    stale = build(snap, include_summary=False)
+    assert "firm refusal" in stale
+    current = build(snap, include_summary=False, caller_text="I am interested, what is the price?")
+    assert "firm refusal" not in current
+    assert "visiting cards" in current

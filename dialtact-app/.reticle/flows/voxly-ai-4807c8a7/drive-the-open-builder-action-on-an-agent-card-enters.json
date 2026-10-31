@@ -1,0 +1,171 @@
+{
+  "version": 2,
+  "name": "drive-the-open-builder-action-on-an-agent-card-enters",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1790836609479,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Open builder"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-tab-overview"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-tab-script"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-tab-calls"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-tab-voice"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-tab-settings"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-test-call"
+            }
+          },
+          {
+            "kind": "element",
+            "query": {
+              "testid": "agent-save"
+            }
+          }
+        ]
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "unresolved"
+      },
+      "args": {},
+      "action": "hover",
+      "degraded": true,
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-test-call",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call-panel"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Practise on a browser call",
+        "visible": true,
+        "absent": true
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "testid",
+        "value": "agent-test-call",
+        "source": {
+          "file": "src/console/ui/TactileButton.jsx",
+          "line": 69,
+          "column": 5
+        }
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "agent-test-call-panel"
+        }
+      },
+      "page": "/"
+    },
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "Close dialog"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "text",
+        "contains": "Practise on a browser call",
+        "visible": true,
+        "absent": true
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "The Open builder action on an agent card enters the workspace with Overview selected, not Script.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "reticle-cli"
+  },
+  "intentId": "flow:drive-the-open-builder-action-on-an-agent-card-enters"
+}

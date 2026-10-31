@@ -2,7 +2,6 @@ import { VOICE_PIPELINE_LIMITS } from "@/lib/voice/types";
 import type { TtsTextChunk } from "@/lib/voice/types";
 
 const STRONG_END = /[.!?।…\n]/;
-const CLAUSE_END = /[;:]/;
 
 function wordCount(text: string): number {
   return (text.trim().match(/\S+/g) || []).length;
@@ -15,8 +14,8 @@ function lastWordBoundary(text: string, maxIndex: number): number {
 }
 
 /**
- * Streaming text chunker — prefers full sentences/clauses over arbitrary fragments.
- * Small responses are emitted as a single unit on flush.
+ * Streaming text chunker — sentence boundaries only (. ? ! ।).
+ * First sentence flushes immediately; tiny complete replies still emit as one chunk on flush.
  */
 export class StreamingTextChunker {
   private fullText = "";
@@ -49,10 +48,6 @@ export class StreamingTextChunker {
   private extract(streamDone: boolean): TtsTextChunk[] {
     const chunks: TtsTextChunk[] = [];
     const { smallResponseMaxChars, minChunkChars, maxChunkChars } = VOICE_PIPELINE_LIMITS;
-
-    if (!streamDone && this.sentEnd === 0 && this.fullText.trim().length <= smallResponseMaxChars) {
-      return chunks;
-    }
 
     if (streamDone && this.sentEnd === 0 && this.fullText.trim().length <= smallResponseMaxChars) {
       const text = this.fullText.trim();
@@ -96,26 +91,22 @@ export class StreamingTextChunker {
   }
 
   private findBoundary(unsent: string, streamDone: boolean): number {
-    const { minChunkChars, maxChunkChars } = VOICE_PIPELINE_LIMITS;
+    const { minChunkChars, maxChunkChars, forceFlushAt } =
+      VOICE_PIPELINE_LIMITS;
 
     if (streamDone) return unsent.length;
 
     for (let i = 0; i < unsent.length; i++) {
+      // Keep decimals like 80.5 intact — only treat "." as sentence end when not before a digit.
       if (STRONG_END.test(unsent[i]) && i + 1 >= minChunkChars) {
+        const next = unsent[i + 1];
+        if (unsent[i] === "." && next && /\d/.test(next)) continue;
         return i + 1;
       }
     }
 
-    for (let i = 0; i < unsent.length; i++) {
-      if (CLAUSE_END.test(unsent[i]) && i + 1 >= minChunkChars) {
-        return i + 1;
-      }
-    }
-
-    for (let i = 0; i < unsent.length; i++) {
-      if (unsent[i] === "," && i + 1 >= minChunkChars && unsent.length >= 40) {
-        return i + 1;
-      }
+    if (unsent.length >= forceFlushAt) {
+      return lastWordBoundary(unsent, maxChunkChars);
     }
 
     if (unsent.length >= maxChunkChars) {

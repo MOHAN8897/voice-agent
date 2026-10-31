@@ -1,0 +1,42 @@
+{
+  "business": "cleaning",
+  "language": "kn-IN",
+  "analysis_status": 200,
+  "http_status": 422,
+  "elapsed_s": 301.172,
+  "request": {
+    "brief": "make Nila from FreshNest Cleaning, outbound friendly service information, Pune only. Messy note: sofa cleaning 349 rupees PER SEAT minimum 3 seats, kitchen cleaning 1599 rupees TOTAL. Old kitchen note 1299 is wrong; discard it, current kitchen fee 1599. Do not quote a whole sofa for 349. Mon-Sat 9am-6pm. No discount, refund or warranty policy supplied. Do not invent them. A caller rejecting sofa cleaning may still want kitchen cleaning. Answer prices and conditions first, never demand a name to answer. Goal explain services and, if wanted, submit an enquiry for team review after preferred name, service type, locality and consent. An enquiry is NOT a confirmed slot or paid order. If authorised CRM is connected save once after consent and confirm only the actual tool result. Without integration explain cannot save externally or confirm a visit; can discuss facts and note the request within this call. Future interest is welcome, not DNC, callbacks only when actually requested. Do not promise same-day arrival or a confirmed time. Do not give instructions for mixing toxic cleaning chemicals. Respect clear refusal and stop-contact. Optional fields optional.",
+    "language": "kn-IN",
+    "employeeName": "Nila",
+    "agentRole": "sales",
+    "callDirection": "outbound",
+    "mode": "instant_lead",
+    "naturalSpokenStyle": true,
+    "requestId": "ed665e3b-348a-40b0-bedc-adc6b9fd5bac"
+  },
+  "response": {
+    "detail": {
+      "error": {
+        "code": "brief_needs_clarification",
+        "status": "needs_user_input",
+        "message": "The script needs another review before it can be saved. Please try again. An unfinished agent remains in your agent list; review or remove it before starting a new creation request.",
+        "issues": [
+          {
+            "code": "invalid_generated_script",
+            "message": "The script needs another review before it can be saved. Please try again.",
+            "description": "The script needs another review before it can be saved. Please try again.",
+            "field": "script",
+            "evidence": "",
+            "severity": "error"
+          }
+        ],
+        "needs_user_input": [
+          "The script needs another review before it can be saved. Please try again."
+        ],
+        "agentId": "a6a0cd51-e9e2-51b8-83ba-0cec5e0c43f2",
+        "draftRetained": true
+      }
+    }
+  },
+  "status": "creation_failed"
+}

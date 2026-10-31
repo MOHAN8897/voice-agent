@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "name": "drive-tenants-prepare-recipients-and-review-a-campaign",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1792524173634,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "New campaign"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "element",
+        "query": {
+          "testid": "campaign-setup"
+        }
+      },
+      "page": "/"
+    }
+  ],
+  "startPath": "/",
+  "intent": "Tenants prepare recipients and review a campaign on one setup page.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/"
+    }
+  ],
+  "author": {
+    "agent": "codex-mcp-client",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-tenants-prepare-recipients-and-review-a-campaign"
+}

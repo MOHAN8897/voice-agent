@@ -1,0 +1,57 @@
+{
+  "key": "repair-hi-IN-connected-1_interested",
+  "business": "repair",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "1_interested",
+  "agent_id": "25beedf0-4160-5e75-9a13-0bb19345ff11",
+  "call_id": "e4607635-e54f-477f-8f2f-ae24104fe93d",
+  "session_id": "audit-repair-hi-IN-connected-1_interested-f957397b",
+  "compiled_checksum": "30004813b705763fee84f783301f109432b20e0f237e3a08bc5b74b2194fb737",
+  "requests": [],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "क्षमा करें, हमें एक तकनीकी समस्या आ रही है। कृपया हमें वापस कॉल करें। धन्यवाद।",
+      "turn": 1,
+      "at": 0.406
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।",
+      "spoken": "क्षमा करें, हमें एक तकनीकी समस्या आ रही है। कृपया हमें वापस कॉल करें। धन्यवाद।",
+      "elapsed_s": 0.453,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 0.453,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "e4607635-e54f-477f-8f2f-ae24104fe93d",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 1,
+  "instrumentation_version": 2,
+  "render_checksum": "90bd6a4f8ae0798b76272bede0e44a788bc94a372888bf0fee764a8aeed2a4c9",
+  "prompt_chars": 17918,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, main Ravi hoon SafeFix Home Service se. Kya aapko Pune mein kisi home appliance service ke baare mein jankari chahiye?",
+  "status": "completed",
+  "elapsed_s": 0.453,
+  "hangup_count": 1
+}

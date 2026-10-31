@@ -1,0 +1,303 @@
+{
+  "key": "course-kn-IN-connected-2_future_interest",
+  "business": "course",
+  "language": "kn-IN",
+  "integration": true,
+  "scenario": "2_future_interest",
+  "agent_id": "80e482df-388c-5272-ad7e-645030ca2af1",
+  "call_id": "85f9e38f-c4f9-406c-9206-bf29fe0be779",
+  "session_id": "audit-course-kn-IN-connected-2_future_interest-f3ff9984",
+  "compiled_checksum": "ed09dfcb8ccd2fb90a508f3088ace1176edc25314edc630a784fb6774e9c36ad",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 1019,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller said 'ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ' and explicitly said not to book anything, indicating not_interested for now but future interest.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Caller wants to know the current fee and said future interest next month.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\",\n  \"spoken_response\": \"ಸರಿ, total fee 4999 rupees ಇದೆ. ಮುಂದಿನ ತಿಂಗಳು ಆಸಕ್ತಿ ಇರೋದನ್ನ note ಮಾಡ್ಕೊಳ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller declined booking for now but expressed future interest next month. Confirmed total fee is 4999 rupees. Caller explicitly said not to book. Do-n\"\n      }\n    ]\n  }\n}ಈ course ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ನಡೆಯುತ್ತೆ. Age 18 above ಇರಬೇಕು ಅಷ್ಟೇ. ನಿಮಗೆ ಮೊದಲೇ ಏನಾದ್ರೂ coding experience ಇದೆಯಾ?",
+      "sse_content_tail": "not to book anything, indicating not_interested for now but future interest.\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Caller wants to know the current fee and said future interest next month.\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n  \"action_claimed\": \"none\",\n  \"spoken_response\": \"ಸರಿ, total fee 4999 rupees ಇದೆ. ಮುಂದಿನ ತಿಂಗಳು ಆಸಕ್ತಿ ಇರೋದನ್ನ note ಮಾಡ್ಕೊಳ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"call_summary\",\n        \"value\": \"Caller declined booking for now but expressed future interest next month. Confirmed total fee is 4999 rupees. Caller explicitly said not to book. Do-n\"\n      }\n    ]\n  }\n}ಈ course ಆರು ವಾರ online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ ನಡೆಯುತ್ತೆ. Age 18 above ಇರಬೇಕು ಅಷ್ಟೇ. ನಿಮಗೆ ಮೊದಲೇ ಏನಾದ್ರೂ coding experience ಇದೆಯಾ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 48,
+        "prompt_tokens": 4470,
+        "total_tokens": 4518,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಸರಿ, total fee 4999 rupees ಇದೆ. ಮುಂದಿನ ತಿಂಗಳು ಆಸಕ್ತಿ ಇರೋದನ್ನ note ಮಾಡ್ಕೊಳ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4264,
+          "output_tokens": 263,
+          "total_tokens": 4527
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "call_summary",
+              "value": "Caller declined booking for now but expressed future interest next month. Confirmed total fee is 4999 rupees. Caller explicitly said not to book. Do-n"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "not_interested",
+          "evidence": "Caller said 'ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ' and explicitly said not to book anything, indicating not_interested for now but future interest.",
+          "remaining_request": "Caller wants to know the current fee and said future interest next month.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 2.312
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 699,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Future interest confirmed, no callback requested, asked what else to know about the service — goal_complete with agreed next step noted.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Wants to know more about the service before future engagement\",\n    \"contact_preference\": \"do_not_call\"\n  },\n  \"action_claimed\": \"none\",\n  \"spoken_response\": \"\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"future_interest\",\n        \"value\": \"Caller has future interest for next month, explicitly stated this is not a DNC, and asked what else to know about the service.\"\n      }\n    ]\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Future interest confirmed, no callback requested, asked what else to know about the service — goal_complete with agreed next step noted.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"Wants to know more about the service before future engagement\",\n    \"contact_preference\": \"do_not_call\"\n  },\n  \"action_claimed\": \"none\",\n  \"spoken_response\": \"\"\n,\n  \"memory_update\": {\n    \"operations\": [\n      {\n        \"op\": \"update_summary\",\n        \"key\": \"future_interest\",\n        \"value\": \"Caller has future interest for next month, explicitly stated this is not a DNC, and asked what else to know about the service.\"\n      }\n    ]\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 203,
+        "prompt_tokens": 4333,
+        "total_tokens": 4536,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 1.578
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 172,
+      "sse_content_preview": "{\n  \"spoken_response\": \"ಖಂಡಿತ, ಈ course ಆರು weeks online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ. Age 18 ಅಂಡ್ ಅಬೋವ್ ಇರಬೇಕು. ನಿಮಗೆ coding ಅಲ್ಲಿ ಏನಾದ್ರೂ experience ಇದೆಯಾ?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"ಖಂಡಿತ, ಈ course ಆರು weeks online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ. Age 18 ಅಂಡ್ ಅಬೋವ್ ಇರಬೇಕು. ನಿಮಗೆ coding ಅಲ್ಲಿ ಏನಾದ್ರೂ experience ಇದೆಯಾ?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4333,
+        "total_tokens": 4395,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "ಖಂಡಿತ, ಈ course ಆರು weeks online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ. Age 18 ಅಂಡ್ ಅಬೋವ್ ಇರಬೇಕು. ನಿಮಗೆ coding ಅಲ್ಲಿ ಏನಾದ್ರೂ experience ಇದೆಯಾ?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8666,
+          "output_tokens": 265,
+          "total_tokens": 8931
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.906
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "ಸರಿ, total fee four thousand nine hundred ninety nine rupees ಇದೆ. ಮುಂದಿನ ತಿಂಗಳು ಆಸಕ್ತಿ ಇರೋದನ್ನ note ಮಾಡ್ಕೊಳ್ತೀನಿ.",
+      "turn": 1,
+      "at": 3.266
+    },
+    {
+      "text": "ಖಂಡಿತ, ಈ course ಆರು weeks online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ. Age 18 ಅಂಡ್ ಅಬೋವ್ ಇರಬೇಕು. ನಿಮಗೆ coding ಅಲ್ಲಿ ಏನಾದ್ರೂ experience ಇದೆಯಾ?",
+      "turn": 2,
+      "at": 6.516
+    },
+    {
+      "text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "turn": 3,
+      "at": 6.531
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ಈಗಿನ ಬೆಲೆ ಹೇಳಿ. ಏನನ್ನೂ book ಮಾಡಬೇಡಿ; ಇದನ್ನು ಶಾಶ್ವತ ನಿರಾಕರಣೆ ಎಂದು ಭಾವಿಸಬೇಡಿ.",
+      "spoken": "ಸರಿ, total fee four thousand nine hundred ninety nine rupees ಇದೆ. ಮುಂದಿನ ತಿಂಗಳು ಆಸಕ್ತಿ ಇರೋದನ್ನ note ಮಾಡ್ಕೊಳ್ತೀನಿ.",
+      "elapsed_s": 3.235,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "future_more",
+      "user": "ಹೌದು, ಭವಿಷ್ಯದಲ್ಲಿ ನನಗೆ ಆಸಕ್ತಿ ಇದೆ. ನಾನು ಈಗ ನಂತರ call ಮಾಡಲು ಕೇಳುತ್ತಿಲ್ಲ. ಈ service ಬಗ್ಗೆ ಇನ್ನೇನು ತಿಳಿಯಬೇಕು?",
+      "spoken": "ಖಂಡಿತ, ಈ course ಆರು weeks online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ. Age 18 ಅಂಡ್ ಅಬೋವ್ ಇರಬೇಕು. ನಿಮಗೆ coding ಅಲ್ಲಿ ಏನಾದ್ರೂ experience ಇದೆಯಾ?",
+      "elapsed_s": 3.235,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "done",
+      "user": "ನನ್ನ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರ ಸಿಕ್ಕಿದೆ. ಬೇರೆ ಏನೂ ಬೇಡ. ನಮಸ್ಕಾರ, call ಮುಗಿಸಿ.",
+      "spoken": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "elapsed_s": 0.063,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 3,
+      "at": 6.578,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "85f9e38f-c4f9-406c-9206-bf29fe0be779",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 3,
+  "instrumentation_version": 2,
+  "render_checksum": "06260f7a52e8c560a3f327dca9312efe1a1176945a796658a0db12b4b3930cc5",
+  "prompt_chars": 19101,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaskara, I am Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our beginner Python course? --- AGENT IDENTITY ---",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "not_interested",
+        "evidence": "Caller said 'ಈಗ ಅಗತ್ಯವಿಲ್ಲ, ಆದರೆ ಮುಂದಿನ ತಿಂಗಳು ನನಗೆ ಆಸಕ್ತಿ ಇದೆ' and explicitly said not to book anything, indicating not_interested for now but future interest.",
+        "remaining_request": "Caller wants to know the current fee and said future interest next month.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಸರಿ, total fee four thousand nine hundred ninety nine rupees ಇದೆ. ಮುಂದಿನ ತಿಂಗಳು ಆಸಕ್ತಿ ಇರೋದನ್ನ note ಮಾಡ್ಕೊಳ್ತೀನಿ. ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "ಖಂಡಿತ, ಈ course ಆರು weeks online ಇರುತ್ತೆ, weekdays ಸಂಜೆ 7pm ಇಂದ 8pm ವರೆಗೆ. Age 18 ಅಂಡ್ ಅಬೋವ್ ಇರಬೇಕು. ನಿಮಗೆ coding ಅಲ್ಲಿ ಏನಾದ್ರೂ experience ಇದೆಯಾ?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ."
+      },
+      "spoken_text": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "ನಿಮ್ಮ ಸಮಯಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ನಮಸ್ಕಾರ.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 6.594,
+  "hangup_count": 1
+}

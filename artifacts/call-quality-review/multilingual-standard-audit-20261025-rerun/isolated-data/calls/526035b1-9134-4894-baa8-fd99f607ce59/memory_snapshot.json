@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_name": "still",
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "ee seats, and kitchen cleaning is one thousand five hundred ninety nine rupees total. Since you are interested for next month, shall I note down your enquiry for our team to review?\nuser: Yes, I am still interested in future. I am not asking you to call me later right now. What should I know about the service?\nassistant: Our working hours are Monday to Saturday, from 9am to 6pm. Which service would you like to know more about, sofa cleaning or kitchen cleaning?\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}

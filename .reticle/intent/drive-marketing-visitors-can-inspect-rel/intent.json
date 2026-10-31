@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-marketing-visitors-can-inspect-relevant-calling": {
+      "declaredAt": 1793129443163,
+      "id": "flow:drive-marketing-visitors-can-inspect-relevant-calling",
+      "state": "declared",
+      "statement": "Marketing visitors can inspect relevant calling workflows, understand follow-up limits, and enter workspace pricing through sign-in on desktop and mobile.",
+      "status": "proposed",
+      "subject": "drive-marketing-visitors-can-inspect-rel",
+      "surface": {
+        "flow": "drive-marketing-visitors-can-inspect-relevant-calling"
+      },
+      "updatedAt": 1793129443182
+    }
+  },
+  "subject": "drive-marketing-visitors-can-inspect-rel",
+  "version": 1
+}

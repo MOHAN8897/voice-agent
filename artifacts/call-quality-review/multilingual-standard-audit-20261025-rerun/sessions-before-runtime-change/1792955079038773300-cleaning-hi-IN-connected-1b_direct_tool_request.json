@@ -1,0 +1,221 @@
+{
+  "key": "cleaning-hi-IN-connected-1b_direct_tool_request",
+  "business": "cleaning",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "1b_direct_tool_request",
+  "agent_id": "ecdd85e3-226b-5cd6-8714-2a63b5afa03f",
+  "call_id": "a368fa1c-e212-4b06-b4f8-327d384c0f4c",
+  "session_id": "audit-cleaning-hi-IN-connected-1b_direct_tool_request-d93b8afa",
+  "compiled_checksum": "0c2fcd9b9891880207ff585f3f61d0a66c16fa9a33b9c59e664552201ded2f9a",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4184,
+        "total_tokens": 4246,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4184,
+          "output_tokens": 62,
+          "total_tokens": 4246
+        },
+        "finish_reason": "tool_calls",
+        "tool_calls": [
+          {
+            "type": "function",
+            "id": "chatcmpl-tool-adfaa10c7cd6013c",
+            "function": {
+              "name": "CRM_CREATE_ENQUIRY",
+              "arguments": "{\"name\": \"Audit Customer\", \"email\": \"audit.customer@example.invalid\", \"request\": \"Kitchen cleaning in Baner, Pune\", \"preferred_time\": \"tomorrow at 3pm\"}"
+            }
+          }
+        ],
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.5
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "schema_properties": [],
+      "sse_content_chars": 163,
+      "sse_content_preview": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। ये सिर्फ team review के लिए है, कोई confirmed booking या order नहीं है। और कुछ जानकारी चाहिए आपको?",
+      "sse_content_tail": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। ये सिर्फ team review के लिए है, कोई confirmed booking या order नहीं है। और कुछ जानकारी चाहिए आपको?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 43,
+        "prompt_tokens": 4477,
+        "total_tokens": 4520,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। ये सिर्फ team review के लिए है, कोई confirmed booking या order नहीं है। और कुछ जानकारी चाहिए आपको?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4477,
+          "output_tokens": 43,
+          "total_tokens": 4520
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.531
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Kitchen cleaning in Baner, Pune",
+        "preferred_time": "tomorrow at 3pm"
+      },
+      "turn": 1
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें।",
+      "turn": 1,
+      "at": 4.266
+    },
+    {
+      "text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "turn": 2,
+      "at": 4.297
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want kitchen cleaning in Baner, Pune; preferred review time tomorrow at 3pm. यह enquiry team review के लिए submit कीजिए। मेरी सहमति है। Booking या order confirm मत बताइए।",
+      "spoken": "मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें।",
+      "elapsed_s": 4.266,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "done",
+      "user": "मेरे सवालों के जवाब मिल गए हैं। अब कुछ और नहीं चाहिए। नमस्ते, call समाप्त कीजिए।",
+      "spoken": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "elapsed_s": 0.062,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 2,
+      "at": 4.344,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "a368fa1c-e212-4b06-b4f8-327d384c0f4c",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 2,
+  "instrumentation_version": 2,
+  "render_checksum": "6114353fe86c56b639b94fab33c1ba7f6e971516b32bd95d18fc2541cf0ef55a",
+  "prompt_chars": 17322,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste. Main Nila bol rahi hoon FreshNest Cleaning se. Kya aapko hamari cleaning services ke baare mein jaankari chahiye?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "आपकी enquiry save हो गई है, reference number AUDIT-ENQUIRY-1 है। ये सिर्फ team review के लिए है, कोई confirmed booking या order नहीं है। और कुछ जानकारी चाहिए आपको?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।"
+      },
+      "spoken_text": "समय देने के लिए धन्यवाद। नमस्कार।",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "समय देने के लिए धन्यवाद। नमस्कार।",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 4.359,
+  "hangup_count": 1,
+  "source_signature": "ddd57ceecf295f637d384e7bd090f316c71dc2e87caec041388f08a14da910c9"
+}

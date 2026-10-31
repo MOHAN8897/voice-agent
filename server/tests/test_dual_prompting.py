@@ -1,16 +1,16 @@
 """Dual-channel prompting (behaviour + business) — Phase 5.5 tests."""
-from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 
-from server.config.env import get_settings
 import server.app as app_mod
+from server.config.env import get_settings
+from server.tests.auth_helpers import authenticated_dev_client
 
 
 def _client(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-dual")
     monkeypatch.setenv("SARVAM_API_KEY", "sv-dual")
     get_settings.cache_clear()
-    return TestClient(app_mod.app)
+    return authenticated_dev_client(app_mod.app)
 
 
 def test_save_and_get_single_brain_prompt(monkeypatch):
@@ -38,11 +38,11 @@ def test_default_brain_prompt_endpoint(monkeypatch):
     assert r.status_code == 200
     j = r.json()
     assert "brainPrompt" in j
-    assert "--- TELUGU VOICE ---" in j["brainPrompt"]
+    assert "--- SPOKEN LANGUAGE (te-IN) ---" in j["brainPrompt"]
     assert j["estimatedTokens"] >= 1024
     assert j["cacheMinTokens"] == 1024
     assert j["budgetMinTokens"] == 1500
-    assert j["budgetMaxTokens"] == 2500
+    assert j["budgetMaxTokens"] == 10000
     get_settings.cache_clear()
 
 
@@ -64,8 +64,10 @@ def test_save_and_get_both_channels(monkeypatch):
     assert "InventoryPro" in g["business"]
     assert g["style"] == "friendly, casual like a friend"
     # limits exposed
-    assert g["limits"]["behaviourMax"] == 8000
-    assert g["limits"]["businessMax"] == 8000
+    assert g["limits"]["behaviourMax"] == 2000
+    assert g["limits"]["businessMax"] == 2400
+    assert g["limits"]["behaviourMaxWords"] == 280
+    assert g["limits"]["businessMaxWords"] == 320
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()
 
@@ -73,20 +75,19 @@ def test_save_and_get_both_channels(monkeypatch):
 def test_8k_caps_enforced(monkeypatch):
     c = _client(monkeypatch)
     sid = "dual-cap"
-    long_b = "b" * 12_000
-    long_z = "z" * 12_000
+    long_b = "b " * 400
+    long_z = "z " * 400
     r = c.post("/api/instructions", json={
         "sessionId": sid,
         "behaviourInstructions": long_b,
         "businessInstructions": long_z,
         "brainPromptBudgetTokens": 2500,
     })
-    # Legacy dual-channel compose at 8k caps exceeds the 2500-token brain budget.
     assert r.status_code == 400
-    assert r.json()["detail"]["error"]["code"] == "prompt_budget_exceeded"
+    assert r.json()["detail"]["error"]["code"] == "prompt_section_too_long"
     from server.agent.brain_prompt_composer import sanitize_behaviour, sanitize_business
-    assert len(sanitize_behaviour(long_b)) == 8000
-    assert len(sanitize_business(long_z)) == 8000
+    assert len(sanitize_behaviour(long_b)) <= 2000
+    assert len(sanitize_business(long_z)) <= 2400
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()
 
@@ -157,5 +158,6 @@ def test_effective_prompt_shows_composed_brain(monkeypatch):
     assert j["channels"]["business_present"] is True
     assert j.get("compiledVersion", 0) >= 1
     assert j["cacheEligible"] == (j["estimatedTokens"] >= get_settings().prompt_cache_min_tokens)
+    assert "--- CALL END POLICY ---" in save.get("brainPromptFull", j["brainPrompt"])
     c.delete("/api/instructions", params={"sessionId": sid})
     get_settings.cache_clear()

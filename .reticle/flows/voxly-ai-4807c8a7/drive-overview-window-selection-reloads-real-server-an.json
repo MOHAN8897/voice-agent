@@ -1,0 +1,59 @@
+{
+  "version": 2,
+  "name": "drive-overview-window-selection-reloads-real-server-an",
+  "projectId": "voxly-ai-4807c8a7",
+  "createdAt": 1793086900817,
+  "steps": [
+    {
+      "tool": "reticle_act",
+      "anchor": {
+        "kind": "role",
+        "role": "button",
+        "name": "7d"
+      },
+      "args": {},
+      "action": "click",
+      "expect": {
+        "kind": "allOf",
+        "predicates": [
+          {
+            "kind": "net",
+            "method": "GET",
+            "urlContains": "/analytics?days=7",
+            "status": 200
+          },
+          {
+            "kind": "text",
+            "contains": "Calls (",
+            "visible": true,
+            "satisfies": {
+              "property": "matchesPattern",
+              "pattern": "Calls \\(\\d[\\d,.]*d\\)"
+            }
+          }
+        ]
+      },
+      "timeoutMs": 15000,
+      "page": "/dev"
+    }
+  ],
+  "startPath": "/dev",
+  "intent": "Overview window selection reloads real server analytics for the chosen date range.",
+  "requires": [
+    {
+      "kind": "route",
+      "pathname": "/dev"
+    }
+  ],
+  "ensures": [
+    {
+      "kind": "route",
+      "pathname": "/dev"
+    }
+  ],
+  "author": {
+    "agent": "mcp",
+    "person": "mohansaiteja.99@gmail.com"
+  },
+  "intentId": "flow:drive-overview-window-selection-reloads-real-server-an"
+}

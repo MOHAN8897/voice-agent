@@ -1,0 +1,75 @@
+{
+  "key": "course-en-IN-connected-2_future_interest",
+  "business": "course",
+  "language": "en-IN",
+  "integration": true,
+  "scenario": "2_future_interest",
+  "agent_id": "584c85f1-487c-5a21-8f37-bdbc77eb869f",
+  "call_id": "2598a1c1-30e9-463e-8af8-7c3cc2dc72d7",
+  "session_id": "audit-course-en-IN-connected-2_future_interest-769aae14",
+  "compiled_checksum": "f5a2713baa0fb33d6aab0cb9b7cc209083cc8a7d8221480adff6b2440b5dd8b9",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "elapsed_s": 4.5
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "auto",
+      "elapsed_s": 4.5
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "turn": 1,
+      "at": 9.0
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "future",
+      "user": "I do not need this right now, but I am interested next month. Please tell me the current price; do not book anything or call this a permanent rejection.",
+      "spoken": "Sorry, we are facing a technical problem. Please call us back. Thank you.",
+      "elapsed_s": 9.047,
+      "requests": 2,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 1,
+      "at": 9.047,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "2598a1c1-30e9-463e-8af8-7c3cc2dc72d7",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 1,
+  "render_checksum": "af44a97c503afe1c9e3b6b1c9edfc54e481227732ece0d92f0e4d78a30880eee",
+  "prompt_chars": 18618,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Hello, my name is Ananya calling from BrightPath Skills. Am I speaking with the right person to discuss our adult beginner Python course today?",
+  "status": "completed",
+  "elapsed_s": 9.047,
+  "hangup_count": 1
+}

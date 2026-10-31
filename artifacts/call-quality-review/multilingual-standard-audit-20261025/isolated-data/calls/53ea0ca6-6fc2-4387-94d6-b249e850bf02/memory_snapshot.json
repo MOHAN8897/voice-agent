@@ -1,0 +1,11 @@
+{
+  "facts": {
+    "caller_interest": "future_next_month",
+    "caller_stance": "not_interested_now",
+    "caller_request": "price_info_only",
+    "caller_name": "still"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": ""
+}

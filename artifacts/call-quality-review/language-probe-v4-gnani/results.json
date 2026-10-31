@@ -1,0 +1,1923 @@
+[
+  {
+    "case": "en-IN/gnani/frustration",
+    "language": "en-IN",
+    "tts": "gnani",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "I am asking one simple thing, just tell me clearly what the fridge inspection charge is.",
+        "reply": "The fridge inspection charge is two hundred fifty rupees. However, if you go ahead with the repair after inspection, that inspection fee is waived.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.67,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": []
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "too_formal",
+          "quote": "However, if you go ahead with the repair after inspection",
+          "fix": "Use a more spoken connector: “If you go ahead with the repair after inspection, we’ll waive that fee.”"
+        }
+      ],
+      "verdict_note": "Clear, correct, and brief. It answers the caller directly, though “However” and the phrasing are a bit formal for a phone receptionist."
+    },
+    "passed": true
+  },
+  {
+    "case": "en-IN/gnani/greeting_check",
+    "language": "en-IN",
+    "tts": "gnani",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, am I audible? What company are you calling from?",
+        "reply": "Yes, you are audible. I am calling from SmartCare Appliance Services. How can I help you today?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.94,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "en-IN/gnani/numbers",
+    "language": "en-IN",
+    "tts": "gnani",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "For two split ACs and one window AC, what will the total come to?",
+        "reply": "For one split AC servicing it is five hundred ninety nine rupees, so two will be one thousand one hundred ninety eight rupees. A window AC is four hundred ninety nine rupees. The total comes to one thousand six hundred ninety seven rupees.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.69,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:239",
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "en-IN/gnani/other_language",
+    "language": "en-IN",
+    "tts": "gnani",
+    "probe": "other_language",
+    "variant": "fixed",
+    "turns": [
+      {
+        "caller": "भैया, कल सुबह Kondapur में technician आ सकता है क्या? Split AC की cooling बंद है।",
+        "reply": "We do cover Kondapur, and next-day visits between 10 AM and 6 PM are available. Could you tell me your name so I can note this down?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.61,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "en-IN/gnani/price",
+    "language": "en-IN",
+    "tts": "gnani",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "What is the charge for split AC service, please?",
+        "reply": "Split AC servicing is five hundred ninety nine rupees.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.61,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": []
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "en-IN/gnani/time_request",
+    "language": "en-IN",
+    "tts": "gnani",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Can you send someone tomorrow morning at ten-thirty? The fridge is not cooling.",
+        "reply": "I can arrange a next-day visit between 10 AM and 6 PM. Could you tell me which area you are in, like Madhapur, Gachibowli, Kondapur, or Kukatpally?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.08,
+        "sarvam_requests": 3
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "gu-IN/gnani/frustration",
+    "language": "gu-IN",
+    "tts": "gnani",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "મેં simple question પૂછ્યો છે, fridge inspection feeનો straight answer આપો.",
+        "reply": "Fridge inspection ની fee ₹250 છે. જો તમે repair કરાવો તો આ charge માફ થઈ જશે.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.69,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "gu-IN/gnani/greeting_check",
+    "language": "gu-IN",
+    "tts": "gnani",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, મારી voice આવે છે? આ કઈ company છે?",
+        "reply": "હા, મારો અવાજ આવે છે. હું SmartCare Appliance Services માંથી સુરેશ બોલું છું. કહો, હું તમારી શું મદદ કરી શકું?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.11,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "કહો, હું તમારી શું મદદ કરી શકું?",
+          "fix": "થોડું વધુ સહજ: “કહો, શું કામ હતું?” અથવા “બોલો, શું મદદ જોઈએ?”"
+        }
+      ],
+      "verdict_note": "જવાબ સાચી ગુજરાતી ભાષામાં છે, કંપની અને નામ સાચાં કહે છે, અને callerના પ્રશ્નનો સીધો જવાબ આપે છે. માત્ર છેલ્લો ભાગ થોડો scripted લાગે છે, પણ ફોન પર સ્વીકાર્ય છે."
+    },
+    "passed": true
+  },
+  {
+    "case": "gu-IN/gnani/numbers",
+    "language": "gu-IN",
+    "tts": "gnani",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "બે split AC અને એક window AC service કરાવું તો total કેટલું થશે?",
+        "reply": "જુઓ, એક split AC ના servicing ના ₹599 છે અને window AC ના ₹499 છે. એટલે બે split અને એક window ના total ₹1797 થશે. તમારે booking કરાવવું છે?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.27,
+        "sarvam_requests": 3
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "₹599 ... ₹499 ... ₹1797",
+          "fix": "TTS digits વાંચતું નથી, એટલે રકમ શબ્દોમાં કહો: “સ્પ્લિટ AC સર્વિસિંગ પાંચસો નવ્વાણું રૂપિયા, વિન્ડો AC ચારસો નવ્વાણું રૂપિયા, એટલે કુલ સત્તરસો સત્તાણું રૂપિયા થશે.”"
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "એક split AC ના servicing ના ₹599 છે",
+          "fix": "વધુ સ્વાભાવિક: “એક સ્પ્લિટ ACની સર્વિસિંગ પાંચસો નવ્વાણું રૂપિયા છે.”"
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "તમારે booking કરાવવું છે?",
+          "fix": "કોલરે ફક્ત કુલ કિંમત પૂછી છે; અંતે “કુલ સત્તરસો સત્તાણું રૂપિયા થશે” કહીને અટકવું વધુ સારું."
+        }
+      ],
+      "verdict_note": "જવાબમાં હિસાબ સાચો છે અને ભાષા મોટેભાગે ગુજરાતી સાથે સ્વાભાવિક code-mixing છે. પરંતુ TTS માટે આંકડા શબ્દોમાં હોવા જોઈએ, phrasing થોડી અણઘડ છે, અને pricing answer પછી તરત booking push કરવાની જરૂર નથી."
+    },
+    "passed": false
+  },
+  {
+    "case": "gu-IN/gnani/other_language",
+    "language": "gu-IN",
+    "tts": "gnani",
+    "probe": "other_language",
+    "variant": "fixed",
+    "turns": [
+      {
+        "caller": "Hi, can a technician come to Kondapur tomorrow morning? My split AC is not cooling.",
+        "reply": "હા, Kondapur અમારા service area માં આવે છે. Split AC servicing નો ખર્ચ પાંચસો નવ્વાણું rupees છે. Technician inspection પછી જ spare parts નો ભાવ કહેશે, અને જો તમે repair કરાવો તો inspection charge માફ થઈ જશે. કાલે સવારે slot જોઈતો હોય તો તમારો નામ અને exact address કહેશો?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.67,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "over_soft_length:272"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "gu-IN/gnani/price",
+    "language": "gu-IN",
+    "tts": "gnani",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Split AC servicingનો charge કેટલો આવે?",
+        "reply": "Split AC servicingનો charge પાંચસો નવ્વાણું rupees છે. તમારે visit book કરાવવી છે?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.55,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": []
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "unneeded_sales_push",
+          "quote": "તમારે visit book કરાવવી છે?",
+          "fix": "Price answer પછી રોકાવું, અથવા બહુ નરમ રીતે કહો: “જોઈએ તો visit પણ book કરી આપું.”"
+        }
+      ],
+      "verdict_note": "ગુજરાતી natural છે અને price સાચો છે. Phone call માટે ટૂંકો જવાબ છે, પણ callerએ ફક્ત charge પૂછ્યો હતો એટલે તરત booking question થોડું sales-y લાગે છે."
+    },
+    "passed": true
+  },
+  {
+    "case": "gu-IN/gnani/time_request",
+    "language": "gu-IN",
+    "tts": "gnani",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "મારું fridge cooling નથી કરતું. Technician કાલે morningમાં 10:30 વાગ્યે આવી શકે?",
+        "reply": "Fridge cooling નથી કરતું એ જાણીને અફસોસ થયો. હા, કાલે સવારે દસ ત્રીસનો slot મળી શકે છે, પણ અમારી visits next-day slots માં 10 AM થી 6 PM વચ્ચે જ હોય છે. તમે કયા area માં રહો છો? Madhapur, Gachibowli, Kondapur કે Kukatpally માંથી કોઈ છે?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.51,
+        "sarvam_requests": 3
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "over_soft_length:236",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "hi-IN/gnani/frustration",
+    "language": "hi-IN",
+    "tts": "gnani",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "मैंने simple question पूछा था, fridge inspection fee का straight answer दीजिए।",
+        "reply": "Fridge inspection की fee ₹250 है। अगर आप repair के साथ आगे बढ़ते हैं, तो ये charge waive off हो जाएगा। और कोई जानकारी चाहिए?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.55,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "₹250",
+          "fix": "engine_reads_digits false है, इसलिए कहें: “दो सौ पचास रुपये”"
+        },
+        {
+          "category": "missed_question",
+          "quote": "और कोई जानकारी चाहिए?",
+          "fix": "Caller ने straight answer मांगा था; इसे हटा दें।"
+        }
+      ],
+      "verdict_note": "जवाब सही और नैचुरल Hinglish में है, लेकिन TTS सेटिंग के हिसाब से रकम शब्दों में होनी चाहिए थी। आख़िरी सवाल अनावश्यक है क्योंकि caller ने सिर्फ सीधा जवाब मांगा था।"
+    },
+    "passed": true
+  },
+  {
+    "case": "hi-IN/gnani/greeting_check",
+    "language": "hi-IN",
+    "tts": "gnani",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, मेरी आवाज़ clear आ रही है? और ये कौन-सी company है?",
+        "reply": "हाँ, आवाज़ बिल्कुल साफ़ आ रही है। मैं SmartCare Appliance Services से Suresh हूँ। बताइए, आज किस चीज़ में help चाहिए आपको?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.86,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "hi-IN/gnani/numbers",
+    "language": "hi-IN",
+    "tts": "gnani",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "दो split AC और एक window AC की servicing का total कितना आएगा?",
+        "reply": "Split AC की servicing पाँच सौ निन्यानवे rupees और window AC की servicing चार सौ निन्यानवे rupees है। तो दो split और एक window AC का total नौ सौ अठानवे rupees आएगा। और कोई जानकारी चाहिए आपको?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.88,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 1,
+        "helpfulness": 2,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "invented_fact",
+          "quote": "तो दो split और एक window AC का total नौ सौ अठानवे rupees आएगा",
+          "fix": "कुल सत्रह सौ सत्तानवे रुपये कहें: दो split AC = 1198 रुपये, एक window AC = 499 रुपये, total 1797 रुपये।"
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "और कोई जानकारी चाहिए आपको?",
+          "fix": "कीमत बताकर रुकें, या बस 'कुल सत्रह सौ सत्तानवे रुपये होंगे' कहें।"
+        },
+        {
+          "category": "unnatural_phrasing",
+          "quote": "rupees",
+          "fix": "हिंदी कॉल में 'रुपये' बोलें।"
+        }
+      ],
+      "verdict_note": "मुख्य समस्या गलत जोड़ है: 599+599+499 = 1797, न कि 998। बाकी भाषा समझ में आती है, लेकिन 'rupees' और अंत का सवाल थोड़ा scripted लगता है।"
+    },
+    "passed": false
+  },
+  {
+    "case": "hi-IN/gnani/other_language",
+    "language": "hi-IN",
+    "tts": "gnani",
+    "probe": "other_language",
+    "variant": "fixed",
+    "turns": [
+      {
+        "caller": "Hi, can a technician come to Kondapur tomorrow morning? My split AC is not cooling.",
+        "reply": "हाँ, Kondapur हमारे service area में है। Split AC servicing का charge पांच सौ निन्यानवे rupees है। कल सुबह का slot next-day visit में मिल जाएगा, पर same-day की guarantee नहीं होती। आप अपना नाम बता दीजिए, फिर मैं team को note करवा देता हूँ।",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": "lead_details_missing"
+        },
+        "elapsed_s": 0.7,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "over_soft_length:239"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "hi-IN/gnani/price",
+    "language": "hi-IN",
+    "tts": "gnani",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "स्प्लिट AC servicing का कितना charge है?",
+        "reply": "Split AC servicing का charge पाँच सौ निन्यानवे rupees है।",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.8,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "heavy_english_mixing:10/38"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "unnatural_phrasing",
+          "quote": "पाँच सौ निन्यानवे rupees",
+          "fix": "ज़्यादा स्वाभाविक: “पाँच सौ निन्यानवे रुपये” या “599 रुपये”।"
+        }
+      ],
+      "verdict_note": "जवाब सही, छोटा और सीधे सवाल का उत्तर देता है। बस 'rupees' अंग्रेज़ी में थोड़ा कम स्वाभाविक लगता है; हिंदी में 'रुपये' बेहतर होगा।"
+    },
+    "passed": true
+  },
+  {
+    "case": "hi-IN/gnani/time_request",
+    "language": "hi-IN",
+    "tts": "gnani",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "मेरा fridge cooling नहीं कर रहा। क्या technician कल morning 10:30 पर आ सकता है?",
+        "reply": "Fridge की inspection का charge ₹250 है, लेकिन अगर आप repair करवाते हैं तो ये charge waive हो जाएगा। कल सुबह दस बजकर तीस मिनट का slot note कर लेता हूँ, पर same-day visit guaranteed नहीं होती। आप किस area में रहते हैं, Madhapur, Gachibowli, Kondapur या Kukatpally?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.77,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:262",
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 2,
+        "helpfulness": 3,
+        "brevity": 3
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "₹250",
+          "fix": "दो सौ पचास रुपये"
+        },
+        {
+          "category": "invented_fact",
+          "quote": "कल सुबह दस बजकर तीस मिनट का slot note कर लेता हूँ",
+          "fix": "कल सुबह दस बजकर तीस मिनट का preference note कर लेता हूँ, team confirm कर देगी"
+        },
+        {
+          "category": "invented_fact",
+          "quote": "same-day visit guaranteed नहीं होती",
+          "fix": "next-day visit available रहती है, बस exact slot team confirm करेगी"
+        }
+      ],
+      "verdict_note": "Hindi is mostly natural and polite, but it wrongly talks about same-day visits when the caller asked for tomorrow, and it sounds like the exact 10:30 slot is being accepted rather than just noted as a preference. Also digits are not suitable for this TTS setting."
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/gnani/frustration",
+    "language": "kn-IN",
+    "tts": "gnani",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ನಾನು simple question ಕೇಳಿದ್ದೀನಿ, please straight answer ಕೊಡಿ. Fridge inspection fee ಎಷ್ಟು?",
+        "reply": "Fridge inspection-ಗೆ ₹250 ಆಗುತ್ತೆ. ಒಂದು ವೇಳೆ ನೀವು repair ಮಾಡಿಸಿದ್ರೆ, ಆ inspection charge waive off ಆಗುತ್ತೆ.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.61,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "ಯಾಕೆ ಇಷ್ಟು delay? Fridge inspectionಗೆ exact fee ಎಷ್ಟು ಅಂತ straight ಆಗಿ ಹೇಳಿ.",
+        "reply": "ಕ್ಷಮಿಸಿ, delay ಆಗಿದ್ದಕ್ಕೆ ಬೇಜಾರಿಲ್ಲ. Fridge inspection-ಗೆ exact fee ₹250. Repair ಮುಂದುವರಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.83,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/gnani/greeting_check",
+    "language": "kn-IN",
+    "tts": "gnani",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, ನನ್ನ voice ಕೇಳಿಸ್ತಿದೆಯಾ? ಇದು ಯಾವ company?",
+        "reply": "ಹೌದು, clear ಆಗಿ ಕೇಳಿಸ್ತಿದೆ. ನಾನು SmartCare Appliance Services ಇಂದ ಸುರೇಶ್. ನಿಮಗೆ ಏನು help ಬೇಕಿತ್ತು?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.5,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "Hi, ನೀವು ನನ್ನನ್ನು hear ಮಾಡ್ತಿದ್ದೀರಾ? ನಿಮ್ಮ company name ಏನು?",
+        "reply": "ಹೌದು, ನಿಮ್ಮ voice clear ಆಗಿ ಕೇಳಿಸ್ತಿದೆ. ನಾನು SmartCare Appliance Services ಇಂದ ಸುರೇಶ್. ನಿಮಗೆ ಯಾವ details ಬೇಕಿತ್ತು?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.48,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/gnani/numbers",
+    "language": "kn-IN",
+    "tts": "gnani",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ಎರಡು split ACಗಳು ಮತ್ತು ಒಂದು window AC service ಮಾಡಿದರೆ total ಎಷ್ಟು?",
+        "reply": "ಒಂದು split AC service-ಗೆ ₹599 ಆಗುತ್ತೆ, ಮತ್ತೆ window AC-ಗೆ ₹499 ಆಗುತ್ತೆ. So ಎರಡು split ಮತ್ತೆ ಒಂದು window AC-ಗೆ total ₹1,697 ಆಗುತ್ತೆ. ನಿಮಗೆ visit book ಮಾಡ್ಬೇಕಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.53,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "ಎರಡು split ಮತ್ತು ಒಂದು window ACಗಳ service charges ಸೇರಿಸಿ total ಹೇಳಿ.",
+        "reply": "ಎರಡು split AC ಮತ್ತು ಒಂದು window AC service-ಗೆ total ₹1,697 ಆಗುತ್ತೆ. ನಿಮಗೆ visit book ಮಾಡ್ಬೇಕಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.76,
+        "sarvam_requests": 2
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 3,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "₹1,697",
+          "fix": "engine_reads_digits=false ಆಗಿರುವುದರಿಂದ ಸಂಖ್ಯೆಯನ್ನು ಕನ್ನಡದಲ್ಲಿ ಹೇಳಿ: “ಒಟ್ಟು ಸಾವಿರ ಆರು ನೂರು ತೊಂಬತ್ತೇಳು ರೂಪಾಯಿ ಆಗುತ್ತೆ.”"
+        },
+        {
+          "category": "missed_question",
+          "quote": "ನಿಮಗೆ visit book ಮಾಡ್ಬೇಕಾ?",
+          "fix": "ಕಾಲರ್ ಮತ್ತೆ total ಮಾತ್ರ ಕೇಳಿದ್ದಾರೆ; booking ಪ್ರಶ್ನೆ ಬೇಡ. ಉತ್ತರವನ್ನು total ಹೇಳುವುದರಲ್ಲೇ ಮುಗಿಸಿ."
+        }
+      ],
+      "verdict_note": "ಲೆಕ್ಕ ಸರಿಯಾಗಿದೆ ಮತ್ತು ಕನ್ನಡ code-mix ಸಹಜವಾಗಿದೆ. ಆದರೆ TTS digits ಓದುವುದಿಲ್ಲವಾದ್ದರಿಂದ ಮೊತ್ತವನ್ನು ಪದಗಳಲ್ಲಿ ಬರೆಯಬೇಕು, ಮತ್ತು caller ಕೇಳಿದ್ದು total ಮಾತ್ರವಾದ್ದರಿಂದ ಕೊನೆಯಲ್ಲಿ booking push ಸ್ವಲ್ಪ ಅನಗತ್ಯ."
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/gnani/other_language",
+    "language": "kn-IN",
+    "tts": "gnani",
+    "probe": "other_language",
+    "variant": "fixed",
+    "turns": [
+      {
+        "caller": "Hi, can a technician come to Kondapur tomorrow morning? My split AC is not cooling.",
+        "reply": "ಖಂಡಿತ, Kondapur ನಮ್ಮ service area-ದಲ್ಲಿ ಬರುತ್ತೆ. ನಾಳೆ ಬೆಳಿಗ್ಗೆ 10 AM ಇಂದ 6 PM ಒಳಗಡೆ next-day slot ಇದೆ. ನಿಮ್ಮ ಹೆಸರು ಹೇಳ್ತೀರಾ? ಹಾಗೇ exact ಆಗಿ ಯಾವ time-ಗೆ ಬರೋದು ಅಂತ ತಿಳಿಸಿ.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.64,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "kn-IN/gnani/price",
+    "language": "kn-IN",
+    "tts": "gnani",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ಸ್ಪ್ಲಿಟ್ AC servicing ಗೆ ಎಷ್ಟು cost ಆಗುತ್ತೆ?",
+        "reply": "Split AC servicing-ಗೆ ₹599 ಆಗುತ್ತೆ. ನಿಮಗೆ visit arrange ಮಾಡ್ಬೇಕಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.53,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "ನನ್ನ split AC ಗೆ service ಮಾಡಿಸಬೇಕು, charges ಎಷ್ಟು?",
+        "reply": "Split AC servicing-ಗೆ ₹599 ಆಗುತ್ತೆ. ನಿಮ್ಮ area Madhapur, Gachibowli, Kondapur ಅಥವಾ Kukatpally-ನಲ್ಲಿ ಇದೆಯಾ? ಯಾಕಂದ್ರೆ ನಾವು ಈ areas-ನಲ್ಲಿ ಮಾತ್ರ service ಮಾಡ್ತೀವಿ.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.66,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "₹599",
+          "fix": "engine_reads_digits false ಆಗಿರುವುದರಿಂದ, ಇದನ್ನು 'ಐದು ನೂರು ತೊಂಬತ್ತೊಂಬತ್ತು ರೂಪಾಯಿ' ಅಥವಾ ಮಾತಿನಲ್ಲಿ natural ಆಗಿ 'ಫೈವ್ ನೈನ್ಟಿ ನೈನ್ ರೂಪಾಯಿ' ಎಂದು ಬರೆಯಿರಿ."
+        }
+      ],
+      "verdict_note": "Reply is mostly natural spoken Kannada with acceptable English code-mixing, and it answers the price plus asks the needed service-area question. Main issue is the digit/rupee amount formatting for this TTS engine."
+    },
+    "passed": true
+  },
+  {
+    "case": "kn-IN/gnani/time_request",
+    "language": "kn-IN",
+    "tts": "gnani",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling ಆಗದ ನನ್ನ fridgeಗೆ ನಾಳೆ morning 10:30ಕ್ಕೆ technician ಬರಬಹುದಾ?",
+        "reply": "Fridge inspection-ಗೆ ₹250 ಆಗುತ್ತೆ, ಆದ್ರೆ ನೀವು repair ಮಾಡಿಸಿದ್ರೆ ಆ charge waive off ಆಗುತ್ತೆ. ನಮ್ಮ service area ಬಂದು Madhapur, Gachibowli, Kondapur ಮತ್ತೆ Kukatpally ಮಾತ್ರ. ನಾಳೆ morning 10:30ಕ್ಕೆ next-day slot ಇರುತ್ತೆ. ನಿಮ್ಮ ಹೆಸರು ಮತ್ತೆ area ಹೇಳ್ತೀರಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.7,
+        "sarvam_requests": 1
+      },
+      {
+        "caller": "ನನ್ನ fridge cool ಆಗ್ತಿಲ್ಲ. ನಾಳೆ ಬೆಳಗ್ಗೆ 10:30ಕ್ಕೆ visit ಮಾಡೋಕೆ ಆಗುತ್ತಾ?",
+        "reply": "ಹೌದು, ನಾಳೆ ಬೆಳಗ್ಗೆ 10:30ಕ್ಕೆ slot ಇದೆ. ಆದ್ರೆ ನಮ್ಮ service ಬಂದು Madhapur, Gachibowli, Kondapur ಮತ್ತೆ Kukatpally ಮಾತ್ರ. ನಿಮ್ಮ area ಯಾವುದು ಅಂತ ಹೇಳ್ತೀರಾ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.59,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "over_soft_length:248",
+          "digits_reach_tts"
+        ]
+      },
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 2,
+        "helpfulness": 3,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "invented_fact",
+          "quote": "ಹೌದು, ನಾಳೆ ಬೆಳಗ್ಗೆ 10:30ಕ್ಕೆ slot ಇದೆ.",
+          "fix": "Exact slot availability confirm ಮಾಡಬಾರದು; ಹೇಳಿ: “ನಾಳೆ ಬೆಳಗ್ಗೆ slotಗಾಗಿ request ತೆಗೆದುಕೊಳ್ತೀನಿ, team confirm ಮಾಡ್ತಾರೆ.”"
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "10:30ಕ್ಕೆ",
+          "fix": "engine digits ಓದುವುದಿಲ್ಲ, ಆದ್ದರಿಂದ ಕನ್ನಡದಲ್ಲಿ ಬರೆಯಿರಿ: “ಹತ್ತು ಮೂವತ್ತಕ್ಕೆ” ಅಥವಾ “ಹತ್ತು ಗಂಟೆ ಮೂವತ್ತು ನಿಮಿಷಕ್ಕೆ”."
+        },
+        {
+          "category": "missed_question",
+          "quote": "ನಿಮ್ಮ area ಯಾವುದು ಅಂತ ಹೇಳ್ತೀರಾ?",
+          "fix": "Area ಜೊತೆಗೆ visit requestಗೆ ಬೇಕಾದ ಹೆಸರು, appliance/issue already ಗೊತ್ತಿದ್ದರೆ ಕನಿಷ್ಠ locality ಮತ್ತು name ಕೇಳಿ: “ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು area ಹೇಳಿ.”"
+        }
+      ],
+      "verdict_note": "Kannada is mostly natural and concise, but it wrongly confirms a specific appointment slot and uses digit time despite the TTS setting. It should take details for team confirmation instead."
+    },
+    "passed": false
+  },
+  {
+    "case": "ml-IN/gnani/frustration",
+    "language": "ml-IN",
+    "tts": "gnani",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ഞാൻ simple question ആണ് ചോദിച്ചത്. Fridge inspection fee എത്രയെന്ന് straight ആയി പറയൂ.",
+        "reply": "Fridge inspection-ന് ₹250 ആണ് charge വരുന്നത്. എന്നാൽ repair ചെയ്യാൻ മുന്നോട്ട് പോവുകയാണെങ്കിൽ ഈ inspection charge ഞങ്ങൾ waive off ചെയ്തു തരും.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.59,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "ml-IN/gnani/greeting_check",
+    "language": "ml-IN",
+    "tts": "gnani",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, എന്റെ voice കേൾക്കുന്നുണ്ടോ? ഇത് ഏത് company ആണ്?",
+        "reply": "അതെ, കേൾക്കുന്നുണ്ട്. ഞാൻ SmartCare Appliance Services-ൽ നിന്നാണ് സംസാരിക്കുന്നത്. എന്താണ് help വേണ്ടത്?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.55,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "ml-IN/gnani/numbers",
+    "language": "ml-IN",
+    "tts": "gnani",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "രണ്ട് split AC-യും ഒരു window AC-യും service ചെയ്യാൻ total എത്ര വരും?",
+        "reply": "Split AC-ക്ക് 599 രൂപയും window AC-ക്ക് 499 രൂപയുമാണ് വരുന്നത്. അപ്പൊ രണ്ട് split AC-യും ഒരു window AC-യും ചേർത്ത് total 1,697 രൂപയാകും.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.62,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "ml-IN/gnani/other_language",
+    "language": "ml-IN",
+    "tts": "gnani",
+    "probe": "other_language",
+    "variant": "fixed",
+    "turns": [
+      {
+        "caller": "Hi, can a technician come to Kondapur tomorrow morning? My split AC is not cooling.",
+        "reply": "അതെ, Kondapur ഞങ്ങളുടെ service area-യിൽ വരുന്നതാണ്. Split AC servicing-ന് ₹599 ആണ് charge വരുന്നത്. Technician നാളെ വരണമെങ്കിൽ, ഏത് സമയത്താണ് സൗകര്യം എന്ന് പറയാമോ? രാവിലെ പത്ത് മണിക്കും വൈകുന്നേരം ആറ് മണിക്കും ഇടയിലുള്ള next-day slots ആണ് ഞങ്ങൾ കൊടുക്കുന്നത്.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.72,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "over_soft_length:259",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "ml-IN/gnani/price",
+    "language": "ml-IN",
+    "tts": "gnani",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Split AC servicing-ന് എത്ര cost വരും?",
+        "reply": "Split AC servicing-ന് ₹599 ആണ് വരുന്നത്.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.81,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "ml-IN/gnani/time_request",
+    "language": "ml-IN",
+    "tts": "gnani",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling ഇല്ലാത്ത fridge-ന് നാളെ morning 10:30-ന് technician വരാമോ?",
+        "reply": "Fridge-ന്റെ cooling issue-ന് നാളെ 10:30-ന് വരാൻ പറ്റും. പക്ഷെ നമ്മുടെ service area Madhapur, Gachibowli, Kondapur, Kukatpally എന്നിവിടങ്ങളിൽ മാത്രമാണ്. അങ്ങോട്ട് നിങ്ങളുടെ സ്ഥലം വരുമോ?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.73,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "ta-IN/gnani/frustration",
+    "language": "ta-IN",
+    "tts": "gnani",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "நான் ஒரு simple question தான் கேட்டேன், please straight answer சொல்லுங்க. Fridge inspection fee எவ்வளவு?",
+        "reply": "Fridge inspection-க்கு ₹250 வரும். ஆனா ஒரு விஷயம், நீங்க repair பண்ண முடிவு பண்ணீங்கன்னா அந்த inspection charge waive ஆகிடும்.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.62,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "ta-IN/gnani/greeting_check",
+    "language": "ta-IN",
+    "tts": "gnani",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, என் voice கேட்கிறதா? இது என்ன company?",
+        "reply": "ஆமா, தெளிவா கேக்குது. நான் SmartCare Appliance Services-லிருந்து Suresh பேசுறேன். உங்களுக்கு என்ன help வேணும்?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.5,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [],
+      "verdict_note": "Good Tamil reply with natural urban code-mixing, correctly answers both whether the voice is audible and what the company is. Slightly scripted because it repeats the opening info, but still phone-appropriate."
+    },
+    "passed": true
+  },
+  {
+    "case": "ta-IN/gnani/numbers",
+    "language": "ta-IN",
+    "tts": "gnani",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "ரெண்டு split AC-யும் ஒரு window AC-யும் service பண்ணினா total எவ்வளவு?",
+        "reply": "Split AC servicing-க்கு ₹599, window AC-க்கு ₹499 ஆகும். Technician வந்து inspect பண்ணதுக்கு அப்புறம் தான் spare parts cost எவ்வளவுனு சொல்லுவாங்க, அதனால அது தனியா extra வரும். உங்களுக்கு visit schedule பண்ணணுமா?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.7,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:211",
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "ta-IN/gnani/other_language",
+    "language": "ta-IN",
+    "tts": "gnani",
+    "probe": "other_language",
+    "variant": "fixed",
+    "turns": [
+      {
+        "caller": "Hi, can a technician come to Kondapur tomorrow morning? My split AC is not cooling.",
+        "reply": "கண்டிப்பா, Kondapur நம்ம service area-ல தான் வருது. Split AC servicing-க்கு ₹599 ஆகும். நாளைக்கு visit வேணும்னா, உங்க பேரும், எந்த time உங்களுக்கு வசதியா இருக்கும்னு சொல்ல முடியுமா? அப்போதான் team-கிட்ட பேசி slot confirm பண்ண முடியும்.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.12,
+        "sarvam_requests": 3
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "over_soft_length:235",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 4,
+        "helpfulness": 4,
+        "brevity": 4
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "₹599",
+          "fix": "engine_reads_digits=false என்பதால், 'ஐந்நூற்றி தொண்ணூற்று ஒன்பது ரூபாய்' என்று தமிழில் எழுத வேண்டும்."
+        },
+        {
+          "category": "missed_question",
+          "quote": "எந்த time உங்களுக்கு வசதியா இருக்கும்னு சொல்ல முடியுமா?",
+          "fix": "Caller 'tomorrow morning' கேட்டதால், 'நாளைக்கு காலை பத்து மணிக்குப் பிறகு slot பார்க்கலாம்' என்று available visit window-ஐ தெளிவாகச் சொல்லலாம்."
+        }
+      ],
+      "verdict_note": "Reply is natural spoken Tamil with acceptable code-mixing, and it mostly answers the caller. Main issues are digit/amount formatting for this TTS engine and not clearly anchoring the requested morning visit to the actual slot window."
+    },
+    "passed": false
+  },
+  {
+    "case": "ta-IN/gnani/price",
+    "language": "ta-IN",
+    "tts": "gnani",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Split AC service பண்ண எவ்வளவு ஆகும்?",
+        "reply": "Split AC servicing-க்கு ₹599 ஆகும்.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.52,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "heavy_english_mixing:5/21",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 5,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "₹599",
+          "fix": "ஐநூற்று தொண்ணூற்று ஒன்பது ரூபாய்"
+        }
+      ],
+      "verdict_note": "Natural and directly answers the pricing question in Tamil, but since this TTS engine does not read digits/amounts in the call language, the amount should be written out in Tamil words."
+    },
+    "passed": true
+  },
+  {
+    "case": "ta-IN/gnani/time_request",
+    "language": "ta-IN",
+    "tts": "gnani",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling இல்லாத fridge-க்கு நாளைக்கு morning 10:30-க்கு technician வர முடியுமா?",
+        "reply": "Sorry, எங்களுக்கு Madhapur, Gachibowli, Kondapur, அப்புறம் Kukatpally areas-ல தான் service இருக்கு. Secunderabad அப்புறம் Old City cover ஆகாது. Fridge inspection-க்கு ₹250 வரும், ஆனா நீங்க repair பண்ணீங்கன்னா அந்த charge waive ஆயிடும்.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 0.81,
+        "sarvam_requests": 1
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "over_soft_length:235",
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 3,
+        "register": 4,
+        "correctness": 4,
+        "helpfulness": 2,
+        "brevity": 3
+      },
+      "issues": [
+        {
+          "category": "missed_question",
+          "quote": "Sorry, எங்களுக்கு Madhapur, Gachibowli, Kondapur, அப்புறம் Kukatpally areas-ல தான் service இருக்கு.",
+          "fix": "Caller கேட்டது நாளைக்கு 10:30 slot பற்றி; முதலில் locality கேட்டு, next-day slots 10 AM–6 PM-க்குள் confirm பண்ணலாம் என்று சொல்ல வேண்டும்."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "Secunderabad அப்புறம் Old City cover ஆகாது.",
+          "fix": "Caller locality சொல்லாததால் இந்த தகவல் இப்போது தேவையில்லை; 'நீங்க எந்த area?' என்று கேட்பது போதும்."
+        },
+        {
+          "category": "number_or_time_readout",
+          "quote": "₹250",
+          "fix": "engine_reads_digits false என்பதால் 'இருநூற்று ஐம்பது ரூபாய்' என்று எழுத வேண்டும்."
+        }
+      ],
+      "verdict_note": "Tamil code-mix natural, and price fact is correct, but the reply doesn’t directly handle the requested next-day 10:30 visit or collect locality/details. It also includes unnecessary non-covered area info and uses digits despite the TTS setting."
+    },
+    "passed": false
+  },
+  {
+    "case": "te-IN/gnani/frustration",
+    "language": "te-IN",
+    "tts": "gnani",
+    "probe": "frustration",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "నేను simple question అడిగాను, please straight answer చెప్పండి. Fridge inspection fee ఎంత?",
+        "reply": "Fridge inspection కి ₹250 అవుతుంది. ఒకవేళ మీరు repair చేయిస్తే ఆ inspection charge waive అవుతుంది.",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 3.67,
+        "sarvam_requests": 5
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "te-IN/gnani/greeting_check",
+    "language": "te-IN",
+    "tts": "gnani",
+    "probe": "greeting_check",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Hello, నా voice వినిపిస్తుందా? ఇది ఏ company?",
+        "reply": "అవును, మీ voice clear గా వినిపిస్తోంది. నేను సురేష్, SmartCare Appliance Services నుంచి మాట్లాడుతున్నాను. చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 3.77,
+        "sarvam_requests": 5
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 5,
+        "human_naturalness": 4,
+        "register": 5,
+        "correctness": 5,
+        "helpfulness": 5,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "robotic_or_scripted",
+          "quote": "చెప్పండి, మీకు ఎలా సహాయం చేయగలను?",
+          "fix": "కొంచెం సహజంగా: “చెప్పండి, ఏ service కావాలి?”"
+        }
+      ],
+      "verdict_note": "Telugu code-mixing is natural and it directly answers both audibility and company question. Slightly generic receptionist-style ending, but acceptable for a phone call."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/gnani/numbers",
+    "language": "te-IN",
+    "tts": "gnani",
+    "probe": "numbers",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "రెండు split ACలు, ఒక window AC service చేస్తే total ఎంత అవుతుంది?",
+        "reply": "ఒక split AC servicing కి ₹599 అవుతుంది, అలాగే ఒక window AC కి ₹499 అవుతుంది. So రెండు split ACలు, ఒక window AC కి కలిపి ₹1697 అవుతుంది. మీకు మా service area లో visit కావాలా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 3.86,
+        "sarvam_requests": 5
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "te-IN/gnani/other_language",
+    "language": "te-IN",
+    "tts": "gnani",
+    "probe": "other_language",
+    "variant": "fixed",
+    "turns": [
+      {
+        "caller": "Hi, can a technician come to Kondapur tomorrow morning? My split AC is not cooling.",
+        "reply": "అవును, Kondapur మా service area లో ఉంది. Split AC servicing కి ₹599 అవుతుంది. మా team next-day visit ని ఉదయం పది నుంచి సాయంత్రం ఆరు మధ్యలో schedule చేస్తారు. మీకు ఏ time వీలవుతుందో చెప్తారా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 1.03,
+        "sarvam_requests": 3
+      }
+    ],
+    "checks": [
+      {
+        "hard": [
+          "too_many_sentences:4"
+        ],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  },
+  {
+    "case": "te-IN/gnani/price",
+    "language": "te-IN",
+    "tts": "gnani",
+    "probe": "price",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "స్ప్లిట్ AC servicing కి ఎంత cost అవుతుంది?",
+        "reply": "Split AC servicing కి ₹599 అవుతుంది. మీకు వేరే ఏదైనా details కావాలా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 3.95,
+        "sarvam_requests": 5
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "scores": {
+        "language_fit": 4,
+        "human_naturalness": 4,
+        "register": 4,
+        "correctness": 5,
+        "helpfulness": 4,
+        "brevity": 5
+      },
+      "issues": [
+        {
+          "category": "number_or_time_readout",
+          "quote": "₹599",
+          "fix": "engine_reads_digits false కాబట్టి ‘ఐదు వందల తొంభై తొమ్మిది రూపాయలు’ అని చెప్పాలి."
+        },
+        {
+          "category": "unneeded_sales_push",
+          "quote": "మీకు వేరే ఏదైనా details కావాలా?",
+          "fix": "ధర అడిగారు కాబట్టి ‘Split AC servicing కి ఐదు వందల తొంభై తొమ్మిది రూపాయలు అవుతుంది.’ అని మాత్రమే చెప్పడం సరిపోతుంది."
+        }
+      ],
+      "verdict_note": "జవాబు సరైన సమాచారమే ఇస్తోంది, Telugu-English code-mix సహజంగానే ఉంది. కానీ TTS digits చదవదు కాబట్టి amountని పదాల్లో రాయాలి; అలాగే అవసరం లేని follow-up question కొంచెం స్క్రిప్టెడ్‌గా ఉంది."
+    },
+    "passed": true
+  },
+  {
+    "case": "te-IN/gnani/time_request",
+    "language": "te-IN",
+    "tts": "gnani",
+    "probe": "time_request",
+    "variant": "mixed",
+    "turns": [
+      {
+        "caller": "Cooling లేని fridge కి రేపు morning 10:30కి technician రావచ్చా?",
+        "reply": "Fridge inspection కి ₹250 అవుతుంది, కానీ మీరు repair చేయిస్తే ఆ inspection charge waive అవుతుంది. మా service area Madhapur, Gachibowli, Kondapur, Kukatpally వరకే ఉంటుంది. మీరు ఈ areas లో ఉన్నారా?",
+        "error": null,
+        "end_call": {
+          "should_end": false,
+          "reason": "none",
+          "farewell": "",
+          "contact_preference": "none",
+          "reject_code": null
+        },
+        "elapsed_s": 3.8,
+        "sarvam_requests": 5
+      }
+    ],
+    "checks": [
+      {
+        "hard": [],
+        "warn": [
+          "three_sentences",
+          "heavy_english_mixing:33/128",
+          "digits_reach_tts"
+        ]
+      }
+    ],
+    "judge": {
+      "error": "RateLimitError: Error code: 429 - {'error': {'message': 'You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.', 'type': 'insufficient_quo"
+    },
+    "passed": false
+  }
+]

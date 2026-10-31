@@ -1,0 +1,375 @@
+{
+  "key": "language-ta-IN-none-1_interested",
+  "business": "language",
+  "language": "ta-IN",
+  "integration": false,
+  "scenario": "1_interested",
+  "agent_id": "1557575e-e441-56ca-ab6d-89d0b81299d9",
+  "call_id": "cdbd1914-5218-4bea-95bb-aa9ccf91d8e9",
+  "session_id": "audit-language-ta-IN-none-1_interested-78fcc20b",
+  "compiled_checksum": "6f8104d7a8c5c3b787bc284a4e53444f57bdac783432ab7a136254cbcd2ebd24",
+  "requests": [
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 5,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 230,
+      "sse_content_preview": "சரிங்க. இந்த வகுப்புகள் ஆன்லைனில் ஆறு வாரங்கள் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். இதோட மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய். உங்களோட learning goal என்னன்னு தெரிஞ்சுக்கலாமா?",
+      "sse_content_tail": "சரிங்க. இந்த வகுப்புகள் ஆன்லைனில் ஆறு வாரங்கள் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். இதோட மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய். உங்களோட learning goal என்னன்னு தெரிஞ்சுக்கலாமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4091,
+        "total_tokens": 4153,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க. இந்த வகுப்புகள் ஆன்லைனில் ஆறு வாரங்கள் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். இதோட மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய். உங்களோட learning goal என்னன்னு தெரிஞ்சுக்கலாமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4091,
+          "output_tokens": 62,
+          "total_tokens": 4153
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.578
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 7,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 234,
+      "sse_content_preview": "மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய், ஆறு வாரங்கள் வகுப்பு, வார இறுதி நாட்களில் காலை பத்து முதல் பதினொன்று மணி வரை இருக்கும். இதுல எந்த job guarantee-யும் கிடையாதுங்க. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா?",
+      "sse_content_tail": "மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய், ஆறு வாரங்கள் வகுப்பு, வார இறுதி நாட்களில் காலை பத்து முதல் பதினொன்று மணி வரை இருக்கும். இதுல எந்த job guarantee-யும் கிடையாதுங்க. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 61,
+        "prompt_tokens": 4181,
+        "total_tokens": 4242,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய், ஆறு வாரங்கள் வகுப்பு, வார இறுதி நாட்களில் காலை பத்து முதல் பதினொன்று மணி வரை இருக்கும். இதுல எந்த job guarantee-யும் கிடையாதுங்க. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4181,
+          "output_tokens": 61,
+          "total_tokens": 4242
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.687
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 9,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 220,
+      "sse_content_preview": "சரிங்க, job guarantee எதுவும் கிடையாது, ஆனா spoken English கத்துக்க இது நல்ல வகுப்பு. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா? உங்க விருப்பமான பெயர் மற்றும் email சொன்னீங்கன்னா எங்க team அத check பண்ணுவாங்க.",
+      "sse_content_tail": "சரிங்க, job guarantee எதுவும் கிடையாது, ஆனா spoken English கத்துக்க இது நல்ல வகுப்பு. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா? உங்க விருப்பமான பெயர் மற்றும் email சொன்னீங்கன்னா எங்க team அத check பண்ணுவாங்க.",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 51,
+        "prompt_tokens": 4249,
+        "total_tokens": 4300,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "சரிங்க, job guarantee எதுவும் கிடையாது, ஆனா spoken English கத்துக்க இது நல்ல வகுப்பு. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா? உங்க விருப்பமான பெயர் மற்றும் email சொன்னீங்கன்னா எங்க team அத check பண்ணுவாங்க.",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4249,
+          "output_tokens": 51,
+          "total_tokens": 4300
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.625
+    },
+    {
+      "kind": "native_selection",
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 12,
+        "schema": false,
+        "tools": 0
+      },
+      "schema_properties": [],
+      "sse_content_chars": 171,
+      "sse_content_preview": "Audit Customer, உங்க email விவரம் note பண்ணிக்கிட்டேன். ஆனா என்னால team-க்கு இந்த enquiry-யை அனுப்பவோ confirm பண்ணவோ முடியாதுங்க. உங்களுக்கு டெமோ அல்லது counseling வேணுமா?",
+      "sse_content_tail": "Audit Customer, உங்க email விவரம் note பண்ணிக்கிட்டேன். ஆனா என்னால team-க்கு இந்த enquiry-யை அனுப்பவோ confirm பண்ணவோ முடியாதுங்க. உங்களுக்கு டெமோ அல்லது counseling வேணுமா?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 43,
+        "prompt_tokens": 4501,
+        "total_tokens": 4544,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "Audit Customer, உங்க email விவரம் note பண்ணிக்கிட்டேன். ஆனா என்னால team-க்கு இந்த enquiry-யை அனுப்பவோ confirm பண்ணவோ முடியாதுங்க. உங்களுக்கு டெமோ அல்லது counseling வேணுமா?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4501,
+          "output_tokens": 43,
+          "total_tokens": 4544
+        },
+        "finish_reason": "stop",
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "response_contract": "speech_text",
+        "external_actions_available": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.563
+    }
+  ],
+  "tool_calls": [],
+  "wire_speech": [
+    {
+      "text": "சரிங்க. இந்த வகுப்புகள் ஆன்லைனில் ஆறு வாரங்கள் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். இதோட மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய். உங்களோட learning goal என்னன்னு தெரிஞ்சுக்கலாமா?",
+      "turn": 1,
+      "at": 2.171
+    },
+    {
+      "text": "மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய், ஆறு வாரங்கள் வகுப்பு, வார இறுதி நாட்களில் காலை பத்து முதல் பதினொன்று மணி வரை இருக்கும். இதுல எந்த job guarantee-யும் கிடையாதுங்க. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா?",
+      "turn": 2,
+      "at": 4.515
+    },
+    {
+      "text": "சரிங்க, job guarantee எதுவும் கிடையாது, ஆனா spoken English கத்துக்க இது நல்ல வகுப்பு. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா? இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது.",
+      "turn": 3,
+      "at": 6.64
+    },
+    {
+      "text": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது.",
+      "turn": 4,
+      "at": 8.812
+    },
+    {
+      "text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "turn": 5,
+      "at": 8.843
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "ஆமாம், எனக்கு ஆர்வம் இருக்கு. உங்கள் service, விலை, நிபந்தனைகளைச் சொல்லுங்க.",
+      "spoken": "சரிங்க. இந்த வகுப்புகள் ஆன்லைனில் ஆறு வாரங்கள் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். இதோட மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய். உங்களோட learning goal என்னன்னு தெரிஞ்சுக்கலாமா?",
+      "elapsed_s": 2.156,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "இப்போ எதையும் book அல்லது save செய்யாதீங்க. முதலில் என் கேள்விக்கு பதில் சொல்லுங்க: Final course fee, duration, class timing என்ன? Fluency அல்லது job guarantee இருக்கா?",
+      "spoken": "மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய், ஆறு வாரங்கள் வகுப்பு, வார இறுதி நாட்களில் காலை பத்து முதல் பதினொன்று மணி வரை இருக்கும். இதுல எந்த job guarantee-யும் கிடையாதுங்க. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா?",
+      "elapsed_s": 2.328,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "Job guarantee வேண்டாம், ஆனால் spoken English கத்துக்க ஆர்வம் இருக்கு. Course சொல்லுங்க.",
+      "spoken": "சரிங்க, job guarantee எதுவும் கிடையாது, ஆனா spoken English கத்துக்க இது நல்ல வகுப்பு. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா? இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது.",
+      "elapsed_s": 2.094,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "My name is Audit Customer, email audit.customer@example.invalid. I want adult spoken-English course demo enquiry; preferred review time tomorrow at 3pm. இந்த enquiry-யை team reviewக்கு submit செய்யுங்க. என் சம்மதம் இருக்கு. Booking அல்லது order confirmன்னு சொல்லாதீங்க.",
+      "spoken": "இந்த அழைப்பில் மட்டும் நினைவில் வைத்துக்கொள்ளலாம். ஆனால் team-க்கு இதை அனுப்பவோ follow-up உறுதி சொல்லவோ முடியாது.",
+      "elapsed_s": 2.156,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "என் கேள்விகளுக்கு பதில் கிடைச்சது. வேற எதுவும் தேவையில்லை. வணக்கம், call முடிச்சிடுங்க.",
+      "spoken": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "elapsed_s": 0.078,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 8.906,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "cdbd1914-5218-4bea-95bb-aa9ccf91d8e9",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "fddbda827552053fc2f3507c5d09e7033a8dd638e98b01a40f11d7b39dab9e34",
+  "prompt_chars": 17234,
+  "opening_seeded": "வணக்கம், நான் SpeakEasy Language Studio நிறுவனத்திலிருந்து சானா பேசுகிறேன். ஆன்லைன் ஆங்கில வகுப்புகள் பற்றிய உங்கள் கேள்விகளுக்கு பதிலளிக்கலாமா?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": null,
+      "spoken_text": "சரிங்க. இந்த வகுப்புகள் ஆன்லைனில் ஆறு வாரங்கள் நடக்கும், வார இறுதி நாட்களில் காலை பத்து மணி முதல் பதினொன்று மணி வரை இருக்கும். இதோட மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய். உங்களோட learning goal என்னன்னு தெரிஞ்சுக்கலாமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": null,
+      "spoken_text": "மொத்த கட்டணம் ஆறாயிரத்து நானூற்று தொண்ணூறு ரூபாய், ஆறு வாரங்கள் வகுப்பு, வார இறுதி நாட்களில் காலை பத்து முதல் பதினொன்று மணி வரை இருக்கும். இதுல எந்த job guarantee-யும் கிடையாதுங்க. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": null,
+      "spoken_text": "சரிங்க, job guarantee எதுவும் கிடையாது, ஆனா spoken English கத்துக்க இது நல்ல வகுப்பு. உங்களுக்கு டெமோ அல்லது counseling ஏற்பாடு பண்ணட்டுமா? உங்க விருப்பமான பெயர் மற்றும் email சொன்னீங்கன்னா எங்க team அத check பண்ணுவாங்க.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": null,
+      "spoken_text": "Audit Customer, உங்க email விவரம் note பண்ணிக்கிட்டேன். ஆனா என்னால team-க்கு இந்த enquiry-யை அனுப்பவோ confirm பண்ணவோ முடியாதுங்க. உங்களுக்கு டெமோ அல்லது counseling வேணுமா?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்."
+      },
+      "spoken_text": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "உங்கள் நேரத்திற்கு நன்றி. வணக்கம்.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 8.906,
+  "hangup_count": 1,
+  "source_signature": "f95691c1be0b78b8daf4f3542b355e04f5d7c43f2dd1b6eefab36c2f223f4cfe"
+}

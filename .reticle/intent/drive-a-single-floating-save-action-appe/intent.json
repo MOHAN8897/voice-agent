@@ -1,0 +1,18 @@
+{
+  "intents": {
+    "flow:drive-a-single-floating-save-action-appears-only-for-u": {
+      "declaredAt": 1793105600971,
+      "id": "flow:drive-a-single-floating-save-action-appears-only-for-u",
+      "state": "declared",
+      "statement": "A single floating save action appears only for unsaved agent edits, and discard restores the saved configuration.",
+      "status": "proposed",
+      "subject": "drive-a-single-floating-save-action-appe",
+      "surface": {
+        "flow": "drive-a-single-floating-save-action-appears-only-for-u"
+      },
+      "updatedAt": 1793105600982
+    }
+  },
+  "subject": "drive-a-single-floating-save-action-appe",
+  "version": 1
+}

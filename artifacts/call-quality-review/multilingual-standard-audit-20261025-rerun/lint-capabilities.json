@@ -1,0 +1,370 @@
+[
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 43
+    },
+    "filename": "D:\\voice agent\\server\\brain\\capabilities.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 19
+          },
+          "location": {
+            "column": 1,
+            "row": 19
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 43
+          },
+          "location": {
+            "column": 5,
+            "row": 43
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 43
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 43,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 64
+    },
+    "filename": "D:\\voice agent\\server\\brain\\capabilities.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 19
+          },
+          "location": {
+            "column": 1,
+            "row": 19
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 64
+          },
+          "location": {
+            "column": 5,
+            "row": 64
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 64
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 64,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 74
+    },
+    "filename": "D:\\voice agent\\server\\brain\\capabilities.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 19
+          },
+          "location": {
+            "column": 1,
+            "row": 19
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 74
+          },
+          "location": {
+            "column": 5,
+            "row": 74
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 74
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 74,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 20
+    },
+    "filename": "D:\\voice agent\\server\\brain\\fact_canon.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 20
+          },
+          "location": {
+            "column": 5,
+            "row": 20
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 20
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 20,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 25
+    },
+    "filename": "D:\\voice agent\\server\\brain\\fact_canon.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 25
+          },
+          "location": {
+            "column": 5,
+            "row": 25
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 25
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 25,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 9,
+      "row": 37
+    },
+    "filename": "D:\\voice agent\\server\\brain\\fact_canon.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 9,
+            "row": 37
+          },
+          "location": {
+            "column": 5,
+            "row": 37
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 5,
+      "row": 37
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 37,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 54,
+      "row": 39
+    },
+    "filename": "D:\\voice agent\\server\\brain\\fact_canon.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 54,
+            "row": 39
+          },
+          "location": {
+            "column": 50,
+            "row": 39
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 50,
+      "row": 39
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 39,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  },
+  {
+    "cell": null,
+    "code": "FURB167",
+    "end_location": {
+      "column": 93,
+      "row": 62
+    },
+    "filename": "D:\\voice agent\\server\\brain\\fact_canon.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "import re",
+          "end_location": {
+            "column": 10,
+            "row": 9
+          },
+          "location": {
+            "column": 1,
+            "row": 9
+          }
+        },
+        {
+          "content": "re.IGNORECASE",
+          "end_location": {
+            "column": 93,
+            "row": 62
+          },
+          "location": {
+            "column": 89,
+            "row": 62
+          }
+        }
+      ],
+      "message": "Replace with `re.IGNORECASE`"
+    },
+    "location": {
+      "column": 89,
+      "row": 62
+    },
+    "message": "Use of regular expression alias `re.I`",
+    "name": "regex-flag-alias",
+    "noqa_row": 62,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/regex-flag-alias"
+  }
+]

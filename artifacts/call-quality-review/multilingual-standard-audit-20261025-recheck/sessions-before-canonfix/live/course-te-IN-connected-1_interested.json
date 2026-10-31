@@ -1,0 +1,556 @@
+{
+  "key": "course-te-IN-connected-1_interested",
+  "business": "course",
+  "language": "te-IN",
+  "integration": true,
+  "scenario": "1_interested",
+  "agent_id": "73629b35-ee60-5ee7-bb82-5151652a5a38",
+  "call_id": "cc85d6c0-3103-4735-bd03-6582410cdea5",
+  "session_id": "audit-course-te-IN-connected-1_interested-79f43726",
+  "compiled_checksum": "7dd3e2c93442bdc28ae9224278169d62d2f4c7f9a8c04318fd7be19e3174c3c6",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 980,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller expressed interest and asked for service, price, and conditions — goal is to explain and offer next step.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None; caller is informed and next step can be agreed.\",\n    \"contact_preference\": \"end_call\"\n  }\n  \n  \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "ce, price, and conditions — goal is to explain and offer next step.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None; caller is informed and next step can be agreed.\",\n    \"contact_preference\": \"end_call\"\n  }\n  \n  \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.75
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 589,
+      "sse_content_preview": "{\n  \"spoken_response\": \"తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ క్లాసులు, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటుంది. కనీస వయస్సు 18 ఏళ్లు ఉండాలి. దీనికి మొత్తం ఫీజు 4999 రూపాయలు మాత్రమే. ఇందులో ఎలాంటి ఉద్యోగ హామీ లేదా ప్లేస్‌మెంట్ వాగ్దానాలు ఉండవు, అలాగే డిస్కౌంట్లు లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు కోడింగ్ అనుభవం ఏమైనా ఉందా అండి?\"\n}సరేనండి, ఫీజు మొత్తం 4999 rupees మాత్రమే. క్లాసులు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో job guarantee లేదా placement వాగ్దానాలు ఏమీ ఉండవు. మీకు డెమో లేదా counseling కావాలా అండి?",
+      "sse_content_tail": "{\n  \"spoken_response\": \"తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ క్లాసులు, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటుంది. కనీస వయస్సు 18 ఏళ్లు ఉండాలి. దీనికి మొత్తం ఫీజు 4999 రూపాయలు మాత్రమే. ఇందులో ఎలాంటి ఉద్యోగ హామీ లేదా ప్లేస్‌మెంట్ వాగ్దానాలు ఉండవు, అలాగే డిస్కౌంట్లు లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు కోడింగ్ అనుభవం ఏమైనా ఉందా అండి?\"\n}సరేనండి, ఫీజు మొత్తం 4999 rupees మాత్రమే. క్లాసులు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో job guarantee లేదా placement వాగ్దానాలు ఏమీ ఉండవు. మీకు డెమో లేదా counseling కావాలా అండి?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 66,
+        "prompt_tokens": 4575,
+        "total_tokens": 4641,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ క్లాసులు, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటుంది. కనీస వయస్సు 18 ఏళ్లు ఉండాలి. దీనికి మొత్తం ఫీజు 4999 రూపాయలు మాత్రమే. ఇందులో ఎలాంటి ఉద్యోగ హామీ లేదా ప్లేస్‌మెంట్ వాగ్దానాలు ఉండవు, అలాగే డిస్కౌంట్లు లేదా వాయిదాల పద్ధతి కూడా లేదు. మీకు కోడింగ్ అనుభవం ఏమైనా ఉందా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4356,
+          "output_tokens": 115,
+          "total_tokens": 4471
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.891
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 1280,
+      "sse_content_preview": "{ \"end_call\":        {\"evidence\": \"Caller explicitly said 'ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి' and asked only for information, refusing booking.\", \"reason\": \"firm_refusal\", \"decision\": \"close\", \"remaining_request\": \"Course fee, duration, timings, and job guarantee details.\", \"contact_preference\": \"do_not_call\"} \n\n,\n\"action_claimed\":   \"none\",\n\"spoken_response\": \"సరేనండి. మొత్తం ఫీజు 4999 రూపాయలు. క్లాసులు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి ఉద్యోగ హామీ లేదా placement వాగ్దానం లేదు అండి. మీకు ఇంకేమైనా వివరాలు కావాలా?\" \n\n,\n\n\"memory_update\":   {\n  \"operations\":      [\n    {\n      \"op\":            \"update_summary\",\n      \"key\":           \"coding_experience\",\n      \"value\":         \"unknown\"\n    },\n    {\n      \"op\":            \"update_summary\",\n      \"key\":           \"interested\",\n      \"value\":         \"true\"\n    },\n    {\n      \"op\":            \"update_summary\",\n      \"key\":           \"booking_consent\",\n      \"value\":         \"false\"\n    }\n  ]\n} }తప్పకుండా అండి, ఇందులో ఎలాంటి job guarantee లేదా placement వాగ్దానం లేదు. ఇది పూర్తిగా beginner level కోర్సు, సో coding అనుభవం లేకపోయినా పర్వాలేదు. మీకు demo లేదా counseling session కావాలా అండి? మీకు సమ్మతి ఉంటే మీ పేరు, email మరియు మీకు అనుకూలమైన time చెప్తారా?",
+      "sse_content_tail": "త్తం ఫీజు 4999 రూపాయలు. క్లాసులు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి ఉద్యోగ హామీ లేదా placement వాగ్దానం లేదు అండి. మీకు ఇంకేమైనా వివరాలు కావాలా?\" \n\n,\n\n\"memory_update\":   {\n  \"operations\":      [\n    {\n      \"op\":            \"update_summary\",\n      \"key\":           \"coding_experience\",\n      \"value\":         \"unknown\"\n    },\n    {\n      \"op\":            \"update_summary\",\n      \"key\":           \"interested\",\n      \"value\":         \"true\"\n    },\n    {\n      \"op\":            \"update_summary\",\n      \"key\":           \"booking_consent\",\n      \"value\":         \"false\"\n    }\n  ]\n} }తప్పకుండా అండి, ఇందులో ఎలాంటి job guarantee లేదా placement వాగ్దానం లేదు. ఇది పూర్తిగా beginner level కోర్సు, సో coding అనుభవం లేకపోయినా పర్వాలేదు. మీకు demo లేదా counseling session కావాలా అండి? మీకు సమ్మతి ఉంటే మీ పేరు, email మరియు మీకు అనుకూలమైన time చెప్తారా?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 62,
+        "prompt_tokens": 4640,
+        "total_tokens": 4702,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి. మొత్తం ఫీజు 4999 రూపాయలు. క్లాసులు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి ఉద్యోగ హామీ లేదా placement వాగ్దానం లేదు అండి. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4438,
+          "output_tokens": 309,
+          "total_tokens": 4747
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": [
+            {
+              "op": "update_summary",
+              "key": "coding_experience",
+              "value": "unknown"
+            },
+            {
+              "op": "update_summary",
+              "key": "interested",
+              "value": "true"
+            },
+            {
+              "op": "update_summary",
+              "key": "booking_consent",
+              "value": "false"
+            }
+          ]
+        },
+        "end_call": {
+          "should_end": true,
+          "decision": "close",
+          "reason": "firm_refusal",
+          "evidence": "Caller explicitly said 'ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి' and asked only for information, refusing booking.",
+          "remaining_request": "Course fee, duration, timings, and job guarantee details.",
+          "contact_preference": "do_not_call",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": "none",
+        "memory_parse_failed": false,
+        "retry_count": 0,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 1280,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 1.468
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 1088,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly stated they are interested in learning Python and asked to explain the course, but did not agree to a next step or provide contact details. No further qualification is needed.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None expressed; caller wants course details but has not requested demo or contact capture.\",\n    \"contact_preference\": \"end_call\"\n  }\n  \n  \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "sse_content_tail": "ils. No further qualification is needed.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None expressed; caller wants course details but has not requested demo or contact capture.\",\n    \"contact_preference\": \"end_call\"\n  }\n  \n  \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.219
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 11,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 202,
+      "sse_content_preview": "{\n  \"spoken_response\": \"సరేనండి, job guarantee ఏమీ ఉండదు. ఇది పూర్తిగా beginners కోసం, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు ఉంటాయి. మీకు coding experience ఏమైనా ఉందా అండి?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"సరేనండి, job guarantee ఏమీ ఉండదు. ఇది పూర్తిగా beginners కోసం, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు ఉంటాయి. మీకు coding experience ఏమైనా ఉందా అండి?\"\n}",
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 61,
+        "prompt_tokens": 4908,
+        "total_tokens": 4969,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, job guarantee ఏమీ ఉండదు. ఇది పూర్తిగా beginners కోసం, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు ఉంటాయి. మీకు coding experience ఏమైనా ఉందా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4503,
+          "output_tokens": 58,
+          "total_tokens": 4561
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.719
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 14,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 939,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller explicitly requested save enquiry and provided consent; goal_complete as enquiry submitted with reference AUDIT-ENQUIRY-1.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "er explicitly requested save enquiry and provided consent; goal_complete as enquiry submitted with reference AUDIT-ENQUIRY-1.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.344
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 2560,
+        "reasoning_effort": null,
+        "message_count": 14,
+        "schema": true,
+        "tools": 1
+      },
+      "sse_content_chars": 240,
+      "sse_content_preview": "{\n  \"spoken_response\": \"సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది team review కోసం మాత్రమే, booking లేదా order ఏమీ confirm అవ్వలేదు. రేపు మధ్యాహ్నం మూడు గంటల time నోట్ చేసుకున్నాను. ఇంకేమైనా help కావాలా అండి?\"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది team review కోసం మాత్రమే, booking లేదా order ఏమీ confirm అవ్వలేదు. రేపు మధ్యాహ్నం మూడు గంటల time నోట్ చేసుకున్నాను. ఇంకేమైనా help కావాలా అండి?\"\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 72,
+        "prompt_tokens": 5103,
+        "total_tokens": 5175,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది team review కోసం మాత్రమే, booking లేదా order ఏమీ confirm అవ్వలేదు. రేపు మధ్యాహ్నం మూడు గంటల time నోట్ చేసుకున్నాను. ఇంకేమైనా help కావాలా అండి?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 5103,
+          "output_tokens": 72,
+          "total_tokens": 5175
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [
+          "enquiry_saved"
+        ],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.906
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Course enquiry for Python beginner course",
+        "preferred_time": "Tomorrow at 3 PM"
+      },
+      "turn": 4
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ క్లాసులు, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటుంది. కనీస వయస్సు 18 ఏళ్లు ఉండాలి. దీనికి మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు మాత్రమే.",
+      "turn": 1,
+      "at": 3.421
+    },
+    {
+      "text": "సరేనండి. మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు. క్లాసులు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి ఉద్యోగ హామీ లేదా placement వాగ్దానం లేదు అండి. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "turn": 2,
+      "at": 6.078
+    },
+    {
+      "text": "సరేనండి, job guarantee ఏమీ ఉండదు. ఇది పూర్తిగా beginners కోసం, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు ఉంటాయి. మీకు coding experience ఏమైనా ఉందా అండి?",
+      "turn": 3,
+      "at": 9.546
+    },
+    {
+      "text": "సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది team review కోసం మాత్రమే, booking లేదా order ఏమీ confirm అవ్వలేదు. రేపు మధ్యాహ్నం మూడు గంటల time నోట్ చేసుకున్నాను. ఇంకేమైనా help కావాలా అండి?",
+      "turn": 4,
+      "at": 12.781
+    },
+    {
+      "text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "turn": 5,
+      "at": 12.796
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "అవునండి, నాకు ఆసక్తి ఉంది. మీ service, ధర, conditions గురించి చెప్పండి.",
+      "spoken": "తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ క్లాసులు, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటుంది. కనీస వయస్సు 18 ఏళ్లు ఉండాలి. దీనికి మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు మాత్రమే.",
+      "elapsed_s": 3.421,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి. ముందు నా ప్రశ్నకి సమాధానం చెప్పండి: Course final fee, duration, class timings ఏమిటి? Job guarantee ఇస్తారా?",
+      "spoken": "సరేనండి. మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు. క్లాసులు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి ఉద్యోగ హామీ లేదా placement వాగ్దానం లేదు అండి. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "elapsed_s": 2.641,
+      "requests": 1,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "నాకు job guarantee అవసరం లేదు, కానీ Python నేర్చుకోవాలని ఆసక్తి ఉంది. Course వివరించగలరా?",
+      "spoken": "సరేనండి, job guarantee ఏమీ ఉండదు. ఇది పూర్తిగా beginners కోసం, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు ఉంటాయి. మీకు coding experience ఏమైనా ఉందా అండి?",
+      "elapsed_s": 3.453,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "నా పేరు Audit Customer, email audit.customer@example.invalid. నా enquiryని team review కోసం save చేయండి. రేపు మధ్యాహ్నం మూడు గంటలు నాకు అనుకూలం. Request submit చేయడానికి నా సమ్మతి ఉంది, కానీ order లేదా booking confirm అయిందని చెప్పకండి.",
+      "spoken": "సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది team review కోసం మాత్రమే, booking లేదా order ఏమీ confirm అవ్వలేదు. రేపు మధ్యాహ్నం మూడు గంటల time నోట్ చేసుకున్నాను. ఇంకేమైనా help కావాలా అండి?",
+      "elapsed_s": 3.203,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 5,
+      "caller_key": "done",
+      "user": "నా ప్రశ్నలకు సమాధానం ఇచ్చారు. ఇంకేమీ అవసరం లేదు. నమస్కారం, call ముగించండి.",
+      "spoken": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "elapsed_s": 0.047,
+      "requests": 0,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": true
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 5,
+      "at": 12.843,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "cc85d6c0-3103-4735-bd03-6582410cdea5",
+      "reason": "goodbye"
+    }
+  ],
+  "turn": 5,
+  "instrumentation_version": 2,
+  "render_checksum": "e7082482fcf2b4bc9469c68d3c3c1b2710173d0834f2f78ec07cbf4ceba6c74f",
+  "prompt_chars": 18476,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "నమస్కారం, నా పేరు అనన్య, నేను బ్రైట్ పాత్ స్కిల్స్ నుండి మాట్లాడుతున్నాను. వయోజనుల కోసం మన ఆరు వారాల ఆన్‌లైన్ పైథాన్ కోర్సు వివరాలు చెప్పడానికి నేను కాల్ చేశాను. ఇప్పుడు మాట్లాడటానికి మీకు కొంచెం సమయం ఉందా?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "తప్పకుండా అండి. ఈ కోర్సు ఆరు వారాల ఆన్‌లైన్ క్లాసులు, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటుంది. కనీస వయస్సు 18 ఏళ్లు ఉండాలి. దీనికి మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు మాత్రమే.",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": true,
+        "decision": "close",
+        "reason": "firm_refusal",
+        "evidence": "Caller explicitly said 'ఇప్పుడే ఏదీ book చేయకండి, save చేయకండి' and asked only for information, refusing booking.",
+        "remaining_request": "Course fee, duration, timings, and job guarantee details.",
+        "contact_preference": "do_not_call",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి. మొత్తం ఫీజు four thousand nine hundred ninety nine రూపాయలు. క్లాసులు ఆరు వారాల పాటు సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు ఉంటాయి. ఇందులో ఎలాంటి ఉద్యోగ హామీ లేదా placement వాగ్దానం లేదు అండి. మీకు ఇంకేమైనా వివరాలు కావాలా?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "remaining_request"
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, job guarantee ఏమీ ఉండదు. ఇది పూర్తిగా beginners కోసం, సోమవారం నుండి శుక్రవారం వరకు రాత్రి 7 నుండి 8 గంటల వరకు క్లాసులు ఉంటాయి. మీకు coding experience ఏమైనా ఉందా అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 4,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "సరేనండి, మీ enquiry save అయింది. Reference number AUDIT-ENQUIRY-1. ఇది team review కోసం మాత్రమే, booking లేదా order ఏమీ confirm అవ్వలేదు. రేపు మధ్యాహ్నం మూడు గంటల time నోట్ చేసుకున్నాను. ఇంకేమైనా help కావాలా అండి?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 5,
+      "proposal": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం."
+      },
+      "spoken_text": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+      "server_result": {
+        "should_end": true,
+        "reason": "goodbye",
+        "farewell": "సరేనండి, మీ సమయం ఇచ్చినందుకు ధన్యవాదాలు. నమస్కారం.",
+        "contact_preference": "end_call"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 12.843,
+  "hangup_count": 1
+}

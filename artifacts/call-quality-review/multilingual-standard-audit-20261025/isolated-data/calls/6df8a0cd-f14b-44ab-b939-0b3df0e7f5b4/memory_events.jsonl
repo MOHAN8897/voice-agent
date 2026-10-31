@@ -1,0 +1,2 @@
+{"turn_seq": 1, "ts": "2026-10-25T15:25:25.771103Z", "source": "model", "operations": [{"op": "set_fact", "key": "price_objection_handled", "value": "Visiting card 25 rupees per card, min 100"}], "applied": true, "validation_errors": []}
+{"turn_seq": 3, "ts": "2026-10-25T15:25:26.662036Z", "source": "model", "operations": [], "applied": false, "validation_errors": []}

@@ -1,0 +1,9 @@
+{
+  "facts": {
+    "caller_email": "audit.customer@example.invalid",
+    "caller_name": "Audit"
+  },
+  "preferences": {},
+  "important_context": "Caller shared contact details for the team to follow up.",
+  "summary": "confirm ಆಗಿದೆಯಾ?\nassistant: ಸೋಫಾಗೆ ಪ್ರತಿ ಸೀಟಿಗೆ three hundred forty nine ರೂಪಾಯಿ, ಕನಿಷ್ಠ 3 ಸೀಟುಗಳು ಬೇಕು, ಮತ್ತು ಕಿಚನ್ ಕ್ಲೀನಿಂಗ್ ಒಟ್ಟು one thousand five hundred ninety nine ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಇದು ದೃಢಪಡಿಸಿದ ಸ್ಲಾಟ್ ಅಥವಾ paid order ಅಲ್ಲ, visit ಈಗಲೇ confirm ಆಗಿಲ್ಲ. ನಿಮಗೆ ಯಾವ service ಬೇಕು ಅಂತ ಹೇಳ್ತೀರಾ?\nuser: ಸೋಫಾ cleaning ಬೇಡ, ಆದರೆ kitchen cleaning ಬೇಕು. ವಿವರಿಸಿ.\nassistant: ಸರಿ, ಕಿಚನ್ ಕ್ಲೀನಿಂಗ್‌ಗೆ ಒಟ್ಟು one thousand fiv…e hundred and ninety nine ರೂಪಾಯಿ ಆಗುತ್ತೆ. ಈ ಕರೆಯಲ್ಲಿ ಮಾತ್ರ ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬಹುದು. ಆದರೆ ತಂಡಕ್ಕೆ ಇದನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ follow-up ಭರವಸೆ ನೀಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು locality ತಿಳಿಸ್ತೀರಾ?"
+}

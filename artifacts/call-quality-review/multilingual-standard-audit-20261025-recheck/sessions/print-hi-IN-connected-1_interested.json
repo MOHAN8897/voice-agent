@@ -1,0 +1,448 @@
+{
+  "key": "print-hi-IN-connected-1_interested",
+  "business": "print",
+  "language": "hi-IN",
+  "integration": true,
+  "scenario": "1_interested",
+  "agent_id": "2fc12aaa-fef8-53c9-81db-07efa7f84427",
+  "call_id": "aaa4aee2-d5c9-4925-a768-a92ff3297009",
+  "session_id": "audit-print-hi-IN-connected-1_interested-04c49c05",
+  "compiled_checksum": "e91bf22969093f6a27742c03010544073c3466fd7eebb112e2acaf08eed62852",
+  "requests": [
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 4,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 876,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"Caller expressed interest and asked for service, price, and terms.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"Caller expressed interest and asked for service, price, and terms.\",\n    \"reason\": \"goal_complete\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"None\",\n    \"contact_preference\": \"do_not_call\"\n  }\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 1.312
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 698,
+      "sse_content_preview": "{\n  \"spoken_response\": \"देखिये, हमारे printed visiting cards 25 rupees per card के हिसाब से हैं, minimum 100 cards का order होता है। Wedding invitations भी मिलते हैं, लेकिन उसकी कीमत design और quantity पर depend करती है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है। वैसे cards और cash on delivery दोनों accept करते हैं। क्या आप quote के लिए अपनी preferred name और delivery locality बता सकते हैं?\"\n}हाँ, wedding invitations भी print होते हैं, लेकिन इसकी कीमत design और quantity पर depend करती है, fixed price available नहीं है। Delivery Pune में by post होती है, artwork approval के पाँच working days बाद। तो क्या आप quote के लिए अपना नाम और locality बता सकते हैं?",
+      "sse_content_tail": "{\n  \"spoken_response\": \"देखिये, हमारे printed visiting cards 25 rupees per card के हिसाब से हैं, minimum 100 cards का order होता है। Wedding invitations भी मिलते हैं, लेकिन उसकी कीमत design और quantity पर depend करती है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है। वैसे cards और cash on delivery दोनों accept करते हैं। क्या आप quote के लिए अपनी preferred name और delivery locality बता सकते हैं?\"\n}हाँ, wedding invitations भी print होते हैं, लेकिन इसकी कीमत design और quantity पर depend करती है, fixed price available नहीं है। Delivery Pune में by post होती है, artwork approval के पाँच working days बाद। तो क्या आप quote के लिए अपना नाम और locality बता सकते हैं?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 57,
+        "prompt_tokens": 4223,
+        "total_tokens": 4280,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "देखिये, हमारे printed visiting cards 25 rupees per card के हिसाब से हैं, minimum 100 cards का order होता है। Wedding invitations भी मिलते हैं, लेकिन उसकी कीमत design और quantity पर depend करती है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है। वैसे cards और cash on delivery दोनों accept करते हैं। क्या आप quote के लिए अपनी preferred name और delivery locality बता सकते हैं?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4015,
+          "output_tokens": 100,
+          "total_tokens": 4115
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.813
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 6,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 958,
+      "sse_content_preview": "{\"end_call\": {\"evidence\": \"अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: क्या आप शादी के निमंत्रण भी print करते हैं? कीमत और delivery time क्या है?\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"wedding invitation price and delivery time\", \"contact_preference\": \"do_not_call\"},\n\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r",
+      "sse_content_tail": "पहले मेरे सवाल का जवाब दीजिए: क्या आप शादी के निमंत्रण भी print करते हैं? कीमत और delivery time क्या है?\", \"reason\": \"goal_complete\", \"decision\": \"close\", \"remaining_request\": \"wedding invitation price and delivery time\", \"contact_preference\": \"do_not_call\"},\n\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r",
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "whitespace_stall",
+      "elapsed_s": 2.922
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 600,
+      "sse_content_preview": "{\"spoken_response\":\"जी हाँ, हम wedding invitations भी print करते हैं, लेकिन इसकी कीमत design और quantity पर depend करती है, fixed price available नहीं है। Delivery Pune में by post होती है, artwork approval के पाँच working days बाद। वैसे आपको किस type का card चाहिए और कितनी quantity में चाहिए? \"}जी बिल्कुल, हम wedding invitations भी बनाते हैं। इसकी कीमत design और quantity के हिसाब से तय होती है, तो fixed price available नहीं है। वैसे delivery Pune में by post artwork approval के बाद five working days में हो जाएगी। क्या आप अपनी details share करना चाहेंगे ताकि मैं आपको एक quote request भेज सकूँ?",
+      "sse_content_tail": "{\"spoken_response\":\"जी हाँ, हम wedding invitations भी print करते हैं, लेकिन इसकी कीमत design और quantity पर depend करती है, fixed price available नहीं है। Delivery Pune में by post होती है, artwork approval के पाँच working days बाद। वैसे आपको किस type का card चाहिए और कितनी quantity में चाहिए? \"}जी बिल्कुल, हम wedding invitations भी बनाते हैं। इसकी कीमत design और quantity के हिसाब से तय होती है, तो fixed price available नहीं है। वैसे delivery Pune में by post artwork approval के बाद five working days में हो जाएगी। क्या आप अपनी details share करना चाहेंगे ताकि मैं आपको एक quote request भेज सकूँ?",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 64,
+        "prompt_tokens": 4285,
+        "total_tokens": 4349,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "जी हाँ, हम wedding invitations भी print करते हैं, लेकिन इसकी कीमत design और quantity पर depend करती है, fixed price available नहीं है। Delivery Pune में by post होती है, artwork approval के पाँच working days बाद। वैसे आपको किस type का card चाहिए और कितनी quantity में चाहिए?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 4086,
+          "output_tokens": 64,
+          "total_tokens": 4150
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.906
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 8,
+        "schema": true,
+        "tools": 0
+      },
+      "sse_content_chars": 383,
+      "sse_content_preview": "{\n  \"end_call\": {\n    \"evidence\": \"मुझे visiting cards नहीं चाहिए, लेकिन शादी के निमंत्रण चाहिए। क्या आप बनाते हैं?\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"wedding invitations quote\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n    \"action_claimed\": \"none\",\n    \"spoken_response\": \"\"\n  ,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_content_tail": "{\n  \"end_call\": {\n    \"evidence\": \"मुझे visiting cards नहीं चाहिए, लेकिन शादी के निमंत्रण चाहिए। क्या आप बनाते हैं?\",\n    \"reason\": \"not_interested\",\n    \"decision\": \"close\",\n    \"remaining_request\": \"wedding invitations quote\",\n    \"contact_preference\": \"do_not_call\"\n  }\n,\n\n    \"action_claimed\": \"none\",\n    \"spoken_response\": \"\"\n  ,\n  \"memory_update\": {\n    \"operations\": []\n  }\n}",
+      "sse_finish": "stop",
+      "sse_usage": {
+        "completion_tokens": 131,
+        "prompt_tokens": 4148,
+        "total_tokens": 4279,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "error_type": "IncompleteTurnError",
+      "finish_reason": "stop",
+      "elapsed_s": 0.797
+    },
+    {
+      "max_output_tokens": 2560,
+      "reasoning_effort": null,
+      "tools": [],
+      "tool_choice": null,
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 11,
+        "schema": false,
+        "tools": 1
+      },
+      "sse_content_chars": 421,
+      "sse_content_preview": "{\n  \"spoken_response\": \"जी बिल्कुल, हम शादी के निमंत्रण भी बनाते हैं। इसकी exact कीमत design और quantity के हिसाब से तय होती है। क्या आप quote के लिए अपना नाम और delivery locality बता सकते हैं? Pune में five working days के अंदर post से delivery हो जाएगी artwork approval के बाद। Cards और cash on delivery दोनों accept हैं। Office timings Monday से Saturday, 10am से 6pm तक हैं। क्या आप अपना नाम और area share करेंगे? \"\n}",
+      "sse_content_tail": "{\n  \"spoken_response\": \"जी बिल्कुल, हम शादी के निमंत्रण भी बनाते हैं। इसकी exact कीमत design और quantity के हिसाब से तय होती है। क्या आप quote के लिए अपना नाम और delivery locality बता सकते हैं? Pune में five working days के अंदर post से delivery हो जाएगी artwork approval के बाद। Cards और cash on delivery दोनों accept हैं। Office timings Monday से Saturday, 10am से 6pm तक हैं। क्या आप अपना नाम और area share करेंगे? \"\n}",
+      "sse_finish": "tool_calls",
+      "sse_usage": {
+        "completion_tokens": 45,
+        "prompt_tokens": 4594,
+        "total_tokens": 4639,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "result": {
+        "done": true,
+        "text": "जी बिल्कुल, हम शादी के निमंत्रण भी बनाते हैं। इसकी exact कीमत design और quantity के हिसाब से तय होती है। क्या आप quote के लिए अपना नाम और delivery locality बता सकते हैं? Pune में five working days के अंदर post से delivery हो जाएगी artwork approval के बाद। Cards और cash on delivery दोनों accept हैं। Office timings Monday से Saturday, 10am से 6pm तक हैं। क्या आप अपना नाम और area share करेंगे?",
+        "language_context": {},
+        "usage": {
+          "input_tokens": 8296,
+          "output_tokens": 236,
+          "total_tokens": 8532
+        },
+        "finish_reason": "stop",
+        "memory_update": {
+          "operations": []
+        },
+        "end_call": {
+          "should_end": false,
+          "decision": "continue",
+          "reason": "none",
+          "evidence": "",
+          "remaining_request": "",
+          "contact_preference": "",
+          "farewell": "",
+          "conflict": false
+        },
+        "action_claimed": null,
+        "memory_parse_failed": false,
+        "retry_count": 1,
+        "requested_max_tokens": 0,
+        "effective_max_tokens": 2560,
+        "reasoning_effort": null,
+        "action_proofs": [],
+        "order_proof": false
+      },
+      "error_type": "GeneratorExit",
+      "finish_reason": null,
+      "elapsed_s": 0.813
+    },
+    {
+      "max_output_tokens": 1280,
+      "reasoning_effort": null,
+      "tools": [
+        "CRM_CREATE_ENQUIRY"
+      ],
+      "tool_choice": "none",
+      "serialized": {
+        "model": "sarvam-105b-conversations",
+        "max_tokens": 1280,
+        "reasoning_effort": null,
+        "message_count": 14,
+        "schema": true,
+        "tools": 1
+      },
+      "error_type": "RuntimeError",
+      "finish_reason": null,
+      "elapsed_s": 0.406
+    }
+  ],
+  "tool_calls": [
+    {
+      "name": "CRM_CREATE_ENQUIRY",
+      "arguments": {
+        "name": "Audit Customer",
+        "email": "audit.customer@example.invalid",
+        "request": "Wedding invitations quote request"
+      },
+      "turn": 4
+    }
+  ],
+  "wire_speech": [
+    {
+      "text": "देखिये, हमारे printed visiting cards twenty five rupees per card के हिसाब से हैं, minimum one hundred cards का order होता है। Wedding invitations भी मिलते हैं, लेकिन उसकी कीमत design और quantity पर depend करती है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है।",
+      "turn": 1,
+      "at": 3.047
+    },
+    {
+      "text": "जी हाँ, हम wedding invitations भी print करते हैं, लेकिन इसकी कीमत design और quantity पर depend करती है, fixed price available नहीं है। Delivery Pune में by post होती है, artwork approval के पाँच working days बाद। वैसे आपको किस type का card चाहिए और कितनी quantity में चाहिए?",
+      "turn": 2,
+      "at": 7.547
+    },
+    {
+      "text": "जी बिल्कुल, हम शादी के निमंत्रण भी बनाते हैं। इसकी exact कीमत design और quantity के हिसाब से तय होती है। क्या आप quote के लिए अपना नाम और delivery locality बता सकते हैं? Pune में five working days के अंदर post से delivery हो जाएगी artwork approval के बाद।",
+      "turn": 3,
+      "at": 9.813
+    },
+    {
+      "text": "क्षमा करें, हमें एक तकनीकी समस्या आ रही है। कृपया हमें वापस कॉल करें। धन्यवाद।",
+      "turn": 4,
+      "at": 11.313
+    }
+  ],
+  "turns": [
+    {
+      "index": 1,
+      "caller_key": "interested",
+      "user": "हाँ, मुझे दिलचस्पी है। अपनी service, कीमत और शर्तें बताइए।",
+      "spoken": "देखिये, हमारे printed visiting cards twenty five rupees per card के हिसाब से हैं, minimum one hundred cards का order होता है। Wedding invitations भी मिलते हैं, लेकिन उसकी कीमत design और quantity पर depend करती है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है।",
+      "elapsed_s": 3.047,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 2,
+      "caller_key": "details",
+      "user": "अभी कुछ book या save मत कीजिए। पहले मेरे सवाल का जवाब दीजिए: क्या आप शादी के निमंत्रण भी print करते हैं? कीमत और delivery time क्या है?",
+      "spoken": "जी हाँ, हम wedding invitations भी print करते हैं, लेकिन इसकी कीमत design और quantity पर depend करती है, fixed price available नहीं है। Delivery Pune में by post होती है, artwork approval के पाँच working days बाद। वैसे आपको किस type का card चाहिए और कितनी quantity में चाहिए?",
+      "elapsed_s": 4.484,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 3,
+      "caller_key": "alternate",
+      "user": "मुझे visiting cards नहीं चाहिए, लेकिन शादी के निमंत्रण चाहिए। क्या आप बनाते हैं?",
+      "spoken": "जी बिल्कुल, हम शादी के निमंत्रण भी बनाते हैं। इसकी exact कीमत design और quantity के हिसाब से तय होती है। क्या आप quote के लिए अपना नाम और delivery locality बता सकते हैं? Pune में five working days के अंदर post से delivery हो जाएगी artwork approval के बाद।",
+      "elapsed_s": 2.234,
+      "requests": 2,
+      "server_closed": false,
+      "phase": "listening",
+      "armed": false
+    },
+    {
+      "index": 4,
+      "caller_key": "request",
+      "user": "मेरा नाम Audit Customer है, email audit.customer@example.invalid है। मेरी enquiry team के review के लिए save कीजिए। कल दोपहर तीन बजे मेरे लिए ठीक है। Request submit करने की मेरी सहमति है, लेकिन order या booking confirm होने का दावा मत कीजिए।",
+      "spoken": "क्षमा करें, हमें एक तकनीकी समस्या आ रही है। कृपया हमें वापस कॉल करें। धन्यवाद।",
+      "elapsed_s": 1.531,
+      "requests": 1,
+      "server_closed": true,
+      "phase": "ended",
+      "armed": false
+    }
+  ],
+  "carrier": [
+    {
+      "turn": 4,
+      "at": 11.36,
+      "playback_active": false,
+      "pending": false
+    }
+  ],
+  "events": [
+    {
+      "type": "lifecycle_end",
+      "call_id": "aaa4aee2-d5c9-4925-a768-a92ff3297009",
+      "reason": "agent_hangup"
+    }
+  ],
+  "turn": 4,
+  "instrumentation_version": 2,
+  "render_checksum": "c24b80c3ea5863d92e17dda61428d03d0f154610dc6b3c0599e4a2bfb2a90dd1",
+  "prompt_chars": 18000,
+  "integration_prompt_note": "Tool declaration supplied only; business permissions come from the generated script.",
+  "opening_seeded": "Namaste, I am Meera, an AI assistant from ClearPrint Studio. Am I speaking with the right person regarding card printing needs?",
+  "close_gates": [
+    {
+      "turn": 1,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "देखिये, हमारे printed visiting cards twenty five rupees per card के हिसाब से हैं, minimum one hundred cards का order होता है। Wedding invitations भी मिलते हैं, लेकिन उसकी कीमत design और quantity पर depend करती है। Delivery Pune में post से artwork approval के पाँच working days बाद हो जाती है।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 2,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "जी हाँ, हम wedding invitations भी print करते हैं, लेकिन इसकी कीमत design और quantity पर depend करती है, fixed price available नहीं है। Delivery Pune में by post होती है, artwork approval के पाँच working days बाद। वैसे आपको किस type का card चाहिए और कितनी quantity में चाहिए?",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": null
+      }
+    },
+    {
+      "turn": 3,
+      "proposal": {
+        "should_end": false,
+        "decision": "continue",
+        "reason": "none",
+        "evidence": "",
+        "remaining_request": "",
+        "contact_preference": "",
+        "farewell": "",
+        "conflict": false
+      },
+      "spoken_text": "जी बिल्कुल, हम शादी के निमंत्रण भी बनाते हैं। इसकी exact कीमत design और quantity के हिसाब से तय होती है। क्या आप quote के लिए अपना नाम और delivery locality बता सकते हैं? Pune में five working days के अंदर post से delivery हो जाएगी artwork approval के बाद।",
+      "server_result": {
+        "should_end": false,
+        "reason": "none",
+        "farewell": "",
+        "contact_preference": "none",
+        "reject_code": "lead_details_missing"
+      }
+    }
+  ],
+  "status": "completed",
+  "elapsed_s": 11.36,
+  "hangup_count": 1
+}

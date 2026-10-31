@@ -1,0 +1,8 @@
+{
+  "facts": {
+    "latest_caller_correction": "You have answered my questions. I do not need anything else. Goodbye, end the call."
+  },
+  "preferences": {},
+  "important_context": "",
+  "summary": "that. I can only assist with our home cleaning services in Pune, like sofa or kitchen cleaning. Would you like to hear about those?\nuser: Fine, leave that topic. Please answer the original business question about price and conditions.\nassistant: For sofa cleaning, it is three hundred forty nine rupees per seat with a minimum of three seats. Kitchen cleaning is one thousand five hundred ninety nine rupees total. Would you like to know more about either service?\nuser: You have answered my questions. I do not need anything else. Goodbye, end the call.\nassistant: Thank you for your time. Goodbye."
+}
