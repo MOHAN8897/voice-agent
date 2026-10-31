@@ -179,17 +179,21 @@ def finalize_live_spoken_text(user_text: str, assistant_text: str, *, ctx: Any =
                                     language=active_language(ctx) or getattr(getattr(ctx, "resolved_stack", None), "language", None))
     if is_incomplete_spoken_crumb(prepared) or is_incomplete_spoken_crumb(capped):
         return ""
-    return _avoid_verbatim_repeat(prepared, ctx)
+    return _avoid_verbatim_repeat(prepared, ctx, caller=user_text)
 
 
 # Live probes: after "okay, thanks" the model often re-sent its previous reply word for word.
 from server.call.reply_guard import REPEAT_ACK as _REPEAT_ACK  # noqa: E402
 
 
-def _avoid_verbatim_repeat(text: str, ctx: Any) -> str:
+def _avoid_verbatim_repeat(text: str, ctx: Any, *, caller: str = "") -> str:
     """A reply identical to the agent's previous turn becomes a short acknowledgement."""
     session_id = getattr(ctx, "session_id", None)
     if not text or not session_id:
+        return text
+    from server.call.end_call_validate import looks_like_question
+    if "?" in (caller or "") or looks_like_question(caller or ""):
+        # The caller asked again: a bare "OK" answered nothing (kn-IN delivery-time loop).
         return text
     from server.agent.conversation_manager import conversation_manager
 
@@ -198,7 +202,7 @@ def _avoid_verbatim_repeat(text: str, ctx: Any) -> str:
     norm = lambda value: re.sub(r"[\W_]+", "", value.casefold())  # noqa: E731
     if not previous or len(norm(text)) < 12:
         return text
-    split = lambda value: [s.strip() for s in re.findall(r"[^.!?।]+[.!?।]*", value) if norm(s)]  # noqa: E731
+    from server.call.reply_guard import sentences as split
     said = {norm(s) for s in split(previous)}
     fresh = [s for s in split(text) if norm(s) not in said]
     if len(fresh) == len(split(text)):
@@ -580,7 +584,7 @@ class LiveTurnOrchestrator:
                 + json.dumps(ctx.turn_control if isinstance(getattr(ctx, "turn_control", None), dict) else None, ensure_ascii=False)
                 + ". Evidence-backed answers for the current business questions: "
                 + json.dumps(ctx.business_answers if isinstance(getattr(ctx, "business_answers", None), list) else [], ensure_ascii=False)
-                + ". Any term marked not_stated MUST be described as unknown. It is never zero, free, included, or no hidden charges. Use calculated_total only for its quoted unit price and requested quantity. "
+                + ". Any term marked not_stated MUST be described as unknown. It is never zero, free, included, or no hidden charges. Use calculated_total only for its quoted unit price and requested quantity; for a combined total say calculated_grand_total exactly. "
                 + ". If the caller asks whether their details, appointment, or enquiry were saved ('did it save?'), check the confirmed action receipts: "
                 "if a confirmed receipt exists, state clearly that it was already recorded/confirmed and do not call the action again. "
                 "Never create the same contact or order twice. "
@@ -1430,9 +1434,11 @@ class LiveTurnOrchestrator:
         language = str(kwargs.get("language_code") or "te-IN")
         control = getattr(ctx, "turn_control", None) or {}
         if isinstance(control, dict) and control.get("close_verified") is True and not control.get("remaining_request"):
-            from server.call.call_end_policy import allowed_reasons_for
-            if control.get("reason") in allowed_reasons_for(getattr(ctx, "call_end_policy", None)):
-                yield {"done": True, "text": "", "response_contract": "speech_text", "finish_reason": "stop", "server_owned_close": True}
+            from server.call.semantic_call_control import close_rejection
+            # Skip the reply only when the gate will really close; otherwise the caller hears nothing.
+            if close_rejection(control, ctx=ctx, transcript=transcript) is None:
+                yield {"done": True, "text": "", "response_contract": "speech_text", "finish_reason": "stop",
+                       "server_owned_close": True, "empty_provider_response": True}
                 return
         # Clear end intent needs no network round trip or generative sales reply.
         # The normal gate below still owns policy, active-call, and barge checks.
@@ -1962,6 +1968,61 @@ class LiveTurnOrchestrator:
                 event["external_actions_available"] = external_available
             yield event
 
+    async def _speech_or_reselect(
+        self, *, ctx, adapter, llm_sel, stream_kwargs: dict[str, Any], selection_kwargs: dict[str, Any],
+        messages: list[dict[str, Any]] | None, tool_schemas: list[dict[str, Any]], call_id: str | None,
+        record_request_usage, selection_text: str, allow_retry: bool,
+    ) -> AsyncIterator[dict[str, Any]]:
+        """The validated speech pass; if it comes back empty, offer the tools once more.
+
+        Sarvam strips a tool call from a request that offers no tools and returns null
+        content: the model meant to act (place the order, send the email) and the caller
+        heard nothing, then a recovery line, and the order was never recorded.
+        """
+        speech_done: dict[str, Any] | None = None
+        async for chunk in self._stream_composed_speech(
+            adapter=adapter, available_tools=tool_schemas, messages=messages,
+            schema=LIVE_TURN_JSON_SCHEMA, stream_kwargs=stream_kwargs, call_id=call_id,
+            provider=llm_sel.provider, model=llm_sel.model, allow_retry=allow_retry,
+        ):
+            record_request_usage(chunk)
+            chunk.setdefault("action_proofs", [])
+            chunk.setdefault("order_proof", False)
+            if chunk.get("done"):
+                speech_done = chunk
+                continue
+            yield chunk
+        if speech_done is not None and speech_done.get("empty_provider_response") and not str(speech_done.get("text") or "").strip():
+            log_pstn("composed.speech_empty_reselect", call_id=call_id, provider=llm_sel.provider)
+            reselect: dict[str, Any] | None = None
+            try:
+                async for chunk in self._stream_composed_turn(
+                    stream_fn=adapter.stream_live_turn, messages=messages, schema=None,
+                    stream_kwargs=selection_kwargs, call_id=call_id, provider=llm_sel.provider,
+                    model=llm_sel.model, allow_empty_text=True, allow_empty_selection=True,
+                    allow_retry=False, carry_partial=False,
+                ):
+                    record_request_usage(chunk)
+                    if chunk.get("done"):
+                        reselect = chunk
+            except IncompleteTurnError:
+                reselect = None
+            if reselect and isinstance(reselect.get("tool_calls"), list) and reselect["tool_calls"]:
+                async for chunk in self._composed_speech_after_tools(
+                    ctx=ctx, adapter=adapter, llm_sel=llm_sel, stream_kwargs=stream_kwargs,
+                    messages=messages, tool_schemas=tool_schemas, tool_calls=reselect["tool_calls"],
+                    call_id=call_id, record_request_usage=record_request_usage, allow_retry=False,
+                ):
+                    yield chunk
+                return
+            prose = str((reselect or {}).get("text") or selection_text or "").strip()
+            if prose:
+                # Still guarded downstream (claims, review triggers, language) like any reply.
+                speech_done = {**speech_done, "text": prose, "empty_provider_response": False,
+                               "replace_speech": True, "finish_reason": "selection_prose"}
+        if speech_done is not None:
+            yield speech_done
+
     async def _composed_tool_turn(
         self,
         *,
@@ -1984,20 +2045,18 @@ class LiveTurnOrchestrator:
         validated speech phase, after the server knows each result.
         """
         if getattr(adapter, "selects_tools_without_schema", False):
-            if (getattr(ctx, "turn_control", None) or {}).get("action_request") == "none":
-                async for chunk in self._stream_composed_speech(
-                    adapter=adapter, available_tools=tool_schemas, messages=messages,
-                    schema=LIVE_TURN_JSON_SCHEMA, stream_kwargs=stream_kwargs, call_id=call_id,
-                    provider=llm_sel.provider, model=llm_sel.model, allow_retry=allow_retry,
-                ):
-                    record_request_usage(chunk)
-                    yield chunk
-                return
             selection_kwargs = dict(stream_kwargs)
             selection_kwargs["tools"] = tool_schemas
             selection_kwargs["tool_choice"] = "auto"
             # A selection that chooses no action may legitimately have no text.
             selection_kwargs["allow_empty_response"] = True
+            speech = dict(ctx=ctx, adapter=adapter, llm_sel=llm_sel, stream_kwargs=stream_kwargs,
+                          selection_kwargs=selection_kwargs, messages=messages, tool_schemas=tool_schemas,
+                          call_id=call_id, record_request_usage=record_request_usage)
+            if (getattr(ctx, "turn_control", None) or {}).get("action_request") == "none":
+                async for chunk in self._speech_or_reselect(**speech, selection_text="", allow_retry=allow_retry):
+                    yield chunk
+                return
             selection_done: dict[str, Any] | None = None
             async for chunk in self._stream_composed_turn(
                 stream_fn=adapter.stream_live_turn,
@@ -2032,20 +2091,10 @@ class LiveTurnOrchestrator:
             if not isinstance(tool_calls, list) or not tool_calls:
                 # No action was selected. The selection reply is unvalidated
                 # prose, so it is never spoken: produce the normal speech turn.
-                async for chunk in self._stream_composed_speech(
-                    adapter=adapter,
-                    available_tools=tool_schemas,
-                    messages=messages,
-                    schema=LIVE_TURN_JSON_SCHEMA,
-                    stream_kwargs=stream_kwargs,
-                    call_id=call_id,
-                    provider=llm_sel.provider,
-                    model=llm_sel.model,
+                async for chunk in self._speech_or_reselect(
+                    **speech, selection_text=str(selection_done.get("text") or ""),
                     allow_retry=allow_retry and not turn_retry_used,
                 ):
-                    record_request_usage(chunk)
-                    chunk.setdefault("action_proofs", [])
-                    chunk.setdefault("order_proof", False)
                     yield chunk
                 return
             async for chunk in self._composed_speech_after_tools(

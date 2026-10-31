@@ -174,9 +174,13 @@ def _phone_key(raw: str) -> str:
 
 def _extract_phone(facts: dict[str, str], meta: dict[str, Any]) -> str:
     """The number to key the lead on, falling back to the call's own parties."""
+    from server.services.saas.call_callback_service import normalize_e164
+
     from_facts = _clean(_first_fact(facts, _PHONE_KEYS), 32)
     if 7 <= len(_phone_key(from_facts)) <= 15:
-        return from_facts
+        # A dictated "9876543210" was stored raw beside "+919876543210" leads, so the same
+        # person could become two leads and miss DND matching.
+        return normalize_e164(from_facts) or from_facts
     direction = str(meta.get("direction") or "").lower()
     outbound = direction in ("outbound", "outgoing", "outbound-api")
     candidate = meta.get("callee_e164") if outbound else meta.get("caller_id")

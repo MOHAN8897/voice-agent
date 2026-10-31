@@ -147,11 +147,15 @@ def claim_has_proof(claim: str | None, proofs: Iterable[str]) -> bool:
         return True
     available = proof_set(proofs)
     if claim in _RECORDED_REQUEST:
-        return bool(available & _RECORDED_REQUEST)
+        # A confirmed booking or order is also a recorded request; "noted" after a real
+        # calendar booking was replaced by "I couldn't confirm your request".
+        return bool(available & (_RECORDED_REQUEST | {PROOF_APPOINTMENT_CONFIRMED, PROOF_ORDER_CONFIRMED}))
     return claim in available
 
 
 _ORDER_CLAIM = re.compile(
+    # "I am placing the order now" claims the action is under way without a tool.
+    r"\b(?:am|is|are|'m)\s+(?:now\s+)?(?:placing|confirming|booking)\b[^.!?]{0,30}\b(?:order|purchase)\b|"
     r"\b(?:order|purchase)\b[^.!?]{0,60}\b(?:confirmed|placed|done|complete[d]?)\b|"
     r"\b(?:confirmed|placed)\b[^.!?]{0,40}\b(?:order|purchase)\b|"
     r"\b(?:order|purchase)\b[^.!?]{0,60}\bconfirm(?:ing)?\b[^.!?]{0,24}(?:చేస్తున్న|అయింది|చేశా)|"
@@ -165,7 +169,11 @@ _ORDER_CLAIM = re.compile(
     r"(?:order|ఆర్డర్|ऑर्डर|ஆர்டர்|ಆರ್ಡರ್|ഓർഡർ|ઓર્ડર)[^.!?]{0,40}"
     r"(?:confirm|కన్ఫర్మ్|कन्फर्म|கன்ஃபார்ம்|கன்பார்ம்|ಕನ್ಫರ್ಮ್|കൺഫേം|કન્ફર્મ)[^.!?]{0,20}"
     r"(?:చేస్తున్న|చేశా|అయింది|అయ్యింది|कर\s*(?:दिया|रहा|रही|दी)|हो\s*गया|பண்ணிட்ட|பண்றேன்|ஆயிடுச்சு|"
-    r"ಮಾಡ್ತೀನಿ|ಮಾಡಿದ್ದೀನಿ|ಆಯ್ತು|ചെയ്തു|ചെയ്യുന്നു|આવી\s*ગયો|કરી\s*દીધો|કરું\s*છું|ing\b|ed\b)",
+    r"ಮಾಡ್ತೀನಿ|ಮಾಡಿದ್ದೀನಿ|ಆಯ್ತು|ചെയ്തു|ചെയ്യുന്നു|આવી\s*ગયો|કરી\s*દીધો|કરું\s*છું|ing\b|ed\b)"
+    # Code-mixed done-claims: "order place हो गया", "ಆರ್ಡರ್ ಕನ್ಫರ್ಮ್ ಆಗಿದೆ".
+    r"|(?:order|ఆర్డర్|ऑर्डर|आर्डर|ஆர்டர்|ಆರ್ಡರ್|ഓർഡർ|ઓર્ડર)[^.!?।]{0,30}"
+    r"(?:place|confirm|book|ప్లేస్|కన్ఫర్మ్|प्लेस|कन्फर्म|ப்ளேஸ்|கன்ஃபார்ம்|ಪ್ಲೇಸ್|ಕನ್ಫರ್ಮ್|പ്ലേസ്|കൺഫേം|પ્લેસ|કન્ફર્મ)[^.!?।]{0,12}"
+    r"(?:हो\s*(?:गया|गई|गए|चुका|चुकी)|कर\s*(?:दिया|दी|दिए|ली|लिया|लिए)|అయింది|అయ్యింది|చేశా|చేసా|చేసాను|చేశాను|ஆயிடுச்சு|ஆகிவிட்டது|பண்ணிட்ட|செய்துவிட்ட|ಆಗಿದೆ|ಆಯ್ತು|ಮಾಡಿದ್ದೀನಿ|ಮಾಡಿದ್ದೇನೆ|ആയി|ചെയ്തു|થઈ\s*ગ(?:યો|ઈ|યા)|કરી\s*(?:દીધો|દીધી|લીધો|લીધી))",
     re.I,
 )
 _APPOINTMENT_CLAIM = re.compile(
@@ -197,7 +205,11 @@ _RECORDED_CLAIM = re.compile(
     r"(?:अनुरोध|विवरण|पूछताछ)[^.!?]{0,40}(?:सहेज|दर्ज|भेज|नोट)|"
     r"(?:கோரிக்கை|விவரங்கள்|விசாரணை)[^.!?]{0,40}(?:சேமி|பதிவு|அனுப்ப)|"
     r"(?:ವಿನಂತಿ|ವಿವರಗಳು|ವಿಚಾರಣೆ)[^.!?]{0,40}(?:ಉಳಿಸ|ದಾಖಲಿಸ|ಕಳುಹಿಸ)|"
-    r"(?:അഭ്യർത്ഥന|വിവരങ്ങൾ|അന്വേഷണം)[^.!?]{0,40}(?:സംരക്ഷിച്ച|രേഖപ്പെടുത്തി|അയച്ച)",
+    r"(?:അഭ്യർത്ഥന|വിവരങ്ങൾ|അന്വേഷണം)[^.!?]{0,40}(?:സംരക്ഷിച്ച|രേഖപ്പെടുത്തി|അയച്ച)"
+    # Code-mixed: "enquiry save हो गई", "details save అయింది".
+    r"|(?:enquiry|inquiry|request|details|ఎంక్వైరీ|एंक्वायरी|इन्क्वायरी)[^.!?।]{0,30}"
+    r"(?:save|register|submit|record|సేవ్|सेव|ಸೇವ್|சேவ்|സേവ്|સેવ)[^.!?।]{0,12}"
+    r"(?:हो\s*(?:गया|गई|गए|चुका|चुकी)|कर\s*(?:दिया|दी|दिए|ली|लिया|लिए)|అయింది|అయ్యింది|చేశా|చేసా|చేసాను|చేశాను|ஆயிடுச்சு|ஆகிவிட்டது|பண்ணிட்ட|செய்துவிட்ட|ಆಗಿದೆ|ಆಯ್ತು|ಮಾಡಿದ್ದೀನಿ|ಮಾಡಿದ್ದೇನೆ|ആയി|ചെയ്തു|થઈ\s*ગ(?:યો|ઈ|યા)|કરી\s*(?:દીધો|દીધી|લીધો|લીધી))",
     re.I,
 )
 
@@ -270,7 +282,7 @@ def unproven_claim(text: str, proofs: Iterable[str]) -> str | None:
         _APPOINTMENT_CLAIM, spoken
     ):
         return PROOF_APPOINTMENT_CONFIRMED
-    if not (available & _RECORDED_REQUEST) and _asserted(_RECORDED_CLAIM, spoken):
+    if not claim_has_proof(PROOF_ENQUIRY_SAVED, available) and _asserted(_RECORDED_CLAIM, spoken):
         return PROOF_ENQUIRY_SAVED
     return None
 

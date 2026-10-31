@@ -190,6 +190,30 @@ async def test_incomplete_address_waits_without_speaking_or_hanging_up(monkeypat
     assert result["hangup_commands"] == 0
 
 
+@pytest.mark.asyncio
+async def test_complete_acknowledgement_is_answered_not_waited_on(monkeypatch):
+    said = "Haan, that makes sense actually, ji."
+
+    class AckAdapter:
+        uses_plain_live_speech = True
+
+        async def stream_live_turn(self, **_kwargs):
+            system = _kwargs["input_messages"][0]["content"]
+            if system.startswith("Understand telephone"):
+                yield {"done": True, "text": '{"contact_action":"keep","finish":false,"open_request":""}'}
+                return
+            if system.startswith(("Read this phone conversation", "Validate")):
+                yield {"done": True, "text": json.dumps({"decision": "continue", "wait_for_caller": True,
+                                                          "wait_evidence": said, "memory_operations": []})}
+                return
+            yield {"delta": "Anything else you would like to know?"}
+            yield {"done": True, "text": "Anything else you would like to know?"}
+
+    result = await run_voice_simulation(monkeypatch, "en-IN", said, False, adapter=AckAdapter())
+    assert result["spoken"], "a complete acknowledgement got dead air"
+    assert result["hangup_commands"] == 0
+
+
 async def run_voice_simulation(monkeypatch, language, user, closing, *, adapter=None, retry_attempt=False, empty_speech=False, recovered_text=""):
     """Real gate, voice loop, executor and lifecycle; substitute speech and carrier."""
     from server.call import call_context

@@ -9,7 +9,10 @@ from server.services.voice_pipeline_limits import (
 )
 
 # End sentence on Latin/Telugu punctuation (not decimal points like 80.5), or newline.
-_SENTENCE_END = re.compile(r"(?<=[.!?।])(?!\d)\s*|\n+")
+# A period inside a token ("gmail.com", "www.site.in") never ends a sentence.
+_SENTENCE_END = re.compile(r"(?<=[!?।])(?!\d)\s*|(?<=\.)(?=\s|$)\s*|\n+")
+# An address still streaming ("...@gmail." before "com" arrives) is held, not spoken in halves.
+_ADDRESS_TAIL = re.compile(r"(?:\S*@\S*|(?:www\.|https?://)\S*)\.$")
 
 
 def _last_word_boundary(text: str, max_index: int) -> int:
@@ -32,6 +35,10 @@ def drain_complete_sentences(
 
     complete: list[str] = []
     remainder = buffer
+    held = ""
+    tail = _ADDRESS_TAIL.search(buffer)
+    if tail:
+        remainder, held = buffer[:tail.start()], buffer[tail.start():]
     carry = ""
     # Kept for API compatibility. A first chunk now follows the same prosody-safe
     # boundaries as every other chunk: punctuation, a substantial clause, or the
@@ -78,7 +85,10 @@ def drain_complete_sentences(
 
         break
 
-    return complete, " ".join(part for part in (carry, remainder) if part)
+    rest = " ".join(part for part in (carry, remainder) if part)
+    if held:
+        rest = f"{rest.rstrip()} {held}" if rest.strip() else held
+    return complete, rest
 
 
 def join_speakable_chunks(chunks: list[str]) -> str:

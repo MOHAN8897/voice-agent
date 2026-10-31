@@ -77,6 +77,40 @@ def business_fact_text(brain: str) -> str:
     return "\n".join(lines).casefold()
 
 
+# Callers say quantities as words ("ಎರಡು hair oil", "दो bottles"); without these the server
+# computed no total and the model summed the order wrongly in every language.
+_QUANTITY_WORDS = {
+    1: ("one", "a", "an", "single", "एक", "ఒక", "ఒకటి", "ஒரு", "ஒன்று", "ಒಂದು", "ഒരു", "ഒന്ന്", "એક"),
+    2: ("two", "couple", "दो", "రెండు", "இரண்டு", "ரெண்டு", "ಎರಡು", "രണ്ട്", "બે"),
+    3: ("three", "तीन", "మూడు", "மூன்று", "ಮೂರು", "മൂന്ന്", "ત્રણ"),
+    4: ("four", "चार", "నాలుగు", "நான்கு", "ನಾಲ್ಕು", "നാല്", "ચાર"),
+    5: ("five", "पांच", "पाँच", "ఐదు", "ஐந்து", "ಐದು", "അഞ്ച്", "પાંચ"),
+    6: ("six", "छह", "ఆరు", "ஆறு", "ಆರು", "ആറ്", "છ"),
+    7: ("seven", "सात", "ఏడు", "ஏழு", "ಏಳು", "ഏഴ്", "સાત"),
+    8: ("eight", "आठ", "ఎనిమిది", "எட்டு", "ಎಂಟು", "എട്ട്", "આઠ"),
+    9: ("nine", "नौ", "తొమ్మిది", "ஒன்பது", "ಒಂಬತ್ತು", "ഒമ്പത്", "નવ"),
+    10: ("ten", "दस", "పది", "பத்து", "ಹತ್ತು", "പത്ത്", "દસ"),
+}
+
+
+_PACK_SIZE = re.compile(r"^\s*(?:ml|g|gm|grams?|kg|l|ltr|litres?|capsules?|tablets?)(?![a-z])", re.I)
+
+
+_WORD_TO_COUNT = {word: n for n, words in _QUANTITY_WORDS.items() for word in words if word not in {"a", "an"}}
+
+
+def word_quantity(token: str) -> int | None:
+    """The count a single spoken quantity word stands for, if any."""
+    return _WORD_TO_COUNT.get((token or "").casefold())
+
+
+def spoken_quantities(text: str) -> set[str]:
+    """Digits for quantity words the caller actually said, in any supported language."""
+    # Indic vowel signs are not \w, so split on spaces and punctuation instead.
+    tokens = {t for t in re.split(r"[\s,.!?।;:()\-]+", (text or "").casefold()) if t}
+    return {str(n) for n, words in _QUANTITY_WORDS.items() if tokens & set(words)}
+
+
 def validate_answers(raw: Any, rows: list[str], caller: str) -> list[dict]:
     result = []
     for item in raw[:4] if isinstance(raw, list) else []:
@@ -95,15 +129,34 @@ def validate_answers(raw: Any, rows: list[str], caller: str) -> list[dict]:
             answer.update(status="stated", source=rows[index], topic=topic, value=value)
             price, units, requested = [str(item.get(k) or "") for k in ("unit_price_quote", "unit_quantity_quote", "requested_quantity_quote")]
             numbers = lambda text: set(re.findall(r"(?<!\d)\d[\d,]*(?:\.\d+)?(?!\d)", text))
-            if price and units and requested and price in numbers(rows[index]) and units in numbers(rows[index]) and requested in numbers(caller):
+            if price and units and requested and price in numbers(rows[index]) and units in numbers(rows[index]) and requested in numbers(caller) | spoken_quantities(caller):
                 try:
                     p, u, q = [Decimal(v.replace(",", "")) for v in (price, units, requested)]
+                    if _PACK_SIZE.search(rows[index].split(units, 1)[1][:12] if units in rows[index] else ""):
+                        u = Decimal(1)  # "499 rupees (200 ml)": the price is per pack; the caller counts packs
                     if all(v.is_finite() and v > 0 for v in (p, u, q)) and q % u == 0:
                         answer["calculated_total"] = format(p * (q / u), "f")
                 except (InvalidOperation, ValueError):
                     pass
         result.append(answer)
     return result
+
+
+def with_combined_total(answers: list[dict]) -> list[dict]:
+    """Add the server-computed sum when two or more items carry a calculated total.
+
+    "2 hair oil and 1 face cream" got per-item totals, then the model summed them wrongly
+    (₹1497 for 998 + 599) on every language it was tried in.
+    """
+    items = [a for a in answers if a.get("calculated_total")]
+    if len(items) < 2:
+        return answers
+    try:
+        total = sum(Decimal(a["calculated_total"]) for a in items)
+    except (InvalidOperation, ValueError):
+        return answers
+    return [*answers, {"question": "combined total of the items above", "status": "calculated",
+                       "calculated_grand_total": format(total.normalize(), "f")}]
 
 
 async def resolve_business_answers(ctx: Any, caller: str) -> list[dict]:
@@ -143,6 +196,6 @@ async def resolve_business_answers(ctx: Any, caller: str) -> list[dict]:
     parsed = _json_object(output)
     if not isinstance(parsed, dict) or not isinstance(parsed.get("answers"), list):
         return [{"question": caller[:200], "status": "not_stated", "reason": "invalid_lookup"}]
-    answers = validate_answers(parsed["answers"], rows, caller)
+    answers = with_combined_total(validate_answers(parsed["answers"], rows, caller))
     log_pstn("business.answer_lookup", call_id=ctx.call_id, terms=len(answers), unknown=sum(a["status"] == "not_stated" for a in answers))
     return answers

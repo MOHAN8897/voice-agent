@@ -107,7 +107,7 @@ async def test_questions_are_not_evidence_and_invented_prices_are_rejected(pipel
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("mutation", ["new_price", "merged_name", "new_company", "new_number", "qa_failure", "language_change", "invented_link", "wrong_speaker"])
+@pytest.mark.parametrize("mutation", ["new_price", "merged_name", "new_company", "new_number", "qa_failure", "invented_link", "wrong_speaker"])
 async def test_fail_closed_at_the_relevant_stage(pipeline_model, mutation):
     if mutation == "merged_name":
         pipeline_model.extracted["agent_name"] = "Meera Related to my agency"
@@ -117,8 +117,6 @@ async def test_fail_closed_at_the_relevant_stage(pipeline_model, mutation):
         pipeline_model.extracted["facts"][0]["text"] += " Pay INR 500."
     elif mutation == "new_number":
         pipeline_model.repaired["call_to_action"] = "Pay INR 900 to complete a booking."
-    elif mutation == "language_change":
-        pipeline_model.repaired["opening"] = "నమస్కారం, మీకు ఎలా సహాయం చేయగలను?"
     elif mutation == "invented_link":
         pipeline_model.repaired["call_to_action"] = "Go to https://invented.example.com to buy."
     elif mutation == "wrong_speaker":
@@ -261,3 +259,10 @@ async def test_openai_structured_requests_use_the_stage_temperature(monkeypatch)
         schema={"type": "object", "properties": {"ok": {"type": "boolean"}}},
         config=LLMConfig(provider="openai", model="gpt-4.1", temperature=0.2))
     assert create.await_args.kwargs["temperature"] == 0.2
+
+
+@pytest.mark.asyncio
+async def test_wrong_language_opening_is_replaced_by_the_native_template(pipeline_model):
+    pipeline_model.repaired["opening"] = "నమస్కారం, మీకు ఎలా సహాయం చేయగలను?"
+    _compiled, result = await pipeline.compile_employee_script(brief=BRIEF, language="en-IN")
+    assert "నమస్కారం" not in result.agent_script

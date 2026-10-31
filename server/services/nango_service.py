@@ -131,6 +131,14 @@ REVERSE_NANGO_PROVIDER_MAP.update({
 SHOPIFY_API_VERSION = "2026-07"
 
 
+def _credential_refresh_failed(resp: Any) -> bool:
+    """Nango could not refresh the provider token (sent as 400/424, not 401)."""
+    if getattr(resp, "status_code", 0) not in (400, 424):
+        return False
+    text = str(getattr(resp, "text", "") or "").lower()
+    return "refresh" in text and ("credential" in text or "access token" in text or "connection" in text)
+
+
 def _display_name(app: str) -> str:
     """Speakable integration name for caller-facing messages."""
     try:
@@ -825,6 +833,9 @@ class NangoService:
                     }
                 else:
                     logger.error("[NANGO_PROXY] Gmail send failed HTTP %s", resp.status_code)
+                    if _credential_refresh_failed(resp):
+                        # Nango answers 400 when the Google token cannot be refreshed; nothing was sent.
+                        return {"status": "error", "message": "The Gmail connection needs to be re-authorized by the business. Nothing was sent."}
                     return {"status": "error", "message": f"Could not send email (HTTP {resp.status_code})."}
 
             elif action_name == "SLACK_SEND_MESSAGE":

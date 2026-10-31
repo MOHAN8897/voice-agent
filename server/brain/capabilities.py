@@ -203,6 +203,14 @@ def apply_available_tools(text: str, tools: list[dict], *, followup_config: dict
         rows.append("The tenant permits automatic callbacks after the server resolves timing and passes calling-window, DND and account checks. A saved request is not a confirmed call time; do not promise an exact dial or claim a schedule succeeded without a server result.")
     else:
         rows.append("The team must review callback requests. Do not promise that an automatic callback or exact appointment has been scheduled.")
+    if "CONFIRM_ORDER" in names:
+        # Without this the model collected name and address, then said "I'll pass it to the team"
+        # and recorded nothing.
+        rows.append("Order flow: once products, quantities, name and delivery address are known, read them back "
+                    "with the total in one short line and ask for a yes; after the yes, call CONFIRM_ORDER in that turn. "
+                    "A yes that also asks something is still a yes: place the order and answer the question in the same turn. "
+                    "Ask 'shall I proceed?' at most once; never loop on it. "
+                    "Never say you will pass an order or request to the team unless an action records it in that turn.")
     if "REQUEST_HUMAN_HANDOFF" in names:
         rows.append("You cannot transfer this call. When the caller wants a manager, owner, team member or named person "
                     "to contact them, save it with REQUEST_HUMAN_HANDOFF and say you will pass it on.")

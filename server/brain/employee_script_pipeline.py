@@ -499,6 +499,17 @@ async def compile_employee_script(*, brief: str, language: str,
         if repair.passed and not (romanized and (
                 _romanized_indic_opening(repair.fixed_script.opening, language, brief, identity_names) or introduces_unsupported)):
             final = repair.fixed_script
+        if (_romanized_indic_opening(final.opening, language, brief, identity_names)
+                or not _opening_line_is_language_compatible(final.opening, language)):
+            # A failed repair used to keep the English opening, which a kn/ml voice then
+            # read aloud as the first line of every call. The platform template is native.
+            from server.prompts.agent_voice_rules import opening_line_for
+            fallback = opening_line_for(language, agent_name=extracted.agent_name or "",
+                                        company_name=extracted.company_name or "", work_scope="",
+                                        direction=config.get("callDirection") or "outbound")
+            logger.warning("employee_script.opening_template_fallback correlation_id=%s language=%s",
+                           correlation_id, language)
+            final = final.model_copy(update={"opening": fallback})
     assert extracted.agent_name is not None and extracted.primary_goal is not None
     name = extracted.agent_name
     company = extracted.company_name or ""
@@ -536,6 +547,9 @@ async def compile_employee_script(*, brief: str, language: str,
         validation.append("opening identity does not match the brief")
     validation.extend(validate_brief_requirements(script, language=language))
     if validation:
+        # The tenant sees a generic retry message; operators need the actual findings.
+        logger.warning("employee_script.validation_failed correlation_id=%s language=%s issues=%s",
+                       correlation_id, language, [str(v)[:200] for v in validation])
         raise BriefValidationError([brief_issue("invalid_generated_script", "The script needs another review before it can be saved. Please try again.", field="script")])
     rules = _platform_call_rules(agent_name=name, role=role, direction=direction, language=language)
     script = with_entity_tags_section(script, build_script_entities(agent_name=name, company_name=company,

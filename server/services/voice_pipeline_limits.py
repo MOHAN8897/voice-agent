@@ -40,7 +40,8 @@ _INCOMPLETE_TAIL = re.compile(
     re.I,
 )
 # Latin plus every Indic block a supported locale writes in (Devanagari through Malayalam).
-_GLUED_SENTENCE = re.compile(r"([.!?।])(?=[A-Za-zऀ-ൿ])")
+# A glued "." splits only before a capital or Indic letter; "gmail.com" and "www.site.in" stay intact.
+_GLUED_SENTENCE = re.compile(r"([!?।])(?=[A-Za-zऀ-ൿ])|(\.)(?=[A-Zऀ-ൿ])")
 _GREETING_START = re.compile(
     r"^(?:hi|hello|hey|namaste|namaskar)\b.{0,80}?\b(?:this is|nenu|main)\b",
     re.I,
@@ -132,7 +133,7 @@ def collapse_repeated_spoken_reply(text: str) -> str:
         return cleaned
 
     # Normalize "...today?Hi" → "...today? Hi" so prefix search works.
-    spaced = _GLUED_SENTENCE.sub(r"\1 ", cleaned)
+    spaced = _GLUED_SENTENCE.sub(lambda m: m.group(0) + " ", cleaned)
     if spaced != cleaned:
         cleaned = " ".join(spaced.split())
 

@@ -19,7 +19,9 @@ from typing import Any
 # Punctuation that separates spoken words in every supported script.
 _PUNCT = r"\s.,!?।॥;:\"'“”‘’()\[\]{}\-–—…/|*_~`"
 _TOKEN = re.compile(rf"[^{_PUNCT}]+")
-_SENTENCE = re.compile(r"[^.!?।]+[.!?।]*")
+# A dot inside a token ("name.99@gmail.com", "80.5") does not end a sentence; cutting there
+# dropped half an email address as an "already said" repeat.
+_SENTENCE = re.compile(r"(?:[^.!?।]|[.!?।](?=\S))+[.!?।]*")
 _CLAUSE = re.compile(r"[^,.!?।;]+[,.!?।;]*")
 _HEAD_CLAUSE = re.compile(r"\s*[^,.!?।;]+[,.!?।;]+")
 
@@ -132,7 +134,8 @@ def strip_filler_echo(reply: str, caller: str) -> str:
         if not any(_same_word(w, c) for w in head_words for c in caller_words):
             break
         rest = text[len(head):].strip()
-        if not _norm(rest):
+        if not _norm(rest) or len(tokens(rest)) < 2:
+            # "ठीक है, noted।" became a bare "noted।": a one-word remainder is not a reply.
             break
         text = rest
     return text

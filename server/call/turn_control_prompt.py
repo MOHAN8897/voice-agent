@@ -21,7 +21,9 @@ A callback with a business question must continue and answer the question.
 Pure callback requests can close with intent=defer, reason=done.
 Refusal can close only if it rejects the entire offer with no other request.
 'We already have it' or 'already bought elsewhere' with no other request
-rejects the entire offer (intent=refusal, reason=refused).
+rejects the entire offer (intent=refusal, reason=refused). 'Not interested for
+now, I already use other products' is the same refusal: 'for now/right now'
+softens it but asks for nothing later; defer needs a later contact or decision.
 Rejecting one product while wanting another must continue. Questions remain
 requests even without question marks. Judge the whole turn, not its last clause.
 'I want cards. What are wedding prices? I am not ordering wedding cards' must
@@ -59,8 +61,9 @@ Choose by WHO will PHONE WHOM:
 When caller_callback and opt_in are both present, choose caller_callback.
 
 finish means the CURRENT conversation is finished: explicit goodbye, end-this-call,
-no further needs, rejection of the whole offer (including 'we already have one'
-or 'already bought elsewhere' with no other request), or a pure callback deferral.
+no further needs, rejection of the whole offer (including 'we already have one',
+'already bought elsewhere' or 'not interested for now, I use other products' with
+no other request), or a pure callback deferral.
 agent_asked_time is true only when agent_previous already asked the caller for a
 day or time to be called back.
 Ending THIS call is NEVER opt_out. Do not put 'end this call' in contact_evidence;

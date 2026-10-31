@@ -350,7 +350,7 @@ _SCHEMAS: dict[str, list[dict]] = {
         {
             "type": "function",
             "name": "GMAIL_SEND_EMAIL",
-            "description": "Send a confirmation email to the caller",
+            "description": "Send an email to the caller at the address they gave: requested details, prices, a summary or a confirmation",
             "parameters": {
                 "type": "object",
                 "properties": {

@@ -168,6 +168,27 @@ async def test_imperative_call_me_misread_as_self_callback_is_rechecked(monkeypa
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("next_contact,expected", [("neither", "none"), ("caller", "self_callback"), ("business", "callback")])
+async def test_let_you_know_later_is_not_turned_into_a_business_callback(monkeypatch, next_contact, expected):
+    import json
+    from server.call import close_classifier
+    said = "సరే అండి, డాక్టర్ తో మాట్లాడాక చెప్తాను, బాయ్."
+
+    def responder(system):
+        if system.startswith("Understand telephone"):
+            return json.dumps({"contact_action": "caller_callback", "contact_evidence": said,
+                               "when": "", "finish": True, "finish_evidence": said, "open_request": ""})
+        if system.startswith("Decide ONLY who will make the next phone call"):
+            return json.dumps({"next_contact": next_contact})
+        return json.dumps({"decision": "close", "reason": "goodbye", "evidence": said, "contact_intent": "self_callback"})
+
+    _registry(monkeypatch, responder)
+    result = await close_classifier.classify_close_turn(
+        transcript=said, agent_previous="మీరు డాక్టర్ తో మాట్లాడాక మమ్మల్ని సంప్రదించండి.", language="te-IN", llm=_llm())
+    assert result["contact_intent"] == expected
+
+
+@pytest.mark.asyncio
 async def test_callback_without_time_asks_once_then_closes(monkeypatch):
     import json
     from server.call import call_context, close_classifier
@@ -315,12 +336,16 @@ async def test_romanized_hindi_opening_gets_native_script_repair(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_failed_native_repair_keeps_romanized_opening_instead_of_failing(monkeypatch):
+async def test_failed_native_repair_uses_native_template_opening_instead_of_failing(monkeypatch):
     from server.brain.employee_script_pipeline import compile_employee_script
+    from server.prompts.agent_voice_rules import opening_line_for
     romanized = "Namaste, main Meera bol rahi hoon Example Clinic se."
     _employee_fixture(monkeypatch, opening=romanized, repaired_opening="Namaste ji, Meera here from Example Clinic.")
     _compiled, result = await compile_employee_script(brief=BRIEF_HI, language="hi-IN")
-    assert romanized in result.agent_script
+    # A kn/ml/hi voice must never read an English or romanized first line.
+    assert romanized not in result.agent_script
+    assert opening_line_for("hi-IN", agent_name="Meera", company_name="Example Clinic", work_scope="",
+                            direction="outbound") in result.agent_script
 
 
 @pytest.mark.asyncio
@@ -421,7 +446,7 @@ async def test_native_repair_that_invents_a_number_is_not_used(monkeypatch):
     _employee_fixture(monkeypatch, opening=romanized,
                       repaired_opening="नमस्ते, मैं Example Clinic से Meera, 24 घंटे आपकी सेवा में।")
     _compiled, result = await compile_employee_script(brief=BRIEF_HI, language="hi-IN")
-    assert romanized in result.agent_script and "24 घंटे" not in result.agent_script
+    assert romanized not in result.agent_script and "24 घंटे" not in result.agent_script
 
 
 @pytest.mark.parametrize("opening,expected", [
@@ -472,3 +497,25 @@ async def test_verified_refusal_close_sets_disposition(monkeypatch, tmp_path, en
         assert result["disposition"] == expected
     finally:
         get_settings.cache_clear()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action,expected", [("write", "continue"), ("none", "close")])
+async def test_goodbye_with_a_requested_action_runs_the_action_first(monkeypatch, action, expected):
+    import json
+    from server.call import close_classifier
+    said = "హా, షూర్ అండి, ఆర్డర్ ప్లేస్ చేయండి. థాంక్స్, బాయ్."
+
+    def responder(system):
+        if system.startswith("Understand telephone"):
+            return json.dumps({"contact_action": "keep", "finish": True, "finish_evidence": said,
+                               "open_request": "", "action_request": action})
+        return json.dumps({"decision": "close", "intent": "goodbye", "reason": "goodbye", "explicit_end": True,
+                           "evidence": said, "contact_intent": "end_this_call"})
+
+    _registry(monkeypatch, responder)
+    result = await close_classifier.classify_close_turn(
+        transcript=said, agent_previous="ఆర్డర్ ప్లేస్ చేయమని చెప్తారా?", language="te-IN", llm=_llm())
+    assert result["decision"] == expected
+    if expected == "continue":
+        assert result["remaining_request"] and result["close_verified"] is False

@@ -34,7 +34,7 @@ CONFIRM_ORDER_TOOL: dict[str, Any] = {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 1_000_000,
-                "description": "Confirmed quantity as a positive whole number",
+                "description": "Confirmed quantity as a positive whole number; for several products, the total units",
             },
             "customer_name": {
                 "type": "string",
@@ -51,7 +51,7 @@ CONFIRM_ORDER_TOOL: dict[str, Any] = {
             "product": {
                 "type": "string",
                 "maxLength": 160,
-                "description": "Product or service being ordered, if stated",
+                "description": "Product or service being ordered; for several, each with its count (e.g. '2 x Hair Oil, 1 x Face Cream')",
             },
         },
         "required": ["quantity", "customer_name", "delivery_address"],
