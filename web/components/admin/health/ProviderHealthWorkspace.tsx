@@ -50,7 +50,14 @@ function KeySlots({ pool, categories }: { pool: KeyPool; categories: Record<stri
         const state = SLOT_STATE[slot.state] ?? SLOT_STATE.standby;
         return (
           <li key={slot.slot} className="flex flex-wrap items-center justify-between gap-2 rounded-skeuo-sm border border-surface-border-subtle bg-surface-panel px-2.5 py-1.5 text-xs">
-            <span className="font-medium text-text">{SLOT_LABEL(slot.slot)}</span>
+            <span className="font-medium text-text">
+              {SLOT_LABEL(slot.slot)}
+              {slot.source ? (
+                <span className="ml-1.5 font-normal text-text-subtle">
+                  {slot.source === "environment_page" ? "· from Environment page" : "· from .env"}
+                </span>
+              ) : null}
+            </span>
             <span className="flex flex-wrap items-center gap-2 text-text-muted">
               {slot.category ? <span>{categories[slot.category] ?? slot.category}</span> : null}
               {slot.state === "cooling_down" && slot.retryInSeconds > 0 ? (

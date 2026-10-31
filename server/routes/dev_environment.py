@@ -14,15 +14,22 @@ router = APIRouter()
 
 
 class EnvironmentPatch(BaseModel):
-    """Partial update — only sent fields are applied to the dev overlay."""
+    """Partial update — only sent fields are applied to the dev overlay.
 
-    model_config = ConfigDict(extra="forbid")
+    Unknown or read-only fields are passed to the store, which returns them as
+    ``rejected``. Forbidding them failed the whole save with 400 whenever the
+    panel sent a field this model did not list (enable_gnani, gemini_model), so
+    no key was ever stored.
+    """
+
+    model_config = ConfigDict(extra="allow")
 
     openai_api_key: str | None = None
     sarvam_api_key: str | None = None
     deepseek_api_key: str | None = None
     cartesia_api_key: str | None = None
     gemini_api_key: str | None = None
+    gnani_api_key: str | None = None
     telnyx_api_key: str | None = None
     vobiz_auth_token: str | None = None
     enable_sarvam: bool | None = None
@@ -30,6 +37,7 @@ class EnvironmentPatch(BaseModel):
     enable_deepseek: bool | None = None
     enable_cartesia: bool | None = None
     enable_gemini: bool | None = None
+    enable_gnani: bool | None = None
     enable_telnyx: bool | None = None
     enable_vobiz: bool | None = None
     enable_benchmarks: bool | None = None
@@ -50,7 +58,7 @@ class EnvironmentPatch(BaseModel):
 
 
 def _patch_dict(body: EnvironmentPatch) -> dict[str, Any]:
-    return body.model_dump(exclude_none=True)
+    return {**body.model_dump(exclude_none=True), **{k: v for k, v in (body.model_extra or {}).items() if v is not None}}
 
 
 @router.get("/api/dev/environment")

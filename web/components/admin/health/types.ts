@@ -9,6 +9,7 @@ export type KeySlot = {
   failures: number;
   lastFailureAt: string | null;
   lastSuccessAt: string | null;
+  source?: "environment_page" | "env_file";
 };
 
 export type KeyPool = {

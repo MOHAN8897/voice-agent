@@ -79,6 +79,17 @@ class SarvamKeyPool:
             fallback = _env_value("SARVAM_API_KEY")
         return str(dev_secrets_store.effective_secret("sarvam_api_key") or fallback or "").strip()
 
+    @staticmethod
+    def _primary_source() -> str:
+        """Where the primary key comes from: the admin Environment page overlay wins over .env."""
+        from server.services.dev_secrets_store import dev_secrets_store
+
+        try:
+            overlay = dev_secrets_store.snapshot().get("overlay_keys") or []
+        except Exception:
+            overlay = []
+        return "environment_page" if "sarvam_api_key" in overlay else "env_file"
+
     def keys(self) -> list[tuple[str, str]]:
         """Ordered (slot, key) pairs, de-duplicated, never logged."""
         out: list[tuple[str, str]] = []
@@ -199,6 +210,8 @@ class SarvamKeyPool:
                 slots.append({
                     "slot": slot,
                     "configured": True,
+                    # An admin who edits .env while the page overlay holds a key is re-checking the old key.
+                    "source": self._primary_source() if slot == "primary" else "env_file",
                     "state": "cooling_down" if cooling else ("active" if slot == self._active_slot else "standby"),
                     "category": state.category if cooling else None,
                     "retryInSeconds": int(state.cooldown_until - now) if cooling else 0,
@@ -360,7 +373,9 @@ async def probe_all(component: str = "llm") -> list[dict[str, Any]]:
 
     sarvam_key_pool.recheck_now()
     results: list[dict[str, Any]] = []
-    body = {"model": "sarvam-105b", "messages": [{"role": "user", "content": "ok"}],
+    # Probe the model calls actually use, so "working" means calls will work.
+    model = _env_value("SARVAM_LLM_MODEL") or "sarvam-105b-conversations"
+    body = {"model": model, "messages": [{"role": "user", "content": "ok"}],
             "max_tokens": 1, "reasoning_effort": None}
     async with httpx.AsyncClient(timeout=20) as client:
         for slot, key in sarvam_key_pool.keys():

@@ -128,3 +128,43 @@ def test_environment_patch_accepts_telnyx_and_cartesia_toggles():
     assert dumped["enable_cartesia"] is True
     assert dumped["enable_sarvam"] is True
     assert dumped["enable_telnyx"] is True
+
+
+@pytest.mark.asyncio
+async def test_saving_a_key_with_read_only_fields_in_the_form_still_saves_the_key(monkeypatch):
+    """The panel sent enable_gnani / gemini_model with a new key; the whole save failed with 400."""
+    monkeypatch.setenv("DEV_PORTAL_USERNAME", "dev")
+    monkeypatch.setenv("DEV_PORTAL_PASSWORD", "devpass")
+    from server.config.env import get_settings
+
+    get_settings.cache_clear()
+    import server.app as app_mod
+
+    transport = ASGITransport(app=app_mod.app)
+    async with AsyncClient(transport=transport, base_url="http://localhost") as client:
+        login = await client.post("/api/dev/login", json={"username": "dev", "password": "devpass"})
+        headers = {"X-CSRF-Token": login.json()["csrf_token"]}
+        r = await client.patch(
+            "/api/dev/environment",
+            json={"enable_gnani": True, "gemini_model": "x", "voice_pipeline_mode": "y",
+                  "gnani_api_key": "test-gnani-key"},
+            headers=headers,
+        )
+        assert r.status_code == 200
+        body = r.json()
+        assert {"enable_gnani", "gnani_api_key"} <= set(body["applied_keys"])
+        assert {x["field"] for x in body["rejected"]} == {"gemini_model", "voice_pipeline_mode"}
+        await client.delete("/api/dev/environment/gnani_api_key", headers=headers)
+        await client.delete("/api/dev/environment/enable_gnani", headers=headers)
+    get_settings.cache_clear()
+
+
+def test_key_pool_reports_where_the_primary_key_comes_from():
+    from server.services.sarvam_keys import SarvamKeyPool
+
+    dev_secrets_store.update({"sarvam_api_key": "test-overlay-sarvam"})
+    try:
+        slots = SarvamKeyPool().snapshot()["slots"]
+        assert slots[0]["slot"] == "primary" and slots[0]["source"] == "environment_page"
+    finally:
+        dev_secrets_store.remove_overlay_key("sarvam_api_key")

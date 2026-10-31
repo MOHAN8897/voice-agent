@@ -225,6 +225,9 @@ export function EnvironmentPanel() {
   const [error, setError] = useState("");
   const [overlayKeys, setOverlayKeys] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  // Values as loaded, so Save sends only what the admin changed.
+  const [loadedToggles, setLoadedToggles] = useState<Record<string, boolean>>({});
+  const [loadedStrings, setLoadedStrings] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -250,13 +253,15 @@ export function EnvironmentPanel() {
     Object.values(g).flat().forEach((row) => {
       const r = row as EnvRow;
       if (r.type === "toggle" && r.editable) t[r.field] = Boolean(r.value);
-      if (r.type === "string") {
+      if (r.type === "string" && r.editable) {
         if (typeof r.value === "string") s[r.field] = r.value;
         else if (r.value != null) s[r.field] = String(r.value);
       }
     });
     setToggles(t);
     setStrings(s);
+    setLoadedToggles(t);
+    setLoadedStrings(s);
     setLoading(false);
   }, []);
 
@@ -341,13 +346,22 @@ export function EnvironmentPanel() {
     setSaving(true);
     setStatus("Saving to server overlay…");
     setSaveResult(null);
-    const patch: Record<string, unknown> = { ...toggles };
+    // Only changed, editable values: sending every row made one read-only field fail the whole save.
+    const patch: Record<string, unknown> = {};
+    Object.entries(toggles).forEach(([k, v]) => {
+      if (loadedToggles[k] !== v) patch[k] = v;
+    });
     Object.entries(strings).forEach(([k, v]) => {
-      if (typeof v === "string" && v.trim()) patch[k] = v.trim();
+      if (typeof v === "string" && v.trim() && v.trim() !== (loadedStrings[k] ?? "").trim()) patch[k] = v.trim();
     });
     Object.entries(draft).forEach(([k, v]) => {
       if (v.trim()) patch[k] = v.trim();
     });
+    if (Object.keys(patch).length === 0) {
+      setStatus("Nothing changed — enter a new key or change a setting first");
+      setSaving(false);
+      return;
+    }
     const r = await portalFetch("dev", "/api/dev/environment", {
       method: "PATCH",
       body: JSON.stringify(patch),
@@ -356,15 +370,16 @@ export function EnvironmentPanel() {
     if (r.ok) {
       setSaveResult({ applied_keys: j.applied_keys, rejected: j.rejected });
       const applied = (j.applied_keys || []).length;
+      const rejected = (j.rejected || []).map((x: { field: string }) => x.field);
       setStatus(
-        applied > 0
+        (applied > 0
           ? `Saved ${applied} field(s) to data/dev_secrets.json — provider registry reloaded`
-          : "No changes applied"
+          : "No changes applied") + (rejected.length ? ` · not saved: ${rejected.join(", ")}` : "")
       );
       setDraft({});
       await load();
     } else {
-      setStatus(j.detail?.error?.message || `Save failed (${r.status})`);
+      setStatus(j.detail?.error?.message || j.error?.message || `Save failed (${r.status})`);
     }
     setSaving(false);
   }
