@@ -143,6 +143,14 @@ def parse_classifier_output(raw: Any, transcript: str, *, unfinished_request: bo
 
 # A caller turn that ends a sentence is not an unfinished thought to wait on.
 _ENDS_COMPLETE = re.compile(r"[.!?।॥]\s*$")
+# Nor is a bare greeting or "yes", whatever punctuation the transcript gave it.
+_GREETING_ONLY = re.compile(
+    r"^[\s,.!?।]*(?:(?:hello|hallo|helo|hi|hey|haan|ha|yes|yeah|ok|okay|namaste|namaskar\w*|vanakkam|"
+    r"హలో|హలో\s*అండి|హాయ్|నమస్తే|నమస్కారం|అవును|"
+    r"हेलो|हैलो|हलो|हाँ|हां|जी|नमस्ते|नमस्कार|"
+    r"ஹலோ|வணக்கம்|ஆமா|ಹಲೋ|ನಮಸ್ಕಾರ|ಹೌದು|ഹലോ|നമസ്കാരം|അതെ|હેલો|હલો|નમસ્તે|હા)[\s,.!?।]*){1,3}$",
+    re.I,
+)
 
 # A callback is only withdrawn on an explicit negation in the caller's own words.
 _EMPTY_REQUEST = frozenset({"", "none", "null", "n/a", "na", "nil", "empty", "no", "nothing"})
@@ -245,6 +253,8 @@ async def classify_close_turn(
             and evidence_matches(str(parsed.get("wait_evidence") or ""), transcript)
             # "Haan, that makes sense, ji." is complete: waiting left dead air on the line.
             and not _ENDS_COMPLETE.search(transcript)
+            # "హలో," after the greeting was read as unfinished and the reply was held: 12 s of silence.
+            and not _GREETING_ONLY.match(transcript)
         )
     async with asyncio.TaskGroup() as checks:
         memory_check = checks.create_task(_validate_memory(adapter, llm, payload, parsed.get("memory_operations"), transcript, call_id)) if extract_memory and isinstance(parsed, dict) and parsed.get("memory_operations") else None

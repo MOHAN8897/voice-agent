@@ -661,8 +661,10 @@ async def run_session(spec: dict, agent: dict, scenario: dict, playback_cls, ind
                           stack_override=stack.to_safe_dict() | {"pipeline": "composed_voice",
                                                                  "voice_flow": "composed_stages"})
     voice._intro_phase, voice._phase = False, PHASE_LISTENING
-    # A real PSTN loop re-tunes STT/TTS mid-call; the switch path must be live here too.
-    voice._enable_live_language_switch()
+    # Mirror the PSTN loop: live switching only when the voice core enables it.
+    from server.services.pstn_voice_core import LIVE_LANGUAGE_SWITCH
+    if LIVE_LANGUAGE_SWITCH:
+        voice._enable_live_language_switch()
     voice._schedule_outage_clip_prewarm = lambda: case["tts_events"].append(
         {"turn": case["turn_index"], "event": "outage_clip_prewarm_requested"})
 

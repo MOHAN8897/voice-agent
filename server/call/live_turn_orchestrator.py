@@ -940,8 +940,18 @@ class LiveTurnOrchestrator:
                         known_proofs = turn_proofs | (
                             {PROOF_ORDER_CONFIRMED} if order_proof_on_file else set()
                         )
+                        # A call back is a platform capability, not an integration: "our team will call
+                        # you tomorrow" was replaced by "I cannot promise a follow-up" right after one was saved.
+                        callback_turn = ctx is not None and (
+                            bool(getattr(ctx, "callback_request_text", ""))
+                            or (getattr(ctx, "turn_control", None) or {}).get("contact_intent") == "callback"
+                            or bool(getattr(getattr(ctx, "language_switch_state", None), "callbacks", ()))
+                        )
+                        if callback_turn:
+                            # The platform records the call back; "noted, the team will confirm the time" is true.
+                            known_proofs = known_proofs | {"appointment_requested"}
                         if structured and chunk.get("response_contract") != "speech_text" and (
-                            chunk.get("external_actions_available") is False
+                            (chunk.get("external_actions_available") is False and not callback_turn)
                             or chunk.get("action_outcome_unconfirmed")
                         ):
                             bounded = replace_unavailable_action_promises(

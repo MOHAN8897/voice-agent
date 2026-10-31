@@ -27,6 +27,19 @@ def effective_word_count(text: str) -> int:
     return spaced
 
 
+# "Hello?" said into silence asks whether anyone is there. It is a real turn: dropping it as
+# too thin left a caller saying "హలో" twice to 12 s of dead air (call 19e522ae).
+_PRESENCE_CHECK = re.compile(
+    r"^[\s,.!?।]*(?:(?:hello|hallo|helo|hi|hey|"
+    r"హలో|హలొ|హాయ్|हेलो|हैलो|हलो|हल्लो|ஹலோ|ஹெலோ|ಹಲೋ|ಹಲ್ಲೋ|ഹലോ|ഹല്ലോ|હેલો|હલો)[\s,.!?।]*){1,3}$",
+    re.I,
+)
+
+
+def is_presence_check(text: str) -> bool:
+    return bool(_PRESENCE_CHECK.match(text or ""))
+
+
 def is_substantive_transcript(
     text: str,
     *,

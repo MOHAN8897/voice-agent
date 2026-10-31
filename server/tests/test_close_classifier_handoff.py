@@ -452,3 +452,25 @@ async def test_completed_stt_turn_clears_only_its_active_partial(monkeypatch, te
         assert ctx.last_stt_partial_at == expected_partial_at
     finally:
         await voice.close()
+
+
+@pytest.mark.asyncio
+async def test_a_bare_greeting_after_the_opening_gets_a_reply(monkeypatch):
+    """Call 19e522ae: 'హలో,' was read as an unfinished thought and 12 s of silence followed."""
+    class GreetingAdapter:
+        uses_plain_live_speech = True
+
+        async def stream_live_turn(self, **_kwargs):
+            system = _kwargs["input_messages"][0]["content"]
+            if system.startswith("Understand telephone"):
+                yield {"done": True, "text": '{"contact_action":"keep","finish":false,"open_request":""}'}
+                return
+            if system.startswith(("Read this phone conversation", "Validate")):
+                yield {"done": True, "text": json.dumps({"decision": "continue", "wait_for_caller": True,
+                                                          "wait_evidence": "హలో,", "memory_operations": []})}
+                return
+            yield {"delta": "నమస్కారం, చెప్పండి."}
+            yield {"done": True, "text": "నమస్కారం, చెప్పండి."}
+
+    result = await run_voice_simulation(monkeypatch, "te-IN", "హలో,", False, adapter=GreetingAdapter())
+    assert result["spoken"], "a greeting got dead air"

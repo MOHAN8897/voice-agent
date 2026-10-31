@@ -484,3 +484,17 @@ async def test_live_turn_never_reaches_the_reply_model_for_a_language_request(db
     assert len(done) == 1 and done[0]["end_call"]["should_end"] is True
     assert done[0]["replace_speech"] and "English" in done[0]["text"]
     assert any(r["role"] == "assistant" for r in call_ledger.read_lines(ctx.call_id))
+
+
+@pytest.mark.parametrize("said,call_language,expected", [
+    ("देखिए, मुझे तेलुगु में ज्यादा आसानी होती है। आप मुझे कल तेलुगु में कॉल कर सकते हैं क्या?", "hi-IN", "te-IN"),
+    ("मुझे तेलुगु में कॉल करो", "hi-IN", "te-IN"),
+    ("నాకు హిందీలో call చేయండి", "te-IN", "hi-IN"),
+    ("தமிழ்ல கால் பண்ணுங்க", "hi-IN", "ta-IN"),
+    ("मुझे हिंदी नहीं आती", "te-IN", None),
+    ("मैं आपको कल कॉल करूंगी", "hi-IN", None),
+])
+def test_native_script_call_back_asks_are_language_requests(said, call_language, expected):
+    """A Hindi caller asking for a Telugu call back heard "please speak Hindi" and nothing was tagged."""
+    from server.call.language_switch import detect_language_request
+    assert detect_language_request(said, call_language) == expected

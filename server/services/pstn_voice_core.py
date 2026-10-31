@@ -153,6 +153,11 @@ def pstn_turn_runtime(config_session_id: str | None, session_id: str) -> dict[st
     }
 
 
+# A call speaks its own language only. A caller who wants another language gets a call back in
+# it and the call closes; switching mid-call (to English) caused more problems than it solved
+# (mixed-language replies, "please repeat in English", lost confirmations). Kept behind this flag.
+LIVE_LANGUAGE_SWITCH = False
+
 class PstnVoiceLoop:
     def __init__(
         self,
@@ -1139,11 +1144,12 @@ class PstnVoiceLoop:
     def _accepts_user_turn(self, text: str, *, after_barge: bool = False) -> bool:
         if self._technical_fallback_active:
             return False
-        from server.services.transcript_gate import is_substantive_transcript
+        from server.services.transcript_gate import is_presence_check, is_substantive_transcript
 
         return bool(
             _STRONG_HALT_RE.fullmatch(text) or _WEAK_NEGATION_RE.fullmatch(text)
             or is_single_word_claim(text)
+            or is_presence_check(text)
             or (is_backchannel(text) and self._agent_expects_answer())
             or is_substantive_transcript(text, after_barge=after_barge)
         )
@@ -2073,7 +2079,8 @@ class PstnVoiceLoop:
         self._stt = await self._stt_cm.__aenter__()
         self._stt_task = asyncio.create_task(self._stt_supervisor())
         self._ping_task = asyncio.create_task(self._stt_ping())
-        self._enable_live_language_switch()
+        if LIVE_LANGUAGE_SWITCH:
+            self._enable_live_language_switch()
         log_pstn("stt.open", call_id=self.call_id, language=lang, sample_rate=self.sample_rate)
         if self.call_id:
             pstn_media_flow.emit(self.call_id, "stt_stream", "inbound", detail="streaming")

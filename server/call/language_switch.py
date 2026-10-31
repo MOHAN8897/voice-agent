@@ -127,6 +127,10 @@ _REQUEST_VERB = re.compile(
     # "call me back in Hindi", "I prefer Tamil", "more comfortable in Hindi"
     r"call\s+(?:me\s+|us\s+)?back|callback|call\s+kar\w*|call\s+chey\w*|call\s+pann\w*|call\s+maad\w*|"
     r"prefer\w*|comfortable|easier)\b|"
+    # The same asks in native script: "तेलुगु में कॉल कर सकते हैं", "मुझे तेलुगु में आसानी होती है".
+    r"कॉल|काल|आसान|आसानी|सुविधा|కాల్|సులువు|సౌకర్య|ఈజీ|கால்|வசதி|சுலபம்|ಕಾಲ್|ಸುಲಭ|ಆರಾಮ|"
+    r"call\s*(?:చేయ|చెయ్య|చేస్త|कर|पण्ण|பண்ண|ಮಾಡ|ചെയ്യ|કર)|"
+    r"കോൾ|കാൾ|എളുപ്പ|സൗകര്യ|કૉલ|કોલ|સરળ|ફાવ|"
     r"बात|बोल|समझा|बता|भाषा|आती\s*है\s*क्या|"
     r"మాట్లాడ|చెప్ప|భాష|బాష|వచ్చా|వస్తుందా|"
     r"பேச|சொல்ல|மொழி|தெரியுமா|வருமா|"

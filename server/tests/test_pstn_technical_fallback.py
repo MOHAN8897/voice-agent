@@ -615,3 +615,13 @@ async def test_realtime_internal_runtime_error_does_not_claim_speech_outage(monk
     announce.assert_not_awaited()
     disconnect.assert_awaited_once_with("runtime_failure", False)
     await loop.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("said", ["హలో.", "హలో?", "hello", "हेलो?", "హలో హలో"])
+async def test_a_hello_into_silence_is_a_turn_not_noise(said):
+    """Call 19e522ae: two "హలో" checks were dropped as thin and the caller heard 12 s of silence."""
+    loop = PstnVoiceLoop(session_id="presence-check", call_id=None, on_agent_wire=AsyncMock())
+    assert loop._accepts_user_turn(said) is True
+    assert loop._accepts_user_turn("hmm") is False
+    await loop.close()
