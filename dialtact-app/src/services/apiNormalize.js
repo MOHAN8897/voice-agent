@@ -250,6 +250,12 @@ export function normalizeCall(row, agentsById = {}) {
     // "Failed", "Missed call", with one sentence saying why.
     outcomeLabel: row.outcome_label || row.outcomeLabel || null,
     outcomeReason: row.outcome_reason || row.outcomeReason || null,
+    // Finer reason for the label and filter: no_answer, busy, declined, unreachable…
+    outcomeKind: row.outcome_kind || row.outcomeKind || null,
+    // This call was a callback of another one: { id, mode, by, at }.
+    callbackOf: row.callback_of || row.callbackOf || null,
+    // This call was called back: { count, last_at, last_result, last_mode }.
+    callbacks: row.callbacks || null,
     billedAmount: row.tenant_charge?.amount ?? null,
     billedCurrency: row.tenant_charge?.currency ?? null,
     endReason: row.end_reason || row.endReason,

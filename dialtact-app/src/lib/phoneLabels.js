@@ -30,5 +30,7 @@ export function callBucket(call) {
 /** Tabs that can be sent to the API as `?status=`. */
 export function bucketToApiStatus(bucket) {
   if (!bucket || bucket === 'all') return null;
-  return isCallStatus(bucket) ? bucket : null;
+  // "declined:busy" narrows a status to one reason; the server filters by the status.
+  const status = String(bucket).split(':')[0];
+  return isCallStatus(status) ? status : null;
 }

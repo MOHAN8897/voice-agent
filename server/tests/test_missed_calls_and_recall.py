@@ -51,8 +51,12 @@ def _clean_stores():
     ("REJECTED", "outbound", "declined", "Declined"),
     ("UNALLOCATED_NUMBER", "outbound", "failed", "Invalid number"),
     ("INVALID_NUMBER", "outbound", "failed", "Invalid number"),
-    ("NETWORK_OUT_OF_ORDER", "outbound", "failed", "Failed"),
-    ("SERVICE_UNAVAILABLE", "outbound", "failed", "Failed"),
+    # Network faults read as "Couldn't connect", a switched-off phone as "Unreachable",
+    # so an owner can tell a bad network from a phone that was off.
+    ("NETWORK_OUT_OF_ORDER", "outbound", "failed", "Couldn't connect"),
+    ("SERVICE_UNAVAILABLE", "outbound", "failed", "Couldn't connect"),
+    ("SUBSCRIBER_ABSENT", "outbound", "failed", "Unreachable"),
+    ("DESTINATION_OUT_OF_ORDER", "outbound", "failed", "Unreachable"),
     ("NORMAL_CLEARING", "outbound", "missed", "No answer"),  # rang out, nobody answered
     ("ORIGINATOR_CANCEL", "inbound", "missed", "Missed call"),
     ("NORMAL_CLEARING", "inbound", "missed", "Missed call"),

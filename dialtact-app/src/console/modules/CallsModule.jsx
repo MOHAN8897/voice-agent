@@ -13,6 +13,12 @@ import {
   X,
   AlertTriangle,
   ListChecks,
+  PhoneMissed,
+  PhoneOff,
+  Clock,
+  WifiOff,
+  Ban,
+  CornerUpLeft,
 } from 'lucide-react';
 import { SolidCard } from '../ui/SolidCard';
 import { IntegrationSelectionSummary, useCallIntegrationOptions } from '../ui/CallIntegrationPicker';
@@ -31,9 +37,11 @@ import { showToast } from '../ui/ToastHost';
 import { bucketToApiStatus } from '../../lib/phoneLabels';
 import {
   CALL_STATUS_TABS,
+  bucketOutcome,
   callStatus,
   formatDuration,
   isCallbackCandidate,
+  outcomeMeta,
   statusMeta,
 } from '../../lib/callStatus';
 import {
@@ -71,15 +79,54 @@ const FIELD =
 const SELECT =
   'h-11 sm:h-9 min-w-0 max-w-full sm:max-w-[14rem] rounded-control border border-line bg-surface px-3 text-base sm:text-ui text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15 disabled:opacity-50';
 
-function CallStatusPill({ status, label = null, title = null, className = '' }) {
+/** One icon per reason a call never connected, so busy, declined and phone-off read apart. */
+const OUTCOME_ICON = {
+  no_answer: PhoneMissed,
+  missed_call: PhoneMissed,
+  declined: PhoneOff,
+  busy: Clock,
+  unreachable: WifiOff,
+  invalid_number: Ban,
+  connect_failed: AlertTriangle,
+  voicemail: Voicemail,
+};
+
+function CallStatusPill({ status, kind = null, label = null, title = null, className = '' }) {
   const meta = statusMeta(status);
-  const Icon = STATUS_ICON[status] || PhoneIncoming;
-  const tone = status === 'in_progress' ? 'live' : STATUS_TONE[meta.tone] || 'neutral';
+  const outcome = outcomeMeta(kind);
+  const Icon = (kind && OUTCOME_ICON[kind]) || STATUS_ICON[status] || PhoneIncoming;
+  const tone = status === 'in_progress' ? 'live' : outcome?.tone || STATUS_TONE[meta.tone] || 'neutral';
   // `label` is the server's plain outcome ("No answer", "Busy", "Missed call").
   return (
-    <Badge tone={tone} title={title || meta.hint} className={className} data-testid="call-outcome-pill">
+    <Badge tone={tone} title={title || outcome?.next || meta.hint} className={className} data-testid="call-outcome-pill">
       <Icon className="h-3 w-3" aria-hidden="true" />
-      {label || meta.short}
+      {label || outcome?.label || meta.short}
+    </Badge>
+  );
+}
+
+const CALLBACK_MODE_WORD = { manual: 'Callback', ai_redial: 'AI redial', scheduled: 'Scheduled callback' };
+
+/** "Callback by Priya": this call returned an earlier one. */
+function CallbackOfBadge({ callbackOf }) {
+  if (!callbackOf) return null;
+  const word = CALLBACK_MODE_WORD[callbackOf.mode] || 'Callback';
+  return (
+    <Badge tone="info" data-testid="call-callback-of" title="This call returned an earlier call">
+      <CornerUpLeft className="h-3 w-3" aria-hidden="true" />
+      {callbackOf.by ? `${word} by ${callbackOf.by}` : word}
+    </Badge>
+  );
+}
+
+/** "Called back 2× · Answered": what happened when this call was returned. */
+function CalledBackBadge({ callbacks }) {
+  if (!callbacks?.count) return null;
+  const times = callbacks.count > 1 ? `Called back ${callbacks.count}×` : 'Called back';
+  return (
+    <Badge tone="neutral" data-testid="call-called-back" title="Calls placed to return this one">
+      <CornerUpLeft className="h-3 w-3" aria-hidden="true" />
+      {callbacks.last_result ? `${times} · ${callbacks.last_result}` : times}
     </Badge>
   );
 }
@@ -595,9 +642,12 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
           (call.outcome || '').toLowerCase().includes(q) ||
           (call.summary || '').toLowerCase().includes(q) ||
           (call.statusTags || []).some((tag) => tag.includes(q));
-        return matchesDir && matchesSearch && matchesAgent;
+        // "Busy" inside "Busy / declined" and similar narrow to one reason.
+        const narrowed = bucketOutcome(historyBucket);
+        const matchesOutcome = !narrowed || call.outcomeKind === narrowed;
+        return matchesDir && matchesSearch && matchesAgent && matchesOutcome;
       }),
-    [scopedCalls, filterAgentId, filterDirection, searchQuery, agents]
+    [scopedCalls, filterAgentId, filterDirection, searchQuery, agents, historyBucket]
   );
 
   const activeCall = useMemo(
@@ -905,7 +955,9 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                                   <span className="font-mono tabular-nums">· {call.duration}</span>
                                 )}
                                 {!sentence.actor && call.agentName && call.agentName !== 'Unassigned' && <span>· {call.agentName}</span>}
-                                <CallStatusPill status={call.status} label={call.outcomeLabel} title={call.outcomeReason} />
+                                <CallStatusPill status={call.status} kind={call.outcomeKind} label={call.outcomeLabel} title={call.outcomeReason} />
+                                <CallbackOfBadge callbackOf={call.callbackOf} />
+                                <CalledBackBadge callbacks={call.callbacks} />
                                 {isTechnicalFailure(call.endReason) && <TechnicalIssuePill />}
                                 <CallTags tags={call.statusTags} />
                               </div>
@@ -957,7 +1009,8 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                       {detailOutcome && <span className="text-fg-body"> · {detailOutcome}</span>}
                     </p>
                     <div className="flex flex-wrap items-center gap-2 text-meta text-fg-muted">
-                      <CallStatusPill status={activeCall.status} label={activeCall.outcomeLabel} title={activeCall.outcomeReason} />
+                      <CallStatusPill status={activeCall.status} kind={activeCall.outcomeKind} label={activeCall.outcomeLabel} title={activeCall.outcomeReason} />
+                      <CallbackOfBadge callbackOf={activeCall.callbackOf} />
                       {isTechnicalFailure(activeCall.endReason) && <TechnicalIssuePill />}
                       {activeCall.startedAt && (
                         <time dateTime={activeCall.startedAt} title={new Date(activeCall.startedAt).toLocaleString('en-IN')}>
@@ -976,6 +1029,32 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                         ? ` (${policyReasonLabel(activeCall.policyReason)})`
                         : ''}
                     </p>
+                    {outcomeMeta(activeCall.outcomeKind) && (
+                      <p className="text-ui text-fg-body" data-testid="call-outcome-next">
+                        {outcomeMeta(activeCall.outcomeKind).next}
+                      </p>
+                    )}
+                    {activeCall.callbackOf?.id && (
+                      <p className="text-ui text-fg-muted" data-testid="call-callback-of-link">
+                        This call returned an earlier call
+                        {activeCall.callbackOf.at ? ` (placed ${relativeTime(activeCall.callbackOf.at)})` : ''}.{' '}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCallId(activeCall.callbackOf.id)}
+                          className="font-medium text-accent underline-offset-2 hover:underline"
+                        >
+                          Open the original call
+                        </button>
+                      </p>
+                    )}
+                    {activeCall.callbacks?.count > 0 && (
+                      <p className="text-ui text-fg-muted" data-testid="call-callbacks-summary">
+                        {activeCall.callbacks.count > 1 ? `Called back ${activeCall.callbacks.count} times` : 'Called back once'}
+                        {activeCall.callbacks.last_at ? `, last ${relativeTime(activeCall.callbacks.last_at)}` : ''}
+                        {activeCall.callbacks.last_result ? `: ${activeCall.callbacks.last_result.toLowerCase()}` : ''}.
+                        Each callback is its own row in this list.
+                      </p>
+                    )}
                   </div>
 
                   <RecordingPlayer call={activeCall} />

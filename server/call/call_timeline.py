@@ -54,6 +54,8 @@ def _attempt_to_item(row: dict[str, Any]) -> dict[str, Any]:
         "status_tags": [],
         "has_recording": False,
         "has_transcript": False,
+        # Dropped before the row leaves the server; used to find the callback it belongs to.
+        "_control": row.get("provider_call_control_id"),
     }
     item.update(outcome_for_item(item))
     return item
@@ -184,7 +186,145 @@ async def list_timeline(
         items = [i for i in items if i.get("status") in wanted]
     items.sort(key=_sort_key, reverse=True)
 
-    return items[offset : offset + limit], total
+    page = items[offset : offset + limit]
+    await annotate_callbacks(page, tenant_id=tenant_id)
+    return page, total
+
+
+#: Callback modes a person or the follow-up worker dialled. "requested" rows are a
+#: caller asking to be called, not a dial, and never mark a history row.
+_DIALLED_CALLBACK_MODES = ("manual", "ai_redial", "scheduled")
+
+
+async def annotate_callbacks(items: list[dict[str, Any]], *, tenant_id: str) -> None:
+    """Mark callback dials and the calls they returned, in place.
+
+    A callback is its own call or ringing attempt; without this it looks like an
+    unrelated outgoing call, and the missed call never shows it was returned.
+    Each row gets ``callback_of`` (this dial returned that call) and
+    ``callbacks`` (how often this call was returned, and the latest result).
+    Failure-tolerant: history without the links still renders.
+    """
+    for item in items:
+        item.setdefault("callback_of", None)
+        item.setdefault("callbacks", None)
+    try:
+        await _annotate_callbacks(items, tenant_id=tenant_id)
+    except Exception:  # noqa: BLE001 -- annotation must never fail the history list.
+        pass
+    for item in items:
+        item.pop("_control", None)
+
+
+async def _annotate_callbacks(items: list[dict[str, Any]], *, tenant_id: str) -> None:
+    import uuid as _uuid
+
+    from sqlalchemy import or_, select
+
+    from server.db.connection import get_session_factory
+    from server.db.models.entities import CallAttempt, CallCallback
+    from server.db.models.saas_models import User
+
+    factory = get_session_factory()
+    if factory is None or not items:
+        return
+    try:
+        tid = _uuid.UUID(str(tenant_id))
+    except (TypeError, ValueError):
+        return
+
+    def _uuid_or_none(value: Any) -> _uuid.UUID | None:
+        try:
+            return _uuid.UUID(str(value))
+        except (TypeError, ValueError):
+            return None
+
+    row_ids = [u for u in (_uuid_or_none(i.get("call_id")) for i in items) if u]
+    call_ids = [u for u in (_uuid_or_none(i.get("call_id")) for i in items if not i.get("is_attempt")) if u]
+    async with factory() as session:
+        # A connected call's carrier id lives on the attempt that rang it.
+        control_by_call: dict[str, str] = {}
+        if call_ids:
+            linked = await session.execute(
+                select(CallAttempt.linked_call_id, CallAttempt.provider_call_control_id).where(
+                    CallAttempt.tenant_id == tid, CallAttempt.linked_call_id.in_(call_ids)
+                )
+            )
+            control_by_call = {str(cid): ctl for cid, ctl in linked if ctl}
+        controls = {str(i["_control"]) for i in items if i.get("_control")} | set(control_by_call.values())
+        # A dial the carrier refused is recorded under "dialfail:<dial_request_id>".
+        request_ids = {c.split(":", 1)[1] for c in controls if c.startswith("dialfail:")}
+        filters = []
+        if controls:
+            filters.append(CallCallback.provider_call_control_id.in_(controls))
+        if request_ids:
+            filters.append(CallCallback.dial_request_id.in_(request_ids))
+        if row_ids:
+            filters += [CallCallback.original_call_id.in_(row_ids), CallCallback.original_attempt_id.in_(row_ids)]
+        rows = (
+            await session.execute(
+                select(CallCallback)
+                .where(CallCallback.tenant_id == tid, CallCallback.mode.in_(_DIALLED_CALLBACK_MODES), or_(*filters))
+                .order_by(CallCallback.created_at.desc())
+            )
+        ).scalars().all()
+        # What each callback dial actually did, from the attempt the carrier reported.
+        result_by_control: dict[str, str] = {}
+        dial_controls = {r.provider_call_control_id for r in rows if r.provider_call_control_id}
+        if dial_controls:
+            for control, linked_call, status, end_reason, direction in await session.execute(
+                select(CallAttempt.provider_call_control_id, CallAttempt.linked_call_id, CallAttempt.status,
+                       CallAttempt.end_reason, CallAttempt.direction)
+                .where(CallAttempt.tenant_id == tid, CallAttempt.provider_call_control_id.in_(dial_controls))
+            ):
+                if linked_call is not None:
+                    result_by_control[control] = "Answered"
+                elif status == "in_progress":
+                    result_by_control[control] = "Ringing"
+                else:
+                    words = outcome_for_item({"status": status, "direction": direction, "end_reason": end_reason})
+                    result_by_control[control] = words.get("outcome_label") or "Ended"
+        user_ids = {r.user_id for r in rows if r.user_id}
+        names: dict[Any, str] = {}
+        if user_ids:
+            for uid, full_name, email in await session.execute(
+                select(User.user_id, User.full_name, User.email).where(User.user_id.in_(user_ids))
+            ):
+                names[uid] = (full_name or "").strip() or email
+    if not rows:
+        return
+
+    by_control = {r.provider_call_control_id: r for r in rows if r.provider_call_control_id}
+    by_request = {r.dial_request_id: r for r in rows}
+    for item in items:
+        control = item.get("_control") or control_by_call.get(str(item.get("call_id")))
+        cb = by_control.get(control) if control else None
+        if cb is None and control and str(control).startswith("dialfail:"):
+            cb = by_request.get(str(control).split(":", 1)[1])
+        if cb is not None:
+            original = cb.original_call_id or cb.original_attempt_id
+            item["callback_of"] = {
+                "id": str(original) if original else None,
+                "mode": cb.mode,
+                "by": names.get(cb.user_id) if cb.user_id else None,
+                "at": cb.created_at.isoformat() if cb.created_at else None,
+            }
+        own = str(item.get("call_id"))
+        returned = [
+            r for r in rows
+            if str(r.original_call_id or "") == own or str(r.original_attempt_id or "") == own
+        ]
+        if returned:
+            latest = returned[0]
+            item["callbacks"] = {
+                "count": len(returned),
+                "last_at": latest.created_at.isoformat() if latest.created_at else None,
+                "last_status": latest.status,
+                # "Answered", "Busy", "No answer"… or why the dial never rang.
+                "last_result": result_by_control.get(latest.provider_call_control_id or "")
+                or ("Not placed" if latest.status == "failed" else None),
+                "last_mode": latest.mode,
+            }
 
 
 def counts_from_items(items: list[dict[str, Any]]) -> dict[str, int]:

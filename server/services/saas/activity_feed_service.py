@@ -1148,11 +1148,15 @@ async def _call_record(session, M, tenant_id: uuid.UUID, call_id: str | None) ->
 
     row = await session.get(M["Call"], cid)
     if row is not None and row.tenant_id == tenant_id and not row.is_test:
-        return call_timeline._call_to_item(_row_to_dict(row))
-    attempt = await session.get(M["CallAttempt"], cid)
-    if attempt is not None and attempt.tenant_id == tenant_id:
-        return call_timeline._attempt_to_item(_attempt_row_to_dict(attempt))
-    return None
+        item = call_timeline._call_to_item(_row_to_dict(row))
+    else:
+        attempt = await session.get(M["CallAttempt"], cid)
+        if attempt is None or attempt.tenant_id != tenant_id:
+            return None
+        item = call_timeline._attempt_to_item(_attempt_row_to_dict(attempt))
+    # The same callback links the Calls page shows ("Callback of …", "Called back 2×").
+    await call_timeline.annotate_callbacks([item], tenant_id=str(tenant_id))
+    return item
 
 
 async def _enrich_call_record(record: dict[str, Any], tenant_id: uuid.UUID) -> dict[str, Any]:

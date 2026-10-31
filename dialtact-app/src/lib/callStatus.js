@@ -86,17 +86,84 @@ export function statusLabel(status) {
   return statusMeta(status).label;
 }
 
-/** Tabs shown above the call list, in the order a user cares about them. */
+/**
+ * Why a call never connected, finer than its status. Mirrors
+ * `server/call/hangup_causes.py` (OUTCOME_LABELS); the server sends `outcome_kind`.
+ * `next` tells the owner what usually helps.
+ */
+export const OUTCOME_META = {
+  no_answer: {
+    label: 'No answer',
+    tone: 'warning',
+    next: 'It rang but nobody picked up. Trying again at another time usually works.',
+  },
+  missed_call: {
+    label: 'Missed call',
+    tone: 'warning',
+    next: 'Someone called and nobody answered. Call them back soon.',
+  },
+  declined: {
+    label: 'Declined',
+    tone: 'neutral',
+    next: 'They pressed decline. Give it a while before calling again.',
+  },
+  busy: {
+    label: 'Busy',
+    tone: 'info',
+    next: 'They were on another call (some networks also report a decline as busy). Try again later.',
+  },
+  unreachable: {
+    label: 'Unreachable',
+    tone: 'warning',
+    next: 'Their phone was switched off or out of coverage. Try again later.',
+  },
+  invalid_number: {
+    label: 'Invalid number',
+    tone: 'danger',
+    next: 'Check the number. It is not retried automatically.',
+  },
+  connect_failed: {
+    label: "Couldn't connect",
+    tone: 'danger',
+    next: 'The phone network could not connect the call. It is safe to try again.',
+  },
+  voicemail: {
+    label: 'Voicemail',
+    tone: 'neutral',
+    next: 'The call reached voicemail.',
+  },
+};
+
+export function outcomeMeta(kind) {
+  return OUTCOME_META[kind] || null;
+}
+
+/**
+ * Filter options above the call list. An option with `outcome` narrows its status
+ * to one reason ("Busy" inside "Busy / declined"); its id is `status:outcome`.
+ */
 export const CALL_STATUS_TABS = [
   { id: 'all', label: 'All calls' },
   { id: 'answered', label: 'Answered' },
   { id: 'missed', label: 'Missed / no answer' },
+  { id: 'missed:no_answer', label: '↳ No answer (outgoing)', status: 'missed', outcome: 'no_answer' },
+  { id: 'missed:missed_call', label: '↳ Missed call (incoming)', status: 'missed', outcome: 'missed_call' },
+  { id: 'declined', label: 'Busy / declined' },
+  { id: 'declined:declined', label: '↳ Declined', status: 'declined', outcome: 'declined' },
+  { id: 'declined:busy', label: '↳ Busy', status: 'declined', outcome: 'busy' },
+  { id: 'failed', label: 'Failed' },
+  { id: 'failed:unreachable', label: '↳ Unreachable (phone off)', status: 'failed', outcome: 'unreachable' },
+  { id: 'failed:invalid_number', label: '↳ Invalid number', status: 'failed', outcome: 'invalid_number' },
+  { id: 'failed:connect_failed', label: "↳ Couldn't connect", status: 'failed', outcome: 'connect_failed' },
   { id: 'voicemail', label: 'Voicemail' },
   { id: 'outbound', label: 'Outgoing' },
-  { id: 'declined', label: 'Busy / declined' },
-  { id: 'failed', label: 'Failed' },
   { id: 'in_progress', label: 'Live' },
 ];
+
+/** The outcome a filter option narrows to, or null for a whole status. */
+export function bucketOutcome(bucket) {
+  return CALL_STATUS_TABS.find((tab) => tab.id === bucket)?.outcome || null;
+}
 
 /**
  * Fallback classification for rows the server has not stamped.

@@ -244,22 +244,48 @@ def _reason_key(end_reason: Any) -> str:
     return mapped or raw
 
 
+#: ``outcome_kind`` -> owner-facing label. The kind is what the console filters
+#: and colours by; the canonical status alone groups busy with declined and every
+#: carrier fault under "Failed".
+OUTCOME_LABELS: Final[dict[str, str]] = {
+    "no_answer": "No answer",
+    "missed_call": "Missed call",
+    "declined": "Declined",
+    "busy": "Busy",
+    "unreachable": "Unreachable",
+    "invalid_number": "Invalid number",
+    "connect_failed": "Couldn't connect",
+    "voicemail": "Voicemail",
+}
+
+
+def outcome_kind(status: str, *, outbound: bool, reason_key: str) -> str | None:
+    if status == STATUS_MISSED:
+        return "no_answer" if outbound else "missed_call"
+    if status == STATUS_DECLINED:
+        return "busy" if reason_key == REASON_BUSY else "declined"
+    if status == STATUS_FAILED:
+        if reason_key == REASON_INVALID_NUMBER:
+            return "invalid_number"
+        # Inbound "unreachable" is a dropped call on our side, not a switched-off phone.
+        if reason_key == REASON_UNREACHABLE and outbound:
+            return "unreachable"
+        return "connect_failed"
+    if status == STATUS_VOICEMAIL:
+        return "voicemail"
+    return None
+
+
 def outcome_for_item(item: dict[str, Any]) -> dict[str, str | None]:
-    """``{"outcome_label", "outcome_reason"}`` for a timeline row (call or attempt)."""
+    """``{"outcome_kind", "outcome_label", "outcome_reason"}`` for a timeline row (call or attempt)."""
     status = str(item.get("status") or "").lower()
     outbound = str(item.get("direction") or "").lower() == "outbound"
     key = _reason_key(item.get("end_reason"))
     policy = str(item.get("policy_reason") or "").lower()
-    if status == STATUS_MISSED:
-        label = "No answer" if outbound else "Missed call"
-    elif status == STATUS_DECLINED:
-        label = "Busy" if key == REASON_BUSY else "Declined"
-    elif status == STATUS_FAILED:
-        label = "Invalid number" if key == REASON_INVALID_NUMBER else "Failed"
-    elif status == STATUS_VOICEMAIL:
-        label = "Voicemail"
-    else:
-        return {"outcome_label": None, "outcome_reason": None}
+    kind = outcome_kind(status, outbound=outbound, reason_key=key)
+    if kind is None:
+        return {"outcome_kind": None, "outcome_label": None, "outcome_reason": None}
+    label = OUTCOME_LABELS[kind]
     reason: str | None = None
     if not outbound and policy in _POLICY_TEXT:
         reason = _POLICY_TEXT[policy]
@@ -273,4 +299,4 @@ def outcome_for_item(item: dict[str, Any]) -> dict[str, str | None]:
             STATUS_FAILED: "The call couldn't be connected.",
             STATUS_VOICEMAIL: "The call went to voicemail.",
         }[status]
-    return {"outcome_label": label, "outcome_reason": reason}
+    return {"outcome_kind": kind, "outcome_label": label, "outcome_reason": reason}
