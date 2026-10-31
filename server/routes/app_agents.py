@@ -359,3 +359,15 @@ async def build_employee(
         result = completed or response
         return {**result, "agent": _subscriber_agent(result.get("agent") or {})}
     return response
+
+
+@router.get("/api/app/agents/{agent_id}/call-warnings")
+async def agent_call_warnings_read(agent_id: str, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    """Settings the agent's recent calls show need attention (read-only)."""
+    from server.services.saas.agent_call_warnings import agent_call_warnings
+    from server.services.saas.tenant_guard import load_agent_for_tenant
+
+    require_subscriber_permission(principal, "app.calls.read")
+    tenant_id = subscriber_workspace_tenant_id(principal)
+    agent = await load_agent_for_tenant(agent_id, tenant_id)
+    return await agent_call_warnings(str(tenant_id), agent)

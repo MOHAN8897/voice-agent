@@ -72,8 +72,9 @@ def test_platform_rules_never_forbid_a_caller_requested_callback(role, direction
     from server.brain.agent_script_compiler import _platform_call_rules
     rules = _platform_call_rules(agent_name="Priya", role=role, direction=direction, language="en-IN")
     assert "do not assume a callback is allowed" not in rules
-    if role in ("sales", "appointment") or direction == "outbound":
-        assert "caller's own request to be called back is always noted" in rules
+    # One callback rule for every role and direction (call 35002575 review).
+    from server.prompts.agent_voice_rules import CALLBACK_RULE
+    assert rules.count(CALLBACK_RULE) == 1
     # One objection rule, which defers to the business script and handles repeats.
     assert rules.count("--- OBJECTION HANDLING ---") == 1
     assert "same objection comes back" in rules
@@ -108,7 +109,8 @@ async def test_compiled_sales_brain_has_no_contradictory_callback_or_objection_l
     assert "do not assume a callback is allowed" not in compiled
     assert "Expect questions rather than objections" not in compiled
     assert "Expect objections as well as questions" in compiled
-    assert "caller's own request to be called back is always noted" in compiled
+    from server.prompts.agent_voice_rules import CALLBACK_RULE
+    assert compiled.count(CALLBACK_RULE) == 1
 
 
 def test_employee_script_lists_permitted_next_steps_once():
@@ -403,10 +405,13 @@ def test_callback_time_question_is_a_localized_question(language):
 
 
 def test_orchestrator_asks_for_callback_time_only_when_reply_has_no_question():
+    # The held-close time question moved into callback_close.callback_time_reply
+    # (call 35002575 issue 8), which now also fixes the order: acknowledge, then ask.
     import inspect
-    from server.call import live_turn_orchestrator
-    source = inspect.getsource(live_turn_orchestrator)
-    assert 'raw_close.get("callback_time_needed")' in source and '"?" not in assistant_text' in source
+    from server.call import callback_close, live_turn_orchestrator
+    assert "callback_time_reply(ctx, raw_close, assistant_text, language_code)" in inspect.getsource(live_turn_orchestrator)
+    source = inspect.getsource(callback_close.callback_time_reply)
+    assert 'control.get("callback_time_needed")' in source and '"?" in text' in source
 
 
 @pytest.mark.asyncio

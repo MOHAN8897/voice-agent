@@ -10,17 +10,15 @@ from server.prompts.agent_voice_rules import (
     PHONE_ASK_FALLBACK,
     PHONE_CALL_POLICY_PTR,
     PHONE_SPEAK_BAN,
-    SLOW_DOWN_FALLBACK,
     SOFT_BREVITY,
-    UNCLEAR_FALLBACK,
+    slow_down_rule,
+    unclear_audio_rule,
 )
 
 
 def _pack(locale: str, intro: str, filler_ban: str, extra_examples: str = "") -> str:
     lock = LANGUAGE_LOCK[locale]
     mismatch = LANGUAGE_MISMATCH_FALLBACK[locale]
-    unclear = UNCLEAR_FALLBACK[locale]
-    slow_down = SLOW_DOWN_FALLBACK[locale]
     phone_ask = PHONE_ASK_FALLBACK[locale]
     examples_block = f"\n{extra_examples.strip()}\n" if extra_examples.strip() else ""
     return f"""--- SPOKEN LANGUAGE ({locale}) ---
@@ -30,8 +28,8 @@ If the caller speaks another language you cannot follow: use the language-mismat
 Language mismatch (once): `{mismatch}`
 {SOFT_BREVITY}
 Filler bans: {filler_ban}
-Slow-down (once): `{slow_down}`
-Unclear audio (garbled STT, not a language change): `{unclear}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
+{slow_down_rule(locale)}
+{unclear_audio_rule(locale)}
 {NUMBER_RULES_INDIC}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}

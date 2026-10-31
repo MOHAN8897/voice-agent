@@ -225,6 +225,30 @@ def extract_exact_opening(brief: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+# Phone TTS speaks about 15 characters a second in every supported script
+# (call 35002575: a 251-character Telugu opening took 16.5 s). Past ~8 s the
+# callee talks over the opening or hangs up before the agent asks anything.
+OPENING_CHARS_PER_SECOND = 15.0
+OPENING_MAX_SECONDS = 8.0
+
+
+def estimate_speech_seconds(text: str) -> float:
+    return round(len(" ".join((text or "").split())) / OPENING_CHARS_PER_SECOND, 1)
+
+
+def opening_length_issue(opening: str, *, field: str = "opening") -> dict[str, Any] | None:
+    """Warn, never trim: the tenant's opening is spoken as written."""
+    seconds = estimate_speech_seconds(opening)
+    if seconds <= OPENING_MAX_SECONDS:
+        return None
+    return brief_issue(
+        "opening_too_long",
+        f"The opening line takes about {seconds:.0f} seconds to say. Openings over "
+        f"{OPENING_MAX_SECONDS:.0f} seconds are often interrupted; consider a shorter greeting.",
+        field=field, evidence=opening.strip()[:280], severity="warning",
+    )
+
+
 def _requirement_key(text: str) -> str:
     return " ".join(re.sub(r"[^\w\s]", " ", text.casefold()).split())
 

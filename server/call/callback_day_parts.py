@@ -339,6 +339,39 @@ def resolve_callback_window(
     }
 
 
+def clamp_to_calling_window(
+    due_at: datetime,
+    *,
+    timezone_name: str = "Asia/Kolkata",
+    weekdays: Iterable[int] | None = None,
+) -> datetime:
+    """``due_at`` moved, if needed, to the next legal calling window on an allowed day.
+
+    The last guard before a follow-up is stored: whatever computed the time (a
+    window, an extractor, a retry delay), a dial is never queued for 08:04 or
+    22:30 local. A time already inside the window is returned unchanged.
+    """
+    try:
+        zone = ZoneInfo(timezone_name or "Asia/Kolkata")
+    except Exception:  # noqa: BLE001 - an unknown zone falls back to the platform default.
+        zone, timezone_name = ZoneInfo("Asia/Kolkata"), "Asia/Kolkata"
+    due = due_at.astimezone(timezone.utc) if due_at.tzinfo else due_at.replace(tzinfo=timezone.utc)
+    start, end = legal_hours(timezone_name)
+    allowed = {int(d) for d in weekdays} if weekdays else set(range(7))
+    local = due.astimezone(zone)
+    for offset in range(8):
+        day = local.date() + timedelta(days=offset)
+        if day.weekday() not in allowed:
+            continue
+        opens = datetime.combine(day, start, tzinfo=zone)
+        closes = datetime.combine(day, end, tzinfo=zone)
+        if offset == 0 and opens <= local < closes:
+            return due
+        if local < opens:
+            return opens.astimezone(timezone.utc)
+    return due
+
+
 def resolve_from_texts(texts: Iterable[str], **kwargs: Any) -> dict[str, Any] | None:
     """First phrase that resolves wins. Pass the most specific text first."""
     for text in texts:

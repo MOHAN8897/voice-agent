@@ -22,6 +22,7 @@ from server.call.outcome_schema import (
     normalize_custom_tags,
     normalize_extracted_fields,
     normalize_model_tags,
+    normalize_unanswered_questions,
     validate_disposition,
 )
 from server.call.paths import call_dir
@@ -171,7 +172,7 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     if payload.get("disposition") not in DISPOSITIONS:
         payload["disposition"] = disposition
         payload["notes"] = (payload.get("notes") or "") + " (disposition coerced to no_outcome)"
-    _english_only_summaries(payload)
+    _finalize_summaries(payload, _call_language(meta))
     facts = merge_outcome_facts(
         payload.get("extracted_fields"),
         snapshot,
@@ -207,6 +208,9 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
         call_id, tenant_id=str(meta.get("tenant_id") or "") or None
     )
     downgraded = enforce_order_proof(payload, order_proof)
+    # The proof check rebuilds the facts dict; later server facts must land in the saved one.
+    facts = payload["facts"] if isinstance(payload.get("facts"), dict) else facts
+    payload["facts"] = payload["extracted_fields"] = facts
     if downgraded:
         # Codes only: the proof holds customer details, the transcript holds words.
         logger.info("[ORDER] outcome downgraded call=%s reason=%s", call_id, downgraded)
@@ -219,6 +223,14 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
     if order_proof and str(order_proof.get("status") or "") == "confirmed" and payload.get("disposition") != "converted":
         payload["disposition"] = "converted"
         payload["next_action"] = payload.get("next_action") or "Fulfil the confirmed order recorded on this call."
+    if isinstance(meta.get("human_handoff"), dict) and meta["human_handoff"]:
+        # A saved request for a manager/owner is server truth, not a model reading,
+        # and it is a task for the business, never an objection.
+        facts["handoff_requested"] = "true"
+        payload["human_handoff"] = meta["human_handoff"]
+        payload["objections"] = [o for o in payload.get("objections") or [] if not _HANDOFF_OBJECTION.search(str(o))]
+        if payload.get("disposition") in {None, "no_outcome", "new_lead", "interested"}:
+            payload["disposition"] = "callback_required"
     saved_callback = meta.get("callback_request") if isinstance(meta.get("callback_request"), dict) else None
     if saved_callback and not meta.get("callback_cancelled") \
             and str(saved_callback.get("status") or "requested") in {"requested", "saved", "scheduled"} \
@@ -238,7 +250,8 @@ async def _run_outcome_locked(call_id: str) -> dict[str, Any]:
         # Do not surface an actionable callback alongside a permanent opt-out.
         payload["disposition"] = "not_interested"
         payload["next_action"] = "Do not contact this number. The caller opted out."
-        for key in ("callback_requested", "callback_time", "requested_time", "callback_phone", "language_switch"):
+        for key in ("callback_requested", "callback_time", "requested_time", "callback_phone", "language_switch",
+                    "handoff_requested"):
             facts.pop(key, None)
     payload["status_tags"] = derive_status_tags(
         payload.get("disposition"),
@@ -353,8 +366,10 @@ async def _generate_outcome(
             "role": "developer",
             "content": (
                 "You analyze completed voice calls. Output structured JSON only. "
-                "Write the entire call summary in English only. Put it in summary_en. "
-                "Leave summary_te as an empty string. "
+                "summary_en is always English. summary_te holds the same summary written in the "
+                "call language named under [Call], in that language's own script; leave summary_te "
+                "empty only when the call language is English. Describe who called whom exactly as "
+                "[Call] states the direction. "
                 "summary_en is 3-6 complete sentences (roughly 60-150 words) covering the whole call "
                 "in order: caller intent, facts shared, agent response, objections, agreed next step, "
                 "and how the call ended. Keep it concise by choosing what matters, never by stopping "
@@ -363,6 +378,10 @@ async def _generate_outcome(
                 "Never claim an action was completed unless the transcript confirms it. "
                 "A caller requesting an order or discussing buying details is interested, not merely new_lead. "
                 "A callback is the business calling the caller; I will call you is not callback_required. "
+                "When the caller asks for a manager, owner or another person to call them, add the "
+                "extracted field handoff_requested=true and tag followup:handoff; it is not an objection. "
+                "unanswered_questions: each caller question (in English, at most 5) that the agent "
+                "answered by saying it had no such information; [] when there were none. "
                 "Refusing a callback or one product is not refusing all contact. "
                 "Do not treat an agent's unsupported promise as proof of success. "
                 "extracted_fields must be an array of {key, value} strings "
@@ -390,7 +409,8 @@ async def _generate_outcome(
         {
             "role": "user",
             "content": (
-                "[Full transcript]\n"
+                _call_header(meta)
+                + "[Full transcript]\n"
                 + "\n".join(f"{row.get('role')}: {row.get('text')}" for row in transcript)
                 + "\n\n[Final working memory]\n"
                 + json.dumps(snapshot, ensure_ascii=False)
@@ -432,12 +452,17 @@ async def _generate_outcome(
             payload["extracted_fields"] = normalize_extracted_fields(payload.get("extracted_fields"))
             payload["tags"] = normalize_model_tags(payload.get("tags"))
             payload["custom_tags"] = normalize_custom_tags(payload.get("custom_tags"))
+            payload["unanswered_questions"] = normalize_unanswered_questions(payload.get("unanswered_questions"))
             payload.setdefault("objections", [])
             payload.setdefault("next_action", None)
             payload.setdefault("summary_te", "")
             payload.setdefault("summary_en", "")
             payload.setdefault("disposition_confidence", 0.0)
             payload["outcome_provider"] = provider_id
+            config = LLMConfig(provider=provider_id, model=candidate_model)
+            await _repair_summaries(
+                payload, meta, lambda retry: _complete_with_budget(adapter, retry, config, extra), messages,
+            )
             return payload, None
         except Exception as e:
             last_error = str(e)[:240]
@@ -537,13 +562,153 @@ def _detect_disclosure_delivery(
     return "missing"
 
 
-def _english_only_summaries(payload: dict[str, Any]) -> None:
+#: Languages written in a non-Latin script: a summary in one of them with no
+#: non-ASCII letter is English (or empty) wearing the wrong label.
+_NATIVE_SCRIPT_LANGUAGES = frozenset({"hi", "te", "ta", "kn", "ml", "bn", "mr", "gu", "pa", "or", "as", "ur"})
+
+#: A summary that says the wrong party placed the call. Checked on summary_en only.
+_WRONG_DIRECTION: dict[str, re.Pattern[str]] = {
+    "outbound": re.compile(
+        r"\b(?:the\s+)?(?:caller|customer|client|user|lead)\s+(?:initiated|placed|made|started)\s+(?:the|this)\s+call\b"
+        r"|\b(?:the\s+)?(?:caller|customer|client|user|lead)\s+called\s+(?:in\b|us\b|the\s+(?:business|company|agent)\b)"
+        r"|\bcalled\s+in\s+to\b|\binbound\s+call\b",
+        re.IGNORECASE,
+    ),
+    "inbound": re.compile(
+        r"\b(?:the\s+)?(?:agent|business|company)\s+(?:initiated|placed|made|started)\s+(?:the|this)\s+call\b"
+        r"|\b(?:the\s+)?(?:agent|business|company)\s+called\s+(?:the\s+)?(?:caller|customer|client|lead)\b"
+        r"|\boutbound\s+call\b",
+        re.IGNORECASE,
+    ),
+}
+#: An objection that only restates a saved handoff request ("asked to speak to the manager").
+#: Objections are written in English by the summary step, so English terms suffice.
+_HANDOFF_OBJECTION = re.compile(
+    r"\b(?:manager|owner|supervisor|boss|senior|proprietor|someone else|another person|a person|human|team lead)\b",
+    re.IGNORECASE,
+)
+_DIRECTION_FIX = {"outbound": "the agent called the customer", "inbound": "the customer called the business"}
+
+
+def _call_language(meta: dict[str, Any]) -> str:
+    stack = meta.get("resolved_stack") if isinstance(meta.get("resolved_stack"), dict) else {}
+    return str(meta.get("language") or stack.get("language") or "en-IN")
+
+
+def _call_direction(meta: dict[str, Any]) -> str | None:
+    value = str(meta.get("direction") or "").strip().lower()
+    if value in ("outbound", "outgoing", "outbound-api"):
+        return "outbound"
+    if value in ("inbound", "incoming"):
+        return "inbound"
+    return None
+
+
+def _is_english(language: str) -> bool:
+    return language.split("-")[0].lower() == "en"
+
+
+def _call_header(meta: dict[str, Any]) -> str:
+    """Direction and language facts the summary must not get wrong."""
+    from server.call.language_switch import language_name
+
+    language = _call_language(meta)
+    lines = [f"Language: {language_name(language)} ({language})"]
+    direction = _call_direction(meta)
+    if direction == "outbound":
+        lines.append("Direction: outbound. The business's agent called the customer (you called them); "
+                     "the customer did not initiate this call.")
+    elif direction == "inbound":
+        lines.append("Direction: inbound. The customer called the business (they called you).")
+    return "[Call]\n" + "\n".join(lines) + "\n\n"
+
+
+def _local_summary(text: Any, language: str) -> str:
+    """The call-language summary, or "" when it is missing or not in that language's script."""
+    # Not filter_unrelated_scripts: it treats Marathi's Devanagari as foreign on a Hindi call.
+    from server.realtime.language_guard import _SCRIPT_RANGES
+
+    clean = re.sub(r"\s+", " ", str(text or "")).strip()
+    base = language.split("-")[0].lower()
+    if base not in _NATIVE_SCRIPT_LANGUAGES:
+        return clean
+    ranges = _SCRIPT_RANGES.get(base)
+    native = any(lo <= ord(ch) <= hi for ch in clean for lo, hi in ranges) if ranges else not clean.isascii()
+    return clean if native else ""
+
+
+def summary_problems(payload: dict[str, Any], meta: dict[str, Any]) -> list[str]:
+    """Checks the code can enforce on a generated summary, in a stable order."""
+    problems: list[str] = []
+    direction = _call_direction(meta)
+    if direction and _WRONG_DIRECTION[direction].search(str(payload.get("summary_en") or "")):
+        problems.append("wrong_direction")
+    language = _call_language(meta)
+    if not _is_english(language) and not _local_summary(payload.get("summary_te"), language):
+        problems.append("missing_local_summary")
+    return problems
+
+
+def fix_summary_direction(text: str, direction: str | None) -> str:
+    """Last resort after the retry: replace a wrong-direction clause with the true one."""
+    if not direction:
+        return text
+
+    def swap(match: re.Match[str]) -> str:
+        fixed = _DIRECTION_FIX[direction]
+        return fixed[0].upper() + fixed[1:] if match.group(0)[:1].isupper() else fixed
+
+    return _WRONG_DIRECTION[direction].sub(swap, text)
+
+
+async def _repair_summaries(payload: dict[str, Any], meta: dict[str, Any], complete, messages: list[dict]) -> None:
+    """Retry once when the summary names the wrong caller or lacks the call-language text.
+
+    The retry only fills what was wrong: a good English summary is never replaced,
+    and an empty retry keeps the first answer.
+    """
+    problems = summary_problems(payload, meta)
+    if not problems:
+        return
+    from server.call.language_switch import language_name
+
+    asks = {
+        "wrong_direction": "summary_en says the wrong party started the call; follow the Direction under [Call].",
+        "missing_local_summary": f"summary_te is empty; write the summary in {language_name(_call_language(meta))}.",
+    }
+    retry = [
+        *messages,
+        {"role": "assistant", "content": json.dumps({k: payload.get(k) for k in ("summary_en", "summary_te")}, ensure_ascii=False)},
+        {"role": "user", "content": "Return the full JSON again. Fix: " + " ".join(asks[p] for p in problems)},
+    ]
+    try:
+        again = await complete(retry)
+    except Exception as exc:  # noqa: BLE001 -- the first answer stands.
+        logger.warning(f"[CALL] summary retry failed: {str(exc)[:160]}")
+        again = None
+    direction = _call_direction(meta)
+    if isinstance(again, dict):
+        if "missing_local_summary" in problems and _local_summary(again.get("summary_te"), _call_language(meta)):
+            payload["summary_te"] = str(again.get("summary_te") or "").strip()
+        retried_en = finish_summary(again.get("summary_en"))
+        if "wrong_direction" in problems and retried_en and not _WRONG_DIRECTION[direction].search(retried_en):
+            payload["summary_en"] = retried_en
+    remaining = summary_problems(payload, meta)
+    if "wrong_direction" in remaining:
+        payload["summary_en"] = fix_summary_direction(str(payload.get("summary_en") or ""), direction)
+    # An empty call-language summary after the retry is recorded, never invented.
+    payload["summary_checks"] = [p for p in remaining if p != "wrong_direction"]
+
+
+def _finalize_summaries(payload: dict[str, Any], language: str) -> None:
+    """English summary always; the call-language summary only for non-English calls."""
     en = str(payload.get("summary_en") or "").strip()
-    te = str(payload.get("summary_te") or "").strip()
-    if not en and te:
-        en = te
+    local = "" if _is_english(language) else _local_summary(payload.get("summary_te"), language)
+    if not en and local:
+        en = local
     payload["summary_en"] = filter_unrelated_scripts(en, "en-IN")
-    payload["summary_te"] = ""
+    payload["summary_te"] = local
+    payload["summary_language"] = language
 
 
 def _write_call_summary(call_id: str, outcome: dict[str, Any]) -> None:
@@ -553,6 +718,7 @@ def _write_call_summary(call_id: str, outcome: dict[str, Any]) -> None:
         "disposition": validate_disposition(outcome.get("disposition")),
         "disposition_confidence": outcome.get("disposition_confidence"),
         "summary_te": outcome.get("summary_te") or "",
+        "summary_language": outcome.get("summary_language"),
         "summary_en": outcome.get("summary_en") or "",
         "next_action": outcome.get("next_action"),
         "extracted_fields": outcome.get("extracted_fields") or {},
@@ -562,6 +728,7 @@ def _write_call_summary(call_id: str, outcome: dict[str, Any]) -> None:
         "custom_tags": outcome.get("custom_tags") or [],
         "disclosure_status": outcome.get("disclosure_status"),
         "objections": outcome.get("objections") or [],
+        "unanswered_questions": outcome.get("unanswered_questions") or [],
         "model": outcome.get("model"),
         "generated_at": outcome.get("generated_at"),
         "generation_ok": outcome.get("generation_ok"),
@@ -689,7 +856,8 @@ async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]
             built = call_integrations.post_call_arguments(action, outcome, meta)
             if built is None:
                 results.append({"action": action, "result": {
-                    "status": "skipped", "message": "The call did not capture the details this action needs."}})
+                    "status": "skipped", "message": "The call did not capture the details this action needs.",
+                    "missing": missing_post_call_details(action, outcome, meta)}})
                 continue
             arguments = built
         result = await tool_router.route_and_execute(
@@ -698,3 +866,32 @@ async def reconcile_and_dispatch_post_call(call_id: str, outcome: dict[str, Any]
         results.append({"action": action, "result": result})
     outcome["integration_results"] = results
     outcome["integration_dispatch_complete"] = True
+
+
+#: What each built-in post-call action needs from a call, in the tenant's words.
+#: Mirrors call_integrations.post_call_arguments; shown when an action is skipped.
+POST_CALL_REQUIRED_DETAILS: dict[str, tuple[str, ...]] = {
+    "GMAIL_CREATE_DRAFT": ("caller email", "call summary"),
+    "HUBSPOT_CREATE_CONTACT": ("caller name", "caller email or phone"),
+    "TODOIST_CREATE_TASK": ("next step or call summary",),
+}
+
+
+def missing_post_call_details(action: str, outcome: dict[str, Any], meta: dict[str, Any] | None) -> list[str]:
+    """Which of an action's required details this call did not capture."""
+    facts = outcome.get("extracted_fields") if isinstance(outcome.get("extracted_fields"), dict) else {}
+    contact = (meta or {}).get("contact") if isinstance((meta or {}).get("contact"), dict) else {}
+
+    def first(*keys: str) -> str:
+        return next((str(src.get(k)).strip() for src in (facts, contact) for k in keys if str(src.get(k) or "").strip()), "")
+
+    email = "@" in first("email", "caller_email")
+    present = {
+        "caller email": email,
+        "call summary": bool(str(outcome.get("summary_en") or "").strip()),
+        "caller name": bool(first("name", "caller_name", "full_name", "customer_name", "first_name")),
+        "caller email or phone": email or bool(first("phone", "callback_phone", "phone_number", "mobile", "phone_e164")),
+        "next step or call summary": bool(str(outcome.get("next_action") or outcome.get("summary_en") or "").strip()),
+    }
+    needed = POST_CALL_REQUIRED_DETAILS.get(str(action).upper(), ())
+    return [detail for detail in needed if not present.get(detail, False)] or list(needed)

@@ -44,9 +44,17 @@ async def prepare_callback_close(ctx: Any, decision: dict[str, Any], language: s
     from server.call.call_end_policy import callback_save_failed_for, server_farewell_for
     from server.utils.logger import log_pstn
 
+    request_text = str(getattr(ctx, "callback_request_text", "") or user_text)
+    handoff = getattr(ctx, "human_handoff", None) or None
+    if isinstance(handoff, dict):
+        # A person from the business was already asked for on this call: the
+        # callback time belongs to that one task, not a second, separate request.
+        from server.call.human_handoff import merge_handoff
+        when = str(getattr(ctx, "callback_when", "") or "") or ("" if handoff.get("requestedTime") else request_text)
+        handoff = merge_handoff(handoff, {"requestedTime": when[:200]})
     try:
         saved = await asyncio.wait_for(record_callback_request(
-            ctx, str(getattr(ctx, "callback_request_text", "") or user_text),
+            ctx, request_text, handoff=handoff if isinstance(handoff, dict) else None,
         ), timeout=3.0)
     except Exception as exc:  # noqa: BLE001 -- closing must report storage failures honestly.
         saved = None
@@ -74,8 +82,11 @@ def resolve_requested_window(texts: list[str], at: datetime, config: dict | None
 
 
 def _public(row: CallCallback) -> dict[str, Any]:
+    from server.call.human_handoff import handoff_contact_label, is_handoff_key
+
     meta = call_ledger.read_meta(str(row.original_call_id)) if row.original_call_id else {}
-    details = meta.get("callback_request") or {}
+    handoff = is_handoff_key(row.dial_request_id)
+    details = (meta.get("human_handoff") if handoff else meta.get("callback_request")) or {}
     resolved = details.get("resolvedWindow")
     if resolved is None and row.created_at and (details.get("requestedWhen") or details.get("requestText")):
         # Requests saved before windows were resolved: anchor on when the caller asked.
@@ -90,7 +101,33 @@ def _public(row: CallCallback) -> dict[str, Any]:
         "requestText": details.get("requestText") or "",
         "resolvedWindow": resolved,
         "createdAt": row.created_at.isoformat() if row.created_at else None,
+        # A handoff is the business's own task: a person, not the agent, calls back.
+        "kind": "human_handoff" if handoff else "callback",
+        **({"handoff": {
+            "contactRole": details.get("contactRole") or "any_person",
+            "contactLabel": handoff_contact_label(details),
+            "contactName": details.get("contactName") or "",
+            "reason": details.get("reason") or "",
+        }} if handoff else {}),
     }
+
+
+async def _capture_followup(session: Any, row: CallCallback, ctx: Any, call_id: uuid.UUID,
+                            request_text: str, review_only: bool) -> None:
+    try:
+        from server.services.saas.followup_service import capture_request
+        from server.services.saas.followup_policy import timing_model_snapshot
+        selected = getattr(getattr(ctx, "resolved_stack", None), "llm", None)
+        llm = timing_model_snapshot(selected)
+        requested_when = str(getattr(ctx, "callback_when", "") or "")[:400]
+        recent_turns = await asyncio.to_thread(_timing_context, str(call_id), request_text, requested_when)
+        async with session.begin_nested():
+            await capture_request(session, row, request_text=request_text, llm=llm,
+                                  requested_when=requested_when, recent_turns=recent_turns,
+                                  review_only=review_only)
+            await session.flush()
+    except Exception as exc:
+        logger.warning("callback.scheduling_unavailable kind=%s", type(exc).__name__)
 
 
 async def recover_interrupted_callback(ctx: Any) -> dict[str, Any] | None:
@@ -104,11 +141,20 @@ async def recover_interrupted_callback(ctx: Any) -> dict[str, Any] | None:
     request = str(getattr(ctx, "callback_request_text", "") or "").strip()
     if not request:
         return None
-    return await asyncio.wait_for(record_callback_request(ctx, request, review_only=True), timeout=3.0)
+    handoff = getattr(ctx, "human_handoff", None)
+    return await asyncio.wait_for(record_callback_request(
+        ctx, request, review_only=True, handoff=handoff if isinstance(handoff, dict) and handoff else None,
+    ), timeout=3.0)
 
 
-async def record_callback_request(ctx: Any, request_text: str, *, review_only: bool = False) -> dict[str, Any] | None:
-    """Commit before the voice agent claims the request was noted. Never dials."""
+async def record_callback_request(ctx: Any, request_text: str, *, review_only: bool = False,
+                                  handoff: dict[str, str] | None = None) -> dict[str, Any] | None:
+    """Commit before the voice agent claims the request was noted. Never dials.
+
+    ``handoff`` marks a request for a person from the business. It shares the
+    callback table and console list under its own key, and is never queued for
+    an automatic agent dial: a person from the business makes that call.
+    """
     factory = get_session_factory()
     if factory is None or ctx is None:
         return None
@@ -124,7 +170,9 @@ async def record_callback_request(ctx: Any, request_text: str, *, review_only: b
     if not target:
         return None
     generation = int(getattr(ctx, "callback_generation", 0) or meta.get("callback_generation") or 0)
-    key = f"requested:{call_id}" + (f":{generation}" if generation else "")
+    from server.call.human_handoff import HANDOFF_KEY_PREFIX
+
+    key = (f"{HANDOFF_KEY_PREFIX}{call_id}" if handoff else f"requested:{call_id}") + (f":{generation}" if generation else "")
     policy_config: dict | None = None
     async with factory() as session:
         call = (await session.execute(select(Call).where(
@@ -148,20 +196,9 @@ async def record_callback_request(ctx: Any, request_text: str, *, review_only: b
                 await session.flush()
                 # Optional new storage stays in a savepoint so older installations
                 # retain the durable manual request until their migration is applied.
-                try:
-                    from server.services.saas.followup_service import capture_request
-                    from server.services.saas.followup_policy import timing_model_snapshot
-                    selected = getattr(getattr(ctx, "resolved_stack", None), "llm", None)
-                    llm = timing_model_snapshot(selected)
-                    requested_when = str(getattr(ctx, "callback_when", "") or "")[:400]
-                    recent_turns = await asyncio.to_thread(_timing_context, str(call_id), request_text, requested_when)
-                    async with session.begin_nested():
-                        await capture_request(session, row, request_text=request_text, llm=llm,
-                                              requested_when=requested_when, recent_turns=recent_turns,
-                                              review_only=review_only)
-                        await session.flush()
-                except Exception as exc:
-                    logger.warning("callback.scheduling_unavailable kind=%s", type(exc).__name__)
+                # A handoff is never queued for an automatic agent dial.
+                if not handoff:
+                    await _capture_followup(session, row, ctx, call_id, request_text, review_only)
                 try:
                     from server.db.models.followup_models import AgentFollowUpPolicy
                     async with session.begin_nested():
@@ -179,6 +216,21 @@ async def record_callback_request(ctx: Any, request_text: str, *, review_only: b
                     raise
         callback_id, status = str(row.callback_id), row.status
     # Re-read after the database await so concurrent transcript/media metadata survives.
+    if handoff:
+        requested_time = str(handoff.get("requestedTime") or "")[:400]
+        resolved = resolve_requested_window([requested_time], datetime.now(timezone.utc),
+                                            policy_config, spread_key=callback_id) if requested_time else None
+        meta = call_ledger.read_meta(str(call_id))
+        meta["human_handoff"] = {
+            **{k: str(v)[:800] for k, v in handoff.items()},
+            "id": callback_id, "status": status,
+            "requestedWhen": requested_time,
+            "requestText": str(handoff.get("callerWords") or request_text)[:800],
+            **({"resolvedWindow": resolved} if resolved else {}),
+        }
+        meta.update(callback_cancelled=False, callback_withdrawal_pending=False)
+        call_ledger.write_meta(str(call_id), meta)
+        return {"id": callback_id, "status": status, "kind": "human_handoff"}
     requested_when_text = str(getattr(ctx, "callback_when", "") or request_text)[:400]
     resolved = resolve_requested_window([requested_when_text, request_text], datetime.now(timezone.utc),
                                         policy_config, spread_key=callback_id)

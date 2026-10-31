@@ -15,6 +15,12 @@ from server.services.saas.followup_policy import FollowUpConfig, utc
 
 logger = logging.getLogger(__name__)
 
+#: Summary tags that show buying interest, strongest first (the first found is the evidence).
+INTEREST_TAGS: tuple[str, ...] = (
+    "signal:ready_to_buy", "intent:purchase", "intent:quote", "intent:booking", "intent:renewal",
+    "intent:demo", "signal:budget_confirmed", "followup:site_visit",
+)
+
 
 def score_outcome(outcome: dict, config: FollowUpConfig | None = None) -> dict:
     cfg = config or FollowUpConfig()
@@ -45,6 +51,10 @@ def score_outcome(outcome: dict, config: FollowUpConfig | None = None) -> dict:
     selected_offer = any(normalized.get(key) for key in ("product", "service", "selected_product", "course"))
     contextual_requirement = any(normalized.get(key.strip().lower()) for key in cfg.scoreFactKeys["requirements"]
                                  if key.strip().lower() not in {"product", "service", "product_interest", "selected_product", "course"})
+    # The summary step tags what the caller wanted (intent:purchase, signal:ready_to_buy);
+    # a callback_required disposition with those tags is still a buyer.
+    tags = {str(t) for t in [*(outcome.get("status_tags") or []), *(outcome.get("tags") or [])]}
+    interest_tag = next((t for t in INTEREST_TAGS if t in tags), "")
     components = []
     for key, weight in cfg.scoreWeights.items():
         evidence = (
@@ -54,7 +64,7 @@ def score_outcome(outcome: dict, config: FollowUpConfig | None = None) -> dict:
                 disposition in ("interested", "qualified", "site_visit_planned", "converted", "order_requested")
                 or (selected_offer and contextual_requirement)
             )
-            else ""
+            else interest_tag if key == "interest" else ""
         )
         if key != "interest":
             evidence = next((name for name in cfg.scoreFactKeys[key] if normalized.get(name.strip().lower())), "")

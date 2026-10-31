@@ -137,6 +137,7 @@ const TAG_LABEL = {
   'followup:schedule_pending': 'Time to be confirmed',
   'followup:send_info': 'Send details',
   'followup:send_quote': 'Send a quote',
+  'followup:handoff': 'Wants a manager to call',
   'followup:site_visit': 'Site visit',
   'contact:email_known': 'Email captured',
   'contact:name_known': 'Name captured',

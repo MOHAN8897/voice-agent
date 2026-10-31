@@ -199,3 +199,82 @@ def suppress_stale_conclusions(
             if not _calls_conclusion(str(key), str(value))
         }
     return filtered
+
+
+# --- slot values ---------------------------------------------------------------------------
+# A slot holds the kind of value its name promises. "బల్క్" ("bulk") is an
+# answer to "how many?" but not a quantity; storing it made the agent believe
+# the quantity was known and the post-call lead carry a word instead of a count.
+
+NUMBER_WORDS: dict[str, list[str]] = {
+    "en": ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+           "fifteen", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety", "hundred",
+           "hundreds", "thousand", "thousands", "lakh", "lakhs", "crore", "dozen", "dozens", "couple", "single"],
+    # Bare ఒక / ఒక్క is also the article "a"; ఒకటి / ఒక్కటి is the number.
+    "te": ["ఒకటి", "ఒక్కటి", "రెండు", "మూడు", "నాలుగు", "ఐదు", "అయిదు", "ఆరు", "ఏడు", "ఎనిమిది", "తొమ్మిది",
+           "పది", "ఇరవై", "ముప్పై", "నలభై", "యాభై", "అరవై", "డెబ్బై", "ఎనభై", "తొంభై", "వంద", "వందలు", "నూరు",
+           "వెయ్యి", "వేయి", "వేలు", "లక్ష", "లక్షలు", "డజను", "డజన్", "వన్", "టూ", "త్రీ", "ఫోర్", "ఫైవ్",
+           "సిక్స్", "సెవెన్", "ఎయిట్", "నైన్", "టెన్", "ట్వెంటీ", "ఫిఫ్టీ", "హండ్రెడ్", "థౌజండ్"],
+    "hi": ["एक", "दो", "तीन", "चार", "पांच", "पाँच", "छह", "छः", "सात", "आठ", "नौ", "दस", "बीस", "तीस",
+           "चालीस", "पचास", "साठ", "सत्तर", "अस्सी", "नब्बे", "सौ", "हज़ार", "हजार", "लाख", "करोड़", "दर्जन",
+           "हंड्रेड", "थाउजेंड", "फाइव", "टेन"],
+    "ta": ["ஒன்று", "ஒண்ணு", "இரண்டு", "ரெண்டு", "மூன்று", "மூணு", "நான்கு", "நாலு", "ஐந்து", "அஞ்சு",
+           "ஆறு", "ஏழு", "எட்டு", "ஒன்பது", "பத்து", "இருபது", "ஐம்பது", "நூறு", "ஆயிரம்", "லட்சம்", "டஜன்"],
+    "kn": ["ಒಂದು", "ಎರಡು", "ಮೂರು", "ನಾಲ್ಕು", "ಐದು", "ಆರು", "ಏಳು", "ಎಂಟು", "ಒಂಬತ್ತು", "ಹತ್ತು", "ಇಪ್ಪತ್ತು",
+           "ಐವತ್ತು", "ನೂರು", "ಸಾವಿರ", "ಲಕ್ಷ", "ಡಜನ್"],
+    "ml": ["ഒന്ന്", "രണ്ട്", "മൂന്ന്", "നാല്", "അഞ്ച്", "ആറ്", "ഏഴ്", "എട്ട്", "ഒമ്പത്", "പത്ത്", "ഇരുപത്",
+           "അമ്പത്", "നൂറ്", "ആയിരം", "ലക്ഷം", "ഡസൻ"],
+    "mr": ["एक", "दोन", "तीन", "चार", "पाच", "सहा", "सात", "आठ", "नऊ", "दहा", "वीस", "पन्नास", "शंभर",
+           "हजार", "लाख", "डझन"],
+    "bn": ["এক", "দুই", "তিন", "চার", "পাঁচ", "ছয়", "সাত", "আট", "দশ", "কুড়ি", "বিশ", "পঞ্চাশ", "একশ",
+           "একশো", "হাজার", "লাখ", "ডজন"],
+    "gu": ["એક", "બે", "ત્રણ", "ચાર", "પાંચ", "છ", "સાત", "આઠ", "નવ", "દસ", "વીસ", "પચાસ", "સો", "હજાર",
+           "લાખ", "ડઝન"],
+    "pa": ["ਇੱਕ", "ਇਕ", "ਦੋ", "ਤਿੰਨ", "ਚਾਰ", "ਪੰਜ", "ਛੇ", "ਸੱਤ", "ਅੱਠ", "ਨੌਂ", "ਦਸ", "ਵੀਹ", "ਪੰਜਾਹ", "ਸੌ",
+           "ਹਜ਼ਾਰ", "ਲੱਖ", "ਦਰਜਨ"],
+}
+_NUMBER_TOKENS = frozenset(w.casefold() for pool in NUMBER_WORDS.values() for w in pool)
+# Agglutinated forms ("ఐదువందలు", "వందల") start with a number word of three or more letters.
+_NUMBER_PREFIXES = tuple(sorted((w for w in _NUMBER_TOKENS if len(w) >= 3 and not w.isascii()), key=len, reverse=True))
+_DIGIT = re.compile(r"\d")
+
+_COUNT_KEY = re.compile(
+    r"(?:^|_)(?:quantity|qty|count|units|pieces|headcount|party_size|guests)(?:$|_)|^(?:number_of|num|no_of)_", re.I,
+)
+_NAME_KEY = re.compile(r"^(?:caller_|customer_|contact_|lead_|first_|last_|full_)?name$|^(?:first|last|full|sur)name$", re.I)
+_PHONE_KEY = re.compile(r"^(?:callback_|alternate_|alt_|contact_)?(?:phone|mobile)(?:_number)?$|^contact_number$", re.I)
+_EMAIL_KEY = re.compile(r"^(?:caller_|contact_)?email(?:_address)?$", re.I)
+
+
+def has_number(text: str | None) -> bool:
+    """Digits in any script, or a number word in a supported language."""
+    raw = text or ""
+    if _DIGIT.search(raw):
+        return True
+    from server.call.reply_guard import tokens
+
+    return any(t in _NUMBER_TOKENS or (not t.isascii() and t.startswith(_NUMBER_PREFIXES)) for t in tokens(raw))
+
+
+def slot_value_error(key: str, value: str) -> str | None:
+    """Why ``value`` does not fit slot ``key``, or None when it fits (or the slot is free-form)."""
+    text = (value or "").strip()
+    if _COUNT_KEY.search(key):
+        return None if has_number(text) else "not_a_number"
+    if _NAME_KEY.fullmatch(key):
+        from server.call.caller_detail_capture import is_usable_lead_name
+        from server.call.reply_guard import is_acknowledgement
+
+        if _DIGIT.search(text) or "?" in text or "@" in text:
+            return "not_a_name"
+        if len(text) > 60 or len(text.split()) > 4:
+            return "not_a_name"
+        if is_acknowledgement(text) or not is_usable_lead_name(text):
+            return "not_a_name"
+        return None
+    if _PHONE_KEY.fullmatch(key):
+        return None if len(_DIGIT.findall(text)) >= 6 else "not_a_phone"
+    if _EMAIL_KEY.fullmatch(key):
+        spoken = re.search(r"\bat\b.*\bdot\b", text, re.I)
+        return None if ("@" in text or spoken) else "not_an_email"
+    return None

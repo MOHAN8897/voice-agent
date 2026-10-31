@@ -8,6 +8,7 @@ import json
 import logging
 import time
 import uuid
+from datetime import datetime, timezone
 from collections.abc import AsyncIterator, Awaitable, Callable
 from typing import Any
 
@@ -19,12 +20,13 @@ from server.services.pstn_lexicon import (
     is_backchannel,
     is_single_word_claim,
 )
-from server.services.pstn_media_flow import pstn_media_flow
+from server.services.pstn_media_flow import pstn_media_flow, pstn_turn_timing
 from server.services.pstn_text_chunker import (
     drain_complete_sentences,
     extract_opening_greeting,
     join_speakable_chunks,
     resolve_stream_tts_tail,
+    split_first_sentence,
 )
 from server.utils.logger import log_error, log_stt, log_tts
 
@@ -249,6 +251,12 @@ class PstnVoiceLoop:
         self._coalesce_epoch = 0
         self._coalesce_transcript: str | None = None
         self._last_user_partial_at = 0.0
+        # Per-turn latency for trace.json (monotonic seconds; 0 = not seen).
+        self._last_stt_final_at = 0.0
+        self._last_stt_final_ms: int | None = None
+        self._turn_started_at = 0.0
+        self._turn_tts_text_at = 0.0
+        self._turn_first_audio_at = 0.0
         self._current_turn_transcript: str = ""
         self._think_cancel_relaunch: str | None = None
         self._voice_turn_generation: str | None = None
@@ -1624,6 +1632,39 @@ class PstnVoiceLoop:
                 detail=expanded[:200],
             )
 
+    def _note_llm_first_token(self, transcript: str) -> None:
+        if self._turn_started_at > 0:
+            pstn_turn_timing.record(
+                self.call_id, transcript,
+                llm_ttft_ms=round((time.monotonic() - self._turn_started_at) * 1000),
+            )
+        pstn_media_flow.emit(
+            self.call_id,
+            "llm_first_token",
+            "outbound",
+            turn_id=self.current_turn_id,
+            status="healthy",
+        )
+
+    def _note_reply_first_audio(self) -> None:
+        """First reply frame on the wire: TTS latency and caller-perceived end-to-end."""
+        now = time.monotonic()
+        self._turn_first_audio_at = now
+        started = self._turn_started_at
+        heard_from = self._last_stt_final_at if 0 < self._last_stt_final_at <= started else started
+        pstn_turn_timing.record(
+            self.call_id, self._current_turn_transcript,
+            tts_first_audio_ms=round((now - self._turn_tts_text_at) * 1000) if self._turn_tts_text_at > 0 else None,
+            e2e_ms=round((now - heard_from) * 1000) if heard_from > 0 else None,
+        )
+
+    async def _send_reply_tts_text(self, session: Any, text: str) -> Any:
+        """Reply speech: let a holding line finish, then note when TTS got text."""
+        await self._backchannel.settle_hold()
+        if self._turn_tts_text_at <= 0:
+            self._turn_tts_text_at = time.monotonic()
+        return await self._send_tts_text(session, text)
+
     async def _send_tts_text(self, session: Any, text: str) -> Any:
         if self.emission_blocked():
             return session
@@ -1855,6 +1896,8 @@ class PstnVoiceLoop:
         # The greeting is synthesized; render the outage announcement now, off
         # the critical path, so it exists before any failure can need it.
         self._schedule_outage_clip_prewarm()
+        if self._is_composed_call():
+            self._backchannel.prewarm_hold()
         stt_err = results[0] if isinstance(results[0], BaseException) else None
         if greeting:
             greet_err = results[2] if len(results) > 2 and isinstance(results[2], BaseException) else None
@@ -1885,6 +1928,16 @@ class PstnVoiceLoop:
                         )
                         raise
             await self._wait_for_intro_playback(self._wire_frames_out - before_frames)
+            if self.call_id and self._wire_frames_out > before_frames:
+                # The played opening is the agent's first transcript line, at its play time.
+                from server.call.call_ledger import call_ledger, utc_iso
+
+                first = getattr(self, "_first_wire_at", None) if before_frames == 0 else None
+                try:
+                    await call_ledger.append_opening_turn(
+                        self.call_id, self._tts_heard_text or greeting, ts=utc_iso(first) if first else None)
+                except Exception as exc:  # noqa: BLE001 -- a transcript write never breaks the call.
+                    log_pstn("greeting.ledger_failed", call_id=self.call_id, error_type=type(exc).__name__)
             if not self._closed and self._intro_phase and self._wire_frames_out > before_frames:
                 await self._note_opening_spoken(self._tts_heard_text or greeting)
                 log_pstn("greeting.done", timer_key=self.call_id, call_id=self.call_id)
@@ -2245,6 +2298,13 @@ class PstnVoiceLoop:
                     self._backchannel.note_final()
                     self._cancel_backchannel()
                     if text:
+                        now_final = time.monotonic()
+                        # Finalization lag: the caller's last partial to this final.
+                        self._last_stt_final_ms = (
+                            round((now_final - self._last_user_partial_at) * 1000)
+                            if self._last_user_partial_at > 0 else None
+                        )
+                        self._last_stt_final_at = now_final
                         self._last_user_partial_at = 0.0
                         if self.call_id:
                             from server.call.call_context import get as get_ctx
@@ -2879,6 +2939,10 @@ class PstnVoiceLoop:
         safe = text[:120].encode("ascii", "replace").decode("ascii")
         log_pstn("TURN_START", call_id=self.call_id, turn_id=self.current_turn_id, generation_id=self.current_generation_id, text=safe)
         self._begin_turn_playout_metrics()
+        self._turn_started_at = time.monotonic()
+        self._turn_tts_text_at = 0.0
+        self._turn_first_audio_at = 0.0
+        pstn_turn_timing.record(self.call_id, text, stt_final_ms=self._last_stt_final_ms)
         pstn_media_flow.emit(
             self.call_id,
             "llm_started",
@@ -2919,6 +2983,8 @@ class PstnVoiceLoop:
             async with self._speak_lock:
                 self._active_speak_task = asyncio.current_task()
                 tts_prepare = asyncio.create_task(tts_session.prepare_for_turn())
+                if self._is_composed_call():
+                    self._backchannel.start_hold(self.current_turn_id)
                 try:
                     turn_kwargs = dict(
                         transcript=text,
@@ -2947,16 +3013,12 @@ class PstnVoiceLoop:
                             self._expects_answer = chunk["expects_answer"]
                         if chunk.get("cancelled"):
                             turn_cancelled = True
+                        if (chunk.get("delta") or chunk.get("status") == "reply_buffered") and not first_token_seen:
+                            # A buffered reply reports its first provider token as
+                            # reply_buffered; it is the same TTFT moment as a delta.
+                            first_token_seen = True
+                            self._note_llm_first_token(text)
                         if chunk.get("delta"):
-                            if not first_token_seen:
-                                first_token_seen = True
-                                pstn_media_flow.emit(
-                                    self.call_id,
-                                    "llm_first_token",
-                                    "outbound",
-                                    turn_id=self.current_turn_id,
-                                    status="healthy",
-                                )
                             pending += chunk.get("delta") or ""
                             sentences, pending = drain_complete_sentences(
                                 pending,
@@ -2970,7 +3032,7 @@ class PstnVoiceLoop:
                                     if self.emission_blocked():
                                         turn_cancelled = True
                                         break
-                                    tts_session = await self._send_tts_text(tts_session, combined)
+                                    tts_session = await self._send_reply_tts_text(tts_session, combined)
                                     spoke_from_stream = True
                         elif chunk.get("done"):
                             turn_completed = True
@@ -2992,7 +3054,12 @@ class PstnVoiceLoop:
                             if tail and not turn_cancelled and not self.emission_blocked():
                                 await tts_prepare
                                 self._set_tts_active(True)
-                                tts_session = await self._send_tts_text(tts_session, tail)
+                                # A buffered reply arrives whole. Synthesize its first
+                                # sentence on its own so audio starts before the rest.
+                                for piece in split_first_sentence(tail):
+                                    if turn_cancelled or self.emission_blocked():
+                                        break
+                                    tts_session = await self._send_reply_tts_text(tts_session, piece)
                             pending = ""
                             end_call = chunk.get("end_call") or {}
                             accepted_end_call = bool(
@@ -3033,6 +3100,7 @@ class PstnVoiceLoop:
                         cancelled=turn_cancelled,
                     )
                 finally:
+                    self._backchannel.cancel_hold()
                     self._set_tts_active(False)
                     if not tts_prepare.done():
                         tts_prepare.cancel()
@@ -3197,6 +3265,10 @@ class PstnVoiceLoop:
         if not getattr(self.playback, "defer_heard_until_sent", False):
             self._promote_queued_tts_to_heard()
         self._wire_frames_out += 1
+        if self._wire_frames_out == 1:
+            # When the caller first heard the agent: the opening. Wall clock via datetime,
+            # since tests replace this module's `time` with a monotonic-only stand-in.
+            self._first_wire_at = datetime.now(timezone.utc).timestamp()
         self._wire_bytes_out += len(wire)
         if self.call_id:
             self._archive.enqueue(self.call_id, "agent", wire)
@@ -3213,6 +3285,8 @@ class PstnVoiceLoop:
             await res
         if self._turn_busy and not self._technical_fallback_active:
             self._turn_audio_delivered = True
+            if not self._backchannel_playing and self._turn_first_audio_at <= 0 and self._turn_started_at > 0:
+                self._note_reply_first_audio()
 
     async def speak(
         self,

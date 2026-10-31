@@ -51,6 +51,6 @@ def spoken_register_for(locale: str) -> str:
         "no forced fillers or laughter. Use short complete thoughts; preserve exact mandatory disclosures "
         "when in the admitted language, and translate foreign-language required phrases into natural conversational speech in this language.\n"
         f"Style anchors, not extra facts: ‘{style.unknown}’ for a missing fact; ‘{style.clarification}’ only when "
-        f"their request is unclear. After answering, stop; offer a next step only like ‘{style.soft_offer}’, "
-        "never as a closing question."
+        f"their request is unclear. After answering an information question, stop without a sales question. "
+        f"When the script's next step is due, offer it once in one short line like ‘{style.soft_offer}’."
     )

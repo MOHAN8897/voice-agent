@@ -25,6 +25,19 @@ def _utcnow() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _parse_ts(value: Any) -> datetime | None:
+    try:
+        parsed = datetime.fromisoformat(str(value or "").replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def utc_iso(epoch_seconds: float) -> str:
+    """Ledger timestamp for a wall-clock instant (time.time())."""
+    return datetime.fromtimestamp(epoch_seconds, timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def _sync_post_call_transcript_usage(
     usage: dict[str, Any],
     meta: dict[str, Any],
@@ -164,6 +177,36 @@ class CallLedger:
                 "ts": ts,
             },
         )
+
+    async def append_opening_turn(self, call_id: str, text: str, *, ts: str | None = None) -> dict[str, Any] | None:
+        """Record the opening greeting the platform played, once, at its play time.
+
+        The greeting is noted after its playback drains, by which time the caller may
+        already have spoken over it. It is placed by time and takes seq 0, so it is
+        the agent's first line and no later seq (memory events reference them) moves.
+        Returns None when the call already has its opening line or is sealed.
+        """
+        clean = str(text or "").strip()
+        if not clean:
+            return None
+        async with _lock(call_id):
+            if call_id in _sealed:
+                return None
+            path = self.transcript_path(call_id)
+            rows = self.read_lines(call_id)
+            # Some voice paths already write the greeting as an ordinary turn.
+            if any(row.get("opening") or (row.get("role") == "assistant" and str(row.get("text") or "").strip() == clean)
+                   for row in rows):
+                return None
+            line = {"seq": 0, "role": "assistant", "text": clean, "ts": ts or _utcnow(), "opening": True}
+            at = _parse_ts(line["ts"])
+            index = next((i for i, row in enumerate(rows) if at is not None and (_parse_ts(row.get("ts")) or at) > at), len(rows))
+            rows.insert(index, line)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("w", encoding="utf-8") as fh:
+                for row in rows:
+                    fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+            return line
 
     async def _append(self, call_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         async with _lock(call_id):

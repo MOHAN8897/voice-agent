@@ -57,7 +57,7 @@ _FILTER_SOURCES: dict[str, frozenset[str]] = {
     "needs_action": frozenset(),
 }
 
-_TOPUP_KINDS = ("topup", "razorpay_topup_inr", "razorpay_topup", "admin_grant")
+_TOPUP_KINDS = ("topup", "razorpay_topup_inr", "razorpay_topup", "admin_grant", "admin_credit")
 _RENT_KINDS = ("did_rental",)
 _REFUND_KINDS = ("did_refund",)
 _TECHNICAL_REASONS = frozenset({"technical_fallback", "technical_failure"})
@@ -634,8 +634,11 @@ def _callback_item(row: Any, names: dict[str, str]) -> dict[str, Any]:
     if call_id:
         actions.append({"kind": "open_call", "label": "Open call", "callId": call_id})
     status_text = {"converted": "was handled", "dismissed": "was dismissed", "completed": "was completed"}
-    text = f"{_who(contact)} asked for a callback" if open_ or row.status not in status_text else \
-        f"Callback request from {_who(contact)} {status_text[row.status]}"
+    from server.call.human_handoff import is_handoff_key
+    handoff = is_handoff_key(row.dial_request_id)
+    asked = "asked for a person from the business to call" if handoff else "asked for a callback"
+    text = f"{_who(contact)} {asked}" if open_ or row.status not in status_text else \
+        f"{'Handoff' if handoff else 'Callback'} request from {_who(contact)} {status_text[row.status]}"
     item = _item(key=f"callback:{row.callback_id}", type_="callback.requested", category="calls",
                  at=row.created_at, tone="warning" if open_ else "neutral", actor=None, text=text,
                  agent_id=row.agent_id, contact=contact, needs_action=open_, actions=actions,
@@ -1283,6 +1286,9 @@ async def item_detail(tenant_id: uuid.UUID, item_id: str) -> dict[str, Any] | No
             item = _callback_item(row, names)
             source_call = item["refs"].get("callId") or (str(row.original_attempt_id) if row.original_attempt_id else None)
             facts = {"status": row.status, "requestedAt": _iso(row.created_at), "updatedAt": _iso(row.updated_at)}
+            from server.call.human_handoff import handoff_facts_for_call, is_handoff_key
+            if is_handoff_key(row.dial_request_id) and source_call:
+                facts.update(await asyncio.to_thread(handoff_facts_for_call, source_call, tenant_id))
         elif kind == "followup":
             row = await owned(M["FollowUpJob"])
             if row is None:

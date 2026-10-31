@@ -1242,12 +1242,19 @@ async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: 
                                 (not r.action_whitelist or tool["name"] in {a.upper() for a in r.action_whitelist}) for r in matching):
             continue
         allowed.append(tool)
+    if compiled_text:
+        from server.brain.capabilities import tools_used_by_script
+
+        # Only tools this agent's own workflow can use reach the model each turn.
+        allowed = tools_used_by_script(allowed, compiled_text)
     if include_platform:
         from server.brain.capabilities import order_confirmation_allowed_from_script
         from server.call.enquiry import SAVE_ENQUIRY_TOOL
+        from server.call.human_handoff import REQUEST_HUMAN_HANDOFF_TOOL
         from server.call.order_confirmation import CONFIRM_ORDER_TOOL
 
-        platform_tools = [SAVE_ENQUIRY_TOOL]
+        # A request for a person from the business is passed on whatever the script says.
+        platform_tools = [SAVE_ENQUIRY_TOOL, REQUEST_HUMAN_HANDOFF_TOOL]
         if order_confirmation_allowed_from_script(compiled_text):
             platform_tools.append(CONFIRM_ORDER_TOOL)
         allowed = [*allowed[:32-len(platform_tools)], *platform_tools]
@@ -1256,11 +1263,13 @@ async def get_tools_for_agent(active_apps: list[str], tenant_id: str, agent_id: 
 
 def tool_definition(tool_name: str) -> tuple[str, dict] | None:
     name = tool_name.upper()
-    if name in {"SAVE_ENQUIRY", "CONFIRM_ORDER"}:
+    if name in {"SAVE_ENQUIRY", "CONFIRM_ORDER", "REQUEST_HUMAN_HANDOFF"}:
         from server.call.enquiry import SAVE_ENQUIRY_TOOL
+        from server.call.human_handoff import REQUEST_HUMAN_HANDOFF_TOOL
         from server.call.order_confirmation import CONFIRM_ORDER_TOOL
 
-        return "PLATFORM", SAVE_ENQUIRY_TOOL if name == "SAVE_ENQUIRY" else CONFIRM_ORDER_TOOL
+        return "PLATFORM", {"SAVE_ENQUIRY": SAVE_ENQUIRY_TOOL, "CONFIRM_ORDER": CONFIRM_ORDER_TOOL,
+                            "REQUEST_HUMAN_HANDOFF": REQUEST_HUMAN_HANDOFF_TOOL}[name]
     return next(((app, tool) for app, tools in _SCHEMAS.items() for tool in tools if tool["name"] == name), None)
 
 

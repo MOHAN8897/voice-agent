@@ -71,17 +71,19 @@ _REQUEST_SUFFIXES = (
     "_CREATE_ITEM",
 )
 
+# Spoken in everyday phone register: the caller hears this mid-call, so it reads
+# like a person talking, not a notice ("నిర్ధారణ", "अनुरोध" were bookish).
 _UNCONFIRMED_LINES: dict[str, str] = {
     "en": "I couldn't confirm that your request went through. Please don't treat it as done.",
-    "te": "మీ అభ్యర్థన నిర్ధారణ అయిందో లేదో నాకు తెలియదు. దయచేసి దాన్ని పూర్తయినట్టు భావించకండి.",
-    "hi": "मैं पुष्टि नहीं कर पाया कि आपका अनुरोध पूरा हुआ। कृपया इसे हो गया न मानें।",
-    "mr": "तुमची विनंती पूर्ण झाली का हे मला निश्चित करता आले नाही. कृपया ती झाली असे मानू नका.",
-    "ta": "உங்கள் கோரிக்கை முடிந்ததா என்று என்னால் உறுதிப்படுத்த முடியவில்லை. தயவுசெய்து அதை முடிந்ததாகக் கருத வேண்டாம்.",
-    "kn": "ನಿಮ್ಮ ವಿನಂತಿ ಪೂರ್ಣಗೊಂಡಿದೆಯೇ ಎಂದು ನನಗೆ ದೃಢೀಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಅದನ್ನು ಮುಗಿದಿದೆ ಎಂದು ಪರಿಗಣಿಸಬೇಡಿ.",
-    "ml": "നിങ്ങളുടെ അഭ്യർത്ഥന പൂർത്തിയായോ എന്ന് എനിക്ക് സ്ഥിരീകരിക്കാനായില്ല. ദയവായി അത് പൂർത്തിയായതായി കരുതരുത്.",
-    "bn": "আপনার অনুরোধ সম্পন্ন হয়েছে কিনা আমি নিশ্চিত করতে পারিনি। অনুগ্রহ করে এটি সম্পন্ন হয়েছে মনে করবেন না।",
-    "gu": "તમારી વિનંતી પૂર્ણ થઈ કે નહીં તે હું ખાતરી કરી શક્યો નથી. કૃપા કરી તેને થઈ ગયું ન ગણો.",
-    "pa": "ਮੈਂ ਪੁਸ਼ਟੀ ਨਹੀਂ ਕਰ ਸਕਿਆ ਕਿ ਤੁਹਾਡੀ ਬੇਨਤੀ ਪੂਰੀ ਹੋਈ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਇਸਨੂੰ ਹੋਇਆ ਨਾ ਮੰਨੋ।",
+    "te": "అది పూర్తయిందో లేదో నేను confirm చేయలేకపోయాను. ఇంకా అయిపోయిందని అనుకోకండి.",
+    "hi": "ये हो गया या नहीं, अभी confirm नहीं हो पाया। प्लीज़ इसे हुआ हुआ मत मानिए।",
+    "mr": "हे झालं की नाही, ते अजून confirm झालं नाही. प्लीज ते झालं असं समजू नका.",
+    "ta": "அது முடிஞ்சதான்னு என்னால confirm பண்ண முடியல. அது முடிஞ்சதா நினைக்காதீங்க.",
+    "kn": "ಅದು ಆಯ್ತಾ ಇಲ್ವಾ ಅಂತ ನನಗೆ confirm ಮಾಡೋಕೆ ಆಗ್ಲಿಲ್ಲ. ಅದು ಆಗಿದೆ ಅಂತ ಅಂದ್ಕೋಬೇಡಿ.",
+    "ml": "അത് നടന്നോ എന്ന് എനിക്ക് confirm ചെയ്യാൻ പറ്റിയില്ല. അത് കഴിഞ്ഞെന്ന് കരുതരുത്.",
+    "bn": "এটা হয়েছে কিনা আমি confirm করতে পারিনি। প্লিজ এটা হয়ে গেছে ধরে নেবেন না।",
+    "gu": "એ થયું કે નહીં, એ હજી confirm નથી થયું. પ્લીઝ એને થઈ ગયું ન માનતા.",
+    "pa": "ਇਹ ਹੋਇਆ ਕਿ ਨਹੀਂ, ਅਜੇ confirm ਨਹੀਂ ਹੋਇਆ। ਕਿਰਪਾ ਕਰਕੇ ਇਸਨੂੰ ਹੋਇਆ ਨਾ ਮੰਨੋ।",
 }
 
 
@@ -117,7 +119,8 @@ def proof_for_tool_result(tool_name: str, result: Any) -> str | None:
         return None
     if name == "CONFIRM_ORDER":
         return PROOF_ORDER_CONFIRMED
-    if name == "SAVE_ENQUIRY":
+    if name in {"SAVE_ENQUIRY", "REQUEST_HUMAN_HANDOFF"}:
+        # A saved handoff is a recorded request for the business's team.
         return PROOF_ENQUIRY_SAVED
     if name.endswith(_ENQUIRY_SUFFIXES):
         return PROOF_ENQUIRY_SAVED
@@ -355,6 +358,20 @@ def caller_requests_external_submission(text: str) -> bool:
     )
 
 
+def _is_handoff_acknowledgement(sentence: str) -> bool:
+    from server.call.call_end_policy import handoff_acknowledgement_for
+    from server.prompts.agent_voice_rules import CALL_END_FAREWELLS
+
+    def norm(value: str) -> str:
+        return re.sub(r"[\s.!?।,]+", " ", value).strip().casefold()
+
+    spoken = norm(sentence)
+    if len(spoken) < 12:
+        return False
+    lines = {norm(handoff_acknowledgement_for(lang)) for lang in CALL_END_FAREWELLS}
+    return any(spoken in line or line in spoken for line in lines)
+
+
 def unavailable_action_line_for(language: str | None) -> str:
     lang = str(language or "en-IN").split("-")[0]
     return _UNAVAILABLE_LINES.get(lang, _UNAVAILABLE_LINES["en"])
@@ -390,6 +407,11 @@ def replace_unavailable_action_promises(
     replaced = False
     for sentence in _SENTENCE_SPLIT.split((text or "").strip()):
         if saved_request and claims_recorded_request(sentence) and not _EXTERNAL_TARGET.search(sentence):
+            output.append(sentence)
+            continue
+        if saved_request and _is_handoff_acknowledgement(sentence):
+            # The platform's own "I'll pass this to my manager or team" after a
+            # saved request; replacing it brought back "I can't connect you".
             output.append(sentence)
             continue
         unsupported = False

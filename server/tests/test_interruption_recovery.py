@@ -140,8 +140,10 @@ async def test_reply_contract_follows_compiled_developer_brain_and_turn_hints():
         provider="sarvam", model="sarvam-105b-conversations")]
     messages = observed["input_messages"]
     assert messages[0]["role"] == "developer"
-    assert messages[1]["content"] == "Caller is still enquiring."
-    assert messages[2]["content"].startswith("Speech delivery contract:")
+    # The static contract follows the compiled brain and precedes per-turn
+    # messages, so the provider's prefix cache covers every static byte.
+    assert messages[1]["content"].startswith("Speech delivery contract:")
+    assert messages[2]["content"] == "Caller is still enquiring."
     assert messages[3]["role"] == "user"
     assert events[-1]["response_contract"] == "speech_text"
 

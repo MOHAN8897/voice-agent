@@ -191,7 +191,7 @@ class MemoryManager:
         accepted: list[dict[str, Any]] = []
         errors: list[str] = []
         for raw in ops:
-            ok, normalized, err = self.validate_op(raw)
+            ok, normalized, err = self.validate_op(raw, source=source)
             if not ok:
                 errors.append(err or "invalid op")
                 continue
@@ -277,7 +277,7 @@ class MemoryManager:
             reason=reason,
         )
 
-    def validate_op(self, raw: Any) -> tuple[bool, dict[str, Any], str | None]:
+    def validate_op(self, raw: Any, *, source: str = "model") -> tuple[bool, dict[str, Any], str | None]:
         if not isinstance(raw, dict):
             return False, {}, "op must be an object"
         op = str(raw.get("op") or "").strip()
@@ -290,6 +290,13 @@ class MemoryManager:
                 return False, {}, f"invalid key: {key!r}"
             if not value:
                 return False, {}, f"{op} requires a non-empty value"
+            if source != "manual_correction":
+                # An operator correction is trusted; every other writer must fit the slot.
+                from server.call.memory_guard import slot_value_error
+
+                mismatch = slot_value_error(key, value)
+                if mismatch:
+                    return False, {}, f"{mismatch}: {key}"
             cap = 400 if "address" in key.lower() else _VALUE_MAX
             return True, {"op": op, "key": key, "value": value[:cap]}, None
         value = str(raw.get("value") if raw.get("value") is not None else "").strip()

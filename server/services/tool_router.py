@@ -95,7 +95,9 @@ class DialtactToolRouter:
             return {"status": "error", "message": error}
         if not await self.authorized(tenant_id, agent_id, tool_name, timing=timing, call_id=call_id or None):
             return {"status": "error", "message": "This action is not enabled for this agent and workspace."}
-        if tool_name in {"SAVE_ENQUIRY", "CONFIRM_ORDER"}:
+        from server.call.enquiry import PLATFORM_ACTIONS
+
+        if tool_name in PLATFORM_ACTIONS:
             from server.call.enquiry import execute_platform_action
 
             try:

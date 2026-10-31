@@ -105,7 +105,7 @@ POST_CALL_DEFAULT_ACTION: dict[str, str] = {
     "HUBSPOT": "HUBSPOT_CREATE_CONTACT",
 }
 
-PLATFORM_TOOLS = frozenset({"SAVE_ENQUIRY", "CONFIRM_ORDER"})
+PLATFORM_TOOLS = frozenset({"SAVE_ENQUIRY", "CONFIRM_ORDER", "REQUEST_HUMAN_HANDOFF"})
 
 
 class SelectionError(ValueError):

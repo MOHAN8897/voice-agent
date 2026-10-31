@@ -9,6 +9,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
+# Platform-native actions: no external gateway, available on every agent's calls.
+PLATFORM_ACTIONS = frozenset({"SAVE_ENQUIRY", "CONFIRM_ORDER", "REQUEST_HUMAN_HANDOFF"})
+
 SAVE_ENQUIRY_TOOL: dict[str, Any] = {
     "type": "function", "name": "SAVE_ENQUIRY",
     "description": "Save a caller-requested enquiry for workspace review after they agree to that next step. Works without external integrations. Does not confirm an order, payment, email or scheduled callback. Announce saving only after status ok.",
@@ -89,6 +92,10 @@ async def execute_platform_action(tool_name: str, *, call_id: str, tenant_id: st
         return {"status": "error", "message": "This action is unavailable."}
     if tool_name == "SAVE_ENQUIRY":
         return await save_enquiry(call_id=call_id, tenant_id=tenant_id, agent_id=agent_id, arguments=arguments)
+    if tool_name == "REQUEST_HUMAN_HANDOFF":
+        from server.call.human_handoff import save_human_handoff
+
+        return await save_human_handoff(ctx=ctx, arguments=arguments)
     from server.brain.capabilities import order_confirmation_allowed_from_script
     from server.call.order_confirmation import record_order_confirmation
 

@@ -4,7 +4,8 @@ import { outboundCallErrorMessage } from '../lib/outboundCall';
 import { SolidCard } from '../ui/SolidCard';
 import { TactileButton } from '../ui/TactileButton';
 import { EmptyState } from '../ui/EmptyState';
-import { PhoneCall, RefreshCw } from 'lucide-react';
+import { PhoneCall, RefreshCw, UserRound } from 'lucide-react';
+import { Badge } from '../ui/StatusBadge';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { NeedsYouItem } from './NeedsYouItem';
 import { formatPhone } from '../../lib/phoneMask';
@@ -39,7 +40,8 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
     try {
       await api.request('PATCH', `/api/callback-requests/${row.id}`, { status });
       setRows((current) => current.filter((item) => item.id !== row.id));
-      setNotice(status === 'converted' ? 'Marked converted and removed from pending callbacks.' : 'Removed from pending callbacks.');
+      setNotice(status === 'converted' ? 'Marked converted and removed from pending callbacks.'
+        : row.kind === 'human_handoff' ? 'Marked handled and removed from pending requests.' : 'Removed from pending callbacks.');
     } catch (e) {
       setError(e.message || 'Could not update this callback. It is still in the list.');
     } finally {
@@ -69,7 +71,7 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
       <div className="flex flex-wrap items-start justify-between gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
         <div className="min-w-0 max-w-2xl">
           <h3 className="text-title text-ink">Callback requests</h3>
-          <p className="mt-0.5 text-ui text-fg-muted">Callers who asked your agent to ring them back. Calling back replaces any automatic follow-up, and a call that has already started is never placed twice. Automatic follow-ups are in Callbacks &amp; missed calls.</p>
+          <p className="mt-0.5 text-ui text-fg-muted">Callers who asked your agent to ring them back, or asked for a person from your team to call them. Calling back replaces any automatic follow-up, and a call that has already started is never placed twice. Automatic follow-ups are in Callbacks &amp; missed calls.</p>
         </div>
         <TactileButton type="button" variant="secondary" size="sm" icon={RefreshCw} onClick={load} disabled={loading || busy !== null}>Refresh</TactileButton>
       </div>
@@ -83,24 +85,37 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
         <ul className="mt-3 divide-y divide-line border-t border-line" data-testid="callback-request-list">
           {rows.map((row) => {
             const agent = agentName(row.agentId);
+            // A handoff asks for a person from the business, so the agent does not dial it.
+            const handoff = row.kind === 'human_handoff' ? row.handoff || {} : null;
+            const asked = row.requestedWhen && row.requestedWhen !== 'Requested during the call'
+              ? `Asked for: ${row.requestedWhen}${row.resolvedWindow?.display ? ` → ${row.resolvedWindow.display}` : ''}` : null;
             return (
               <NeedsYouItem
                 key={row.id}
                 agentName={agent}
-                icon={PhoneCall}
+                icon={handoff ? UserRound : PhoneCall}
                 tone="warning"
                 needsYou
+                data-kind={row.kind || 'callback'}
                 actor={<span className="font-mono tabular-nums">{formatPhone(row.phone) || row.phone}</span>}
-                text="asked for a call back"
-                detail={row.requestedWhen ? `Asked for: ${row.requestedWhen}${row.resolvedWindow?.display ? ` → ${row.resolvedWindow.display}` : ''}` : null}
+                text={handoff ? `wants ${(handoff.contactLabel || 'a person from the business').replace(/^A /, 'a ')} to call them` : 'asked for a call back'}
+                detail={handoff ? [handoff.reason && `Why: ${handoff.reason}`, asked].filter(Boolean).join(' · ') || null
+                  : (row.requestedWhen ? `Asked for: ${row.requestedWhen}${row.resolvedWindow?.display ? ` → ${row.resolvedWindow.display}` : ''}` : null)}
                 at={row.createdAt || null}
                 meta={agent ? <span>· {agent}</span> : null}
+                badges={handoff ? <Badge tone="info" size="xs">Person from your team</Badge> : null}
                 actions={<>
-                  <TactileButton type="button" size="xs" variant="primary" icon={PhoneCall} className="min-h-[36px] sm:min-h-0" disabled={readOnly || busy !== null} onClick={() => callBack(row)}>Call back</TactileButton>
+                  {handoff ? (
+                    <a href={`tel:${row.phone}`} className="inline-flex min-h-[36px] items-center justify-center gap-2 rounded-control border border-transparent bg-ink px-2.5 py-1 text-meta font-semibold text-white shadow-craft-xs hover:bg-[#232130] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:min-h-0">
+                      <PhoneCall size={14} aria-hidden="true" />Call them yourself
+                    </a>
+                  ) : (
+                    <TactileButton type="button" size="xs" variant="primary" icon={PhoneCall} className="min-h-[36px] sm:min-h-0" disabled={readOnly || busy !== null} onClick={() => callBack(row)}>Call back</TactileButton>
+                  )}
                   <TactileButton type="button" size="xs" variant="secondary" className="min-h-[36px] sm:min-h-0" disabled={readOnly || busy !== null} onClick={() => resolve(row, 'converted')}>
                     {busy === row.id ? 'Saving…' : 'Mark converted'}
                   </TactileButton>
-                  <TactileButton type="button" size="xs" variant="ghost" className="min-h-[36px] sm:min-h-0" disabled={readOnly || busy !== null} onClick={() => resolve(row, 'dismissed')}>Remove</TactileButton>
+                  <TactileButton type="button" size="xs" variant="ghost" className="min-h-[36px] sm:min-h-0" disabled={readOnly || busy !== null} onClick={() => resolve(row, 'dismissed')}>{handoff ? 'Mark handled' : 'Remove'}</TactileButton>
                 </>}
               >
                 {row.requestText && row.requestText !== row.requestedWhen && <p className="mt-0.5 text-ui text-fg-muted break-words">Caller said: “{row.requestText}”</p>}

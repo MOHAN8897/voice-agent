@@ -40,7 +40,15 @@ class CallbackCloseState:
 def extract_callback_when(*texts: str) -> str:
     blob = " ".join(t for t in texts if t)
     match = _TIMING_RE.search(blob)
-    return match.group(0) if match else ""
+    if match:
+        return match.group(0)
+    from server.call.callback_day_parts import detect, has_explicit_clock
+
+    # Day parts and clock times in every script ("రేపు ఈవెనింగ్", "शाम 5 बजे").
+    for text in reversed([t for t in texts if t]):
+        if detect(text) or has_explicit_clock(text):
+            return text.strip()[:120]
+    return ""
 
 
 def hint_for_phase(phase: str, missing: str | None = None) -> str | None:
@@ -53,6 +61,12 @@ def hint_for_phase(phase: str, missing: str | None = None) -> str | None:
         return (
             "[Internal] Caller asked you to record their details and contact them later. "
             "Acknowledge briefly, ask ONLY for the best phone number, then wait. Do not pitch. Do not say goodbye yet."
+        )
+    if missing == "timing":
+        return (
+            "[Internal] Caller wants a call later but gave no time. In a few words acknowledge, then ask "
+            "only when to call them, as one question. Do not ask them to call or tell you later, do not "
+            "pitch, and do not close or say goodbye yet."
         )
     if phase == PHASE_CLOSING_ALLOWED:
         return (
@@ -69,6 +83,39 @@ def spoken_collect_instruction(field: str, language: str = "en-IN") -> str:
     requested = {"phone": "the best phone number", "name": "the caller's name", "timing": "the preferred callback day or time"}.get(field, "the caller's name")
     return (f"In the selected call language ({language}), acknowledge the callback request and ask only for {requested}. "
         "Do not pitch or say goodbye. The request is pending: never say it is arranged, saved or scheduled before platform confirmation.")
+
+
+def callback_time_reply(ctx: Any, control: Any, spoken: str, language: str) -> str | None:
+    """The reply for a busy or call-me-later turn that still has no time.
+
+    The order is fixed for every language: a short acknowledgement, then one
+    question asking when to call; the callback is saved and the call closed only
+    after the answer. Model wording such as "tell me when you are free and I'll
+    note it" is replaced (call 35002575 issue 8). The decision is structural: the
+    turn classifier's verified callback intent and its empty time, not phrases.
+    Returns None when the turn is not a callback still missing its time.
+    """
+    from server.call.call_end_policy import callback_time_question_for, callback_time_reply_for
+
+    if not isinstance(control, dict):
+        return None
+    held = control.get("callback_time_needed") is True
+    requested_now = (
+        control.get("contact_intent") == "callback" and control.get("contact_verified") is True
+        and control.get("decision") != "close"
+        and not str(control.get("callback_time") or "").strip() and not control.get("agent_asked_time")
+        and ctx is not None and not str(getattr(ctx, "callback_when", "") or "").strip()
+        and not getattr(ctx, "callback_time_prompted", False)
+    )
+    if not held and not requested_now:
+        return None
+    if ctx is not None:
+        ctx.callback_time_prompted = True
+    text = (spoken or "").strip()
+    if str(control.get("remaining_request") or "").strip() and text:
+        # The caller also asked something: keep that answer and add the one question.
+        return text if "?" in text else f"{text} {callback_time_question_for(language)}"
+    return callback_time_reply_for(language)
 
 
 def _persist(ctx: Any, state: CallbackCloseState) -> None:
@@ -177,6 +224,10 @@ def advance_callback_close(
             phase, missing = PHASE_CLOSING_ALLOWED, None
     else:
         phase, missing = PHASE_CLOSING_ALLOWED, None
+    if phase == PHASE_CLOSING_ALLOWED and not when and ctx is not None and not getattr(ctx, "callback_time_prompted", False):
+        # Busy / call-me-later: acknowledge, ask the time once, then save and close.
+        ctx.callback_time_prompted = True
+        missing = "timing"
 
     state = CallbackCloseState(
         phase=phase,

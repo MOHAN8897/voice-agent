@@ -53,8 +53,65 @@ _NAME_KEYS = ("name", "caller_name", "customer_name", "full_name", "contact_name
 _PHONE_KEYS = ("phone", "callback_phone", "contact", "phone_number", "mobile")
 
 
+#: Tags the summary step produces that mean the caller wants to buy.
+PURCHASE_INTENT_TAGS = frozenset({"intent:purchase", "intent:quote", "intent:booking", "intent:renewal", "signal:ready_to_buy"})
+#: Fact keys that carry how much the caller wants.
+_QUANTITY_KEYS = ("quantity", "qty", "units", "order_quantity", "count")
+
+
 def stage_for_disposition(disposition: str | None) -> str:
     return DISPOSITION_TO_STAGE.get(str(disposition or "").strip().lower(), "new")
+
+
+def engagement_stage(outcome: dict[str, Any], meta: dict[str, Any] | None = None) -> str | None:
+    """A stage earned by what the caller asked for, whatever the disposition says.
+
+    A purchase intent with a stated quantity, or the caller's own request for a
+    callback or a manager/owner handoff, is an engaged lead: "qualified" on this
+    board. Read from the structured tags and facts the summary step writes, never
+    from phrases, so it holds in every language.
+    """
+    meta = meta or {}
+    facts = outcome.get("facts") if isinstance(outcome.get("facts"), dict) else {}
+    lowered = {str(k).strip().lower(): str(v).strip() for k, v in facts.items() if str(v or "").strip()}
+    tags = {str(t) for t in [*(outcome.get("status_tags") or []), *(outcome.get("tags") or [])]}
+    quantity = any(re.search(r"\d", lowered.get(key, "")) for key in _QUANTITY_KEYS)
+    if tags & PURCHASE_INTENT_TAGS and quantity:
+        return "qualified"
+    saved = meta.get("callback_request") if isinstance(meta.get("callback_request"), dict) else {}
+    callback = (
+        lowered.get("callback_requested") == "true"
+        or outcome.get("contact_preference") == "callback"
+        or (bool(saved) and not meta.get("callback_cancelled")
+            and str(saved.get("status") or "requested") in {"requested", "saved", "scheduled"})
+    )
+    handoff = (lowered.get("handoff_requested") == "true" or "followup:handoff" in tags
+               or isinstance(meta.get("human_handoff"), dict) and bool(meta["human_handoff"]))
+    return "qualified" if callback or handoff else None
+
+
+def outcome_stage(outcome: dict[str, Any], meta: dict[str, Any] | None = None) -> str:
+    """The furthest stage this call supports: its disposition or the caller's engagement."""
+    stage = stage_for_disposition(outcome.get("disposition"))
+    engaged = engagement_stage(outcome, meta)
+    return engaged if engaged and stage_rank(engaged) > stage_rank(stage) else stage
+
+
+def better_name(stored: str | None, captured: str) -> bool:
+    """Whether a name heard on this call should replace the stored one.
+
+    Only a missing placeholder or a shorter form of the same name ("Sai" ->
+    "Saikiran", "Sai" -> "Sai Kiran") is replaced. A different name is kept: it
+    may have been typed by a person, and the lead row does not record who did.
+    """
+    old = re.sub(r"\s+", " ", str(stored or "")).strip()
+    new = re.sub(r"\s+", " ", str(captured or "")).strip()
+    if not new or new == "New lead":
+        return False
+    if not old or old == "New lead":
+        return True
+    old_key, new_key = old.casefold(), new.casefold()
+    return len(new_key) > len(old_key) and (new_key.startswith(old_key) or new_key.replace(" ", "").startswith(old_key.replace(" ", "")))
 
 
 def stage_rank(stage: str | None) -> int:
@@ -148,7 +205,7 @@ async def sync_outcome_to_lead(
     phone = _extract_phone(facts, meta)
     name = _clean(_first_fact(facts, _NAME_KEYS), 255) or "New lead"
     email = _clean(facts.get("email"), 320) or None
-    stage = stage_for_disposition(disposition)
+    stage = outcome_stage(outcome, meta)
     notes = _notes_from_outcome(outcome)
     call_marker = f"[Call reference: {call_id}]" if call_id else ""
     if call_marker:
@@ -221,7 +278,7 @@ async def sync_outcome_to_lead(
                     row.stage = stage
                 # Enrich blanks; an unverified later call must not overwrite a
                 # contact identity already maintained in the tenant's CRM.
-                if name != "New lead" and (not row.name or row.name == "New lead"):
+                if better_name(row.name, name):
                     row.name = name
                 if email and not row.email:
                     row.email = email

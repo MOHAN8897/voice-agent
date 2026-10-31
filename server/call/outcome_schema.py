@@ -53,7 +53,8 @@ TAG_VOCABULARY: dict[str, tuple[str, ...]] = {
         "repeat_customer",
         "urgent",
     ),
-    "followup": ("callback", "language_switch", "schedule_pending", "send_info", "send_quote", "site_visit"),
+    # handoff: the caller asked for a manager, owner or other person to call back.
+    "followup": ("callback", "handoff", "language_switch", "schedule_pending", "send_info", "send_quote", "site_visit"),
     "contact": ("email_known", "name_known", "phone_known", "preferred_language"),
     "compliance": ("disclosure_delivered", "disclosure_missing", "recording_objected"),
     "quality": (
@@ -121,6 +122,7 @@ OUTCOME_JSON_SCHEMA: dict[str, Any] = {
         "notes",
         "tags",
         "custom_tags",
+        "unanswered_questions",
     ],
     "properties": {
         "disposition": {"type": "string", "enum": sorted(DISPOSITIONS)},
@@ -136,8 +138,13 @@ OUTCOME_JSON_SCHEMA: dict[str, Any] = {
             "items": {"type": "string", "enum": sorted(MODEL_STATUS_TAGS)},
         },
         "custom_tags": {"type": "array", "items": {"type": "string"}},
+        # Caller questions the agent said it had no information for (its unknown-fact
+        # line). The business reads these to add the missing facts.
+        "unanswered_questions": {"type": "array", "items": {"type": "string"}},
     },
 }
+
+UNANSWERED_QUESTION_LIMIT = 5
 
 
 def validate_disposition(value: str | None) -> str:
@@ -193,6 +200,26 @@ def merge_outcome_facts(
         elif not outbound and caller_id:
             merged["phone"] = str(caller_id).strip()
     return dict(sorted(merged.items()))
+
+
+def normalize_unanswered_questions(raw: Any) -> list[str]:
+    """Short, distinct question strings; never more than UNANSWERED_QUESTION_LIMIT."""
+    if isinstance(raw, str):
+        raw = [raw]
+    if not isinstance(raw, (list, tuple)):
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for item in raw:
+        text = re.sub(r"\s+", " ", str(item or "")).strip()[:200]
+        key = text.casefold().rstrip("?.! ")
+        if len(key) < 3 or key in seen:
+            continue
+        seen.add(key)
+        out.append(text)
+        if len(out) >= UNANSWERED_QUESTION_LIMIT:
+            break
+    return out
 
 
 def normalize_model_tags(raw: Any) -> list[str]:
@@ -274,6 +301,8 @@ def derive_status_tags(
     action = str(next_action or "").lower()
     if contact_preference != "do_not_call" and (contact_preference == "callback" or normalized == "callback_required" or "callback" in action or "call back" in action):
         tags.add("followup:callback")
+    if contact_preference != "do_not_call" and normalized_facts.get("handoff_requested") == "true":
+        tags.add("followup:handoff")
     if contact_preference != "do_not_call" and normalized_facts.get("language_switch") == "true":
         tags.add("followup:language_switch")
     if normalized == "site_visit_planned" or "site visit" in action or "appointment" in action:
@@ -325,6 +354,7 @@ def empty_outcome(*, model: str, reason: str = "unavailable") -> dict[str, Any]:
         "status_tags": ["outcome:no_outcome", "quality:inconclusive"],
         "tags": [],
         "custom_tags": [],
+        "unanswered_questions": [],
         "objections": [],
         "notes": reason,
         "model": model,

@@ -86,6 +86,29 @@ def join_speakable_chunks(chunks: list[str]) -> str:
     return " ".join(piece.strip() for piece in chunks if piece and piece.strip())
 
 
+# Below this a reply is quick to synthesize whole; splitting would only add a seam.
+SPLIT_REPLY_MIN_CHARS = 120
+
+
+def split_first_sentence(text: str, *, min_chars: int = MIN_CHUNK_CHARS) -> list[str]:
+    """[first sentence, rest] for a long reply that arrived whole; otherwise [text].
+
+    TTS providers synthesize one request at a time, so a short first request
+    reaches the caller's ear before the rest of a long buffered reply is ready.
+    """
+    stripped = (text or "").strip()
+    if not stripped:
+        return []
+    if len(stripped) < SPLIT_REPLY_MIN_CHARS:
+        return [stripped]
+    sentences, rest = drain_complete_sentences(stripped, min_chars=min_chars)
+    if len(sentences) < 2 and not (sentences and rest.strip()):
+        return [stripped]
+    first = sentences[0]
+    remainder = join_speakable_chunks([*sentences[1:], rest.strip()] if rest.strip() else sentences[1:])
+    return [first, remainder] if remainder else [first]
+
+
 def resolve_stream_tts_tail(pending: str, full_text: str, *, spoke_from_stream: bool) -> str | None:
     """Return remaining PSTN TTS text after streaming deltas; avoid replaying full_text."""
     tail = pending.strip()

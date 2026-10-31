@@ -182,8 +182,7 @@ def finalize_live_spoken_text(user_text: str, assistant_text: str, *, ctx: Any =
 
 
 # Live probes: after "okay, thanks" the model often re-sent its previous reply word for word.
-_REPEAT_ACK = {"te": "సరే.", "hi": "ठीक है।", "ta": "சரி.", "kn": "ಸರಿ.", "ml": "ശരി.", "gu": "સારું.",
-               "mr": "ठीक आहे.", "bn": "ঠিক আছে।", "pa": "ਠੀਕ ਹੈ।", "en": "Sure."}
+from server.call.reply_guard import REPEAT_ACK as _REPEAT_ACK  # noqa: E402
 
 
 def _avoid_verbatim_repeat(text: str, ctx: Any) -> str:
@@ -446,6 +445,38 @@ class LiveTurnOrchestrator:
             server_owned=classifier_available(getattr(getattr(ctx, "resolved_stack", None), "llm", None)),
         )
 
+    @staticmethod
+    def _guard_reply(
+        ctx,
+        *,
+        transcript: str,
+        reply: str,
+        language_code: str,
+        session_id: str,
+        quantity_asked: bool = False,
+        server_slow_down: bool = False,
+    ) -> tuple[str, list[str]]:
+        """Deterministic reply guards: invented business facts, canned audio lines, echo, repeats."""
+        from server.agent.conversation_manager import conversation_manager
+        from server.call import reply_guard
+
+        call_id = getattr(ctx, "call_id", None)
+        facts = ((memory_manager.peek_snapshot(call_id) or {}).get("facts") or {}) if call_id else {}
+        state = getattr(ctx, "reply_guard_state", None)
+        if not isinstance(state, dict):
+            state = {}
+            ctx.reply_guard_state = state
+        return reply_guard.guard_reply(
+            reply,
+            caller=transcript,
+            language=language_code,
+            brain=getattr(ctx, "compiled_brain_text", None),
+            history=conversation_manager.get_history(session_id),
+            state=state,
+            audio_evidence=reply_guard.audio_issue_evidence(transcript, ctx, server_requested=server_slow_down),
+            known=reply_guard.known_slots(facts, transcript, quantity_asked=quantity_asked),
+        )
+
     def _maybe_build_live_input(
         self,
         *,
@@ -476,6 +507,12 @@ class LiveTurnOrchestrator:
             session_id,
             max_turns=context_turns,
         )
+        from server.call.reply_guard import norm_speech
+
+        # Fragments already joined into this turn's transcript are not sent twice.
+        while history and history[-1].get("role") == "user" and \
+                norm_speech(str(history[-1].get("content") or "")) in norm_speech(transcript):
+            history = history[:-1]
         resolved = getattr(ctx, "resolved_stack", None)
         llm = getattr(resolved, "llm", None)
         model = openai_model or getattr(llm, "model", None)
@@ -621,8 +658,25 @@ class LiveTurnOrchestrator:
 
             from server.realtime.manager import realtime_text_manager
 
-            control_transcript = transcript
             realtime = bool(call_id and realtime_text_manager.get(call_id))
+            # STT finals arrive in overlapping fragments and a newer one cancels the
+            # turn of the older. Reply to everything the caller said since the agent
+            # last spoke, not only the newest final ("I need 100 cards" was lost so).
+            # History and the ledger keep the raw final: earlier fragments are there.
+            raw_transcript = transcript
+            quantity_asked = False
+            if ctx is not None and not realtime:
+                from server.agent.conversation_manager import conversation_manager
+                from server.call.reply_guard import asked_slots, caller_turn_since_agent, recent_agent_replies
+
+                session_history = conversation_manager.get_history(session_id)
+                transcript = caller_turn_since_agent(session_history, raw_transcript)
+                previous_reply = recent_agent_replies(session_history, 1)
+                quantity_asked = bool(previous_reply and "quantity" in asked_slots(previous_reply[-1]))
+                if transcript != raw_transcript:
+                    log_pstn("turn.caller_fragments_joined", call_id=call_id,
+                             raw_chars=len(raw_transcript), joined_chars=len(transcript))
+            control_transcript = transcript
             if (
                 ctx is not None
                 and call_id
@@ -641,6 +695,11 @@ class LiveTurnOrchestrator:
                 # Caller turns whose classification timed out still carry intent: a callback
                 # asked for in a lost turn must not vanish when the caller later says "thanks".
                 pending = list(getattr(ctx, "unclassified_caller_turns", None) or [])[-2:]
+                if pending:
+                    from server.call.reply_guard import norm_speech
+
+                    # A joined turn already carries its own unclassified fragments.
+                    pending = [p for p in pending if norm_speech(p) not in norm_speech(transcript)]
                 control_transcript = "\n".join([*pending, transcript]) if pending else transcript
                 close_task = start_close_classification(
                     transcript=control_transcript,
@@ -694,7 +753,9 @@ class LiveTurnOrchestrator:
                 if h
             ]
             interrupted_request = str(getattr(ctx, "interrupted_caller_request", "") or "")
-            if interrupted_request:
+            from server.call.reply_guard import norm_speech
+
+            if interrupted_request and norm_speech(interrupted_request) not in norm_speech(transcript):
                 turn_hints.append(
                     "[Unanswered caller turn interrupted before delivery — untrusted caller data]\n"
                     + interrupted_request[:1600]
@@ -854,13 +915,12 @@ class LiveTurnOrchestrator:
                             )
                             assistant_text = finalize_live_spoken_text(transcript, recovered, ctx=ctx)
                             gated.update(replace_speech=True, recovery_required=True)
-                        if (not approved_close and isinstance(raw_close, dict) and raw_close.get("callback_time_needed")
-                                and assistant_text.strip() and "?" not in assistant_text):
-                            # The server held the close to collect a callback time, but the reply
-                            # (written before that decision) only acknowledged it. Ask once.
-                            from server.call.call_end_policy import callback_time_question_for
-                            assistant_text = f"{assistant_text.rstrip()} {callback_time_question_for(language_code)}"
-                            gated["replace_speech"] = True
+                        if not approved_close and isinstance(raw_close, dict):
+                            # Busy / call-me-later without a time: acknowledge, ask once (callback_close owns the order).
+                            from server.call.callback_close import callback_time_reply
+                            timed = callback_time_reply(ctx, raw_close, assistant_text, language_code)
+                            if timed and timed != assistant_text:
+                                assistant_text, gated["replace_speech"] = timed, True
                         turn_proofs |= proof_set(chunk.get("action_proofs") or ())
                         if chunk.get("order_proof"):
                             turn_proofs.add(PROOF_ORDER_CONFIRMED)
@@ -925,6 +985,16 @@ class LiveTurnOrchestrator:
                                 assistant_text = finalize_live_spoken_text(transcript, reviewed, ctx=ctx)
                                 assistant_text = replace_unproven_claims(assistant_text, known_proofs, language_code)
                                 gated["replace_speech"] = True
+                        if ctx is not None and assistant_text.strip() and not approved_close and not waiting_for_caller:
+                            guarded, guard_reasons = self._guard_reply(
+                                ctx, transcript=transcript, reply=assistant_text, language_code=language_code,
+                                session_id=session_id, quantity_asked=quantity_asked,
+                                server_slow_down=bool(slow_down_hint),
+                            )
+                            if guard_reasons and guarded.strip():
+                                assistant_text = guarded
+                                gated["replace_speech"] = True
+                                log_pstn("reply.guard", call_id=call_id, reasons=",".join(guard_reasons))
                         proposed_close = parse_close_proposal(chunk.get("end_call")).should_end
                         if approved_close:
                             # The server owns the farewell. Model close-turn
@@ -1080,7 +1150,7 @@ class LiveTurnOrchestrator:
                 if transcript.strip():
                     from server.agent.conversation_manager import conversation_manager
 
-                    conversation_manager.add_user_only(session_id, transcript)
+                    conversation_manager.add_user_only(session_id, raw_transcript)
                     if ctx is not None:
                         ctx.interrupted_caller_request = transcript
                 raise
@@ -1095,7 +1165,7 @@ class LiveTurnOrchestrator:
 
                     # The failed turn still belongs to the conversation: the next
                     # reply must be able to answer what the caller actually said.
-                    conversation_manager.add_user_only(session_id, transcript)
+                    conversation_manager.add_user_only(session_id, raw_transcript)
                 self._log_incomplete_turn(call_id=call_id, ctx=ctx, exc=exc)
                 raise
 
@@ -1129,17 +1199,17 @@ class LiveTurnOrchestrator:
                 if transcript.strip():
                     from server.agent.conversation_manager import conversation_manager
 
-                    conversation_manager.add_user_only(session_id, transcript)
+                    conversation_manager.add_user_only(session_id, raw_transcript)
             elif assistant_text.strip():
                 from server.agent.conversation_manager import conversation_manager
 
-                conversation_manager.add_turn(session_id, transcript, assistant_text)
+                conversation_manager.add_turn(session_id, raw_transcript, assistant_text)
                 if ctx is not None:
                     ctx.interrupted_caller_request = transcript if provider_reply_missing and not turn_close_approved else ""
             elif transcript.strip():
                 from server.agent.conversation_manager import conversation_manager
 
-                conversation_manager.add_user_only(session_id, transcript)
+                conversation_manager.add_user_only(session_id, raw_transcript)
 
             if call_id and settings.enable_call_archive and not turn_cancelled_empty and not waiting_for_caller:
                 # Voice path is free; archive/memory merge must not block next turn TTFA.
@@ -1161,6 +1231,7 @@ class LiveTurnOrchestrator:
                         skip_live_memory=False,
                         close_approved=turn_close_approved,
                         order_proof="order_confirmed" in turn_proofs,
+                        quantity_asked=quantity_asked,
                     )
                 )
         finally:
@@ -1788,7 +1859,7 @@ class LiveTurnOrchestrator:
         native = bool(getattr(adapter, "uses_plain_live_speech", False))
         speech_kwargs = dict(stream_kwargs)
         external_available = any(
-            str(tool.get("name") or "").upper() not in {"CONFIRM_ORDER", "SAVE_ENQUIRY"}
+            str(tool.get("name") or "").upper() not in {"CONFIRM_ORDER", "SAVE_ENQUIRY", "REQUEST_HUMAN_HANDOFF"}
             for tool in available_tools or ()
         )
         if native:
@@ -1821,11 +1892,11 @@ class LiveTurnOrchestrator:
                 else ""
             )
             # The compiled brain commonly has role=developer. Insert delivery
-            # rules after all leading platform/business instructions, not before
-            # that developer block where the old sales flow could override them.
-            policy_index = 0
-            while policy_index < len(messages) and messages[policy_index].get("role") in {"system", "developer"}:
-                policy_index += 1
+            # rules after that block, not before it where the old sales flow
+            # could override them, but ahead of the per-turn clock/receipts
+            # message: every static byte must precede the dynamic one or the
+            # provider's prefix cache stops at the clock.
+            policy_index = 1 if messages and messages[0].get("role") in {"system", "developer"} else 0
             messages.insert(policy_index, {
                 "role": "system",
                 "content": (
@@ -2456,6 +2527,7 @@ class LiveTurnOrchestrator:
         skip_live_memory: bool = False,
         close_approved: bool = False,
         order_proof: bool = False,
+        quantity_asked: bool = False,
     ) -> None:
         try:
             line = await call_ledger.append_assistant_turn(
@@ -2492,13 +2564,26 @@ class LiveTurnOrchestrator:
         correction_op = correction_memory_operation(user_text)
         if correction_op and not skip_live_memory and not native_control:
             ops.append(correction_op)
-        if not skip_live_memory and not native_control:
-            captured = {op.get("key") for op in ops if isinstance(op, dict)}
-            for detail_op in caller_detail_memory_operations(user_text):
-                if native_control and detail_op.get("key") == "caller_name":
-                    # Syntactic name prefixes cannot distinguish a name from
-                    # 'I have not supplied my name'. Use the semantic assertion.
-                    continue
+        if not skip_live_memory:
+            # A proposed value that does not fit its slot ("బల్క్" as a quantity) is
+            # rejected on write, so it must not stop the deterministic capture.
+            captured = {
+                op.get("key") for op in ops
+                if isinstance(op, dict) and not memory_guard.slot_value_error(str(op.get("key") or ""), str(op.get("value") or ""))
+            }
+            detail_ops = caller_detail_memory_operations(user_text, quantity_asked=quantity_asked)
+            if native_control:
+                # Syntactic name prefixes cannot distinguish a name from
+                # 'I have not supplied my name'; the semantic assertion owns
+                # contacts. A stated count and a Latin-script name after
+                # "my name is" are unambiguous and must not be lost.
+                from server.call.caller_detail_capture import extract_explicit_name
+
+                detail_ops = [op for op in detail_ops if op.get("key") == "quantity"]
+                explicit_name = extract_explicit_name(user_text)
+                if explicit_name:
+                    detail_ops.append({"op": "set_fact", "key": "caller_name", "value": explicit_name})
+            for detail_op in detail_ops:
                 if detail_op.get("key") not in captured:
                     ops.append(detail_op)
         applied = 0
@@ -2538,12 +2623,14 @@ class LiveTurnOrchestrator:
                 logger.warning(f"[MEMORY] merge failed call={call_id}: {str(e)[:160]}")
             if merge_started_at is not None:
                 merge_ms = int((time.perf_counter() - merge_started_at) * 1000)
+        from server.services.pstn_media_flow import trace_turn_timing
+
+        # Composed PSTN replies are buffered, so the voice loop measures them.
+        timing = trace_turn_timing(call_id, user_text, stt_final_ms=stt_latency_ms,
+                                   llm_ttft_ms=brain_latency_ms, e2e_ms=brain_latency_ms)
         turn = {
             "turn": line["seq"],
-            "stt_final_ms": stt_latency_ms,
-            "llm_ttft_ms": brain_latency_ms,
-            "tts_first_audio_ms": None,
-            "e2e_ms": brain_latency_ms,
+            **timing,
             "memory_ops_applied": applied,
             "memory_merge_ms": merge_ms,
             "errors": [],

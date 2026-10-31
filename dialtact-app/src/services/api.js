@@ -926,6 +926,8 @@ export const api = {
       const rows = data.agents || data;
       return Array.isArray(rows) ? rows.map(normalizeAgent) : [];
     },
+    /** Settings this agent's recent calls show need attention (read-only). */
+    callWarnings: (agentId) => api.request('GET', `/api/app/agents/${encodeURIComponent(agentId)}/call-warnings`),
     /**
      * Operational phone settings for one agent: greeting, business hours,
      * after-hours action, and the inbound/outbound toggles. Kept server-side and

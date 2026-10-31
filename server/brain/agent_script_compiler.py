@@ -35,8 +35,11 @@ from server.prompts.conversation_policy import (
 )
 from server.brain.sections import STATIC_OUTPUT_RULES
 from server.prompts.agent_voice_rules import (
+    CALLBACK_RULE,
+    INBOUND_OPENING_LEAD,
     LANGUAGE_LOCK,
     IDENTITY_SPEAK,
+    OUTBOUND_OPENING_LEAD,
     build_recording_disclosure_instruction,
     call_end_policy_section,
     is_native_english,
@@ -191,6 +194,17 @@ class AgentScriptResult:
     agent_spec: dict[str, Any] = field(default_factory=dict)
     provenance: dict[str, Any] = field(default_factory=dict)
     status: str = "ready"
+
+    def __post_init__(self) -> None:
+        # Every compile path builds this result, so the opening-length warning is
+        # attached here once instead of in each pipeline. The text is never cut.
+        from server.brain.brief_contract import opening_length_issue
+        from server.brain.script_entities import parse_entity_tags
+
+        opening = parse_entity_tags(self.agent_script).get("opening_line") or ""
+        issue = opening_length_issue(opening)
+        if issue and not any(item.get("code") == issue["code"] for item in self.issues):
+            self.issues = [*self.issues, issue]
 
     def to_dict(self) -> dict[str, Any]:
         from server.brain.script_entities import entity_tags_to_api, parse_entity_tags
@@ -1301,7 +1315,8 @@ def validate_agent_script(
         if co not in (body or "").lower():
             reasons.append(f"company missing from script: {company_name[:48]}")
         open_m = re.search(
-            r"(?:Example opening|CANONICAL OPENING)[^\n]*\n+([^\n]{8,280})",
+            # A colon-terminated lead line is an instruction, not the opening itself.
+            r"(?:Example opening|CANONICAL OPENING)[^\n]*\n+(?:[^\n]*:[ \t]*\n+)?([^\n]{8,280})",
             body,
             re.I,
         )
@@ -1547,9 +1562,8 @@ def _conversation_plan(
         )
     else:
         beats.append(
-            "Use CANONICAL OPENING exactly once when the runtime authorizes the opening. "
-            "If opening_delivered is true, continue with the first applicable unanswered objective; do not greet again. "
-            "Respect refusal immediately. Do not add a question forbidden by the brief."
+            "The platform has already played CANONICAL OPENING. Continue with the first applicable unanswered "
+            "objective; do not greet again. Respect refusal immediately. Do not add a question forbidden by the brief."
         )
     if re.search(r"\b(fee|fees|price|cost|afford|cheap|discount|fee structure)\b", scope, re.I):
         beats.append(
@@ -1584,9 +1598,6 @@ def _conversation_plan(
         "If an applicable next step was agreed, briefly confirm only that step. "
         "An information or support call can finish with its answer; do not invent a follow-up."
     )
-    beats.append(
-        "Represent the business naturally. If asked whether you are AI, answer honestly and briefly; do not pretend to be human."
-    )
     return "--- HOW THE CALL SHOULD GO ---\n" + "\n".join(f"- {b}" for b in beats)
 
 
@@ -1619,8 +1630,7 @@ def _when_you_dont_know(brief: str, *, company_name: str, role: str) -> str:
     return (
         "--- WHEN YOU DO NOT KNOW SOMETHING ---\n"
         "Say plainly that you do not have that detail. Offer a further action only if the business permits it "
-        "and the runtime can perform it. Do not volunteer a callback or handoff without that permission; "
-        "a caller's own request to be called back is always noted for the platform to save.\n"
+        "and the runtime can perform it. Do not volunteer a handoff without that permission.\n"
         "Never invent a price, a discount, a start date, a seat count, a policy, or an outcome. "
         "Never claim a booking, a payment, or a message was sent unless a tool actually confirmed it.\n"
         "For unrelated harmless questions, give one brief honest line and offer relevant help only when useful. "
@@ -1773,11 +1783,7 @@ def _user_visible_script(
             f"You are {agent_name}. "
             f"Always speak as {agent_name} — the only speaker on this call."
         )
-    opening_lead = (
-        "When you answer, say once:"
-        if inbound
-        else "When the runtime authorizes the opening and opening_delivered is false, say once:"
-    )
+    opening_lead = INBOUND_OPENING_LEAD if inbound else OUTBOUND_OPENING_LEAD
     if personal:
         who = str(ctx["callee"] or "the person you called")
         if ctx["is_friend"]:
@@ -1824,13 +1830,9 @@ def _user_visible_script(
     )
 
 
-# One busy/callback rule for every platform section. Earlier wording ("do not assume
-# a callback is allowed") contradicted CALL CAPABILITIES and the speech contract,
-# which always note a caller's own callback request.
-_BUSY_RULE = (
-    "If they are busy, acknowledge it without pitching. Volunteer a callback only when the business "
-    "workflow permits it; a caller's own request to be called back is always noted for the platform to save."
-)
+# The busy/callback rule (CALLBACK_RULE) is stated once, under PROFESSIONAL CLOSE.
+# It used to be repeated in the workflow and LEAD CAPTURE in different words, and
+# older copies contradicted CALL CAPABILITIES ("do not assume a callback is allowed").
 _OBJECTION_RULE = (
     "Use the business script's own handling for the caller's actual concern (its OBJECTION HANDLING "
     "and BUSINESS WORKFLOW lines win over generic wording). Apply only the branch that matches what the "
@@ -1859,15 +1861,13 @@ def _platform_call_rules(
             "--- LEAD CAPTURE ---\n"
             "Collect only fields required by the explicit business workflow and still unknown on this call. "
             "Never turn optional fields into a checklist or invent permission to collect contact details.\n"
-            "Acknowledge details briefly. Do not read the dialed number aloud.\n"
-            f"{_BUSY_RULE}\n\n"
+            "Acknowledge details briefly. Do not read the dialed number aloud.\n\n"
         )
     elif role in ("appointment", "follow_up"):
         lead_capture = (
             "--- LEAD CAPTURE ---\n"
             "Ask for scheduling or contact details only when the explicit business workflow requires them. "
-            "Skip details already supplied. Do not read the dialed number aloud.\n"
-            f"{_BUSY_RULE}\n\n"
+            "Skip details already supplied. Do not read the dialed number aloud.\n\n"
         )
     if inbound:
         workflow = (
@@ -1887,7 +1887,7 @@ def _platform_call_rules(
             "Do not generate or replay it after the opening-delivered note.\n"
             "2. Wait for the caller's actual reply and address it before the next applicable script objective.\n"
             "3. Ask a discovery question or offer a next step only when the business workflow permits it.\n"
-            f"4. {_BUSY_RULE} If they decline this offer, answer any other product or service they ask about; make the close decision only when they clearly refuse all help or ask to end.\n\n"
+            "4. If they decline this offer, answer any other product or service they ask about; make the close decision only when they clearly refuse all help or ask to end.\n\n"
         )
         first_turn_guard = "Never use help-desk language on the first turn.\n"
 
@@ -1909,26 +1909,23 @@ def _platform_call_rules(
         f"stop qualifying and close professionally.\n"
         f"Follow applicable required steps and disclosures, skipping answered questions and inapplicable branches.\n"
         f"Script is a guide: follow the caller's need without forcing optional qualification. Never numbered Question/Step trees.\n"
-        f"If the caller answers a script question without being asked, mark it as done and advance.\n"
-        f"Speak naturally as the named AI assistant; answer honestly if asked whether you are AI.\n\n"
+        f"If the caller answers a script question without being asked, mark it as done and advance.\n\n"
         f"--- TURN DISCIPLINE ---\n"
         f"Professional and concise: one or two short sentences per turn, then stop and listen.\n"
-        f"Answer their last point first, then stop; resume an open script step only when the caller is ready for it. No monologues, repeated pitch, or brochure dumps.\n"
-        f"Do not talk continuously — end each turn when the point is made.\n\n"
+        f"Answer their last point first, then stop; resume an open script step only when the caller is ready for it. No monologues, repeated pitch, or brochure dumps.\n\n"
         f"{lead_capture}"
         f"--- PROFESSIONAL CLOSE ---\n"
         f"Follow CALL END POLICY for refusal, confirmed endings and completed next steps. "
         f"Bare okay/thanks is not a hangup. Make the close decision only when the caller is finished, "
-        f"clearly refuses all help, or asks to end. In JSON sessions leave spoken_response empty when proposing a close; "
-        f"in speech-text sessions a brief acknowledgement is allowed. Never speak a farewell. "
-        f"The platform speaks the approved farewell and disconnects when playback finishes.\n\n"
+        f"clearly refuses all help, or asks to end. Never speak a farewell; CALL END POLICY owns it.\n"
+        f"{CALLBACK_RULE}\n\n"
         f"--- OBJECTION HANDLING ---\n"
         f"{_OBJECTION_RULE}\n\n"
+        # Pricing, greeting, language and AI-honesty rules live in WHEN YOU DO NOT
+        # KNOW, STATIC OUTPUT RULES and the language pack; repeating them here
+        # only cost tokens on every turn.
         f"--- GUARDRAILS ---\n"
-        f"Never invent prices, availability, or policies.\n"
-        f"Never greet twice in one call.\n"
         f"Never claim to be anyone except {agent_name}.\n"
-        f"Follow the selected primary language with natural English mixing.\n"
         f"{first_turn_guard}"
         f"{disclosure_block}"
     )

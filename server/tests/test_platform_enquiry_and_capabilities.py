@@ -104,15 +104,27 @@ async def test_compile_and_call_share_agent_whitelist_and_platform_actions(call_
         session.add(AgentIntegration(tenant_id=TID, agent_id=AID, app_name="GOOGLECALENDAR", enabled=True,
                                     timing_mode="in_call", action_whitelist=["GOOGLECALENDAR_FIND_FREE_SLOTS"]))
         await session.commit()
+    # An order-only script never schedules, so its calendar tools are not offered
+    # (call 35002575 carried ten unused calendar schemas on every turn).
     brain = assemble_unified_brain(language="te-IN", script="Collect delivery address and quantity, then confirm the order.")
     tools = await get_tools_for_agent(["GOOGLECALENDAR"], str(TID), str(AID), factory,
                                      include_platform=True, compiled_text=brain)
     names = {tool["name"] for tool in tools}
-    assert names == {"GOOGLECALENDAR_FIND_FREE_SLOTS", "SAVE_ENQUIRY", "CONFIRM_ORDER"}
+    assert names == {"SAVE_ENQUIRY", "REQUEST_HUMAN_HANDOFF", "CONFIRM_ORDER"}
     compiled = apply_available_tools(brain, tools)
+    assert "GOOGLECALENDAR_FIND_FREE_SLOTS" not in compiled
+    assert "order_confirmation: allowed" in compiled
+
+    # A script that books keeps only the whitelisted calendar action.
+    booking = assemble_unified_brain(
+        language="te-IN",
+        script="Find a free slot for a site visit and book the appointment, then confirm the order.",
+    )
+    tools = await get_tools_for_agent(["GOOGLECALENDAR"], str(TID), str(AID), factory,
+                                     include_platform=True, compiled_text=booking)
+    compiled = apply_available_tools(booking, tools)
     assert "GOOGLECALENDAR_FIND_FREE_SLOTS" in compiled
     assert "GOOGLECALENDAR_CREATE_EVENT" not in compiled
-    assert "order_confirmation: allowed" in compiled
 
 
 @pytest.mark.asyncio

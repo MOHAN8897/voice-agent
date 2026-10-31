@@ -95,18 +95,19 @@ def server_farewell_for(
 
 
 def callback_acknowledgement_for(language: str | None) -> str:
+    """Spoken after the callback request is saved. Everyday phone speech, not a form letter."""
     lang = normalize_compile_language(language)
     return {
-        "te-IN": "మీ వివరాలు, మళ్లీ కాల్ చేయాలన్న మీ అభ్యర్థనను నమోదు చేశాను.",
-        "hi-IN": "आपकी जानकारी और दोबारा कॉल करने का अनुरोध दर्ज कर लिया है।",
-        "ta-IN": "உங்கள் விவரங்களையும் மீண்டும் அழைக்க வேண்டிய கோரிக்கையையும் பதிவு செய்துள்ளேன்.",
-        "kn-IN": "ನಿಮ್ಮ ವಿವರಗಳನ್ನು ಮತ್ತು ಮತ್ತೆ ಕರೆ ಮಾಡುವ ವಿನಂತಿಯನ್ನು ದಾಖಲಿಸಿದ್ದೇನೆ.",
-        "ml-IN": "നിങ്ങളുടെ വിവരങ്ങളും തിരികെ വിളിക്കാനുള്ള അഭ്യർത്ഥനയും രേഖപ്പെടുത്തിയിട്ടുണ്ട്.",
-        "gu-IN": "તમારી વિગતો અને ફરીથી કૉલ કરવાની વિનંતી નોંધી લીધી છે.",
-        "mr-IN": "तुमची माहिती आणि परत कॉल करण्याची विनंती नोंदवली आहे.",
-        "bn-IN": "আপনার তথ্য আর আবার কল করার অনুরোধ লিখে রেখেছি।",
-        "pa-IN": "ਤੁਹਾਡੀ ਜਾਣਕਾਰੀ ਅਤੇ ਦੁਬਾਰਾ ਕਾਲ ਕਰਨ ਦੀ ਬੇਨਤੀ ਦਰਜ ਕਰ ਲਈ ਹੈ।",
-    }.get(lang, "I've saved your details and your request for a follow-up call.")
+        "te-IN": "సరే, మీ callback note చేసుకున్నాను.",
+        "hi-IN": "ठीक है, आपका callback note कर लिया है।",
+        "ta-IN": "சரி, உங்க callback-ஐ note பண்ணிட்டேன்.",
+        "kn-IN": "ಸರಿ, ನಿಮ್ಮ callback note ಮಾಡ್ಕೊಂಡಿದೀನಿ.",
+        "ml-IN": "ശരി, നിങ്ങളുടെ callback note ചെയ്തിട്ടുണ്ട്.",
+        "gu-IN": "સારું, તમારો callback note કરી લીધો છે.",
+        "mr-IN": "ठीक आहे, तुमचा callback note करून घेतला आहे.",
+        "bn-IN": "ঠিক আছে, আপনার callback note করে নিয়েছি।",
+        "pa-IN": "ਠੀਕ ਹੈ, ਤੁਹਾਡਾ callback note ਕਰ ਲਿਆ ਹੈ।",
+    }.get(lang, "Okay, I've noted your callback.")
 
 
 def callback_time_question_for(language: str | None) -> str:
@@ -142,16 +143,48 @@ def do_not_call_acknowledgement_for(language: str | None) -> str:
 
 def callback_save_failed_for(language: str | None) -> str:
     return {
-        "te-IN": "క్షమించండి, మీ కాల్‌బ్యాక్ అభ్యర్థనను సేవ్ చేయలేకపోయాను. దయచేసి వ్యాపార సంస్థను నేరుగా సంప్రదించండి.",
-        "hi-IN": "माफ़ कीजिए, आपका दोबारा कॉल करने का अनुरोध सेव नहीं हो सका। कृपया व्यवसाय से सीधे संपर्क करें।",
-        "ta-IN": "மன்னிக்கவும், மீண்டும் அழைக்கும் கோரிக்கையைச் சேமிக்க முடியவில்லை. தயவுசெய்து நிறுவனத்தை நேரடியாகத் தொடர்புகொள்ளுங்கள்.",
-        "kn-IN": "ಕ್ಷಮಿಸಿ, ಮತ್ತೆ ಕರೆ ಮಾಡುವ ವಿನಂತಿಯನ್ನು ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಸಂಸ್ಥೆಯನ್ನು ನೇರವಾಗಿ ಸಂಪರ್ಕಿಸಿ.",
-        "ml-IN": "ക്ഷമിക്കണം, തിരികെ വിളിക്കാനുള്ള അഭ്യർത്ഥന സേവ് ചെയ്യാൻ കഴിഞ്ഞില്ല. ദയവായി സ്ഥാപനവുമായി നേരിട്ട് ബന്ധപ്പെടുക.",
-        "gu-IN": "માફ કરશો, ફરીથી કૉલ કરવાની વિનંતી સેવ થઈ શકી નહીં. કૃપા કરીને સીધો સંપર્ક કરો.",
-        "mr-IN": "माफ करा, परत कॉल करण्याची विनंती सेव्ह होऊ शकली नाही. कृपया थेट संपर्क करा.",
-        "bn-IN": "দুঃখিত, আবার কল করার অনুরোধটি সেভ করা গেল না। অনুগ্রহ করে সরাসরি যোগাযোগ করুন।",
-        "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਦੁਬਾਰਾ ਕਾਲ ਦੀ ਬੇਨਤੀ ਸੇਵ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਸਿੱਧਾ ਸੰਪਰਕ ਕਰੋ।",
-    }.get(normalize_compile_language(language), "I'm sorry, I couldn't save your callback request. Please contact the business directly.")
+        "te-IN": "క్షమించండి, మీ callback save కాలేదు. దయచేసి మమ్మల్ని నేరుగా contact చేయండి.",
+        "hi-IN": "माफ़ कीजिए, आपका callback save नहीं हो पाया। प्लीज़ हमसे सीधे contact कीजिए।",
+        "ta-IN": "மன்னிக்கணும், உங்க callback save ஆகல. தயவுசெய்து எங்களை நேரடியா contact பண்ணுங்க.",
+        "kn-IN": "ಕ್ಷಮಿಸಿ, ನಿಮ್ಮ callback save ಆಗ್ಲಿಲ್ಲ. ದಯವಿಟ್ಟು ನಮ್ಮನ್ನ ನೇರವಾಗಿ contact ಮಾಡಿ.",
+        "ml-IN": "ക്ഷമിക്കണം, നിങ്ങളുടെ callback save ആയില്ല. ദയവായി ഞങ്ങളെ നേരിട്ട് contact ചെയ്യൂ.",
+        "gu-IN": "માફ કરજો, તમારો callback save ન થયો. પ્લીઝ અમારો સીધો contact કરજો.",
+        "mr-IN": "माफ करा, तुमचा callback save झाला नाही. प्लीज आम्हाला थेट contact करा.",
+        "bn-IN": "দুঃখিত, আপনার callback save হয়নি। প্লিজ আমাদের সাথে সরাসরি contact করুন।",
+        "pa-IN": "ਮਾਫ਼ ਕਰਨਾ, ਤੁਹਾਡਾ callback save ਨਹੀਂ ਹੋਇਆ। ਕਿਰਪਾ ਕਰਕੇ ਸਾਡੇ ਨਾਲ ਸਿੱਧਾ contact ਕਰੋ।",
+    }.get(normalize_compile_language(language), "Sorry, I couldn't save your callback. Please contact us directly.")
+
+
+def callback_time_reply_for(language: str | None) -> str:
+    """A busy or call-me-later turn with no time: a short acknowledgement, then one question."""
+    lang = normalize_compile_language(language)
+    acknowledgement = {
+        "te-IN": "సరే, పర్లేదు.",
+        "hi-IN": "ठीक है, कोई बात नहीं।",
+        "ta-IN": "சரி, பரவாயில்ல.",
+        "kn-IN": "ಸರಿ, ಪರವಾಗಿಲ್ಲ.",
+        "ml-IN": "ശരി, കുഴപ്പമില്ല.",
+        "gu-IN": "ઠીક છે, વાંધો નહીં.",
+        "mr-IN": "ठीक आहे, हरकत नाही.",
+        "bn-IN": "ঠিক আছে, কোনো সমস্যা নেই।",
+        "pa-IN": "ਠੀਕ ਹੈ, ਕੋਈ ਗੱਲ ਨਹੀਂ।",
+    }.get(lang, "Sure, no problem.")
+    return f"{acknowledgement} {callback_time_question_for(lang)}"
+
+
+def handoff_acknowledgement_for(language: str | None) -> str:
+    """Spoken once a request for a person from the business is saved. Never "I can't connect you"."""
+    return {
+        "te-IN": "సరే, ఈ విషయం మా manager లేదా team కి చెప్తాను.",
+        "hi-IN": "ठीक है, आपकी बात हम अपने manager या team तक पहुँचा देंगे।",
+        "ta-IN": "சரி, இந்த விஷயத்தை எங்க manager அல்லது team-கிட்ட சொல்றேன்.",
+        "kn-IN": "ಸರಿ, ಈ ವಿಷಯವನ್ನ ನಮ್ಮ manager ಅಥವಾ team ಗೆ ತಿಳಿಸ್ತೀನಿ.",
+        "ml-IN": "ശരി, ഈ കാര്യം ഞങ്ങളുടെ manager-നെയോ team-നെയോ അറിയിക്കാം.",
+        "gu-IN": "સારું, આ વાત અમારા manager કે team સુધી પહોંચાડી દઈશ.",
+        "mr-IN": "ठीक आहे, ही गोष्ट आम्ही आमच्या manager किंवा team पर्यंत पोहोचवू.",
+        "bn-IN": "ঠিক আছে, এটা আমাদের manager বা team কে জানিয়ে দেব।",
+        "pa-IN": "ਠੀਕ ਹੈ, ਇਹ ਗੱਲ ਅਸੀਂ ਆਪਣੇ manager ਜਾਂ team ਤੱਕ ਪਹੁੰਚਾ ਦਿਆਂਗੇ।",
+    }.get(normalize_compile_language(language), "Okay, I'll pass this to my manager or team.")
 
 
 CALL_END_CONFIG_TITLE = "saas_call_end_policy"

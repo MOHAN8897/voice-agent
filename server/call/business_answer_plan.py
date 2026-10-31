@@ -55,6 +55,28 @@ def source_rows(brain: str) -> list[str]:
     return rows
 
 
+# Platform style, language and guardrail sections are instructions, not facts
+# about the business. A word there ("Never invent discounts") proves nothing.
+_NOT_FACT_SECTIONS = re.compile(
+    r"^(?:SAFETY|SPOKEN LANGUAGE.*|LANGUAGE|UNKNOWN INFORMATION|ENTITY TAGS|BUSINESS REQUIREMENTS|GUARDRAILS|"
+    r"CALL CAPABILITIES|PLATFORM CALL RULES|CALL END POLICY|STATIC OUTPUT RULES|CALLING SCRIPT)$",
+    re.I,
+)
+
+
+def business_fact_text(brain: str) -> str:
+    """The business's own approved text (identity, offer, flow, objections), casefolded."""
+    keep, lines = True, []
+    for line in (brain or "").splitlines():
+        heading = re.fullmatch(r"-{2,}\s*(.*?)\s*-{2,}", line.strip())
+        if heading:
+            keep = not _NOT_FACT_SECTIONS.match(heading.group(1).strip())
+            continue
+        if keep and line.strip():
+            lines.append(line.strip())
+    return "\n".join(lines).casefold()
+
+
 def validate_answers(raw: Any, rows: list[str], caller: str) -> list[dict]:
     result = []
     for item in raw[:4] if isinstance(raw, list) else []:

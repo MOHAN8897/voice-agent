@@ -323,6 +323,8 @@ const FACT_LABELS = {
   language: 'Language',
   originalLanguage: 'Call was in',
   requestText: 'What they said',
+  handoffTo: 'Wants to hear from',
+  handoffReason: 'Reason',
   app: 'App',
   startedAt: 'Started',
   completedAt: 'Finished',

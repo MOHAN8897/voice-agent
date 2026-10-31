@@ -45,7 +45,8 @@ def test_hangup_judgment_rules_in_realtime_instructions():
     assert "goal_complete" in END_CALL_TOOL["description"]
     assert "interested" in HANGUP_JUDGMENT_RULES.lower()
     assert "keep talking" in HANGUP_JUDGMENT_RULES.lower()
-    assert "one callback" in HANGUP_JUDGMENT_RULES.lower()
+    # One callback rule (call 35002575): busy or call-me-later gets one time question.
+    assert "busy or call-me-later" in HANGUP_JUDGMENT_RULES.lower()
     from server.prompts.voice_defaults import CACHE_FLOOR_PAD, DEFAULT_BEHAVIOUR_INSTRUCTIONS
 
     assert "objective is complete" not in CACHE_FLOOR_PAD.lower()

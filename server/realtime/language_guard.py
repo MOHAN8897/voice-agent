@@ -37,6 +37,11 @@ _GLOBAL_UNEXPECTED = (
 _WS = re.compile(r"[ \t]{2,}")
 
 
+# Danda and double danda end sentences in Bengali, Odia, Punjabi and other Indic
+# scripts, though Unicode files them under Devanagari.
+_SHARED_INDIC_PUNCT = ((0x0964, 0x0965),)
+
+
 def _in_ranges(cp: int, ranges: tuple[tuple[int, int], ...]) -> bool:
     return any(lo <= cp <= hi for lo, hi in ranges)
 
@@ -94,13 +99,18 @@ def filter_unrelated_scripts(
     extra_unexpected: list[tuple[int, int]] = []
     for code, rng in _SCRIPT_RANGES.items():
         if code != lang_prefix and not (lang_prefix not in _SCRIPT_RANGES and code in ("te", "hi")):
-            extra_unexpected.extend(rng)
+            # Languages that share a script (Hindi and Marathi both write Devanagari)
+            # must not mark the configured language's own letters as contaminants.
+            extra_unexpected.extend(r for r in rng if r not in allowed_ranges)
     unexpected = _GLOBAL_UNEXPECTED + tuple(extra_unexpected)
 
     kept: list[str] = []
     dropped = False
     for ch in text:
         cp = ord(ch)
+        if _in_ranges(cp, _SHARED_INDIC_PUNCT) and lang_prefix != "en":
+            kept.append(ch)
+            continue
         if _in_ranges(cp, unexpected) or not _in_ranges(cp, allowed_ranges):
             if not ch.isspace():
                 dropped = True

@@ -10,6 +10,7 @@ import { humanizeToken, statusWord } from '../../../lib/internalLabels';
 import { api } from '../../../services/api';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { callStatus, statusLabel } from '../../../lib/callStatus';
+import { AgentCallWarnings } from './AgentCallWarnings';
 
 const RANGE_DAYS = { Today: 1, '7 days': 7, '30 days': 30 };
 
@@ -140,6 +141,8 @@ export function AgentOverview({ agent, onOpenTab }) {
           ))}
         </div>
       </div>
+
+      <AgentCallWarnings agent={agent} onOpenTab={onOpenTab} />
 
       {total === 0 ? (
         <SolidCard padding="p-0">

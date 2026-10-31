@@ -102,6 +102,79 @@ def order_confirmation_allowed_from_script(compiled_text: str | None) -> bool:
     return takes_orders and proof_fields and not prohibited
 
 
+# Sections the compiler writes around the authored script. Their wording
+# ("booking", "schedule" as style examples) says nothing about this business.
+_PLATFORM_SECTION = re.compile(
+    r"^(?:SPOKEN LANGUAGE|CONVERSATIONAL REGISTER|GUARDRAILS|LEAD CAPTURE|SCRIPT DISCIPLINE|"
+    r"TURN DISCIPLINE|PROFESSIONAL CLOSE|OUTBOUND WORKFLOW|INBOUND WORKFLOW|VOICE STYLE|PLATFORM\b|"
+    r"SAFETY|STATIC OUTPUT RULES|BUSINESS REQUIREMENTS|WHEN YOU DO NOT KNOW SOMETHING|CLOSING|BEHAVIOUR)"
+)
+_SECTION_HEADER = re.compile(r"(?m)^--- ([A-Z][^\n]*?) ---[ \t]*$")
+_ROLE_TAG = re.compile(r"(?m)^@role:\s*([a-z_]+)\s*$")
+
+# Integrations whose only use is booking or scheduling time with the caller.
+SCHEDULING_APPS = frozenset({"GOOGLECALENDAR", "CALENDLY", "CALCOM", "OUTLOOKCALENDAR", "ZOOM"})
+_SCHEDULING_ROLES = frozenset({"appointment", "follow_up", "scheduling", "booking"})
+# Evidence that the business's own workflow books, schedules or meets. Native
+# loanwords are listed for every supported script; a match only keeps a tool.
+_SCHEDULING_EVIDENCE = re.compile(
+    r"\b(?:appointments?|book|books|booked|booking|bookings|schedul\w*|reschedul\w*|slots?|meetings?|"
+    r"demos?|consultations?|reservations?|reserve|visits?|calendar|availability|walk-?ins?|calendly)\b|"
+    r"అపాయింట్|బుకింగ్|బుక్|స్లాట్|మీటింగ్|షెడ్యూల్|డెమో|"
+    r"अपॉइंटमेंट|अपॉइन्टमेंट|अपोइंटमेंट|बुकिंग|बुक|स्लॉट|मीटिंग|शेड्यूल|डेमो|मुलाकात|"
+    r"அப்பாயின்ட்|அப்பாயிண்ட்|புக்கிங்|புக்|ஸ்லாட்|மீட்டிங்|சந்திப்பு|"
+    r"ಅಪಾಯಿಂಟ್|ಬುಕಿಂಗ್|ಬುಕ್|ಸ್ಲಾಟ್|ಮೀಟಿಂಗ್|ಭೇಟಿ|"
+    r"അപ്പോയിന്റ്|ബുക്കിംഗ്|ബുക്ക്|സ്ലോട്ട്|മീറ്റിംഗ്|കൂടിക്കാഴ്ച|"
+    r"অ্যাপয়েন্টমেন্ট|অ্যাপয়েন্টমেন্ট|বুকিং|বুক|স্লট|মিটিং|সাক্ষাৎ|"
+    r"એપોઇન્ટમેન્ટ|એપોઈન્ટમેન્ટ|બુકિંગ|બુક|સ્લોટ|મીટિંગ|મુલાકાત|"
+    r"ਅਪਾਇੰਟਮੈਂਟ|ਬੁਕਿੰਗ|ਬੁੱਕ|ਸਲਾਟ|ਮੀਟਿੰਗ|ਮੁਲਾਕਾਤ",
+    re.I,
+)
+
+
+def authored_business_text(compiled_text: str | None) -> str:
+    """The business script without the platform sections compiled around it."""
+    business = business_text(compiled_text)
+    parts = _SECTION_HEADER.split(business)
+    kept = [parts[0]]
+    for name, body in zip(parts[1::2], parts[2::2]):
+        if not _PLATFORM_SECTION.match(name.strip()):
+            kept.append(body)
+    return "\n".join(kept).strip()
+
+
+def script_uses_scheduling(compiled_text: str | None) -> bool | None:
+    """True/False from the agent's own role and workflow; None when it cannot be judged."""
+    raw = compiled_text or ""
+    role = _ROLE_TAG.search(raw)
+    if role and role.group(1) in _SCHEDULING_ROLES:
+        return True
+    if not re.search(r"(?m)^--- CALLING SCRIPT ---[ \t]*$", raw):
+        return None
+    authored = authored_business_text(raw)
+    if len(authored) < 40:
+        return None
+    return bool(_SCHEDULING_EVIDENCE.search(authored))
+
+
+def tools_used_by_script(tools: list[dict], compiled_text: str | None) -> list[dict]:
+    """Drop integration tools the agent's own workflow never uses.
+
+    Each schema is sent on every turn, so an unused calendar costs input tokens
+    and invites invented bookings. Only a confident "this workflow never
+    schedules" removes anything; an unjudgeable script keeps every tool.
+    """
+    if script_uses_scheduling(compiled_text) is not False:
+        return tools
+    from server.services.tool_schema_registry import tool_definition
+
+    def app(tool: dict) -> str:
+        definition = tool_definition(str(tool.get("name") or ""))
+        return definition[0] if definition else ""
+
+    return [tool for tool in tools if app(tool) not in SCHEDULING_APPS]
+
+
 def render_capabilities_section(compiled_text: str | None) -> str:
     allowed = order_confirmation_allowed_from_script(compiled_text)
     return (
@@ -130,6 +203,9 @@ def apply_available_tools(text: str, tools: list[dict], *, followup_config: dict
         rows.append("The tenant permits automatic callbacks after the server resolves timing and passes calling-window, DND and account checks. A saved request is not a confirmed call time; do not promise an exact dial or claim a schedule succeeded without a server result.")
     else:
         rows.append("The team must review callback requests. Do not promise that an automatic callback or exact appointment has been scheduled.")
+    if "REQUEST_HUMAN_HANDOFF" in names:
+        rows.append("You cannot transfer this call. When the caller wants a manager, owner, team member or named person "
+                    "to contact them, save it with REQUEST_HUMAN_HANDOFF and say you will pass it on.")
     if not tools:
         rows.append("No in-call action tools are available. Answer questions without promising a submission, booking or order.")
     for tool in tools[:32]:

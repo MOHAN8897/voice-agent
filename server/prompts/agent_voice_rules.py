@@ -204,6 +204,42 @@ LANGUAGE_MISMATCH_FALLBACK: dict[str, str] = {
 LANGUAGE_LOCK: dict[str, str] = {locale: primary_language_rule(locale) for locale in SPOKEN_LOCALES}
 
 
+def slow_down_rule(locale: str) -> str:
+    """The slow-down line with the evidence that permits it.
+
+    A bare `Slow-down (once): ...` line was spoken after a caller's "ok ok"
+    (call 35002575): with no stated trigger the model used it as filler.
+    """
+    return (f"Slow-down (once, only after a long fast stretch you could not follow; never after a short "
+            f"reply such as okay, yes or a name): `{SLOW_DOWN_FALLBACK[locale]}`")
+
+
+def unclear_audio_rule(locale: str) -> str:
+    """The repair line for garbled speech recognition, with its evidence condition."""
+    return (f"Unclear audio (only when the transcript is garbled or cut off so you cannot tell what they "
+            f"said; never for a clear short reply, hmm, road noise or a language change): "
+            f"`{UNCLEAR_FALLBACK[locale]}` then wait for clarification; do not restart the conversation.")
+
+
+# One callback rule for every compiled section. Earlier sections disagreed ("do not
+# invent callbacks" / "do not assume a callback is allowed" against "never say you
+# cannot note a callback"), so the model picked whichever it read last.
+CALLBACK_RULE = (
+    "Busy or call-me-later: say a short okay, ask only when to call them, note it as a callback request, "
+    "then make the close decision. Never ask them to tell you or call you when they are free. A caller's own "
+    "callback request is always noted; never volunteer a callback otherwise and never promise an automatic "
+    "or scheduled call."
+)
+
+# Who speaks CANONICAL OPENING. Outbound openings are prewarmed and played by the
+# platform at media readiness, so the model must never be told to say them.
+OUTBOUND_OPENING_LEAD = (
+    "The platform plays this opening once when the call connects, in the call language. "
+    "Never say or repeat it yourself:"
+)
+INBOUND_OPENING_LEAD = "When you answer, say once:"
+
+
 def live_realtime_output_rules(language: str | None, *, direction: str | None = None) -> str:
     """Strict live-call rules appended to Realtime session instructions."""
     lang = normalize_compile_language(language)
@@ -301,8 +337,8 @@ If the caller speaks another language and you cannot follow: use the language-mi
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["te-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every reply with an acknowledgment. Use సరే / అలాగే / ఓకే occasionally when appropriate; do not rotate honorific fillers every turn. Answer directly and politely.
-Slow-down (once): `{SLOW_DOWN_FALLBACK["te-IN"]}`
-Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["te-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
+{slow_down_rule("te-IN")}
+{unclear_audio_rule("te-IN")}
 {NUMBER_RULES_INDIC}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -328,12 +364,11 @@ If the caller speaks Telugu, Hindi, or another language you cannot follow: use t
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with Yes, / Sure, / Okay, / Alright, / Absolutely, / Definitely,. Answer directly.
-Slow-down (once): `{SLOW_DOWN_FALLBACK["en-IN"]}`
-Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-IN"]}` then wait for clarification; do not restart the conversation. Do not treat road noise as a new intent. Do not treat hmm / umm / let me think as unclear audio.
+{slow_down_rule("en-IN")}
+{unclear_audio_rule("en-IN")}
 {NUMBER_RULES}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
-Write amounts fully in English: `That comes to fifty lakh rupees.` not `Rs.50 lakhs` or bare digits.
 {OVERLAP_RULES}
 
 VOICE EXAMPLES
@@ -394,8 +429,8 @@ If the caller speaks another language you cannot follow: use the language-mismat
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-US"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with Yes, / Sure, / Okay, / Alright, / Absolutely,. Answer directly.
-Slow-down (once): `{SLOW_DOWN_FALLBACK["en-US"]}`
-Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["en-US"]}` then wait for clarification; do not restart the conversation. Do not treat road noise as a new intent. Do not treat hmm / umm / let me think as unclear audio.
+{slow_down_rule("en-US")}
+{unclear_audio_rule("en-US")}
 {NUMBER_RULES_NATIVE}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -431,8 +466,8 @@ If the caller speaks Telugu, English-only, or another language you cannot follow
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["hi-IN"]}`
 {SOFT_BREVITY}
 Filler bans: acknowledge when helpful (हाँ, ठीक है, ओके); answer directly without starting every reply with an acknowledgment prefix. Avoid repeating 'जी' or honorifics mechanically.
-Slow-down (once): `{SLOW_DOWN_FALLBACK["hi-IN"]}`
-Unclear audio (garbled STT, not language change): `{UNCLEAR_FALLBACK["hi-IN"]}` then wait for clarification; do not restart the conversation. Do not treat road noise as a new intent.
+{slow_down_rule("hi-IN")}
+{unclear_audio_rule("hi-IN")}
 {NUMBER_RULES_INDIC}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -484,8 +519,8 @@ If the caller speaks another language you cannot follow: use the language-mismat
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["ta-IN"]}`
 {SOFT_BREVITY}
 Filler bans: acknowledge when useful (சரி, கண்டிப்பா, ஓகே); answer directly without prefixing an acknowledgment on every turn. Do not append ங்க to every word mechanically.
-Slow-down (once): `{SLOW_DOWN_FALLBACK["ta-IN"]}`
-Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["ta-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
+{slow_down_rule("ta-IN")}
+{unclear_audio_rule("ta-IN")}
 {NUMBER_RULES_INDIC}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -519,8 +554,8 @@ If the caller speaks another language you cannot follow: use the language-mismat
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["kn-IN"]}`
 {SOFT_BREVITY}
 Filler bans: acknowledge when useful (ಹೌದು, ಸರಿ, ಖಂಡಿತ, ಓಕೆ); answer directly without prefixing an acknowledgment on every turn. Do not force ರೀ into each phrase; keep acknowledgments optional.
-Slow-down (once): `{SLOW_DOWN_FALLBACK["kn-IN"]}`
-Unclear audio (garbled STT, not a language change): `{UNCLEAR_FALLBACK["kn-IN"]}` then wait for clarification; do not restart the conversation. Road noise is not a new intent.
+{slow_down_rule("kn-IN")}
+{unclear_audio_rule("kn-IN")}
 {NUMBER_RULES_INDIC}
 {PHONE_SPEAK_BAN}
 {CALLER_DETAIL_CAPTURE}
@@ -827,7 +862,7 @@ _PACK_BLOCK_HEADERS = (
     "VOICE EXAMPLES",
     "PHONE CALL",
     "Filler bans:",
-    "Slow-down (once):",
+    "Slow-down (once",
     "Unclear audio (",
     "Language mismatch (once):",
     "Write amounts fully in English",

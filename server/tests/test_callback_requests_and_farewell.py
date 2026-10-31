@@ -160,7 +160,9 @@ async def test_callback_queue_is_tenant_scoped(callback_db):
 async def test_callback_is_saved_before_confirmation_and_custom_farewell(callback_db):
     _, principal, ctx = callback_db
     result = await svc.prepare_callback_close(ctx, {"should_end": True, "contact_preference": "callback"}, "en-IN", ctx.callback_request_text)
-    assert "I've saved your details" in result["farewell"]
+    # The confirmation was reworded to everyday speech (call 35002575 issue 9);
+    # the meaning pinned here is unchanged: the callback is confirmed as noted.
+    assert result["farewell"].startswith("Okay, I've noted your callback.")
     assert result["farewell"].endswith(ctx.call_end_policy["farewell"])
     assert len(await svc.list_callback_requests(principal)) == 1
 

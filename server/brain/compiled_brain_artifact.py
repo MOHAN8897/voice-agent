@@ -28,6 +28,47 @@ TOOL_CONTRACT_VERSION = "realtime_voice_v2"
 
 _SPOKEN_HEADER = re.compile(r"---\s*SPOKEN LANGUAGE\s*\(", re.I)
 _STATIC_HEADER = re.compile(r"---\s*STATIC OUTPUT RULES\s*---", re.I)
+# platform_brain_store.redacted_preview() output, once saved as a platform body.
+_REDACTED_PLATFORM_BODY = re.compile(r"Platform rules active — \d+ constraint blocks \(redacted\)")
+_SCRIPT_PACK_SECTION = re.compile(r"(?ms)^---\s*SPOKEN LANGUAGE\s*\([^)]*\)\s*---[ \t]*\n.*?(?=^---\s*[^\n]+?\s*---[ \t]*$|\Z)")
+
+# Busy/callback wordings that published brains still carry. Each was replaced by
+# the single CALLBACK_RULE; a stored copy must not keep the old, contradictory
+# instruction next to it (call 35002575: "do not assume a callback is allowed").
+_SUPERSEDED_CALLBACK_LINES = (
+    re.compile(r"If busy, acknowledge and use only a permitted next step\.[ \t]*"),
+    re.compile(r"If they are busy, follow only a source-permitted next step; do not assume a callback is allowed\.[ \t]*"),
+    re.compile(r"If they are busy, acknowledge it without pitching\. Volunteer a callback only when the business "
+               r"workflow permits it; a caller's own request to be called back is always noted for the platform to save\.[ \t]*"),
+)
+# Guardrail lines a fresh compile no longer emits because another section owns the
+# rule (STATIC OUTPUT RULES, LENGTH, CALL END POLICY). Published brains still carry
+# them, so drop the whole line at render.
+_SUPERSEDED_DUPLICATE_LINES = re.compile(
+    r"(?m)^[ \t]*- (?:Never invent prices, availability, or policies\.|Never greet twice in one call\.|"
+    r"Follow the selected primary language with natural English mixing\.|"
+    r"Speak naturally as the named AI assistant; answer honestly if asked whether you are AI\.|"
+    r"Do not talk continuously — end each turn when the point is made\.)[ \t]*\n"
+)
+_SUPERSEDED_PHRASES = (
+    (re.compile(r"Do not volunteer a callback or handoff without that permission; a caller's own request to be "
+                r"called back is always noted for the platform to save\."),
+     "Do not volunteer a handoff without that permission."),
+    # "Do not invent callbacks, prices, ..." in a generated script: the callback
+    # rule owns callbacks, and "invent" contradicted noting a caller's request.
+    (re.compile(r"\b(invent(?:ing)?)\s+callbacks?\s*,\s*", re.I), r"\1 "),
+    (re.compile(r"Use CANONICAL OPENING exactly once when the runtime authorizes the opening\. "
+                r"If opening_delivered is true, continue with the first applicable unanswered objective; do not greet again\."),
+     "The platform has already played CANONICAL OPENING. Continue with the first applicable unanswered "
+     "objective; do not greet again."),
+)
+# Lead lines that told the model to speak an outbound opening the platform plays.
+_OPENING_LEAD = re.compile(
+    r"(?m)^(---\s*CANONICAL OPENING\s*---[ \t]*\n)"
+    r"(?:After the callee speaks, say once \(in the configured language\):|"
+    r"When the runtime authorizes the opening and opening_delivered is false, say once:|Say once:)[ \t]*$"
+)
+_PROFESSIONAL_CLOSE = re.compile(r"(?m)^((?:- )?)-{2,3}\s*PROFESSIONAL CLOSE\s*---[ \t]*\n[^\n]+")
 
 
 @dataclass
@@ -66,7 +107,7 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
     """Refresh platform-owned blocks at render time without changing saved business scripts."""
     raw = (text or "").strip()
     if not is_unified_compiled_brain(raw) and not _SPOKEN_HEADER.search(raw):
-        return sanitize_closing_instructions(raw)
+        return canonicalize_platform_rules(sanitize_closing_instructions(raw))
     from server.brain.fact_canon import canonicalize_superseded_facts
 
     # A corrected price must not survive in a stored publication either, and a
@@ -95,9 +136,18 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
     header = re.compile(r"(?m)^---\s*(.+?)\s*---[ \t]*\n")
     sections = list(header.finditer(raw))
     chunks = [raw[:sections[0].start()]] if sections else [raw]
+    pack_rendered = False
     for index, match in enumerate(sections):
         end = sections[index + 1].start() if index + 1 < len(sections) else len(raw)
         title = match.group(1).strip().upper()
+        if title.startswith("SPOKEN LANGUAGE (") and pack_rendered:
+            # A calling script's own language marker, renamed to a pack header by
+            # older edits, used to be expanded into a second full pack here
+            # (call 35002575 shipped the language block twice). One pack only.
+            continue
+        if title == "PLATFORM CALL RULES" and _REDACTED_PLATFORM_BODY.fullmatch(raw[match.end():end].strip()):
+            # A redacted admin preview saved as the platform body says nothing.
+            continue
         if title == "SAFETY":
             block = SECTION_SAFETY
         elif title == "STATIC OUTPUT RULES":
@@ -112,6 +162,7 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
             block = STATIC_OUTPUT_RULES + ("\n\n" + suffix if suffix else "")
         elif title.startswith("SPOKEN LANGUAGE ("):
             block = spoken_pack_for(language, include_brevity=False, core_only=True)
+            pack_rendered = True
         elif title == "CALL CAPABILITIES":
             from server.brain.capabilities import render_capabilities_section
             old = raw[match.start():end]
@@ -134,7 +185,7 @@ def refresh_platform_sections(text: str | None, language: str) -> str:
             block = raw[match.start():end]
         chunks.append(block.strip())
     refreshed = "\n\n".join(chunk for chunk in chunks if chunk.strip())
-    return sanitize_closing_instructions(_ensure_capabilities_section(refreshed))
+    return canonicalize_platform_rules(sanitize_closing_instructions(_ensure_capabilities_section(refreshed)))
 
 
 def _ensure_capabilities_section(text: str) -> str:
@@ -151,6 +202,54 @@ def _ensure_capabilities_section(text: str) -> str:
         return text
     section = render_capabilities_section(text)
     return f"{text[:anchor.start()].rstrip()}\n\n{section}\n\n{text[anchor.start():]}"
+
+
+def strip_script_language_packs(script: str) -> str:
+    """Drop `SPOKEN LANGUAGE (...)` sections from a business script.
+
+    The platform places one pack before the script. A script-owned copy (an old
+    LANGUAGE marker renamed to a pack header) was expanded into a second full
+    pack, doubling the language and register rules on every turn.
+    """
+    cleaned = _SCRIPT_PACK_SECTION.sub("", script or "")
+    return re.sub(r"\n{3,}", "\n\n", cleaned).strip()
+
+
+def canonicalize_platform_rules(text: str | None) -> str:
+    """Give a stored or fresh brain one consistent callback and opening rule set.
+
+    Publications freeze the platform rules they were compiled with, so a corrected
+    rule never reached a published agent. Superseded wordings are rewritten here,
+    at compile and at render, the same way sanitize_closing_instructions handles
+    farewell ownership. Unknown text is left alone.
+    """
+    from server.brain.script_entities import parse_entity_tags
+    from server.prompts.agent_voice_rules import CALLBACK_RULE, OUTBOUND_OPENING_LEAD
+
+    out = str(text or "")
+    if not out:
+        return ""
+    for pattern in _SUPERSEDED_CALLBACK_LINES:
+        out = pattern.sub("", out)
+    for pattern, replacement in _SUPERSEDED_PHRASES:
+        out = pattern.sub(replacement, out)
+    out = _SUPERSEDED_DUPLICATE_LINES.sub("", out)
+    # A bullet or numbered step left empty by a removed sentence.
+    out = re.sub(r"(?m)^[ \t]*(?:-|\d+\.)[ \t]*\n", "", out)
+    if CALLBACK_RULE not in out:
+        close = _PROFESSIONAL_CLOSE.search(out)
+        if close:
+            out = f"{out[:close.end()]}\n{close.group(1)}{CALLBACK_RULE}{out[close.end():]}"
+    else:
+        first = out.index(CALLBACK_RULE) + len(CALLBACK_RULE)
+        out = out[:first] + out[first:].replace(CALLBACK_RULE, "")
+    direction = (parse_entity_tags(out).get("direction") or "").strip().lower()
+    outbound = direction in {"outbound", "outgoing", "out"} or (
+        not direction and "OUTBOUND WORKFLOW" in out and "INBOUND WORKFLOW" not in out
+    )
+    if outbound:
+        out = _OPENING_LEAD.sub(lambda match: match.group(1) + OUTBOUND_OPENING_LEAD, out)
+    return out
 
 
 def business_from_unified_brain(text: str) -> str:
@@ -309,6 +408,8 @@ def assemble_unified_brain(
     # language was changed after the script was generated.
     aligned_script = patch_calling_script_language_markers(script, lang)
     business = sanitize_closing_instructions(canonicalize_superseded_facts(strip_closing_section(strip_section_markers(aligned_script))))
+    # The brain carries exactly one language pack, placed before the script.
+    business = strip_script_language_packs(business)
     # Permissions come from the authored brief alone. Reading them here, at
     # compile time, keeps platform safety text (which also names orders) from
     # ever granting or denying a business capability.
@@ -323,7 +424,7 @@ def assemble_unified_brain(
     # examples while preserving locale-specific number phrasing.
     # Without this the same guidance was sent two or three times
     # in every compiled brain.
-    body = (
+    body = canonicalize_platform_rules(
         f"{core}\n\n"
         f"{spoken_pack_for(lang, include_brevity=False, core_only=True)}\n\n"
         f"{calling}"
@@ -396,7 +497,7 @@ def platform_body_for_agent_language(platform_body: str, language: str) -> str:
     pb = (platform_body or "").strip()
     if not pb:
         return ""
-    if pb == CORE_SYSTEM_PROMPT.strip():
+    if pb == CORE_SYSTEM_PROMPT.strip() or _REDACTED_PLATFORM_BODY.fullmatch(pb):
         return ""
     # Platform draft still embedding only te-IN voice — unified assembler adds the right pack.
     if _SPOKEN_HEADER.search(pb) and SECTION_SAFETY.strip() in pb:

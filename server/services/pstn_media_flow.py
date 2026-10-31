@@ -368,5 +368,75 @@ class PstnMediaFlowStore:
 pstn_media_flow = PstnMediaFlowStore()
 
 
+TURN_TIMING_KEYS = ("stt_final_ms", "llm_ttft_ms", "tts_first_audio_ms", "e2e_ms")
+
+
+class PstnTurnTimingStore:
+    """Per-turn latencies measured by the PSTN voice loop, for trace.json.
+
+    Kept apart from the media-flow rows: Vobiz bridges never bind a call_id to
+    their row, so stage events keyed by call_id were dropped and every composed
+    trace turn recorded null timings (call 35002575). Turns are matched by the
+    caller transcript the orchestrator archives with the reply.
+    """
+
+    _MAX_CALLS = 512
+    _MAX_TURNS = 8
+
+    def __init__(self) -> None:
+        self._lock = RLock()
+        self._calls: dict[str, deque[dict[str, Any]]] = {}
+
+    @_locked
+    def record(self, call_id: str | None, transcript: str, **values: int | None) -> None:
+        if not call_id:
+            return
+        rows = self._calls.pop(call_id, None) or deque(maxlen=self._MAX_TURNS)
+        # Re-insert so the dict stays ordered by recent activity for eviction.
+        self._calls[call_id] = rows
+        while len(self._calls) > self._MAX_CALLS:
+            self._calls.pop(next(iter(self._calls)))
+        key = (transcript or "").strip()
+        row = next((item for item in reversed(rows) if item["transcript"] == key), None)
+        if row is None:
+            row = {"transcript": key}
+            rows.append(row)
+        row.update({name: value for name, value in values.items() if name in TURN_TIMING_KEYS and value is not None})
+
+    @_locked
+    def pop(self, call_id: str | None, transcript: str) -> dict[str, int]:
+        rows = self._calls.get(call_id or "")
+        if not rows:
+            return {}
+        key = (transcript or "").strip()
+        for row in reversed(rows):
+            if row["transcript"] == key:
+                rows.remove(row)
+                return {name: row[name] for name in TURN_TIMING_KEYS if name in row}
+        return {}
+
+    @_locked
+    def clear(self, call_id: str | None) -> None:
+        self._calls.pop(call_id or "", None)
+
+
+pstn_turn_timing = PstnTurnTimingStore()
+
+
+def trace_turn_timing(
+    call_id: str | None,
+    transcript: str,
+    *,
+    stt_final_ms: int | None = None,
+    llm_ttft_ms: int | None = None,
+    e2e_ms: int | None = None,
+) -> dict[str, int | None]:
+    """Timing fields for one trace turn: voice-loop measurements win over fallbacks."""
+    measured = pstn_turn_timing.pop(call_id, transcript)
+    fallback = {"stt_final_ms": stt_final_ms, "llm_ttft_ms": llm_ttft_ms,
+                "tts_first_audio_ms": None, "e2e_ms": e2e_ms}
+    return {name: measured.get(name, fallback[name]) for name in TURN_TIMING_KEYS}
+
+
 def new_ws_id() -> str:
     return uuid.uuid4().hex[:12]

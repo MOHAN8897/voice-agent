@@ -111,6 +111,9 @@ def _sarvam_fallback_config(language: str, wire_mode: str) -> dict[str, Any] | N
 class PstnTurnTtsSession:
     """One upstream TTS socket per PSTN reply; mirrors browser StreamingTtsClient."""
 
+    # Class default too: tests and helpers build sessions without __init__.
+    _detached = False
+
     def __init__(self, voice: PstnVoiceLoop) -> None:
         self._voice = voice
         self._tts = None
@@ -153,6 +156,9 @@ class PstnTurnTtsSession:
         self._awaiting_audio = False
         self._collecting_frames = False
         self._collected_frames: list[bytes] = []
+        # A detached clip is synthesized for later playback (the holding line),
+        # outside any reply generation, and must not move turn telemetry.
+        self._detached = False
 
     @property
     def has_sent_text(self) -> bool:
@@ -176,6 +182,10 @@ class PstnTurnTtsSession:
         return self._tts_audio_bytes > 0
 
     def _stale_generation(self) -> bool:
+        if self._detached:
+            # Only collected here; playback generation guards apply when the
+            # frames are emitted.
+            return self._interrupted or self._closed
         voice = self._voice
         bound = getattr(self, "_bound_generation", None)
         if self._interrupted:
@@ -516,7 +526,7 @@ class PstnTurnTtsSession:
         voice = self._voice
         if self._stale_generation():
             return
-        if self._chars_sent == 0:
+        if self._chars_sent == 0 and not self._detached:
             log_pstn(
                 "tts.speak.start",
                 call_id=voice.call_id,
@@ -684,6 +694,11 @@ class PstnTurnTtsSession:
             return list(self._collected_frames)
         finally:
             self._collecting_frames = False
+
+    async def synthesize_detached(self, text: str) -> list[bytes]:
+        """Wire frames for a clip played later, independent of the current reply."""
+        self._detached = True
+        return await self.synthesize_to_frames(text)
 
     async def finish(self) -> None:
         if self._closed or self._flushed or (
@@ -949,6 +964,8 @@ class PstnTurnTtsSession:
                 return
             audio = pcm16_to_mulaw(pcm8k, sample_rate=8000)
             tts_rate = 8000
+        if self._detached:
+            first_chunk = self._first_chunk = False
         if use_mp3:
             if first_chunk and voice.call_id:
                 from server.services.pstn_media_flow import pstn_media_flow
