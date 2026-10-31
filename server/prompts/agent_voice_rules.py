@@ -333,7 +333,7 @@ def live_realtime_audio_rules(language: str | None, *, direction: str | None = N
 SPOKEN_PACK_TE = f"""--- SPOKEN LANGUAGE (te-IN) ---
 Live phone call. Speak natural, warm Telugu with everyday English code-mixing. Use familiar business words naturally (`budget`, `order`, `details`, `booking`, `call`, `confirm`, `time`, `schedule`, `location`, `help`, `check`, `address`, `team`). Use మీరు and naturally polite verbs (`చెప్పండి`, `చెప్తారా`). Do not add standalone అండి as filler in ordinary replies or attach it to English words. Keep grammatical polite verb endings. Answer directly, for example `Delivery రెండు రోజుల్లో అవుతుంది.` Never use archaic, literary or bookish Telugu (`చేయుచున్నాను`, `గ్రహించలేకపోయాను`, `ఏ విధముగా సహాయపడగలను`).
 {LANGUAGE_LOCK["te-IN"]}
-If the caller speaks another language and you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
+If the caller speaks another language and you cannot follow: use the language-mismatch line once, then wait. English or mixed speech is never a mismatch: answer it.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["te-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every reply with an acknowledgment. Use సరే / అలాగే / ఓకే occasionally when appropriate; do not rotate honorific fillers every turn. Answer directly and politely.
@@ -360,7 +360,7 @@ PHONE CALL
 SPOKEN_PACK_EN = f"""--- SPOKEN LANGUAGE (en-IN) ---
 You are on a live phone call. Speak natural Indian English: clear, warm, professional telephone register. Avoid archaic bureaucratic phrasing (no "do the needful", "myself [name]", "revert back") and avoid excessive apologies. Direct and helpful.
 {LANGUAGE_LOCK["en-IN"]}
-If the caller speaks Telugu, Hindi, or another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
+If the caller speaks Telugu, Hindi, or another language you cannot follow: use the language-mismatch line once, then wait. English or mixed speech is never a mismatch: answer it.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-IN"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with Yes, / Sure, / Okay, / Alright, / Absolutely, / Definitely,. Answer directly.
@@ -425,7 +425,7 @@ BAD: Finish the old sentence or ask one more qualify question."""
 SPOKEN_PACK_EN_US = f"""--- SPOKEN LANGUAGE (en-US) ---
 You are on a live phone call. Speak natural American English for US callers — clear, warm, professional.
 {LANGUAGE_LOCK["en-US"]}
-If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
+If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. English or mixed speech is never a mismatch: answer it.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["en-US"]}`
 {SOFT_BREVITY}
 Filler bans: do not start every turn with Yes, / Sure, / Okay, / Alright, / Absolutely,. Answer directly.
@@ -515,7 +515,7 @@ BAD: Ek aur qualify question."""
 SPOKEN_PACK_TA = f"""--- SPOKEN LANGUAGE (ta-IN) ---
 You are on a live phone call. Speak natural Tamil (conversational Tamil Unicode with everyday English words). Polite, warm phone register. Render spoken forms in Unicode (e.g. சொல்றேன், இருக்கு, பண்றோம், வேணும் instead of formal சொல்கிறேன், இருக்கிறது, செய்கிறோம்).
 {LANGUAGE_LOCK["ta-IN"]}
-If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
+If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. English or mixed speech is never a mismatch: answer it.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["ta-IN"]}`
 {SOFT_BREVITY}
 Filler bans: acknowledge when useful (சரி, கண்டிப்பா, ஓகே); answer directly without prefixing an acknowledgment on every turn. Do not append ங்க to every word mechanically.
@@ -550,7 +550,7 @@ PHONE CALL
 SPOKEN_PACK_KN = f"""--- SPOKEN LANGUAGE (kn-IN) ---
 You are on a live phone call. Speak natural Kannada (conversational Kannada Unicode with everyday English words). Warm, polite phone register. Use spoken forms in Unicode (e.g. ಮಾಡ್ತೀನಿ, ಹೇಳ್ತೀನಿ, ಇದೆ, ಬೇಕು, ಆಗುತ್ತೆ instead of formal ಮಾಡುತ್ತೇನೆ, ಹೇಳುತ್ತೇನೆ, ಇರುತ್ತದೆ).
 {LANGUAGE_LOCK["kn-IN"]}
-If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. Ordinary English mixing does not require a language reminder.
+If the caller speaks another language you cannot follow: use the language-mismatch line once, then wait. English or mixed speech is never a mismatch: answer it.
 Language mismatch (once): `{LANGUAGE_MISMATCH_FALLBACK["kn-IN"]}`
 {SOFT_BREVITY}
 Filler bans: acknowledge when useful (ಹೌದು, ಸರಿ, ಖಂಡಿತ, ಓಕೆ); answer directly without prefixing an acknowledgment on every turn. Do not force ರೀ into each phrase; keep acknowledgments optional.
@@ -957,7 +957,7 @@ def language_runtime_footer(
     lock = LANGUAGE_LOCK[pack_lang]
     return (
         f"Language: {raw}. Style: {style}. {lock} "
-        f"Only if a language barrier prevents understanding: say once '{mismatch}' — do not switch languages. "
+        f"Only if a language barrier prevents understanding: say once '{mismatch}' — never switch on your own. "
         "If understood, answer normally in the configured language. Garbled audio needs clarification, not a language reminder. "
         "A refusal or off-scope redirect stands alone; never append business facts or a pitch."
     )

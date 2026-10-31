@@ -25,7 +25,9 @@ def _pyav_transcode(src_wav: Path, dest_path: Path, *, codec_name: str, format_n
                     out_stream.bit_rate = int(bitrate.rstrip("kK")) * 1000
                 except Exception:
                     pass
-                out_stream.layout = in_stream.layout
+                # WAVs written by the wave module carry no channel mask ("2 channels"),
+                # which LAME and AAC reject; name the layout from the channel count.
+                out_stream.layout = "stereo" if in_stream.channels >= 2 else "mono"
                 for frame in in_container.decode(in_stream):
                     frame.pts = None
                     for packet in out_stream.encode(frame):

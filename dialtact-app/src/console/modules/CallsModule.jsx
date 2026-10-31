@@ -26,6 +26,7 @@ import { OutboundCallForm, useOutboundCall } from './outbound/OutboundCallForm';
 import { Badge, StatusBadge } from '../ui/StatusBadge';
 import { TactileButton } from '../ui/TactileButton';
 import { PageHeader } from '../ui/PageHeader';
+import { ExportButton } from './analytics/ExportDialog';
 import { Tabs } from '../ui/Tabs';
 import { Toolbar, SearchInput } from '../ui/Toolbar';
 import { Avatar } from '../ui/Avatar';
@@ -60,6 +61,8 @@ import { formatInr, formatUsd, relativeTime } from '../../lib/money';
 import { contactName, maskPhone } from '../../lib/phoneMask';
 import { normalizeCall } from '../../services/apiNormalize';
 import { fetchCallRecord } from './home/activityDetail';
+import { LanguageTag } from '../ui/LanguageTag';
+import { languagePrefix, useLanguageRequests } from '../lib/languageRequests';
 
 const STATUS_ICON = {
   answered: PhoneIncoming,
@@ -159,8 +162,14 @@ function sortedTags(tags = []) {
   return [...tags].sort((a, b) => tagPriority(a) - tagPriority(b));
 }
 
-function CallTags({ tags = [], limit = 3 }) {
-  if (!tags.length) return null;
+/** The language a caller asked for on this call, or the one a language callback was placed in. */
+function CallLanguageTag({ language }) {
+  if (!language) return null;
+  return <LanguageTag code={language.code} label={language.label} prefix={languagePrefix(language)} />;
+}
+
+function CallTags({ tags = [], limit = 3, language = null }) {
+  if (!tags.length) return <CallLanguageTag language={language} />;
   const shown = sortedTags(tags).slice(0, limit);
   const rest = tags.length - shown.length;
   return (
@@ -170,6 +179,7 @@ function CallTags({ tags = [], limit = 3 }) {
           {tagLabel(tag)}
         </Badge>
       ))}
+      <CallLanguageTag language={language} />
       {rest > 0 && (
         <span className="text-meta text-fg-muted" title={sortedTags(tags).slice(limit).map(tagLabel).join(', ')}>
           +{rest} more
@@ -424,7 +434,7 @@ function RecordingPlayer({ call }) {
  * callback/transcript/outcome handling. `embedded` drops the page chrome (fleet
  * header, dialer tab) because the workspace supplies its own around it.
  */
-export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = null, agentName = '', embedded = false, initialSearch = '' }) {
+export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = null, agentName = '', embedded = false, initialSearch = '', initialStatus = '' }) {
   const {
     calls,
     selectedCallId,
@@ -437,6 +447,8 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
     refreshCalls: refreshWorkspaceCalls,
     isLoading,
   } = useWorkspace();
+  // Calls where the caller asked for another language, and the callbacks placed in it.
+  const languageRequests = useLanguageRequests(lockedAgentId);
   const [filterDirection, setFilterDirection] = useState('All');
   const [filterAgentId, setFilterAgentId] = useState('all');
   const [tagFilter, setTagFilter] = useState('');
@@ -465,7 +477,8 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
   const [liveTranscription, setLiveTranscription] = useState(null);
   const mainTab = dialDraft.mainTab === 'outbound' ? 'outbound' : 'history';
   const setMainTab = (value) => patchDialDraft({ mainTab: value });
-  const [historyBucket, setHistoryBucket] = useState('all');
+  // `initialStatus` seeds the filter from a link (an agent Overview number).
+  const [historyBucket, setHistoryBucket] = useState(() => (CALL_STATUS_TABS.some((tab) => tab.id === initialStatus) ? initialStatus : 'all'));
   const [outcome, setOutcome] = useState(null);
   const [outcomeLoading, setOutcomeLoading] = useState(false);
   const [callbacks, setCallbacks] = useState([]);
@@ -782,7 +795,13 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
       <PageHeader
         title={embedded ? `${agentName || 'Agent'} calls` : 'Calls'}
         description="Every call your AI employees made or took, with recordings, transcripts and what each call cost."
-        actions={
+        actions={<>
+          <ExportButton preset={{
+            dataset: 'calls',
+            agentId: lockedAgentId || (filterAgentId !== 'all' ? filterAgentId : ''),
+            values: filterDirection !== 'All' ? { direction: filterDirection.toLowerCase() } : {},
+            tags: tagFilter ? [tagFilter] : [],
+          }} />
           <TactileButton
             variant="secondary"
             size="sm"
@@ -792,7 +811,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
           >
             Refresh
           </TactileButton>
-        }
+        </>}
       />
 
       {!embedded && (
@@ -959,7 +978,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                                 <CallbackOfBadge callbackOf={call.callbackOf} />
                                 <CalledBackBadge callbacks={call.callbacks} />
                                 {isTechnicalFailure(call.endReason) && <TechnicalIssuePill />}
-                                <CallTags tags={call.statusTags} />
+                                <CallTags tags={call.statusTags} language={languageRequests.byCall.get(call.id)} />
                               </div>
                             </div>
                           </button>
@@ -1188,6 +1207,7 @@ export function CallsModule({ onRequireFunds = null, agentId: lockedAgentId = nu
                             {tagLabel(tag)}
                           </Badge>
                         ))}
+                        <CallLanguageTag language={activeCall ? languageRequests.byCall.get(activeCall.id) : null} />
                       </div>
                     )}
                   </div>

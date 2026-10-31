@@ -170,9 +170,10 @@ class PstnBackchannelController:
         voice = self._voice
         session = PstnTurnTtsSession(voice)
         try:
-            text = prepare_spoken_reply(holding_phrase_for(voice._resolve_language()), ensure_terminal=True)
+            language = voice._resolve_language()
+            text = prepare_spoken_reply(holding_phrase_for(language), ensure_terminal=True)
             frames = await session.synthesize_detached(text)
-            if frames:
+            if frames and language == voice._resolve_language():
                 self._hold_frames = frames
         except asyncio.CancelledError:
             raise
@@ -180,6 +181,16 @@ class PstnBackchannelController:
             log_pstn("hold.prewarm_failed", call_id=voice.call_id, error=str(exc)[:160])
         finally:
             await session.close()
+
+    def drop_hold_clip(self) -> None:
+        """The call switched language mid-call: re-synthesize the holding line in it."""
+        had_clip = bool(self._hold_frames) or self._hold_prewarm is not None
+        self._hold_frames = []
+        if self._hold_prewarm is not None and not self._hold_prewarm.done():
+            self._hold_prewarm.cancel()
+        self._hold_prewarm = None
+        if had_clip:
+            self.prewarm_hold()
 
     def start_hold(self, turn_id: str | None) -> None:
         """Arm the holding line for this turn; never on two turns in a row."""

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import dataclasses
 import json
 import logging
 from contextlib import aclosing
@@ -66,6 +67,22 @@ def classify_tts_exception(exc: BaseException | None, *, provider: str = "") -> 
         }
     return {"kind": "transport", "provider": provider, "retained": False}
 
+
+
+def _voice_for_switch(provider: str, model: str, speaker: str, language: str, *, call_id: str | None) -> str:
+    """The voice to keep after a mid-call language switch; logs any substitution."""
+    from server.providers.voice_inventory import voice_for_language
+
+    try:
+        chosen, changed = voice_for_language(provider, model, speaker, language)
+    except ValueError as exc:
+        log_pstn("tts.language_switch.voice_unavailable", call_id=call_id, provider=provider, model=model,
+                 language=language, error=str(exc)[:160])
+        return speaker
+    if changed:
+        log_pstn("tts.language_switch.voice_substituted", call_id=call_id, provider=provider, model=model,
+                 language=language, previous=speaker, speaker=chosen)
+    return chosen
 
 
 def _tts_config_sample_rate(merged: dict[str, Any], *, fallback: int) -> int:
@@ -363,13 +380,17 @@ class PstnTurnTtsSession:
 
         if not provider or not model or not isinstance(config, dict):
             raise RuntimeError("The selected composed speech model is unavailable")
-        if stack_lang and stack_lang != language_code:
+        switched = bool(stack_lang) and stack_lang != language_code
+        if switched and language_code != self._voice._resolve_language():
             raise RuntimeError("Composed PSTN speech language does not match the pinned profile")
 
         api_mode = str(config.get("api_mode") or "").strip().lower()
         speaker = str(config.get("speaker") or "").strip()
         if not speaker:
             raise RuntimeError("The selected composed speech voice is unavailable")
+        if switched:
+            # Mid-call English fallback: same voice when it speaks the language.
+            speaker = _voice_for_switch(provider, model, speaker, language_code, call_id=voice.call_id)
         registry = get_provider_registry()
         if (
             not registry.is_provider_enabled(provider, "tts")
@@ -512,6 +533,40 @@ class PstnTurnTtsSession:
             )
             self._reader_task = asyncio.create_task(self._reader_loop())
 
+    async def sync_language(self) -> None:
+        """Follow a mid-call language switch on the open session (no reconnect)."""
+        if not self._opened or self._closed or self._detached:
+            return
+        current = str(self._merged.get("language_code") or "")
+        resolve = getattr(self._voice, "_resolve_language", None)
+        language = resolve() if callable(resolve) else current
+        if not current or current == language:
+            return
+        await self.switch_language(language)
+
+    async def switch_language(self, language: str) -> None:
+        """Re-tune the open session: a new config with ``language`` and the same voice
+        when it speaks it, else the provider's closest voice for that language."""
+        provider = str(self._merged.get("provider") or "")
+        model = str(self._merged.get("model") or self._model or "")
+        previous_speaker = str(self._merged.get("speaker") or "")
+        speaker = _voice_for_switch(provider, model, previous_speaker, language, call_id=self._voice.call_id)
+        previous = self._merged.get("language_code")
+        self._merged["language_code"] = language
+        if speaker:
+            self._merged["speaker"] = speaker
+        for name in ("_unary_config", "_stream_config"):
+            config = getattr(self, name, None)
+            if config is not None:
+                setattr(self, name, dataclasses.replace(config, language=language, speaker=speaker or config.speaker))
+        if self._tts is not None:
+            await self._tts.send(json.dumps({
+                "type": "config",
+                "data": {key: value for key, value in self._merged.items() if key not in {"provider", "model"}},
+            }))
+        log_pstn("tts.language_switched", call_id=self._voice.call_id, provider=provider, previous=previous,
+                 language=language, speaker=speaker, voice_changed=bool(speaker) and speaker != previous_speaker)
+
     async def send_text(self, text: str) -> None:
         from server.prompts.tts_delivery_rules import sanitize_tts_tags
 
@@ -526,6 +581,9 @@ class PstnTurnTtsSession:
         voice = self._voice
         if self._stale_generation():
             return
+        if self._chars_sent == 0:
+            # The turn that switched language decides it after this session was prepared.
+            await self.sync_language()
         if self._chars_sent == 0 and not self._detached:
             log_pstn(
                 "tts.speak.start",
@@ -641,6 +699,7 @@ class PstnTurnTtsSession:
         if self._closed or not self._opened:
             await self.open()
         await self._prepare_for_chunk()
+        await self.sync_language()
 
     async def _prepare_for_chunk(self) -> None:
         """Reset per-chunk synthesis state; keep the upstream WebSocket warm."""

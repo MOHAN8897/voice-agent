@@ -6,6 +6,7 @@ import { AgentInboundPanel } from './AgentInboundPanel';
 import { AgentDialBulkPanel } from './AgentDialBulkPanel';
 import { ErrorBoundary } from '../../ui/ErrorBoundary';
 import { useSessionDraft } from '../../lib/sessionDraft';
+import { useLeadWorkCounts } from '../../lib/leadWorkCounts';
 
 const PANELS = [
   { id: 'inbound', label: 'Incoming', icon: PhoneIncoming },
@@ -24,6 +25,7 @@ export function AgentCallsPanel({
   agentId,
   agentName,
   initialPanel = null,
+  initialFilters = null,
   onPanelChange,
   onNavigateToSettings,
 }) {
@@ -41,6 +43,9 @@ export function AgentCallsPanel({
     onPanelChange?.(next);
   };
   const [historyPhone, setHistoryPhone] = useState('');
+  // Callbacks and language callbacks waiting for this agent, shown on the Leads tab.
+  const work = useLeadWorkCounts(agentId);
+  const pendingLeads = (work.followups || 0) + (work.language || 0);
 
   useEffect(() => {
     if (initialPanel === 'settings') {
@@ -69,9 +74,10 @@ export function AgentCallsPanel({
               id={`agent-calls-tab-${p.id}`}
               aria-selected={isActive}
               aria-controls={`agent-calls-panel-${p.id}`}
+              aria-description={p.id === 'leads' && pendingLeads > 0 ? `${pendingLeads} waiting` : undefined}
               data-testid={`agent-calls-panel-tab-${p.id}`}
               onClick={() => setPanel(p.id)}
-              className={`flex shrink-0 items-center gap-1.5 px-3 sm:px-4 py-1.5 min-h-[36px] rounded-[8px] text-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+              className={`flex shrink-0 items-center gap-1.5 px-2.5 sm:px-4 py-1.5 min-h-[36px] rounded-[8px] text-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 isActive
                   ? 'bg-surface text-ink shadow-craft-xs'
                   : 'text-fg-body hover:text-ink'
@@ -79,6 +85,11 @@ export function AgentCallsPanel({
             >
               <Icon className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{p.label}</span>
+              {p.id === 'leads' && pendingLeads > 0 && (
+                <span aria-hidden="true" data-testid="agent-calls-tab-count-leads" className="rounded-pill bg-warning-soft px-1.5 font-mono text-meta tabular-nums text-warning-fg">
+                  {pendingLeads}
+                </span>
+              )}
             </button>
           );
         })}
@@ -107,9 +118,10 @@ export function AgentCallsPanel({
             <AgentDialBulkPanel agentId={agentId} agentName={agentName} />
           )}
           {panel === 'history' && (
-            <CallsModule agentId={agentId} agentName={agentName} initialSearch={historyPhone} embedded />
+            <CallsModule agentId={agentId} agentName={agentName} initialSearch={historyPhone} initialStatus={initialFilters?.status} embedded />
           )}
           {panel === 'leads' && <LeadsModule agentId={agentId} agentName={agentName}
+            initialStage={initialFilters?.stage} initialDays={initialFilters?.days}
             onOpenHistory={(lead) => { setHistoryPhone(lead.phone); setPanel('history'); }} />}
         </ErrorBoundary>
       </div>

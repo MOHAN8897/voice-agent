@@ -19,11 +19,12 @@ from server.prompts.agent_voice_rules import (
     spoken_pack_for,
 )
 from server.prompts.brain_prompt import SECTION_SAFETY
+from server.prompts.spoken_locale_style import ACTIVE_LANGUAGE_RULE
 from server.prompts.voice_defaults import style_for_language
 
 SCHEMA_VERSION = "1"
 CORE_VERSION = "section_safety_v3"
-LANGUAGE_PACK_VERSION = "spoken_packs_v7"
+LANGUAGE_PACK_VERSION = "spoken_packs_v8"
 TOOL_CONTRACT_VERSION = "realtime_voice_v2"
 
 _SPOKEN_HEADER = re.compile(r"---\s*SPOKEN LANGUAGE\s*\(", re.I)
@@ -57,6 +58,15 @@ _SUPERSEDED_PHRASES = (
     # "Do not invent callbacks, prices, ..." in a generated script: the callback
     # rule owns callbacks, and "invent" contradicted noting a caller's request.
     (re.compile(r"\b(invent(?:ing)?)\s+callbacks?\s*,\s*", re.I), r"\1 "),
+    # The old language lock forbade any mid-call switch, so a caller asking for
+    # English heard "please speak Telugu". The platform now owns the switch and
+    # sends an ACTIVE LANGUAGE note the model must follow.
+    (re.compile(r"Reply in ([^.;\n]{1,40}?) even if the caller switches language or asks for another one; "
+                r"never switch mid-call\. The platform offers a call back in the requested language\."),
+     lambda match: ACTIVE_LANGUAGE_RULE.format(name=match.group(1))),
+    (re.compile(r"(say once '[^'\n]*') — do not switch languages\."), r"\1 — never switch on your own."),
+    (re.compile(r"Ordinary English mixing does not require a language reminder\."),
+     "English or mixed speech is never a mismatch: answer it."),
     (re.compile(r"Use CANONICAL OPENING exactly once when the runtime authorizes the opening\. "
                 r"If opening_delivered is true, continue with the first applicable unanswered objective; do not greet again\."),
      "The platform has already played CANONICAL OPENING. Continue with the first applicable unanswered "

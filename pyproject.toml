@@ -27,6 +27,9 @@ dependencies = [
     "razorpay>=1.4",
     "reportlab>=4.2",
     "audioop-lts>=0.2.1; python_version >= '3.13'",
+    # Decodes carrier MP3 recordings and encodes downloads (server/call/audio_mp3.py).
+    # Without it recordings fall back to the raw, unbalanced carrier file.
+    "av>=12",
     # IANA tz database for zoneinfo. Windows has no system tzdata, and the
     # inbound business-hours policy must not fall back to naive UTC there.
     "tzdata>=2024.1",

@@ -1,4 +1,9 @@
-"""Language-switch callbacks: detect, never switch, record, list, call back in the requested pack."""
+"""Language-switch callbacks: detect, record, list, call back in the requested pack.
+
+Calls built with `_ctx()` cannot switch live (no `supports_language_switch`), so they
+keep the confirm-record-close path; the live English fallback is in
+test_language_live_switch.py.
+"""
 from __future__ import annotations
 
 import json
@@ -120,11 +125,13 @@ def test_declined_offer_is_not_repeated():
     assert ls.decide_language_switch(ctx, "मुझे इसकी कीमत जाननी है कृपया", "ta-IN") is None
 
 
-def test_prompt_lock_forbids_mid_call_switch():
+def test_prompt_lock_follows_the_platform_active_language_note():
     from server.prompts.agent_voice_rules import LANGUAGE_LOCK
 
     for code in ("hi-IN", "te-IN", "ta-IN", "en-IN"):
-        assert "never switch mid-call" in LANGUAGE_LOCK[code]
+        # The model never switches on its own; the platform's ACTIVE LANGUAGE note decides.
+        assert "ACTIVE LANGUAGE note" in LANGUAGE_LOCK[code] and "Never switch on your own" in LANGUAGE_LOCK[code]
+        assert "never switch mid-call" not in LANGUAGE_LOCK[code]
 
 
 # -- Storage ---------------------------------------------------------------------------

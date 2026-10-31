@@ -244,6 +244,27 @@ export const api = {
       return api.request('GET', `/api/activity/live${qs}`);
     },
   },
+  /** Workspace analytics for one period (IST days), tenant-scoped. */
+  analytics: {
+    workspace: (params = {}) => api.request('GET', `/api/app/analytics?${new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== ''))}`),
+  },
+  /** CSV / Excel exports; `filters` are the same query keys the server reads. */
+  exports: {
+    count: (dataset, filters = {}) => api.request('GET', `/api/app/exports/${encodeURIComponent(dataset)}/count?${new URLSearchParams(Object.entries(filters).filter(([, v]) => v != null && v !== ''))}`),
+    async download(dataset, format, filters = {}) {
+      const qs = new URLSearchParams(Object.entries({ ...filters, format }).filter(([, v]) => v != null && v !== ''));
+      const { blob, filename } = await api.requestBlob('GET', `/api/app/exports/${encodeURIComponent(dataset)}?${qs}`);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || `dialtact-${dataset}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      return filename;
+    },
+  },
   languageSwitch: {
     readiness: (agentId, language) => api.request('GET', `/api/language-switch-requests/readiness?agentId=${encodeURIComponent(agentId)}&language=${encodeURIComponent(language)}`),
     call: (id, fromE164 = null) => api.request('POST', `/api/language-switch-requests/${encodeURIComponent(id)}/call`, fromE164 ? { fromE164 } : {}),

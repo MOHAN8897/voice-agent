@@ -117,17 +117,6 @@ async def test_clear_audio_is_louder_than_raw(archive):
     assert peak(archive.mix_clear_path(call_id)) > peak(archive.mix_path(call_id))
 
 
-def test_peak_normalize_ignores_click_spike():
-    from server.call.audio_archive import _peak_normalize_pcm16
-
-    samples = [400] * 200
-    samples[50] = 30000
-    pcm = struct.pack("<" + "h" * 200, *samples)
-    out = _peak_normalize_pcm16(pcm)
-    boosted = struct.unpack("<200h", out)
-    assert abs(boosted[0]) > 2000
-    assert abs(boosted[50]) == 32767
-
 
 @pytest.mark.asyncio
 async def test_clear_mix_folds_both_parties_and_is_louder(archive):

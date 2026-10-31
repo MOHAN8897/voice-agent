@@ -8,9 +8,11 @@ import { Modal } from '../ui/Modal';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/StatusBadge';
 import { EmptyState } from '../ui/EmptyState';
+import { LanguageTag } from '../ui/LanguageTag';
 import { NeedsYouItem } from './NeedsYouItem';
 import { humanizeToken } from '../../lib/internalLabels';
 import { contactName, formatPhone } from '../../lib/phoneMask';
+import { invalidateLanguageRequests } from '../lib/languageRequests';
 
 const field = 'mt-1 block min-h-11 min-w-0 max-w-full rounded-control border border-line bg-surface px-3 py-2 text-base sm:text-ui text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15';
 const STATUS_LABEL = { pending: 'Needs callback', calling: 'Callback placed', done: 'Done', dismissed: 'Removed' };
@@ -18,13 +20,7 @@ const STATUS_TONE = { pending: 'warning', calling: 'info', done: 'success', dism
 
 function LanguageChip({ label, active = false, onClick, count }) {
   const cls = `inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-pill border px-3 text-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${active ? 'border-ink bg-ink text-white' : 'border-line bg-surface text-fg-body hover:border-line-strong hover:text-ink'}`;
-  if (!onClick) {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-pill border border-accent-soft bg-accent-soft px-2 py-0.5 text-meta font-medium text-accent-fg">
-        <Languages className="h-3 w-3" aria-hidden="true" />{label}
-      </span>
-    );
-  }
+  if (!onClick) return <LanguageTag label={label} />;
   return (
     <button type="button" aria-pressed={active} onClick={onClick} className={cls}>
       {label}{typeof count === 'number' && <span className={`rounded-pill px-1.5 font-mono text-meta tabular-nums ${active ? 'bg-white/20 text-white' : 'bg-surface-subtle text-fg-body'}`}>{count}</span>}
@@ -33,7 +29,7 @@ function LanguageChip({ label, active = false, onClick, count }) {
 }
 
 /** "Callback needed in another language": callers who asked for a language the agent's pack doesn't speak. */
-export function LanguageCallbacks({ agentId = null, readOnly = false }) {
+export function LanguageCallbacks({ agentId = null, readOnly = false, onChange = null }) {
   const { agents = [], outboundFromE164 } = useWorkspace();
   const [rows, setRows] = useState([]);
   const [status, setStatus] = useState('open');
@@ -44,6 +40,8 @@ export function LanguageCallbacks({ agentId = null, readOnly = false }) {
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  // Non-blocking: which of the agent's own lines were replaced by the language's defaults.
+  const [hint, setHint] = useState('');
   const [bulkOpen, setBulkOpen] = useState(false);
   const [consent, setConsent] = useState(false);
 
@@ -73,14 +71,16 @@ export function LanguageCallbacks({ agentId = null, readOnly = false }) {
   const selectedRows = visible.filter((row) => selected.includes(row.id));
 
   const callNow = async (row) => {
-    setBusy(row.id); setError(''); setNotice('');
+    setBusy(row.id); setError(''); setNotice(''); setHint('');
     try {
       const ready = await api.request('GET', `/api/language-switch-requests/readiness?agentId=${encodeURIComponent(row.agentId)}&language=${encodeURIComponent(row.requestedLanguage)}`);
       if (!ready.ready) throw new Error(ready.message || `This agent can't call in ${row.requestedLanguageLabel} yet.`);
       const result = await api.request('POST', `/api/language-switch-requests/${row.id}/call`, outboundFromE164 ? { fromE164: outboundFromE164 } : {});
       if (result.ok === false) throw new Error(result.error || 'The call could not be placed. The request is still in the list.');
       setNotice(`Calling ${contactName(row.contactName, row.phone, 'this caller')} in ${row.requestedLanguageLabel} with ${agentName(row.agentId)}. It is marked done after a connected call in ${row.requestedLanguageLabel}.`);
+      setHint(result.note || ready.note || '');
       setRows((current) => current.map((item) => item.id === row.id ? { ...item, status: 'calling' } : item));
+      invalidateLanguageRequests(); onChange?.();
     } catch (e) {
       setError(e.message || 'Could not start the call.');
     } finally {
@@ -96,6 +96,7 @@ export function LanguageCallbacks({ agentId = null, readOnly = false }) {
         ? current.filter((item) => item.id !== row.id)
         : current.map((item) => item.id === row.id ? updated : item)));
       setNotice(next === 'done' ? 'Marked done.' : 'Removed from the list.');
+      invalidateLanguageRequests(); onChange?.();
     } catch (e) {
       setError(e.message || 'Could not update this request.');
     } finally {
@@ -104,7 +105,7 @@ export function LanguageCallbacks({ agentId = null, readOnly = false }) {
   };
 
   const createCampaign = async () => {
-    setBusy('bulk'); setError(''); setNotice('');
+    setBusy('bulk'); setError(''); setNotice(''); setHint('');
     try {
       const result = await api.request('POST', '/api/language-switch-requests/campaign', {
         ids: selectedRows.map((row) => row.id), consentConfirmed: consent, autoStart: true,
@@ -113,7 +114,9 @@ export function LanguageCallbacks({ agentId = null, readOnly = false }) {
       });
       const total = (result.campaigns || []).reduce((sum, c) => sum + (c.contacts || 0), 0);
       setNotice(`Started ${result.campaigns?.length || 0} campaign${result.campaigns?.length === 1 ? '' : 's'} for ${total} contact${total === 1 ? '' : 's'}. Each contact is called in the language they asked for. Track progress in Campaigns.`);
+      setHint((result.notes || []).join(' '));
       setBulkOpen(false); setConsent(false);
+      invalidateLanguageRequests(); onChange?.();
       await load();
     } catch (e) {
       setError(e.message || 'Could not create the campaign.');
@@ -168,6 +171,7 @@ export function LanguageCallbacks({ agentId = null, readOnly = false }) {
 
         {error && <p role="alert" className="rounded-control border border-danger-line bg-danger-soft p-3 text-ui text-danger-fg">{error}</p>}
         {notice && <p role="status" className="rounded-control border border-success-line bg-success-soft p-3 text-ui text-success-fg">{notice}</p>}
+        {hint && <p role="note" data-testid="language-callback-hint" className="rounded-control border border-info-line bg-info-soft p-3 text-ui text-info-fg">{hint}</p>}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
           <label className="flex min-h-11 items-center gap-2 text-ui text-fg-body sm:min-h-0">
@@ -204,7 +208,7 @@ export function LanguageCallbacks({ agentId = null, readOnly = false }) {
                 detail={<><span className="font-mono tabular-nums">{formatPhone(row.phone) || row.phone}</span> · spoke {row.originalLanguageLabel} with {agent}</>}
                 at={row.createdAt || null}
                 badges={<>
-                  <LanguageChip label={`Wants ${row.requestedLanguageLabel}`} />
+                  <LanguageTag code={row.requestedLanguage} label={row.requestedLanguageLabel} prefix="Wants" />
                   <Badge tone={STATUS_TONE[row.status] || 'neutral'} size="xs">{STATUS_LABEL[row.status] || humanizeToken(row.status)}</Badge>
                 </>}
                 actions={open ? <>

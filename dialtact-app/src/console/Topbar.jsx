@@ -66,6 +66,7 @@ export function Topbar({
     calculator: 'Usage calculator',
     integrations: 'Integrations',
     settings: 'Settings',
+    analytics: 'Analytics',
     admin: 'Platform admin',
   };
 

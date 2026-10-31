@@ -72,6 +72,29 @@ def allowed_reasons_for(policy: dict[str, Any] | None) -> frozenset[str]:
     return frozenset(reasons or DEFAULT_HANGUP_REASONS)
 
 
+# Native script blocks of the served Indic languages (Devanagari shared by hi/mr).
+_SCRIPT_BLOCKS = {"hi": (0x0900, 0x097F), "mr": (0x0900, 0x097F), "bn": (0x0980, 0x09FF), "pa": (0x0A00, 0x0A7F),
+                  "gu": (0x0A80, 0x0AFF), "ta": (0x0B80, 0x0BFF), "te": (0x0C00, 0x0C7F), "kn": (0x0C80, 0x0CFF),
+                  "ml": (0x0D00, 0x0D7F)}
+
+
+def farewell_fits_language(text: str, language: str | None) -> bool:
+    """False when a fixed line is plainly written in another script than ``language`` speaks."""
+    letters = [ch for ch in text or "" if ch.isalpha()]
+    if not letters:
+        return True
+    base = str(language or "").split("-")[0].lower()
+    latin = sum(1 for ch in letters if ord(ch) < 0x0250)
+    if base == "en":
+        return latin / len(letters) >= 0.8
+    block = _SCRIPT_BLOCKS.get(base)
+    if block is None:
+        return True
+    native = sum(1 for ch in letters if block[0] <= ord(ch) <= block[1])
+    foreign = len(letters) - latin - native
+    return foreign / len(letters) < 0.5
+
+
 def server_farewell_for(
     language: str | None,
     *,
@@ -81,6 +104,10 @@ def server_farewell_for(
     """The only farewell spoken on a close. Tenant policy wins, then the language pack."""
     normalized = normalize_call_end_policy(policy, language=language)
     farewell = str(normalized.get("farewell") or "").strip()
+    if farewell and not farewell_fits_language(farewell, language):
+        # A tenant farewell written for the call's own language, after the call
+        # switched to English mid-call: the language pack's farewell is spoken.
+        farewell = ""
     if not farewell:
         from server.call.hangup_judge import default_farewell_for
 

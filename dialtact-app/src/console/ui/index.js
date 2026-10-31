@@ -11,3 +11,4 @@ export { Avatar, avatarColor } from './Avatar';
 export { Toolbar, SearchInput, SelectFilter } from './Toolbar';
 export { NotFound } from './NotFound';
 export { Modal } from './Modal';
+export { LanguageTag, languageLabel } from './LanguageTag';

@@ -302,6 +302,7 @@ export function AgentStudioModule({
   const [activeTab, setActiveTab] = useState(() => resolveEmployeeStep(flowStep).step);
   // null: no link asked for a sub-tab, so the Calls tab reopens where the tenant left it.
   const [callPanel, setCallPanel] = useState(() => resolveEmployeeStep(flowStep).callPanel || null);
+  const [callFilters, setCallFilters] = useState(null);
   const [testCallOpen, setTestCallOpen] = useState(() => Boolean(resolveEmployeeStep(flowStep).openTestCall));
   const [voiceStackReady, setVoiceStackReady] = useState(true);
   // Reset before the voice panel's passive validation effect. Resetting here
@@ -887,17 +888,23 @@ export function AgentStudioModule({
   }, [dirty]);
 
   const selectAgent = useMemo(
+    // Switching employee keeps the tab the user is on. Without a step the hash
+    // dropped to #dashboard/employees and the fleet list replaced the workspace.
     () => guardedAction((agentId, step) => {
+      if (!agentId || agentId === selectedAgentId) return;
       setSelectedAgentId(agentId);
-      onFlowStepChange?.(step, agentId);
+      onFlowStepChange?.(step || activeTab, agentId);
     }),
-    [guardedAction, setSelectedAgentId, onFlowStepChange]
+    [guardedAction, setSelectedAgentId, onFlowStepChange, activeTab, selectedAgentId]
   );
 
   const selectTab = useMemo(
-    () => guardedAction((id, panel) => {
+    // `filters` is a one-shot from an Overview number or stage chip (status for
+    // history; stage/days for leads). A plain tab click clears it.
+    () => guardedAction((id, panel, filters = null) => {
       setActiveTab(id);
       if (id === 'calls' && ['inbound', 'outbound', 'history', 'leads'].includes(panel)) setCallPanel(panel);
+      setCallFilters(id === 'calls' && filters ? filters : null);
       onFlowStepChange?.(id);
     }),
     [guardedAction, onFlowStepChange]
@@ -1936,6 +1943,7 @@ export function AgentStudioModule({
               agentId={selectedAgent.id}
               agentName={selectedAgent.name}
               initialPanel={callPanel}
+              initialFilters={callFilters}
               onPanelChange={setCallPanel}
               onNavigateToSettings={() => selectTab('settings')}
             />

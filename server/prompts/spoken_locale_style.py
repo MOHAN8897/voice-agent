@@ -39,8 +39,13 @@ def primary_language_rule(locale: str) -> str:
         "Keep this regional English style; preserve local names and the supplied business currency. "
     )
     return (f"Primary language: {style.name} ({locale}). Speak naturally, warmly and respectfully. {mixing}"
-            f"Reply in {style.name} even if the caller switches language or asks for another one; never switch "
-            "mid-call. The platform offers a call back in the requested language.")
+            f"{ACTIVE_LANGUAGE_RULE.format(name=style.name)}")
+
+
+#: The one language rule a compiled brain carries. The platform decides a mid-call
+#: switch (English fallback) and sends an ACTIVE LANGUAGE note; the model never switches on its own.
+ACTIVE_LANGUAGE_RULE = ("Reply in {name} unless a later ACTIVE LANGUAGE note names another language; then follow "
+                        "that note. Never switch on your own.")
 
 
 def spoken_register_for(locale: str) -> str:

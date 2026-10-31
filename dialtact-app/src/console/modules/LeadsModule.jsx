@@ -20,7 +20,11 @@ import { CampaignSetup } from './CampaignSetup';
 import { FollowUpQueue } from './FollowUpQueue';
 import { DncRegistryPanel } from './DncRegistryPanel';
 import { LeadPriority } from './LeadPriority';
+import { ExportButton } from './analytics/ExportDialog';
 import { formatPhone } from '../../lib/phoneMask';
+import { LanguageTag } from '../ui/LanguageTag';
+import { languagePrefix, phoneKey, useLanguageRequests } from '../lib/languageRequests';
+import { useLeadWorkCounts } from '../lib/leadWorkCounts';
 
 const STAGES = ['New', 'Contacted', 'Qualified', 'Meeting Booked', 'Converted', 'Unqualified'];
 const PAGE_SIZE = 25;
@@ -44,7 +48,7 @@ function rowClickOpens(event) {
 }
 const ROW_FOCUS = 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent';
 
-export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
+export function LeadsModule({ agentId = null, agentName = '', onOpenHistory, initialStage = '', initialDays = '' }) {
   const { user } = useAuth();
   const readOnly = user?.role === 'customer_viewer' || user?.role === 'viewer';
   const rowPressRef = useRef(null);
@@ -71,7 +75,9 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
     return wanted.slice(0, 64);
   });
   const leadOpened = useRef(false);
-  const [filters, setFilters] = useState({ search: initialLeadSearch, stage: '', owner: '', phone: '', days: '', sort: 'updated' });
+  // Stage and period can be seeded from a link (an agent Overview chip); the stage may come as the API token.
+  const [filters, setFilters] = useState(() => ({ search: initialLeadSearch, stage: STAGES.find((stage) => stage === initialStage || leadStageToApi(stage) === initialStage) || '',
+    owner: '', phone: '', days: ['1', '7', '30', '90'].includes(String(initialDays)) ? String(initialDays) : '', sort: 'updated' }));
   const [search, setSearch] = useState(initialLeadSearch);
   const [offset, setOffset] = useState(0);
   const [refresh, setRefresh] = useState(0);
@@ -91,6 +97,15 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
   const [addError, setAddError] = useState('');
   const [campaignLeads, setCampaignLeads] = useState(null);
   const [campaignBusy, setCampaignBusy] = useState(false);
+  // Pending work behind each sub-tab, and the language each caller asked for.
+  const [workRevision, setWorkRevision] = useState(0);
+  const workChanged = () => setWorkRevision((value) => value + 1);
+  const workCounts = useLeadWorkCounts(agentId, workRevision);
+  const languages = useLanguageRequests(agentId, workRevision);
+  const leadLanguage = (lead) => {
+    const tag = lead?.phone ? languages.byPhone.get(phoneKey(lead.phone)) : null;
+    return tag ? <LanguageTag code={tag.code} label={tag.label} prefix={languagePrefix(tag)} /> : null;
+  };
   useEffect(() => { const timer = setTimeout(() => setSearch(filters.search.trim()), 250); return () => clearTimeout(timer); }, [filters.search]);
   const updatedSince = useMemo(() => filters.days ? new Date(Date.now() - Number(filters.days) * 86400000).toISOString() : undefined, [filters.days]);
   const query = useMemo(() => ({ agentId: agentId || filters.owner || undefined, search,
@@ -161,7 +176,7 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
   const toggle = (lead) => setSelected((current) => current.includes(lead.id) ? current.filter((id) => id !== lead.id) : [...current, lead.id]);
   const metrics = [['Matching leads', total], ['New enquiries', counts.new || 0], ['Qualified', counts.qualified || 0], ['Meetings booked', counts.meeting_booked || 0], ['Converted', counts.converted || 0]];
 
-  const areaTabs = [['pipeline', 'Pipeline'], ['followups', 'Callbacks & missed calls'], ['language', 'Callback in another language'], ['dnd', 'Do not call']];
+  const areaTabs = [['pipeline', 'Pipeline'], ['followups', 'Callbacks & missed calls', workCounts.followups], ['language', 'Callback in another language', workCounts.language], ['dnd', 'Do not call']];
   const areaCopy = {
     pipeline: 'Review enquiries, keep a clear next step, and follow up by call or campaign.',
     followups: 'Callers who asked for a call back and calls you missed, in the order they are due.',
@@ -173,29 +188,41 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
       eyebrow={area === 'pipeline' ? 'Customer pipeline' : null}
       title={agentId ? `${agentName || 'Agent'} leads` : 'Leads'}
       description={areaCopy[area]}
-      actions={area === 'pipeline' ? <>
+      actions={<>
+        <ExportButton size="md" preset={area === 'pipeline'
+          ? { dataset: 'leads', agentId: agentId || (filters.owner !== 'unassigned' ? filters.owner : '') || '', values: filters.stage ? { stage: leadStageToApi(filters.stage) } : {} }
+          : { dataset: { followups: 'followups', language: 'language_callbacks', dnd: 'dnc' }[area] || 'leads', agentId: agentId || '' }} />
+        {area === 'pipeline' && <>
         <TactileButton variant="secondary" icon={RefreshCw} disabled={loading} onClick={() => setRefresh((value) => value + 1)}>Refresh leads</TactileButton>
         <TactileButton icon={Plus} disabled={readOnly} onClick={() => { setAddForm({ ...emptyLead, agentId: agentId || '' }); setAddError(''); setAddOpen(true); }}>Add lead</TactileButton>
-      </> : null}
+        </>}
+      </>}
     />
   );
   const navigation = (
     <nav aria-label="Lead management" className="flex max-w-full gap-0.5 overflow-x-auto rounded-control border border-line bg-surface-subtle p-0.5 no-scrollbar sm:inline-flex">
-      {areaTabs.map(([value, title]) => (
+      {areaTabs.map(([value, title, pending]) => (
         <button
           key={value}
           type="button"
           aria-pressed={area === value}
           onClick={() => setArea(value)}
+          data-testid={`leads-tab-${value}`}
+          aria-description={pending > 0 ? `${pending} waiting` : undefined}
           className={`inline-flex min-h-[40px] sm:min-h-[32px] shrink-0 items-center rounded-[8px] px-3 py-1.5 text-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${area === value ? 'bg-surface text-ink shadow-craft-xs' : 'text-fg-body hover:text-ink'}`}
         >
           {title}
+          {pending > 0 && (
+            <span aria-hidden="true" data-testid={`leads-tab-count-${value}`} className="ml-1.5 rounded-pill bg-warning-soft px-1.5 font-mono text-meta tabular-nums text-warning-fg">
+              {pending}
+            </span>
+          )}
         </button>
       ))}
     </nav>
   );
-  if (area === 'followups') return <div className="min-w-0 space-y-5">{header}{navigation}<FollowUpQueue agentId={agentId} readOnly={readOnly} /><CallbackRequests agentId={agentId} readOnly={readOnly} /></div>;
-  if (area === 'language') return <div className="min-w-0 space-y-5">{header}{navigation}<LanguageCallbacks agentId={agentId} readOnly={readOnly} /></div>;
+  if (area === 'followups') return <div className="min-w-0 space-y-5">{header}{navigation}<FollowUpQueue agentId={agentId} readOnly={readOnly} onChange={workChanged} /><CallbackRequests agentId={agentId} readOnly={readOnly} onChange={workChanged} /></div>;
+  if (area === 'language') return <div className="min-w-0 space-y-5">{header}{navigation}<LanguageCallbacks agentId={agentId} readOnly={readOnly} onChange={workChanged} /></div>;
   if (area === 'dnd') return <div className="min-w-0 space-y-5">{header}{navigation}<DncRegistryPanel readOnly={readOnly} /></div>;
   const selectBox = (lead, extra = '') => (
     <input type="checkbox" aria-label={`Select ${lead.name}`} disabled={readOnly || lead.doNotCall || !lead.phone?.trim()} checked={selected.includes(lead.id)} onChange={() => toggle(lead)} className={`h-4 w-4 shrink-0 accent-accent ${extra}`} />
@@ -241,7 +268,7 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
           <label className="block min-w-0 text-meta font-medium text-fg-body">Stage<select className={`${field} mt-1`} value={filters.stage} onChange={(event) => changeFilter('stage', event.target.value)}><option value="">All stages</option>{STAGES.map((stage) => <option key={stage} value={stage}>{statusWord(stage).label}</option>)}</select></label>
           {!agentId && <label className="block min-w-0 text-meta font-medium text-fg-body">Agent owner<select className={`${field} mt-1`} value={filters.owner} onChange={(event) => changeFilter('owner', event.target.value)}><option value="">All agents</option><option value="unassigned">Unassigned</option>{agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select></label>}
           <label className="block min-w-0 text-meta font-medium text-fg-body">Contact availability<select className={`${field} mt-1`} value={filters.phone} onChange={(event) => changeFilter('phone', event.target.value)}><option value="">All contacts</option><option value="yes">Has phone number</option><option value="no">Missing phone number</option></select></label>
-          <label className="block min-w-0 text-meta font-medium text-fg-body">Last updated<select className={`${field} mt-1`} value={filters.days} onChange={(event) => changeFilter('days', event.target.value)}><option value="">Any time</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select></label>
+          <label className="block min-w-0 text-meta font-medium text-fg-body">Last updated<select className={`${field} mt-1`} value={filters.days} onChange={(event) => changeFilter('days', event.target.value)}><option value="">Any time</option><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select></label>
           <label className="block min-w-0 text-meta font-medium text-fg-body">Sort by<select className={`${field} mt-1`} value={filters.sort} onChange={(event) => changeFilter('sort', event.target.value)}><option value="updated">Recently updated</option><option value="created">Newest enquiries</option><option value="name">Name A–Z</option></select></label>
           <div className="flex items-end"><TactileButton variant="ghost" onClick={() => { setFilters({ search: '', stage: '', owner: '', phone: '', days: '', sort: 'updated' }); setOffset(0); setSelected([]); }}>Clear filters</TactileButton></div>
         </div>
@@ -268,15 +295,16 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
             <thead><tr className="border-b border-line text-meta text-fg-muted"><th className="w-10 py-2.5 pl-5 pr-2"><input type="checkbox" aria-label="Select all callable leads on this page" disabled={readOnly || !callableRows.length} checked={Boolean(callableRows.length) && callableRows.every((lead) => selected.includes(lead.id))} onChange={(event) => setSelected(event.target.checked ? callableRows.map((lead) => lead.id) : [])} className="h-4 w-4 accent-accent" /></th>{['Contact', 'Stage', 'Agent owner', 'Updated', ''].map((label, index) => <th key={label || index} scope="col" className="px-3 py-2.5 font-medium">{label ? label : <span className="sr-only">Actions</span>}</th>)}</tr></thead>
             <tbody className="divide-y divide-line">{rows.map((lead) => <tr key={lead.id} {...openRowProps(lead)} className={`align-top transition-colors hover:bg-canvas ${ROW_FOCUS}`} data-testid={`lead-row-${lead.id}`}>
               <td className="py-4 pl-5 pr-2 cursor-default" data-row-ignore>{selectBox(lead)}</td>
-              <td className="max-w-sm px-3 py-4"><div className="flex min-w-0 items-start gap-3"><Avatar name={lead.name} size="sm" /><div className="min-w-0"><button type="button" onClick={() => openDetail(lead)} title={lead.name} className="max-w-full truncate text-left font-semibold text-ink hover:text-accent-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-control">{lead.name}</button><p className={`mt-0.5 text-meta text-fg-body ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone ? formatPhone(lead.phone) : 'Phone missing'}</p>{lead.email && <p className="mt-0.5 truncate text-meta text-fg-muted" title={lead.email}>{lead.email}</p>}<p className="mt-1 line-clamp-1 max-w-xs text-meta text-fg-muted" title={lead.notes || undefined}>{lead.notes || 'Add notes and a next step'}</p></div></div></td>
+              <td className="max-w-sm px-3 py-4"><div className="flex min-w-0 items-start gap-3"><Avatar name={lead.name} size="sm" /><div className="min-w-0"><button type="button" onClick={() => openDetail(lead)} title={lead.name} className="max-w-full truncate text-left font-semibold text-ink hover:text-accent-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-control">{lead.name}</button><p className={`mt-0.5 text-meta ${lead.doNotCall ? 'font-semibold text-danger-fg' : 'text-fg-body'} ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone ? formatPhone(lead.phone) : 'Phone missing'}</p>{leadLanguage(lead) && <div className="mt-1">{leadLanguage(lead)}</div>}{lead.email && <p className="mt-0.5 truncate text-meta text-fg-muted" title={lead.email}>{lead.email}</p>}<p className="mt-1 line-clamp-1 max-w-xs text-meta text-fg-muted" title={lead.notes || undefined}>{lead.notes || 'Add notes and a next step'}</p></div></div></td>
               <td className="px-3 py-4"><StatusBadge status={lead.stage} size="xs" /><LeadPriority lead={lead} /></td>
               <td className="px-3 py-4 text-ui text-fg-body"><span className="inline-flex min-w-0 items-center gap-2">{lead.agentId && <Avatar name={ownerName(lead)} size="xs" />}{ownerName(lead)}</span></td>
               <td className="whitespace-nowrap px-3 py-4 text-meta text-fg-muted">{updated(lead)}</td>
               <td className="py-4 pl-3 pr-5 text-right"><TactileButton size="sm" variant="secondary" icon={ArrowUpRight} onClick={() => openDetail(lead)} aria-label={`Open ${lead.name}`}>Details</TactileButton></td>
             </tr>)}</tbody></table></div>
           <ul className="divide-y divide-line md:hidden">{rows.map((lead) => <li key={lead.id} {...openRowProps(lead)} data-testid={`lead-item-${lead.id}`} className={`space-y-2 p-4 transition-colors hover:bg-canvas ${ROW_FOCUS}`}>
-            <div className="flex items-start gap-3">{selectBox(lead, 'mt-2.5')}<Avatar name={lead.name} size="sm" /><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><button type="button" onClick={() => openDetail(lead)} title={lead.name} className="min-w-0 truncate text-left text-copy font-semibold text-ink">{lead.name}</button><StatusBadge status={lead.stage} size="xs" /></div><p className={`text-meta text-fg-body ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone ? formatPhone(lead.phone) : 'Phone missing'}</p></div></div>
+            <div className="flex items-start gap-3">{selectBox(lead, 'mt-2.5')}<Avatar name={lead.name} size="sm" /><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><button type="button" onClick={() => openDetail(lead)} title={lead.name} className="min-w-0 truncate text-left text-copy font-semibold text-ink">{lead.name}</button><StatusBadge status={lead.stage} size="xs" /></div><p className={`text-meta ${lead.doNotCall ? 'font-semibold text-danger-fg' : 'text-fg-body'} ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone ? formatPhone(lead.phone) : 'Phone missing'}</p></div></div>
             <LeadPriority lead={lead} />
+            {leadLanguage(lead)}
             <p className="line-clamp-2 text-meta text-fg-muted">{lead.notes || 'No notes yet'}</p>
             <div className="flex items-center justify-between gap-2 text-meta text-fg-muted"><span className="min-w-0 truncate">{ownerName(lead)}</span>{updated(lead)}</div>
             <TactileButton variant="secondary" size="sm" onClick={() => openDetail(lead)}>View details</TactileButton>
@@ -286,7 +314,8 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
           {rows.filter((lead) => lead.stage === stage).map((lead) => <div key={lead.id} {...openRowProps(lead)} data-testid={`lead-card-${lead.id}`} className={`space-y-2 rounded-control border border-line bg-surface p-3 transition-colors hover:border-line-strong ${ROW_FOCUS}`}>
             <div className="flex items-start gap-2">{selectBox(lead, 'mt-1')}<button type="button" onClick={() => openDetail(lead)} title={lead.name} className="min-w-0 break-words text-left text-ui font-semibold text-ink hover:text-accent-fg">{lead.name}</button></div>
             <LeadPriority lead={lead} />
-            <p className={`text-meta text-fg-body ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone ? formatPhone(lead.phone) : 'Phone missing'}</p>
+            {leadLanguage(lead)}
+            <p className={`text-meta ${lead.doNotCall ? 'font-semibold text-danger-fg' : 'text-fg-body'} ${lead.phone ? 'font-mono tabular-nums' : ''}`}>{lead.phone ? formatPhone(lead.phone) : 'Phone missing'}</p>
             <p className="line-clamp-3 text-meta text-fg-muted">{lead.notes || 'No notes yet'}</p>
             <p className="text-meta text-fg-muted">{ownerName(lead)} · {updated(lead)}</p>
           </div>)}
@@ -294,11 +323,12 @@ export function LeadsModule({ agentId = null, agentName = '', onOpenHistory }) {
         </section>)}</div>}
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 text-meta text-fg-muted sm:px-5"><span><span className="font-mono tabular-nums">{total ? `${offset + 1}–${Math.min(offset + PAGE_SIZE, total)}` : '0'}</span>{total ? ` of ${total.toLocaleString()}` : ' leads'} · {view === 'board' ? 'Board shows this page' : '25 per page'}</span><div className="flex gap-2"><TactileButton variant="secondary" size="sm" disabled={!offset || loading} onClick={() => { setOffset(Math.max(0, offset - PAGE_SIZE)); setSelected([]); }}>Previous leads</TactileButton><TactileButton variant="secondary" size="sm" disabled={offset + PAGE_SIZE >= total || loading} onClick={() => { setOffset(offset + PAGE_SIZE); setSelected([]); }}>Next leads</TactileButton></div></footer>
       </SolidCard>
-      <CallbackRequests agentId={agentId} readOnly={readOnly} />
+      <CallbackRequests agentId={agentId} readOnly={readOnly} onChange={workChanged} />
       {readOnly && <p className="text-meta text-fg-muted" role="status">You have view-only access: you can review leads and call history.</p>}
       <Modal isOpen={Boolean(detail)} onClose={closeDetail} title={detail?.name || 'Lead details'} subtitle="Contact details, notes and follow-up" maxWidth="max-w-2xl">
         {detail && <div className="space-y-5">
           <LeadPriority lead={detail} detailed />
+          {leadLanguage(detail) && <p className="flex flex-wrap items-center gap-2 text-ui text-fg-body" data-testid="lead-language">{leadLanguage(detail)}<span>This caller asked to talk in another language. Call them back from Callback in another language.</span></p>}
           <dl className="grid grid-cols-1 gap-4 rounded-control border border-line bg-canvas p-4 text-ui sm:grid-cols-2">{[['Phone', detail.phone || 'Not provided'], ['Email', detail.email || 'Not provided'], ['Agent owner', ownerName(detail)], ['Created', formatDate(detail.createdAt)], ['Last updated', formatDate(detail.updatedAt)]].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-meta text-fg-muted">{label}</dt><dd className={`mt-1 break-words font-medium text-ink ${label === 'Phone' && detail.phone ? 'font-mono tabular-nums' : ''}`}>{value}</dd></div>)}</dl>
           <label className="block text-ui font-medium text-ink">Pipeline stage<select className={`${field} mt-1`} value={draft.stage} disabled={readOnly || Boolean(busy)} onChange={(event) => { setDraft((current) => ({ ...current, stage: event.target.value })); setConversionConfirmed(false); }}>{STAGES.map((stage) => <option key={stage} value={stage}>{statusWord(stage).label}</option>)}</select></label>
           {draft.stage === 'Converted' && detail.stage !== 'Converted' && <label className="flex items-start gap-3 rounded-control border border-success-line bg-success-soft p-4 text-copy text-success-fg"><input type="checkbox" checked={conversionConfirmed} disabled={readOnly || Boolean(busy)} onChange={(event) => setConversionConfirmed(event.target.checked)} className="mt-1 h-4 w-4 shrink-0" /><span>I confirm this lead became a customer.</span></label>}

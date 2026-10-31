@@ -22,6 +22,7 @@ import { BillingModule } from './modules/BillingModule';
 import { UsageCalculatorModule } from './modules/UsageCalculatorModule';
 import { IntegrationsModule } from './modules/IntegrationsModule';
 import { SettingsModule } from './modules/SettingsModule';
+import { AnalyticsModule } from './modules/analytics/AnalyticsModule';
 import { useAuth } from '../context/AuthContext';
 import { ConsoleSyncBanner } from './ui/ConsoleSyncBanner';
 import { ImpersonationBanner } from './ui/ImpersonationBanner';
@@ -36,7 +37,7 @@ import { NotFound } from './ui/NotFound';
 /** Every page the console can render. Anything else shows "Page not found". */
 export const CONSOLE_TABS = new Set([
   'overview', 'employees', 'phone-numbers', 'calls', 'leads', 'campaigns',
-  'billing', 'calculator', 'integrations', 'settings',
+  'billing', 'calculator', 'integrations', 'settings', 'analytics',
 ]);
 
 export function AppShell({ onBackToLanding, onSignOut }) {
@@ -255,6 +256,8 @@ export function AppShell({ onBackToLanding, onSignOut }) {
               {activeTab === 'integrations' && <IntegrationsModule />}
 
               {activeTab === 'settings' && <SettingsModule />}
+
+              {activeTab === 'analytics' && <AnalyticsModule onNavigate={handleNavigate} />}
 
               {!CONSOLE_TABS.has(activeTab) && <NotFound page={activeTab} onHome={() => handleSelectTab('overview')} />}
             </ErrorBoundary>

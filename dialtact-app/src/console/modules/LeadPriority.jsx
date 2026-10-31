@@ -13,7 +13,7 @@ export function LeadPriority({ lead, detailed = false }) {
         {scored ? `${a.score}/100 · ${a.band} priority` : 'Priority not scored'}
       </Badge>
       {lead.doNotCall && (
-        <Badge tone="warning" size="xs" title="This number is on your do-not-call list">
+        <Badge tone="danger" size="xs" title="This number is on your do-not-call list">
           <ShieldOff className="h-3 w-3" aria-hidden="true" />DND · calling blocked
         </Badge>
       )}

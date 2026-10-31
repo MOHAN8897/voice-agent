@@ -9,8 +9,9 @@ import { Badge } from '../ui/StatusBadge';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { NeedsYouItem } from './NeedsYouItem';
 import { formatPhone } from '../../lib/phoneMask';
+import { languagePrefix, phoneKey, useLanguageRequests } from '../lib/languageRequests';
 
-export function CallbackRequests({ agentId = null, readOnly = false }) {
+export function CallbackRequests({ agentId = null, readOnly = false, onChange = null }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -18,6 +19,9 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
   const [notice, setNotice] = useState('');
   const { agents = [] } = useWorkspace();
   const agentName = (id) => (id ? agents.find((agent) => String(agent.id) === String(id))?.name || '' : '');
+  const [revision, setRevision] = useState(0);
+  // Callers who asked for another language carry that language on their request.
+  const languages = useLanguageRequests(agentId, revision);
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -32,6 +36,7 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
     }
   }, [agentId]);
   useEffect(() => { load(); }, [load]);
+  const reload = () => { setRevision((value) => value + 1); load(); };
 
   const resolve = async (row, status) => {
     setBusy(row.id);
@@ -40,6 +45,7 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
     try {
       await api.request('PATCH', `/api/callback-requests/${row.id}`, { status });
       setRows((current) => current.filter((item) => item.id !== row.id));
+      onChange?.();
       setNotice(status === 'converted' ? 'Marked converted and removed from pending callbacks.'
         : row.kind === 'human_handoff' ? 'Marked handled and removed from pending requests.' : 'Removed from pending callbacks.');
     } catch (e) {
@@ -73,7 +79,7 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
           <h3 className="text-title text-ink">Callback requests</h3>
           <p className="mt-0.5 text-ui text-fg-muted">Callers who asked your agent to ring them back, or asked for a person from your team to call them. Calling back replaces any automatic follow-up, and a call that has already started is never placed twice. Automatic follow-ups are in Callbacks &amp; missed calls.</p>
         </div>
-        <TactileButton type="button" variant="secondary" size="sm" icon={RefreshCw} onClick={load} disabled={loading || busy !== null}>Refresh</TactileButton>
+        <TactileButton type="button" variant="secondary" size="sm" icon={RefreshCw} onClick={reload} disabled={loading || busy !== null}>Refresh</TactileButton>
       </div>
       <div className="px-4 sm:px-5">
         {error && <p role="alert" className="mt-3 rounded-control border border-danger-line bg-danger-soft px-3 py-2 text-ui text-danger-fg">{error}</p>}
@@ -85,6 +91,7 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
         <ul className="mt-3 divide-y divide-line border-t border-line" data-testid="callback-request-list">
           {rows.map((row) => {
             const agent = agentName(row.agentId);
+            const wanted = languages.byPhone.get(phoneKey(row.phone));
             // A handoff asks for a person from the business, so the agent does not dial it.
             const handoff = row.kind === 'human_handoff' ? row.handoff || {} : null;
             const asked = row.requestedWhen && row.requestedWhen !== 'Requested during the call'
@@ -97,6 +104,9 @@ export function CallbackRequests({ agentId = null, readOnly = false }) {
                 tone="warning"
                 needsYou
                 data-kind={row.kind || 'callback'}
+                language={wanted?.code}
+                languageLabel={wanted?.label}
+                languagePrefix={languagePrefix(wanted)}
                 actor={<span className="font-mono tabular-nums">{formatPhone(row.phone) || row.phone}</span>}
                 text={handoff ? `wants ${(handoff.contactLabel || 'a person from the business').replace(/^A /, 'a ')} to call them` : 'asked for a call back'}
                 detail={handoff ? [handoff.reason && `Why: ${handoff.reason}`, asked].filter(Boolean).join(' · ') || null

@@ -111,7 +111,7 @@ export function EmployeesModule({
             onOpenBuyNumber?.();
           }}
           flowStep={employeeFlowStep}
-          onFlowStepChange={(step) => onEmployeeFlowStepChange?.(step, selectedAgentId)}
+          onFlowStepChange={(step, agentId) => onEmployeeFlowStepChange?.(step, agentId || selectedAgentId)}
           onBackToFleet={onBackToFleet}
           liveAgentIds={onCallIds}
         />

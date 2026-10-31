@@ -19,6 +19,7 @@ import {
 import { Avatar } from '../../ui/Avatar';
 import { Badge } from '../../ui/StatusBadge';
 import { TactileButton } from '../../ui/TactileButton';
+import { LanguageTag } from '../../ui/LanguageTag';
 import { formatClock, relativeTime } from '../../../lib/money';
 import { rowTransition, rowVariants } from './motion';
 
@@ -68,6 +69,25 @@ export function ItemSentence({ item, className = '' }) {
       <span className={actor ? 'text-fg-body' : 'font-medium text-ink'}>{item.text}</span>
     </span>
   );
+}
+
+/**
+ * The language a caller asked for, and the language a callback was placed in.
+ * Language callbacks carry it on every status; calls carry it when the caller
+ * asked for another language or the call was a language callback.
+ */
+export function ItemLanguageTags({ item }) {
+  const meta = item.meta || {};
+  const type = item.type || '';
+  const tags = [];
+  if (meta.language) {
+    const prefix = type === 'language.calling' ? 'Calling in' : type === 'language.done' ? 'Called in' : 'Wants';
+    tags.push(<LanguageTag key="wants" code={meta.language} label={meta.languageLabel} prefix={prefix} />);
+  }
+  if (meta.callLanguage && meta.callLanguage !== meta.language) {
+    tags.push(<LanguageTag key="call" code={meta.callLanguage} label={meta.callLanguageLabel} prefix="Called in" />);
+  }
+  return tags.length ? <>{tags}</> : null;
 }
 
 /**
@@ -182,6 +202,7 @@ export const FeedItem = forwardRef(function FeedItem(
           {duration && <span className="font-mono tabular-nums">· {duration}</span>}
           {dueAt && <span>· due {relativeTime(dueAt, now)}</span>}
           {outcome && <Badge tone={item.tone === 'success' ? 'success' : 'neutral'} size="xs">{outcome}</Badge>}
+          <ItemLanguageTags item={item} />
           {item.needsAction && <Badge tone={item.tone === 'danger' ? 'danger' : 'warning'} size="xs">Needs you</Badge>}
         </div>
 

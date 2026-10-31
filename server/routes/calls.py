@@ -682,7 +682,10 @@ async def get_audio_status(call_id: str, scope: tuple[str, bool] = Depends(resol
         from server.services.vobiz_recordings import schedule_recording_retrieval
         schedule_recording_retrieval(call_id)
     await asyncio.to_thread(audio_archive.ensure_telnyx_review, call_id)
-    path = audio_archive.file_for(call_id, "mix_clear")
+    path = await asyncio.to_thread(audio_archive.ensure_balanced_mix, call_id)
+    if path is None:
+        path = audio_archive.file_for(call_id, "mix_clear")
+    levels = audio_archive.levels_for(call_id, path)[1] if path else None
     if path and path.suffix.lower() == ".wav":
         mp4_path = await asyncio.to_thread(audio_archive.ensure_conversation_mp4, call_id, path)
         if mp4_path:
@@ -694,6 +697,7 @@ async def get_audio_status(call_id: str, scope: tuple[str, bool] = Depends(resol
         "ready": path is not None,
         "telnyx_ready": source == "telnyx",
         "file": path.name if path else None,
+        "levels": levels,
     }
 
 
@@ -702,6 +706,7 @@ async def get_audio(
     call_id: str,
     kind: Literal["mix", "user", "agent", "mix_clear", "user_clear", "agent_clear"],
     download: bool = Query(False, alias="download"),
+    original: bool = Query(False, alias="original"),
     scope: tuple[str, bool] = Depends(resolve_calls_scope),
 ):
     await _assert_call_scoped(call_id, scope)
@@ -709,7 +714,12 @@ async def get_audio(
         await asyncio.to_thread(audio_archive.ensure_telnyx_review, call_id)
     if kind.endswith("_clear"):
         await asyncio.to_thread(audio_archive.refresh_clear_tracks, call_id)
-    path = audio_archive.file_for(call_id, kind)
+    path = None
+    if kind in ("mix", "mix_clear") and not original:
+        # Play and download the speaker-levelled mix; ?original=1 gets the raw file.
+        path = await asyncio.to_thread(audio_archive.ensure_balanced_mix, call_id)
+    if path is None:
+        path = audio_archive.file_for(call_id, kind)
     if path is None:
         from server.services.r2_storage import r2_storage
         if r2_storage.is_configured():
@@ -750,12 +760,14 @@ async def get_audio(
         ".mp4": "audio/mp4",
         ".m4a": "audio/mp4",
     }.get(suffix, "application/octet-stream")
-    source = "vobiz" if path.name.startswith("vobiz_recording") else "telnyx" if path.name.startswith("telnyx") else "local"
+    source, levels = audio_archive.levels_for(call_id, path)
     headers: dict[str, str] = {
         "Accept-Ranges": "bytes",
         "Cache-Control": "no-store",
         "X-Recording-Source": source,
-        "Access-Control-Expose-Headers": "X-Recording-Source",
+        # "balanced": each speaker levelled; "original": the file as recorded.
+        "X-Recording-Levels": levels,
+        "Access-Control-Expose-Headers": "X-Recording-Source, X-Recording-Levels",
         "X-Audio-Encoding": suffix.lstrip("."),
     }
     return FileResponse(
@@ -769,7 +781,7 @@ async def get_audio(
 
 @router.get("/api/call/{call_id}/audio")
 async def get_audio_mix(call_id: str, scope: tuple[str, bool] = Depends(resolve_calls_scope)):
-    return await get_audio(call_id, "mix", scope=scope)
+    return await get_audio(call_id, "mix", download=False, original=False, scope=scope)
 
 
 @router.get("/api/call/{call_id}/memory")

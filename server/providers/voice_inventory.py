@@ -282,7 +282,13 @@ def voices_for_model(provider: str, model: str) -> list[dict[str, Any]]:
         if model not in constants.CARTESIA_TTS_MODELS:
             return []
         supported = set(entry.get("modelLanguages", {}).get(model) or [])
-        rows = [{**row, "languages": sorted(set(row["languages"]) & supported)} for row in entry.get("voices") or []]
+        # Sonic voices are multilingual: the catalog lists a voice's accents, not
+        # its languages. A live check (2026-10-31, sonic-3.5: Jacqueline, Daniel,
+        # Skylar, Archie, te/hi/ta accents) spoke en-IN correctly on the same
+        # stream, so every Indian-accent voice also serves the English fallback.
+        rows = [{**row, "languages": sorted((set(row["languages"]) | (
+            {"en-IN"} if any(code.endswith("-IN") for code in row["languages"]) else set())) & supported)}
+            for row in entry.get("voices") or []]
         return copy.deepcopy([row for row in rows if row["languages"]])
     return copy.deepcopy((entry.get("models") or {}).get(model) or [])
 
@@ -308,6 +314,30 @@ def validate_voice(provider: str, model: str, voice_id: str, language: str | Non
     if language and language not in voice["languages"]:
         raise ValueError("The voice does not match the selected language")
     return copy.deepcopy(voice)
+
+
+def voice_for_language(provider: str, model: str, voice_id: str | None, language: str) -> tuple[str, bool]:
+    """``voice_id`` when it speaks ``language``; else the provider's closest voice for it.
+
+    Closest means the same gender, preferring a persona native to the language.
+    Returns ``(voice, changed)``. A voice missing from the catalog (custom or
+    cloned) is kept: nothing proves it cannot speak the language.
+    """
+    lang = normalize_supported_language(language) or language
+    if provider in {"sarvam", "gnani"} and lang == "en-US":
+        lang = "en-IN"
+    rows = voices_for_model(provider, model)
+    wanted = str(voice_id or "").casefold()
+    current = next((row for row in rows if str(row["providerVoiceId"]).casefold() == wanted), None)
+    if voice_id and (current is None or lang in current.get("languages", [])):
+        return str(voice_id), False
+    candidates = [row for row in rows if lang in row.get("languages", [])]
+    if not candidates:
+        raise ValueError(f"No {provider} voice is published for {model} in {language}")
+    gender = (current or {}).get("gender")
+    same = [row for row in candidates if gender and row.get("gender") == gender] or candidates
+    native = [row for row in same if lang in (row.get("preferredLanguages") or [])]
+    return str((native or same)[0]["providerVoiceId"]), True
 
 
 def profile_voice_rows(provider: str, model: str, languages: list[str], previous: list[dict[str, Any]] | None = None, *, include_unavailable: bool = False) -> list[dict[str, Any]]:

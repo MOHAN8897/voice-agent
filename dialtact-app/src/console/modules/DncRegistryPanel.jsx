@@ -20,6 +20,7 @@ import { Modal } from '../ui/Modal';
 import { DncTableSkeleton } from '../ui/Skeleton';
 import { showToast } from '../ui/ToastHost';
 import { api } from '../../services/api';
+import { formatPhone } from '../../lib/phoneMask';
 
 /**
  * DncRegistryPanel
@@ -92,7 +93,7 @@ export function DncRegistryPanel({ readOnly = false }) {
           return;
         }
         await api.dnc.add(clean, addReason || 'manual_operator');
-        showToast(`Added ${clean} to Do Not Call registry`, 'success');
+        showToast(`Added ${formatPhone(clean) || clean} to Do Not Call registry`, 'success');
       } else {
         const list = bulkPhones
           .split(/\r?\n/)
@@ -124,7 +125,7 @@ export function DncRegistryPanel({ readOnly = false }) {
     try {
       const phone = deactivateTarget.phoneE164 || deactivateTarget.phone_e164;
       await api.dnc.deactivate(phone, removalReason.trim(), true, deactivateTarget.addedAt || deactivateTarget.added_at || null);
-      showToast(`Removed ${phone} from active Do Not Call list`, 'success');
+      showToast(`Removed ${formatPhone(phone) || phone} from active Do Not Call list`, 'success');
       setDeactivateTarget(null);
       setRemovalReason('');
       setReconsentConfirmed(false);
@@ -282,7 +283,20 @@ className={`min-h-[40px] pb-2.5 -mb-px transition-colors border-b-2 flex items-c
                       className="hover:bg-canvas transition-colors text-ink"
                       data-testid={`dnc-row-${phone}`}
                     >
-                      <td className="py-3 px-4 font-mono tabular-nums font-semibold whitespace-nowrap">{phone}</td>
+                      {/* Blocked numbers read red at a glance; the badge says it in words too (never colour alone). */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        {subTab === 'active' ? (
+                          <span className="inline-flex items-center gap-2">
+                            <span className="font-mono tabular-nums font-semibold text-danger-fg" data-testid="dnc-phone" title={phone}>{formatPhone(phone) || phone}</span>
+                            <Badge tone="danger" size="xs" data-testid="dnc-blocked-badge">
+                              <PhoneOff className="h-3 w-3" aria-hidden="true" />
+                              Do not call
+                            </Badge>
+                          </span>
+                        ) : (
+                          <span className="font-mono tabular-nums font-semibold text-ink" data-testid="dnc-phone" title={phone}>{formatPhone(phone) || phone}</span>
+                        )}
+                      </td>
                       <td className="py-3 px-4">
                         <Badge tone="neutral">{formatSource(item.source)}</Badge>
                       </td>
@@ -434,7 +448,7 @@ className={`min-h-[40px] pb-2.5 -mb-px transition-colors border-b-2 flex items-c
         isOpen={Boolean(deactivateTarget)}
         onClose={() => { if (!deactivateBusy) setDeactivateTarget(null); }}
         title="Remove from Do Not Call list"
-        subtitle={`Confirm that ${deactivateTarget?.phoneE164 || deactivateTarget?.phone_e164} has agreed to be called again`}
+        subtitle={`Confirm that ${formatPhone(deactivateTarget?.phoneE164 || deactivateTarget?.phone_e164) || 'this number'} has agreed to be called again`}
         maxWidth="max-w-lg"
       >
         <div className="space-y-4">

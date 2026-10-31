@@ -22,6 +22,8 @@ TTS WS: wss://api.sarvam.ai/text-to-speech/ws?model=bulbul:v3&send_completion_ev
 """
 from __future__ import annotations
 
+import asyncio
+
 import inspect
 from typing import Any
 
@@ -53,6 +55,41 @@ def _handshake_body(exc: BaseException) -> bytes | None:
     response = getattr(exc, "response", None)
     body = getattr(response, "body", None)
     return body if isinstance(body, (bytes, bytearray)) else None
+
+
+#: How long a freshly opened realtime stream is watched for an immediate close.
+#: Sarvam closes an exhausted key's STT stream within a few hundred ms of the upgrade.
+EARLY_CLOSE_WINDOW_S = 0.4
+
+_QUOTA_WORDS = ("credit", "quota", "balance", "insufficient", "payment", "limit")
+_AUTH_WORDS = ("unauthor", "invalid api", "api key", "forbidden", "subscription")
+
+
+async def _early_close_status(ws: Any) -> tuple[int, str] | None:
+    """``(http_like_status, reason)`` if the server closed the new stream at once.
+
+    Waits on the close handshake only, so no frame is consumed. A stream still
+    open after the window, or a normal close, returns None.
+    """
+    wait_closed = getattr(ws, "wait_closed", None)
+    if wait_closed is None:
+        return None
+    try:
+        await asyncio.wait_for(wait_closed(), timeout=EARLY_CLOSE_WINDOW_S)
+    except asyncio.TimeoutError:
+        return None
+    except Exception:  # noqa: BLE001 -- a broken probe must not fail the connect.
+        return None
+    code = getattr(ws, "close_code", None)
+    reason = str(getattr(ws, "close_reason", "") or "")
+    lowered = reason.lower()
+    if code in (1000, 1001, None) and not lowered:
+        return None
+    if any(word in lowered for word in _AUTH_WORDS) or code in (1008, 4001, 4003, 4401, 4403):
+        return 401, reason
+    if any(word in lowered for word in _QUOTA_WORDS) or code in (1003, 4002, 4029, 4402):
+        return 402, reason or "insufficient_quota"
+    return 503, reason
 
 
 class _FailoverConnect:
@@ -100,6 +137,20 @@ class _FailoverConnect:
                                      body=_handshake_body(exc)):
                     continue
                 raise
+            rejected = await _early_close_status(ws) if self._component == "stt" else None
+            if rejected is not None:
+                # Realtime STT accepts the upgrade on an exhausted key, then closes it
+                # (code 1003 with a credits reason). Treat that as a rejected key.
+                status, reason = rejected
+                if _handle_rejection(attempts, index, component=self._component, status=status,
+                                     body=reason.encode("utf-8", "replace")):
+                    continue
+                raise ph.ProviderFailure(
+                    f"{self._label} closed the stream right after connecting ({reason or 'no reason'})",
+                    provider="sarvam", component=self._component,
+                    category=ph.classify("sarvam", status=status, body=reason.encode("utf-8", "replace")),
+                    status=status, key_slot=slot, all_keys_failed=True,
+                )
             sarvam_key_pool.report_success(slot, component=self._component)
             return ws
         raise no_key_available(self._component, self._label)

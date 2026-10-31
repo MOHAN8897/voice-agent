@@ -48,6 +48,9 @@ PSTN_AEC_MAX_CREST_FACTOR = 4.5
 PSTN_AEC_LOUD_OPEN_FRAMES = 2
 PSTN_AEC_QUIET_CLOSE_FRAMES = 8
 PSTN_BARGE_FINAL_TIMEOUT_S = 0.8
+# After a mid-call language switch the old STT socket may still owe a final for
+# speech already sent to it; the new socket takes audio meanwhile.
+STT_SWITCH_GRACE_S = 1.5
 # Shield initial carrier/speakerphone echo; explicit strong halts still win.
 PSTN_BARGE_MIN_AFTER_SPEAK_S = 0.35
 # Conversational corrections often land <800ms apart; 450ms still blocks echo double-fires.
@@ -178,6 +181,10 @@ class PstnVoiceLoop:
         self._stt_cm = None
         self._stt = None
         self._stt_task: asyncio.Task | None = None
+        # Mid-call language switch: the language STT listens in, and the swap in flight.
+        self._stt_language = ""
+        self._stt_swapped = False
+        self._stt_switch_task: asyncio.Task | None = None
         self._ping_task: asyncio.Task | None = None
         self._barge_confirm_task: asyncio.Task | None = None
         self._barge_timeout_task: asyncio.Task | None = None
@@ -1791,8 +1798,15 @@ class PstnVoiceLoop:
     def _resolve_language(self) -> str:
         if not self.call_id:
             return "te-IN"
+        from server.call.call_context import get as get_ctx
+        from server.call.language_switch import active_language
         from server.prompts.agent_voice_rules import normalize_compile_language
 
+        # A mid-call English fallback (or a switch back) moves every stage that
+        # asks for the call language: TTS, STT, fixed lines, holding lines.
+        active = active_language(get_ctx(self.call_id))
+        if active:
+            return normalize_compile_language(active)
         cached = getattr(self, "_cached_resolve_language", None)
         if cached:
             return cached
@@ -1802,8 +1816,6 @@ class PstnVoiceLoop:
         if meta_lang:
             self._cached_resolve_language = normalize_compile_language(str(meta_lang))
             return self._cached_resolve_language
-        from server.call.call_context import get as get_ctx
-
         ctx = get_ctx(self.call_id)
         if ctx and ctx.resolved_stack:
             self._cached_resolve_language = normalize_compile_language(
@@ -2039,6 +2051,7 @@ class PstnVoiceLoop:
         )
 
         lang = self._resolve_language()
+        self._stt_language = lang
         rt = runtime_settings.get(self.config_session_id or self.session_id)
         stream_type = effective_stt_stream_type(str(rt.get("sttStreamType") or "fast"))
         mode = effective_stt_mode(str(rt.get("sttMode") or "transcribe"))
@@ -2060,6 +2073,7 @@ class PstnVoiceLoop:
         self._stt = await self._stt_cm.__aenter__()
         self._stt_task = asyncio.create_task(self._stt_supervisor())
         self._ping_task = asyncio.create_task(self._stt_ping())
+        self._enable_live_language_switch()
         log_pstn("stt.open", call_id=self.call_id, language=lang, sample_rate=self.sample_rate)
         if self.call_id:
             pstn_media_flow.emit(self.call_id, "stt_stream", "inbound", detail="streaming")
@@ -2101,6 +2115,7 @@ class PstnVoiceLoop:
             )
 
             lang = self._resolve_language()
+            self._stt_language = lang
             rt = runtime_settings.get(self.config_session_id or self.session_id)
             expected_pipeline, pinned_stack = self._stt_pipeline_options()
             self._stt_cm = _connect_stt_upstream(
@@ -2129,6 +2144,8 @@ class PstnVoiceLoop:
         while not self._closed and self._phase != PHASE_ENDED:
             try:
                 await self._stt_reader()
+                if self._take_stt_swap():
+                    continue
                 # Clean iterator end — try one reconnect if call still live.
                 if self._closed or self._phase == PHASE_ENDED:
                     return
@@ -2143,6 +2160,8 @@ class PstnVoiceLoop:
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
+                if self._take_stt_swap():
+                    continue
                 retries += 1
                 log_pstn(
                     "stt.reader.crash",
@@ -2158,6 +2177,96 @@ class PstnVoiceLoop:
                 if not await self._reopen_stt_socket():
                     self._stt_failed("STT reconnect failed")
                     return
+
+    # -- Mid-call language switch (English fallback) ---------------------------------
+
+    def _enable_live_language_switch(self) -> None:
+        """This loop can re-tune STT/TTS mid-call, so a turn may switch the call language."""
+        if not self.call_id:
+            return
+        from server.call.call_context import get as get_ctx
+
+        ctx = get_ctx(self.call_id)
+        if ctx is None:
+            return
+        ctx.supports_language_switch = True
+        ctx.language_switch_listener = self._on_active_language_changed
+
+    def _on_active_language_changed(self, language: str) -> None:
+        """Called by the turn that switched: STT moves now; TTS re-tunes before its next text."""
+        if self._closed:
+            return
+        backchannel = getattr(self, "_backchannel", None)
+        if backchannel is not None and hasattr(backchannel, "drop_hold_clip"):
+            backchannel.drop_hold_clip()
+        # The outage line must exist in the language the caller now hears.
+        self._schedule_outage_clip_prewarm()
+        task = getattr(self, "_stt_switch_task", None)
+        if task is None or task.done():
+            self._stt_switch_task = asyncio.create_task(self._switch_stt_language())
+
+    def _take_stt_swap(self) -> bool:
+        """The reader ended because a language switch replaced its socket."""
+        if not getattr(self, "_stt_swapped", False) or self._closed or self._phase == PHASE_ENDED or not self._stt:
+            return False
+        self._stt_swapped = False
+        return True
+
+    async def _switch_stt_language(self) -> None:
+        """Open STT in the active language, then retire the old socket.
+
+        The new socket takes caller audio as soon as it is open; the old reader
+        keeps a short grace window to deliver a final already in flight.
+        """
+        from server.routes.ws import _connect_stt_upstream
+        from server.services.runtime_settings import runtime_settings
+        from server.services.voice_stt_runtime import (
+            effective_stt_mode,
+            effective_stt_silence_ms,
+            effective_stt_stream_type,
+        )
+
+        while not self._closed and self._stt is not None:
+            lang = self._resolve_language()
+            if lang == getattr(self, "_stt_language", lang):
+                return
+            rt = runtime_settings.get(self.config_session_id or self.session_id)
+            expected_pipeline, pinned_stack = self._stt_pipeline_options()
+            started = time.monotonic()
+            try:
+                new_cm = _connect_stt_upstream(
+                    session_id=self.config_session_id or self.session_id,
+                    call_id=self.call_id,
+                    expected_pipeline=expected_pipeline,
+                    pinned_stack=pinned_stack,
+                    language_code=lang,
+                    sample_rate=self.sample_rate,
+                    stream_type=effective_stt_stream_type(str(rt.get("sttStreamType") or "fast")),
+                    mode=effective_stt_mode(str(rt.get("sttMode") or "transcribe")),
+                    silence_duration_ms=effective_stt_silence_ms(rt),
+                    threshold=float(rt["sttThreshold"]) if rt.get("sttThreshold") is not None else None,
+                )
+                new_ws = await asyncio.wait_for(new_cm.__aenter__(), timeout=8.0)
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                # Keep listening in the old language rather than going deaf.
+                log_pstn("stt.language_switch.failed", call_id=self.call_id, language=lang, error=str(exc)[:200])
+                return
+            if self._closed:
+                await new_cm.__aexit__(None, None, None)
+                return
+            old_cm, previous = self._stt_cm, getattr(self, "_stt_language", "")
+            self._stt_cm, self._stt, self._stt_language = new_cm, new_ws, lang
+            log_pstn("stt.language_switched", call_id=self.call_id, previous=previous, language=lang,
+                     connect_ms=int((time.monotonic() - started) * 1000))
+            await asyncio.sleep(STT_SWITCH_GRACE_S)
+            self._stt_swapped = True
+            if old_cm is not None:
+                try:
+                    await old_cm.__aexit__(None, None, None)
+                except Exception:
+                    pass
 
     def _stt_failed(self, detail: str) -> None:
         self._stt = None
@@ -3400,7 +3509,8 @@ class PstnVoiceLoop:
         except Exception:
             pass
         tasks = (self._stt_task, self._ping_task, self._barge_confirm_task, self._barge_timeout_task,
-                 self._remote_clear_task, self._llm_cancel_task, self._orphan_turn_task)
+                 self._remote_clear_task, self._llm_cancel_task, self._orphan_turn_task,
+                 getattr(self, "_stt_switch_task", None))
         for task in tasks:
             if task and task is not asyncio.current_task():
                 task.cancel()

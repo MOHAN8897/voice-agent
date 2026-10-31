@@ -1,28 +1,36 @@
-"""Caller asks for another language: offer a callback in it, never switch mid-call.
+"""Caller language changes mid-call: English fallback, callbacks for other languages.
 
-Agents run one language pack per call (brain, STT, TTS voice, pre-generated
-lines). When a caller asks for a different language ("in English please",
-"Hindi lo matladandi", "हिंदी में बात करो") or keeps speaking a different
-language for two turns, the platform:
+Agents start each call in one language pack (brain, STT, TTS voice, fixed
+lines). On a call whose voice loop can re-tune its speech stages
+(``ctx.supports_language_switch``), the platform:
 
-* explicit request for a supported language -> confirms in the call's language
-  that a call back in the requested language will be arranged, records a
-  durable ``language_switch`` callback item, then closes politely;
-* sustained foreign-language speech -> offers that callback once and waits;
-  a yes records and closes, anything else continues in the call language;
-* unsupported language -> the reply model is told to say so politely and
-  continue in the call language (no callback).
+* caller asks for English, says they cannot follow the call language, or keeps
+  answering only in English for two turns -> the call switches to English
+  (en-IN) for the rest of the call: one late ACTIVE LANGUAGE note for the reply
+  model (``with_active_language``), and the voice loop moves STT, TTS and the
+  fixed lines over (``_resolve_language`` reads ``ctx.active_language``). Asking
+  for the call's own language again switches back;
+* caller asks for another supported language -> a durable ``language_switch``
+  callback item is recorded, the reply model confirms it in the active
+  language, and the call carries on (it closes only when the caller is done);
+* sustained speech in another supported language -> that callback is offered
+  once; a yes records it, anything else continues;
+* unsupported language -> the reply model says so politely, once.
+
+Calls that cannot re-tune (realtime pipelines) keep the earlier behaviour:
+confirm a callback in the requested language, record it, close.
 
 An opt-out always wins: no callback is offered or recorded for a caller who
-also asks not to be contacted. Detection is deterministic and cross-script so
-the reply model never sees an instruction to switch.
+also asks not to be contacted. Detection is deterministic and cross-script; the
+reply model never decides to switch on its own.
 """
 from __future__ import annotations
 
 import asyncio
 import re
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any
 
 # -- Language names, as callers say them, in every script we serve -----------------
@@ -115,7 +123,10 @@ _REQUEST_VERB = re.compile(
     r"\b(?:speak|talk|converse|continue|switch|change|reply|respond|explain|say\s+it|tell\s+me|"
     r"language|bhasha|bhasa|baat|bat\s+kar|bolo|boliye|bol\s*(?:ie|iye|o|na)|samjhao|samjhaiye|batao|bataiye|"
     r"matlad\w*|maatlad\w*|matladu\w*|cheppandi|cheppu|chepp\w*|pesu\w*|pesunga|pesungo|sollunga|sollu\w*|"
-    r"maatad\w*|matad\w*|maathad\w*|helri|heli|samjav\w*|bolun|bolaa)\b|"
+    r"maatad\w*|matad\w*|maathad\w*|helri|heli|samjav\w*|bolun|bolaa|"
+    # "call me back in Hindi", "I prefer Tamil", "more comfortable in Hindi"
+    r"call\s+(?:me\s+|us\s+)?back|callback|call\s+kar\w*|call\s+chey\w*|call\s+pann\w*|call\s+maad\w*|"
+    r"prefer\w*|comfortable|easier)\b|"
     r"बात|बोल|समझा|बता|भाषा|आती\s*है\s*क्या|"
     r"మాట్లాడ|చెప్ప|భాష|బాష|వచ్చా|వస్తుందా|"
     r"பேச|சொல்ல|மொழி|தெரியுமா|வருமா|"
@@ -141,6 +152,32 @@ _NEGATION = re.compile(
     re.I,
 )
 _CLAUSE_SPLIT = re.compile(r"[,.;!?।|]+|\b(?:but|lekin|par|kani|aana|anaa|aanaa|magar)\b|लेकिन|पर\s|కానీ|ஆனால்|ஆனா|ಆದರೆ|ಆದ್ರೆ", re.I)
+
+# "I don't understand Telugu", "తెలుగు రాదు", "हिंदी समझ नहीं आती": the caller cannot
+# follow a named language. The negation must govern a comprehension verb, so
+# "no no, I know Telugu" or "no, Telugu is fine" is not read as a barrier.
+_CANNOT_FOLLOW = re.compile(
+    # English and Hinglish, negation before the verb or after it.
+    r"\b(?:don'?t|do\s+not|didn'?t|did\s+not|doesn'?t|can'?t|cannot|can\s+not|not|never|unable\s+to)\s+"
+    r"(?:\w+\s+){0,2}?(?:understand\w*|follow\w*|know|speak|talk)\b|"
+    r"\b(?:samajh\w*|samaj|aata|aati|aate)\b(?:\s+\w+){0,2}?\s+(?:nahi|nahin|nai)\b|"
+    r"\b(?:nahi|nahin|nai)\s+(?:\w+\s+)?(?:aata|aati|aate|samajh\w*)\b|"
+    # Romanised Dravidian forms that carry the negation themselves.
+    r"\b(?:raadu|radu|teliyadu|theriyadhu|theriyathu|varadhu|puriyala\w*|puriyavillai|baralla|barolla|"
+    r"gottilla|gothilla|ardham\s+ka\w*ledu|artham\s+ka\w*ledu)\b|"
+    # Native scripts: self-negating verbs, or a comprehension word with a negation.
+    r"రాదు|రావు|తెలియదు|தெரியாது|வராது|புரியல|புரியவில்லை|ಬರಲ್ಲ|ಬರೋದಿಲ್ಲ|ಗೊತ್ತಿಲ್ಲ|അറിയില്ല|"
+    r"(?:समझ|आती|आता|అర్థం|అర్ధం|ಅರ್ಥ|മനസ്സിലാ|સમજ|આવડ|বুঝ|ਸਮਝ|ਆਉਂਦ)\S*\s*(?:\S+\s+){0,2}?"
+    r"(?:नहीं|नही|కాలేదు|కావట్లేదు|కావడం\s*లేదు|ఆగల్ల|ಆಗಲ್ಲ|ಆಗ್ತಿಲ್ಲ|ആകുന്നില്ല|ഇല്ല|નથી|নয়|না|ਨਹੀਂ)|"
+    r"(?:नहीं|नही)\s*(?:\S+\s+){0,1}?(?:आती|आता|समझ)",
+    re.I,
+)
+# Plain-English confusion with no language named ("Sorry, I don't understand").
+_UNNAMED_CONFUSION = re.compile(
+    r"\b(?:don'?t|do\s+not|didn'?t|did\s+not|can'?t|cannot|can\s+not|not\s+able\s+to|unable\s+to)\s+"
+    r"(?:understand|follow)\b|\bnot\s+understanding\b|\bno\s+understand\b",
+    re.I,
+)
 
 # -- Affirmation / decline after an offer -------------------------------------------
 
@@ -354,7 +391,38 @@ def unsupported_hint(call_language: str | None, target: str) -> str:
     )
 
 
+def callback_offer_line(call_language: str | None, target: str) -> str:
+    """The offer without the "I can only continue in X" lead: the call can switch to English."""
+    return re.split(r"(?<=[.।])\s+", offer_line(call_language, target), maxsplit=1)[-1]
+
+
+def _latin_english(text: str) -> bool:
+    letters = [ch for ch in text or "" if ch.isalpha()]
+    if len(letters) < 6:
+        return False
+    latin = sum(1 for ch in letters if ord(ch) < 0x0250)
+    return latin / len(letters) >= 0.9 and not _ROMANISED_INDIC.search(text)
+
+
+def caller_cannot_follow(text: str, language: str | None) -> bool:
+    """The caller says they cannot follow ``language`` (named, or plain-English confusion)."""
+    raw = _norm(text)
+    base = _base(language)
+    if not raw or not base:
+        return False
+    for clause in (c.strip() for c in _CLAUSE_SPLIT.split(raw)):
+        named = any(_base(_ALIAS_TO_CODE[m.group(0).casefold()]) == base for m in _ALIAS_RE.finditer(clause))
+        if named and _CANNOT_FOLLOW.search(clause):
+            return True
+    # "Sorry, I don't understand" said in English on a non-English call.
+    return base != "en" and bool(_UNNAMED_CONFUSION.search(raw)) and _latin_english(text)
+
+
 # -- Per-call state machine ----------------------------------------------------------
+
+#: The one language every live call can fall back to mid-call.
+FALLBACK_LANGUAGE = "en-IN"
+ACTIVE_LANGUAGE_HEADER = "--- ACTIVE LANGUAGE ("
 
 PHASE_IDLE = "idle"
 PHASE_OFFERED = "offered"
@@ -369,6 +437,11 @@ class SwitchState:
     streak_language: str = ""
     streak: int = 0
     unsupported_noted: tuple[str, ...] = ()
+    # Live switching: the language the call speaks now ("" = its own language).
+    original: str = ""
+    active: str = ""
+    switches: list[dict[str, str]] = field(default_factory=list)
+    callbacks: tuple[str, ...] = ()
 
 
 def _state(ctx: Any) -> SwitchState:
@@ -394,32 +467,41 @@ def _opted_out(ctx: Any, text: str) -> bool:
         return False
 
 
+def can_switch_live(ctx: Any) -> bool:
+    """Only a voice loop that re-tunes STT/TTS mid-call sets this capability."""
+    return getattr(ctx, "supports_language_switch", False) is True
+
+
+def original_language(ctx: Any, fallback: str | None = None) -> str:
+    state = getattr(ctx, "language_switch_state", None)
+    if isinstance(state, SwitchState) and state.original:
+        return state.original
+    stack_language = getattr(getattr(ctx, "resolved_stack", None), "language", "")
+    return stack_language if isinstance(stack_language, str) and stack_language else str(fallback or "te-IN")
+
+
+def active_language(ctx: Any, fallback: str | None = None) -> str:
+    """The language this call speaks now: a mid-call switch, else ``fallback``."""
+    active = getattr(ctx, "active_language", "")
+    return active if isinstance(active, str) and active else str(fallback or "")
+
+
 @dataclass(frozen=True)
 class SwitchDecision:
-    """``action``: close (speak + record + hang up), offer (speak + wait), hint (to the model)."""
+    """``action``: switch (live, to ``language``), callback (record + confirm, continue),
+    offer (speak + wait), hint (to the model), close (speak + record + hang up; non-live calls).
+    ``switch_to`` also moves a callback turn to English when the caller cannot follow."""
 
     action: str
     language: str
     text: str = ""
+    switch_to: str = ""
+    reason: str = ""
 
 
-def decide_language_switch(ctx: Any, transcript: str, call_language: str) -> SwitchDecision | None:
-    """Pure decision for one caller turn; mutates only the per-call switch state."""
-    state = _state(ctx)
-    if state.phase == PHASE_RECORDED:
-        return None
-    text = transcript or ""
-    if _opted_out(ctx, text):
-        # DND wins over any language preference: no offer, no record.
-        state.phase = PHASE_DECLINED if state.phase == PHASE_OFFERED else state.phase
-        return None
-    explicit = detect_language_request(text, call_language)
+def _legacy_decision(state: SwitchState, text: str, explicit: str | None, call_language: str) -> SwitchDecision | None:
+    """Calls that cannot switch live: confirm a callback in the requested language and close."""
     if explicit:
-        if not is_supported_target(explicit):
-            if explicit in state.unsupported_noted:
-                return None
-            state.unsupported_noted = (*state.unsupported_noted, explicit)
-            return SwitchDecision("hint", explicit, unsupported_hint(call_language, explicit))
         state.language = explicit
         return SwitchDecision("close", explicit, close_line(call_language, explicit))
     if state.phase == PHASE_OFFERED:
@@ -440,6 +522,169 @@ def decide_language_switch(ctx: Any, transcript: str, call_language: str) -> Swi
         state.language = state.streak_language
         return SwitchDecision("offer", state.language, offer_line(call_language, state.language))
     return None
+
+
+def decide_language_switch(ctx: Any, transcript: str, call_language: str) -> SwitchDecision | None:
+    """Pure decision for one caller turn; mutates only the per-call switch state.
+
+    ``call_language`` is the language the call speaks now (the active one).
+    """
+    state = _state(ctx)
+    if state.phase == PHASE_RECORDED:
+        return None
+    text = transcript or ""
+    if _opted_out(ctx, text):
+        # DND wins over any language preference: no offer, no record.
+        state.phase = PHASE_DECLINED if state.phase == PHASE_OFFERED else state.phase
+        return None
+    explicit = detect_language_request(text, call_language)
+    if explicit and not is_supported_target(explicit):
+        if explicit in state.unsupported_noted:
+            return None
+        state.unsupported_noted = (*state.unsupported_noted, explicit)
+        return SwitchDecision("hint", explicit, unsupported_hint(call_language, explicit))
+    if not can_switch_live(ctx):
+        return _legacy_decision(state, text, explicit, call_language)
+
+    original = original_language(ctx, call_language)
+    state.original = state.original or original
+    active = call_language
+    cannot_follow = caller_cannot_follow(text, active)
+    # Where a caller who cannot follow goes: English, or back to the call's own language.
+    escape = original if _base(active) != _base(original) else FALLBACK_LANGUAGE
+    escape_ok = _base(escape) != _base(active) and (escape == original or is_supported_target(escape))
+    if explicit and (_base(explicit) == "en" or _base(explicit) == _base(original)):
+        state.streak, state.streak_language = 0, ""
+        target = FALLBACK_LANGUAGE if _base(explicit) == "en" else original
+        if is_supported_target(target) or target == original:
+            return SwitchDecision("switch", target, reason="asked")
+    if explicit:
+        # Any other supported language: a call back in it, while this call carries on.
+        state.streak, state.streak_language = 0, ""
+        if explicit in state.callbacks:
+            return None
+        return SwitchDecision("callback", explicit, close_line(active, explicit),
+                              switch_to=escape if cannot_follow and escape_ok else "", reason="asked")
+    if cannot_follow and escape_ok:
+        state.streak, state.streak_language = 0, ""
+        return SwitchDecision("switch", escape, reason="cannot_follow")
+    if state.phase == PHASE_OFFERED:
+        if caller_affirmed(text) and not caller_declined(text):
+            state.phase = PHASE_IDLE
+            return SwitchDecision("callback", state.language, close_line(active, state.language), reason="offer_accepted")
+        state.phase = PHASE_DECLINED
+        return None
+    spoken = utterance_language(text)
+    if spoken and _base(spoken) != _base(active) and _base(spoken) != _base(original):
+        state.streak = state.streak + 1 if spoken == state.streak_language else 1
+        state.streak_language = spoken
+    else:
+        state.streak, state.streak_language = 0, ""
+    if state.streak < 2 or not is_supported_target(state.streak_language):
+        return None
+    language, state.streak, state.streak_language = state.streak_language, 0, ""
+    if _base(language) == "en":
+        # Two English-only answers: the caller is more at home in English.
+        return SwitchDecision("switch", FALLBACK_LANGUAGE, reason="answered_in_english")
+    if state.phase == PHASE_DECLINED or language in state.callbacks:
+        return None
+    state.phase = PHASE_OFFERED
+    state.language = language
+    return SwitchDecision("offer", language, callback_offer_line(active, language))
+
+
+# -- Applying a decision -------------------------------------------------------------
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def _persist_switches(call_id: str, active: str, switches: list[dict[str, str]]) -> None:
+    from server.call.call_ledger import call_ledger
+
+    meta = call_ledger.read_meta(call_id)
+    if not meta:
+        return
+    meta["active_language"] = active
+    meta["language_switches"] = list(switches)
+    call_ledger.write_meta(call_id, meta)
+
+
+async def switch_active_language(ctx: Any, language: str, *, reason: str) -> str:
+    """Move the live call to ``language``; returns the language it was speaking."""
+    from server.services.pstn_debug import log_pstn
+
+    state = _state(ctx)
+    previous = active_language(ctx, original_language(ctx))
+    state.original = state.original or original_language(ctx, previous)
+    state.active = "" if language == state.original else language
+    state.phase = PHASE_IDLE if state.phase == PHASE_OFFERED else state.phase
+    state.switches.append({"from": previous, "to": language, "reason": reason, "at": _now_iso()})
+    ctx.active_language = state.active
+    call_id = str(getattr(ctx, "call_id", "") or "")
+    log_pstn("language_switch.live", call_id=call_id, previous=previous, active=language, reason=reason)
+    if call_id:
+        try:
+            await asyncio.to_thread(_persist_switches, call_id, language, state.switches)
+        except Exception as exc:  # noqa: BLE001 -- bookkeeping must not break the turn.
+            log_pstn("language_switch.meta_failed", call_id=call_id, error_type=type(exc).__name__)
+    listener = getattr(ctx, "language_switch_listener", None)
+    if callable(listener):
+        try:
+            listener(language)
+        except Exception as exc:  # noqa: BLE001
+            log_pstn("language_switch.listener_failed", call_id=call_id, error_type=type(exc).__name__)
+    return previous
+
+
+def switch_hint(language: str, previous: str, reason: str) -> str:
+    asked = "asked to continue in" if reason == "asked" else "is more comfortable in"
+    return (
+        f"[Internal] The caller {asked} {language_name(language)}. From this reply on, speak natural "
+        f"{language_name(language)} ({language}) as the ACTIVE LANGUAGE note says. Acknowledge the switch in a few "
+        "words, then continue from where the conversation was and answer anything they asked. Do not repeat the "
+        f"opening and do not ask them to speak {language_name(previous)}."
+    )
+
+
+def callback_hint(confirmation: str, requested: str, saved: bool, language: str) -> str:
+    if not saved:
+        from server.call.call_end_policy import callback_save_failed_for
+
+        return (
+            f"[Internal] The caller asked for a call back in {language_name(requested)}, but it could not be saved. "
+            f"In {language_name(language)}, say once: '{callback_save_failed_for(language)}' Then keep helping. "
+            "Do not promise a callback."
+        )
+    return (
+        f"[Internal] A call back in {language_name(requested)} is now recorded for this caller. Begin your reply "
+        f"with exactly: '{confirmation}' Then keep helping in {language_name(language)}: answer anything else they "
+        "asked. Do not promise a time and do not end the call unless the caller is done."
+    )
+
+
+async def record_language_callback(ctx: Any, requested: str, original: str, transcript: str) -> bool:
+    from server.services.pstn_debug import log_pstn
+
+    call_id = str(getattr(ctx, "call_id", "") or "")
+    try:
+        from server.services.saas.language_switch_service import record_language_switch
+
+        saved = await asyncio.wait_for(record_language_switch(
+            ctx, requested_language=requested, original_language=original, request_text=transcript,
+        ), timeout=3.0)
+    except Exception as exc:  # noqa: BLE001 -- the caller must never hear a false promise.
+        log_pstn("language_switch.save_failed", call_id=call_id, error_type=type(exc).__name__)
+        saved = None
+    if saved:
+        log_pstn("language_switch.recorded", call_id=call_id, requested=requested, original=original)
+        try:
+            from server.call.contact_preference import record_contact_preference
+
+            await record_contact_preference(call_id or None, "callback")
+        except Exception:
+            pass
+    return bool(saved)
 
 
 async def apply_language_switch_close(ctx: Any, decision: SwitchDecision, call_language: str, transcript: str) -> dict[str, Any]:
@@ -483,7 +728,7 @@ async def apply_language_switch_close(ctx: Any, decision: SwitchDecision, call_l
 
 
 async def server_language_switch_turn(ctx: Any, transcript: str, call_language: str) -> dict[str, Any] | None:
-    """One caller turn: None (normal reply), {"hint"} for the model, or a server-spoken turn."""
+    """One caller turn: None (normal reply), {"hint", "active_language"} for the model, or a server-spoken turn."""
     if ctx is None or getattr(ctx, "status", "active") != "active" or not (transcript or "").strip():
         return None
     try:
@@ -494,8 +739,68 @@ async def server_language_switch_turn(ctx: Any, transcript: str, call_language: 
         return None
     if decision.action == "hint":
         return {"hint": decision.text}
+    if decision.action == "switch":
+        previous = await switch_active_language(ctx, decision.language, reason=decision.reason)
+        return {"hint": switch_hint(decision.language, previous, decision.reason), "active_language": decision.language}
+    if decision.action == "callback":
+        state = _state(ctx)
+        active = call_language
+        hints = []
+        if decision.switch_to:
+            previous = await switch_active_language(ctx, decision.switch_to, reason="cannot_follow")
+            hints.append(switch_hint(decision.switch_to, previous, "cannot_follow"))
+            active = decision.switch_to
+        saved = await record_language_callback(ctx, decision.language, original_language(ctx, call_language), transcript)
+        if saved:
+            state.callbacks = (*state.callbacks, decision.language)
+        hints.append(callback_hint(close_line(active, decision.language), decision.language, saved, active))
+        return {"hint": "\n".join(hints), "active_language": active}
     if decision.action == "offer":
         return {"text": decision.text, "language": decision.language,
                 "end_call": {"should_end": False, "reason": "none", "farewell": "", "contact_preference": "none"}}
     end_call = await apply_language_switch_close(ctx, decision, call_language, transcript)
     return {"text": end_call["farewell"], "language": decision.language, "end_call": end_call}
+
+
+# -- Reply-model input ----------------------------------------------------------------
+
+def active_language_note(active: str, original: str) -> str:
+    """The late note that carries the active spoken pack; the cached brain stays untouched."""
+    from server.prompts.agent_voice_rules import spoken_pack_for
+
+    name, before = language_name(active), language_name(original)
+    return (
+        f"{ACTIVE_LANGUAGE_HEADER}{active}) ---\n"
+        f"This call has switched from {before} to {name}. Reply only in natural {name} for the rest of the call "
+        f"unless a newer note says otherwise. This overrides every earlier language instruction (primary language, "
+        f"selected session language, language mismatch, 'Language: {original}'). Business facts and the script "
+        f"still apply; say them in {name}.\n\n"
+        + spoken_pack_for(active, include_brevity=False, core_only=True)
+    )
+
+
+def _message_text(message: dict[str, Any]) -> str:
+    content = message.get("content")
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return "".join(str(part.get("text") or "") for part in content if isinstance(part, dict))
+    return ""
+
+
+def with_active_language(messages: list[dict[str, Any]] | None, ctx: Any) -> list[dict[str, Any]] | None:
+    """Replace (never stack) the single ACTIVE LANGUAGE note, placed just before the caller's turn.
+
+    Messages before it, including the cached compiled brain, are left untouched.
+    """
+    if not messages:
+        return messages
+    kept = [m for m in messages if not _message_text(m).startswith(ACTIVE_LANGUAGE_HEADER)]
+    active = active_language(ctx)
+    original = original_language(ctx, active)
+    if not active or _base(active) == _base(original):
+        return kept
+    note = {"type": "message", "role": "developer",
+            "content": [{"type": "input_text", "text": active_language_note(active, original)}]}
+    index = len(kept) - 1 if kept and kept[-1].get("role") == "user" else len(kept)
+    return [*kept[:index], note, *kept[index:]]

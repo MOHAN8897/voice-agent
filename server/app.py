@@ -54,6 +54,7 @@ from server.routes.app_billing import router as app_billing_router
 from server.routes.app_channels import router as app_channels_router
 from server.routes.admin_channels import router as admin_channels_router
 from server.routes.app_leads import router as app_leads_router
+from server.routes.app_analytics import router as app_analytics_router
 from server.routes.dev_stack import router as dev_stack_router
 from server.routes.dev_environment import router as dev_environment_router
 from server.routes.dev_audit import router as dev_audit_router
@@ -646,6 +647,7 @@ app.include_router(app_billing_router)
 app.include_router(app_channels_router)
 app.include_router(admin_channels_router)
 app.include_router(app_leads_router)
+app.include_router(app_analytics_router)
 app.include_router(dev_stack_router)
 app.include_router(dev_environment_router)
 app.include_router(dev_audit_router)

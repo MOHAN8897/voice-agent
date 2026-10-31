@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
-import { Activity, Bot, Phone } from 'lucide-react';
+import { Activity, BarChart3, Bot, Phone } from 'lucide-react';
 import { TactileButton } from '../ui/TactileButton';
 import { Tabs } from '../ui/Tabs';
 import { SelectFilter } from '../ui/Toolbar';
@@ -75,9 +75,16 @@ function writeItemHash(id) {
 function useScrollRoot(anchorRef) {
   const [root, setRoot] = useState(null);
   const [box, setBox] = useState({ height: 0, padTop: 0, padBottom: 0 });
+  // The anchor only exists once the loading skeleton is gone, so look for <main>
+  // after every render (a no-op once found). Measured only on first mount, the
+  // root stayed null: the sticky offsets ignored <main>'s padding and rows showed
+  // through a band above the Activity header.
   useLayoutEffect(() => {
     const node = anchorRef.current?.closest('main') || null;
-    setRoot(node);
+    if (node !== root) setRoot(node);
+  });
+  useLayoutEffect(() => {
+    const node = root;
     if (!node) return undefined;
     const update = () => {
       const style = getComputedStyle(node);
@@ -92,7 +99,7 @@ function useScrollRoot(anchorRef) {
       ro?.disconnect();
       window.removeEventListener('resize', update);
     };
-  }, [anchorRef]);
+  }, [root]);
   return { root, ...box };
 }
 
@@ -441,6 +448,7 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
   const showFeed = !(isNewTenant && feed.items.length === 0 && feed.pinned.filter((p) => p.type !== 'billing.low').length === 0);
   const viewKey = `${filter}|${agentFilter}`;
   const feedState = feed.loading && feed.items.length === 0 ? 'loading' : feed.items.length === 0 ? 'empty' : 'list';
+  // Group headers stick flush under the Activity bar, whose height is measured.
   const stickyTop = { top: `${headerHeight - padTop}px` };
   const railMax = rootHeight ? `${Math.max(320, rootHeight - padTop - padBottom)}px` : 'calc(100dvh - 8rem)';
   const railMask = railEdges.top && railEdges.bottom
@@ -520,7 +528,12 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
             )}
 
             {showFeed && (
-              <section aria-labelledby="home-feed-title" className="rounded-card border border-line bg-surface shadow-craft-xs" data-testid="home-feed">
+              <section
+                aria-labelledby="home-feed-title"
+                className="rounded-card border border-line bg-surface shadow-craft-xs [&_[data-item-id]]:scroll-mt-[var(--feed-sticky)]"
+                style={{ '--feed-sticky': `${headerHeight + 40}px` }}
+                data-testid="home-feed"
+              >
                 <div ref={sentinelRef} aria-hidden="true" className="h-0" />
                 <div
                   ref={headerRef}
@@ -528,7 +541,7 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
                   data-stuck={headerStuck ? 'true' : undefined}
                   style={{ top: `${-padTop}px` }}
                   className={`sticky z-[3] space-y-3 rounded-t-card border-b px-4 pt-4 pb-3 transition-[background-color,box-shadow,border-color] duration-200 ease-out sm:px-5 ${
-                    headerStuck ? 'rounded-t-none border-line bg-surface/95 shadow-craft-sm backdrop-blur-md' : 'border-line bg-surface'
+                    headerStuck ? 'rounded-t-none border-line bg-surface shadow-craft-xs' : 'border-line bg-surface'
                   }`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -542,9 +555,14 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
                         </span>
                       )}
                     </h2>
-                    {agents.length > 1 && (
-                      <SelectFilter label="Agent" value={agentFilter} onChange={setAgentFilter} options={agentOptions} />
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {agents.length > 1 && (
+                        <SelectFilter label="Agent" value={agentFilter} onChange={setAgentFilter} options={agentOptions} />
+                      )}
+                      <TactileButton variant="secondary" size="sm" icon={BarChart3} onClick={() => onNavigate('analytics')} data-testid="home-analytics-link">
+                        Analytics
+                      </TactileButton>
+                    </div>
                   </div>
                   <Tabs
                     variant="pills"
@@ -566,7 +584,9 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
                     <motion.div key="pinned" {...collapse} data-testid="home-pinned">
                       <div className="border-b border-line bg-warning-soft/40">
                         <h3
-                          className="sticky z-[2] flex items-center gap-1.5 bg-warning-soft/95 px-4 pt-3 pb-1 text-ui font-semibold text-warning-fg backdrop-blur-sm sm:px-5"
+                          data-testid="home-needs-you-header"
+                          data-stuck={headerStuck ? 'true' : undefined}
+                          className="sticky z-[2] flex items-center gap-1.5 border-b border-warning-line/60 bg-warning-soft px-4 py-2 text-ui font-semibold text-warning-fg sm:px-5"
                           style={stickyTop}
                         >
                           Needs you
@@ -602,7 +622,7 @@ export function OverviewModule({ onNavigate, onOpenCreateAgent, onOpenBuyNumber 
                         {groups.map((group) => (
                           <div key={group.label} data-testid="home-feed-group">
                             <h3
-                              className="sticky z-[2] flex items-center gap-2 border-b border-line/60 bg-surface/95 px-4 pt-2.5 pb-1.5 text-meta font-medium text-fg-muted backdrop-blur-sm sm:px-5"
+                              className="sticky z-[2] flex items-center gap-2 border-b border-line/60 bg-surface px-4 py-2 text-meta font-medium text-fg-muted sm:px-5"
                               style={stickyTop}
                             >
                               {group.label === 'Now' && <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-success motion-safe:animate-pulse" />}

@@ -19,7 +19,8 @@ import { api } from '../../../services/api';
 import { formatClock, formatInr, formatUsd, relativeTime } from '../../../lib/money';
 import { formatPhone, looksLikePhone } from '../../../lib/phoneMask';
 import { callReference, endReasonLabel, statusWord, tagLabel, tagTone } from '../../../lib/internalLabels';
-import { ItemAvatar, ItemSentence, PRIMARY_KINDS, iconFor } from './FeedItem';
+import { ItemAvatar, ItemLanguageTags, ItemSentence, PRIMARY_KINDS, iconFor } from './FeedItem';
+import { LanguageTag } from '../../ui/LanguageTag';
 import { fetchItemDetail, itemTargets } from './activityDetail';
 import { drawerSpring, EASE_OUT } from './motion';
 
@@ -111,7 +112,10 @@ function RelatedList({ items, agentNames, now, onOpenItem }) {
                   {!rel.actor && agentNames[rel.agentId] ? ` · ${agentNames[rel.agentId]}` : ''}
                 </span>
               </span>
-              {rel.needsAction && <Badge tone="warning" size="xs">Needs you</Badge>}
+              <span className="flex shrink-0 flex-col items-end gap-1">
+                <ItemLanguageTags item={rel} />
+                {rel.needsAction && <Badge tone="warning" size="xs">Needs you</Badge>}
+              </span>
             </button>
           </li>
         );
@@ -236,6 +240,9 @@ function CallBlock({ call, item, now, title }) {
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5" aria-label="Tags">
           {tags.map((t) => <Badge key={t.tag} tone={t.tone} size="xs">{t.label}</Badge>)}
+          {tags.some((t) => t.tag === 'followup:language_switch') && item.meta?.language && (
+            <LanguageTag code={item.meta.language} label={item.meta.languageLabel} prefix="Wants" />
+          )}
         </div>
       )}
       {call.summary && (
@@ -350,7 +357,7 @@ function Facts({ facts }) {
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
         {entries.map(([k, v]) => (
           <Field key={k} label={FACT_LABELS[k]} mono={MONO_FACTS.has(k)}>
-            {k === 'status' ? <StatusBadge status={v} size="xs" /> : DATE_FACTS.has(k) ? fullDate(v) : String(v)}
+            {k === 'status' ? <StatusBadge status={v} size="xs" /> : k === 'language' ? <LanguageTag label={String(v)} /> : DATE_FACTS.has(k) ? fullDate(v) : String(v)}
           </Field>
         ))}
       </dl>
@@ -584,9 +591,13 @@ export function ItemDetailPanel({
                           )}
                           {!item.actor && agentName && <span>· {agentName}</span>}
                           {item.meta?.outcome && <Badge tone={item.tone === 'success' ? 'success' : 'neutral'} size="xs">{item.meta.outcome}</Badge>}
+                          <ItemLanguageTags item={item} />
                           {item.needsAction && <Badge tone={item.tone === 'danger' ? 'danger' : 'warning'} size="xs">Needs you</Badge>}
                         </div>
                         {item.detail && <p className="mt-2 text-ui text-fg-body break-words">{item.detail}</p>}
+                        {item.meta?.languageNote && (
+                          <p role="note" data-testid="language-note" className="mt-2 rounded-control border border-info-line bg-info-soft px-3 py-2 text-ui text-info-fg">{item.meta.languageNote}</p>
+                        )}
                       </div>
                     </div>
                   ) : (

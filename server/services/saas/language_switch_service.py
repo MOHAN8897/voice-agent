@@ -296,17 +296,21 @@ async def language_readiness(agent: dict[str, Any], language: str) -> dict[str, 
         return {"ready": False, "language": code, "code": "brain_not_published",
                 "message": "Publish this agent's script before calling."}
     agent_id = str(agent.get("agent_id") or agent.get("id") or "")
+    from server.call.language_callback_lines import language_substitutions, substitution_note
+
     try:
-        from server.brain.compiled_brain_artifact import refresh_platform_sections
         from server.brain.compiled_brain_service import compiled_brain_service
 
         snapshot = await compiled_brain_service.get_active_for_agent(agent_id)
-        # Build (compile on demand) the brain with the requested pack, exactly as the call will.
-        await asyncio.to_thread(refresh_platform_sections, snapshot.get("compiled_text") or "", code)
+        stored = snapshot.get("compiled_text") or ""
+        # Build the brain with the requested pack exactly as the call will. Custom
+        # fixed lines written in another language give way to that language's defaults.
+        await asyncio.to_thread(render_call_brain, stored, agent, code)
+        substitutions = language_substitutions(stored, agent, code)
     except ValueError as exc:
         return {"ready": False, "language": code, "code": "script_needs_review",
-                "message": f"This agent's custom farewell or recording disclosure is written for another language. "
-                           f"Review it for {label} in the agent's script, then call again. ({str(exc)[:120]})"}
+                "message": f"The agent's script could not be prepared in {label}. Open the agent's script, "
+                           f"publish it again, then call. ({str(exc)[:120]})"}
     except Exception as exc:  # noqa: BLE001
         logger.warning("language_switch.readiness_brain_failed kind=%s", type(exc).__name__)
         return {"ready": False, "language": code, "code": "brain_unavailable",
@@ -321,9 +325,23 @@ async def language_readiness(agent: dict[str, Any], language: str) -> dict[str, 
         return {"ready": False, "language": code, "code": "voice_unavailable",
                 "message": f"The agent's voice settings can't speak {label}. Choose a voice that supports it in the "
                            f"agent's voice settings. ({type(exc).__name__})"}
-    return {"ready": True, "language": code, "code": "ready",
+    note = substitution_note(substitutions)
+    return {"ready": True, "language": code, "code": "ready", "substitutions": substitutions, "note": note,
             "message": f"The agent's published script will run with the {label} language pack "
-                       f"(speech recognition, voice and opening line in {label})."}
+                       f"(speech recognition, voice and opening line in {label})." + (f" {note}" if note else "")}
+
+
+def render_call_brain(stored: str, agent: dict[str, Any], language: str) -> str:
+    """The brain a call in ``language`` speaks from: realigned pack and farewell, localized notice."""
+    from server.brain.compiled_brain_artifact import refresh_platform_sections
+    from server.brain.script_entities import realign_compiled_brain_for_session
+    from server.call.language_callback_lines import disclosure_text_for_call
+    from server.prompts.agent_voice_rules import inject_recording_disclosure
+
+    text = realign_compiled_brain_for_session(stored, language, direction="outbound")
+    text = inject_recording_disclosure(text, enabled=bool(agent.get("recording_disclosure_enabled")),
+                                       disclosure_text=disclosure_text_for_call(agent, language), language=language)
+    return refresh_platform_sections(text, language)
 
 
 async def apply_call_language(agent: dict[str, Any], language: str) -> dict[str, Any]:
@@ -378,8 +396,10 @@ async def call_language_switch(principal: Any, item_id: uuid.UUID, *, from_e164:
     if not readiness["ready"]:
         raise _err(409, readiness["code"], readiness["message"])
     request_id = f"ls:{item_id}:{uuid.uuid4().hex[:12]}"
+    # Lines replaced by this language's defaults travel with the call (meta["contact"]).
     contact = {"call_language": item["requestedLanguage"], "language_switch_id": item["id"],
-               **({"full_name": item["contactName"]} if item["contactName"] else {})}
+               **({"full_name": item["contactName"]} if item["contactName"] else {}),
+               **({"language_substitutions": readiness["substitutions"]} if readiness.get("substitutions") else {})}
     if item["callId"]:
         result = await request_callback(principal, call_id=item["callId"], to_e164=item["phone"], agent_id=item["agentId"],
                                         from_e164=from_e164, dial_request_id=request_id, mode="manual", contact=contact)
@@ -398,7 +418,8 @@ async def call_language_switch(principal: Any, item_id: uuid.UUID, *, from_e164:
             rows[0].updated_at = _now()
             await session.commit()
     return {"ok": ok, "itemId": str(item_id), "language": item["requestedLanguage"], "dialRequestId": request_id,
-            "error": result.get("error"), "code": result.get("code")}
+            "error": result.get("error"), "code": result.get("code"), "note": readiness.get("note"),
+            "substitutions": readiness.get("substitutions") or []}
 
 
 async def campaign_contacts_for(tenant_id: uuid.UUID, ids: list[uuid.UUID]) -> tuple[dict[str, list[dict[str, Any]]], list[str]]:
@@ -429,13 +450,20 @@ async def mark_campaign_items(tenant_id: uuid.UUID, campaign_id: str, item_ids: 
         await session.commit()
 
 
-async def validate_campaign_languages(agent: dict[str, Any], contacts: list[dict[str, Any]]) -> None:
-    """Campaign contacts may each carry ``call_language``; every one must be callable by this agent."""
+async def validate_campaign_languages(agent: dict[str, Any], contacts: list[dict[str, Any]]) -> list[str]:
+    """Campaign contacts may each carry ``call_language``; every one must be callable by this agent.
+
+    Returns the tenant notes for lines replaced by a language's defaults.
+    """
     languages = {str(c.get("call_language") or "").strip() for c in contacts if str(c.get("call_language") or "").strip()}
+    notes: list[str] = []
     for language in sorted(languages):
         readiness = await language_readiness(agent, language)
         if not readiness["ready"]:
             raise _err(409, readiness["code"], readiness["message"])
+        if readiness.get("note"):
+            notes.append(readiness["note"])
     for contact in contacts:
         if str(contact.get("call_language") or "").strip():
             contact["call_language"] = canonical_language(contact["call_language"])
+    return notes

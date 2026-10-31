@@ -111,9 +111,10 @@ async def bulk_campaign(
         raise HTTPException(409, detail={"error": {"code": "nothing_to_call",
             "message": "None of the selected contacts still need a callback."}})
     # Check every agent/language pair before creating anything.
+    notes: list[str] = []
     for agent_id, contacts in by_agent.items():
         agent = await resolve_workspace_agent(agent_id, str(tenant_id))
-        await svc.validate_campaign_languages(agent, contacts)
+        notes += [n for n in (await svc.validate_campaign_languages(agent, contacts) or []) if n not in notes]
     campaigns: list[dict[str, Any]] = []
     for agent_id, contacts in by_agent.items():
         langs = sorted({c["call_language"] for c in contacts})
@@ -128,4 +129,4 @@ async def bulk_campaign(
             await svc.mark_campaign_items(tenant_id, campaign_id, [c["language_switch_id"] for c in contacts])
         campaigns.append({"agentId": agent_id, "campaignId": campaign_id, "languages": langs,
                           "contacts": len(contacts), "status": (created.get("campaign") or {}).get("status")})
-    return {"ok": True, "campaigns": campaigns, "skipped": skipped}
+    return {"ok": True, "campaigns": campaigns, "skipped": skipped, "notes": notes}

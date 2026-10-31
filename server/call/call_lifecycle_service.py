@@ -117,12 +117,14 @@ def status_url(call_id: str) -> str:
 
 def apply_recording_disclosure(compiled_text: str, agent: dict[str, Any], language: str) -> str:
     """Use the same disclosure in the dial-time and connected-call snapshots."""
+    from server.call.language_callback_lines import disclosure_text_for_call
     from server.prompts.agent_voice_rules import inject_recording_disclosure
 
     return inject_recording_disclosure(
         compiled_text,
         enabled=bool(agent.get("recording_disclosure_enabled")),
-        disclosure_text=agent.get("recording_disclosure_text"),
+        # A call in another language (language callback) uses that language's default notice.
+        disclosure_text=disclosure_text_for_call(agent, language),
         language=language,
     )
 

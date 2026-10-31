@@ -13,6 +13,7 @@ import { showToast } from '../ui/ToastHost';
 import { CampaignSetup } from './CampaignSetup';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { formatPhone } from '../../lib/phoneMask';
+import { languagePrefix, phoneKey, useLanguageRequests } from '../lib/languageRequests';
 
 const field = 'mt-1 block min-h-11 w-full min-w-0 rounded-control border border-line bg-surface px-3 text-base sm:text-ui text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15 disabled:opacity-50';
 const STATUS_LABEL = { active: 'Active', planning: 'Working out the time' };
@@ -57,7 +58,7 @@ const toLocalInput = (iso) => {
 };
 const instant = (value, zone) => value ? new Date(value).toLocaleString('en-IN', { timeZone: zone || undefined, dateStyle: 'medium', timeStyle: 'short' }) : 'Choose a time';
 
-export function FollowUpQueue({ agentId, readOnly = false }) {
+export function FollowUpQueue({ agentId, readOnly = false, onChange = null }) {
   const { agents } = useWorkspace();
   const [importOpen, setImportOpen] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -77,6 +78,8 @@ export function FollowUpQueue({ agentId, readOnly = false }) {
   const [busy, setBusy] = useState(false);
   const [editError, setEditError] = useState('');
   const agentName = (id) => (id ? agents.find((agent) => String(agent.id) === String(id))?.name || '' : '');
+  // Callers who asked for another language carry that language on their follow-up.
+  const languages = useLanguageRequests(agentId, revision);
   useEffect(() => {
     let active = true;
     setLoading(true); setError(''); setData({ jobs: [], total: 0 });
@@ -114,7 +117,7 @@ export function FollowUpQueue({ agentId, readOnly = false }) {
       const dueAt = editing.action === 'schedule' ? new Date(due).toISOString() : null;
       await api.followups.update(editing.row.id, { action: editing.action, dueAt, expectedUpdatedAt: editing.row.updatedAt, confirm: true });
       showToast(editing.action === 'cancel' ? 'Pending follow-up cancelled.' : 'Follow-up saved. DND, calling hours and wallet checks still apply.', 'success');
-      setEditing(null); refresh();
+      setEditing(null); refresh(); onChange?.();
     } catch (e) { setEditError(e.message || 'Could not update follow-up.'); }
     finally { setBusy(false); }
   };
@@ -157,10 +160,14 @@ export function FollowUpQueue({ agentId, readOnly = false }) {
             const editable = ['planning', 'needs_review', 'scheduled'].includes(row.status);
             const review = row.status === 'needs_review' || row.status === 'planning';
             const agent = agentName(row.agentId);
+            const wanted = languages.byPhone.get(phoneKey(row.phone));
             return (
               <NeedsYouItem
                 key={row.id}
                 agentName={agent}
+                language={wanted?.code}
+                languageLabel={wanted?.label}
+                languagePrefix={languagePrefix(wanted)}
                 icon={row.kind === 'missed' || row.kind === 'recall' ? PhoneMissed : PhoneCall}
                 tone={review ? 'warning' : 'info'}
                 needsYou={review}

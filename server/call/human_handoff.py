@@ -73,7 +73,10 @@ def merge_handoff(previous: Any, update: dict[str, str]) -> dict[str, str]:
 
 def _language(ctx: Any) -> str:
     stack = getattr(ctx, "resolved_stack", None)
-    return str(getattr(stack, "language", "") or getattr(ctx, "language", "") or "en-IN")
+    # A mid-call English fallback (ctx.active_language) speaks the acknowledgement too.
+    from server.call.language_switch import active_language
+
+    return active_language(ctx) or str(getattr(stack, "language", "") or getattr(ctx, "language", "") or "en-IN")
 
 
 async def save_human_handoff(*, ctx: Any, arguments: dict) -> dict[str, Any]:

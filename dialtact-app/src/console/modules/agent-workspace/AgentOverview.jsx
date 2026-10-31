@@ -22,8 +22,14 @@ function formatMinutes(seconds) {
   return `${Math.floor(mins / 60)}h ${mins % 60}m`;
 }
 
-function KpiCard({ icon, label, value, hint }) {
-  return <MetricCard compact icon={icon} title={label} value={value} subtitle={hint} className="min-w-0" />;
+// A KPI with `onClick` renders as a real button (MetricCard), so it is focusable
+// and opens the filtered list behind the number.
+function KpiCard({ icon, label, value, hint, onClick, testId }) {
+  return (
+    <div className="min-w-0" data-testid={testId}>
+      <MetricCard compact icon={icon} title={label} value={value} subtitle={hint} onClick={onClick} className="h-full min-w-0" />
+    </div>
+  );
 }
 
 function directionWord(direction) {
@@ -110,6 +116,11 @@ export function AgentOverview({ agent, onOpenTab }) {
   const total = Number(stats?.total) || 0;
   const connected = Number(stats?.connected) || 0;
   const missed = Number(stats?.missed) || 0;
+  // Lead lists filter on "last updated", which always includes the leads created in
+  // this period. 'Today' maps to the last day.
+  const leadDays = String(days);
+  const openCalls = (status) => onOpenTab?.('calls', 'history', status ? { status } : null);
+  const openLeads = (stage) => onOpenTab?.('calls', 'leads', { days: leadDays, ...(stage ? { stage } : {}) });
 
   return (
     <div className="space-y-6">
@@ -155,9 +166,9 @@ export function AgentOverview({ agent, onOpenTab }) {
         </SolidCard>
       ) : (
         <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard icon={PhoneCall} label="Calls" value={total} hint={`last ${days} day${days === 1 ? '' : 's'}`} />
+          <KpiCard icon={PhoneCall} label="Calls" value={total} hint={`last ${days} day${days === 1 ? '' : 's'}`} onClick={() => openCalls()} testId="agent-kpi-calls" />
           <KpiCard icon={TrendingUp} label="Connect rate" value={stats?.connectRate != null ? `${stats.connectRate}%` : total ? `${Math.round(connected * 100 / total)}%` : '—'} hint={`${connected} of ${total} answered · may include voicemail`} />
-          <KpiCard icon={PhoneOff} label="Missed" value={missed} hint="Not answered" />
+          <KpiCard icon={PhoneOff} label="Missed" value={missed} hint="Not answered" onClick={() => openCalls('missed')} testId="agent-kpi-missed" />
           <KpiCard
             icon={Clock}
             label="Average call"
@@ -168,10 +179,10 @@ export function AgentOverview({ agent, onOpenTab }) {
       )}
 
       <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4" data-testid="agent-conversion-metrics">
-        <KpiCard icon={Users} label="New leads" value={stats?.leadCount ?? '—'} hint="Created in this period" />
+        <KpiCard icon={Users} label="New leads" value={stats?.leadCount ?? '—'} hint="Created in this period" onClick={() => openLeads()} testId="agent-kpi-leads" />
         <KpiCard icon={TrendingUp} label="Lead conversion" value={stats?.conversionRate != null ? `${stats.conversionRate}%` : '—'} hint={`${stats?.convertedLeads ?? 0} of ${stats?.leadCount ?? 0} leads marked converted by you`} />
         <KpiCard icon={TrendingUp} label="Cost per lead" value={stats?.cost?.costPerLead != null ? formatMoney(stats.cost.costPerLead, stats.cost.currency) : '—'} hint={stats?.cost?.complete === false ? 'Waiting for settled call charges' : 'Call charges divided by new leads'} />
-        <KpiCard icon={Clock} label="Spent on calls" value={stats?.cost ? formatMoney(stats.cost.settledSpend, stats.cost.currency) : '—'} hint={stats?.cost?.complete === false ? 'Some charges are still pending' : 'Charged to your wallet for these calls'} />
+        <KpiCard icon={Clock} label="Spent on calls" value={stats?.cost ? formatMoney(stats.cost.settledSpend, stats.cost.currency) : '—'} hint={stats?.cost?.complete === false ? 'Some charges are still pending' : 'Charged to your wallet for these calls'} onClick={() => openCalls()} testId="agent-kpi-spend" />
       </div>
       <p className="text-ui leading-relaxed text-fg-muted">Test calls are not counted. Answered calls can include voicemail. Conversion counts leads created in this period that you have marked as converted. {range === 'Today' ? `Today starts at midnight in ${Intl.DateTimeFormat().resolvedOptions().timeZone}.` : ''}</p>
       <div className="grid lg:grid-cols-2 gap-4">
@@ -218,7 +229,7 @@ export function AgentOverview({ agent, onOpenTab }) {
               Pipeline <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-          {!stats?.leadCount ? <p className="py-4 text-center text-ui text-fg-muted" data-testid="agent-overview-no-leads">No new leads recorded in this period.</p> : <><p className="mb-3 text-heading text-ink"><span className="font-mono tabular-nums">{stats.leadCount}</span> <span className="text-ui font-normal text-fg-muted">new leads in this period</span></p><div className="flex flex-wrap gap-2">{Object.entries(stats.leadStageCounts || {}).map(([stage, count]) => <span key={stage} className="rounded-control border border-line bg-canvas px-3 py-2 text-ui text-fg-body">{statusWord(stage).label} · <span className="font-mono tabular-nums text-ink">{count}</span></span>)}</div></>}
+          {!stats?.leadCount ? <p className="py-4 text-center text-ui text-fg-muted" data-testid="agent-overview-no-leads">No new leads recorded in this period.</p> : <><p className="mb-3 text-heading text-ink"><span className="font-mono tabular-nums">{stats.leadCount}</span> <span className="text-ui font-normal text-fg-muted">new leads in this period</span></p><div className="flex flex-wrap gap-2">{Object.entries(stats.leadStageCounts || {}).map(([stage, count]) => <button key={stage} type="button" data-testid={`agent-overview-stage-${stage}`} onClick={() => openLeads(stage)} aria-label={`Show ${count} ${statusWord(stage).label} lead${Number(count) === 1 ? '' : 's'} from ${agent?.name || 'this employee'}`} className="min-h-[40px] rounded-control border border-line bg-canvas px-3 py-2 text-ui text-fg-body transition-colors hover:border-line-strong hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">{statusWord(stage).label} · <span className="font-mono tabular-nums text-ink">{count}</span></button>)}</div></>}
 
         </SolidCard>
       </div>

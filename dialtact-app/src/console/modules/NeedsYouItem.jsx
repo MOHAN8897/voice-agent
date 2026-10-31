@@ -2,6 +2,7 @@ import React from 'react';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/StatusBadge';
 import { relativeTime } from '../../lib/money';
+import { LanguageTag } from '../ui/LanguageTag';
 
 const TONE_BAR = {
   danger: 'before:bg-danger',
@@ -18,6 +19,7 @@ const TONE_BAR = {
  *     at={row.createdAt} needsYou actions={<Button…/>} />
  *
  * `leading` replaces the avatar column (e.g. a checkbox plus avatar).
+ * `language` ("hi-IN") tags a row whose caller asked for another language.
  */
 export function NeedsYouItem({
   agentName = '',
@@ -34,6 +36,9 @@ export function NeedsYouItem({
   badges = null,
   actions = null,
   leading = null,
+  language = '',
+  languageLabel = '',
+  languagePrefix = 'Wants',
   className = '',
   ...props
 }) {
@@ -64,6 +69,7 @@ export function NeedsYouItem({
             </time>
           )}
           {meta}
+          {(language || languageLabel) && <LanguageTag code={language} label={languageLabel} prefix={languagePrefix} />}
           {badges}
           {needsYou && <Badge tone={tone === 'danger' ? 'danger' : 'warning'} size="xs">Needs you</Badge>}
         </div>

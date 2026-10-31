@@ -162,6 +162,7 @@ def cap_reactive_response(user_text: str, assistant_text: str) -> str:
 
 def finalize_live_spoken_text(user_text: str, assistant_text: str, *, ctx: Any = None) -> str:
     """Apply reactive one-sentence cap, collapse repeats, soft length safety, spoken prep."""
+    from server.call.language_switch import active_language
     from server.services.spoken_numbers import prepare_spoken_reply
     from server.services.voice_pipeline_limits import (
         cap_spoken_sentences,
@@ -175,7 +176,7 @@ def finalize_live_spoken_text(user_text: str, assistant_text: str, *, ctx: Any =
     capped = clamp_live_spoken_reply(collapsed)
     selection = getattr(getattr(ctx, "resolved_stack", None), "tts", None) if getattr(ctx, "pipeline", None) != "realtime_voice" else None
     prepared = prepare_spoken_reply(capped, provider=getattr(selection, "provider", None), model=getattr(selection, "model", None),
-                                    language=getattr(getattr(ctx, "resolved_stack", None), "language", None))
+                                    language=active_language(ctx) or getattr(getattr(ctx, "resolved_stack", None), "language", None))
     if is_incomplete_spoken_crumb(prepared) or is_incomplete_spoken_crumb(capped):
         return ""
     return _avoid_verbatim_repeat(prepared, ctx)
@@ -530,6 +531,11 @@ class LiveTurnOrchestrator:
             rolling_summary=rolling or None,
             memory_projection=projection or None,
         )
+        from server.call.language_switch import with_active_language
+
+        # After a mid-call switch one late note carries the active language pack;
+        # the cached brain prefix before it never changes.
+        messages = with_active_language(messages, ctx)
         if composed:
             from datetime import datetime, timezone, timedelta
             from zoneinfo import ZoneInfo
@@ -643,13 +649,14 @@ class LiveTurnOrchestrator:
                     self._safe_append_user(call_id, transcript, stt_latency_ms)
                 )
 
-            # A request for another language is server-owned: one language pack per
-            # call, so offer/arrange a callback in that language instead of switching.
+            # A language request is server-owned: English (or back to the call's own
+            # language) switches the live call; any other language is a callback.
             from server.call.language_switch import server_language_switch_turn
 
             switch = await server_language_switch_turn(ctx, transcript, language_code) if call_id and not retry_attempt else None
             if switch and switch.get("hint"):
                 user_instructions = f"{switch['hint']}\n\n{user_instructions or ''}".strip()
+                language_code = switch.get("active_language") or language_code
             elif switch:
                 yield {"done": True, "text": switch["text"], "replace_speech": True, "end_call": switch["end_call"],
                        "finish_reason": "language_switch", "response_contract": "speech_text"}
@@ -1292,6 +1299,7 @@ class LiveTurnOrchestrator:
             switch = await server_language_switch_turn(ctx, transcript, language_code) if call_id else None
             if switch and switch.get("hint"):
                 kwargs["user_instructions"] = f"{switch['hint']}\n\n{kwargs.get('user_instructions') or ''}".strip()
+                kwargs["language_code"] = switch.get("active_language") or language_code
             elif switch:
                 await self._archive_server_turn(call_id, session_id, transcript, switch, ledger_task, stt_latency_ms)
                 return {"text": switch["text"], "end_call": switch["end_call"], "memory_update": {"operations": []},

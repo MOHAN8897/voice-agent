@@ -350,9 +350,18 @@ def realign_compiled_brain_for_session(
             flags=re.I,
         )
 
-    # 2. Update call end policy in suffix if present
+    # 2. Update call end policy in suffix if present. Keep the tenant's own close
+    # reasons and farewell; only a farewell written in another language gives way
+    # to the platform default for this session's language.
     if re.search(r"---\s*CALL END POLICY", suffix, re.I):
-        new_call_end = call_end_policy_section(norm_lang)
+        from server.call.call_end_policy import farewell_fits_language, policy_from_brain
+
+        policy = policy_from_brain(suffix, norm_lang)
+        if policy and policy.get("farewellSource") == "tenant" and not farewell_fits_language(
+            str(policy.get("farewell") or ""), norm_lang
+        ):
+            policy = {"allowedReasons": policy.get("allowedReasons")}
+        new_call_end = call_end_policy_section(norm_lang, policy)
         suffix = re.sub(
             r"---\s*CALL END POLICY[\s\S]*?(?=\n---\s*STATIC OUTPUT RULES|\Z)",
             f"{new_call_end}\n\n",

@@ -341,6 +341,17 @@ def _ledger_details(call_id: str, tenant_id: str) -> dict[str, Any]:
             str(contact.get(k) or "") for k in ("first_name", "last_name")).strip()
         if name:
             out["name"] = str(name)[:120]
+        # A caller who asked for another language, and a callback placed in one.
+        handoff = meta.get("language_callback") if isinstance(meta.get("language_callback"), dict) else {}
+        if handoff.get("status") == "requested" and handoff.get("caller_language"):
+            out["requested_language"] = str(handoff["caller_language"])
+        if contact.get("call_language"):
+            out["call_language"] = str(contact["call_language"])
+            from server.call.language_callback_lines import substitution_note
+
+            note = substitution_note([s for s in contact.get("language_substitutions") or [] if isinstance(s, dict)])
+            if note:
+                out["language_note"] = note
         request = meta.get("callback_request") if isinstance(meta.get("callback_request"), dict) else {}
         if request.get("requestedWhen"):
             out["requested_when"] = str(request["requestedWhen"])[:160]
@@ -430,6 +441,12 @@ def _call_item(row: Any, agent_names: dict[str, str]) -> dict[str, Any]:
         it["contact"] = contact
         who = _who(contact)
         it["detail"] = info.get("summary")
+        if info.get("requested_language"):
+            it["meta"].update(language=info["requested_language"], languageLabel=_language_name(info["requested_language"]))
+        if info.get("call_language"):
+            it["meta"].update(callLanguage=info["call_language"], callLanguageLabel=_language_name(info["call_language"]))
+            if info.get("language_note"):
+                it["meta"]["languageNote"] = info["language_note"]
         if info.get("has_recording"):
             it["actions"].append({"kind": "play_recording", "label": "Play recording", "callId": call_id})
         t = it["type"]
@@ -716,12 +733,13 @@ def _language_item(row: Any, names: dict[str, str]) -> dict[str, Any]:
     contact = _contact(row.contact_name, row.phone_e164)
     who = _who(contact, "a caller")
     refs = {"languageRequestId": str(row.id), "callId": str(row.original_call_id) if row.original_call_id else None}
+    meta = {"language": row.requested_language, "languageLabel": language}
     open_call = [{"kind": "open_call", "label": "Open call", "callId": refs["callId"]}] if refs["callId"] else []
     if row.status == "pending":
         return _item(key=f"language:{row.id}", type_="language.callback", category="calls", at=row.updated_at,
                      tone="warning", actor=None, text=f"{who} needs a callback in {language}",
                      detail=(row.request_text or None), agent_id=row.agent_id, contact=contact, needs_action=True,
-                     refs=refs, meta={"language": row.requested_language, "languageLabel": language},
+                     refs=refs, meta=meta,
                      actions=[{"kind": "call_in_language", "label": f"Call in {language}",
                                "requestId": str(row.id), "agentId": row.agent_id,
                                "language": row.requested_language, "languageLabel": language},
@@ -730,12 +748,12 @@ def _language_item(row: Any, names: dict[str, str]) -> dict[str, Any]:
     if row.status == "calling":
         return _item(key=f"language:{row.id}", type_="language.calling", category="calls", at=row.updated_at,
                      tone="info", actor=names.get(str(row.agent_id)), text=f"is calling {who} back in {language}",
-                     agent_id=row.agent_id, contact=contact, refs=refs,
+                     agent_id=row.agent_id, contact=contact, refs=refs, meta=meta,
                      actions=[{"kind": "open_language", "label": "Open language callbacks"}, *open_call])
     return _item(key=f"language:{row.id}", type_="language.done", category="calls",
                  at=row.updated_at, tone="success", actor=names.get(str(row.agent_id)),
                  text=f"called {who} back in {language}", agent_id=row.agent_id, contact=contact, refs=refs,
-                 actions=open_call)
+                 meta=meta, actions=open_call)
 
 
 def _lead_item(row: Any, names: dict[str, str]) -> dict[str, Any]:
