@@ -107,22 +107,79 @@ def test_unsupported_language_is_said_once_and_call_continues():
     assert ls.decide_language_switch(ctx, "Urdu mein baat karo please", "hi-IN") is None
 
 
-def test_sustained_foreign_speech_offers_once_then_closes_on_yes():
+def test_english_on_an_indic_call_is_answered_not_called_back():
     ctx = _ctx()
     assert ls.decide_language_switch(ctx, "What is the price of this product please tell me", "te-IN") is None
-    offer = ls.decide_language_switch(ctx, "Can you tell me when the delivery will happen", "te-IN")
-    assert offer.action == "offer" and offer.language == "en-IN"
-    closing = ls.decide_language_switch(ctx, "yes please", "te-IN")
-    assert closing.action == "close" and closing.language == "en-IN"
+    assert ls.decide_language_switch(ctx, "Can you tell me when the delivery will happen", "te-IN") is None
 
 
-def test_declined_offer_is_not_repeated():
+def test_a_clear_sentence_in_another_language_closes_with_a_call_back():
+    """Like a telecaller: say this call stays in Tamil, promise a Hindi call back, close."""
     ctx = _ctx()
-    ls.decide_language_switch(ctx, "मुझे इसकी कीमत जाननी है कृपया बताइए", "ta-IN")
-    assert ls.decide_language_switch(ctx, "डिलीवरी कब तक होगी बताइए", "ta-IN").action == "offer"
-    assert ls.decide_language_switch(ctx, "नहीं, ठीक है", "ta-IN") is None
-    assert ls.decide_language_switch(ctx, "डिलीवरी कब तक होगी बताइए", "ta-IN") is None
-    assert ls.decide_language_switch(ctx, "मुझे इसकी कीमत जाननी है कृपया", "ta-IN") is None
+    closing = ls.decide_language_switch(ctx, "मुझे इसकी कीमत जाननी है कृपया बताइए", "ta-IN")
+    assert (closing.action, closing.language) == ("close", "hi-IN")
+    assert closing.text == ls.unable_line("ta-IN", "hi-IN")
+
+
+def test_hindi_written_in_telugu_script_is_hindi():
+    """Call 19e522ae: STT wrote Hindi in Telugu letters ("క్యా బోల్ రే హా?")."""
+    ctx = _ctx()
+    assert ls.decide_language_switch(ctx, "హలో,", "te-IN") is None
+    closing = ls.decide_language_switch(ctx, "హలో, క్యా బోల్ రే హా?", "te-IN")
+    assert (closing.action, closing.language) == ("close", "hi-IN")
+    assert ls.decide_language_switch(_ctx(), "కల్ కి call చేయండి", "te-IN") is None
+
+
+class _FakeLlmAdapter:
+    def __init__(self, answer: str):
+        self.answer = answer
+
+    async def stream_live_turn(self, **_kwargs):
+        yield {"done": True, "text": self.answer}
+
+
+@pytest.mark.parametrize(("text", "latin"), [
+    ("ఆప్ కౌన్ బోల్ రహే హో", "aap kaun bol rahe ho"),  # Hindi in Telugu letters
+    ("ಮೀರು ಎವರು? ಕೊಂಚಂ ಚೆಪ್ಪಗಲರಾ?", "miiru evaru? komcam ceppagalaraa?"),  # Telugu in Kannada letters
+    ("आप कौन बोल रहे हो", "aap kaun bol rahe ho"),  # Hindi drops the word-final "a"
+    ("ఈ hair oil price ఎంత?", "ii hair oil price emta?"),  # Telugu keeps it
+    ("മുഝേ സമഝ് നഹീ ആയാ.", "mujhe samajh nahii aayaa."),
+])
+def test_any_indic_script_is_spelled_in_latin_for_the_model(text, latin):
+    assert ls.latin_spelling(text) == latin
+
+
+@pytest.mark.parametrize(("answer", "expected"), [
+    ('{"language":"hi-IN","evidence":"aap kaun bol rahe ho"}', "hi-IN"),
+    ('{"language":"same","evidence":"aap kaun bol rahe ho"}', None),
+    ('{"language":"te-IN","evidence":"aap kaun bol rahe ho"}', None),  # the call's own language
+    ('{"language":"hi-IN","evidence":"words the caller never said"}', None),  # ungrounded guess
+    ("not json", None),
+])
+async def test_the_model_names_the_language_behind_the_script(monkeypatch, answer, expected):
+    import server.providers as providers
+
+    registry = SimpleNamespace(is_provider_enabled=lambda *_: True, is_model_allowed=lambda *_: True,
+                               get_llm=lambda _p: _FakeLlmAdapter(answer))
+    monkeypatch.setattr(providers, "get_provider_registry", lambda: registry)
+    llm = SimpleNamespace(provider="sarvam", model="sarvam-105b", config={})
+    assert await ls.identify_caller_language(llm, "ఆప్ కౌన్ బోల్ రహే హో", "te-IN") == expected
+
+
+async def test_a_model_heard_language_closes_with_a_call_back(monkeypatch):
+    ctx = _ctx()
+    monkeypatch.setattr(ls, "apply_language_switch_close", AsyncMock(return_value={
+        "should_end": True, "reason": "goal_complete", "farewell": "bye", "contact_preference": "callback",
+    }))
+    # No lexicon hit: only the model knows this Telugu-script line is Hindi.
+    turn = await ls.model_language_switch_turn(ctx, "ఆప్ కౌన్ బోల్ రహే హో", "te-IN", "hi-IN")
+    assert turn["language"] == "hi-IN" and turn["end_call"]["should_end"] is True
+    decision = ls.apply_language_switch_close.await_args.args[1]
+    assert decision.text == ls.unable_line("te-IN", "hi-IN")
+    # English, or nothing heard, never closes.
+    assert await ls.model_language_switch_turn(_ctx(), "what is the price of this oil", "te-IN", "en-IN") is None
+    assert await ls.model_language_switch_turn(_ctx(), "ఆప్ కౌన్ బోల్ రహే హో", "te-IN", None) is None
+    assert ls.language_check_due(_ctx(), "హలో") is False
 
 
 def test_prompt_lock_follows_the_platform_active_language_note():

@@ -724,6 +724,15 @@ class LiveTurnOrchestrator:
                         order_workflow_active(getattr(ctx, "compiled_brain_text", "")) and not has_order_proof(call_id)
                     ),
                 )
+            # Speech-to-text writes in the call's script, so only a model reading the words can tell
+            # Hindi from Telugu there. Asked alongside the classifier; the reply is not yet started.
+            from server.call.language_switch import identify_caller_language, language_check_due
+
+            language_task = (
+                asyncio.create_task(identify_caller_language(ctx.resolved_stack.llm, transcript, language_code, call_id=call_id))
+                if call_id and not realtime and not retry_attempt and language_check_due(ctx, transcript)
+                and getattr(getattr(ctx, "resolved_stack", None), "llm", None) is not None else None
+            )
             if ctx is not None:
                 ctx.semantic_control_enabled = close_task is not None
                 ctx.turn_action_results = []
@@ -745,6 +754,21 @@ class LiveTurnOrchestrator:
                         from server.services.saas.callback_request_service import withdraw_callback_request
                         await withdraw_callback_request(ctx)
                         ctx.contact_control_applied = True
+            if language_task is not None:
+                from server.call.language_switch import LANGUAGE_ID_TIMEOUT_SEC, model_language_switch_turn
+
+                await asyncio.wait({language_task}, timeout=LANGUAGE_ID_TIMEOUT_SEC + 0.5)
+                spoken = language_task.result() if language_task.done() and not language_task.cancelled() else None
+                if not language_task.done():
+                    language_task.cancel()
+                switch = await model_language_switch_turn(ctx, transcript, language_code, spoken)
+                if switch:
+                    if close_task is not None and not close_task.done():
+                        close_task.cancel()
+                    yield {"done": True, "text": switch["text"], "replace_speech": True, "end_call": switch["end_call"],
+                           "finish_reason": "language_switch", "response_contract": "speech_text"}
+                    await self._archive_server_turn(call_id, session_id, transcript, switch, ledger_task, stt_latency_ms)
+                    return
             if ctx is not None:
                 ctx.business_answers = []
                 control = getattr(ctx, "turn_control", None) or {}
