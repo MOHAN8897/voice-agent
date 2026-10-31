@@ -338,7 +338,7 @@ async def list_wallet_transactions(tenant_id: uuid.UUID, limit: int = 50, user_i
                     desc = "Concurrent call channels: 30-day renewal"
                 elif tx.kind == "channel_refund":
                     desc = "Concurrent call channels refund"
-                elif tx.kind in ("admin_grant", "admin_debit"):
+                elif tx.kind in ("admin_grant", "admin_credit", "admin_debit"):
                     desc = "Manual balance adjustment"
                 elif tx.kind == "forfeiture":
                     desc = "Account deletion forfeiture"

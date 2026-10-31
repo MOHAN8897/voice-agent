@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { SkeuoButton } from "@/components/ui/skeuo";
-import { adminAction, devFetch, useAdminResource } from "@/lib/useAdminResource";
+import { adjustmentKey, adminAction, clearAdjustmentKey, devFetch, useAdminResource } from "@/lib/useAdminResource";
 import { cn } from "@/lib/cn";
 import { PLANS, ROLE_LABEL, USER_ROLES, money, runBulk, type ListPage, type Workspace } from "./model";
 import { ActionDialog, Field, Modal, Notice, TextInput, selectClass, useDebounced } from "./ui";
@@ -270,15 +270,17 @@ export function WalletDialog({
     setBusy(true);
     setError(null);
     try {
+      const body = {
+        tenantId: workspace.tenantId,
+        amountUsdCents: Math.round(dollars * 100) * (mode === "credit" ? 1 : -1),
+        reason: mode === "credit" ? "admin_grant" : "admin_debit",
+        note: note.trim(),
+      };
       await adminAction("/api/dev/admin/wallets/adjust", {
         method: "POST",
-        body: {
-          tenantId: workspace.tenantId,
-          amountUsdCents: Math.round(dollars * 100) * (mode === "credit" ? 1 : -1),
-          reason: mode === "credit" ? "admin_credit" : "admin_debit",
-          note: note.trim(),
-        },
+        body: { ...body, idempotencyKey: adjustmentKey(body) },
       });
+      clearAdjustmentKey();
       onClose(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Wallet adjustment failed");

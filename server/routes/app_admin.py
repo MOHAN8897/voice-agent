@@ -15,6 +15,13 @@ from server.db.models.phase5_models import PhoneNumber
 from server.db.models.saas_models import BillingWallet, NumberPurchase, User
 
 logger = logging.getLogger(__name__)
+from server.services.saas.admin_wallet_adjust import (
+    IDEMPOTENCY_KEY_PATTERN,
+    adjustment_already_posted,
+    admin_adjust_kind,
+    admin_adjust_reference,
+    tenant_exists,
+)
 from server.services.saas.billing_wallet_service import credit_wallet, wallet_summary
 from server.services.saas.platform_admins import require_platform_admin_email
 from server.services.saas.tenant_guard import SubscriberPrincipal
@@ -29,11 +36,15 @@ def _require_admin(principal: SubscriberPrincipal) -> None:
 class CreditBody(BaseModel):
     tenantId: str
     amountInrPaise: int = Field(..., ge=-50_000_000, le=50_000_000)
+    # Recorded in the audit log only; the ledger kind is fixed by the sign.
     reason: str = Field("admin_grant", max_length=80)
+    note: str = Field("", max_length=500)
+    idempotencyKey: str | None = Field(None, pattern=IDEMPOTENCY_KEY_PATTERN)
 
 
 @router.post("/api/admin/credits")
 async def admin_credits(body: CreditBody, principal: SubscriberPrincipal = Depends(require_subscriber_jwt)):
+    """Older console-token route; books exactly like /api/dev/admin/wallets/adjust."""
     _require_admin(principal)
     try:
         tenant_id = uuid.UUID(body.tenantId)
@@ -41,30 +52,42 @@ async def admin_credits(body: CreditBody, principal: SubscriberPrincipal = Depen
         raise HTTPException(status_code=400, detail={"error": {"code": "invalid_tenant", "message": "Invalid tenant"}})
     if body.amountInrPaise == 0:
         raise HTTPException(status_code=400, detail={"error": {"code": "invalid_amount", "message": "Amount cannot be zero"}})
+    note = (body.note or "").strip()
+    if len(note) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "note_required",
+                    "message": "Admin statement required (at least 8 characters) for wallet adjustments.",
+                }
+            },
+        )
     factory = get_session_factory()
     if factory is None:
         raise HTTPException(status_code=503, detail={"error": {"code": "db_unavailable", "message": "Database required"}})
-    async with factory() as check_session:
-        if await check_session.get(Tenant, tenant_id) is None:
-            raise HTTPException(status_code=404, detail={"error": {"code": "tenant_not_found", "message": "Tenant not found"}})
-    # reference_id column is varchar(64) — keep under that.
-    ref_tail = uuid.uuid4().hex[:12]
+    if not await tenant_exists(tenant_id):
+        raise HTTPException(status_code=404, detail={"error": {"code": "tenant_not_found", "message": "Tenant not found"}})
+    kind = admin_adjust_kind(body.amountInrPaise)
+    reference_id = admin_adjust_reference(tenant_id, body.amountInrPaise, body.idempotencyKey)
+    if await adjustment_already_posted(reference_id):
+        return {"ok": True, "duplicate": True, "wallet": await wallet_summary(tenant_id)}
+    # The admin's user row belongs to their own workspace, not the target one,
+    # so the ledger line carries no user; the audit log names the admin.
     if body.amountInrPaise > 0:
         await credit_wallet(
             tenant_id,
             amount_inr_paise=body.amountInrPaise,
-            kind=body.reason or "admin_grant",
-            reference_id=f"agr:{tenant_id.hex}:{ref_tail}",
-            user_id=principal.user_id,
+            kind=kind,
+            reference_id=reference_id,
         )
     else:
         from server.services.saas.billing_wallet_service import debit_wallet
 
         await debit_wallet(
             tenant_id,
-            kind=body.reason or "admin_debit",
-            reference_id=f"adb:{tenant_id.hex}:{ref_tail}",
-            user_id=principal.user_id,
+            kind=kind,
+            reference_id=reference_id,
             amount_inr_paise=abs(body.amountInrPaise),
             allow_partial=False,
         )
@@ -75,9 +98,13 @@ async def admin_credits(body: CreditBody, principal: SubscriberPrincipal = Depen
         action="wallet.platform_adjust",
         resource_type="tenant",
         resource_id=str(tenant_id),
+        tenant_id=tenant_id,
         payload={
             "amountInrPaise": body.amountInrPaise,
+            "kind": kind,
+            "referenceId": reference_id,
             "reason": body.reason,
+            "note": note,
             "userId": str(principal.user_id),
         },
     )

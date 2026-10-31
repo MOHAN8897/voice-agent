@@ -22,7 +22,7 @@ import {
   SkeuoTd,
   SkeuoTh,
 } from "@/components/ui/skeuo";
-import { adminAction, formatInr, formatUsd, formatWhen, useAdminResource } from "@/lib/useAdminResource";
+import { adjustmentKey, adminAction, clearAdjustmentKey, formatInr, formatUsd, formatWhen, useAdminResource } from "@/lib/useAdminResource";
 import { isWalletCurrencyDisplay, useWalletCurrencyDisplay } from "@/lib/useWalletCurrencyDisplay";
 
 type TabId = "overview" | "members" | "wallet" | "numbers" | "compliance" | "usage" | "audit";
@@ -314,17 +314,19 @@ export default function TenantCockpitPage() {
       return;
     }
     return run(sign > 0 ? "credit" : "debit", async () => {
+      const body = {
+        tenantId,
+        ...(walletCurrencyDisplay === "INR"
+          ? { amountInrPaise: Math.round(amount * 100) * sign }
+          : { amountUsdCents: Math.round(amount * 100) * sign }),
+        reason: sign > 0 ? "admin_grant" : "admin_debit",
+        note: walletNote.trim(),
+      };
       await adminAction("/api/dev/admin/wallets/adjust", {
         method: "POST",
-        body: {
-          tenantId,
-          ...(walletCurrencyDisplay === "INR"
-            ? { amountInrPaise: Math.round(amount * 100) * sign }
-            : { amountUsdCents: Math.round(amount * 100) * sign }),
-          reason: sign > 0 ? "admin_credit" : "admin_debit",
-          note: walletNote.trim(),
-        },
+        body: { ...body, idempotencyKey: adjustmentKey(body) },
       });
+      clearAdjustmentKey();
       setWalletNote("");
       setWalletAmountDraft(null);
       await detail.reload();

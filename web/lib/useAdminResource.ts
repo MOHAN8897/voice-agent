@@ -120,6 +120,29 @@ export async function adminAction<T = unknown>(
   })) as T;
 }
 
+let pendingAdjustment: { signature: string; key: string } | null = null;
+
+/**
+ * Idempotency key for a wallet adjustment. Retrying the same adjustment after a
+ * failure reuses the key, so the server books it at most once; changing the
+ * amount, tenant or note starts a new one. Call `clearAdjustmentKey` on success.
+ */
+export function adjustmentKey(body: Record<string, unknown>): string {
+  const signature = JSON.stringify(body);
+  if (pendingAdjustment?.signature !== signature) {
+    const key =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+    pendingAdjustment = { signature, key };
+  }
+  return pendingAdjustment.key;
+}
+
+export function clearAdjustmentKey(): void {
+  pendingAdjustment = null;
+}
+
 export function formatUsd(cents: number | null | undefined): string {
   const v = Number(cents ?? 0) / 100;
   return v.toLocaleString("en-US", { style: "currency", currency: "USD" });

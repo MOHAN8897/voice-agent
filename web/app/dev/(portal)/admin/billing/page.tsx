@@ -22,7 +22,9 @@ import {
   SkeuoTh,
 } from "@/components/ui/skeuo";
 import {
+  adjustmentKey,
   adminAction,
+  clearAdjustmentKey,
   formatInr,
   formatUsd,
   formatWhen,
@@ -654,17 +656,19 @@ export default function AdminBillingPage() {
       return;
     }
     return run(sign > 0 ? "credit" : "debit", async () => {
+      const body = {
+        tenantId,
+        ...(walletCurrencyDisplay === "INR"
+          ? { amountInrPaise: Math.round(amount * 100) * sign }
+          : { amountUsdCents: Math.round(amount * 100) * sign }),
+        reason: sign > 0 ? "admin_grant" : "admin_debit",
+        note,
+      };
       await adminAction("/api/dev/admin/wallets/adjust", {
         method: "POST",
-        body: {
-          tenantId,
-          ...(walletCurrencyDisplay === "INR"
-            ? { amountInrPaise: Math.round(amount * 100) * sign }
-            : { amountUsdCents: Math.round(amount * 100) * sign }),
-          reason: sign > 0 ? "admin_grant" : "admin_debit",
-          note,
-        },
+        body: { ...body, idempotencyKey: adjustmentKey(body) },
       });
+      clearAdjustmentKey();
       setAdjustNote("");
       setWalletAmountDraft(null);
       await wallets.reload();

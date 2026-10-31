@@ -42,6 +42,13 @@ from server.db.models.saas_models import (
     User,
 )
 from server.services.saas.admin_audit import record_admin_action
+from server.services.saas.admin_wallet_adjust import (
+    IDEMPOTENCY_KEY_PATTERN,
+    adjustment_already_posted,
+    admin_adjust_kind,
+    admin_adjust_reference,
+    tenant_exists,
+)
 
 router = APIRouter()
 
@@ -1923,8 +1930,11 @@ class WalletAdjustBody(BaseModel):
     tenantId: str
     amountUsdCents: int | None = Field(None, ge=-50_000_000, le=50_000_000)
     amountInrPaise: int | None = Field(None, ge=-50_000_000, le=50_000_000)
+    # Kept for older clients and recorded in the audit log; the ledger kind is
+    # always admin_grant / admin_debit (see services.saas.admin_wallet_adjust).
     reason: str = Field("admin_adjust", max_length=40)
     note: str = Field("", max_length=500)
+    idempotencyKey: str | None = Field(None, pattern=IDEMPOTENCY_KEY_PATTERN)
 
 
 @router.get("/api/dev/admin/wallets")
@@ -2415,14 +2425,25 @@ async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(r
         tenant_id = uuid.UUID(body.tenantId)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid tenant")
+    if not await tenant_exists(tenant_id):
+        raise HTTPException(status_code=404, detail="Tenant not found")
 
-    ref_tail = uuid.uuid4().hex[:12]
+    kind = admin_adjust_kind(cents)
+    reference_id = admin_adjust_reference(tenant_id, cents, body.idempotencyKey)
+    if await adjustment_already_posted(reference_id):
+        # A retried request: the first one already moved the money.
+        return {"ok": True, "duplicate": True, "wallet": await wallet_summary(tenant_id)}
+
     paise = usd_to_inr_cents(abs(cents), fx=fx)
     wallet = await get_or_create_wallet(tenant_id)
     # Credit/debit ONE leg only — writing both doubles purchasing power.
     use_inr = (wallet.currency or "usd").lower() == "inr" or (
         int(wallet.balance_inr_paise or 0) > 0 and int(wallet.balance_cents or 0) <= 0
     )
+    if use_inr and body.amountUsdCents is None and body.amountInrPaise is not None:
+        # The admin typed rupees into an INR wallet: book exactly that, not a
+        # USD round trip that can drift by a few paise.
+        paise = abs(int(body.amountInrPaise))
     credit_cents = 0 if use_inr else abs(cents)
     credit_paise = paise if use_inr else 0
     if cents > 0:
@@ -2430,14 +2451,14 @@ async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(r
             tenant_id,
             amount_cents=credit_cents,
             amount_inr_paise=credit_paise,
-            kind=body.reason or "admin_grant",
-            reference_id=f"agr:{tenant_id.hex}:{ref_tail}",
+            kind=kind,
+            reference_id=reference_id,
         )
     else:
         await debit_wallet(
             tenant_id,
-            kind=body.reason or "admin_debit",
-            reference_id=f"adb:{tenant_id.hex}:{ref_tail}",
+            kind=kind,
+            reference_id=reference_id,
             amount_cents=credit_cents,
             amount_inr_paise=credit_paise,
             allow_partial=False,
@@ -2451,6 +2472,9 @@ async def adjust_wallet(body: WalletAdjustBody, session: SessionData = Depends(r
         payload={
             "amountUsdCents": cents,
             "leg": "inr" if use_inr else "usd",
+            "amountInrPaise": credit_paise,
+            "kind": kind,
+            "referenceId": reference_id,
             "reason": body.reason,
             "note": note,
         },
