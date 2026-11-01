@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 /**
- * Records the sign-in page's WebGL effects (Ghost Fibers, Laser Flow) as PNG frames for
+ * Records the sign-in page's WebGL background (Ghost Fibers) as PNG frames for
  * devices that cannot run them live. The page's requestAnimationFrame and performance.now
  * are replaced by a clock this script steps, one frame per call, 1/30s apart, however
  * slow the machine. A `crossfade` effect records a second past its loop length;
  * encode_effects.py fades that tail into the start so the video loops without a seam.
  *
- * The fibers are recorded on /signin itself with everything but the background hidden;
- * the laser on scripts/capture/effects.html, against an invisible stand-in card.
+ * The fibers are recorded on /signin itself with everything but the background hidden.
  *
  *   npm run dev
  *   node scripts/capture/capture-effects.mjs <out-dir> [base-url]
@@ -26,13 +25,6 @@ export const EFFECTS = {
   fibers: {
     loop: 8, start: 6, mode: 'crossfade', url: '/signin', hide: '.signin > :not(.signin-bg) { visibility: hidden !important; }',
     viewport: { width: 1280, height: 800 }, clip: { x: 0, y: 0, width: 1280, height: 800 },
-  },
-  // The beam lands on the card's top-right corner at (672, 240); keep 560px left of it
-  // (the light running along the card's top edge), the 192px to the layer's edge, and the
-  // layer's full height, so the glow beside the card never ends in a hard line.
-  laser: {
-    loop: 6, start: 2, mode: 'crossfade', url: '/scripts/capture/effects.html',
-    viewport: { width: 864, height: 820 }, clip: { x: 112, y: 0, width: 752, height: 820 },
   },
 };
 

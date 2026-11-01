@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { MarketingNav } from './MarketingNav';
+import { IntegrationsSection } from './IntegrationsSection';
 import { HeroSection, StatementSection } from './HeroSection';
 import { HowItWorksSection } from './HowItWorksSection';
 import { RealCallSection } from './RealCallSection';
@@ -10,6 +11,8 @@ import { CapabilitiesSection } from './CapabilitiesSection';
 import { UseCasesSection, WorkspaceSection } from './ProofSections';
 import { FaqSection, FinalCtaSection, MarketingFooter, PricingSection } from './ClosingSections';
 import { ScrollBot } from './ScrollBot';
+import GlowCursor from '@/components/reactbits/GlowCursor';
+import { renderMode } from '../lib/renderSupport';
 import './mascot.css';
 import './marketing.css';
 
@@ -52,6 +55,20 @@ function useSmoothScroll() {
   }, []);
 }
 
+/**
+ * React Bits Glow Cursor, faint (a tenth of its default strength) and white, on devices
+ * with a mouse that run WebGL well, and never under reduced motion.
+ */
+function useGlowCursor() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const mouse = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setOn(mouse && !calm && renderMode() === 'live');
+  }, []);
+  return on;
+}
+
 export function MarketingPage({
   onGetStarted,
   onSignIn,
@@ -62,6 +79,7 @@ export function MarketingPage({
   isModalOpen,
 }) {
   useSmoothScroll();
+  const glow = useGlowCursor();
 
   // The body is light for the rest of the app; match it to this page so overscroll
   // and rubber-banding never flash a pale edge.
@@ -81,6 +99,18 @@ export function MarketingPage({
 
   return (
     <div className="mk">
+      {glow && (
+        <GlowCursor
+          className="mk-glow-cursor"
+          color="#ffffff"
+          intensity={0.13}
+          glow={0.6}
+          trailWidth={2.5}
+          linger={1}
+          clickBurst={false}
+          quality="medium"
+        />
+      )}
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-white focus:text-black focus:px-4 focus:py-2 focus:rounded">
         Skip to content
       </a>
@@ -93,6 +123,7 @@ export function MarketingPage({
         <CapabilitiesSection />
         <UseCasesSection />
         <WorkspaceSection />
+        <IntegrationsSection />
         <PricingSection onSelectPlan={onSelectPlan} />
         <FaqSection />
         <FinalCtaSection onGetStarted={onGetStarted} />

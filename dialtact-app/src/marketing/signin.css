@@ -1,5 +1,4 @@
-/* /signin: the home page's black and white, with Ghost Fibers behind and a Laser Flow
-   beam landing on the form card. */
+/* /signin: the home page's black and white, with Ghost Fibers behind the form card. */
 .signin { min-height: 100svh; display: flex; flex-direction: column; isolation: isolate; }
 .signin-bg { position: fixed; inset: 0; z-index: -1; background: #000; }
 
@@ -12,40 +11,15 @@
 .signin-next h2 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
 .signin-next p { margin-top: 0.25rem; color: var(--mk-muted); font-size: 1rem; }
 
-/* The beam comes down from the top of the stage and lands on the card's top-right corner. */
-.signin-stage { position: relative; padding-top: 9rem; }
-.signin-laser { position: absolute; left: -40%; right: -40%; top: -6rem; bottom: 0; pointer-events: none; mix-blend-mode: screen; } /* only the light shows over the fibers */
-/* The beam's fog fades out at the sides instead of stopping at a hard edge,
-   and the beam fades in from above, so it never cuts through the header. */
-.signin-laser {
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 32%); /* taste-skill-ignore: a soft edge mask, not a fill */
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(90deg, transparent, #000 30%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 32%); /* taste-skill-ignore: a soft edge mask, not a fill */
-  mask-composite: intersect;
-}
+.signin-stage { position: relative; }
 .signin-card { position: relative; border-radius: 28px; background: #fff; color: #000; overflow: hidden; }
 
-/* The recorded versions (lib/renderSupport): the fibers fill the background; the beam
-   video (its edge fades recorded in) is pinned so the spot it lands on (560px in, 240px
-   down) meets the card's top-right corner, at any card size. */
+/* The recorded fibers (lib/renderSupport), where WebGL cannot run them live. */
 .signin-bg-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.signin-laser-video {
-  position: absolute; top: calc(9rem - 240px); right: -192px; width: 752px; height: 816px; max-width: none;
-  pointer-events: none; mix-blend-mode: screen;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 25%); mask-image: linear-gradient(90deg, transparent, #000 25%); /* taste-skill-ignore: a soft edge mask, not a fill */
-}
 
 @media (max-width: 1023px) {
   .signin-grid { grid-template-columns: 1fr; }
   .signin-next { display: none; }
-  .signin-stage { padding-top: 5rem; }
-  .signin-laser { top: 0; } /* start below the copy, never over it */
-  .signin-laser-video { top: calc(5rem - 240px); }
-  /* The stage is short here, so the beam fades in over a shorter run. */
-  .signin-laser {
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 9%); /* taste-skill-ignore: a soft edge mask, not a fill */
-    mask-image: linear-gradient(90deg, transparent, #000 30%, #000 88%, transparent), linear-gradient(180deg, transparent, #000 9%); /* taste-skill-ignore: a soft edge mask, not a fill */
-  }
 }
 
 /* The form, in black and white: its violet links, focus rings and tints go neutral. */

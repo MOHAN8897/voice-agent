@@ -12,8 +12,15 @@ import { VideoMascot } from './VideoMascot';
  * it takes no clicks itself (a hit area over the body does), so the empty sides never
  * block the page beside it.
  */
-const BOT_W = 760;
-const BOT_H = 565;
+const BOT_W = 950;
+const BOT_H = 706;
+
+/**
+ * Where the mascot's body sits in that canvas, as fractions of it: the idle clip's box
+ * in public/media/mascot/manifest.json (576x432 at 183,71 of 950x706). A section's
+ * `<BotAnchor />` is filled by the body, not by the canvas around it.
+ */
+const BODY = { w: 576 / 950, h: 432 / 706, cx: (183 + 288) / 950, cy: (71 + 216) / 706 };
 
 /** Lengths of the Blender-authored one-shot clips (scripts/blender/add_scroll_clips.py). */
 const CLIP_MS = {
@@ -58,6 +65,20 @@ const TAP_COMBO = { moves: ['CELEBRATE'], mood: 'EXCITED', say: "Okay, okay. I'm
 /** Hovering says hello, at most this often. */
 const HOVER_COOLDOWN_MS = 9000;
 
+/**
+ * Alive at rest: a slow sway, a lean toward a nearby cursor, and, left alone for a while,
+ * a small gesture of its own. Things on the page marked `data-bot-hover="…"` make it
+ * comment when pointed at (`data-bot-hover-move` adds a gesture); `data-bot-click-move`
+ * plays one on click.
+ */
+const SWAY_PX = 8;
+const SWAY_DEG = 1.4;
+const LEAN_RANGE_PX = 420;
+const BORED_MS = 12000;
+const BORED_MOVES = ['SCAN', 'STRETCH', 'NOD', 'LEFT_HAND_WAVE', 'EXPLAIN'];
+const HOVER_LINE_MS = 2800;
+const HOVER_MOVE_COOLDOWN_MS = 6000;
+
 /** Ask the mascot to do something from anywhere on the page. */
 export function commandBot(detail) {
   if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('dialtact:bot', { detail }));
@@ -101,7 +122,7 @@ export function ScrollBot({ controllerRef, hidden = false }) {
   const tiltRef = useRef(null);
   const bubbleRef = useRef(null);
   const pointerRef = useRef({ x: 0, y: 0 });
-  const mouse = useRef({ x: 0, y: 0, at: 0 });
+  const mouse = useRef({ x: 0, y: 0, at: 0, cx: -9999, cy: -9999 });
   // Position in page coordinates: inside a section the mascot rides with the page like
   // any element; between sections it eases over to the next slot.
   const pos = useRef({
@@ -111,6 +132,7 @@ export function ScrollBot({ controllerRef, hidden = false }) {
     sq: 0, sqV: 0, // squash (<0) and stretch (>0)
     hop: 0, hopV: 0, // a jump, canvas px (negative is up)
     windup: 0, trip: 0, arc: 0, arrived: false, press: false,
+    alive: 0, leanX: 0, leanR: 0, // sway at rest, lean toward the cursor
     fade: 1, leaving: false,
   });
   const taps = useRef([]);
@@ -130,6 +152,9 @@ export function ScrollBot({ controllerRef, hidden = false }) {
   const [isDocked, setIsDocked] = useState(true);
   const bubbleTimer = useRef(0);
   const lastHover = useRef(0);
+  const busyUntil = useRef(0);
+  const lastActivity = useRef(0);
+  const boredIndex = useRef(0);
   const lastFrame = useRef(0);
 
   const say = useCallback((text, title = 'Dialtact', ttl = 0) => {
@@ -147,11 +172,14 @@ export function ScrollBot({ controllerRef, hidden = false }) {
     // Gestures play under reduced motion too: they move in place, not across the page.
     const queue = moves.filter(Boolean);
     let at = 0;
+    const started = performance.now();
+    lastActivity.current = started;
     const mark = (move) => { if (botRef.current) botRef.current.dataset.botMove = move; };
     queue.forEach((move) => {
       timers.current.push(window.setTimeout(() => { mark(move); controllerRef.current?.setState(move); }, at));
       at += CLIP_MS[move] || 1500;
     });
+    busyUntil.current = started + at;
     // `data-bot-move` names the clip playing now, so the choreography is observable.
     timers.current.push(window.setTimeout(() => mark(mood || 'IDLE'), at));
     // Mood names are expressions: setting one never interrupts a running gesture.
@@ -213,11 +241,12 @@ export function ScrollBot({ controllerRef, hidden = false }) {
       let tx; let ty; let ts;
       const nowDocked = !(rect && visibleBox(rect, vw, vh));
       if (!nowDocked) {
-        ts = rect.height / BOT_H;
-        tx = rect.left + rect.width / 2 - (BOT_W * ts) / 2;
-        ty = rect.top;
+        // Fit the body (not the canvas) into the slot, centred.
+        ts = Math.min(rect.width / (BODY.w * BOT_W), rect.height / (BODY.h * BOT_H));
+        tx = rect.left + rect.width / 2 - BODY.cx * BOT_W * ts;
+        ty = rect.top + rect.height / 2 - BODY.cy * BOT_H * ts;
       } else {
-        ts = vw < 768 ? 0.21 : 0.28;
+        ts = vw < 768 ? 0.17 : 0.224;
         // The mascot's body is the middle ~45% of the canvas; dock that in the corner.
         tx = vw - BOT_W * ts * 0.72 - (vw < 768 ? 4 : 16);
         ty = vh - BOT_H * ts - (vw < 768 ? 4 : 8);
@@ -340,6 +369,14 @@ export function ScrollBot({ controllerRef, hidden = false }) {
       }
       if (botRef.current && botRef.current.dataset.arrived !== String(arrived)) botRef.current.dataset.arrived = String(arrived);
 
+      // Left alone for a while, it does something small of its own.
+      if (!reduce && arrived && !hold.current && !pending.current && !p.press
+        && now > busyUntil.current && now - lastActivity.current > BORED_MS) {
+        const move = BORED_MOVES[boredIndex.current % BORED_MOVES.length];
+        boredIndex.current += 1;
+        perform([move], section?.dataset.botState || 'IDLE');
+      }
+
       const mouseFresh = now - mouse.current.at < 2500;
       if (!arrived) {
         // Look where it is going.
@@ -362,16 +399,41 @@ export function ScrollBot({ controllerRef, hidden = false }) {
         const sy2 = 1 + p.sq;
         const sx2 = 1 - p.sq * 0.55; // keep the volume: taller is thinner
         const bob = videoShowing.current && !reduce ? Math.sin((now / 1000) * 2.4) * BOB_PX : 0;
-        tiltRef.current.style.transform = `translate3d(0, ${(p.hop + bob).toFixed(1)}px, 0) rotate(${p.tilt.toFixed(2)}deg) scale(${sx2.toFixed(4)}, ${sy2.toFixed(4)})`;
+        // At rest it sways, and leans toward a cursor that comes close.
+        p.alive += ((arrived && !reduce ? 1 : 0) - p.alive) * (1 - Math.exp(-dt * 1.5));
+        const t = now / 1000;
+        const swayX = Math.sin(t * 0.8) * SWAY_PX * p.alive;
+        const swayR = Math.sin(t * 0.55 + 1) * SWAY_DEG * p.alive;
+        const cx = x + (BOT_W * p.s) / 2;
+        const cy = y + BOT_H * p.s * 0.45;
+        const gap = Math.hypot(mouse.current.cx - cx, mouse.current.cy - cy);
+        const near = mouseFresh && arrived && !reduce ? Math.max(0, 1 - gap / LEAN_RANGE_PX) : 0;
+        const toward = Math.max(-1, Math.min(1, (mouse.current.cx - cx) / LEAN_RANGE_PX));
+        p.leanX += (toward * near * 22 - p.leanX) * (1 - Math.exp(-dt * 5));
+        p.leanR += (toward * near * 4 - p.leanR) * (1 - Math.exp(-dt * 5));
+        tiltRef.current.style.transform = `translate3d(${(swayX + p.leanX).toFixed(1)}px, ${(p.hop + bob).toFixed(1)}px, 0) rotate(${(p.tilt + swayR + p.leanR).toFixed(2)}deg) scale(${sx2.toFixed(4)}, ${sy2.toFixed(4)})`;
         tiltRef.current.style.opacity = p.fade < 1 ? p.fade.toFixed(3) : '';
       }
       if (bubbleRef.current) {
         const w = BOT_W * p.s;
         const bw = bubbleRef.current.offsetWidth || 260;
         const bh = bubbleRef.current.offsetHeight || 80;
-        // Centred above the mascot's head, so it never lands on the copy beside it.
-        const bx = Math.max(12, Math.min(vw - bw - 12, x + w / 2 - bw / 2));
-        const by = Math.max(76, y + (BOT_H * 0.05 + Math.min(0, p.hop)) * p.s - bh);
+        // Centred above the mascot's head by default. A section can put it under the body
+        // (data-bot-bubble="below") or on a spot it marks (data-bot-bubble-at="<selector>",
+        // the bubble's bottom-left corner), when above the head would cover its copy.
+        let bx = x + w / 2 - bw / 2;
+        let by = y + (BOT_H * 0.05 + Math.min(0, p.hop)) * p.s - bh;
+        const placement = arrived && !nowDocked && section ? section.dataset : {};
+        const spot = placement.botBubbleAt ? section.querySelector(placement.botBubbleAt) : null;
+        if (spot) {
+          const r = spot.getBoundingClientRect();
+          bx = r.left;
+          by = r.top - bh;
+        } else if (placement.botBubble === 'below') {
+          by = y + (BODY.cy + BODY.h / 2) * BOT_H * p.s + 12;
+        }
+        bx = Math.max(12, Math.min(vw - bw - 12, bx));
+        by = Math.max(76, Math.min(vh - bh - 12, by));
         bubbleRef.current.style.transform = `translate3d(${bx.toFixed(1)}px, ${by.toFixed(1)}px, 0)`;
       }
       raf = requestAnimationFrame(tick);
@@ -386,13 +448,54 @@ export function ScrollBot({ controllerRef, hidden = false }) {
       mouse.current.x = Math.max(-1, Math.min(1, (event.clientX - cx) / Math.max(window.innerWidth * 0.45, 380)));
       mouse.current.y = -Math.max(-1, Math.min(1, (event.clientY - cy) / Math.max(window.innerHeight * 0.4, 280)));
       mouse.current.at = performance.now();
+      mouse.current.cx = event.clientX;
+      mouse.current.cy = event.clientY;
+    };
+
+    // Pointing at something marked data-bot-hover makes it comment, then it goes back to
+    // the section's own line.
+    let hovered = null;
+    let lastLine = 0;
+    let lastMove = 0;
+    let restore = 0;
+    const onOver = (event) => {
+      const el = event.target.closest?.('[data-bot-hover]');
+      if (el === hovered) return;
+      hovered = el;
+      const now = performance.now();
+      if (!el || hold.current || window.innerWidth < 768 || now - lastLine < 700) return;
+      lastLine = now;
+      lastActivity.current = now;
+      say(el.dataset.botHover, 'Dialtact');
+      window.clearTimeout(restore);
+      restore = window.setTimeout(() => {
+        const section = active.current;
+        if (hold.current) return;
+        say(!docked.current && section ? section.dataset.botSay : null, section?.dataset.botTitle || 'Dialtact');
+      }, HOVER_LINE_MS);
+      const move = el.dataset.botHoverMove;
+      if (move && now > busyUntil.current && now - lastMove > HOVER_MOVE_COOLDOWN_MS) {
+        lastMove = now;
+        perform([move], active.current?.dataset.botState || 'HAPPY');
+        if (move === 'HOP' && pos.current.hop === 0) pos.current.hopV = -520;
+      }
+    };
+    const onClick = (event) => {
+      const el = event.target.closest?.('[data-bot-click-move]');
+      if (!el || hold.current || performance.now() < busyUntil.current) return;
+      perform([el.dataset.botClickMove], active.current?.dataset.botState || 'IDLE');
     };
     window.addEventListener('pointermove', onPointer, { passive: true });
+    document.addEventListener('pointerover', onOver, { passive: true });
+    document.addEventListener('click', onClick);
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(restore);
       window.removeEventListener('pointermove', onPointer);
+      document.removeEventListener('pointerover', onOver);
+      document.removeEventListener('click', onClick);
     };
-  }, [enterSection, say]);
+  }, [enterSection, perform, say]);
 
   const handleHover = useCallback(() => {
     const now = performance.now();

@@ -1,7 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, AudioLines } from 'lucide-react';
 import GhostFibers from '@/components/reactbits/GhostFibers';
-import LaserFlow from '@/components/reactbits/LaserFlow';
 import { AuthModal } from '../components/AuthModal';
 import { renderMode, videoFormat } from '../lib/renderSupport';
 import './marketing.css';
@@ -40,11 +39,9 @@ function EffectVideo({ name, className }) {
 /**
  * `/signin`: sign in or make an account, and the agent builder opens straight after.
  * One page for both, in the home page's black and white. Ghost Fibers drift behind it,
- * and a Laser Flow beam lands on the form card; both are recorded video where WebGL
- * cannot run them well (lib/renderSupport).
+ * recorded video where WebGL cannot run them well (lib/renderSupport).
  */
 export function SignInPage({ mode = 'signin', notice = '', onAuthSuccess, onBack }) {
-  const cardRef = useRef(null);
   const [live] = useState(() => renderMode() === 'live');
   const back = (event) => {
     event.preventDefault();
@@ -86,17 +83,7 @@ export function SignInPage({ mode = 'signin', notice = '', onAuthSuccess, onBack
         </section>
 
         <div className="signin-stage">
-          {live ? (
-            <div className="signin-laser" aria-hidden="true">
-              {/* The beam lands on the card's top-right corner (the stage's layer is 1.8x the
-                  card's width, so the card ends at 0.778; LaserFlow pulls 0.76 just
-                  inside the rounded corner), softly. */}
-              <LaserFlow surfaceRef={cardRef} color="#ffffff" beamPosition={0.76} intensity={0.65} flare={1} fog={0.08} dust={0.5} streaks={1} mouseInteraction={false} />
-            </div>
-          ) : (
-            <EffectVideo name="laser" className="signin-laser-video" />
-          )}
-          <div ref={cardRef} className="signin-card">
+          <div className="signin-card">
             <AuthModal variant="page" initialMode={mode} notice={notice} onAuthSuccess={onAuthSuccess} />
           </div>
         </div>

@@ -7,7 +7,8 @@ import { catalogNumberMonthly, formatInrAmount, formatUsdAmount, pricedTiers, us
 import { LANDING_FAQS } from '../data/siteContent';
 import { api } from '../services/api';
 import { BotAnchor } from './ScrollBot';
-import { ReflectiveCard, Reveal, WarmTooltip } from './effects';
+import SpotlightCard from '@/components/reactbits/SpotlightCard';
+import { Reveal, WarmTooltip } from './effects';
 
 /** Published rates from the billing catalog — never a hard-coded price. */
 export function PricingSection({ onSelectPlan }) {
@@ -59,7 +60,16 @@ export function PricingSection({ onSelectPlan }) {
               const tags = Array.isArray(tier.tags) ? tier.tags : [];
               return (
                 <Reveal key={tier.id} delay={index * 0.08} className="h-full">
-                  <ReflectiveCard className={`mk-price h-full${featured ? ' is-featured' : ''}`} data-tier={tier.id}>
+                  {/* React Bits Spotlight Card: a soft light follows the pointer and spills onto the neighbours. */}
+                  <SpotlightCard
+                    theme={featured ? 'light' : 'dark'}
+                    intensity={featured ? 0.35 : 0.2}
+                    spotlightSize={320}
+                    proximity={120}
+                    className={`mk-price h-full${featured ? ' is-featured' : ''}`}
+                    data-tier={tier.id}
+                    data-bot-hover={tier.pstn ? `${tier.label}: ${formatInrAmount(tier.pstn.inrPerMin)} a phone minute.` : `${tier.label}: the rate is in your workspace.`}
+                  >
                     <h3>{tier.label}</h3>
                     {tags.length > 0 && (
                       <ul className="mk-price-tags" aria-label={`${tier.label} highlights`}>
@@ -81,7 +91,7 @@ export function PricingSection({ onSelectPlan }) {
                     <button type="button" className={`mk-btn ${featured ? 'mk-btn-primary' : 'mk-btn-ghost'}`} style={{ marginTop: '1.75rem' }} onClick={onSelectPlan}>
                       Choose {tier.label} <ArrowRight size={16} aria-hidden="true" />
                     </button>
-                  </ReflectiveCard>
+                  </SpotlightCard>
                 </Reveal>
               );
             })}
@@ -111,6 +121,7 @@ export function FaqSection() {
       className="mk-section"
       aria-label="Frequently asked questions"
       data-bot-say="If I don’t know, I say so."
+      data-bot-bubble="below"
       data-bot-gesture="REACH_RIGHT"
       data-bot-state="LISTENING"
       data-bot-title="FAQ"
@@ -129,7 +140,7 @@ export function FaqSection() {
             return (
               <div key={question} className="mk-faq-item">
                 <h3>
-                  <button type="button" aria-expanded={expanded} aria-controls={id} onClick={() => setOpen(expanded ? -1 : index)}>
+                  <button type="button" aria-expanded={expanded} aria-controls={id} data-bot-click-move="NOD" onClick={() => setOpen(expanded ? -1 : index)}>
                     {question}<Plus size={20} aria-hidden="true" />
                   </button>
                 </h3>
@@ -166,7 +177,7 @@ export function FinalCtaSection({ onGetStarted }) {
         <p>Create your agent in the browser, test it with your own script, then put it on a number when it sounds right.</p>
         <div className="mk-actions">
           <Magnet padding={70} magnetStrength={3}>
-            <a href="/signin" className="mk-btn mk-btn-primary mk-btn-lg" onClick={(event) => { event.preventDefault(); onGetStarted(); }}>
+            <a href="/signin" className="mk-btn mk-btn-primary mk-btn-lg" data-bot-hover="I’m ready when you are." data-bot-hover-move="HOP" onClick={(event) => { event.preventDefault(); onGetStarted(); }}>
               Create your own agent <ArrowRight size={18} aria-hidden="true" />
             </a>
           </Magnet>

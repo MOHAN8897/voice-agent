@@ -33,12 +33,12 @@ test.describe('auth modal visual check', () => {
     await expect(page.getByTestId('auth-modal').getByLabel('Work email')).toBeFocused();
     await expect(page.locator('[role="dialog"]')).toHaveCount(0);
 
-    // The card sits in the right column, whole, and the beam and fibers are drawing.
+    // The card sits in the right column, whole, over the drawing fibers; no light beam.
     const box = await page.getByTestId('auth-modal').boundingBox();
     expect(box.width).toBeGreaterThan(400);
     expect(box.x + box.width).toBeLessThanOrEqual(1440);
-    await expect(signin.locator('.signin-laser canvas')).toHaveCount(1);
     await expect(signin.locator('.signin-bg canvas')).toHaveCount(1);
+    await expect(signin.locator('canvas')).toHaveCount(1);
 
     // Black and white: the form's violet links and focus ring are neutral on the page.
     const accent = await page.getByRole('button', { name: 'Create an account' }).evaluate((el) => getComputedStyle(el).color);

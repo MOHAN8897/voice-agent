@@ -238,14 +238,19 @@ test('a lost GPU context never leaves the mascot as a picture', async ({ page })
   expect(await page.evaluate(() => window.__pictureShown)).toBe(false);
 });
 
-test('the mascot opens big on the right, comes to the centre, then works the left side', async ({ page }) => {
+test('the mascot opens big in front of the hero words, then works the left side', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openHome(page);
   const bot = page.getByTestId('scroll-bot');
   const centreX = async () => bot.evaluate((el) => { const r = el.getBoundingClientRect(); return r.x + r.width / 2; });
   await expect(bot).toHaveAttribute('data-docked', 'false');
+  await expect(bot).toHaveAttribute('data-arrived', 'true');
   const hero = await bot.boundingBox();
-  expect(await centreX()).toBeGreaterThan(1440 * 0.6);
+  // Centred, standing over the giant "every call." behind it.
+  expect(Math.abs((await centreX()) - 720)).toBeLessThan(60);
+  const giant = await page.locator('.mk-hero-giant').boundingBox();
+  const body = await page.locator('.mk-bot-hit').boundingBox();
+  expect(body.y + body.height).toBeGreaterThan(giant.y + giant.height * 0.3);
   await scrollToTop(page, '.mk-statement');
   await expect.poll(centreX).toBeGreaterThan(1440 * 0.4);
   await expect.poll(centreX).toBeLessThan(1440 * 0.6);
@@ -290,8 +295,8 @@ test('the mascot glides between sections instead of jumping', async ({ page }) =
     observer.observe(el, { attributes: true, attributeFilter: ['data-arrived'] });
   }));
   await page.locator('#how-it-works').evaluate((el) => window.__dialtactLenis.scrollTo(el, { offset: -60, immediate: true }));
-  // Mid-flight it is somewhere between the two slots, not at either.
-  await page.waitForTimeout(250);
+  // Mid-flight (after its 0.18s crouch) it is somewhere between the two slots, not at either.
+  await page.waitForTimeout(400);
   const mid = await x();
   expect(Math.abs(mid - start)).toBeGreaterThan(20);
   expect(await travelMs).toBeGreaterThan(600);
@@ -306,10 +311,10 @@ test('Create your own agent opens the sign-in page, not a dialog', async ({ page
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, follow');
   const signin = page.getByTestId('signin-page');
   await expect(signin.getByRole('heading', { level: 1 })).toHaveText('Create your AI voice agent.');
-  // New visitors start on sign-up; the laser and the fibers are real canvases.
+  // New visitors start on sign-up; the fibers are a real canvas, and there is no beam.
   await expect(page.getByTestId('auth-modal').getByRole('heading', { name: 'Create your account' })).toBeVisible();
   await expect(page.locator('[role="dialog"]')).toHaveCount(0);
-  await expect(signin.locator('.signin-laser canvas')).toHaveCount(1);
+  await expect(signin.locator('canvas')).toHaveCount(1);
   await expect(signin.locator('.signin-bg canvas')).toHaveCount(1);
   await signin.getByRole('link', { name: 'Back to home' }).click();
   await expect(page).toHaveURL(/\/$/);
@@ -485,19 +490,45 @@ test('without WebGL the recorded mascot plays and follows the page', async ({ pa
   expect(models).toEqual([]);
 });
 
-test('without WebGL the sign-in page plays its recorded effects', async ({ page }) => {
+test('without WebGL the sign-in page plays its recorded background', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.addInitScript(NO_WEBGL);
   await openHome(page, '/signin', { render: null });
   const signin = page.getByTestId('signin-page');
   await expect(signin.locator('canvas')).toHaveCount(0);
-  const playing = (selector) => signin.locator(selector).evaluate((v) => !v.paused && v.readyState >= 2);
-  await expect.poll(() => playing('.signin-bg-video')).toBe(true);
-  await expect.poll(() => playing('.signin-laser-video')).toBe(true);
-  // The recorded beam lands on the card's top-right corner: 560px in and 240px down.
-  const card = await signin.locator('.signin-card').boundingBox();
-  const beam = await signin.locator('.signin-laser-video').boundingBox();
-  expect(Math.abs(beam.x + 560 - (card.x + card.width))).toBeLessThan(2);
-  expect(Math.abs(beam.y + 240 - card.y)).toBeLessThan(2);
+  await expect(signin.locator('video')).toHaveCount(1);
+  await expect.poll(() => signin.locator('.signin-bg-video').evaluate((v) => !v.paused && v.readyState >= 2)).toBe(true);
   await expect(page.getByTestId('auth-modal')).toBeVisible();
+});
+
+test('integrations: the real catalog in an orbit and a loop, and the mascot names what you point at', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openHome(page, '/', { render: 'video' });
+  const section = page.locator('#integrations');
+  await expect(section.getByRole('heading', { level: 2 })).toHaveText('Works with the tools you already use.');
+  // The server's catalog runs past by name in the loop; no Nango, no carrier.
+  const loop = section.locator('.mk-int-loop');
+  for (const name of ['Google Calendar', 'HubSpot', 'Salesforce', 'Zendesk', 'Shopify', 'WhatsApp Business', 'Gmail', 'Notion', 'GitHub']) {
+    await expect(loop.getByText(name, { exact: true }).first()).toBeAttached();
+  }
+  await expect(section.getByText(/nango|twilio/i)).toHaveCount(0);
+  await expect(section.locator('.mk-orbit-chip')).toHaveCount(20);
+  await scrollToTop(page, '#integrations');
+  // Settled in the section: it has said the section's own line.
+  await expect(page.locator('.mk-bot-bubble')).toContainText('I work inside your calendar');
+  // One out to the side, clear of the mascot standing in the middle.
+  await section.locator('.mk-orbit-ring.is-outer .mk-orbit-chip').nth(3).hover();
+  await expect(page.locator('.mk-bot-bubble')).toContainText('I can work in');
+});
+
+test('pricing cards are spotlight cards, and the mascot reads out the one you point at', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openHome(page, '/', { render: 'video' });
+  const card = page.locator('[data-testid=mk-pricing-cards] [data-tier="beta"]');
+  await card.scrollIntoViewIfNeeded();
+  await expect(card).toHaveClass(/isolate/);
+  // Once it has settled in the section (its arrival line would replace the comment).
+  await expect(page.locator('.mk-bot-bubble')).toContainText('Today’s published rates');
+  await card.hover();
+  await expect(page.locator('.mk-bot-bubble')).toContainText('Beta tier: ₹7.00 a phone minute.');
 });
