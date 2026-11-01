@@ -1,0 +1,22 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "url": "http://localhost:8000",
+      "port": 8000
+    },
+    {
+      "name": "dialtact",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:dialtact"],
+      "port": 5173
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:web"],
+      "port": 3000
+    }
+  ]
+}
