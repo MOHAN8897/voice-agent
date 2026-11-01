@@ -5,14 +5,15 @@ import { BotLights } from './BotLights';
 import { AmbientElements } from './AmbientElements';
 export { clearBotModelCache } from './DialtactBot';
 
-function CanvasLoader() {
+function CanvasLoader({ tone = 'light' }) {
+  const dark = tone === 'dark';
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#FAF9FD]/70 backdrop-blur-sm z-10 transition-opacity duration-500">
+    <div className={`absolute inset-0 flex flex-col items-center justify-center z-10 transition-opacity duration-500 ${dark ? 'bg-transparent' : 'bg-[#FAF9FD]/70 backdrop-blur-sm'}`}>
       <div className="relative flex items-center justify-center">
-        <div className="w-12 h-12 rounded-full border-2 border-[#E4E2EB] border-t-[#6344E7] animate-spin" />
-        <div className="absolute w-6 h-6 rounded-full bg-[#6344E7]/20 animate-pulse" />
+        <div className={`w-12 h-12 rounded-full border-2 animate-spin ${dark ? 'border-white/20 border-t-white' : 'border-[#E4E2EB] border-t-[#6344E7]'}`} />
+        <div className={`absolute w-6 h-6 rounded-full animate-pulse ${dark ? 'bg-white/20' : 'bg-[#6344E7]/20'}`} />
       </div>
-      <p className="mt-3 text-xs font-semibold text-[#524E5E] tracking-wide animate-pulse">
+      <p className={`mt-3 text-xs font-semibold tracking-wide animate-pulse ${dark ? 'text-[#8B909A]' : 'text-[#524E5E]'}`}>
         Preparing your AI employee...
       </p>
     </div>
@@ -31,6 +32,11 @@ export function DialtactScene({
   externalPointer = null,
   className = '',
   isInView = true,
+  tone = 'light',
+  ambient = true,
+  variant = 'color',
+  centered = false,
+  onBotHover,
 }) {
   const internalPointer = useRef({ x: 0, y: 0 });
   const containerRef = useRef(null);
@@ -44,6 +50,24 @@ export function DialtactScene({
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [isPageVisible, setIsPageVisible] = useState(() => !document.hidden);
   const contextCleanup = useRef(null);
+  const autoRebuilds = useRef(0);
+
+  const rebuildRenderer = useCallback(() => {
+    contextCleanup.current?.();
+    setHasWebGLError(false);
+    setRendererKey(key => key + 1);
+  }, []);
+
+  // Most context losses are restored by the browser within a moment. If not, build a
+  // fresh renderer a few times before leaving it to the Retry button.
+  useEffect(() => {
+    if (!hasWebGLError || autoRebuilds.current >= 3) return undefined;
+    const timer = window.setTimeout(() => {
+      autoRebuilds.current += 1;
+      rebuildRenderer();
+    }, 2500);
+    return () => window.clearTimeout(timer);
+  }, [hasWebGLError, rebuildRenderer]);
 
   useEffect(() => {
     const onVisibility = () => {
@@ -130,32 +154,25 @@ export function DialtactScene({
     <div ref={containerRef} data-mascot-state={hasWebGLError ? 'recovering' : active ? 'active' : 'paused'}
       className={`relative w-full h-full select-none ${className}`}
       onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave}>
-      {hasWebGLError ? (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-transparent rounded-2xl p-4">
-          <button type="button" onClick={onBotClick} disabled={!onBotClick} aria-label="Interact with Dialtact" className="border-0 bg-transparent p-0 disabled:cursor-default">
-            <img
-              src="/images/Dialtact_call_assistant_fallback.png"
-              alt="Dialtact AI call assistant"
-              width="320"
-              height="320"
-              loading="eager"
-              decoding="async"
-              className="max-h-[180px] sm:max-h-[220px] object-contain drop-shadow-xl"
-            />
-          </button>
-          <p role="status" className="text-xs text-[#8C879A] mt-1 font-medium">3D animation standby</p>
-          <button type="button" className="mt-2 text-xs font-semibold text-[#6344E7] bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg border border-[#6344E7]/30 transition-all cursor-pointer" onClick={(event) => {
+      {/* A lost context keeps the canvas mounted: the browser restores the same one
+          (its listeners must stay attached for that), and if it does not, the renderer
+          is rebuilt automatically. Never swap the scene for a flat picture. */}
+      {hasWebGLError && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 p-4 pointer-events-none">
+          <p role="status" className={`text-xs font-semibold tracking-wide animate-pulse ${tone === 'dark' ? 'text-white' : 'text-[#6344E7]'}`}>Restoring 3D animation…</p>
+          <button type="button" className={`pointer-events-auto text-xs font-semibold px-3 py-1 rounded-lg border transition-all cursor-pointer ${tone === 'dark' ? 'text-black border-white bg-white hover:bg-white/80' : 'text-[#6344E7] border-[#6344E7]/30 bg-white/80 hover:bg-white'}`} onClick={(event) => {
             event.stopPropagation();
-            contextCleanup.current?.();
-            setHasWebGLError(false);
-            setRendererKey(key => key + 1);
+            rebuildRenderer();
           }}>Retry 3D</button>
         </div>
-      ) : (
-        <Suspense fallback={<CanvasLoader />}>
+      )}
+      <Suspense fallback={<CanvasLoader tone={tone} />}>
           <Canvas
           key={rendererKey}
           frameloop={active ? 'always' : 'never'}
+          // Measure layout size, not the transformed box: the home page flies this
+          // canvas around with a CSS scale, which must not resize the WebGL buffer.
+          resize={{ offsetSize: true, scroll: false }}
           camera={{
             position: isMobile ? [0, 0.2, 5.2] : [0, 0.35, 4.6],
             fov: isMobile ? 40 : 36,
@@ -175,7 +192,7 @@ export function DialtactScene({
           onError={() => setHasWebGLError(true)}
         >
           <BotLights />
-          {!lightweight && <AmbientElements />}
+          {!lightweight && ambient && <AmbientElements />}
           <DialtactBot
             state={state}
             expression={expression}
@@ -187,10 +204,12 @@ export function DialtactScene({
             audioAnalyser={audioAnalyser}
             audioAmplitude={audioAmplitude}
             trackPointer={trackPointer}
+            variant={variant}
+            centered={centered}
+            onBotHover={onBotHover}
           />
         </Canvas>
       </Suspense>
-      )}
     </div>
   );
 }

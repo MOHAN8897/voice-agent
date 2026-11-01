@@ -15,39 +15,32 @@ test.describe('auth modal visual check', () => {
       }
     });
 
+    // Signed out, the console sends you to the /signin page (it replaced the dialog).
     await page.goto('/#dashboard/overview');
+    await expect(page).toHaveURL(/\/signin$/);
     await expect(page.getByTestId('auth-modal')).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(900);
 
     await page.screenshot({ path: testInfo.outputPath('auth-modal-desktop.png') });
 
-    const phoneFeature = page.getByText('Live voice on real phone lines', { exact: true });
-    await expect(phoneFeature).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Sign in to your console' })).toBeVisible();
+    const signin = page.getByTestId('signin-page');
+    await expect(signin.getByRole('heading', { level: 1 })).toHaveText('Create your AI voice agent.');
+    await expect(signin.getByText('Describe your business', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
     await expect(page.getByTestId('auth-modal').getByLabel('Work email')).toBeFocused();
+    await expect(page.locator('[role="dialog"]')).toHaveCount(0);
 
+    // The card sits in the right column, whole, and the beam and fibers are drawing.
     const box = await page.getByTestId('auth-modal').boundingBox();
-    expect(box.width).toBeGreaterThan(900);
+    expect(box.width).toBeGreaterThan(400);
+    expect(box.x + box.width).toBeLessThanOrEqual(1440);
+    await expect(signin.locator('.signin-laser canvas')).toHaveCount(1);
+    await expect(signin.locator('.signin-bg canvas')).toHaveCount(1);
 
-    const design = await page.evaluate(() => ({
-      dmSansLoaded: document.fonts.check('500 13px "DM Sans"'),
-      instrumentSerifLoaded: document.fonts.check('italic 16px "Instrument Serif"'),
-      dialogAnimation: getComputedStyle(document.querySelector('.auth-dialog')).animationName,
-      waveAnimation: getComputedStyle(document.querySelector('.auth-wave')).animationName,
-    }));
-    expect(design.dmSansLoaded).toBe(true);
-    expect(design.instrumentSerifLoaded).toBe(true);
-    expect(design.dialogAnimation).toBe('auth-dialog-in');
-    expect(design.waveAnimation).toBe('auth-wave');
-
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    const reducedMotion = await page.evaluate(() => ({
-      dialog: getComputedStyle(document.querySelector('.auth-dialog')).animationName,
-      wave: getComputedStyle(document.querySelector('.auth-wave')).animationName,
-    }));
-    expect(reducedMotion.dialog).toBe('none');
-    expect(reducedMotion.wave).toBe('none');
+    // Black and white: the form's violet links and focus ring are neutral on the page.
+    const accent = await page.getByRole('button', { name: 'Create an account' }).evaluate((el) => getComputedStyle(el).color);
+    expect(accent).toBe('rgb(0, 0, 0)');
 
     await page.getByRole('button', { name: 'Create an account' }).click();
     await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();

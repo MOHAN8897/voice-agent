@@ -97,6 +97,22 @@ export const EXPRESSIONS = {
   },
 };
 
+/**
+ * One-shot clips authored in Blender for the home page's scroll choreography
+ * (scripts/blender/add_scroll_clips.py): the mascot points at the content beside it,
+ * nods, scans a section, hops, spins in on arrival, or opens its arms.
+ */
+export const SCROLL_GESTURES = [
+  'POINT_LEFT', 'POINT_RIGHT', 'NOD', 'SCAN', 'HOP', 'ARRIVE', 'PRESENT',
+  'STRETCH', 'EXPLAIN', 'PRESENT_LEFT', 'PRESENT_RIGHT', 'REACH_LEFT', 'REACH_RIGHT',
+];
+const GESTURE_EXPRESSIONS = {
+  POINT_LEFT: 'HAPPY', POINT_RIGHT: 'HAPPY', NOD: 'CONFIDENT', SCAN: 'CURIOUS',
+  HOP: 'EXCITED', ARRIVE: 'EXCITED', PRESENT: 'HAPPY',
+  STRETCH: 'HAPPY', EXPLAIN: 'CONFIDENT', PRESENT_LEFT: 'HAPPY', PRESENT_RIGHT: 'HAPPY',
+  REACH_LEFT: 'CONFIDENT', REACH_RIGHT: 'CONFIDENT',
+};
+
 export const ALL_MORPH_NAMES = [
   'Blink',
   'BlinkLeft',
@@ -213,7 +229,6 @@ export function createDialtactController(gltf, { onExpressionChange } = {}) {
   const clamp = (v) => (Number.isFinite(v) ? MathUtils.clamp(v, 0, 1) : 0);
 
   function play(name, once = false) {
-    if (reducedMotion && name !== 'IDLE') return;
     const clip = clips.get(name);
     if (!clip) {
       return;
@@ -226,7 +241,7 @@ export function createDialtactController(gltf, { onExpressionChange } = {}) {
       const from = transitionFrom.get(name);
       from.q.copy(pose.q); from.p.copy(pose.p); from.s.copy(pose.s);
     }
-    transitionTime = action && !reducedMotion ? 0 : 0.28;
+    transitionTime = action ? 0 : 0.28;
     mixer.stopAllAction();
     next.reset().setLoop(once ? LoopOnce : LoopRepeat, once ? 1 : Infinity);
     next.clampWhenFinished = once;
@@ -261,7 +276,7 @@ export function createDialtactController(gltf, { onExpressionChange } = {}) {
   }
 
   function startGesture(name = 'RIGHT_HAND_WAVE', userInitiated = true) {
-    if (reducedMotion) return;
+    if (reducedMotion && String(name).toUpperCase().includes('ROLL')) return;
     const aliases = { THINK: 'THINKING', TWO_HANDS_HI: 'DOUBLE_WAVE' };
     const upper = String(name).toUpperCase();
     const clipName = aliases[upper] || upper;
@@ -273,8 +288,8 @@ export function createDialtactController(gltf, { onExpressionChange } = {}) {
       currentRollDuration = clipName.includes('DOUBLE_ROLL') ? 3.2 : 1.6;
       rollTimer = currentRollDuration;
     }
-    setExpression(clipName === 'THINKING' ? 'THINKING' :
-      /DOUBLE|CELEBRATE/.test(clipName) ? 'EXCITED' : 'HAPPY', userInitiated);
+    setExpression(GESTURE_EXPRESSIONS[clipName] || (clipName === 'THINKING' ? 'THINKING' :
+      /DOUBLE|CELEBRATE/.test(clipName) ? 'EXCITED' : 'HAPPY'), userInitiated);
     play(clipName, true);
   }
 
@@ -300,7 +315,7 @@ export function createDialtactController(gltf, { onExpressionChange } = {}) {
     },
     setState(name) {
       const upper = String(name).toUpperCase();
-      if (['GREETING', 'WAVE', 'LEFT_HAND_WAVE', 'RIGHT_HAND_WAVE', 'DOUBLE_WAVE', 'ROLL_DOUBLE_WAVE', 'DOUBLE_ROLL_DOUBLE_WAVE', 'CELEBRATE', 'DANCE', 'THINK', 'TWO_HANDS_HI'].includes(upper)) {
+      if (['GREETING', 'WAVE', 'LEFT_HAND_WAVE', 'RIGHT_HAND_WAVE', 'DOUBLE_WAVE', 'ROLL_DOUBLE_WAVE', 'DOUBLE_ROLL_DOUBLE_WAVE', 'CELEBRATE', 'DANCE', 'THINK', 'TWO_HANDS_HI', ...SCROLL_GESTURES].includes(upper)) {
         startGesture(upper);
         return;
       }
@@ -342,16 +357,15 @@ export function createDialtactController(gltf, { onExpressionChange } = {}) {
       setExpression(name, userInitiated);
     },
     setReducedMotion(value) {
+      // Reduced motion keeps the clips (they move in place) and drops the rolls,
+      // the jiggle and the autonomous idle routine.
       reducedMotion = Boolean(value);
       if (reducedMotion) {
-        gesture = false;
         rollTimer = 0;
         rollProgress = 0;
-        mixer.stopAllAction();
-        action = null;
-        play('IDLE');
-        mixer.update(0);
-      } else if (!gesture) play(clips.has(state) ? state : 'IDLE');
+        if (gesture && gesture.includes('ROLL')) gesture = false;
+      }
+      if (!gesture) play(clips.has(state) ? state : 'IDLE');
     },
     setPointer(x, y) {
       // User-driven look-at stays active under reduced-motion (not decorative).
@@ -405,7 +419,7 @@ export function createDialtactController(gltf, { onExpressionChange } = {}) {
         }
       }
 
-      mixer.update(reducedMotion ? 0 : dt);
+      mixer.update(dt);
 
       transitionTime = Math.min(0.28, transitionTime + dt);
       const progress = transitionTime / 0.28;

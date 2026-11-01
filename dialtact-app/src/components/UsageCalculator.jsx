@@ -111,17 +111,16 @@ export function UsageCalculator({ catalog, loading, error, onRetry, onSelectPlan
     setShareReady(true);
   }, [syncUrl]);
 
+  // A shared estimate arrives as query params. Read them once, then put the address
+  // back to the clean page URL: the estimate lives in state, and rewriting the URL on
+  // every slider move left visitors (and crawlers) with junk links like
+  // `/?tier=low&mode=calls&calls=500&len=3&mins=1500`. "Copy link" builds one on demand.
   useEffect(() => {
-    if (!syncUrl || !shareReady || !shareableEstimate || !catalog || typeof window === 'undefined') return;
+    if (!syncUrl || !shareReady || typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
-    if (activeTier) params.set('tier', activeTier.id);
-    else params.delete('tier');
-    params.set('mode', volumeMode);
-    params.set('calls', String(calls));
-    params.set('len', String(minutes));
-    params.set('mins', String(monthlyMinutes));
-    if (gstViewEnabled) params.set('gst', taxView);
-    else params.delete('gst');
+    const keys = ['tier', 'mode', 'calls', 'len', 'mins', 'gst'];
+    if (!keys.some((key) => params.has(key))) return;
+    keys.forEach((key) => params.delete(key));
     const query = params.toString();
     try {
       window.history.replaceState(
@@ -132,19 +131,7 @@ export function UsageCalculator({ catalog, loading, error, onRetry, onSelectPlan
     } catch {
       // Embedded previews can block history updates; the estimate still works without a URL.
     }
-  }, [
-    syncUrl,
-    shareReady,
-    shareableEstimate,
-    catalog,
-    activeTier?.id,
-    volumeMode,
-    calls,
-    minutes,
-    monthlyMinutes,
-    gstViewEnabled,
-    taxView,
-  ]);
+  }, [syncUrl, shareReady]);
 
   useEffect(() => {
     setShareStatus('idle');
@@ -195,7 +182,7 @@ export function UsageCalculator({ catalog, loading, error, onRetry, onSelectPlan
     params.set('mins', String(monthlyMinutes));
     if (gstViewEnabled) params.set('gst', taxView);
     else params.delete('gst');
-    return `${window.location.origin}/pricing?${params.toString()}`;
+    return `${window.location.origin}/?${params.toString()}#usage-calculator`;
   }
 
   async function copyShareLink() {

@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
 
+// The previous home page (hero, workflows, sample player) now lives at /legacy; the
+// current home page is covered by home-page.spec.js.
+const HOME = '/legacy';
+
 async function expectAudioPlaying(page) {
   await expect.poll(() => page.locator('.landing-player audio').evaluate(audio => ({
     paused: audio.paused, started: audio.currentTime > 0, error: audio.error?.message || null,
@@ -15,7 +19,7 @@ async function openLanding(page) {
       : path.includes('/support/config') ? { socialLinks: {} } : { ok: true, items: [] };
     await route.fulfill({ json: body });
   });
-  await page.goto('/');
+  await page.goto(HOME);
   await page.addStyleTag({ content: '[data-reticle-overlay] { display:none!important; }' });
   await expect(page.getByTestId('landing-refresh')).toBeVisible();
 }

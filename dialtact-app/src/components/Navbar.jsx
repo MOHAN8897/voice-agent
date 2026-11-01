@@ -43,7 +43,8 @@ export function Navbar({ onEnterConsole, onWatchDemo, onOpenTour, onNavigatePage
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between">
         <a
-          href="#"
+          href="/"
+          aria-label="Dialtact home"
           onClick={(e) => {
             e.preventDefault();
             if (onNavigatePage) {

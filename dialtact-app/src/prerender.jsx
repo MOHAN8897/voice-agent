@@ -7,10 +7,10 @@ import { CompanyPage } from './pages/CompanyPage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { TermsPage } from './pages/TermsPage';
 import { SecurityPage } from './pages/SecurityPage';
-export { PUBLIC_PAGES, PUBLIC_PATHS, SITE_URL } from './lib/siteMetadata';
+export { PUBLIC_PAGES, PUBLIC_PATHS, INDEXABLE_VIEWS, SITE_URL } from './lib/siteMetadata';
 const pages = { support: SupportPage, company: CompanyPage, privacy: PrivacyPage, terms: TermsPage, security: SecurityPage };
 export function render(view) {
-  if (view === 'landing') return renderToString(<App />);
+  if (view === 'landing' || view === 'legacy' || view === 'signin') return renderToString(<App initialView={view} />);
   const Page = pages[view];
   return renderToString(<AuthProvider><Page /></AuthProvider>);
 }

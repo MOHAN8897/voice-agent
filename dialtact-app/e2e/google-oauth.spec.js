@@ -31,7 +31,8 @@ test.describe('Google OAuth integration', () => {
 
   test('auth modal shows Google button when entering console', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: /build your agent/i }).first().click();
+    await page.getByRole('button', { name: 'Log in' }).first().click();
+    await expect(page).toHaveURL(/\/signin$/);
     await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible({
       timeout: 15000,
     });

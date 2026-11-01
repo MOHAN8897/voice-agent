@@ -14,6 +14,8 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const SRC = join(here, '..', 'src');
 const COMPONENTS = join(SRC, 'components');
+// The home page's sections live in src/marketing; the previous home page's in components.
+const MARKETING = join(SRC, 'marketing');
 
 /** Strip comments so the file's own explanations of the old copy do not trip the checks. */
 function stripComments(code) {
@@ -21,9 +23,9 @@ function stripComments(code) {
 }
 
 function componentFiles() {
-  return readdirSync(COMPONENTS)
+  return [COMPONENTS, MARKETING].flatMap((dir) => readdirSync(dir)
     .filter((f) => f.endsWith('.jsx') || f.endsWith('.js'))
-    .map((f) => join(COMPONENTS, f));
+    .map((f) => join(dir, f)));
 }
 
 const failures = [];
@@ -78,7 +80,7 @@ const app = readFileSync(join(SRC, 'App.jsx'), 'utf8');
 const content = readFileSync(join(SRC, 'data', 'siteContent.js'), 'utf8');
 
 const navMatch = content.match(/export const NAV_LINKS = \[([\s\S]*?)\];/);
-const anchors = navMatch ? [...navMatch[1].matchAll(/href: '#([^']+)'/g)].map((m) => m[1]) : [];
+const anchors = navMatch ? [...navMatch[1].matchAll(/href: '\/?#([^']+)'/g)].map((m) => m[1]) : [];
 const STANDALONE_ROUTES = new Set(['company', 'about', 'support', 'contact', 'privacy', 'terms', 'security']);
 for (const anchor of anchors) {
   if (STANDALONE_ROUTES.has(anchor)) continue;

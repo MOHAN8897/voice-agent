@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useEffect, useMemo, useState, Component } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState, Component } from 'react';
 
 const LOAD_RECOVERY_TIMEOUT_MS = 15_000;
 
@@ -23,6 +23,7 @@ class SceneErrorBoundary extends Component {
 
   render() {
     if (this.state.hasError) {
+      const SceneFallback = this.props.Fallback;
       return <SceneFallback className={this.props.className} onBotClick={this.props.onBotClick}
         message="3D could not load. Please try again." onRetry={this.props.onRetry} />;
     }
@@ -34,7 +35,7 @@ class SceneErrorBoundary extends Component {
  * The fallback is the real rendered preview image, not a spinner, so the hero never
  * collapses or shifts: the container keeps its height either way.
  */
-function SceneFallback({ className = '', eager = true, onBotClick, message, onRetry }) {
+function DefaultSceneFallback({ className = '', eager = true, onBotClick, message, onRetry }) {
   return (
     <div data-mascot-state="preview" className={`relative w-full h-full flex flex-col items-center justify-center ${className}`}>
       <button type="button" onClick={onBotClick} disabled={!onBotClick} aria-label="Interact with Dialtact" className="border-0 bg-transparent p-0 disabled:cursor-default">
@@ -55,11 +56,18 @@ function SceneFallback({ className = '', eager = true, onBotClick, message, onRe
   );
 }
 
-function device3DStatus() {
+const CHUNK_RELOAD_KEY = 'dialtact:3d-chunk-reload';
+
+function isChunkLoadError(error) {
+  const text = String(error?.message || error || '');
+  return /dynamically imported module|Importing a module script failed|error loading dynamically|Outdated Optimize Dep/i.test(text);
+}
+
+function device3DStatus({ ignoreDataSaver = false } = {}) {
   if (typeof window === 'undefined') return 'Loading 3D…';
   try {
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    if (conn && conn.saveData) {
+    if (conn && conn.saveData && !ignoreDataSaver) {
       return 'Data saver is on. Retry 3D to load the animation.';
     }
   } catch {}
@@ -76,7 +84,19 @@ function device3DStatus() {
   }
 }
 
+/**
+ * `renderFallback` replaces the preview image in every non-3D state (loading, retrying,
+ * unavailable). It receives `{ message, onRetry, loading }`; the home page uses it to
+ * show a holographic placeholder instead of a flat picture.
+ *
+ * `ignoreDataSaver` loads the model even when the browser reports data saver, for a
+ * page where the 3D mascot is the content rather than decoration.
+ */
 export function LazyDialtactScene(props = {}) {
+  const { renderFallback } = props;
+  const SceneFallback = useMemo(() => (renderFallback
+    ? ({ message, onRetry }) => renderFallback({ message, onRetry, loading: /Loading|taking longer/.test(message || '') })
+    : DefaultSceneFallback), [renderFallback]);
   const [shouldLoad, setShouldLoad] = useState(false);
   const [message, setMessage] = useState('Loading 3D…');
   const [attempt, setAttempt] = useState(0);
@@ -93,13 +113,38 @@ export function LazyDialtactScene(props = {}) {
     setShouldLoad(true);
   };
   const handleModelReady = useCallback((controller) => {
+    try { sessionStorage.removeItem(CHUNK_RELOAD_KEY); } catch { /* storage blocked */ }
     setModelReady(true);
     setLoadTimedOut(false);
     props.onControllerReady?.(controller);
   }, [props.onControllerReady]);
-  const handleLoadError = useCallback(() => {
+  // A failed chunk or model request (a dev rebuild, a flaky network) usually succeeds
+  // on a second try, so retry twice on its own before showing the Retry button.
+  const autoRetries = useRef(0);
+  const handleLoadError = useCallback((error) => {
+    // A missing code chunk means this tab predates a new build (or a dev-server
+    // re-optimisation): retrying asks for the same deleted file. Reload once to pick
+    // up the current build; the session flag stops a reload loop.
+    if (isChunkLoadError(error) && typeof window !== 'undefined') {
+      try {
+        if (!sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
+          sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
+          window.location.reload();
+          return;
+        }
+      } catch {
+        // Storage blocked: fall through to the in-place retries.
+      }
+    }
     setModelReady(true);
     setLoadTimedOut(false);
+    if (autoRetries.current < 2) {
+      autoRetries.current += 1;
+      window.setTimeout(() => {
+        setModelReady(false);
+        setAttempt((value) => value + 1);
+      }, 1500 * autoRetries.current);
+    }
   }, []);
 
   useEffect(() => {
@@ -109,7 +154,7 @@ export function LazyDialtactScene(props = {}) {
   }, [attempt, modelReady, shouldLoad]);
 
   useEffect(() => {
-    const status = device3DStatus();
+    const status = device3DStatus({ ignoreDataSaver: props.ignoreDataSaver === true });
     setMessage(status);
     setShouldLoad(!status);
 
@@ -123,7 +168,7 @@ export function LazyDialtactScene(props = {}) {
 
   return (
     <div className="relative w-full h-full">
-      <SceneErrorBoundary key={attempt} className={props.className} onBotClick={props.onBotClick}
+      <SceneErrorBoundary key={attempt} Fallback={SceneFallback} className={props.className} onBotClick={props.onBotClick}
         onRetry={retry} onError={handleLoadError}>
         <Suspense fallback={<SceneFallback className={props.className} onBotClick={props.onBotClick} message="Loading 3D…" />}>
           <div className="w-full h-full transition-opacity duration-500 animate-fade-in">
@@ -132,7 +177,7 @@ export function LazyDialtactScene(props = {}) {
         </Suspense>
       </SceneErrorBoundary>
       {loadTimedOut && !modelReady && (
-        <div className="absolute inset-0 z-30 rounded-3xl bg-[#FAF9FD]">
+        <div className={`absolute inset-0 z-30 rounded-3xl ${renderFallback ? '' : 'bg-[#FAF9FD]'}`}>
           <SceneFallback className={props.className} onBotClick={props.onBotClick}
             message="3D is taking longer than usual. You can keep waiting or retry."
             onRetry={retry} />

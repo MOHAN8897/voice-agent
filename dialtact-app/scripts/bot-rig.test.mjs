@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs/promises';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { AnimationMixer, LoopOnce, Vector3 } from 'three';
 import { createDialtactController } from '../src/three/BotController.js';
 
 async function load() {
- const bytes=await fs.readFile(new URL('../public/models/DialtactBot_AIEmployee_Interactive.glb',import.meta.url));
- const gltf=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+ const bytes=await fs.readFile(new URL('../public/models/DialtactBot_AIEmployee_Interactive_v6.glb',import.meta.url));
+ const gltf=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
  return {gltf,c:createDialtactController(gltf)};
 }
 
@@ -50,7 +51,9 @@ test('facial expressions blend, speech updates mouth, and reduced motion cancels
  c.update(1/60);assert.ok(mouth.morphTargetInfluences[mouth.morphTargetDictionary.MouthOpen]>0);
  c.playGesture('DOUBLE_ROLL_DOUBLE_WAVE');c.update(.1);assert.ok(c.rollProgress>0);
  c.setReducedMotion(true);c.update(.1);assert.equal(c.rollProgress,0);
- c.playGesture('DANCE');assert.notEqual(c.state,'DANCE');
+ // Reduced motion keeps in-place gestures but never starts a spin.
+ c.playGesture('DOUBLE_ROLL_DOUBLE_WAVE');c.update(.1);assert.equal(c.rollProgress,0);assert.notEqual(c.state,'DOUBLE_ROLL_DOUBLE_WAVE');
+ c.playGesture('DANCE');assert.equal(c.state,'DANCE');
  c.dispose();
 });
 

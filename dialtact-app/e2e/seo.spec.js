@@ -21,13 +21,16 @@ test.describe('SEO and search indexing', () => {
 
   test('structured data contains only supported, substantiated entities', async ({ page }) => {
     await page.goto('/');
-    const script = await page.locator('script[type="application/ld+json"]').textContent();
-    const parsed = JSON.parse(script);
-    expect(parsed['@context']).toBe('https://schema.org');
-    const graph = parsed['@graph'];
+    // The head carries the site graph; the FAQ section adds FAQPage data for the
+    // questions shown on the page. Nothing else may appear.
+    const scripts = (await page.locator('script[type="application/ld+json"]').allTextContents()).map((text) => JSON.parse(text));
+    expect(scripts.every((entry) => entry['@context'] === 'https://schema.org')).toBe(true);
+    const site = scripts.find((entry) => Array.isArray(entry['@graph']));
+    const graph = site['@graph'];
     expect(graph.map((item) => item['@type'])).toEqual(['Organization', 'WebSite', 'SoftwareApplication']);
     expect(graph.every((item) => item.url === 'https://www.dialtact.com/')).toBe(true);
-    expect(JSON.stringify(graph)).not.toMatch(/AggregateRating|ratingCount|priceValidUntil/);
+    expect(scripts.filter((entry) => entry !== site).map((entry) => entry['@type'])).toEqual(['FAQPage']);
+    expect(JSON.stringify(scripts)).not.toMatch(/AggregateRating|ratingCount|priceValidUntil/);
   });
 
   test('page views update their title and description while keeping the single-page canonical', async ({ page }) => {

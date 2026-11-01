@@ -25,9 +25,27 @@ export const PUBLIC_PAGES = {
     title: 'Security — Dialtact',
     description: 'Learn about Dialtact security practices for accounts, voice traffic, customer data, and call records.',
   },
+  // Sign in or make an account; the agent builder opens after. A form, not content,
+  // so it stays out of search results and the sitemap.
+  signin: {
+    title: 'Create your agent — Dialtact',
+    description: 'Sign in or create a Dialtact account to build your AI voice agent.',
+    robots: 'noindex, follow',
+  },
+  // The previous home page, kept reachable for comparison. It duplicates the home
+  // page's content, so it is noindex and canonicalises to `/`.
+  legacy: {
+    title: 'Dialtact — Previous Home Page',
+    description: 'The previous version of the Dialtact home page, kept for reference.',
+    robots: 'noindex, follow',
+    canonicalPath: '/',
+  },
 };
 
-export const PUBLIC_PATHS = { landing: '/', support: '/support', company: '/company', privacy: '/privacy', terms: '/terms', security: '/security' };
+export const PUBLIC_PATHS = { landing: '/', support: '/support', company: '/company', privacy: '/privacy', terms: '/terms', security: '/security', legacy: '/legacy', signin: '/signin' };
+
+/** Routes listed in sitemap.xml: every indexable public page. */
+export const INDEXABLE_VIEWS = Object.keys(PUBLIC_PATHS).filter((view) => !PUBLIC_PAGES[view]?.robots);
 const ALIASES = { contact: 'support', about: 'company' };
 export function viewFromLocation(location) {
   const hash = (location.hash || '').slice(1);
@@ -71,7 +89,7 @@ export function applyPageMetadata(view = 'landing', tab = '') {
     ? 'Sign in to manage your Dialtact workspace.'
     : page.description;
 
-  const canonicalUrl = new URL(PUBLIC_PATHS[view] || "/", SITE_URL).href;
+  const canonicalUrl = new URL(isConsole ? '/' : page.canonicalPath || PUBLIC_PATHS[view] || '/', SITE_URL).href;
   document.title = title;
   setMeta('name', 'description', description);
   setMeta('property', 'og:title', title);
@@ -89,5 +107,5 @@ export function applyPageMetadata(view = 'landing', tab = '') {
   }
   canonical.setAttribute('href', canonicalUrl);
 
-  setMeta('name', 'robots', isConsole ? 'noindex, nofollow' : 'index, follow, max-image-preview:large');
+  setMeta('name', 'robots', isConsole ? 'noindex, nofollow' : page.robots || 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
 }

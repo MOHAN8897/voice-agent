@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { fileURLToPath, URL } from 'node:url';
 
 import { reticle } from '@reticlehq/vite-plugin';
 // The public tunnel reaches this dev server with a real hostname (Host header is
@@ -115,6 +116,10 @@ function previewCachePlugin() {
           res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         } else if (path.startsWith('/models/') || path.startsWith('/images/') || path.startsWith('/audio/')) {
           res.setHeader('Cache-Control', 'public, max-age=86400');
+        } else if (!/\.[a-z0-9]+$/i.test(path) || path.endsWith('.html')) {
+          // Pages must be revalidated: a cached index.html points at hashed chunks
+          // that the next build deletes, which is how the 3D scene failed to load.
+          res.setHeader('Cache-Control', 'no-cache');
         }
         next();
       });
@@ -163,6 +168,8 @@ export default defineConfig({
     localOnlyDevPortalPlugin(),
     previewCachePlugin(),
   ],
+  // `@/` is the shadcn registry alias (Magic UI, React Bits, 21st.dev components).
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   assetsInclude: ['**/*.glb', '**/*.gltf'],
   server: {
     port: 5173,

@@ -15,12 +15,17 @@
  * Anything that appears twice lives here once and is referenced. Anything that appears
  * nowhere is not on the page.
  */
+/**
+ * Section links are root-relative (`/#pricing`, not `#pricing`): a bare fragment
+ * resolves against whatever page it is on, so from /support it pointed at a section
+ * that does not exist there. Click handlers still scroll in place on the home page.
+ */
 export const NAV_LINKS = [
-  { name: 'Product', href: '#capabilities' },
-  { name: 'Use cases', href: '#industries' },
-  { name: 'How it works', href: '#how-it-works' },
-  { name: 'Pricing', href: '#pricing' },
-  { name: 'FAQ', href: '#faq' },
+  { name: 'Product', href: '/#capabilities' },
+  { name: 'Use cases', href: '/#industries' },
+  { name: 'How it works', href: '/#how-it-works' },
+  { name: 'Pricing', href: '/#pricing' },
+  { name: 'FAQ', href: '/#faq' },
 ];
 
 export const HERO_CONTENT = {
@@ -387,4 +392,18 @@ export const FAQS = [
     q: 'Is this compliant with calling rules?',
     a: 'Call recording and consent requirements vary by country. Compliance tooling is built in and Do-Not-Call scrubbing is available on the Professional plan and above; your counsel should confirm the obligations for the markets you call.',
   },
+];
+
+/**
+ * The home page's questions as [question, answer] pairs. Shared by the current and the
+ * previous home page, and emitted as FAQPage structured data, so the answers a search
+ * engine shows are the ones on the page.
+ */
+export const LANDING_FAQS = [
+  ['Do I need to know how to code?', 'No. Describe your business, review the generated script, choose an available voice, and test your agent in the workspace. You control the objectives, objection guidance, and details it should collect.'],
+  ['Can I use it for inbound and outbound calls?', 'Yes. Configure an agent for incoming enquiries or outgoing calls. For list-based outreach, create a campaign and review its audience and calling settings before starting. Phone availability depends on your workspace configuration.'],
+  ['Which languages and voices can I choose?', 'The workspace shows the languages and voices available for your selected tier. Preview the voice and test your actual script before using it with customers.'],
+  ['Can it book appointments or update my CRM?', 'Connected actions depend on the integrations you enable. Add a supported calendar or CRM for the workflow you need. Without that connection, the agent can capture an enquiry or a callback request rather than claim a booking is confirmed.'],
+  ['What happens after the call?', 'Review the transcript, summary, captured details, and outcome in your workspace. Use the lead pipeline and callback list to organise follow-up, and mark converted leads when they become customers. Callback requests do not automatically schedule a redial.'],
+  ['How does billing work?', 'Fund your wallet and choose an available voice tier. Your workspace shows the applicable calling rates, usage, and checkout taxes. Browser-agent and phone-call rates can differ, so review the rate for the channel you use.'],
 ];

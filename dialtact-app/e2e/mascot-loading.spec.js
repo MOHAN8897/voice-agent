@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
 
+// These drive the hero mascot of the previous home page, kept at /legacy. The current
+// home page's scroll mascot reuses the same scene and is covered in home-page.spec.js.
+const HOME = '/legacy';
+
 // Count real GPU draw submissions, not merely the presence of an empty canvas.
 async function trackRendering(page) {
   await page.addInitScript(() => {
@@ -20,7 +24,7 @@ function mascotCanvas(page) {
 
 test('a real lost WebGL context restores the same canvas and resumes rendering', async ({ page }) => {
   await trackRendering(page);
-  await page.goto('/');
+  await page.goto(HOME);
   const canvas = mascotCanvas(page);
   await canvas.scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__mascotDraws)).toBeGreaterThan(0);
@@ -40,17 +44,20 @@ test('a real lost WebGL context restores the same canvas and resumes rendering',
 test('failed model requests can be retried without reloading the page', async ({ page }) => {
   await trackRendering(page);
   await page.route('**/models/*.glb*', route => route.abort());
-  await page.goto('/');
-  await expect(page.getByText('3D could not load. Please try again.')).toBeVisible();
+  await page.goto(HOME);
+  // The loader retries a failed request twice on its own before asking the visitor.
+  await expect(page.getByText('3D could not load. Please try again.')).toBeVisible({ timeout: 15000 });
   await page.unroute('**/models/*.glb*');
   await page.getByRole('button', { name: 'Retry 3D' }).click();
+  // The retry replaces the canvas; wait for the new one before touching it.
+  await expect(page.locator('[data-mascot-state="active"] canvas')).toBeVisible({ timeout: 20000 });
   await mascotCanvas(page).scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__mascotDraws), { timeout: 15000 }).toBeGreaterThan(0);
 });
 
 test('scrolling and page visibility resume rendering after a pause', async ({ page }) => {
   await trackRendering(page);
-  await page.goto('/');
+  await page.goto(HOME);
   const canvas = mascotCanvas(page);
   await canvas.scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__mascotDraws)).toBeGreaterThan(0);
@@ -84,7 +91,7 @@ test('touch devices never steer the model and canceled scroll gestures never act
       const body = (await response.text()).replace('setPointer(x, y) {', 'setPointer(x, y) { window.__pointerValues.push([x, y]);');
       await route.fulfill({ response, body });
     });
-    await page.goto('/');
+    await page.goto(HOME);
     const canvas = mascotCanvas(page);
     await canvas.scrollIntoViewIfNeeded();
     await expect.poll(() => page.evaluate(() => window.__pointerValues.length)).toBeGreaterThan(5);
@@ -112,10 +119,12 @@ test('touch devices never steer the model and canceled scroll gestures never act
 test('data saver explains the preview and allows an explicit 3D retry', async ({ page }) => {
   await trackRendering(page);
   await page.addInitScript(() => Object.defineProperty(navigator, 'connection', { value: { saveData: true }, configurable: true }));
-  await page.goto('/');
+  await page.goto(HOME);
   await expect(page.getByText('Data saver is on. Retry 3D to load the animation.')).toBeVisible();
   await expect(page.locator('canvas')).toHaveCount(0);
   await page.getByRole('button', { name: 'Retry 3D' }).click();
+  // The retry replaces the canvas; wait for the new one before touching it.
+  await expect(page.locator('[data-mascot-state="active"] canvas')).toBeVisible({ timeout: 20000 });
   await mascotCanvas(page).scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__mascotDraws), { timeout: 15000 }).toBeGreaterThan(0);
 });
@@ -129,7 +138,7 @@ test('StrictMode never updates an animation controller after disposal', async ({
     body = body.replace('dispose() {', 'dispose() { this.__testDisposed = true;');
     await route.fulfill({ response, body });
   });
-  await page.goto('/');
+  await page.goto(HOME);
   await mascotCanvas(page).scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__controllerUpdates)).toBeGreaterThan(10);
   expect(await page.evaluate(() => window.__disposedControllerUpdates)).toBe(0);
@@ -147,7 +156,7 @@ for (const [name, viewport, hasTouch] of [
       await trackRendering(page);
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
-      await page.goto('/');
+      await page.goto(HOME);
       const canvas = mascotCanvas(page);
       await expect(canvas).toBeVisible({ timeout: 30000 });
       await canvas.scrollIntoViewIfNeeded();
@@ -172,7 +181,7 @@ test('a model taking over seven seconds still loads successfully', async ({ page
     await new Promise(resolve => setTimeout(resolve, 8500));
     await route.continue();
   });
-  await page.goto('/');
+  await page.goto(HOME);
   const canvas = mascotCanvas(page);
   await canvas.scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.__mascotDraws), { timeout: 30000 }).toBeGreaterThan(0);
@@ -192,7 +201,7 @@ test('a model that finishes after the recovery preview appears automatically rep
     await requestGate;
     await route.continue();
   });
-  await page.goto('/');
+  await page.goto(HOME);
   await requestStarted;
   await expect(page.getByText('3D is taking longer than usual.', { exact: false })).toBeVisible({ timeout: 20000 });
   const preview = page.getByRole('button', { name: 'Interact with Dialtact' }).first();
@@ -221,7 +230,7 @@ test('a stalled model can be retried without reloading the page', async ({ page 
     }
     await route.continue();
   });
-  await page.goto('/');
+  await page.goto(HOME);
   await firstRequest;
   await expect(page.getByText('3D is taking longer than usual.', { exact: false })).toBeVisible({ timeout: 20000 });
 
@@ -236,7 +245,7 @@ test('a stalled model can be retried without reloading the page', async ({ page 
 test('reduced-motion preference keeps the 3D model available in its low-motion mode', async ({ page }) => {
   await trackRendering(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
+  await page.goto(HOME);
   const canvas = mascotCanvas(page);
   await expect(canvas).toBeVisible({ timeout: 30000 });
   await canvas.scrollIntoViewIfNeeded();
@@ -258,7 +267,7 @@ for (const mode of ['no-webgl', 'model-failure', 'context-loss']) {
     if (mode === 'reduced-motion') await page.emulateMedia({ reducedMotion: 'reduce' });
     if (mode === 'model-failure') await page.route('**/models/*.glb*', route => route.abort());
     if (mode === 'context-loss') await trackRendering(page);
-    await page.goto('/');
+    await page.goto(HOME);
     if (mode === 'context-loss') {
       const canvas = mascotCanvas(page);
       await expect(canvas).toBeVisible();
@@ -270,6 +279,12 @@ for (const mode of ['no-webgl', 'model-failure', 'context-loss']) {
       });
       expect(handled).toBe(true);
       await expect(page.locator('[data-mascot-state="recovering"]')).toBeVisible();
+      // A lost context is recovered, never replaced by the flat picture: the scene
+      // says it is restoring, then builds a fresh renderer when none is restored.
+      await expect(page.getByText('Restoring 3D animation…', { exact: true })).toBeVisible();
+      await expect(page.locator('[data-mascot-state] img[src*="call_assistant_fallback"]')).toHaveCount(0);
+      await expect(page.locator('[data-mascot-state="active"] canvas')).toBeVisible({ timeout: 10000 });
+      return;
     }
     const preview = page.getByRole('button', { name: 'Interact with Dialtact' }).first();
     await expect(preview).toBeVisible({ timeout: 30000 });

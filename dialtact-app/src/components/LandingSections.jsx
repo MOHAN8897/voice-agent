@@ -5,6 +5,7 @@ import { voiceAgent } from '../services/voiceAgent';
 import { usePricingCatalog } from '../lib/usePricingCatalog';
 import { PricingCards } from './PricingCards';
 import { UsageCalculator } from './UsageCalculator';
+import { LANDING_FAQS } from '../data/siteContent';
 import '../styles/landing.css';
 
 const WORKFLOWS = [
@@ -19,14 +20,7 @@ const WORKFLOWS = [
     steps: ['Select leads or upload a contact list', 'Review your agent, audience, and campaign settings', 'Track call outcomes and prioritise the next action'], result: 'A campaign you can inspect, call by call.', example: 'Lead qualification · Re-engagement · Follow-ups' },
 ];
 
-const QUESTIONS = [
-  ['Do I need to know how to code?', 'No. Describe your business, review the generated script, choose an available voice, and test your agent in the workspace. You control the objectives, objection guidance, and details it should collect.'],
-  ['Can I use it for inbound and outbound calls?', 'Yes. Configure an agent for incoming enquiries or outgoing calls. For list-based outreach, create a campaign and review its audience and calling settings before starting. Phone availability depends on your workspace configuration.'],
-  ['Which languages and voices can I choose?', 'The workspace shows the languages and voices available for your selected tier. Preview the voice and test your actual script before using it with customers.'],
-  ['Can it book appointments or update my CRM?', 'Connected actions depend on the integrations you enable. Add a supported calendar or CRM for the workflow you need. Without that connection, the agent can capture an enquiry or a callback request rather than claim a booking is confirmed.'],
-  ['What happens after the call?', 'Review the transcript, summary, captured details, and outcome in your workspace. Use the lead pipeline and callback list to organise follow-up, and mark converted leads when they become customers. Callback requests do not automatically schedule a redial.'],
-  ['How does billing work?', 'Fund your wallet and choose an available voice tier. Your workspace shows the applicable calling rates, usage, and checkout taxes. Browser-agent and phone-call rates can differ, so review the rate for the channel you use.'],
-];
+const QUESTIONS = LANDING_FAQS;
 
 function SectionIntro({ eyebrow, title, children }) {
   return <div className="landing-intro"><p className="landing-eyebrow">{eyebrow}</p><h2>{title}</h2>{children && <p className="landing-description">{children}</p>}</div>;

@@ -85,6 +85,17 @@ export default {
         display: ['Inter', 'Plus Jakarta Sans', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
+      /* Magic UI (marquee, shine-border) keyframes, expressed for Tailwind v3. */
+      keyframes: {
+        marquee: { from: { transform: 'translateX(0)' }, to: { transform: 'translateX(calc(-100% - var(--gap)))' } },
+        'marquee-vertical': { from: { transform: 'translateY(0)' }, to: { transform: 'translateY(calc(-100% - var(--gap)))' } },
+        shine: { '0%': { backgroundPosition: '0% 0%' }, '50%': { backgroundPosition: '100% 100%' }, to: { backgroundPosition: '0% 0%' } },
+      },
+      animation: {
+        marquee: 'marquee var(--duration) infinite linear',
+        'marquee-vertical': 'marquee-vertical var(--duration) linear infinite',
+        shine: 'shine var(--duration) infinite linear',
+      },
       boxShadow: {
         'craft-xs': '0 1px 2px rgba(15, 14, 23, 0.04)',
         'craft-sm': '0 1px 3px rgba(15, 14, 23, 0.05), 0 2px 8px rgba(15, 14, 23, 0.02)',

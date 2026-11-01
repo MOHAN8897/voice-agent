@@ -5,7 +5,41 @@ import { MathUtils } from 'three';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { createDialtactController } from './BotController';
 
-const GLB_URL = '/models/DialtactBot_AIEmployee_Interactive.glb?rig=3.1';
+// v5: the Blender-authored scroll gestures (see BotController SCROLL_GESTURES), with
+// geometry quantized for low-end devices (scripts/blender/optimize_model.mjs).
+const GLB_URL = '/models/DialtactBot_AIEmployee_Interactive_v6.glb?rig=6.0';
+
+/**
+ * The home page's black-and-white mascot: every coloured light turns white, the shells
+ * go neutral, and the base and hover ring are hidden so the bot floats on its own.
+ * Materials are cloned so the cached model (and the previous home page) keeps its colours.
+ */
+function applyMonochrome(scene) {
+  const tone = (material) => {
+    const name = material.name || '';
+    if (/Glow|Accent/i.test(name)) {
+      material.color?.set('#ffffff');
+      material.emissive?.set('#ffffff');
+      if ('emissiveIntensity' in material) material.emissiveIntensity = Math.min(material.emissiveIntensity, 1.4);
+    } else if (/Amber/i.test(name)) {
+      material.color?.set('#bdbdbd');
+      material.emissive?.set('#000000');
+    } else if (/White/i.test(name)) {
+      material.color?.set('#ececec');
+    } else if (/Seam/i.test(name)) {
+      material.color?.set('#2b2b2b');
+    } else if (/Dark|Screen|Ring/i.test(name)) {
+      material.color?.set('#0a0a0a');
+    }
+  };
+  scene.traverse((node) => {
+    if (node.name === 'Base' || node.name === 'HoverRing') node.visible = false;
+    if (!node.isMesh) return;
+    node.material = Array.isArray(node.material)
+      ? node.material.map((m) => { const c = m.clone(); tone(c); return c; })
+      : (() => { const c = node.material.clone(); tone(c); return c; })();
+  });
+}
 export const clearBotModelCache = () => useGLTF.clear(GLB_URL);
 
 export function DialtactBot({
@@ -19,6 +53,9 @@ export function DialtactBot({
   audioAnalyser = null,
   audioAmplitude = 0,
   trackPointer = true,
+  variant = 'color',
+  centered = false,
+  onBotHover,
 }) {
   const gltf = useGLTF(GLB_URL);
   const { size } = useThree();
@@ -29,11 +66,10 @@ export function DialtactBot({
 
   // Clone scene with skeletons preserved
   const clonedScene = useMemo(() => {
-    return {
-      scene: SkeletonUtils.clone(gltf.scene),
-      animations: gltf.animations,
-    };
-  }, [gltf.scene, gltf.animations]);
+    const scene = SkeletonUtils.clone(gltf.scene);
+    if (variant === 'mono') applyMonochrome(scene);
+    return { scene, animations: gltf.animations };
+  }, [gltf.scene, gltf.animations, variant]);
 
   // Persistent controller instance: use ref so controller is never torn down or re-instantiated
   const onExpressionChangeRef = useRef(onExpressionChange);
@@ -121,9 +157,11 @@ export function DialtactBot({
     // Mobile: Center + slightly smaller so the callout fits.
     const isDesktop = size.width >= 960;
     const isTablet = size.width >= 640 && size.width < 960;
-    const targetX = isDesktop ? -0.22 : isTablet ? -0.15 : 0;
-    const basePosY = size.width < 640 ? -1.02 : -0.95;
-    const baseScale = size.width < 480 ? 0.38 : size.width < 640 ? 0.40 : 0.42;
+    const targetX = centered ? 0 : isDesktop ? -0.22 : isTablet ? -0.15 : 0;
+    // Without its base (mono) the bot floats: lift it into the frame and let it fill more.
+    const floatLift = variant === 'mono' ? 0.42 : 0;
+    const basePosY = (size.width < 640 ? -1.02 : -0.95) + floatLift;
+    const baseScale = (size.width < 480 ? 0.38 : size.width < 640 ? 0.40 : 0.42) * (variant === 'mono' ? 0.86 : 1);
 
     const targetBodyYaw = lookScale * MathUtils.clamp(pX, -1, 1) * MathUtils.degToRad(18);
     const targetBodyPitch = lookScale * MathUtils.clamp(-pY, -1, 1) * MathUtils.degToRad(7);
@@ -186,6 +224,7 @@ export function DialtactBot({
       }}
       onPointerOver={() => {
         if (trackPointer) document.body.style.cursor = 'pointer';
+        onBotHover?.();
       }}
       onPointerOut={() => {
         document.body.style.cursor = 'default';

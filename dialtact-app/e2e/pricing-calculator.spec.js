@@ -13,6 +13,32 @@ async function setRange(page, selector, value) {
   }, value);
 }
 
+const ESTIMATE_KEYS = ['tier', 'mode', 'calls', 'len', 'mins', 'gst'];
+
+/** Capture what "Copy estimate link" writes. Must run before the page loads. */
+async function stubClipboard(page) {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true,
+      value: { writeText: async (value) => { window.auditSharedEstimate = value; } } });
+  });
+}
+
+async function copyEstimateLink(page) {
+  await page.getByTestId('usage-share').getByRole('button', { name: /copy estimate link/i }).click();
+  await expect(page.getByTestId('usage-share')).toContainText('copied');
+  return new URL(await page.evaluate(() => window.auditSharedEstimate));
+}
+
+/**
+ * Editing the calculator never rewrites the address bar: the estimate lives in state
+ * and only a copied link carries it. (It used to replaceState on every change, which
+ * left visitors and crawlers with `/?tier=…&calls=…` URLs.)
+ */
+async function expectCleanAddress(page) {
+  const params = new URL(page.url()).searchParams;
+  expect(ESTIMATE_KEYS.filter((key) => params.has(key))).toEqual([]);
+}
+
 async function expectMoneyClose(locator, expected) {
   const shown = inr(await locator.innerText());
   expect(Math.abs(shown - expected)).toBeLessThan(0.02);
@@ -75,6 +101,7 @@ test('the calculator is backend-driven and offers volume, comparison, GST and sh
   const exFactor = gstRate > 0 && inclusivePrices ? 1 / (1 + gstRate / 100) : 1;
   const taxMultiplier = 1 + gstRate / 100;
 
+  await stubClipboard(page);
   await page.goto('/');
   const calculator = page.getByTestId('usage-calculator');
   await expect(calculator).toBeVisible();
@@ -167,29 +194,25 @@ test('the calculator is backend-driven and offers volume, comparison, GST and sh
     await expect(page.locator('#usage-monthly-minutes')).toHaveCount(0);
   }
 
+  await expectCleanAddress(page);
   if (flags.shareableEstimate !== false) {
-    await expect(page).toHaveURL(/[?&]tier=/);
-    const url = new URL(page.url());
-    expect(url.searchParams.get('tier')).toBe(first.id);
-    expect(url.searchParams.get('mode')).toBe(flags.allowMinuteInput === false ? 'calls' : 'minutes');
+    const shared = await copyEstimateLink(page);
+    expect(shared.searchParams.get('tier')).toBe(first.id);
+    expect(shared.searchParams.get('mode')).toBe(flags.allowMinuteInput === false ? 'calls' : 'minutes');
     if (flags.allowMinuteInput !== false) {
-      expect(url.searchParams.get('mins')).toBe('800');
-      expect(url.searchParams.get('len')).toBe('2');
+      expect(shared.searchParams.get('mins')).toBe('800');
+      expect(shared.searchParams.get('len')).toBe('2');
     }
 
+    // Opening the copied link restores the same estimate, then tidies the address.
     const totalBefore = inr(await page.getByTestId('usage-estimate-total').innerText());
-    await page.reload();
+    await page.goto(shared.href);
     await expect(page.locator('#usage-tier')).toHaveValue(first.id);
     if (flags.allowMinuteInput !== false) {
       await expect(page.getByTestId('usage-mode-minutes')).toHaveAttribute('aria-pressed', 'true');
     }
     await expectMoneyClose(page.getByTestId('usage-estimate-total'), totalBefore);
-
-    await page
-      .getByTestId('usage-share')
-      .getByRole('button', { name: /copy estimate link/i })
-      .click();
-    await expect(page.getByTestId('usage-share')).toContainText(/copied|copy failed/i);
+    await expect.poll(() => new URL(page.url()).searchParams.has('tier')).toBe(false);
   } else {
     await expect(page.getByTestId('usage-share')).toHaveCount(0);
   }
@@ -202,9 +225,9 @@ test('the calculator is backend-driven and offers volume, comparison, GST and sh
   }
 
   for (const tier of priced) {
-    const card = page.locator(`#pricing .landing-price-card[data-tier="${tier.id}"]`);
+    const card = page.getByTestId('mk-pricing-cards').locator(`[data-tier="${tier.id}"]`);
     await expect(card).toBeVisible();
-    const cardTags = card.locator('.landing-price-tags li');
+    const cardTags = card.locator('.mk-price-tags li');
     const expectedTags = tier.tags || [];
     await expect(cardTags).toHaveCount(expectedTags.length);
     for (let index = 0; index < expectedTags.length; index += 1) {
@@ -218,6 +241,7 @@ test('GST view follows the published tax config in both directions', async ({ pa
   await page.route('**/api/billing/catalog', (route) =>
     route.fulfill({ json: fixtureCatalog() })
   );
+  await stubClipboard(page);
   await page.goto('/');
 
   const calculator = page.getByTestId('usage-calculator');
@@ -238,7 +262,8 @@ test('GST view follows the published tax config in both directions', async ({ pa
   await expectMoneyClose(page.getByTestId('usage-estimate-total'), 5900);
   await expect(page.getByTestId('usage-estimate-formula')).toContainText('incl. 18% GST');
   await expectMoneyClose(rows.nth(4), 11.8);
-  await expect(page).toHaveURL(/[?&]gst=incl/);
+  expect((await copyEstimateLink(page)).searchParams.get('gst')).toBe('incl');
+  await expectCleanAddress(page);
 
   const beta = page.locator('.usage-compare-card[data-tier="beta"]');
   await expect(beta).toContainText('₹8,260.00');
@@ -260,6 +285,7 @@ test('inclusive shelf prices open in the incl-GST view', async ({ page }) => {
       }),
     })
   );
+  await stubClipboard(page);
   await page.goto('/');
 
   const calculator = page.getByTestId('usage-calculator');
@@ -273,28 +299,26 @@ test('inclusive shelf prices open in the incl-GST view', async ({ page }) => {
   await expect(page.getByTestId('usage-estimate-formula')).toContainText('incl. 18% GST');
   await expect(page.getByTestId('usage-gst-ex')).toContainText('₹4,237.29');
   await expect(page.getByTestId('usage-gst-incl')).toContainText('₹5,000.00');
-  await expect(page).toHaveURL(/[?&]gst=incl/);
+  expect((await copyEstimateLink(page)).searchParams.get('gst')).toBe('incl');
 
   await page.getByTestId('usage-gst-ex').click();
   await expectMoneyClose(page.getByTestId('usage-estimate-total'), 4237.29);
   await expect(page.locator('.usage-breakdown dd').nth(2)).toContainText('₹4,237.29');
   await expect(page.locator('.usage-breakdown dd').nth(3)).toContainText('₹762.71');
-  await expect(page).toHaveURL(/[?&]gst=ex/);
+  expect((await copyEstimateLink(page)).searchParams.get('gst')).toBe('ex');
+  await expectCleanAddress(page);
 });
 
-test('shared estimates contain only estimate fields on the public pricing page', async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, 'clipboard', { configurable: true,
-      value: { writeText: async (value) => { window.auditSharedEstimate = value; } } });
-  });
+test('shared estimates contain only estimate fields and point at the calculator', async ({ page }) => {
+  await stubClipboard(page);
   await page.route('**/api/billing/catalog', (route) => route.fulfill({ json: fixtureCatalog() }));
   await page.goto('/pricing?token=synthetic-only&email=fixture%40example.invalid#private-fragment');
-  await page.getByTestId('usage-share').getByRole('button', { name: /copy estimate link/i }).click();
-  await expect(page.getByTestId('usage-share')).toContainText('copied');
-  const shared = new URL(await page.evaluate(() => window.auditSharedEstimate));
-  expect(shared.pathname).toBe('/pricing');
-  expect(shared.hash).toBe('');
-  expect([...shared.searchParams.keys()].every((key) => ['tier', 'mode', 'calls', 'len', 'mins', 'gst'].includes(key))).toBe(true);
+  const shared = await copyEstimateLink(page);
+  // A real page (the home page), never the /pricing route that does not exist.
+  expect(shared.pathname).toBe('/');
+  expect(shared.hash).toBe('#usage-calculator');
+  expect([...shared.searchParams.keys()].every((key) => ESTIMATE_KEYS.includes(key))).toBe(true);
+  expect(shared.href).not.toMatch(/synthetic-only|fixture|private-fragment/);
 });
 
 test('hiding the GST toggle preserves inclusive shelf-price meaning', async ({ page }) => {
@@ -336,7 +360,7 @@ test('operator switches hide calculator features without touching the estimate',
   await expect(page.getByTestId('usage-compare')).toHaveCount(0);
   await expect(page.getByTestId('usage-share')).toHaveCount(0);
   await expect(page.getByTestId('usage-gst-ex')).toHaveCount(0);
-  await expect(page).not.toHaveURL(/[?&]tier=/);
+  await expectCleanAddress(page);
 
   await page.getByRole('button', { name: '500', exact: true }).click();
   await setRange(page, '#usage-minutes', 2);

@@ -4,9 +4,9 @@ import { api } from '../services/api';
 import '../styles/landing.css';
 
 const GROUPS = [
-  ['Product', [['How it works', '#how-it-works'], ['Use cases', '#industries'], ['Pricing', '#pricing'], ['Your workspace', '#dashboard/overview']]],
+  ['Product', [['How it works', '/#how-it-works'], ['Use cases', '/#industries'], ['Pricing', '/#pricing']]],
   ['Company', [['About Dialtact', '/company'], ['Contact & support', '/support']]],
-  ['Resources', [['Common questions', '#faq'], ['Security', '/security'], ['Privacy', '/privacy'], ['Terms', '/terms']]],
+  ['Resources', [['Common questions', '/#faq'], ['Security', '/security'], ['Privacy', '/privacy'], ['Terms', '/terms']]],
 ];
 const SOCIAL_LABELS = { twitter: 'X', linkedin: 'LinkedIn', youtube: 'YouTube', github: 'GitHub', discord: 'Discord' };
 
@@ -20,7 +20,7 @@ export function Footer({ onNavigatePage }) {
   const navigate = target => event => {
     if (!onNavigatePage) return;
     event.preventDefault();
-    onNavigatePage(target.replace(/^[/#]/, ''));
+    onNavigatePage(target.replace(/^\/?#?/, ''));
   };
 
   return <footer className="marketing-footer">

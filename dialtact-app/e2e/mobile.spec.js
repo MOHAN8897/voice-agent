@@ -59,7 +59,7 @@ test.describe('Mobile Responsiveness & Viewport Optimization', () => {
   });
 
   test('mobile navigation hamburger opens drawer and links have accessible touch targets', async ({ page }) => {
-    const hamburgerBtn = page.locator('button[aria-label="Toggle navigation"]');
+    const hamburgerBtn = page.locator('button[aria-controls="mk-mobile-menu"]');
     await expect(hamburgerBtn).toBeVisible();
 
     // Verify initial aria state
@@ -82,52 +82,44 @@ test.describe('Mobile Responsiveness & Viewport Optimization', () => {
       expect(box.height).toBeGreaterThanOrEqual(44);
     }
 
-    // Verify mobile drawer console action button
+    // The drawer has one account button: "Log in" (it becomes "Open console" signed in).
     const consoleBtn = page.locator('[data-testid="mobile-console-btn"]');
     await expect(consoleBtn).toBeVisible();
+    await expect(consoleBtn).toHaveText('Log in');
     const btnBox = await consoleBtn.boundingBox();
     expect(btnBox.height).toBeGreaterThanOrEqual(44);
+    await expect(page.locator('[data-testid="mobile-build-btn"]')).toHaveCount(0);
 
     // Close menu
     await hamburgerBtn.click();
     await expect(hamburgerBtn).toHaveAttribute('aria-expanded', 'false');
   });
 
-  test('AuthModal renders within mobile viewport without clipping and has >=16px font inputs', async ({ page }) => {
-    // Open modal via Hero CTA
-    const buildBtn = page.locator('button:has-text("Build your agent")').first();
+  test('the sign-in page fits a phone and has >=16px font inputs', async ({ page }) => {
+    // On a phone, "Log in" lives in the navigation drawer and opens /signin.
+    await page.locator('button[aria-controls="mk-mobile-menu"]').click();
+    const buildBtn = page.locator('[data-testid="mobile-console-btn"]');
     await expect(buildBtn).toBeVisible();
     await buildBtn.click();
 
-    // Modal dialog is present
-    const modalDialog = page.locator('div[role="dialog"]');
-    await expect(modalDialog).toBeVisible();
+    await expect(page).toHaveURL(/\/signin$/);
+    const form = page.getByTestId('auth-modal');
+    await expect(form).toBeVisible();
+    const box = await form.boundingBox();
+    expect(box.width).toBeLessThanOrEqual(page.viewportSize().width);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
-    // Check modal bounds fit in viewport
-    const modalBox = await modalDialog.boundingBox();
-    expect(modalBox).not.toBeNull();
-    const viewport = page.viewportSize();
-    expect(modalBox.height).toBeLessThanOrEqual(viewport.height);
-    expect(modalBox.width).toBeLessThanOrEqual(viewport.width);
+    // Inputs at 16px or more, so iOS Safari does not zoom the page.
+    const emailInput = form.locator('input[type="email"]').first();
+    await expect(emailInput).toBeVisible();
+    expect(await emailInput.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
 
-    // Verify input font size >= 16px to prevent iOS Safari auto-zoom
-    const emailInput = modalDialog.locator('input[type="email"]').first();
-    if (await emailInput.isVisible()) {
-      const fontSize = await emailInput.evaluate((el) => {
-        return parseFloat(window.getComputedStyle(el).fontSize);
-      });
-      expect(fontSize).toBeGreaterThanOrEqual(16);
-    }
-
-    // Verify close button is accessible
-    const closeBtn = modalDialog.locator('button[aria-label="Close dialog"]');
-    await expect(closeBtn).toBeVisible();
-    const closeBox = await closeBtn.boundingBox();
-    expect(closeBox.width).toBeGreaterThanOrEqual(32);
-    expect(closeBox.height).toBeGreaterThanOrEqual(32);
-
-    await closeBtn.click();
-    await expect(modalDialog).not.toBeVisible();
+    // Leaving is a real link back home, with a 44px touch target.
+    const back = page.getByRole('link', { name: 'Back to home' });
+    const backBox = await back.boundingBox();
+    expect(backBox.height).toBeGreaterThanOrEqual(44);
+    await back.click();
+    await expect(page).toHaveURL(/\/$/);
   });
 
   test('TalkToMeModal renders properly and closes on mobile', async ({ page }) => {

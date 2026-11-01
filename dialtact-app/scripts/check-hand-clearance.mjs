@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { Vector3 } from 'three';
 import { createDialtactController } from '../src/three/BotController.js';
 
-const bytes=await fs.readFile(new URL('../public/models/DialtactBot_AIEmployee_Interactive.glb',import.meta.url));
-const gltf=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+const bytes=await fs.readFile(new URL('../public/models/DialtactBot_AIEmployee_Interactive_v6.glb',import.meta.url));
+const gltf=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
 const c=createDialtactController(gltf);
 const handMeshes=[];
 gltf.scene.traverse(o=>{
